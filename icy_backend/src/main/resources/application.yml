@@ -1,0 +1,63 @@
+spring:
+    application:
+        name: iceforge-backend
+
+    messages:
+        encoding: UTF-8
+    datasource:
+        url: jdbc:postgresql://localhost:5432/iceforgedb
+        username: iceforge
+        password: iceforge
+        driver-class-name: org.postgresql.Driver
+
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate:
+            ddl-auto: validate
+        show-sql: true
+
+    flyway:
+        enabled: true
+        baseline-on-migrate: true
+        locations: classpath:db/migration
+        validate-on-migrate: true
+
+jwt:
+    secret: "MySuperSecretKeyForJWTGeneration"
+    access-expiration: 900000   # 15 minutes (access token)
+    refresh-expiration: 604800000  # 7 jours (refresh token)
+    rotation-enabled: true  # Activation de la rotation des refresh tokens
+
+security:
+    csrf:
+        enabled: true  # Protection CSRF activée
+    cors:
+        allowed-origins: "https://iceforge.com,http://localhost:3000"  # Seul ton frontend est autorisé
+        allowed-methods: "GET,POST,PUT,DELETE"
+        allowed-headers: "Authorization,Content-Type,X-XSRF-TOKEN"
+        allow-credentials: true  # Autoriser les cookies (refreshToken)
+
+server:
+    port: 8080
+
+logging:
+    level:
+        root: INFO  # Niveau par défaut pour éviter trop de logs inutiles
+        com.icy.icy_backend.controller: DEBUG  # Logs détaillés pour les contrôleurs
+        com.icy.icy_backend.service: DEBUG  # Logs détaillés pour les services
+        org.springframework: WARN  # Réduire le bruit des logs Spring
+        org.hibernate.SQL: INFO  # Afficher les requêtes SQL exécutées
+        org.springframework.security: INFO
+        org.springframework.web.cors: INFO
+
+
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info, metrics
+
+
+bot:
+    api-key: jK9LmN2pQ5VtYB8GhX4CsR7Md6wX9Jz3kLmN2pQ5VtYB8GhX4CsR7Md6wX9Jz

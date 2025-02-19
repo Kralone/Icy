@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    container_name: iceforge_db
+    restart: always
+    environment:
+      POSTGRES_USER: iceforge
+      POSTGRES_PASSWORD: iceforge
+      POSTGRES_DB: discordbot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
