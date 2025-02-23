@@ -1,0 +1,12 @@
+<div class="layout-container">
+  <!-- Sidebar fixe -->
+  <app-sidebar class="sidebar" [class.collapsed]="isSidebarCollapsed" (sidebarToggled)="isSidebarCollapsed = $event"></app-sidebar>
+
+  <!-- Conteneur principal -->
+  <div class="content-container">
+    <app-topbar class="topbar"></app-topbar>
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

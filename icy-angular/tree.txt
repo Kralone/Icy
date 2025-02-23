@@ -1,0 +1,55 @@
+icy-angular
+│── .angular/
+│── .vscode/
+│── node_modules/ (library root)
+│── public/
+│── src/
+│   ├── app/
+│   │   ├── auth/
+│   │   │   ├── components/
+│   │   │   │   ├── login/
+│   │   │   │   │   ├── login.component.css
+│   │   │   │   │   ├── login.component.html
+│   │   │   │   │   ├── login.component.spec.ts
+│   │   │   │   │   ├── login.component.ts
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.spec.ts
+│   │   │   │   ├── auth.guard.ts
+│   │   │   │   ├── role.guard.spec.ts
+│   │   │   │   ├── role.guard.ts
+│   │   │   ├── auth.module.ts
+│   │   │   ├── auth-routing.module.ts
+│   │   ├── core/
+│   │   │   ├── interceptors/
+│   │   │   │   ├── http.interceptor.ts
+│   │   │   │   ├── http.service.spec.ts
+│   │   │   ├── services/
+│   │   │   │   ├── auth/
+│   │   │   │   ├── config/
+│   │   │   │   ├── event/
+│   │   │   │   ├── message/
+│   │   │   │   ├── ship/
+│   │   │   │   ├── user/
+│   │   │   ├── core.module.ts
+│   │   ├── features/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── dashboard.component.css
+│   │   │   │   ├── dashboard.component.html
+│   │   │   │   ├── dashboard.component.spec.ts
+│   │   │   │   ├── dashboard.component.ts
+│   │   ├── shared/
+│   │   │   ├── sidebar/
+│   │   │   │   ├── sidebar.component.css
+│   │   │   │   ├── sidebar.component.html
+│   │   │   │   ├── sidebar.component.spec.ts
+│   │   │   │   ├── sidebar.component.ts
+│   │   │   ├── topbar/
+│   │   │   │   ├── topbar.component.css
+│   │   │   │   ├── topbar.component.html
+│   │   │   │   ├── topbar.component.spec.ts
+│   │   │   │   ├── topbar.component.ts
+│   │   ├── app.component.css
+│   │   ├── app.component.html
+│   │   ├── app.component.spec.ts
+│   │   ├── app.component.ts
+│   │   ├── app.config.ts

@@ -1,0 +1,185 @@
+.text-glow {
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.8), 0 0 24px rgba(0, 255, 255, 0.6);
+}
+
+/* 🌟 Glow circulaire + animation lente pour l'élément actif */
+.animated-border.active::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.4) 20%, rgba(0, 255, 255, 0) 80%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.7;
+  animation: soft-pulse 3s infinite ease-in-out;
+}
+
+/* 💡 Animation lente du glow */
+@keyframes soft-pulse {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* 🌟 Élément actif : Décalage statique vers la droite */
+.animated-border.active {
+  pointer-events: none; /* Désactive toute interaction hover */
+}
+
+/* ❌ Désactiver le hover sur l'élément actif */
+.animated-border.active:hover {
+  transform: translateX(10px) !important;
+}
+
+/* 💡 Effet "scanner laser" animé sur la bordure au hover */
+.animated-border {
+  position: relative;
+}
+
+.animated-border::after {
+  content: "";
+  position: absolute;
+  left: -50%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 1) 50%, rgba(0, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, left 0.3s ease-in-out;
+}
+
+.animated-border:hover::after {
+  opacity: 1;
+  left: 100%;
+  transition: left 0.5s ease-in-out;
+}
+
+/* 💡 Effet de translation au hover (uniquement pour les autres éléments) */
+.animated-border:hover {
+  transform: translateX(5px);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* 🌟 Animation de réduction de la sidebar */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  transition: width 0.3s ease-in-out;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: gap 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+
+.sidebar.collapsed a {
+  gap: 0;
+  transform: scale(1.1);  /* Légère mise en avant des icônes */
+}
+
+/* 📌 Mode replié */
+.sidebar.collapsed {
+  width: 80px; /* Réduit la largeur */
+}
+
+/* 🏠 Gestion des textes pour le mode réduit */
+.sidebar.collapsed .menu-text {
+  display: none; /* Cache les labels des liens */
+}
+
+/* 📌 Centrage des icônes quand la sidebar est repliée */
+.sidebar.collapsed a {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+/* 🎭 Animation du menu burger */
+.burger-btn {
+  cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* 🌟 Effet d'agrandissement au hover */
+.burger-btn:hover {
+  transform: scale(1.1);
+}
+
+/* 📌 Position du burger menu */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 📌 Quand la sidebar est repliée, le menu burger passe en dessous du logo */
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar.collapsed .burger-btn {
+  margin-top: 10px; /* Espacement sous le logo */
+}
+
+/* 🌟 Fixer le bouton Logout en bas */
+.logout-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  text-align: center;
+  padding: 10px;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-radius: 5px;
+  background: rgba(255, 0, 0, 0.7); /* Rouge semi-transparent */
+  transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+/* 🌟 Effet hover */
+.logout-btn:hover {
+  background: rgba(255, 0, 0, 1);
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* 📌 Quand la sidebar est repliée, le logout reste aligné et visible */
+.sidebar.collapsed .logout-btn {
+  width: 60%;
+  font-size: 0.8rem;
+  padding: 8px;
+}
+
+.menu-text {
+  display: inline-block;  /* Permet de gérer la largeur */
+  opacity: 1;
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out;
+}
+
+.sidebar.collapsed .menu-text {
+  opacity: 0;
+  max-width: 0;
+  visibility: hidden;  /* Empêche d'occuper de l'espace après la transition */
+  transition: opacity 0.2s ease-in-out, max-width 0.2s ease-in-out 0.1s, visibility 0s 0.2s;
+  transform: scale(1.2);
+}

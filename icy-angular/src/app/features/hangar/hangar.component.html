@@ -1,0 +1,15 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+  <div *ngFor="let ship of ships" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+
+    <!-- Image -->
+    <div class="h-40 bg-cover bg-center" [ngStyle]="{'background-image': 'url(' + ship.image + ')'}"></div>
+
+    <!-- Informations -->
+    <div class="p-4">
+      <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ ship.name }}</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Fabricant: {{ ship.manufacturer }}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Rôle: {{ ship.role }}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Équipage: {{ ship.crew }}</p>
+    </div>
+  </div>
+</div>

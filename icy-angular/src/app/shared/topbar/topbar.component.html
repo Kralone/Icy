@@ -1,0 +1,25 @@
+<header [class.hidden-topbar]="isHidden"
+        class="topbar bg-white dark:bg-gray-900 p-4 flex justify-end items-center space-x-4 shadow-md transition-all duration-500 ease-in-out">
+
+  <!-- Toggle Mode -->
+  <label class="relative inline-flex items-center cursor-pointer">
+    <input type="checkbox" id="dark-mode-toggle" class="sr-only peer" [checked]="isDarkMode" (change)="toggleDarkMode()">
+    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800
+                rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full
+                peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px]
+                after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
+                after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+    </div>
+  </label>
+
+  <!-- Cloche de notification -->
+  <span class="text-xl text-gray-600 dark:text-gray-300">🔔</span>
+
+  <!-- Profil utilisateur -->
+  <div class="flex items-center space-x-2">
+    <span id="username" class="text-gray-700 dark:text-gray-300 transition-colors duration-300">
+      Tom Cook
+    </span>
+    <span class="rounded-full bg-gray-400 dark:bg-gray-600 w-8 h-8"></span>
+  </div>
+</header>
