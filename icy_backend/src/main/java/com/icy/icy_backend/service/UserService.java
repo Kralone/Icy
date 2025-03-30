@@ -89,14 +89,35 @@ public class UserService {
         }
     }
 
-    // ====================================================
-    // ✅ MÉTHODES UTILITAIRES PRIVÉES
-    // ====================================================
+    public User resolveUser(Object identifier) {
+        if (identifier instanceof UUID uuid) {
+            return findUserById(uuid);
+        } else if (identifier instanceof Long discordId) {
+            return findUserByDiscordId(discordId);
+        } else if (identifier instanceof String str) {
+            try {
+                return findUserById(UUID.fromString(str));
+            } catch (IllegalArgumentException ignored) {
+                try {
+                    return findUserByDiscordId(Long.parseLong(str));
+                } catch (NumberFormatException e) {
+                    logger.error("String invalide pour un UUID ou un Discord ID : {}", str);
+                }
+            }
+        } else if (identifier instanceof Number number) {
+            return findUserByDiscordId(number.longValue());
+        }
+
+        logger.error("Type d'identifiant utilisateur non pris en charge : {}", identifier);
+        throw new IllegalArgumentException("Identifiant utilisateur invalide : " + identifier);
+    }
+
+
 
     /**
      * Trouve un utilisateur via son ID, ou lève une exception s'il n'existe pas.
      */
-    protected User findUserById(UUID userId) {
+    public User findUserById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> {
                     logger.warn("Utilisateur introuvable avec ID: {}", userId);

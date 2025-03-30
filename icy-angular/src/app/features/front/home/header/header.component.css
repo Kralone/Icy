@@ -1,0 +1,71 @@
+/* ------------------------------------ */
+/* 🎨 Apparence & fond du header        */
+/* ------------------------------------ */
+
+.hero-background {
+  background-image: url('/assets/images/home/hero-background.png'); /* À adapter si le chemin change */
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.6);
+}
+
+.parallax-section {
+  perspective: 1px;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.parallax-content {
+  transform: translateZ(0.3px) scale(0.95);
+  will-change: transform;
+}
+
+/* ------------------------------------ */
+/* ✨ Animations                        */
+/* ------------------------------------ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 1s ease-out forwards;
+}
+
+@keyframes fadeInOpacityOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-opacity {
+  animation: fadeInOpacityOnly 1s ease-out forwards;
+}
+
+.invisible-before-anim {
+  opacity: 0;
+}
+
+.delay-200 { animation-delay: 0.2s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-600 { animation-delay: 0.6s; }
+
+/* ------------------------------------ */
+/* 🔧 Host pour structure Angular       */
+/* ------------------------------------ */
+
+:host {
+  display: block;
+  overflow-x: hidden;
+}

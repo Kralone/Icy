@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --proxy-config src/proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "start-lan": "ng serve --host 0.0.0.0 --proxy-config src/proxy.conf.json"
   },
   "private": true,
   "dependencies": {
@@ -18,8 +19,14 @@
     "@angular/platform-browser": "^19.1.0",
     "@angular/platform-browser-dynamic": "^19.1.0",
     "@angular/router": "^19.1.0",
+    "@stomp/rx-stomp": "^2.0.0",
+    "@stomp/stompjs": "^7.0.0",
     "@tailwindcss/postcss": "^4.0.7",
+    "ngx-socket-io": "^4.8.4",
     "rxjs": "~7.8.0",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
+    "tailwindcss-animate": "^1.0.7",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
@@ -28,6 +35,8 @@
     "@angular/cli": "^19.1.7",
     "@angular/compiler-cli": "^19.1.0",
     "@types/jasmine": "~5.1.0",
+    "@types/sockjs-client": "^1.5.4",
+    "@types/stompjs": "^2.3.9",
     "autoprefixer": "^10.4.20",
     "jasmine-core": "~5.5.0",
     "karma": "~6.4.0",

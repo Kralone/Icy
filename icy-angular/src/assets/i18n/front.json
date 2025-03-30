@@ -1,0 +1,28 @@
+{
+  "header": {
+    "memberSpace": "Espace membre",
+    "title": "IceForge",
+    "subtitle": "Forgés dans la glace,\nunis dans le feu.",
+    "joinButton": "Rejoindre Iceforge"
+  },
+  "story": {
+    "mainTitle": "L’Histoire de la Corporation",
+    "mainParagraph": "<strong>IceForge Industries</strong> est une organisation industrielle d’élite fondée sur la <strong>COMMUNAUTÉ</strong>, la <strong>PERFORMANCE</strong> et le <strong>PROGRÈS</strong>. Basée à <strong>New Babbage</strong>, nous unifions technologie de pointe, excellence opérationnelle et solidarité pour bâtir une chaîne complète — <strong>extraction, conception, transport et défense</strong> — au cœur du système Stanton. Prenez part à une vision ambitieuse où chaque compétence forge l’avenir.",
+    "sectionTitle": "Fondation et Objectifs",
+    "sectionParagraph": "Fondé en janvier 2955, le groupe <strong>IceForge Industries</strong> a ouvert sa propre organisation dans le froid de <strong>New Babbage, MicroTech</strong> dans le système <strong>Stanton</strong> , avec pour objectif de développer une <strong>chaîne industrielle complète</strong>, et de défendre ses objectifs politiques et militaires sur le système Stanton. Notre <strong>expérience, efficacité, et enthousiasme</strong> nous ont amené à développer des <strong>modules de haute précision pour vaisseaux</strong> ainsi que des combinaisons dans nos laboratoires de ces régions froides. Nos futurs plans nous appellent à recruter des <strong>citoyens qualifiés</strong> et aux compétences diverses ! \uD83C\uDFD4\uFE0F\n ",
+    "sectionParagraph2": "Notre direction principale se trouve dans une <strong>industrie ainsi qu'une production de haute qualité</strong>; de l'extraction à la vente en passant par la conception et le transport, il y a forcément un rôle qui vous conviendra !"
+  },
+  "home": {
+    "footerCopyright": "© IceForge 2025 — Tous droits réservés.",
+    "footerDisclaimer": "Certains assets visuels sont tirés du jeu <strong>Star Citizen</strong>, propriété de <strong>Cloud Imperium Games</strong>.<br>Utilisation non commerciale à des fins communautaires uniquement."
+  },
+  "activities": {
+    "quote1": "<span><strong>Le minage</strong> et <strong>l'industrie</strong> en générale vous attend en équipe avec nos <strong>employés hautement qualifiés</strong>. Allez chercher le minerai de qualité <strong>le plus rare de la galaxie</strong>, aidez à créer des <strong>technologies innovantes et révolutionnaires</strong>.<br>Notre ambition : être le plus <strong>performant</strong> et <strong>exigeant sur la qualité de nos produits</strong>.</span>",
+    "quote2": "<span>Nous traitons la <strong>logistique</strong> comme un <strong>levier stratégique majeur</strong>, et non comme une simple tâche d’exécution. Qu’il s’agisse de <strong>matériaux lourds</strong>, de <strong>ressources vitales</strong> ou de <strong>charges sensibles</strong>, chaque transfert suit des <strong>protocoles fiables</strong> et bénéficie d’une <strong>exécution sans faille</strong>, quels que soient les délais ou les conditions.</span>",
+    "quote3": "<span>La <strong>sécurité du groupe</strong> repose sur notre capacité à <strong>sécuriser chaque maillon</strong> de notre chaîne logistique. Nos forces opèrent une <strong>surveillance active</strong> et <strong>une protection mobile</strong> pour garantir <strong>l’intégrité des convois</strong> et défendre <strong>les ressources et actifs</strong> critiques de la corporation face aux risques extérieurs.</span>"
+  },
+  "carousel": {
+    "join": "Rejoignez l'aventure dès maintenant !",
+    "networks": "Nos réseaux"
+  }
+}

@@ -3,8 +3,11 @@ import { LayoutComponent } from './shared/layout/layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { HangarComponent } from './features/hangar/hangar.component';
 import { LoginComponent } from './auth/components/login/login.component';
+import {HomeComponent} from './features/front/home/home.component';
 
 export const routes: Routes = [
+  { path: '',component: HomeComponent },
+  // { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
 
   {

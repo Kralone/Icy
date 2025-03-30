@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 String username = jwtUtil.getSubjectFromToken(token);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    User userDetails = (User) userDetailsService.loadUserByUsername(username);
+                    UserAuthDetails userDetails = userDetailsService.loadUserForContext(username);
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities()

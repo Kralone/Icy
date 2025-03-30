@@ -124,6 +124,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text-align: center;
 }
 
 /* 📌 Quand la sidebar est repliée, le menu burger passe en dessous du logo */
@@ -183,3 +184,9 @@
   transition: opacity 0.2s ease-in-out, max-width 0.2s ease-in-out 0.1s, visibility 0s 0.2s;
   transform: scale(1.2);
 }
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+}
+

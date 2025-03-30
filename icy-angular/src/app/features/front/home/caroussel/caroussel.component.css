@@ -1,0 +1,17 @@
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+.carousel-track {
+  width: max-content;
+  animation: scroll 45s linear infinite;
+}
+
+.carousel-band img {
+  flex-shrink: 0;
+}

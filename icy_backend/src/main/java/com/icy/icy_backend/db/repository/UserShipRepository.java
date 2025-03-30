@@ -16,8 +16,12 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
     List<UserShip> findByUserId(UUID userId);
     List<UserShip> findByUserDiscordId(Long discordId);
 
-    @Query("SELECT s FROM Ship s JOIN UserShip us ON us.ship.id = s.id WHERE us.user.discordId = :discordId")
-    List<Ship> findShipsByUserDiscordId(@Param("discordId") Long discordId);
+    @Query("SELECT us FROM UserShip us JOIN FETCH us.ship")
+    List<UserShip> findAllWithShips();
+
+
+    @Query("SELECT s FROM Ship s JOIN UserShip us ON us.ship.id = s.id WHERE us.user.id = :userId ORDER BY s.brand.name")
+    List<Ship> findShipsByUserId(@Param("userId") UUID userId);
 
     @Modifying
     @Transactional

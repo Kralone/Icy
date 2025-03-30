@@ -41,7 +41,7 @@ export class LoginComponent implements OnInit {
       try {
         const success = await firstValueFrom(this.authService.login(username, password));
         if (success) {
-          this.router.navigate(['/icy/dashboard']);
+          await this.router.navigate(['/icy/dashboard']);
         } else {
           this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
         }

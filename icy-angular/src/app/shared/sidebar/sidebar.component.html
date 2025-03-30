@@ -1,31 +1,37 @@
-<aside class="sidebar bg-gradient-to-br from-blue-900 to-blue-600 backdrop-blur-lg border-l-4 border-cyan-400/60 p-5 shadow-2xl"
-       [class.collapsed]="isCollapsed">
+<aside class="sidebar bg-gray-900 border-l border-gray-700 p-5 shadow-xl" [class.collapsed]="isCollapsed">
 
-  <!-- 🏠 Logo + Menu Burger -->
-  <div class="sidebar-header flex justify-between items-center mb-8">
-    <span class="text-glow text-3xl font-extrabold tracking-widest">LOGO</span>
-    <button class="burger-btn text-white text-3xl focus:outline-none"
-            (click)="toggleSidebar()">
-      ☰
-    </button>
+  <!-- Sidebar header avec logo cliquable -->
+  <div class="sidebar-header flex flex-col items-center justify-center mb-6 space-y-4">
+    <a [routerLink]="['/icy/dashboard']" class="block">
+      <img src="assets/images/home/iceforgeLogo.png"
+           alt="IceForge Logo"
+           class="h-20 w-20 object-contain transition-transform duration-300 hover:scale-105" />
+    </a>
+
+    <button class="burger-btn text-white text-2xl" (click)="toggleSidebar()">☰</button>
   </div>
 
-  <!-- 📌 Menu -->
+  <!-- Navigation -->
   <nav>
-    <ul class="space-y-4">
+    <ul class="space-y-2">
       <li *ngFor="let item of menuItems">
-        <a [routerLink]="item.link"
-           routerLinkActive="active"
-           class="animated-border flex items-center gap-4 px-5 py-3 text-white text-lg font-semibold tracking-wide uppercase transition duration-300 border-transparent">
-          <span class="text-cyan-400 icon-glow text-2xl">{{ item.icon }}</span>
-          <span class="menu-text">{{ item.label }}</span>
+        <a
+          [routerLink]="item.link"
+          routerLinkActive="active"
+          class="nav-item group flex items-center gap-4 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-md transition"
+        >
+          <span class="text-xl">{{ item.icon }}</span>
+          <span class="menu-text text-sm uppercase tracking-wide">{{ item.label }}</span>
         </a>
       </li>
     </ul>
   </nav>
-  <!-- Bouton Logout toujours en bas -->
-  <button class="logout-btn" (click)="logout()">
-    🚪 Logout
+
+  <!-- Logout -->
+  <button class="logout-btn flex items-center justify-center gap-2" (click)="logout()">
+    🚪
+    <span class="menu-text">Logout</span>
   </button>
+
 
 </aside>

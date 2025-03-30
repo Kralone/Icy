@@ -1,3 +1,29 @@
-<main class="main-content flex-1 p-6 bg-gray-100">
-  <h1 class="text-2xl font-bold">Bienvenue sur le Dashboard</h1>
+<main class="main-content flex-1 p-6 bg-gray-100 flex">
+  <div class="flex-1">
+    <h1 class="text-2xl font-bold mb-4">Bienvenue sur le Dashboard</h1>
+    <!-- Ici, ton contenu principal -->
+  </div>
+
+  <aside class="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-h-[80vh] overflow-y-auto animate-fade-in">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-100 mb-4">🛸 Résumé de la flotte</h2>
+
+    <div *ngIf="fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
+      <div *ngFor="let focus of objectKeys(fleetSummary)" class="mb-4">
+        <h3 class="text-sm font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wide mb-1">
+          {{ focus }}
+        </h3>
+        <ul class="list-disc list-inside text-gray-700 dark:text-gray-200 text-sm space-y-1">
+          <li *ngFor="let ship of fleetSummary[focus]">
+            {{ ship }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <ng-template #noFleet>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">Aucun vaisseau dans la flotte.</p>
+    </ng-template>
+  </aside>
+
+
 </main>
