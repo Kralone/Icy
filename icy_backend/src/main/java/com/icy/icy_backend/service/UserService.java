@@ -1,6 +1,8 @@
 package com.icy.icy_backend.service;
 
+import com.icy.icy_backend.clients.DiscordIcyClient;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.UserResponseDTO;
 import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.db.entity.Role;
 import com.icy.icy_backend.db.repository.UserRepository;
@@ -8,13 +10,16 @@ import com.icy.icy_backend.db.repository.RoleRepository;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.rest.MessageService;
+import org.hibernate.ObjectNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 @Service
 public class UserService {
@@ -25,12 +30,14 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
+    private final DiscordIcyClient discordNotifier;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, DiscordIcyClient discordNotifier) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.messageService = messageService;
+        this.discordNotifier = discordNotifier;
     }
 
     /**
@@ -49,7 +56,7 @@ public class UserService {
     /**
      * Crée un nouvel utilisateur s'il n'existe pas déjà.
      */
-    public ResponseEntity<MessageResponse<User>> createUser(String username, Long discordId) {
+    public ResponseEntity<MessageResponse<User>> createUser(String username, Long discordId, String role) {
         logger.info("Création d'un nouvel utilisateur: {} avec Discord ID: {}", username, discordId);
 
         if (userRepository.findByDiscordId(discordId).isPresent()) {
@@ -62,9 +69,13 @@ public class UserService {
         User user = new User();
         user.setUsername(username);
         user.setDiscordId(discordId);
-        user.setPassword(passwordEncoder.encode("<test>"));
+        String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setPwdReset(true);
 
-        Role defaultRole = findRoleByName(DEFAULT_ROLE_NAME);
+        discordNotifier.sendTemporaryPassword(discordId, tempPassword);
+
+        Role defaultRole = findRoleByName(role);
         user.assignDefaultRole(defaultRole);
 
         User savedUser = userRepository.save(user);
@@ -73,16 +84,25 @@ public class UserService {
         return messageService.buildResponse("user.created", savedUser);
     }
 
+    public String updatePasswordAndUnlock(UUID id, String newPassword) {
+        User user = findUserById(id);
+        logger.info("Réinitialisation du mot de passe pour {}", id);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPwdReset(false);
+        userRepository.save(user);
+
+        return user.getUsername();
+    }
+
     /**
      * Désactive un utilisateur via son ID.
      */
-    public ResponseEntity<MessageResponse<Void>> deactivateUser(Long discordId) {
-        logger.info("Désactivation de l'utilisateur DiscordId: {}", discordId);
+    public ResponseEntity<MessageResponse<Void>> deactivateUser(User user) {
+        logger.info("Désactivation de l'utilisateur DiscordId: {}", user.getUsername());
         try {
-            User user = findUserByDiscordId(discordId);
             user.setActive(false);
             userRepository.save(user);
-            logger.info("Utilisateur désactivé avec succès: {}", discordId);
+            logger.info("Utilisateur désactivé avec succès: {}", user.getUsername());
             return messageService.buildResponse("user.deleted", null);
         } catch (ResourceNotFoundException e) {
             return messageService.buildResponse("user.notfound", null);
@@ -125,6 +145,15 @@ public class UserService {
                 });
     }
 
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    logger.warn("Aucun utilisateur trouvé avec le nom d'utilisateur : {}", username);
+                    return new ResourceNotFoundException("Utilisateur non trouvé : " + username);
+                });
+    }
+
+
     /**
      * Trouve un utilisateur via son Discord ID, ou lève une exception s'il n'existe pas.
      */
@@ -146,4 +175,28 @@ public class UserService {
                     return new ResourceNotFoundException("Rôle '" + roleName + "' introuvable");
                 });
     }
+
+    public ResponseEntity<MessageResponse<List<UserResponseDTO>>> getAllActiveUsers() {
+        logger.info("Récupération de tous les utilisateurs actifs");
+
+        Iterable<User> users = userRepository.findAll(); // Les users actifs uniquement via @SQLRestriction
+
+        List<UserResponseDTO> userDtos = StreamSupport.stream(users.spliterator(), false)
+                .map(UserResponseDTO::new)
+                .toList();
+
+        return messageService.buildResponse("user.list", userDtos);
+    }
+
+    public void forceResetPassword(UUID userId) {
+        User user = findUserById(userId);
+        String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setPwdReset(true);
+        userRepository.save(user);
+
+        logger.info("Mot de passe temporaire réinitialisé pour {}", user.getUsername());
+        discordNotifier.sendTemporaryPassword(user.getDiscordId(), tempPassword);
+    }
+
 }

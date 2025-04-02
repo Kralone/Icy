@@ -1,74 +1,10 @@
-.text-glow {
-  text-shadow: 0 0 12px rgba(0, 255, 255, 0.8), 0 0 24px rgba(0, 255, 255, 0.6);
-}
-
-/* 🌟 Glow circulaire + animation lente pour l'élément actif */
-.animated-border.active::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 80%;
-  height: 80%;
-  background: radial-gradient(circle, rgba(0, 255, 255, 0.4) 20%, rgba(0, 255, 255, 0) 80%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 0.7;
-  animation: soft-pulse 3s infinite ease-in-out;
-}
-
-/* 💡 Animation lente du glow */
-@keyframes soft-pulse {
-  0% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
-  100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-/* 🌟 Élément actif : Décalage statique vers la droite */
-.animated-border.active {
-  pointer-events: none; /* Désactive toute interaction hover */
-}
-
-/* ❌ Désactiver le hover sur l'élément actif */
-.animated-border.active:hover {
-  transform: translateX(10px) !important;
-}
-
-/* 💡 Effet "scanner laser" animé sur la bordure au hover */
-.animated-border {
-  position: relative;
-}
-
-.animated-border::after {
-  content: "";
-  position: absolute;
-  left: -50%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 1) 50%, rgba(0, 255, 255, 0) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out, left 0.3s ease-in-out;
-}
-
-.animated-border:hover::after {
-  opacity: 1;
-  left: 100%;
-  transition: left 0.5s ease-in-out;
-}
-
-/* 💡 Effet de translation au hover (uniquement pour les autres éléments) */
-.animated-border:hover {
-  transform: translateX(5px);
-  transition: transform 0.3s ease-in-out;
+/* ✅ Élément actif (sobre, pro, tech) */
+.sidebar a.active {
+  background-color: rgba(59, 130, 246, 0.2); /* bg-blue-500/20 */
+  border-left: 4px solid #3b82f6; /* border-blue-500 */
+  color: #ffffff;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
 }
 
 /* 🌟 Animation de réduction de la sidebar */

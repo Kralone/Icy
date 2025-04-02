@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 import asyncio
 from dotenv import load_dotenv
+import threading
+from utils.bot_api import launch_api
 
 env_mode = os.getenv("ENV_MODE", "development")  # Valeur par défaut : "development"
 
@@ -38,6 +40,7 @@ async def setup():
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     print("🔍 Cogs chargés :", bot.cogs.keys())  # Affiche tous les cogs chargés
+    threading.Thread(target=launch_api, args=(bot,), daemon=True).start()
 
     try:
         synced = await bot.tree.sync(guild=discord.Object(id=guild_id))

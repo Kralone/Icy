@@ -1,0 +1,134 @@
+<div class="p-6 space-y-4">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <input
+      [(ngModel)]="searchTerm"
+      type="text"
+      placeholder="Rechercher un utilisateur..."
+      class="px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:border-blue-300 w-1/3 transition"
+    />
+    <button
+      (click)="isAddUserModalOpen = true"
+      class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl shadow transition"
+    >
+      + Ajouter un membre
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-x-auto rounded-xl shadow-md border border-gray-700 bg-gray-800 text-gray-100">
+    <div class="relative overflow-x-auto rounded-xl shadow-md border border-gray-700 bg-gray-800 text-gray-100">
+
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-900 text-gray-300 uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">Nom</th>
+          <th class="px-4 py-3 text-left">Discord ID</th>
+          <th class="px-4 py-3 text-left">Rôles</th>
+          <th class="px-4 py-3 text-left">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let user of filteredUsers" class="hover:bg-gray-700 transition">
+          <td class="px-4 py-2">{{ user.username }}</td>
+          <td class="px-4 py-2">{{ user.discordId }}</td>
+          <td class="px-4 py-2">
+            <span *ngFor="let role of user.roles" class="inline-block bg-blue-700 text-white text-xs px-2 py-1 rounded-full mr-1">
+              {{ role }}
+            </span>
+          </td>
+          <td class="px-4 py-2 space-x-2">
+            <button class="text-blue-400 hover:underline">✏️ Modifier</button>
+            <button class="text-red-400 hover:underline" (click)="deleteUser(user.id)">🗑️ Supprimer</button>
+            <button class="text-yellow-400 hover:underline" (click)="resetPassword(user.id)">🔁 Reset PW</button>
+          </td>
+        </tr>
+        <tr *ngIf="isLoading">
+          <td colspan="4" class="py-6 text-center">
+            <app-loading-overlay [isLoading]="true"></app-loading-overlay>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- Pagination -->
+  <div class="flex justify-between items-center pt-4">
+    <div>
+      <label class="text-sm mr-2">Éléments par page:</label>
+      <select [(ngModel)]="itemsPerPage" class="border px-2 py-1 rounded">
+        <option *ngFor="let size of [10, 20, 30]" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+    <div class="space-x-2">
+      <button (click)="prevPage()" [disabled]="currentPage === 1" class="px-2 py-1 bg-gray-100 rounded">Préc.</button>
+      <span>Page {{ currentPage }} / {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="px-2 py-1 bg-gray-100 rounded">Suiv.</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center" *ngIf="isAddUserModalOpen" (click)="isAddUserModalOpen = false">
+  <!-- Modal Box -->
+  <div class="bg-gray-900 border border-gray-700 rounded-xl shadow-xl w-full max-w-md p-6 space-y-6 text-gray-200" (click)="$event.stopPropagation()">
+    <h2 class="text-xl font-semibold text-blue-400">Ajouter un utilisateur</h2>
+
+    <!-- Form -->
+    <form (ngSubmit)="addUser()" #addUserForm="ngForm" class="space-y-4">
+      <!-- Username -->
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-300">Nom</label>
+        <input
+          type="text"
+          name="username"
+          placeholder="Nom"
+          [(ngModel)]="newUser.username"
+          class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <!-- Discord ID -->
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-300">Discord ID</label>
+        <input
+          type="number"
+          name="discordId"
+          placeholder="0123456789"
+          [(ngModel)]="newUser.discordId"
+          class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <!-- Rôle -->
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-300">Rôle</label>
+        <select
+          name="role"
+          [(ngModel)]="newUser.role"
+          class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-md text-gray-200"
+          required
+        >
+          <option *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-4 pt-4">
+        <button type="button" class="text-gray-400 hover:text-white" (click)="isAddUserModalOpen = false">Annuler</button>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+          [disabled]="addUserForm.invalid"
+        >
+          Ajouter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

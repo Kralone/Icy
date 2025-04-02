@@ -1,7 +1,13 @@
 package com.icy.icy_backend.controller;
 
 import com.icy.icy_backend.controller.dto.LoginRequest;
+import com.icy.icy_backend.controller.dto.ResetPasswordRequest;
+import com.icy.icy_backend.controller.dto.response.LoginResponseDTO;
+import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.security.JwtUtil;
+import com.icy.icy_backend.service.UserService;
 import com.icy.icy_backend.service.rest.AuthService;
+import com.icy.icy_backend.service.rest.MessageService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,45 +19,70 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
+    private final UserService userService;
+    private final JwtUtil jwtUtil;
+    private final MessageService messageService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserService userService, JwtUtil jwtUtil, MessageService messageService) {
         this.authService = authService;
+        this.userService = userService;
+        this.jwtUtil = jwtUtil;
+        this.messageService = messageService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest request) {
         logger.info("Requête de login reçue pour : {}", request.getUsername());
-        Map<String, String> tokens = authService.authenticate(request.getUsername(), request.getPassword());
+        LoginResponseDTO tokens = authService.authenticate(request.getUsername(), request.getPassword());
         logger.info("Login réussi, retour des tokens.");
         return ResponseEntity.ok(tokens);
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<LoginResponseDTO> resetPassword(@RequestBody ResetPasswordRequest request) {
+        String username = userService.updatePasswordAndUnlock(request.getId(), request.getNewPassword());
+        LoginResponseDTO loginResponse = authService.authenticate(username, request.getNewPassword());
+        return ResponseEntity.ok(loginResponse);
+    }
+
+    @PostMapping("/admin/force-reset-password")
+    public ResponseEntity<MessageResponse<Void>> forceResetPassword(@RequestParam UUID id) {
+        userService.forceResetPassword(id);
+        return messageService.buildResponse("user.password.reset", null);
+    }
+
 
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, String>> refresh(HttpServletRequest request, HttpServletResponse response) {
-        logger.debug("Requête reçue : tentative de rafraîchissement du token");
+    public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
 
-        // Récupérer le refreshToken depuis le cookie
-        Optional<String> refreshTokenOpt = Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst();
-
-        if (refreshTokenOpt.isEmpty()) {
-            logger.warn("Requête rejetée : refresh token manquant ou invalide");
+        if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized", "message", "Refresh token manquant ou invalide"));
         }
 
-        logger.debug("Refresh token trouvé, tentative de génération d'un nouvel access token");
-        ResponseEntity<Map<String, String>> responseEntity = ResponseEntity.ok(authService.refreshAccessToken(refreshTokenOpt.get(), response));
-        logger.debug("Réponse envoyée : nouvel access token généré avec succès");
+        return ResponseEntity.ok(authService.refreshAccessToken(refreshToken));
+    }
 
-        return responseEntity;
+
+
+    @GetMapping("/verify-token")
+    public ResponseEntity<Void> verifyToken(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String token = authHeader.substring(7); // remove "Bearer "
+
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.status(200).build();
     }
 }

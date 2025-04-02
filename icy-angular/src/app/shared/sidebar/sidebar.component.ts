@@ -1,6 +1,7 @@
 import {Component, EventEmitter, HostBinding, Output} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {RouterLink, RouterLinkActive} from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+import {AuthService} from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -16,7 +17,16 @@ export class SidebarComponent {
   @Output() sidebarToggled = new EventEmitter<boolean>();
   @HostBinding('class.sidebar-visible') isVisible = false;
 
+  isAdminUser = false;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router) {
+  }
+
   ngOnInit() {
+    this.isAdminUser = this.authService.isAdmin();
+
     setTimeout(() => {
       this.isVisible = true;
     }, 300);
@@ -36,7 +46,8 @@ export class SidebarComponent {
   }
 
   logout() {
-    console.log("Déconnexion..."); // À remplacer par ta logique de déconnexion
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
 }

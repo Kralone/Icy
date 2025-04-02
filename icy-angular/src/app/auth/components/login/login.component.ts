@@ -16,7 +16,9 @@ import {NgIf} from '@angular/common';
 })
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
+  passwordForm: FormGroup;
   errorMessage: string = '';
+  showResetModal: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,23 +27,37 @@ export class LoginComponent implements OnInit {
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
     });
+    this.passwordForm = this.fb.group({
+      newPassword: ['', Validators.required],
+      confirmPassword: ['', Validators.required]
+    })
   }
 
   ngOnInit(): void {
-    if (this.authService.isTokenValid()) {
-      this.router.navigate(['/icy/dashboard']);
-    }
+    this.authService.verifyToken().subscribe(valid => {
+      if (valid) {
+        this.router.navigate(['/icy/dashboard']);
+      }
+    });
   }
 
   async onSubmit(): Promise<void> {
+    console.log(this.loginForm.value);
     if (this.loginForm.valid) {
       const {username, password} = this.loginForm.value;
       try {
         const success = await firstValueFrom(this.authService.login(username, password));
         if (success) {
-          await this.router.navigate(['/icy/dashboard']);
+
+
+          if (localStorage.getItem('refreshToken') === "resetPwd" && localStorage.getItem('token') === "resetPwd") {
+            this.showResetModal = true;
+          } else {
+            await this.router.navigate(['/icy/dashboard']);
+          }
+
         } else {
           this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
         }
@@ -50,4 +66,46 @@ export class LoginComponent implements OnInit {
       }
     }
   }
+
+async onResetPassword(): Promise<void> {
+  this.errorMessage = ''; // reset erreur
+
+  if (this.passwordForm.invalid) {
+    this.errorMessage = 'Tous les champs sont requis.';
+    return;
+  }
+
+  const newPassword = this.passwordForm.value.newPassword;
+  const confirmPassword = this.passwordForm.value.confirmPassword;
+
+  if (newPassword.length < 6) {
+    this.errorMessage = 'Le mot de passe doit contenir au moins 6 caractères.';
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    this.errorMessage = 'Les mots de passe ne correspondent pas.';
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem('user')!);
+  const resetPayload = {
+    id: user.id,
+    newPassword
+  };
+
+  try {
+    const response = await firstValueFrom(this.authService.resetPassword(resetPayload));
+    localStorage.setItem('token', response.tokens.accessToken);
+    localStorage.setItem('refreshToken', response.tokens.refreshToken);
+    localStorage.setItem('user', JSON.stringify(response.user));
+
+    this.showResetModal = false;
+    this.router.navigate(['/icy/dashboard']);
+  } catch (err) {
+    this.errorMessage = "Erreur lors de la réinitialisation.";
+  }
+}
+
+
 }

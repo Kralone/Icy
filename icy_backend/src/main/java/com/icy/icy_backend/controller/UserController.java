@@ -2,6 +2,7 @@ package com.icy.icy_backend.controller;
 
 import com.icy.icy_backend.controller.dto.CreateUserRequest;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.UserResponseDTO;
 import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.service.UserService;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,11 +30,21 @@ public class UserController {
 
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<User>>createUser(@RequestBody CreateUserRequest createUserRequest) {
-        return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId());
+        return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
     }
 
-    @DeleteMapping
+    @DeleteMapping("/by-id")
+    public ResponseEntity<MessageResponse<Void>> deleteUserById(@RequestParam UUID id) {
+        return userService.deactivateUser(userService.resolveUser(id));
+    }
+
+    @DeleteMapping("/by-discord")
     public ResponseEntity<MessageResponse<Void>> deleteUserByDiscordId(@RequestParam Long discordId) {
-        return userService.deactivateUser(discordId);
+        return userService.deactivateUser(userService.resolveUser(discordId));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<MessageResponse<List<UserResponseDTO>>> getAllUsers() {
+        return userService.getAllActiveUsers();
     }
 }

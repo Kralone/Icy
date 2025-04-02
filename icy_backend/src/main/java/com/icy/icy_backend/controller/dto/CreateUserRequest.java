@@ -9,4 +9,5 @@ public class CreateUserRequest {
         private String username;
         @JsonProperty("discordId")
         private Long discordId;
+        private String role;
 }

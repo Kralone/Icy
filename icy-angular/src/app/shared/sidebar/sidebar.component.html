@@ -18,10 +18,20 @@
         <a
           [routerLink]="item.link"
           routerLinkActive="active"
-          class="nav-item group flex items-center gap-4 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-md transition"
+          class="nav-item group flex items-center gap-4 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-md transition duration-300 ease-in-out"
         >
           <span class="text-xl">{{ item.icon }}</span>
           <span class="menu-text text-sm uppercase tracking-wide">{{ item.label }}</span>
+        </a>
+      </li>
+      <li *ngIf="isAdminUser">
+        <a
+          [routerLink]="['/icy/admin']"
+          routerLinkActive="active"
+          class="nav-item group flex items-center gap-4 px-4 py-2 text-blue-400 hover:bg-gray-800 rounded-md transition"
+        >
+          <span class="text-xl">🛡️</span>
+          <span class="menu-text text-sm uppercase tracking-wide">Admin</span>
         </a>
       </li>
     </ul>

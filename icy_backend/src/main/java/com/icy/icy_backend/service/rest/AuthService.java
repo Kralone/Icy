@@ -1,8 +1,12 @@
 package com.icy.icy_backend.service.rest;
 
+import com.icy.icy_backend.controller.dto.response.LoginResponseDTO;
+import com.icy.icy_backend.controller.dto.response.UserResponseDTO;
+import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
 import com.icy.icy_backend.security.JwtUtil;
 import com.icy.icy_backend.security.CustomUserDetailsService;
+import com.icy.icy_backend.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -11,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -19,14 +24,16 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
-    public AuthService(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public AuthService(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder, UserService userService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
     }
 
-    public Map<String, String> authenticate(String username, String password) {
+    public LoginResponseDTO  authenticate(String username, String password) {
         logger.info("Tentative d'authentification pour l'utilisateur: {}", username);
         logger.debug(passwordEncoder.encode("test"));
         try {
@@ -42,8 +49,18 @@ public class AuthService {
             String accessToken = jwtUtil.generateAccessToken(username);
             String refreshToken = jwtUtil.generateRefreshToken(username);
 
+            // Charger l'utilisateur complet depuis la BDD (avec les rôles)
+
+            // Récupération de l'utilisateur complet
+            User user = userService.getByUsername(username);
+            UserResponseDTO userDto = new UserResponseDTO(user);
+            if(user.getPwdReset())
+            {
+                return new LoginResponseDTO("resetPwd", "resetPwd", userDto);
+            }
+
             logger.info("Tokens générés avec succès pour l'utilisateur: {}", username);
-            return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
+            return new LoginResponseDTO(accessToken, refreshToken, userDto);
         } catch (Exception e) {
             logger.error("Erreur lors de l'authentification de l'utilisateur: {}", username, e);
             throw new InvalidCredentialsException("Erreur lors de l'authentification.");
@@ -51,32 +68,27 @@ public class AuthService {
     }
 
 
-    public Map<String, String> refreshAccessToken(String oldRefreshToken, HttpServletResponse response) {
+    public Map<String, String> refreshAccessToken(String oldRefreshToken) {
         logger.info("Tentative de rafraîchissement du token");
+
         if (!jwtUtil.validateToken(oldRefreshToken)) {
             logger.warn("Tentative de rafraîchissement avec un token invalide");
             throw new InvalidCredentialsException("Refresh token invalide !");
         }
 
-        // Extraire l'utilisateur depuis le refresh token
         String username = jwtUtil.getSubjectFromToken(oldRefreshToken);
         logger.info("Rafraîchissement réussi pour l'utilisateur: {}", username);
 
-        // Générer un NOUVEAU refresh token
+        // Génère un nouveau refresh token
         String newRefreshToken = jwtUtil.generateRefreshToken(username);
         String newAccessToken = jwtUtil.generateAccessToken(username);
 
-        // Mettre à jour le cookie avec le NOUVEAU refresh token
-        Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/api/auth/refresh");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // Expiration 7 jours
+        logger.info("Nouveaux tokens générés pour l'utilisateur: {}", username);
 
-        response.addCookie(refreshCookie);
-        response.addHeader("Set-Cookie", "refreshToken=" + newRefreshToken + "; Path=/api/auth/refresh; HttpOnly; Secure; SameSite=Strict; Max-Age=" + (7 * 24 * 60 * 60));
-
-        logger.info("Nouveau refresh token généré et stocké pour l'utilisateur: {}", username);
-        return Map.of("accessToken", newAccessToken);
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken
+        );
     }
+
 }

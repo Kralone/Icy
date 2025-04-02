@@ -41,6 +41,9 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "pwd_reset", nullable = false)
+    private Boolean pwdReset = false;
+
     public void assignDefaultRole(Role defaultRole) {
         UserRole userRole = new UserRole();
         userRole.setUser(this);

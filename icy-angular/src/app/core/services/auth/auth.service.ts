@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import {Observable, map, tap, of, catchError} from 'rxjs';
+import {User} from '../../../model/userDto.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,27 +12,38 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(username: string, password: string): Observable<boolean> {
-    return this.http.post<{ accessToken: string, refreshToken: string }>(`${this.apiUrl}/login`, { username, password }).pipe(
+    return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User }>(
+      `${this.apiUrl}/login`,
+      { username, password }
+    ).pipe(
       tap(response => {
-        localStorage.setItem('token', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
+        const accessToken = response.tokens.accessToken;
+        const refreshToken = response.tokens.refreshToken;
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(response.user));
       }),
       map(() => true)
     );
   }
 
+
   logout(): void {
+    localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
   }
 
-  refreshAccessToken(): Observable<string> {
+  resetPassword(payload: { id: string, newPassword: string }): Observable<{ tokens: { accessToken: string, refreshToken: string }, user: User }> {
+    return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User }>(
+      `${this.apiUrl}/reset-password`, payload);
+  }
+
+
+  refreshToken(): Observable<{ tokens: { accessToken: string, refreshToken: string }}> {
     const refreshToken = localStorage.getItem('refreshToken');
-    return this.http.post<{ token: string }>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
-      tap(response => {
-        localStorage.setItem('token', response.token);
-      }),
-      map(response => response.token)
+    return this.http.post<{ tokens : {accessToken: string, refreshToken: string }}>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
+      map(response => response)
     );
   }
 
@@ -43,18 +55,17 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  isTokenValid(): boolean {
+  verifyToken(): Observable<boolean> {
     const token = localStorage.getItem('token');
-    if (!token) {
-      return false;
-    }
+    if (!token) return of(false);
 
-    const expiration = this.getTokenExpiration(token);
-    if (expiration && expiration < Date.now()) {
-      this.refreshAccessToken().subscribe();
-      return false;
-    }
-    return true;
+    return this.http.get<{ valid: boolean }>(
+      `${this.apiUrl}/verify-token`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).pipe(
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   private getTokenExpiration(token: string): number | null {
@@ -64,5 +75,30 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  getCurrentUser(): any {
+    const userJson = localStorage.getItem('user');
+    if (!userJson) return null;
+    return JSON.parse(userJson);
+  }
+
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.roles?.includes('ADMIN');
+  }
+
+  forceResetPassword(userId: string): Promise<void> {
+    return fetch(`/api/auth/admin/force-reset-password?id=${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error('Erreur lors de la réinitialisation du mot de passe.');
+      }
+    });
   }
 }
