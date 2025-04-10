@@ -29,6 +29,15 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
     void deleteByUserIdAndShipId(@Param("userId") UUID userId, @Param("shipId") Long shipId);
 
 
+    @Query("""
+    SELECT us FROM UserShip us
+    JOIN FETCH us.ship s
+    JOIN FETCH s.brand
+    WHERE us.user.id = :userId
+""")
+    List<UserShip> findByUserIdWithShipAndBrand(@Param("userId") UUID userId);
+
+
 
     boolean existsByUserIdAndShipId(UUID userId, Long shipId);
 

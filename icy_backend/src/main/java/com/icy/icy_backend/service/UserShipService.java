@@ -1,6 +1,7 @@
 package com.icy.icy_backend.service;
 
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.UserShipDTO;
 import com.icy.icy_backend.db.entity.Ship;
 import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.db.entity.UserShip;
@@ -38,12 +39,12 @@ public class UserShipService {
         this.shipFleetWebSocketService = shipFleetWebSocketService;
     }
 
-    public ResponseEntity<MessageResponse<List<Ship>>> getShipsByUserId(Object userIdentifier) {
+    public ResponseEntity<MessageResponse<List<UserShip>>> getShipsByUserId(Object userIdentifier) {
         User user = userService.resolveUser(userIdentifier);
         UUID userId = user.getId();
 
         logger.info("Récupération des vaisseaux pour l'utilisateur ID: {}", userId);
-        List<Ship> userShips = userShipRepository.findShipsByUserId(userId);
+        List<UserShip> userShips = userShipRepository.findByUserId(userId);
 
         if (userShips.isEmpty()) {
             logger.warn("Aucun vaisseau trouvé pour l'utilisateur ID: {}", userId);
@@ -54,7 +55,7 @@ public class UserShipService {
         return messageService.buildResponse("user.found", userShips);
     }
 
-    public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId) {
+    public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId, boolean isInGame, boolean isLoaner) {
 
 
         Ship ship = shipService.findShipById(shipId);
@@ -72,6 +73,9 @@ public class UserShipService {
         userShip.setUser(user);
         userShip.setShip(ship);
         userShip.setId(new UserShipId(user.getId(), ship.getId()));
+        userShip.setInGamePurchase(isInGame);
+        userShip.setLoaner(isLoaner);
+
 
         userShipRepository.save(userShip);
         logger.info("Vaisseau ID: {} ajouté avec succès à l'utilisateur: {}", shipId, user.getUsername());
@@ -122,8 +126,16 @@ public class UserShipService {
         userShipRepository.deleteByUserIdAndShipId(userId, shipId);
 
         logger.info("Vaisseau ID: {} supprimé pour l'utilisateur ID: {}", shipId, userId);
-        userWebSocketService.sendUserShipDeletion(new UserShip(null, user, shipService.findShipById(shipId)));
+        userWebSocketService.sendUserShipDeletion(new UserShip(null, user, shipService.findShipById(shipId), false, false));
         shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsMap());
         return messageService.buildResponse("user.ship.delete.success", null, "Vaisseau supprimé avec succès.");
     }
+
+    public List<UserShipDTO> getShipsByUserIdDTO(UUID userId) {
+        List<UserShip> userShips = userShipRepository.findByUserIdWithShipAndBrand(userId); // méthode custom avec JOIN FETCH
+        return userShips.stream()
+                .map(UserShipDTO::from)
+                .toList();
+    }
+
 }

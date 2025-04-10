@@ -6,6 +6,8 @@ import {Ship} from '../../model/ship.model';
 import {FormsModule} from '@angular/forms';
 import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
 import {ClickOutsideDirective} from '../../directives/click-outside.directive';
+import {ShipListDTO} from '../../model/ShipListDTO.model';
+import {HotToastService} from '@ngxpert/hot-toast';
 
 @Component({
   selector: 'app-hangar',
@@ -19,11 +21,13 @@ import {ClickOutsideDirective} from '../../directives/click-outside.directive';
   styleUrls: ['./hangar.component.css']
 })
 export class HangarComponent {
-  ships: Ship[]= [];
+  ships: ShipListDTO[]= [];
 
   isModalOpen = false;
   isLoading = true;
   hasReceivedFirstMessage = false;
+
+  acquisitionType: 'rsi' | 'ingame' | 'loaner' = 'rsi';
 
 
   formData = {
@@ -31,7 +35,7 @@ export class HangarComponent {
   };
 
   brands: { name: string, imageUrl: string }[] = [];
-  filteredShips: Ship[] = [];
+  filteredShips: ShipListDTO[] = [];
   filteredShipsModal: Ship[] = [];
 
   selectedBrand: string = '';
@@ -47,10 +51,9 @@ export class HangarComponent {
 
   messages: string[] = [];
   userId: string = '3aba7720-d850-4557-b8d2-1fb5f1e222f5'; // ID temporaire
-  discordId = "190174996235026433"
 
   constructor(private shipService: ShipService, private wsService: WebSocketService,
-              private eRef: ElementRef) {}
+              private eRef: ElementRef, private toast: HotToastService) {}
 
   ngOnInit(): void {
     this.loadBrands();
@@ -63,7 +66,7 @@ export class HangarComponent {
       try {
         const parsed = JSON.parse(message);
 
-        // Si c’est une vraie liste de vaisseaux
+        // Si c’est une liste de vaisseaux
         if (Array.isArray(parsed)) {
           this.ships = parsed;
           console.log('📦 Chargement initial de la flotte');
@@ -73,18 +76,19 @@ export class HangarComponent {
         } else {
           this.messages.push(message); // Sinon, c’est un message événement individuel
           if (parsed.type === 'ADD') {
+            console.log(parsed)
             this.ships.push(parsed.ship);
             this.filteredShips.push(parsed.ship);
             this.sortShipsByManufacturer();
           } else if (parsed.type === 'DELETE') {
-            this.ships = this.ships.filter(s => s.id !== parsed.ship.id);
-            this.filteredShips = this.filteredShips.filter(s => s.id !== parsed.ship.id);
+            this.ships = this.ships.filter(s => s.shipId !== parsed.ship.shipId);
+            this.filteredShips = this.filteredShips.filter(s => s.shipId !== parsed.ship.shipId);
           }
         }
       } catch {
-        // Si ce n’est pas du JSON (ex: "Vaisseau ajouté : Gladius")
         this.messages.push(message);
       }
+      this.sortShipsByName();
     });
   }
 
@@ -104,7 +108,6 @@ export class HangarComponent {
   loadBrands() {
     this.shipService.getAllBrandsWithImages().subscribe(response => {
       this.brands = response.data;
-
       // Sélectionne la première marque automatiquement
       if (this.brands.length > 0) {
         this.selectedBrand = this.brands[0].name;
@@ -135,28 +138,38 @@ export class HangarComponent {
         this.selectedShipImageUrl = '';
       }
     });
+
   }
 
 
   onShipChange() {
-    const ship = this.filteredShips.find(s => s.name === this.selectedShip?.name);
+    console.log(this.filteredShipsModal);
+    console.log(this.selectedShip?.name);
+    const ship = this.filteredShipsModal.find(s => s.name === this.selectedShip?.name);
+    console.log(ship);
     this.selectedShipImageUrl = ship?.imageUrl || '';
   }
 
   onAddShip(): void {
     if (!this.selectedShip) return;
 
+    console.log(this.selectedShip);
+
     const payload = {
-      discordId: this.discordId,
-      shipId: this.selectedShip.id
+      shipId: this.selectedShip.id,
+      inGamePurchase: this.acquisitionType === 'ingame',
+      loaner: this.acquisitionType === 'loaner'
     };
+
+    console.log(payload.loaner);
+    console.log(payload.inGamePurchase);
 
     this.shipService.addShipToUser(payload).subscribe({
       next: () => {
         this.closeModal();
       },
       error: err => {
-        console.error('Erreur lors de l\'ajout du vaisseau', err);
+        this.toast.error('Erreur lors de l\'ajout du vaisseau', err.error.message);
       }
     });
   }
@@ -190,7 +203,7 @@ export class HangarComponent {
 
     if (this.selectedBrands.length > 0) {
       this.filteredShips = filteredBySearch.filter(ship =>
-        this.selectedBrands.includes(ship.brand.name)
+        this.selectedBrands.includes(ship.brand)
       );
     } else {
       this.filteredShips = filteredBySearch;
@@ -201,4 +214,11 @@ export class HangarComponent {
     this.applyFilters()
   }
 
+  compareShips = (a: any, b: any): boolean => {
+    return a && b && a.id === b.id;
+  };
+
+  sortShipsByName(): void {
+    this.filteredShips.sort((a, b) => a.name.localeCompare(b.name));
+  }
 }

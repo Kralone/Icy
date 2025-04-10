@@ -24,5 +24,8 @@ export class UserService {
     return this.http.delete<void>(`/api/users/by-id?id=${id}`);
   }
 
+  updateUser(user: { id: string, username: string, discordId: number, role: string }): Observable<any> {
+    return this.http.put('/api/users/update', user);
+  }
 
 }

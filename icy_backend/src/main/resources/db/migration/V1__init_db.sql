@@ -27,23 +27,3 @@ CREATE TABLE user_ships (
                             ship_id BIGINT REFERENCES ships(id) ON DELETE CASCADE,
                             acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE events (
-                        event_time TIME NOT NULL,
-                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                        title VARCHAR(255) NOT NULL,
-                        description TEXT,
-                        location VARCHAR(100),
-                        event_date DATE NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        activity_type VARCHAR(255) NOT NULL,
-                        is_finished BOOLEAN DEFAULT FALSE
-);
-
-CREATE TABLE event_participants (
-                                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                                    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                                    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
-                                    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                    status VARCHAR(50) NOT NULL
-);

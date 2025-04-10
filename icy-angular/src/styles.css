@@ -3,4 +3,22 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.fc {
+  --fc-border-color: #d1d5db;        /* gray-300 */
+  --fc-page-bg-color: #ffffff;       /* white */
+  --fc-neutral-bg-color: #f3f4f6;    /* gray-100 */
+  --fc-today-bg-color: #dbeafe;      /* blue-100 */
+  --fc-event-bg-color: #1e3a8a;      /* blue-900 */
+  --fc-event-border-color: #1e3a8a;
+  --fc-event-text-color: white;
+}
 
+.dark .fc {
+  --fc-border-color: #4b5563;        /* gray-600 */
+  --fc-page-bg-color: #364153;       /* gray-800 */
+  --fc-neutral-bg-color: #374151;    /* gray-700 */
+  --fc-today-bg-color: #1e40af;      /* blue-800 */
+  --fc-event-bg-color: #60a5fa;      /* blue-400 */
+  --fc-event-border-color: #3b82f6;
+  --fc-event-text-color: white;
+}

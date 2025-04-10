@@ -17,6 +17,7 @@ public class UserShip {
     @EmbeddedId
     private UserShipId id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id")
@@ -26,5 +27,11 @@ public class UserShip {
     @MapsId("shipId")
     @JoinColumn(name = "ship_id")
     private Ship ship;
+
+    @Column(name = "in_game_purchase", nullable = false)
+    private Boolean inGamePurchase = false;
+
+    @Column(name = "loaner", nullable = false)
+    private Boolean loaner = false;
 }
 

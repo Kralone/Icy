@@ -38,7 +38,7 @@
             </span>
           </td>
           <td class="px-4 py-2 space-x-2">
-            <button class="text-blue-400 hover:underline">✏️ Modifier</button>
+            <button class="text-blue-400 hover:underline" (click)="editUser(user)">✏️ Modifier</button>
             <button class="text-red-400 hover:underline" (click)="deleteUser(user.id)">🗑️ Supprimer</button>
             <button class="text-yellow-400 hover:underline" (click)="resetPassword(user.id)">🔁 Reset PW</button>
           </td>
@@ -74,11 +74,13 @@
 <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center" *ngIf="isAddUserModalOpen" (click)="isAddUserModalOpen = false">
   <!-- Modal Box -->
   <div class="bg-gray-900 border border-gray-700 rounded-xl shadow-xl w-full max-w-md p-6 space-y-6 text-gray-200" (click)="$event.stopPropagation()">
-    <h2 class="text-xl font-semibold text-blue-400">Ajouter un utilisateur</h2>
+    <h2 class="text-xl font-semibold text-blue-400">
+      {{ isEditMode ? 'Modifier un utilisateur' : 'Ajouter un utilisateur' }}
+    </h2>
 
     <!-- Form -->
-    <form (ngSubmit)="addUser()" #addUserForm="ngForm" class="space-y-4">
-      <!-- Username -->
+    <form (ngSubmit)="isEditMode ? updateUser() : addUser()" #addUserForm="ngForm" class="space-y-4">
+    <!-- Username -->
       <div>
         <label class="block mb-1 text-sm font-medium text-gray-300">Nom</label>
         <input
@@ -125,7 +127,7 @@
           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
           [disabled]="addUserForm.invalid"
         >
-          Ajouter
+          {{ isEditMode ? 'Modifier' : 'Ajouter' }}
         </button>
       </div>
     </form>

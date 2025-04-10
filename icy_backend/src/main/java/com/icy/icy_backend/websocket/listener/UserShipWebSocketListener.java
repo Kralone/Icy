@@ -1,5 +1,6 @@
 package com.icy.icy_backend.websocket.listener;
 
+import com.icy.icy_backend.controller.dto.response.UserShipDTO;
 import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.service.UserService;
 import com.icy.icy_backend.service.UserShipService;
@@ -44,9 +45,8 @@ public class UserShipWebSocketListener {
                 String userUuid = destination.split("/")[3];
                 User user = userService.findUserById(UUID.fromString(userUuid));
 
-                var response = userShipService.getShipsByUserId(user.getId());
-
-                String payload = objectMapper.writeValueAsString(response.getBody().getData());
+                List<UserShipDTO> ships = userShipService.getShipsByUserIdDTO(user.getId());
+                String payload = objectMapper.writeValueAsString(ships);
 
                 messagingTemplate.convertAndSend(destination, payload);
                 logger.info("💬 Vaisseaux envoyés via WebSocket pour {}", userUuid);
@@ -54,6 +54,7 @@ public class UserShipWebSocketListener {
             } catch (Exception e) {
                 logger.error("❌ Erreur d'envoi des vaisseaux initiaux pour topic {} : {}", destination, e.getMessage());
             }
+
         } else if ( destination != null && destination.equals("/topic/fleet/update")) {
             try {
                 Map<String, List<String>> fleetSummary = userShipService.getFleetSummaryAsMap();

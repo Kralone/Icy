@@ -1,4 +1,5 @@
 import {Component, ElementRef, HostListener, Renderer2} from '@angular/core';
+import {AuthService} from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-topbar',
@@ -6,12 +7,13 @@ import {Component, ElementRef, HostListener, Renderer2} from '@angular/core';
   styleUrls: ['./topbar.component.css']
 })
 export class TopbarComponent {
+  name = 'Cmdr Unknown'
   isDarkMode = false;
   private scrollListener: (() => void) | null = null;
   lastScrollY: number = 0;
   isHidden: boolean = false; // ✅ État de la topbar
 
-  constructor(private renderer: Renderer2, private el: ElementRef) {}
+  constructor(private renderer: Renderer2, private el: ElementRef, private authService: AuthService) {}
 
   ngAfterViewInit(): void {
     const scrollableElement = document.querySelector('.main-content');
@@ -59,5 +61,8 @@ export class TopbarComponent {
       this.isDarkMode = true;
       this.renderer.addClass(document.body, 'dark');
     }
+
+    console.log(this.authService.getCurrentUser())
+    this.name = this.authService.getCurrentUser().username;
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Client, Message, over } from 'stompjs';
+import {Client, Message, over, Subscription} from 'stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 
@@ -10,6 +10,7 @@ export class WebSocketService {
   private stompClient: Client | null = null;
   private shipUpdatesSubject = new Subject<string>(); // Observable pour les mises à jour des vaisseaux
   private fleetUpdatesSubject = new Subject<any>();
+  private fleetSub?: Subscription;
 
   constructor() {}
 
@@ -37,9 +38,15 @@ export class WebSocketService {
     })
   }
 
+  disconnectFleetUpdate(): void {
+    if (this.fleetSub) {
+      this.fleetSub.unsubscribe();
+    }
+  }
+
   private subscribeToShipUpdates(userId: string): void {
     if (this.stompClient) {
-      this.stompClient.subscribe(`/topic/user/${userId}/ships`, (message: Message) => {
+      this.fleetSub = this.stompClient.subscribe(`/topic/user/${userId}/ships`, (message: Message) => {
         console.debug('📡 Nouvelle mise à jour:', Array(message.body).length);
         this.shipUpdatesSubject.next(message.body);
       });

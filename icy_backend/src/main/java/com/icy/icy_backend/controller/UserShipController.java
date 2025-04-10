@@ -1,8 +1,10 @@
 package com.icy.icy_backend.controller;
 
+import com.icy.icy_backend.controller.dto.AddShipDTO;
 import com.icy.icy_backend.controller.dto.AddUserShip;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.db.entity.Ship;
+import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.db.entity.UserShip;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.UserService;
@@ -31,18 +33,18 @@ public class UserShipController {
     // ===== USER ENDPOINTS (token) =====
 
     @GetMapping
-    public ResponseEntity<MessageResponse<List<Ship>>> getShips() {
+    public ResponseEntity<MessageResponse<List<UserShip>>> getShips() {
         UUID userId = AuthUtils.getCurrentUserId();
         logger.debug("USER : récupération des vaisseaux pour userId : {}", userId);
         return userShipService.getShipsByUserId(userId);
     }
 
     @PostMapping
-    public ResponseEntity<MessageResponse<UserShip>> addShip(@RequestBody AddUserShip dto) {
+    public ResponseEntity<MessageResponse<UserShip>> addShip(@RequestBody AddShipDTO addShipDTO) {
         UUID userId = AuthUtils.getCurrentUserId();
-        logger.debug("USER : ajout d'un vaisseau pour userId : {}, shipId : {}", userId, dto.getShipId());
+        logger.debug("USER : ajout d'un vaisseau pour userId : {}, shipId : {}", userId, addShipDTO.getShipId());
 
-        return userShipService.addShipToUser(userId, dto.getShipId());
+        return userShipService.addShipToUser(userId, addShipDTO.getShipId(), addShipDTO.isInGame(), addShipDTO.isLoaner());
     }
 
     @DeleteMapping
@@ -55,7 +57,7 @@ public class UserShipController {
     // ===== BOT ENDPOINTS =====
 
     @GetMapping("/bot")
-    public ResponseEntity<MessageResponse<List<Ship>>> getUserShipsForBot(@RequestParam Long discordId) {
+    public ResponseEntity<MessageResponse<List<UserShip>>> getUserShipsForBot(@RequestParam Long discordId) {
         logger.debug("BOT : récupération des vaisseaux pour discordId : {}", discordId);
         return userShipService.getShipsByUserId(discordId);
     }
@@ -65,7 +67,7 @@ public class UserShipController {
         logger.debug("BOT : ajout d'un vaisseau pour discordId : {}, shipId : {}",
                 addUserShipDto.getDiscordId(), addUserShipDto.getShipId());
 
-        return userShipService.addShipToUser(userService.resolveUser(addUserShipDto.getDiscordId()).getId(), addUserShipDto.getShipId());
+        return userShipService.addShipToUser(userService.resolveUser(addUserShipDto.getDiscordId()).getId(), addUserShipDto.getShipId(), addUserShipDto.isInGame(), addUserShipDto.isLoaner());
     }
 
     @DeleteMapping("/bot")

@@ -20,6 +20,7 @@ export class HttpAuthInterceptor implements HttpInterceptor {
     // Routes à exclure de l'ajout automatique du token
     const excludedPaths = [
       '/api/auth/login',
+      '/api/auth/refresh',
       '/api/auth/reset-password'
     ];
 
@@ -38,7 +39,7 @@ export class HttpAuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
+        if (error.status === 401 || error.status === 403) {
           return this.authService.refreshToken().pipe(
             switchMap(res => {
               localStorage.setItem('token', res.tokens.accessToken);

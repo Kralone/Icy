@@ -34,7 +34,7 @@ export class SidebarComponent {
   menuItems = [
     { icon: '⌂', label: 'Dashboard', link: '/icy/dashboard' },
     { icon: '🚀', label: 'Mon Hangar', link: '/icy/hangar' },
-    { icon: '📁', label: 'Projects', link: '#' },
+    { icon: '📆', label: 'Events', link: '/icy/events' },
     { icon: '⚙️', label: 'Settings', link: '#' }
   ];
 

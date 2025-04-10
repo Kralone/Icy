@@ -179,6 +179,22 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>9.8.1</version> <!-- même version que flyway-core -->
+				<configuration>
+					<url>jdbc:postgresql://localhost:5432/iceforgedb</url>
+					<user>iceforge</user>
+					<password>iceforge</password>
+					<schemas>
+						<schema>public</schema>
+					</schemas>
+					<locations>
+						<location>filesystem:src/main/resources/db/migration</location>
+					</locations>
+				</configuration>
+			</plugin>
 
 		</plugins>
 	</build>

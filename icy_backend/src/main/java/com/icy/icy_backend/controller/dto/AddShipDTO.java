@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
-public class AddUserShip {
-    @JsonProperty("discordId")
-    private String discordId;
-    private Long shipId;
+public class AddShipDTO {
+    private long shipId;
+    @JsonProperty("inGamePurchase")
     private boolean isInGame;
+    @JsonProperty("loaner")
     private boolean isLoaner;
+
 }

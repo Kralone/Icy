@@ -2,8 +2,7 @@ package com.icy.icy_backend.db.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -18,23 +17,23 @@ public class Event {
     private UUID id;
 
     @Column(nullable = false)
+    private String type;
+
+    @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
-    private String activityType;
+    private LocalDateTime startDateTime;
 
     @Column(nullable = false)
-    private LocalDate eventDate;
+    private LocalDateTime endDateTime;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    private LocalTime eventTime;
-
-    @Column(nullable = false)
-    private String location;
-
-    @Column(nullable = false)
-    private Boolean isFinished = false;
+    private boolean finished = false;
 }

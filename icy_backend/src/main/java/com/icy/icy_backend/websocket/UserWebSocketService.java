@@ -1,5 +1,6 @@
 package com.icy.icy_backend.websocket;
 
+import com.icy.icy_backend.controller.dto.response.UserShipDTO;
 import com.icy.icy_backend.db.entity.Ship;
 import com.icy.icy_backend.db.entity.UserShip;
 import com.icy.icy_backend.websocket.dto.ShipWebSocketMessage;
@@ -22,7 +23,9 @@ public class UserWebSocketService {
      */
     public void sendUserShipUpdate(UserShip userShip) {
         String destination = "/topic/user/" + userShip.getUser().getId() + "/ships" ;
-        Ship ship = userShip.getShip();
+
+        UserShipDTO ship = new UserShipDTO(userShip);
+
         String message = "Vaisseau ajouté : " + ship.getName();
         ShipWebSocketMessage payload = new ShipWebSocketMessage(message, ship, "ADD");
 
@@ -33,7 +36,10 @@ public class UserWebSocketService {
     public void sendUserShipDeletion(UserShip userShip) {
         String destination = "/topic/user/" + userShip.getUser().getId() + "/ships";
         String message = "Vaisseau supprimé : ID " + userShip.getShip().getId();
-        ShipWebSocketMessage payload = new ShipWebSocketMessage(message, userShip.getShip(), "DELETE");
+
+        UserShipDTO ship = new UserShipDTO(userShip);
+
+        ShipWebSocketMessage payload = new ShipWebSocketMessage(message, ship, "DELETE");
 
         logger.info("Envoi d'une notification de suppression de vaisseau à {} : {}", destination, message);
         messagingTemplate.convertAndSend(destination, payload);

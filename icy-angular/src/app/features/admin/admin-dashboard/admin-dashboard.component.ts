@@ -17,10 +17,8 @@ import {LoadingOverlayComponent} from '../../../shared/loading-overlay/loading-o
 })
 export class AdminDashboardComponent implements OnInit {
   users: User[] = [];
-  filteredUsers: User[] = [];
   paginatedUsers: User[] = [];
 
-  searchTerm: string = '';
   sortColumn: keyof User = 'username';
   sortAsc: boolean = true;
 
@@ -28,6 +26,11 @@ export class AdminDashboardComponent implements OnInit {
   itemsPerPage: number = 10;
 
   isLoading = true;
+
+  searchTerm: string = '';
+
+  isEditMode = false;
+  editedUserId: string | null = null;
 
   constructor(private userService: UserService, private authService: AuthService) {}
 
@@ -41,6 +44,7 @@ export class AdminDashboardComponent implements OnInit {
     this.userService.getAllUsers().subscribe({
       next: (response) => {
         this.users = response.data;
+        this._filteredUsers = this.users;
         this.applyFilters();
       },
       error: (err) => {
@@ -103,18 +107,18 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  editUser(user: User): void {
-    console.log('Edit user', user);
-    // TODO: ouvrir un modal d'édition
-  }
-
   isAddUserModalOpen = false;
 
-  newUser = {
+  newUser: {
+    username: string;
+    discordId: number | null;
+    role: string;
+  } = {
     username: '',
     discordId: null,
     role: 'USER'
   };
+
 
   availableRoles: string[] = ['ADMIN', 'USER'];
 
@@ -135,7 +139,10 @@ export class AdminDashboardComponent implements OnInit {
       discordId: null,
       role: 'USER'
     };
+    this.isEditMode = false;
+    this.editedUserId = null;
   }
+
 
   deleteUser(id: string): void {
     if (!confirm("Es-tu sûr de vouloir supprimer cet utilisateur ?")) return;
@@ -161,4 +168,53 @@ export class AdminDashboardComponent implements OnInit {
         alert('Échec de la réinitialisation.');
       });
   }
+
+  get filteredUsers(): any[] {
+    return this._filteredUsers.filter(user =>
+      user.username.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
+  }
+
+  set filteredUsers(value: any[]) {
+    this._filteredUsers = value;
+  }
+
+  private _filteredUsers: any[] = [];
+
+  editUser(user: User): void {
+    this.newUser = {
+      username: user.username,
+      discordId: user.discordId,
+      role: typeof user.roles[0] === 'string' ? user.roles[0] : 'USER'
+    };
+    console.log(user.roles);
+    this.editedUserId = user.id;
+    this.isEditMode = true;
+    this.isAddUserModalOpen = true;
+  }
+
+  updateUser(): void {
+    if (!this.editedUserId) return;
+
+    const payload = {
+      id: this.editedUserId,
+      username: this.newUser.username,
+      discordId: this.newUser.discordId!,
+      role: this.newUser.role
+    };
+
+    this.userService.updateUser(payload).subscribe({
+      next: () => {
+        this.resetForm();
+        this.isAddUserModalOpen = false;
+        this.loadUsers(); // rafraîchir la liste
+      },
+      error: (err) => {
+        console.error('Erreur lors de la mise à jour', err);
+        alert('Échec de la mise à jour');
+      }
+    });
+  }
+
+
 }

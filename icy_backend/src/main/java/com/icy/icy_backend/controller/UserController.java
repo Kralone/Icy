@@ -1,6 +1,7 @@
 package com.icy.icy_backend.controller;
 
 import com.icy.icy_backend.controller.dto.CreateUserRequest;
+import com.icy.icy_backend.controller.dto.UpdateUserRequest;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.UserResponseDTO;
 import com.icy.icy_backend.db.entity.User;
@@ -32,6 +33,12 @@ public class UserController {
     public ResponseEntity<MessageResponse<User>>createUser(@RequestBody CreateUserRequest createUserRequest) {
         return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<MessageResponse<User>> updateUser(@RequestBody UpdateUserRequest request) {
+        return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole());
+    }
+
 
     @DeleteMapping("/by-id")
     public ResponseEntity<MessageResponse<Void>> deleteUserById(@RequestParam UUID id) {

@@ -38,4 +38,8 @@ export class DashboardComponent {
     });
   }
 
+  ngOnDestroy() {
+    this.wsService.disconnectFleetUpdate();
+  }
+
 }
