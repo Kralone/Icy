@@ -20,8 +20,9 @@ public class EventWebSocketService {
     public void sendEventUpdate(Event event, String action) {
         String destination = "/topic/events";
         EventResponseDTO dto = new EventResponseDTO(event);
-        EventWebSocketMessage message = new EventWebSocketMessage("Événement mis à jour", dto, action);
-        logger.info("WebSocket → {} : {}", action, dto.getTitle());
-        messagingTemplate.convertAndSend(destination, message);
+        EventWebSocketMessage payload = new EventWebSocketMessage("Event update", dto, action);
+
+        logger.info("🔁 Envoi WebSocket : {} ({})", dto.getTitle(), action);
+        messagingTemplate.convertAndSend(destination, payload);
     }
 }

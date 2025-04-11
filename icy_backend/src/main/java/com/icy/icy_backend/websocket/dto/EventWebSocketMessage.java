@@ -9,5 +9,5 @@ import lombok.Data;
 public class EventWebSocketMessage {
     private String message;
     private EventResponseDTO event;
-    private String action;
+    private String action; // "ADD", "UPDATE", "DELETE"
 }

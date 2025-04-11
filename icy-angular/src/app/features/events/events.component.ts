@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { EventService, EventCreateRequest } from '../../core/services/event/event.service'; // adapter le chemin si besoin
+import { EventService, EventCreateRequest } from '../../core/services/event/event.service';
+import {WebSocketService} from '../../core/services/websocket/websocket.service'; // adapter le chemin si besoin
 
 @Component({
   selector: 'app-events',
@@ -15,6 +16,7 @@ import { EventService, EventCreateRequest } from '../../core/services/event/even
 export class EventsComponent {
   showModal = false;
 
+  messages: string[] = [];
   eventTypes: string[] = ['Minage', 'Salvage', 'Exploration', 'Combat', 'Event in game'];
 
 
@@ -47,7 +49,29 @@ export class EventsComponent {
     }
   };
 
-  constructor(private eventService: EventService) {}
+  isLoading = false;
+
+  constructor(private eventService: EventService, private wsService: WebSocketService) {}
+
+  ngOnInit() {
+    this.wsService.connectEvent();
+
+    this.isLoading = true;
+
+    this.eventService.listenForEventUpdate().subscribe((message) => {
+      try {
+        const parsed = JSON.parse(message);
+
+        if(Array.isArray(parsed)) {
+          this.calendarOptions.events = parsed;
+          this.isLoading = false;
+        }
+      }
+      catch {
+        this.messages.push(message);
+      }
+    })
+  }
 
   openModal() {
     this.showModal = true;

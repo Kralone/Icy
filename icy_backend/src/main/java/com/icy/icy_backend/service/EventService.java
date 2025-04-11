@@ -6,6 +6,7 @@ import com.icy.icy_backend.db.repository.EventRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.rest.MessageService;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.websocket.EventWebSocketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +23,12 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final MessageService messageService;
+    private final EventWebSocketService eventWebSocketService;
 
-    public EventService(EventRepository eventRepository, MessageService messageService) {
+    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService) {
         this.eventRepository = eventRepository;
         this.messageService = messageService;
+        this.eventWebSocketService = eventWebSocketService;
     }
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(String type, String title, String description, LocalDateTime start, LocalDateTime end) {
@@ -37,6 +40,7 @@ public class EventService {
         event.setEndDateTime(end);
         event.setFinished(false);
         Event saved = eventRepository.save(event);
+        eventWebSocketService.sendEventUpdate(saved, "ADD");
         return messageService.buildResponse("event.created", new EventResponseDTO(saved));
     }
 

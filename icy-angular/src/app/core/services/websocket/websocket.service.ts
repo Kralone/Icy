@@ -10,7 +10,9 @@ export class WebSocketService {
   private stompClient: Client | null = null;
   private shipUpdatesSubject = new Subject<string>(); // Observable pour les mises à jour des vaisseaux
   private fleetUpdatesSubject = new Subject<any>();
+  private eventSubject = new Subject<string>();
   private fleetSub?: Subscription;
+  private eventSub?: Subscription;
 
   constructor() {}
 
@@ -38,9 +40,27 @@ export class WebSocketService {
     })
   }
 
+  connectEvent(): void {
+    const socket = new SockJS('http://localhost:8080/ws');
+    this.stompClient = over(socket);
+
+    this.stompClient.connect({}, () => {
+      console.log('✅ Event WebSocket connecté');
+      this.subscribeToEvent();
+    }, error => {
+      console.error('❌ WebSocket erreur', error);
+    })
+  }
+
   disconnectFleetUpdate(): void {
     if (this.fleetSub) {
       this.fleetSub.unsubscribe();
+    }
+  }
+
+  disconnectEvent(): void {
+    if (this.eventSub) {
+      this.eventSub.unsubscribe();
     }
   }
 
@@ -62,12 +82,26 @@ export class WebSocketService {
     }
   }
 
+  private subscribeToEvent(): void {
+    if (this.stompClient) {
+      this.eventSub = this.stompClient.subscribe('/topic/events', (message) => {
+        console.debug('📡 Nouvelle mise à jour:', Array(message.body).length);
+        this.eventSubject.next(message.body);
+      });
+
+    }
+  }
+
   getShipUpdates(): Observable<string> {
     return this.shipUpdatesSubject.asObservable();
   }
 
   getFleetUpdate(): Observable<any> {
     return this.fleetUpdatesSubject.asObservable();
+  }
+
+  getEvent(): Observable<string> {
+    return this.eventSubject.asObservable();
   }
 
   disconnect(): void {
@@ -84,5 +118,9 @@ export class WebSocketService {
 
   listenForFleetUpdate() {
     return this.getFleetUpdate();
+  }
+
+  listenForEvent() {
+    return this.getEvent();
   }
 }

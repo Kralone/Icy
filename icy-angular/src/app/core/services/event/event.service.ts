@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import {WebSocketService} from '../websocket/websocket.service';
 
 export interface EventCreateRequest {
   type: string;
@@ -27,12 +28,12 @@ export interface EventDTO {
 export class EventService {
   private readonly baseUrl = '/api/events';
 
-  constructor(private http: HttpClient) {}
+  isLoading = false;
 
-  getAllEvents(): Observable<EventDTO[]> {
-    return this.http.get<any>(`${this.baseUrl}/all`).pipe(
-      map(res => res.data as EventDTO[])
-    );
+  constructor(private http: HttpClient, private wsService: WebSocketService) {}
+
+  listenForEventUpdate(): Observable<any> {
+    return this.wsService.listenForEvent();
   }
 
   createEvent(event: EventCreateRequest): Observable<EventDTO> {
