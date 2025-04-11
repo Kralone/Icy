@@ -15,6 +15,9 @@ import { EventService, EventCreateRequest } from '../../core/services/event/even
 export class EventsComponent {
   showModal = false;
 
+  eventTypes: string[] = ['Minage', 'Salvage', 'Exploration', 'Combat', 'Event in game'];
+
+
   newEvent: EventCreateRequest = {
     type: '',
     title: '',
@@ -79,4 +82,22 @@ export class EventsComponent {
       error: err => console.error('Erreur lors de la création de l’événement', err)
     });
   }
+
+  get isFormInvalid(): boolean {
+    const { type, title, description, startDateTime, endDateTime } = this.newEvent;
+
+    if (!type || !title || !description || !startDateTime || !endDateTime) return true;
+
+    const now = new Date();
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+
+    return (
+      start.getTime() <= now.getTime() || // doit être STRICTEMENT dans le futur
+      end.getTime() <= start.getTime()    // fin doit être après début (pas égal)
+    );
+  }
+
+
+
 }
