@@ -6,8 +6,7 @@ import com.icy.icy_backend.service.UserService;
 import com.icy.icy_backend.service.UserShipService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.websocket.dto.FleetWebSocketMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -19,8 +18,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
+@Slf4j
 public class UserShipWebSocketListener {
-    private static final Logger logger = LoggerFactory.getLogger(UserShipWebSocketListener.class);
 
     private final UserService userService;
     private final UserShipService userShipService;
@@ -49,23 +48,23 @@ public class UserShipWebSocketListener {
                 String payload = objectMapper.writeValueAsString(ships);
 
                 messagingTemplate.convertAndSend(destination, payload);
-                logger.info("💬 Vaisseaux envoyés via WebSocket pour {}", userUuid);
+                log.info("💬 Vaisseaux envoyés via WebSocket pour {}", userUuid);
 
             } catch (Exception e) {
-                logger.error("❌ Erreur d'envoi des vaisseaux initiaux pour topic {} : {}", destination, e.getMessage());
+                log.error("❌ Erreur d'envoi des vaisseaux initiaux pour topic {} : {}", destination, e.getMessage());
             }
 
         } else if ( destination != null && destination.equals("/topic/fleet/update")) {
             try {
                 Map<String, List<String>> fleetSummary = userShipService.getFleetSummaryAsMap();
-                String message = "Fleet updated";
+                String message = "Fleet connected";
                 FleetWebSocketMessage payload = new FleetWebSocketMessage(message, fleetSummary);
 
 
                 messagingTemplate.convertAndSend(destination, payload);
-                logger.info("💬 Flotte update envoyés via WebSocket");
+                log.info("💬 Flotte update envoyés via WebSocket");
             } catch (Exception e) {
-                logger.error("❌ Erreur d'envoi de fleet initial");
+                log.error("❌ Erreur d'envoi de fleet initial");
             }
 
         }

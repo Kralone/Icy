@@ -67,4 +67,9 @@ public class EventService {
                 .map(EventResponseDTO::new).collect(Collectors.toList());
         return messageService.buildResponse("event.list", events);
     }
+
+    public List<EventResponseDTO> getAllEventsAsMap() {
+        return ((List<Event>) eventRepository.findAll()).stream()
+                .map(EventResponseDTO::new).collect(Collectors.toList());
+    }
 }

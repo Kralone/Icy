@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { FullCalendarModule } from '@fullcalendar/angular';
-import { EventService, EventCreateRequest } from '../../core/services/event/event.service';
-import {WebSocketService} from '../../core/services/websocket/websocket.service'; // adapter le chemin si besoin
+import {FullCalendarComponent, FullCalendarModule} from '@fullcalendar/angular';
+import {EventService, EventCreateRequest, EventDTO} from '../../core/services/event/event.service';
+import {WebSocketService} from '../../core/services/websocket/websocket.service';
+import * as events from 'node:events';
 
 @Component({
   selector: 'app-events',
@@ -19,6 +20,7 @@ export class EventsComponent {
   messages: string[] = [];
   eventTypes: string[] = ['Minage', 'Salvage', 'Exploration', 'Combat', 'Event in game'];
 
+  @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
   newEvent: EventCreateRequest = {
     type: '',
@@ -46,7 +48,8 @@ export class EventsComponent {
       week:     'Semaine',
       day:      'Jour',
       list:     'Liste'
-    }
+    },
+    eventContent: this.renderCustomEvent.bind(this)
   };
 
   isLoading = false;
@@ -62,9 +65,48 @@ export class EventsComponent {
       try {
         const parsed = JSON.parse(message);
 
-        if(Array.isArray(parsed)) {
-          this.calendarOptions.events = parsed;
+        if(Array.isArray(parsed.events) && parsed.events.length > 0 && parsed.action === 'INIT') {
+          console.log('📦 Chargement initial des events');
+
+            this.calendarOptions.events = parsed.events.map((event: EventDTO) => ({
+              title: event.title,
+              start: event.startDateTime,
+              end: event.endDateTime,
+              extendedProps: {
+                type: event.type,
+                description: event.description,
+                finished: event.finished
+              }
+            }));
+
           this.isLoading = false;
+        } else if(parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') { // update d'un élément
+          if(parsed.action === 'ADD') {
+            this.calendarComponent?.getApi().addEvent({
+              id: parsed.event.id,
+              title: parsed.event.title,
+              start: parsed.event.startDateTime,
+              end: parsed.event.endDateTime,
+              extendedProps: {
+                type: parsed.event.type,
+                description: parsed.event.description,
+                finished: parsed.event.finished
+              }
+            });
+          } else if(parsed.action === 'DELETE') {
+            const existingEvent = this.calendarComponent?.getApi().getEventById(parsed.event.id);
+            existingEvent?.remove();
+          } else if(parsed.action === 'UPDATE') {
+            const existingEvent = this.calendarComponent?.getApi().getEventById(parsed.event.id);
+            existingEvent?.setProp('title', parsed.event.title);
+            existingEvent?.setProp('start', parsed.event.startDateTime);
+            existingEvent?.setProp('end', parsed.event.endDateTime);
+            existingEvent?.setProp('extendedProps', {
+              type: parsed.event.type,
+              description: parsed.event.description,
+              finished: parsed.event.finished
+            });
+          }
         }
       }
       catch {
@@ -120,6 +162,18 @@ export class EventsComponent {
       start.getTime() <= now.getTime() || // doit être STRICTEMENT dans le futur
       end.getTime() <= start.getTime()    // fin doit être après début (pas égal)
     );
+  }
+
+
+  renderCustomEvent(arg: any): { html: string } {
+    const startTime = new Date(arg.event.start).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    return {
+      html: `<span class="font-mono text-sm">${startTime} | ${arg.event.title}</span>`
+    };
   }
 
 

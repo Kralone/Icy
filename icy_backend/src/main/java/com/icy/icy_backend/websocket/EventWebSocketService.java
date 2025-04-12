@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class EventWebSocketService {
     private static final Logger logger = LoggerFactory.getLogger(EventWebSocketService.class);
@@ -20,7 +23,9 @@ public class EventWebSocketService {
     public void sendEventUpdate(Event event, String action) {
         String destination = "/topic/events";
         EventResponseDTO dto = new EventResponseDTO(event);
-        EventWebSocketMessage payload = new EventWebSocketMessage("Event update", dto, action);
+        List<EventResponseDTO> eventUpdate = new ArrayList<>();
+        eventUpdate.add(dto);
+        EventWebSocketMessage payload = new EventWebSocketMessage("Event update", eventUpdate, action);
 
         logger.info("🔁 Envoi WebSocket : {} ({})", dto.getTitle(), action);
         messagingTemplate.convertAndSend(destination, payload);
