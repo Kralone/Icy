@@ -16,9 +16,13 @@ import * as events from 'node:events';
 })
 export class EventsComponent {
   showModal = false;
+  calendarEvents: any[] = [];
 
   messages: string[] = [];
   eventTypes: string[] = ['Minage', 'Salvage', 'Exploration', 'Combat', 'Event in game'];
+
+  selectedEvent: any = null;
+  showDetailsModal = false;
 
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
@@ -49,14 +53,16 @@ export class EventsComponent {
       day:      'Jour',
       list:     'Liste'
     },
-    eventContent: this.renderCustomEvent.bind(this)
+    eventContent: this.renderCustomEvent.bind(this),
+    eventClick: this.onEventClick.bind(this),
+    eventDidMount: this.decorateEventCell.bind(this)
   };
-
   isLoading = false;
+  editMode = false;
 
   constructor(private eventService: EventService, private wsService: WebSocketService) {}
 
-  ngOnInit() {
+  ngAfterViewInit() {
     this.wsService.connectEvent();
 
     this.isLoading = true;
@@ -68,17 +74,18 @@ export class EventsComponent {
         if(Array.isArray(parsed.events) && parsed.events.length > 0 && parsed.action === 'INIT') {
           console.log('📦 Chargement initial des events');
 
-            this.calendarOptions.events = parsed.events.map((event: EventDTO) => ({
-              title: event.title,
-              start: event.startDateTime,
-              end: event.endDateTime,
-              extendedProps: {
-                type: event.type,
-                description: event.description,
-                finished: event.finished
+             this.calendarEvents = parsed.events.map((event: EventDTO) => ({
+               id: event.id,
+               title: event.title,
+               start: event.startDateTime,
+               end: event.endDateTime,
+               extendedProps: {
+                 type: event.type,
+                 description: event.description,
+                 finished: event.finished
               }
-            }));
-
+          }));
+          this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
         } else if(parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') { // update d'un élément
           if(parsed.action === 'ADD') {
@@ -94,18 +101,28 @@ export class EventsComponent {
               }
             });
           } else if(parsed.action === 'DELETE') {
-            const existingEvent = this.calendarComponent?.getApi().getEventById(parsed.event.id);
-            existingEvent?.remove();
-          } else if(parsed.action === 'UPDATE') {
-            const existingEvent = this.calendarComponent?.getApi().getEventById(parsed.event.id);
-            existingEvent?.setProp('title', parsed.event.title);
-            existingEvent?.setProp('start', parsed.event.startDateTime);
-            existingEvent?.setProp('end', parsed.event.endDateTime);
-            existingEvent?.setProp('extendedProps', {
-              type: parsed.event.type,
-              description: parsed.event.description,
-              finished: parsed.event.finished
-            });
+            this.calendarEvents = this.calendarEvents.filter(e => e.id !== parsed.events[0].id);
+            this.calendarOptions.events = [...this.calendarEvents];
+          } else if (parsed.action === 'UPDATE') {
+            const updated = parsed.events[0];
+
+            this.calendarEvents = this.calendarEvents.map(ev =>
+              ev.id === updated.id
+                ? {
+                  ...ev,
+                  title: updated.title,
+                  start: updated.startDateTime,
+                  end: updated.endDateTime,
+                  extendedProps: {
+                    type: updated.type,
+                    description: updated.description,
+                    finished: updated.finished
+                  }
+                }
+                : ev
+            );
+
+            this.calendarOptions.events = [...this.calendarEvents];
           }
         }
       }
@@ -134,20 +151,24 @@ export class EventsComponent {
   }
 
   addEventToBackend() {
-    this.eventService.createEvent(this.newEvent).subscribe({
-      next: (createdEvent) => {
-        this.calendarOptions.events = [
-          ...(this.calendarOptions.events as any[]),
-          {
-            title: createdEvent.title,
-            date: createdEvent.startDateTime
-          }
-        ];
-        this.closeModal();
-      },
-      error: err => console.error('Erreur lors de la création de l’événement', err)
-    });
+    console.log('edit mode : ', this.editMode);
+    if (this.editMode) {
+      this.eventService.updateEvent(this.newEvent).subscribe({
+        next: () => {
+          this.closeModal(); // Le WS s’occupe du reste
+        },
+        error: (err) => console.error('Erreur lors de la mise à jour de l’événement', err)
+      });
+    } else {
+      this.eventService.createEvent(this.newEvent).subscribe({
+        next: () => {
+          this.closeModal(); // Le WS s’occupe du reste
+        },
+        error: (err) => console.error('Erreur lors de la création de l’événement', err)
+      });
+    }
   }
+
 
   get isFormInvalid(): boolean {
     const { type, title, description, startDateTime, endDateTime } = this.newEvent;
@@ -176,6 +197,59 @@ export class EventsComponent {
     };
   }
 
+  decorateEventCell(info: any) {
+    const type = info.event.extendedProps?.type?.toLowerCase() || 'default';
+    const imageUrl = `https://i.ytimg.com/vi/R9VbhY3ZVCw/maxresdefault.jpg`;
+
+    const el = info.el; // l'élément HTML de l'event
+
+    // remonte jusqu’à la cellule jour (td)
+    const dayCell = el.closest('.fc-daygrid-day');
+
+    if (dayCell) {
+      dayCell.style.backgroundImage = `url('${imageUrl}')`;
+      dayCell.style.backgroundSize = 'cover';
+      dayCell.style.backgroundPosition = 'center';
+    }
+  }
+
+
+  onEventClick(arg: any): void {
+    const event = arg.event;
+    this.selectedEvent = {
+      id: event.id,
+      title: event.title,
+      type: event.extendedProps.type,
+      description: event.extendedProps.description,
+      startDateTime: event.startStr,
+      endDateTime: event.endStr,
+      finished: event.extendedProps.finished
+    };
+    this.showDetailsModal = true;
+    this.editMode = false;
+  }
+
+  openEditModal() {
+    this.editMode = true;
+    this.newEvent = { ...this.selectedEvent,
+    startDateTime: this.toDatetimeLocalFormat(this.selectedEvent.startDateTime),
+    endDateTime: this.toDatetimeLocalFormat(this.selectedEvent.endDateTime)
+    };
+    this.showDetailsModal = false;
+    this.showModal = true;
+  }
+
+
+  deleteSelectedEvent() {
+    if (!this.selectedEvent?.id) return;
+    this.eventService.deleteEvent(this.selectedEvent.id).subscribe(() => {
+      this.showDetailsModal = false;
+    });
+  }
+
+  private toDatetimeLocalFormat(date: string): string {
+    return new Date(date).toISOString().slice(0, 16);
+  }
 
 
 }

@@ -42,7 +42,7 @@ export class EventService {
     );
   }
 
-  updateEvent(event: EventDTO): Observable<EventDTO> {
+  updateEvent(event: any): Observable<EventDTO> {
     return this.http.put<any>(`${this.baseUrl}/update`, event).pipe(
       map(res => res.data as EventDTO)
     );

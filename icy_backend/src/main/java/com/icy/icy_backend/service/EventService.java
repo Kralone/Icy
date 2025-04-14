@@ -53,12 +53,14 @@ public class EventService {
         event.setEndDateTime(end);
         event.setFinished(finished);
         Event saved = eventRepository.save(event);
+        eventWebSocketService.sendEventUpdate(saved, "UPDATE");
         return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
     }
 
     public ResponseEntity<MessageResponse<Void>> deleteEvent(UUID id) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
         eventRepository.delete(event);
+        eventWebSocketService.sendEventUpdate(event, "DELETE");
         return messageService.buildResponse("event.deleted", null);
     }
 
