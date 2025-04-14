@@ -17,9 +17,6 @@ public class Event {
     private UUID id;
 
     @Column(nullable = false)
-    private String type;
-
-    @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -36,4 +33,10 @@ public class Event {
 
     @Column(nullable = false)
     private boolean finished = false;
+
+    @ManyToOne
+    @JoinColumn(name = "event_type", referencedColumnName = "name")
+    private EventType type;
+
+
 }

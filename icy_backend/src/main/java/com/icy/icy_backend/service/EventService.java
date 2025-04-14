@@ -2,7 +2,9 @@ package com.icy.icy_backend.service;
 
 import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
 import com.icy.icy_backend.db.entity.Event;
+import com.icy.icy_backend.db.entity.EventType;
 import com.icy.icy_backend.db.repository.EventRepository;
+import com.icy.icy_backend.db.repository.EventTypeRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.rest.MessageService;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
@@ -24,16 +26,18 @@ public class EventService {
     private final EventRepository eventRepository;
     private final MessageService messageService;
     private final EventWebSocketService eventWebSocketService;
+    private final EventTypeRepository eventTypeRepository;
 
-    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService) {
+    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository) {
         this.eventRepository = eventRepository;
         this.messageService = messageService;
         this.eventWebSocketService = eventWebSocketService;
+        this.eventTypeRepository = eventTypeRepository;
     }
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(String type, String title, String description, LocalDateTime start, LocalDateTime end) {
         Event event = new Event();
-        event.setType(type);
+        event.setType(new EventType());
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
@@ -46,7 +50,7 @@ public class EventService {
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(UUID id, String type, String title, String description, LocalDateTime start, LocalDateTime end, boolean finished) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
-        event.setType(type);
+        event.setType(getEventTypeByName(type));
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
@@ -74,4 +78,22 @@ public class EventService {
         return ((List<Event>) eventRepository.findAll()).stream()
                 .map(EventResponseDTO::new).collect(Collectors.toList());
     }
+
+
+// ------------------------------Event Type Service--------------------------------------
+
+    private EventType getEventTypeByName(String name) {
+        if (name == null) {
+            return new EventType();
+        } else {
+            try {
+                return eventTypeRepository.findByName(name);
+            } catch (Exception e) {
+                logger.error("Error while getting event type by name: {}", name);
+                return new EventType();
+            }
+        }
+    }
+
+
 }

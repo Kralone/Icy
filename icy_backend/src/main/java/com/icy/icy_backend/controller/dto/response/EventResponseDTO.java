@@ -1,6 +1,7 @@
 package com.icy.icy_backend.controller.dto.response;
 
 import com.icy.icy_backend.db.entity.Event;
+import com.icy.icy_backend.db.entity.EventType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,7 +10,7 @@ import java.util.UUID;
 @Data
 public class EventResponseDTO {
     private UUID id;
-    private String type;
+    private EventType type;
     private String title;
     private String description;
     private LocalDateTime startDateTime;
