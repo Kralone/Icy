@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.CreateEventRequest;
 import com.icy.icy_backend.controller.dto.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.db.entity.EventType;
 import com.icy.icy_backend.service.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,5 +39,10 @@ public class EventController {
     @GetMapping("/all")
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> all() {
         return eventService.getAllEvents();
+    }
+
+    @GetMapping("/types")
+    public ResponseEntity<MessageResponse<List<EventType>>> getAllTypes() {
+        return eventService.getAllEventsTypes();
     }
 }

@@ -37,7 +37,7 @@ public class EventService {
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(String type, String title, String description, LocalDateTime start, LocalDateTime end) {
         Event event = new Event();
-        event.setType(new EventType());
+        event.setType(getEventTypeByName(type));
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
@@ -95,5 +95,7 @@ public class EventService {
         }
     }
 
-
+    public ResponseEntity<MessageResponse<List<EventType>>> getAllEventsTypes() {
+        return messageService.buildResponse("event.type.list", eventTypeRepository.findAll());
+    }
 }

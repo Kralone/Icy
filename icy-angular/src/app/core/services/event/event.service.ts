@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {WebSocketService} from '../websocket/websocket.service';
+import { EventType } from '../../../model/event-type.model';
 
 export interface EventCreateRequest {
   type: string;
@@ -13,7 +14,7 @@ export interface EventCreateRequest {
 
 export interface EventDTO {
   id: string;
-  type: string;
+  type: EventType;
   title: string;
   description: string;
   startDateTime: string;
@@ -50,5 +51,11 @@ export class EventService {
 
   deleteEvent(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}?id=${id}`);
+  }
+
+  getAllTypes(): Observable<EventType[]> {
+    return this.http.get<any>(`${this.baseUrl}/types`).pipe(
+      map(res => res.data as EventType[])
+    );
   }
 }

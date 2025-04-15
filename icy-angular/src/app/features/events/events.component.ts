@@ -6,7 +6,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import {FullCalendarComponent, FullCalendarModule} from '@fullcalendar/angular';
 import {EventService, EventCreateRequest, EventDTO} from '../../core/services/event/event.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
-import * as events from 'node:events';
+import {EventType} from '../../model/event-type.model';
 
 @Component({
   selector: 'app-events',
@@ -19,10 +19,10 @@ export class EventsComponent {
   calendarEvents: any[] = [];
 
   messages: string[] = [];
-  eventTypes: string[] = ['Minage', 'Salvage', 'Exploration', 'Combat', 'Event in game'];
 
   selectedEvent: any = null;
   showDetailsModal = false;
+  types: EventType[] = [];
 
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
@@ -55,7 +55,8 @@ export class EventsComponent {
     },
     eventContent: this.renderCustomEvent.bind(this),
     eventClick: this.onEventClick.bind(this),
-    eventDidMount: this.decorateEventCell.bind(this)
+    eventDidMount: this.decorateEventCell.bind(this),
+    //todo eventDidUnmount
   };
   isLoading = false;
   editMode = false;
@@ -89,6 +90,7 @@ export class EventsComponent {
           this.isLoading = false;
         } else if(parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') { // update d'un élément
           if(parsed.action === 'ADD') {
+            //todo add websocket broken (types in cause)
             this.calendarComponent?.getApi().addEvent({
               id: parsed.event.id,
               title: parsed.event.title,
@@ -130,6 +132,11 @@ export class EventsComponent {
         this.messages.push(message);
       }
     })
+
+    this.eventService.getAllTypes().subscribe(response => {
+      this.types = response
+    });
+
   }
 
   openModal() {
@@ -192,14 +199,15 @@ export class EventsComponent {
       minute: '2-digit'
     });
 
+    console.log(arg.event.extendedProps.type.textColor);
+
     return {
-      html: `<span class="font-mono text-sm">${startTime} | ${arg.event.title}</span>`
+      html: `<span class="font-mono text-sm" style="color: ${arg.event.extendedProps.type.textColor}">${startTime} | ${arg.event.title}</span>`
     };
   }
 
   decorateEventCell(info: any) {
-    const type = info.event.extendedProps?.type?.toLowerCase() || 'default';
-    const imageUrl = `https://i.ytimg.com/vi/R9VbhY3ZVCw/maxresdefault.jpg`;
+    const imageUrl = info.event.extendedProps?.type?.imageUrl || 'default';
 
     const el = info.el; // l'élément HTML de l'event
 
