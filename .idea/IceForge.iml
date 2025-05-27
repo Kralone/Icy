@@ -13,6 +13,9 @@
       <excludeFolder url="file://$MODULE_DIR$/scripts/.venv/Include" />
       <excludeFolder url="file://$MODULE_DIR$/scripts/.venv/Lib" />
       <excludeFolder url="file://$MODULE_DIR$/scripts/.venv/Scripts" />
+      <excludeFolder url="file://$MODULE_DIR$/scripts/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/scripts/nom_env" />
+      <excludeFolder url="file://$MODULE_DIR$/scripts/scrappers" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
