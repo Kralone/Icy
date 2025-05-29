@@ -7,6 +7,7 @@ import {FullCalendarComponent, FullCalendarModule} from '@fullcalendar/angular';
 import {EventService, EventCreateRequest, EventDTO} from '../../core/services/event/event.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {EventType} from '../../model/event-type.model';
+import {AuthService} from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-events',
@@ -33,6 +34,14 @@ export class EventsComponent {
     startDateTime: '',
     endDateTime: ''
   };
+
+  participationsByStatus = {
+    confirmed: [] as any[],
+    maybe: [] as any[],
+    refused: [] as any[]
+  };
+
+
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
@@ -61,11 +70,13 @@ export class EventsComponent {
   isLoading = false;
   editMode = false;
 
-  constructor(private eventService: EventService, private wsService: WebSocketService) {}
+  isAdmin = false;
+
+  constructor(private eventService: EventService, private wsService: WebSocketService, private authService: AuthService) {}
 
   ngAfterViewInit() {
     this.wsService.connectEvent();
-
+    this.isAdmin = this.authService.isAdmin();
     this.isLoading = true;
 
     this.eventService.listenForEventUpdate().subscribe((message) => {
@@ -235,6 +246,21 @@ export class EventsComponent {
     };
     this.showDetailsModal = true;
     this.editMode = false;
+    this.initializeParticipationData();
+
+  }
+
+
+  private initializeParticipationData() {
+    this.eventService.getParticipations(this.selectedEvent.id).subscribe((response: any) => {
+      const participations = response.data;
+
+      this.participationsByStatus = {
+        confirmed: participations.filter((p: any) => p.status === 1),
+        maybe: participations.filter((p: any) => p.status === 0),
+        refused: participations.filter((p: any) => p.status === -1)
+      };
+    });
   }
 
   openEditModal() {
@@ -258,6 +284,23 @@ export class EventsComponent {
   private toDatetimeLocalFormat(date: string): string {
     return new Date(date).toISOString().slice(0, 16);
   }
+
+  setParticipationStatus(status: number) {
+    if (!this.selectedEvent) return;
+
+    this.eventService.setParticipationStatus(this.selectedEvent.id, status)
+      .subscribe({
+        next: () => {
+          // Optionnel : notification ou mise à jour locale
+          console.log('Participation enregistrée avec succès');
+          this.initializeParticipationData()
+        },
+        error: (err) => {
+          console.error('Erreur lors de la participation', err);
+        }
+      });
+  }
+
 
 
 }

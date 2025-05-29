@@ -1,9 +1,11 @@
 package com.icy.icy_backend.controller;
 
 import com.icy.icy_backend.controller.dto.CreateEventRequest;
+import com.icy.icy_backend.controller.dto.EventParticipationRequest;
 import com.icy.icy_backend.controller.dto.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.db.entity.EventParticipation;
 import com.icy.icy_backend.db.entity.EventType;
 import com.icy.icy_backend.service.EventService;
 import org.springframework.http.ResponseEntity;
@@ -44,5 +46,15 @@ public class EventController {
     @GetMapping("/types")
     public ResponseEntity<MessageResponse<List<EventType>>> getAllTypes() {
         return eventService.getAllEventsTypes();
+    }
+
+    @PostMapping( "/participation")
+    public ResponseEntity<MessageResponse<Void>> setParticipation(@RequestBody EventParticipationRequest dto) {
+        return eventService.setParticipation(dto.getEventId(), dto.getStatus());
+    }
+
+    @GetMapping("/participation")
+    public ResponseEntity<MessageResponse<List<EventParticipation>>> getParticipation(@RequestParam UUID eventId) {
+        return eventService.getEventParticipations(eventId);
     }
 }

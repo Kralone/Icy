@@ -27,7 +27,7 @@ public class EventWebSocketService {
         eventUpdate.add(dto);
         EventWebSocketMessage payload = new EventWebSocketMessage("Event update", eventUpdate, action);
 
-        logger.info("🔁 Envoi WebSocket : {} ({})", dto.getTitle(), action);
+        logger.info("🔁 Envoi WebSocket : {} {}", dto.getTitle(), action);
         messagingTemplate.convertAndSend(destination, payload);
     }
 }

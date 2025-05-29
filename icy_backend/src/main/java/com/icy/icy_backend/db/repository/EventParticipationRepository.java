@@ -1,0 +1,18 @@
+package com.icy.icy_backend.db.repository;
+
+import com.icy.icy_backend.db.entity.Event;
+import com.icy.icy_backend.db.entity.EventParticipation;
+import com.icy.icy_backend.db.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface EventParticipationRepository extends JpaRepository<EventParticipation, UUID> {
+    Optional<EventParticipation> findByEventAndUser(Event event, User user);
+    Optional<List<EventParticipation>> findAllByEvent(Event event);
+}
+

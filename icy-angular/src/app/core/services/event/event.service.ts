@@ -58,4 +58,21 @@ export class EventService {
       map(res => res.data as EventType[])
     );
   }
+
+  setParticipationStatus(eventId: string, status: number) {
+    return this.http.post(`${this.baseUrl}/participation`, {
+      eventId,
+      status
+    });
+  }
+
+  getParticipations(eventId: string): Observable<Object> {
+    return this.http.get(`${this.baseUrl}/participation`, {
+      params: { eventId }
+    });
+  }
+
+
+
+
 }

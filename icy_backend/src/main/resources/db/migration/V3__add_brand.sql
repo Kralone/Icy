@@ -6,7 +6,7 @@ CREATE TABLE brand (
 );
 
 -- Ajout de la colonne brand_id à la table ships
-ALTER TABLE ships ADD COLUMN brand_id INT;
+ALTER TABLE ships ADD COLUMN brand_id BIGINT;
 
 -- Création de la contrainte FK entre ships et brand
 ALTER TABLE ships

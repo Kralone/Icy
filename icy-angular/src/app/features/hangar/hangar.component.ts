@@ -8,6 +8,7 @@ import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-over
 import {ClickOutsideDirective} from '../../directives/click-outside.directive';
 import {ShipListDTO} from '../../model/ShipListDTO.model';
 import {HotToastService} from '@ngxpert/hot-toast';
+import {AuthService} from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-hangar',
@@ -50,12 +51,15 @@ export class HangarComponent {
   shipFilter: string = '';
 
   messages: string[] = [];
-  userId: string = '3aba7720-d850-4557-b8d2-1fb5f1e222f5'; // ID temporaire
+  userId: string = "";
 
   constructor(private shipService: ShipService, private wsService: WebSocketService,
-              private eRef: ElementRef, private toast: HotToastService) {}
+              private eRef: ElementRef, private toast: HotToastService, private authService: AuthService) {}
 
   ngOnInit(): void {
+    this.userId = this.authService.getCurrentUser().id
+
+    console.log(this.userId);
     this.loadBrands();
     this.wsService.connectShipUpdate(this.userId);
 

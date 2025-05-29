@@ -85,7 +85,79 @@
       <p><strong>Description :</strong></p>
       <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ selectedEvent?.description }}</p>
     </div>
-    <div class="flex justify-end gap-4 mt-6">
+    <div class="mt-6 border-t pt-4">
+      <h3 class="text-lg font-semibold mb-3">Votre participation :</h3>
+      <div class="grid grid-cols-3 text-sm mb-4 text-center divide-x divide-gray-300 dark:divide-gray-600">
+        <!-- Confirmés -->
+        <div class="px-4">
+          <p class="font-semibold text-green-600 mb-2">✔️ Confirmés</p>
+          <ng-container *ngIf="participationsByStatus.confirmed.length > 0; else noConfirmed">
+            <ul class="space-y-1">
+              <li *ngFor="let p of participationsByStatus.confirmed">{{ p.user.username }}</li>
+            </ul>
+          </ng-container>
+          <ng-template #noConfirmed>
+            <p class="italic text-gray-400">Aucun participant confirmé</p>
+          </ng-template>
+        </div>
+
+        <!-- Indécis -->
+        <div class="px-4">
+          <p class="font-semibold text-yellow-500 mb-2">❔ Indécis</p>
+          <ng-container *ngIf="participationsByStatus.maybe.length > 0; else noMaybe">
+            <ul class="space-y-1">
+              <li *ngFor="let p of participationsByStatus.maybe">{{ p.user.username }}</li>
+            </ul>
+          </ng-container>
+          <ng-template #noMaybe>
+            <p class="italic text-gray-400">Aucun participant indécis</p>
+          </ng-template>
+        </div>
+
+        <!-- Refusés -->
+        <div class="px-4">
+          <p class="font-semibold text-red-600 mb-2">❌ Refusés</p>
+          <ng-container *ngIf="participationsByStatus.refused.length > 0; else noRefused">
+            <ul class="space-y-1">
+              <li *ngFor="let p of participationsByStatus.refused">{{ p.user.username }}</li>
+            </ul>
+          </ng-container>
+          <ng-template #noRefused>
+            <p class="italic text-gray-400">Aucun participant refusé</p>
+          </ng-template>
+        </div>
+      </div>
+
+
+
+      <div class="flex justify-center gap-4">
+        <button
+          (click)="setParticipationStatus(1)"
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          Confirmer
+        </button>
+        <button
+          (click)="setParticipationStatus(0)"
+          class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm-1-3a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm0-4a1 1 0 112 0v1a1 1 0 11-2 0V9z" clip-rule="evenodd" />
+          </svg>
+          Peut-être
+        </button>
+        <button
+          (click)="setParticipationStatus(-1)"
+          class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+          Refuser
+        </button>
+      </div>
+    </div>
+    <div class="flex justify-end gap-4 mt-6" *ngIf="isAdmin">
       <button
         (click)="openEditModal()"
         class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow-md transition"
