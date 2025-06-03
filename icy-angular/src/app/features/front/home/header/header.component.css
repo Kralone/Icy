@@ -3,7 +3,7 @@
 /* ------------------------------------ */
 
 .hero-background {
-  background-image: url('/assets/images/home/hero-background.png'); /* À adapter si le chemin change */
+  background-image: url('/assets/images/home/hero-background.webp'); /* À adapter si le chemin change */
   background-attachment: fixed;
   background-size: cover;
   background-position: center;

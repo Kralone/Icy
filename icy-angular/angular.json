@@ -30,7 +30,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "optimization": true,
+            "sourceMap": false
           },
           "configurations": {
             "production": {

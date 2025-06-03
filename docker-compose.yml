@@ -7,13 +7,16 @@ services:
       POSTGRES_USER: iceforge
       POSTGRES_PASSWORD: iceforgepassword
       POSTGRES_DB: iceforge_db
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
+      - external
 
   backend:
-    build: ./backend
+    build: ./app
     container_name: iceforge_backend
     restart: always
     environment:
@@ -30,19 +33,29 @@ services:
       - internal
       - external
 
-  bot:
-    build: ./bot
-    container_name: iceforge_bot
+  frontend:
+    build: ./frontend
+    container_name: iceforge_frontend
     restart: always
-    environment:
-      DISCORD_TOKEN: your_discord_token_here
-      API_URL: http://backend:8080
-    depends_on:
-      - backend
-    volumes:
-      - bot_config:/app/config
+    ports:
+      - "80:80"
     networks:
       - external
+
+
+#  bot:
+#    build: ./bot
+#    container_name: iceforge_bot
+#    restart: always
+#    environment:
+#      DISCORD_TOKEN: your_discord_token_here
+#      API_URL: http://backend:8080
+#    depends_on:
+#      - backend
+#    volumes:
+#      - bot_config:/app/config
+#    networks:
+#      - external
 
 volumes:
   postgres_data:

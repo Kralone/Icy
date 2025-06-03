@@ -27,7 +27,7 @@ export class StoryComponent {
   private loadStagger() {
     const basePath = 'assets/images/home/stagger/';
     const count = 4; // nombre d’images dans le dossier
-    this.staggeredImages = Array.from({ length: count }, (_, i) => `${basePath}img${i + 1}.jpg`);
+    this.staggeredImages = Array.from({ length: count }, (_, i) => `${basePath}img${i + 1}.webp`);
   }
 
   getTopOffset(i: number): number {

@@ -22,3 +22,18 @@
   --fc-event-border-color: #3b82f6;
   --fc-event-text-color: white;
 }
+
+@layer utilities {
+  .animate-spin-custom {
+    animation: spin-custom 1s linear infinite;
+  }
+}
+
+@keyframes spin-custom {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
