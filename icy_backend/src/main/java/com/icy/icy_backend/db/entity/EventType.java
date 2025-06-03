@@ -13,6 +13,7 @@ public class EventType {
     public EventType() {
         name = "Default";
         textColor = "black";
+        backgroundColor = "white";
         imageUrl = "default_event_type_image.png";
     }
 
@@ -22,6 +23,9 @@ public class EventType {
 
     @Column(length = 50)
     private String textColor;
+
+    @Column(length = 50)
+    private String backgroundColor;
 
     @Column
     private String imageUrl;

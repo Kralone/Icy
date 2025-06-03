@@ -64,7 +64,8 @@ export class EventsComponent {
     },
     eventContent: this.renderCustomEvent.bind(this),
     eventClick: this.onEventClick.bind(this),
-    eventDidMount: this.decorateEventCell.bind(this),
+    eventDidMount: this.applyBackgroundColor.bind(this),
+    // eventDidMount: this.decorateEventCell.bind(this),
     //todo eventDidUnmount
   };
   isLoading = false;
@@ -91,6 +92,7 @@ export class EventsComponent {
                title: event.title,
                start: event.startDateTime,
                end: event.endDateTime,
+               backgroundColor: event.type.backgroundColor,
                extendedProps: {
                  type: event.type,
                  description: event.description,
@@ -102,17 +104,22 @@ export class EventsComponent {
         } else if(parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') { // update d'un élément
           if(parsed.action === 'ADD') {
             //todo add websocket broken (types in cause)
-            this.calendarComponent?.getApi().addEvent({
+            parsed.event = parsed.events[0];
+            console.log(parsed.event);
+            console.log(parsed);
+            this.calendarEvents.push({
               id: parsed.event.id,
               title: parsed.event.title,
               start: parsed.event.startDateTime,
               end: parsed.event.endDateTime,
+              backgroundColor: parsed.event.type.backgroundColor,
               extendedProps: {
                 type: parsed.event.type,
                 description: parsed.event.description,
                 finished: parsed.event.finished
               }
             });
+            this.calendarOptions.events = [...this.calendarEvents];
           } else if(parsed.action === 'DELETE') {
             this.calendarEvents = this.calendarEvents.filter(e => e.id !== parsed.events[0].id);
             this.calendarOptions.events = [...this.calendarEvents];
@@ -210,8 +217,6 @@ export class EventsComponent {
       minute: '2-digit'
     });
 
-    console.log(arg.event.extendedProps.type.textColor);
-
     return {
       html: `<span class="font-mono text-sm" style="color: ${arg.event.extendedProps.type.textColor}">${startTime} | ${arg.event.title}</span>`
     };
@@ -232,6 +237,12 @@ export class EventsComponent {
     }
   }
 
+  applyBackgroundColor(info: any) {
+    const color = info.event.extendedProps?.type?.backgroundColor;
+    if (color) {
+      info.el.style.backgroundColor = color;
+    }
+  }
 
   onEventClick(arg: any): void {
     const event = arg.event;
