@@ -40,9 +40,9 @@ export class AuthService {
   }
 
 
-  refreshToken(): Observable<{ tokens: { accessToken: string, refreshToken: string }}> {
+  refreshToken(): Observable<{accessToken: string, refreshToken: string }> {
     const refreshToken = localStorage.getItem('refreshToken');
-    return this.http.post<{ tokens : {accessToken: string, refreshToken: string }}>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
+    return this.http.post<{accessToken: string, refreshToken: string }>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
       map(response => response)
     );
   }

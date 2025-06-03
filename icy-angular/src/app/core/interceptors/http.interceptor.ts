@@ -42,11 +42,11 @@ export class HttpAuthInterceptor implements HttpInterceptor {
         if (error.status === 401 || error.status === 403) {
           return this.authService.refreshToken().pipe(
             switchMap(res => {
-              localStorage.setItem('token', res.tokens.accessToken);
-              localStorage.setItem('refreshToken', res.tokens.refreshToken);
+              localStorage.setItem('token', res.accessToken);
+              localStorage.setItem('refreshToken', res.refreshToken);
 
               const retryReq = request.clone({
-                setHeaders: { Authorization: `Bearer ${res.tokens.accessToken}` }
+                setHeaders: { Authorization: `Bearer ${res.accessToken}` }
               });
 
               return next.handle(retryReq);
