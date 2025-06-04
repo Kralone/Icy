@@ -2,7 +2,7 @@
   <!-- Titre + Bouton Ajouter -->
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">📅 Calendrier des événements</h1>
-    <button
+    <button *ngIf="isAdmin"
       class="text-sm text-white dark:text-gray-800 bg-gray-800 dark:bg-gray-200 border border-transparent hover:bg-gray-700 dark:hover:bg-gray-300 transition duration-200 transform hover:scale-105 cursor-pointer rounded px-4 py-2 shadow-sm"
     (click)="openModal()">
       + Ajouter
@@ -69,6 +69,14 @@
 <div *ngIf="showDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" (click)="showDetailsModal = false">
   <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg shadow-xl w-full max-w-xl p-6 relative" (click)="$event.stopPropagation()">
     <button (click)="showDetailsModal = false" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xl">✖</button>
+    <div *ngIf="selectedEvent?.type?.imageUrl" class="-mt-6 -mx-6 mb-6">
+      <img
+        [src]="selectedEvent.type.imageUrl"
+        alt="Illustration du type d'événement"
+        class="w-full h-48 object-cover rounded-t-lg"
+      />
+    </div>
+
 
     <h2 class="text-2xl font-bold mb-4">{{ selectedEvent?.title }}</h2>
 
