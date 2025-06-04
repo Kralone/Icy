@@ -19,9 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -107,6 +111,32 @@ public class EventService {
 
     public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
         return messageService.buildResponse("event.upcoming", eventRepository.findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now()));
+    }
+
+
+    @Transactional
+    @Scheduled(cron = "0 1 0 * * *")
+    public void markPastDayEventsAsFinished() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDateTime startOfYesterday = yesterday.atStartOfDay();
+        LocalDateTime endOfYesterday = yesterday.atTime(LocalTime.MAX);
+
+        List<Event> eventsToFinish = eventRepository
+                .findByEndDateTimeBetweenAndFinishedFalse(startOfYesterday, endOfYesterday);
+
+        if (eventsToFinish.isEmpty()) {
+            logger.info("Aucun événement à terminer pour {}", yesterday);
+            return;
+        }
+
+        for (Event event : eventsToFinish) {
+            event.setFinished(true);
+            logger.info("Événement terminé automatiquement : {}", event.getId());
+            eventWebSocketService.sendEventUpdate(event, "UPDATE");
+        }
+
+        eventRepository.saveAll(eventsToFinish);
+        logger.info("{} événements marqués comme terminés pour {}", eventsToFinish.size(), yesterday);
     }
 
 // ------------------------------Event Type Service--------------------------------------

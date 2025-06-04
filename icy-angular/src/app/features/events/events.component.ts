@@ -239,9 +239,21 @@ export class EventsComponent {
 
   applyBackgroundColor(info: any) {
     const color = info.event.extendedProps?.type?.backgroundColor;
+    const isFinished = info.event.extendedProps?.finished;
+
     if (color) {
-      info.el.style.backgroundColor = color;
+      const rgba = isFinished ? this.hexToRgba(color, 0.25) : color;
+      info.el.style.backgroundColor = rgba;
     }
+  }
+
+  private hexToRgba(hex: string, opacity: number): string {
+    const sanitizedHex = hex.replace('#', '');
+    const bigint = parseInt(sanitizedHex, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   }
 
   onEventClick(arg: any): void {
