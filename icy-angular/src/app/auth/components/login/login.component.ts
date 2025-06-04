@@ -107,5 +107,11 @@ async onResetPassword(): Promise<void> {
   }
 }
 
+  onBack(): void {
+    // Par exemple : revenir à la page d'accueil ou précédente
+    this.router.navigate(['/']);
+  }
+
+
 
 }
