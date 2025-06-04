@@ -5,6 +5,7 @@ import com.icy.icy_backend.controller.dto.EventParticipationRequest;
 import com.icy.icy_backend.controller.dto.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.db.entity.Event;
 import com.icy.icy_backend.db.entity.EventParticipation;
 import com.icy.icy_backend.db.entity.EventType;
 import com.icy.icy_backend.service.EventService;
@@ -56,5 +57,10 @@ public class EventController {
     @GetMapping("/participation")
     public ResponseEntity<MessageResponse<List<EventParticipation>>> getParticipation(@RequestParam UUID eventId) {
         return eventService.getEventParticipations(eventId);
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
+        return eventService.getUpcomingEvents();
     }
 }

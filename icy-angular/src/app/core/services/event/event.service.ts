@@ -72,7 +72,7 @@ export class EventService {
     });
   }
 
-
-
-
+  getUpcomingEvents(): Observable<{ data: EventDTO[] }> {
+    return this.http.get<{ data: EventDTO[] }>('/api/events/upcoming');
+  }
 }

@@ -105,6 +105,9 @@ public class EventService {
                 });
     }
 
+    public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
+        return messageService.buildResponse("event.upcoming", eventRepository.findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now()));
+    }
 
 // ------------------------------Event Type Service--------------------------------------
 
@@ -156,5 +159,4 @@ public class EventService {
         }
 
     }
-
 }
