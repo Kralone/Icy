@@ -25,10 +25,10 @@ async def notify_password(req: Request):
     temp_password = data["tempPassword"]
 
     # Lance la coroutine dans la boucle event loop du bot
-    # asyncio.run_coroutine_threadsafe(
-    #     send_password_message(discord_id, temp_password),
-    #     bot.loop
-    # )
+    asyncio.run_coroutine_threadsafe(
+        send_password_message(discord_id, temp_password),
+        bot.loop
+    )
 
     return {"status": "ok"}
 
