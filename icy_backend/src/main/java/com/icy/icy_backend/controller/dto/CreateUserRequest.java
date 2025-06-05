@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class CreateUserRequest {
         private String username;
         @JsonProperty("discordId")
-        private Long discordId;
+        private String discordId;
         private String role;
 }

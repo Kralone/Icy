@@ -10,7 +10,7 @@ import java.util.UUID;
 public class UpdateUserRequest {
     private UUID id;
     private String username;
-    private Long discordId;
+    private String discordId;
     private String role;
 
 }

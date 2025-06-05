@@ -30,7 +30,7 @@ public class User {
     private String password;
 
     @Column(nullable = false, unique = true)
-    private Long discordId;
+    private String discordId;
 
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt = LocalDateTime.now();

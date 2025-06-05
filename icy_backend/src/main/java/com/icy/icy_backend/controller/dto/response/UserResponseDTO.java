@@ -12,7 +12,7 @@ public class UserResponseDTO {
     private UUID id;
     private String username;
     private List<String> roles;
-    private Long discordId;
+    private String discordId;
 
     public UserResponseDTO(User user) {
         this.id = user.getId();

@@ -42,20 +42,22 @@ services:
     networks:
       - external
 
-
-#  bot:
-#    build: ./bot
-#    container_name: iceforge_bot
-#    restart: always
-#    environment:
-#      DISCORD_TOKEN: your_discord_token_here
-#      API_URL: http://backend:8080
-#    depends_on:
-#      - backend
-#    volumes:
-#      - bot_config:/app/config
-#    networks:
-#      - external
+  bot:
+    build: ./bot
+    container_name: iceforge_bot
+    restart: always
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      API_URL: http://backend:8080
+    ports:
+      - "8090:8090"
+    depends_on:
+      - backend
+    volumes:
+      - bot_config:/app/config
+    networks:
+      - internal
+      - external
 
 volumes:
   postgres_data:

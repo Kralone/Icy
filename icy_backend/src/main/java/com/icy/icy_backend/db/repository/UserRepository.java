@@ -6,6 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByDiscordId(Long discordId);
+    Optional<User> findByDiscordId(String discordId);
     Optional<User> findByUsername(String username);
 }

@@ -3,7 +3,7 @@
 CREATE TABLE users (
                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                        username VARCHAR(50) NOT NULL,
-                       discord_id BIGINT UNIQUE NOT NULL,
+                       discord_id VARCHAR(50) UNIQUE NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        password VARCHAR(255) NOT NULL,
                        active BOOLEAN DEFAULT TRUE

@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   username: string;
-  discordId: number;
+  discordId: string;
   createdAt: string;
   active: boolean;
   roles: Role[];

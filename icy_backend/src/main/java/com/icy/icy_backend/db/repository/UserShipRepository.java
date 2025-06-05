@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> {
     List<UserShip> findByUserId(UUID userId);
-    List<UserShip> findByUserDiscordId(Long discordId);
+    List<UserShip> findByUserDiscordId(String discordId);
 
     @Query("SELECT us FROM UserShip us JOIN FETCH us.ship")
     List<UserShip> findAllWithShips();

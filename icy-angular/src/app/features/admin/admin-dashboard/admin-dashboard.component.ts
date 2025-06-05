@@ -111,11 +111,11 @@ export class AdminDashboardComponent implements OnInit {
 
   newUser: {
     username: string;
-    discordId: number | null;
+    discordId: string;
     role: string;
   } = {
     username: '',
-    discordId: null,
+    discordId: '',
     role: 'USER'
   };
 
@@ -125,7 +125,7 @@ export class AdminDashboardComponent implements OnInit {
   addUser(): void {
     if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role) return;
 
-
+    console.log(this.newUser);
     this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role).subscribe(() => {
       this.isAddUserModalOpen = false;
       this.resetForm();
@@ -136,7 +136,7 @@ export class AdminDashboardComponent implements OnInit {
   resetForm(): void {
     this.newUser = {
       username: '',
-      discordId: null,
+      discordId: '',
       role: 'USER'
     };
     this.isEditMode = false;

@@ -50,7 +50,7 @@ public class UserService {
     /**
      * Récupère un utilisateur via son Discord ID.
      */
-    public ResponseEntity<MessageResponse<User>> getUserByDiscordId(Long discordId) {
+    public ResponseEntity<MessageResponse<User>> getUserByDiscordId(String discordId) {
         logger.info("Recherche de l'utilisateur avec Discord ID: {}", discordId);
         try {
             User user = findUserByDiscordId(discordId);
@@ -63,7 +63,7 @@ public class UserService {
     /**
      * Crée un nouvel utilisateur s'il n'existe pas déjà.
      */
-    public ResponseEntity<MessageResponse<User>> createUser(String username, Long discordId, String role) {
+    public ResponseEntity<MessageResponse<User>> createUser(String username, String discordId, String role) {
         logger.info("Création d'un nouvel utilisateur: {} avec Discord ID: {}", username, discordId);
 
         if (userRepository.findByDiscordId(discordId).isPresent()) {
@@ -119,20 +119,8 @@ public class UserService {
     public User resolveUser(Object identifier) {
         if (identifier instanceof UUID uuid) {
             return findUserById(uuid);
-        } else if (identifier instanceof Long discordId) {
+        } else if (identifier instanceof String discordId) {
             return findUserByDiscordId(discordId);
-        } else if (identifier instanceof String str) {
-            try {
-                return findUserById(UUID.fromString(str));
-            } catch (IllegalArgumentException ignored) {
-                try {
-                    return findUserByDiscordId(Long.parseLong(str));
-                } catch (NumberFormatException e) {
-                    logger.error("String invalide pour un UUID ou un Discord ID : {}", str);
-                }
-            }
-        } else if (identifier instanceof Number number) {
-            return findUserByDiscordId(number.longValue());
         }
 
         logger.error("Type d'identifiant utilisateur non pris en charge : {}", identifier);
@@ -164,7 +152,7 @@ public class UserService {
     /**
      * Trouve un utilisateur via son Discord ID, ou lève une exception s'il n'existe pas.
      */
-    protected User findUserByDiscordId(Long discordId) {
+    protected User findUserByDiscordId(String discordId) {
         return userRepository.findByDiscordId(discordId)
                 .orElseThrow(() -> {
                     logger.warn("Aucun utilisateur trouvé avec Discord ID: {}", discordId);
@@ -208,7 +196,7 @@ public class UserService {
 
 
     @Transactional
-    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, Long discordId, String roleName) {
+    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName) {
         logger.info("Mise à jour de l'utilisateur {}", id);
 
         User user = findUserById(id);

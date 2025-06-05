@@ -16,7 +16,7 @@ export class UserService {
     return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/all`);
   }
 
-  createUser(username: string, discordId: number, role: string): Observable<User> {
+  createUser(username: string, discordId: string, role: string): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/create`, { username, discordId, role });
   }
 
@@ -24,7 +24,7 @@ export class UserService {
     return this.http.delete<void>(`/api/users/by-id?id=${id}`);
   }
 
-  updateUser(user: { id: string, username: string, discordId: number, role: string }): Observable<any> {
+  updateUser(user: { id: string, username: string, discordId: string, role: string }): Observable<any> {
     return this.http.put('/api/users/update', user);
   }
 

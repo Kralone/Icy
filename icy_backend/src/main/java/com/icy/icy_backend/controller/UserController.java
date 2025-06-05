@@ -25,7 +25,7 @@ public class UserController {
     }
 
     @GetMapping("/{discordId}")
-    public ResponseEntity<MessageResponse<User>> getUserByDiscordId(@PathVariable Long discordId) {
+    public ResponseEntity<MessageResponse<User>> getUserByDiscordId(@PathVariable String discordId) {
         return userService.getUserByDiscordId(discordId);
     }
 
