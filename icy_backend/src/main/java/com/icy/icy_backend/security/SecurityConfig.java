@@ -25,8 +25,7 @@ public class SecurityConfig {
     ) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Activation de CORS
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**").disable()
-                )
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
@@ -40,7 +39,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("https://iceforge.com","http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of("https://iceforge.fr","http://localhost:4200", "https://localhost:4200"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); //Méthodes autorisées
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
