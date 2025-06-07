@@ -1,5 +1,5 @@
 import {Component, ElementRef, HostListener} from '@angular/core';
-import {CommonModule, NgForOf, NgOptimizedImage, NgStyle} from '@angular/common';
+import {CommonModule, NgForOf, NgStyle} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {Ship} from '../../model/ship.model';
@@ -17,8 +17,7 @@ import {AuthService} from '../../core/services/auth/auth.service';
     CommonModule,
     FormsModule,
     LoadingOverlayComponent,
-    ClickOutsideDirective,
-    NgOptimizedImage
+    ClickOutsideDirective
   ],
   styleUrls: ['./hangar.component.css']
 })

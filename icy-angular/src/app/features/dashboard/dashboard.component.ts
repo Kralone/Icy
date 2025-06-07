@@ -3,7 +3,6 @@ import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
-// (Optionnel) Remplace EventService par ton vrai service d’événements
 import {EventService} from '../../core/services/event/event.service';
 
 interface Event {
@@ -48,15 +47,33 @@ export class DashboardComponent {
 
   loadFleetSummary() {
     this.shipService.getFleetSummary().subscribe(response => {
-      this.fleetSummary = JSON.parse(response).fleet;
+      const rawFleet = JSON.parse(response).fleet;
+      this.fleetSummary = this.groupShipsByFocus(rawFleet);
       console.log('📦 Fleet update');
       this.isLoading = false;
     });
   }
 
+  private groupShipsByFocus(fleet: { [focus: string]: string[] }): { [focus: string]: string[] } {
+    const result: { [focus: string]: string[] } = {};
+
+    for (const focus in fleet) {
+      const nameCounts: { [name: string]: number } = {};
+
+      for (const name of fleet[focus]) {
+        nameCounts[name] = (nameCounts[name] || 0) + 1;
+      }
+
+      result[focus] = Object.entries(nameCounts).map(([name, count]) =>
+        count > 1 ? `${name} (${count})` : name
+      );
+    }
+
+    return result;
+  }
+
   loadEvents() {
     this.eventService.getUpcomingEvents().subscribe(response => {
-      console.log(response.data);
       this.events = response.data.map(evt => ({
         name: evt.title,
         date: evt.startDateTime,
