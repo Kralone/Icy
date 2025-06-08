@@ -4,6 +4,8 @@ import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
 import {EventService} from '../../core/services/event/event.service';
+import {GoalComponent} from './goal/goal.component';
+import {NewsComponent} from './news/news.component';
 
 interface Event {
   name: string;
@@ -21,7 +23,9 @@ interface ShipSummary {
   standalone: true,
   imports: [
     CommonModule,
-    LoadingOverlayComponent
+    LoadingOverlayComponent,
+    GoalComponent,
+    NewsComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
