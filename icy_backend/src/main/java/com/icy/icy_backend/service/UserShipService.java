@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service;
 
+import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.UserShipDTO;
 import com.icy.icy_backend.db.entity.Ship;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserShipService {
@@ -81,39 +83,37 @@ public class UserShipService {
         logger.info("Vaisseau ID: {} ajouté avec succès à l'utilisateur: {}", shipId, user.getUsername());
 
         userWebSocketService.sendUserShipUpdate(userShip);
-        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsMap());
+        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
 
         return messageService.buildResponse("user.ship.add.success", userShip);
     }
 
-    public ResponseEntity<MessageResponse<Map<String, List<String>>>> getFleetSummary() {
-        Map<String, List<String>> fleet = getFleetSummaryAsMap();
-        if(fleet == null) {
-            return messageService.buildResponse("ship.notfound", Map.of(), "Aucun vaisseau enregistré.");
-        }
-
-        return messageService.buildResponse("ship.fleet.summary", fleet);
-    }
-
-    public Map<String, List<String>> getFleetSummaryAsMap() {
+    public List<FleetSummaryResponse> getFleetSummaryAsList() {
         logger.info("Génération du résumé de la flotte");
 
         List<UserShip> userShips = userShipRepository.findAllWithShips();
         if (userShips.isEmpty()) {
             logger.warn("Aucun vaisseau trouvé.");
-            return null;
+            return List.of();
         }
 
-        Map<String, List<String>> fleetSummary = new HashMap<>();
+        Map<String, String> nameToImage = new LinkedHashMap<>();
 
         for (UserShip userShip : userShips) {
             Ship ship = userShip.getShip();
-            String focus = ship.getFocus() != null ? ship.getFocus().replace("Starter, ", "") : "Autre";
-            String shipNameDisplay = ship.getName();
-
-            fleetSummary.computeIfAbsent(focus, k -> new ArrayList<>()).add(shipNameDisplay);
+            String name = ship.getName();
+            String image = ship.getImageUrl();
+            nameToImage.putIfAbsent(name, image);
         }
-        return fleetSummary;
+
+        return nameToImage.entrySet().stream()
+                .map(entry -> new FleetSummaryResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    public ResponseEntity<MessageResponse<List<FleetSummaryResponse>>> getFleetSummary() {
+        List<FleetSummaryResponse> summary = getFleetSummaryAsList();
+        return messageService.buildResponse("ship.fleet.summary", summary);
     }
 
     @Transactional
@@ -127,7 +127,7 @@ public class UserShipService {
 
         logger.info("Vaisseau ID: {} supprimé pour l'utilisateur ID: {}", shipId, userId);
         userWebSocketService.sendUserShipDeletion(new UserShip(null, user, shipService.findShipById(shipId), false, false));
-        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsMap());
+        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
         return messageService.buildResponse("user.ship.delete.success", null, "Vaisseau supprimé avec succès.");
     }
 

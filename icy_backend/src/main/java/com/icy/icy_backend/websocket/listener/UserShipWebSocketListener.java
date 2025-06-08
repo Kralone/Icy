@@ -1,5 +1,6 @@
 package com.icy.icy_backend.websocket.listener;
 
+import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
 import com.icy.icy_backend.controller.dto.response.UserShipDTO;
 import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.service.UserService;
@@ -56,7 +57,7 @@ public class UserShipWebSocketListener {
 
         } else if ( destination != null && destination.equals("/topic/fleet/update")) {
             try {
-                Map<String, List<String>> fleetSummary = userShipService.getFleetSummaryAsMap();
+                List<FleetSummaryResponse> fleetSummary = userShipService.getFleetSummaryAsList();
                 String message = "Fleet connected";
                 FleetWebSocketMessage payload = new FleetWebSocketMessage(message, fleetSummary);
 

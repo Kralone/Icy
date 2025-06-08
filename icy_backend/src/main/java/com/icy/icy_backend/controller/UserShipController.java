@@ -2,6 +2,7 @@ package com.icy.icy_backend.controller;
 
 import com.icy.icy_backend.controller.dto.AddShipDTO;
 import com.icy.icy_backend.controller.dto.AddUserShip;
+import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.db.entity.Ship;
 import com.icy.icy_backend.db.entity.User;
@@ -79,7 +80,7 @@ public class UserShipController {
     // ===== COMMUN =====
 
     @GetMapping("/fleet-summary")
-    public ResponseEntity<MessageResponse<Map<String, List<String>>>> getFleetSummary() {
+    public ResponseEntity<MessageResponse<List<FleetSummaryResponse>>> getFleetSummary() {
         logger.info("Récupération du résumé de la flotte");
         return userShipService.getFleetSummary();
     }

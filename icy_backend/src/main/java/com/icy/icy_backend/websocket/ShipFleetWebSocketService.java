@@ -1,5 +1,6 @@
 package com.icy.icy_backend.websocket;
 
+import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
 import com.icy.icy_backend.websocket.dto.FleetWebSocketMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ public class ShipFleetWebSocketService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public void sendShipFleetUpdate(Map<String, List<String>> fleetSummary) {
+    public void sendShipFleetUpdate(List<FleetSummaryResponse> fleetSummary) {
         String destination = "/topic/fleet/update";
         String message = "Fleet updated";
         FleetWebSocketMessage payload = new FleetWebSocketMessage(message, fleetSummary);
