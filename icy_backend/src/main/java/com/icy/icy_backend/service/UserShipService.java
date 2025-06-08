@@ -97,18 +97,14 @@ public class UserShipService {
             return List.of();
         }
 
-        Map<String, String> nameToImage = new LinkedHashMap<>();
-
+        List<FleetSummaryResponse> fleetSummary = new ArrayList<>();
         for (UserShip userShip : userShips) {
             Ship ship = userShip.getShip();
-            String name = ship.getName();
-            String image = ship.getImageUrl();
-            nameToImage.putIfAbsent(name, image);
+
+            fleetSummary.add(new FleetSummaryResponse(ship.getName(), ship.getImageUrl(), ship.getFocus()));
         }
 
-        return nameToImage.entrySet().stream()
-                .map(entry -> new FleetSummaryResponse(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        return fleetSummary;
     }
 
     public ResponseEntity<MessageResponse<List<FleetSummaryResponse>>> getFleetSummary() {

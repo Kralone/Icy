@@ -1,13 +1,12 @@
 <main class="main-content flex-1 p-6 flex h-[80vh]">
   <div class="flex-1 mr-6">
     <h1 class="text-2xl font-bold mb-4">Bienvenue sur le Dashboard</h1>
-    <!-- Ici, ton contenu principal -->
   </div>
 
   <aside class="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col h-full gap-4">
     <!-- Résumé de la flotte (75%) -->
     <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-100 mb-4">🛸 Résumé de la flotte</h2>
-    <div class="flex-[3] overflow-y-auto">
+    <div class="flex-[3] overflow-y-auto scrollbar-custom">
 
       <div class="relative overflow-x-auto rounded-xl shadow-md text-gray-100">
         <div *ngIf="isLoading" class="h-16">
@@ -18,9 +17,13 @@
             <h3 class="text-sm font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wide mb-1">
               {{ focus }}
             </h3>
-            <ul class="list-disc list-inside text-gray-700 dark:text-gray-200 text-sm space-y-1">
-              <li *ngFor="let ship of fleetSummary[focus]">
-                {{ ship }}
+            <ul class="list-none pl-0 text-gray-700 dark:text-gray-200 text-sm space-y-1 overflow-hidden">
+              <li *ngFor="let ship of fleetSummary[focus]" class="relative flex items-center justify-start h-10 overflow-hidden">
+                <div *ngIf="ship.imageUrl" class="absolute top-0 left-0 w-full h-full">
+                  <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-80" />
+                  <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-gray-800 to-transparent"></div>
+                </div>
+                <span class="relative z-10 pl-2 truncate">{{ ship.name }}</span>
               </li>
             </ul>
           </div>
@@ -34,7 +37,7 @@
 
     <!-- Événements (25%) -->
     <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-100 mb-4">📅 Événements</h2>
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto scrollbar-custom">
 
       <div class="relative overflow-x-auto rounded-xl shadow-md text-gray-100">
         <div *ngIf="isEventsLoading" class="h-16">

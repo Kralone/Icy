@@ -11,6 +11,11 @@ interface Event {
   type: string;
 }
 
+interface ShipSummary {
+  name: string;
+  imageUrl: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -25,7 +30,7 @@ export class DashboardComponent {
   isLoading = true;
   isEventsLoading = true;
 
-  fleetSummary: { [focus: string]: string[] } = {};
+  fleetSummary: { [focus: string]: ShipSummary[] } = {};
   events: Event[] = [];
 
   objectKeys = Object.keys;
@@ -47,30 +52,43 @@ export class DashboardComponent {
 
   loadFleetSummary() {
     this.shipService.getFleetSummary().subscribe(response => {
+      console.log(response);
       const rawFleet = JSON.parse(response).fleet;
+      console.log(rawFleet);
       this.fleetSummary = this.groupShipsByFocus(rawFleet);
       console.log('📦 Fleet update');
       this.isLoading = false;
     });
   }
 
-  private groupShipsByFocus(fleet: { [focus: string]: string[] }): { [focus: string]: string[] } {
-    const result: { [focus: string]: string[] } = {};
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string }[]): { [focus: string]: { name: string; imageUrl: string }[] } {
+    const result: { [focus: string]: { name: string; imageUrl: string; count: number }[] } = {};
 
-    for (const focus in fleet) {
-      const nameCounts: { [name: string]: number } = {};
-
-      for (const name of fleet[focus]) {
-        nameCounts[name] = (nameCounts[name] || 0) + 1;
+    for (const ship of fleet) {
+      if (!result[ship.focus]) {
+        result[ship.focus] = [];
       }
 
-      result[focus] = Object.entries(nameCounts).map(([name, count]) =>
-        count > 1 ? `${name} (${count})` : name
-      );
+      const existing = result[ship.focus].find(s => s.name === ship.name);
+      if (existing) {
+        existing.count++;
+      } else {
+        result[ship.focus].push({ name: ship.name, imageUrl: ship.imageUrl, count: 1 });
+      }
     }
 
-    return result;
+    // Nettoyage du format final
+    const finalResult: { [focus: string]: { name: string; imageUrl: string }[] } = {};
+    for (const focus of Object.keys(result)) {
+      finalResult[focus] = result[focus].map(s => ({
+        name: s.count > 1 ? `${s.name} (${s.count})` : s.name,
+        imageUrl: s.imageUrl
+      }));
+    }
+
+    return finalResult;
   }
+
 
   loadEvents() {
     this.eventService.getUpcomingEvents().subscribe(response => {

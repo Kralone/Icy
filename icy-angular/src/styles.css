@@ -29,6 +29,44 @@
   }
 }
 
+@layer base {
+  /* Scrollbar personnalisée, claire par défaut et sombre avec .dark */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #3b82f6 #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #3b82f6;
+    border-radius: 6px;
+    border: 2px solid #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #2563eb;
+  }
+
+  /* Mode sombre */
+  .dark .scrollbar-custom {
+    scrollbar-color: #2563eb #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #2563eb;
+    border: 2px solid #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #3b82f6;
+  }
+}
+
 @keyframes spin-custom {
   from {
     transform: rotate(0deg);
