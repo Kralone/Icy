@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import {Goal} from '../../../model/goal.model';
-import {GoalService} from '../../../core/services/goal/goal.service';
-import {CommonModule} from '@angular/common';
+import { Goal } from '../../../model/goal.model';
+import { GoalService } from '../../../core/services/goal/goal.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard-goal',
@@ -16,9 +16,9 @@ export class GoalComponent implements OnInit {
   constructor(private goalService: GoalService) {}
 
   ngOnInit(): void {
-    this.goalService.getAllGoals().subscribe({
-      next: (goals) => {
-        this.goals = this.sortByProgress(goals);
+    this.goalService.getPinnedGoal().subscribe({
+      next: (goal) => {
+        this.goals = goal ? [goal] : [];
         this.isLoading = false;
       },
       error: () => {
@@ -29,16 +29,5 @@ export class GoalComponent implements OnInit {
 
   calculateProgress(goal: Goal): number {
     return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
-  }
-
-  sortByProgress(goals: Goal[]): Goal[] {
-    return [...goals].sort((a, b) => {
-      const progressA = this.calculateProgress(a);
-      const progressB = this.calculateProgress(b);
-
-      if (a.completed && !b.completed) return 1;
-      if (!a.completed && b.completed) return -1;
-      return progressB - progressA;
-    });
   }
 }

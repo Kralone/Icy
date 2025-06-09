@@ -15,14 +15,12 @@ export class GoalSubComponent {
   @Input() isAdmin = false;
   @Output() refresh = new EventEmitter<void>();
 
+  loading = false;
+
   constructor(private goalService: GoalService) {}
 
   calculateProgress(goal: Goal): number {
     return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
-  }
-
-  updateProgress(delta: number) {
-    this.goalService.updateProgress(this.goal.id, delta).subscribe(() => this.refresh.emit());
   }
 
   togglePinned() {
@@ -32,4 +30,21 @@ export class GoalSubComponent {
   deleteGoal() {
     this.goalService.deleteGoal(this.goal.id).subscribe(() => this.refresh.emit());
   }
+
+  increment(goalId: number, delta: number) {
+    if (this.loading) return;
+
+    this.loading = true;
+    this.goalService.incrementGoal(goalId, delta).subscribe({
+      next: () => {
+        this.goal.current += delta;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error("Erreur de mise à jour :", err);
+        this.loading = false;
+      }
+    });
+  }
+
 }

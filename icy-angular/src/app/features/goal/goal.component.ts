@@ -5,6 +5,7 @@ import {GoalService} from '../../core/services/goal/goal.service';
 import {GoalSubComponent} from './goal-sub/goal-sub.component';
 import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
 import {AddGoalModalComponent} from './add-goal-modal/add-goal-modal.component';
+import {AuthService} from '../../core/services/auth/auth.service';
 
 
 @Component({
@@ -15,40 +16,49 @@ import {AddGoalModalComponent} from './add-goal-modal/add-goal-modal.component';
 })
 export class GoalComponent implements OnInit {
   goals: Goal[] = [];
-  isAdmin = true; // à adapter selon ton auth
+  isAdmin = false; // à adapter selon ton auth
   isLoading = true;
 
   showAddModal = false;
   selectedParentId: number | null = null;
 
-  constructor(private goalService: GoalService) {}
+  constructor(private goalService: GoalService, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.goalService.getAllGoals().subscribe(goals => {
-      this.goals = this.sortGoals(goals);
+      console.log(goals);
+      this.goals = goals
       this.isLoading = false;
     });
+    this.isAdmin = this.authService.isAdmin();
   }
 
-  sortGoals(goals: Goal[]): Goal[] {
-    return goals
-      .filter(g => g.parentId === null)
-      .sort((a, b) => {
-        if (a.completed && !b.completed) return 1;
-        if (!a.completed && b.completed) return -1;
-        return this.calculateProgress(b) - this.calculateProgress(a);
-      });
-  }
-
-  calculateProgress(goal: Goal): number {
-    return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
-  }
+  // sortGoals(goals: Goal[]): Goal[] {
+  //   return goals
+  //     .filter(g => g.parentId === null)
+  //     .sort((a, b) => {
+  //       if (a.completed && !b.completed) return 1;
+  //       if (!a.completed && b.completed) return -1;
+  //       return this.calculateProgress(b) - this.calculateProgress(a);
+  //     });
+  // }
+  //
+  // calculateProgress(goal: Goal): number {
+  //   return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+  // }
 
   handleAddGoal(data: any) {
     this.goalService.addGoal(data).subscribe(() => this.loadGoals());
   }
 
   loadGoals() {
-    this.goalService.getAllGoals().subscribe();
+    this.goalService.getAllGoals().subscribe((goals) => {
+      this.goals = goals;
+      this.showAddModal = false; // ferme le modal
+      this.selectedParentId = null; // reset sélection
+    });
   }
+
+
+
 }

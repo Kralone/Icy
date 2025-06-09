@@ -22,10 +22,19 @@ export class GoalService {
   }
 
   togglePinned(id: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${id}/toggle-pinned`, {});
+    return this.http.post<void>(`${this.apiUrl}/pin`, id);
   }
 
   addGoal(goal: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}`, goal);
   }
+
+  getPinnedGoal(): Observable<Goal> {
+    return this.http.get<Goal>(`${this.apiUrl}/pinned`);
+  }
+
+  incrementGoal(id: number, delta: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/increment?delta=${delta}`, null);
+  }
+
 }

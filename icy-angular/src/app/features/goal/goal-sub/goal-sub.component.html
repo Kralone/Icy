@@ -64,13 +64,31 @@
           {{ calculateProgress(goal) | number:'1.0-0' }}%
         </div>
 
-        <!-- Boutons -->
-        <button (click)="updateProgress(-1)" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-3 py-1 rounded text-sm font-medium cursor-pointer">
-          -1
-        </button>
-        <button (click)="updateProgress(1)" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-3 py-1 rounded text-sm font-medium cursor-pointer">
-          +1
-        </button>
+        <div class="flex items-center gap-2 mt-2">
+          <!-- Bouton -1 -->
+          <button
+            (click)="increment(goal.id, -1)"
+            [disabled]="goal.current <= 0 || loading"
+            class="px-2 py-1 rounded bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            -1
+          </button>
+
+          <!-- Affichage -->
+          <span class="text-sm text-gray-700 dark:text-gray-200">
+    {{ goal.current }} / {{ goal.target }}
+  </span>
+
+          <!-- Bouton +1 -->
+          <button
+            (click)="increment(goal.id, 1)"
+            [disabled]="goal.current >= goal.target || loading"
+            class="px-2 py-1 rounded bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            +1
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
