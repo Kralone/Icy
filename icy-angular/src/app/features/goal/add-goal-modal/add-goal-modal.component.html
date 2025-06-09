@@ -1,0 +1,55 @@
+<div class="fixed inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+  <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg w-full max-w-md transform transition-all duration-300 scale-95 animate-scaleIn">
+    <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">Ajouter un objectif</h2>
+
+    <!-- Nom -->
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom</label>
+      <input [(ngModel)]="goal.name" type="text" class="w-full mt-1 p-2 rounded border dark:bg-gray-700 dark:text-white" />
+    </div>
+
+    <!-- Description -->
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+      <textarea [(ngModel)]="goal.description" class="w-full mt-1 p-2 rounded border dark:bg-gray-700 dark:text-white"></textarea>
+    </div>
+
+    <!-- Cible -->
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cible</label>
+      <input [(ngModel)]="goal.target" type="number" class="w-full mt-1 p-2 rounded border dark:bg-gray-700 dark:text-white" />
+    </div>
+
+    <!-- Parent selector -->
+    <div *ngIf="flatGoals.length > 0" class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Objectif parent (optionnel)</label>
+      <select [(ngModel)]="selectedParentId"
+              class="w-full mt-1 p-2 rounded border border-gray-500 bg-gray-900 text-white appearance-none focus:ring-2 focus:ring-blue-500">
+        <option [ngValue]="null">— Aucun —</option>
+        <option *ngFor="let g of getRootGoals()" [ngValue]="g.id">{{ g.name }}</option>
+      </select>
+    </div>
+
+    <!-- Sous-parent -->
+    <div *ngIf="selectedParentId" class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sous-objectif parent</label>
+      <select [(ngModel)]="selectedSubParentId"
+              class="w-full mt-1 p-2 rounded border border-gray-500 bg-gray-900 text-white appearance-none focus:ring-2 focus:ring-blue-500">
+        <option [ngValue]="null">— Aucun —</option>
+        <option *ngFor="let g of getFilteredSubGoals()" [ngValue]="g.id">{{ g.name }}</option>
+      </select>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end space-x-3 mt-6">
+      <button (click)="submit()" [disabled]="!isFormValid"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+        Valider
+      </button>
+      <button (click)="closeModal()"
+              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-500 transition">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>

@@ -6,6 +6,7 @@ import { LoginComponent } from './auth/components/login/login.component';
 import {HomeComponent} from './features/front/home/home.component';
 import {AdminDashboardComponent} from './features/admin/admin-dashboard/admin-dashboard.component';
 import {EventsComponent} from './features/events/events.component';
+import {GoalComponent} from './features/goal/goal.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -20,6 +21,7 @@ export const routes: Routes = [
       { path: 'hangar', component: HangarComponent },
       { path: 'admin', component: AdminDashboardComponent },
       { path: 'events', component: EventsComponent },
+      { path: 'goals', component: GoalComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

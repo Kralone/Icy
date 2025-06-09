@@ -35,7 +35,7 @@ export class SidebarComponent {
     { icon: '⌂', label: 'Dashboard', link: '/icy/dashboard' },
     { icon: '🚀', label: 'Mon Hangar', link: '/icy/hangar' },
     { icon: '📆', label: 'Events', link: '/icy/events' },
-    { icon: '⚙️', label: 'Settings', link: '#' }
+    { icon: '📈', label: 'Objectifs', link: '/icy/goals' }
   ];
 
   isCollapsed = false;

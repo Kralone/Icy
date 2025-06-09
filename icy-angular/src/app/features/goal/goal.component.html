@@ -1,0 +1,27 @@
+<div class="p-6">
+  <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
+
+  <!-- Contenu flouté pendant le chargement -->
+  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300">
+
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Objectifs</h1>
+      <button *ngIf="isAdmin" class="bg-blue-600 text-white px-4 py-2 rounded shadow" (click)="showAddModal = true">+ Ajouter</button>
+    </div>
+
+    <div *ngIf="isLoading" class="text-gray-500">Chargement...</div>
+
+    <div *ngIf="!isLoading && goals.length === 0" class="text-gray-500">Aucun objectif.</div>
+
+    <div *ngFor="let goal of goals">
+      <app-goal-sub [goal]="goal" [isAdmin]="isAdmin" (refresh)="ngOnInit()"></app-goal-sub>
+    </div>
+  </div>
+</div>
+
+<app-add-goal-modal
+  *ngIf="showAddModal"
+  [allGoals]="goals"
+  (submitGoal)="handleAddGoal($event)"
+  (close)="showAddModal = false">
+</app-add-goal-modal>
