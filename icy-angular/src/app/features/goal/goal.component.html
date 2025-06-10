@@ -14,7 +14,7 @@
     <div *ngIf="!isLoading && goals.length === 0" class="text-gray-500">Aucun objectif.</div>
 
     <div *ngFor="let goal of goals">
-      <app-goal-sub [goal]="goal" [isAdmin]="isAdmin" (refresh)="ngOnInit()"></app-goal-sub>
+      <app-goal-sub [goal]="goal" [depth]="0" [isAdmin]="isAdmin" (refresh)="ngOnInit()"></app-goal-sub>
     </div>
   </div>
 </div>

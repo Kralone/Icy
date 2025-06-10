@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {GoalService} from '../../../core/services/goal/goal.service';
-import {Goal} from '../../../model/goal.model';
-
+import { GoalService } from '../../../core/services/goal/goal.service';
+import { Goal } from '../../../model/goal.model';
 
 @Component({
   selector: 'app-goal-sub',
@@ -13,9 +12,11 @@ import {Goal} from '../../../model/goal.model';
 export class GoalSubComponent {
   @Input() goal!: Goal;
   @Input() isAdmin = false;
+  @Input() depth = 0;
   @Output() refresh = new EventEmitter<void>();
 
   loading = false;
+  showChildren = true;
 
   constructor(private goalService: GoalService) {}
 
@@ -47,4 +48,7 @@ export class GoalSubComponent {
     });
   }
 
+  toggleChildrenVisibility() {
+    this.showChildren = !this.showChildren;
+  }
 }

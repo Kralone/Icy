@@ -65,6 +65,11 @@
   .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     background-color: #3b82f6;
   }
+
+  .rotate-90 {
+    transform: rotate(90deg);
+  }
+
 }
 
 @keyframes spin-custom {
