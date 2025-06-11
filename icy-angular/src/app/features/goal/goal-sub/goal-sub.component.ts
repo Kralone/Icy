@@ -21,8 +21,28 @@ export class GoalSubComponent {
   constructor(private goalService: GoalService) {}
 
   calculateProgress(goal: Goal): number {
-    return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+    if (!goal || goal.target === 0) return 0;
+    return Math.min(100, (goal.current / goal.target) * 100);
   }
+
+  get sortedSubGoals(): Goal[] {
+    if (!this.goal.subGoals) return [];
+
+    return [...this.goal.subGoals].sort((a, b) => {
+      const progressA = this.calculateProgress(a);
+      const progressB = this.calculateProgress(b);
+
+      // Objectifs à 100% vont toujours en bas
+      const aIsDone = progressA === 100;
+      const bIsDone = progressB === 100;
+
+      if (aIsDone && !bIsDone) return 1;
+      if (!aIsDone && bIsDone) return -1;
+
+      return progressA - progressB;
+    });
+  }
+
 
   togglePinned() {
     this.goalService.togglePinned(this.goal.id).subscribe(() => this.refresh.emit());

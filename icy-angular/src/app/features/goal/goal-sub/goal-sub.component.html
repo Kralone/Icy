@@ -87,12 +87,21 @@
   <div class="pl-8">
     <!-- Conteneur animé -->
     <div class="transition-all duration-500 ease-in-out overflow-hidden"
-         [style.maxHeight]="showChildren ? '1000px' : '0px'"
-         [style.opacity]="showChildren ? '1' : '0'">
-      <ng-container *ngFor="let sub of goal.subGoals">
-        <app-goal-sub [goal]="sub" [isAdmin]="isAdmin" [depth]="depth + 1" (refresh)="refresh.emit()" [showChildren]="false">
+         [class.max-h-0]="!showChildren"
+         [class.max-h-[9999px]]="showChildren"
+         [class.opacity-0]="!showChildren"
+         [class.opacity-100]="showChildren">
+      <ng-container *ngFor="let sub of sortedSubGoals">
+        <app-goal-sub
+          [goal]="sub"
+          [isAdmin]="isAdmin"
+          [depth]="depth + 1"
+          [showChildren]=false
+          (refresh)="refresh.emit()">
         </app-goal-sub>
       </ng-container>
     </div>
+
+
   </div>
 </div>
