@@ -1,0 +1,23 @@
+<div class="grid grid-cols-2 gap-6 p-6 max-w-8xl mx-auto">
+  <div
+    *ngFor="let item of menuItems"
+    [routerLink]="[item.route]"
+    class="group flex flex-col h-80 bg-white dark:bg-gray-800 rounded-2xl shadow-lg transform transition duration-300 hover:scale-105 cursor-pointer overflow-hidden"
+  >
+    <!-- Image (75%) -->
+    <div class="h-3/4 w-full">
+      <img
+        [src]="item.imageUrl"
+        alt="{{ item.label }}"
+        class="w-full h-full object-cover"
+      />
+    </div>
+
+    <!-- Label (25%) -->
+    <div class="h-1/4 flex items-center justify-center">
+      <span class="text-xl font-semibold text-gray-800 dark:text-white">
+        {{ item.label }}
+      </span>
+    </div>
+  </div>
+</div>
