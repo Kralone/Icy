@@ -14,9 +14,9 @@ export class GoalSubComponent {
   @Input() isAdmin = false;
   @Input() depth = 0;
   @Output() refresh = new EventEmitter<void>();
+  @Input() showChildren = true;
 
   loading = false;
-  showChildren = true;
 
   constructor(private goalService: GoalService) {}
 

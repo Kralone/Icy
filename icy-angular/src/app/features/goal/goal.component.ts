@@ -33,19 +33,19 @@ export class GoalComponent implements OnInit {
     this.isAdmin = this.authService.isAdmin();
   }
 
-  // sortGoals(goals: Goal[]): Goal[] {
-  //   return goals
-  //     .filter(g => g.parentId === null)
-  //     .sort((a, b) => {
-  //       if (a.completed && !b.completed) return 1;
-  //       if (!a.completed && b.completed) return -1;
-  //       return this.calculateProgress(b) - this.calculateProgress(a);
-  //     });
-  // }
-  //
-  // calculateProgress(goal: Goal): number {
-  //   return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
-  // }
+  sortGoals(goals: Goal[]): Goal[] {
+    return goals
+      .filter(g => g.parentId === null)
+      .sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return this.calculateProgress(b) - this.calculateProgress(a);
+      });
+  }
+
+  calculateProgress(goal: Goal): number {
+    return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+  }
 
   handleAddGoal(data: any) {
     this.goalService.addGoal(data).subscribe(() => this.loadGoals());

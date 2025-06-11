@@ -90,7 +90,7 @@
          [style.maxHeight]="showChildren ? '1000px' : '0px'"
          [style.opacity]="showChildren ? '1' : '0'">
       <ng-container *ngFor="let sub of goal.subGoals">
-        <app-goal-sub [goal]="sub" [isAdmin]="isAdmin" [depth]="depth + 1" (refresh)="refresh.emit()">
+        <app-goal-sub [goal]="sub" [isAdmin]="isAdmin" [depth]="depth + 1" (refresh)="refresh.emit()" [showChildren]="false">
         </app-goal-sub>
       </ng-container>
     </div>
