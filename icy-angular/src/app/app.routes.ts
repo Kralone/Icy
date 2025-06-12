@@ -8,6 +8,7 @@ import {AdminDashboardComponent} from './features/admin/admin-dashboard/admin-da
 import {EventsComponent} from './features/events/events.component';
 import {GoalComponent} from './features/goal/goal.component';
 import {AdminMenuComponent} from './features/admin/menu/menu.component';
+import {FleetComponent} from './features/fleet/fleet.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -20,6 +21,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'hangar', component: HangarComponent },
+      { path: 'fleet', component: FleetComponent },
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/members', component: AdminDashboardComponent },
       { path: 'events', component: EventsComponent },

@@ -7,8 +7,7 @@ import {CommonModule} from '@angular/common';
   selector: 'app-admin-menu',
   imports: [
     RouterLink,
-    CommonModule,
-    RouterOutlet
+    CommonModule
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
