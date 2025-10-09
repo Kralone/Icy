@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import strings from '../../../../../assets/i18n/front.json';
-import {RouterLink} from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 
 @Component({
   selector: 'front-header',
@@ -12,4 +12,11 @@ import {RouterLink} from '@angular/router';
 })
 export class HeaderComponent {
   strings = strings.header;
+
+  constructor(private router: Router) {
+  }
+
+  goToRecruitment() {
+    this.router.navigate(['/recrutement']);
+  }
 }

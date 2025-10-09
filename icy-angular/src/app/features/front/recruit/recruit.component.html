@@ -1,0 +1,86 @@
+<div class="relative w-full h-screen bg-[#103643]">
+  <!-- Animated wave background -->
+  <div class="absolute inset-0 flex items-center justify-center overflow-hidden">
+    <div class="absolute w-96 h-96 bg-white rounded-full opacity-30 animate-wave"></div>
+    <div class="absolute w-96 h-96 bg-white rounded-full opacity-30 animate-wave delay-4000"></div>
+  </div>
+
+  <!-- Foreground SVG with hexagonal pattern as a mask -->
+  <div class="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+    <svg class="absolute w-full h-full opacity-100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <mask id="hex-mask">
+          <rect width="100%" height="100%" fill="white"/>
+          <pattern id="a" width="29" height="50.115" patternUnits="userSpaceOnUse">
+            <path stroke-width="4" fill="none" stroke="black" d="
+            M14.498 16.858 0 8.488.002-8.257l14.5-8.374L29-8.26l-.002 16.745zm0 50.06
+            L0 58.548l.002-16.745 14.5-8.373L29 41.8l-.002 16.744zM28.996 41.8
+            l-14.498-8.37.002-16.744L29 8.312l14.498 8.37-.002 16.745zm-29 0
+            -14.498-8.37.002-16.744L0 8.312l14.498 8.37-.002 16.745z"/>
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#a)"/>
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" fill="#5B5B5B" mask="url(#hex-mask)"/>
+    </svg>
+  </div>
+
+  <div class="login-wrapper flex items-center justify-center min-h-screen relative">
+    <div class="login-container bg-white p-8 rounded-lg shadow-lg animate__animated animate__fadeInUp w-[500px] max-h-screen overflow-y-auto">
+      <form [formGroup]="recruitmentForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+        <h2 class="text-2xl font-bold text-center text-gray-800">Recrutement Star Citizen</h2>
+
+        <label class="text-gray-600">Pseudo Discord</label>
+        <input type="text" formControlName="discord" required class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <label class="text-gray-600">Pseudo In-Game</label>
+        <input type="text" formControlName="inGame" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <label class="text-gray-600">Âge</label>
+        <input type="number" formControlName="age" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <label class="text-gray-600">Fuseau horaire / Disponibilités</label>
+        <input type="text" formControlName="availability" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <label class="text-gray-600">Rôles préférés</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label><input type="checkbox" value="commerce" (change)="onRoleChange($event)" /> Commerce</label>
+          <label><input type="checkbox" value="combat" (change)="onRoleChange($event)" /> Combat spatial</label>
+          <label><input type="checkbox" value="fps" (change)="onRoleChange($event)" /> Infanterie / FPS</label>
+          <label><input type="checkbox" value="exploration" (change)="onRoleChange($event)" /> Exploration</label>
+          <label><input type="checkbox" value="logistique" (change)="onRoleChange($event)" /> Ingénierie / Logistique</label>
+          <label><input type="checkbox" value="autre" (change)="onRoleChange($event)" /> Autre</label>
+
+        </div>
+
+        <label class="text-gray-600">Expérience sur Star Citizen</label>
+        <select formControlName="experience" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Choisir --</option>
+          <option value="débutant">Débutant</option>
+          <option value="moyen">Quelques mois</option>
+          <option value="vétéran">Vétéran</option>
+        </select>
+
+        <label class="text-gray-600">As-tu déjà fait partie d'une organisation ? Si oui, laquelle ?</label>
+        <input type="text" formControlName="previousOrg" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <label class="text-gray-600">Motivations</label>
+        <textarea formControlName="motivation" rows="4" required class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+        <button type="submit" [disabled]="recruitmentForm.invalid" class="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+          Envoyer
+        </button>
+
+        <p *ngIf="successMessage" class="text-green-500 text-center animate__animated animate__fadeIn">{{ successMessage }}</p>
+        <p *ngIf="errorMessage" class="text-red-500 text-center animate__animated animate__shakeX">{{ errorMessage }}</p>
+      </form>
+
+      <button
+        type="button"
+        class="mt-4 text-sm text-gray-500 hover:text-gray-700 hover:underline hover:cursor-pointer self-center transition"
+        (click)="onBack()">
+        ← Retour
+      </button>
+    </div>
+  </div>
+</div>

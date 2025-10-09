@@ -9,11 +9,13 @@ import {EventsComponent} from './features/events/events.component';
 import {GoalComponent} from './features/goal/goal.component';
 import {AdminMenuComponent} from './features/admin/menu/menu.component';
 import {FleetComponent} from './features/fleet/fleet.component';
+import {RecrutementComponent} from './features/front/recruit/recruit.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
   // { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  { path: 'recrutement', component: RecrutementComponent },
 
   {
     path: 'icy',
