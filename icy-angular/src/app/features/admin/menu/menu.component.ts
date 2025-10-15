@@ -30,6 +30,16 @@ export class AdminMenuComponent {
       route: '/icy/admin/collections',
     },
     {
+      label: 'Vaisseaux',
+      imageUrl: 'https://media.starcitizen.tools/thumb/e/e2/SC_MultiShip_Roles.jpg/800px-SC_MultiShip_Roles.jpg.webp',
+      route: '/',
+    },
+    {
+      label: 'Événements',
+      imageUrl: 'https://robertsspaceindustries.com/i/08fe2244a8775fd0035d274b01dab7d7902a28d4/ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjResf17hC1c31dKDgMVCohp9HDpEHngVixnEz/3-16_patchbanner_crop.webp',
+      route: '/',
+    },
+    {
       label: 'Coming Soon',
       imageUrl: 'https://screenplaysmag.com/wp-content/uploads/2024/12/Untitled-design-5-1.png',
       route: '/',
