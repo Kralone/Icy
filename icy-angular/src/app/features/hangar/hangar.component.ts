@@ -57,7 +57,7 @@ export class HangarComponent {
               private eRef: ElementRef, private toast: HotToastService, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.userId = this.authService.getCurrentUser().id
+    this.userId = this.authService.getUserIdFromToken()
 
     console.log(this.userId);
     this.loadBrands();

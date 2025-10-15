@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -31,12 +32,13 @@ public class JwtUtil {
     // 🔑 Génération des tokens
     // ==============================================================
 
-    public String generateAccessToken(String username, Collection<? extends GrantedAuthority> roles) {
+    public String generateAccessToken(String username, Collection<? extends GrantedAuthority> roles, UUID userId) {
         return Jwts.builder()
                 .subject(username)
                 .claim("roles", roles.stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList())
+                .claim("userId", userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration))
                 .signWith(secretKey, Jwts.SIG.HS256)

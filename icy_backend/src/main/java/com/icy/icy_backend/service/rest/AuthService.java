@@ -60,7 +60,8 @@ public class AuthService {
             // ✅ Génération du JWT avec les rôles
             String accessToken = jwtUtil.generateAccessToken(
                     userDetails.getUsername(),
-                    userDetails.getAuthorities()
+                    userDetails.getAuthorities(),
+                    user.getId()
             );
 
             String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
@@ -92,11 +93,13 @@ public class AuthService {
 
         // ⚙️ Récupérer les rôles depuis la BDD (source fiable)
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        User user = userService.getByUsername(username);
 
         // 🔁 Générer les nouveaux tokens
         String newAccessToken = jwtUtil.generateAccessToken(
                 username,
-                userDetails.getAuthorities()
+                userDetails.getAuthorities(),
+                user.getId()
         );
 
         String newRefreshToken = jwtUtil.generateRefreshToken(username);

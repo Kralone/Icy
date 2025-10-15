@@ -51,8 +51,12 @@ export class AuthService {
     return !!localStorage.getItem('token');
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
+  getToken(): string {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Aucun token JWT trouvé dans le stockage local.');
+    }
+    return token;
   }
 
   verifyToken(): Observable<boolean> {
@@ -101,5 +105,31 @@ export class AuthService {
   isAdmin(): Observable<boolean> {
     return this.http.get<boolean>('/api/auth/isAdmin');
   }
+
+  getUserIdFromToken(): string {
+    const token = this.getToken();
+
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Token JWT invalide : structure incorrecte.');
+    }
+
+    try {
+      const payload = JSON.parse(atob(parts[1]));
+      // ✅ On cherche d'abord "userId" puis éventuellement d'autres champs
+      const userId = payload?.userId || payload?.id || payload?.sub;
+
+      if (!userId || typeof userId !== 'string') {
+        throw new Error('Impossible de récupérer l’UUID utilisateur depuis le token.');
+      }
+
+      return userId;
+    } catch (error) {
+      console.error('❌ Erreur lors du décodage du token JWT :', error);
+      throw new Error('Erreur lors du décodage du token JWT.');
+    }
+  }
+
+
 
 }
