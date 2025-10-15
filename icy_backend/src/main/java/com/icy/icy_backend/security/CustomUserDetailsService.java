@@ -1,44 +1,56 @@
 package com.icy.icy_backend.security;
 
 import com.icy.icy_backend.db.entity.User;
+import com.icy.icy_backend.db.entity.UserRole;
 import com.icy.icy_backend.db.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
     private final UserRepository userRepository;
 
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Utilisé par Spring Security uniquement pendant le login (mot de passe requis).
-     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+        logger.debug("Chargement de l'utilisateur : {}", username);
+
+        User user = userRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + username));
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword()) // ✅ requis pour login
-                .authorities(Collections.emptyList())
-                .build();
-    }
+        logger.debug("Utilisateur trouvé : {}", user.getUsername());
 
-    /**
-     * Utilisé après authentification pour injecter un utilisateur dans le contexte JWT.
-     */
-    public UserAuthDetails loadUserForContext(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + username));
+        // 🔹 Extraction des rôles à partir des UserRole
+        List<GrantedAuthority> authorities = user.getRoles().stream()
+                .map(UserRole::getRole)
+                .map(role -> new SimpleGrantedAuthority(
+                        role.getName().startsWith("ROLE_") ? role.getName() : "ROLE_" + role.getName()
+                ))
 
-        return new UserAuthDetails(user.getId(), user.getUsername(), Collections.emptyList());
+                .collect(Collectors.toList());
+
+        logger.debug("Authorities extraites : {}", authorities);
+
+        return new UserAuthDetails(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                authorities
+        );
+
     }
 }

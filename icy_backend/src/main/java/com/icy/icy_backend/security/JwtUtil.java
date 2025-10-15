@@ -4,10 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtil {
@@ -24,9 +27,16 @@ public class JwtUtil {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String generateAccessToken(String username) {
+    // ==============================================================
+    // 🔑 Génération des tokens
+    // ==============================================================
+
+    public String generateAccessToken(String username, Collection<? extends GrantedAuthority> roles) {
         return Jwts.builder()
                 .subject(username)
+                .claim("roles", roles.stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration))
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -41,6 +51,10 @@ public class JwtUtil {
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
+
+    // ==============================================================
+    // ✅ Validation & extraction
+    // ==============================================================
 
     public boolean validateToken(String token) {
         try {
@@ -62,4 +76,43 @@ public class JwtUtil {
                 .getPayload();
         return claims.getSubject();
     }
+
+    public List<String> extractRoles(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Object rolesClaim = claims.get("roles");
+
+            if (rolesClaim == null) {
+                return List.of();
+            }
+
+            if (rolesClaim instanceof List<?>) {
+                // ✅ cas standard
+                return ((List<?>) rolesClaim).stream()
+                        .map(Object::toString)
+                        .toList();
+            } else if (rolesClaim instanceof String rolesString) {
+                // ✅ fallback si c'est une chaîne JSON
+                return List.of(rolesString.replace("[", "")
+                                .replace("]", "")
+                                .replace("\"", "")
+                                .split(","))
+                        .stream()
+                        .map(String::trim)
+                        .toList();
+            } else {
+                // fallback générique
+                return List.of(rolesClaim.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
 }

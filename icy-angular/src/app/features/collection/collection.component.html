@@ -1,0 +1,333 @@
+<div class="relative p-6 space-y-10">
+
+  <!-- =========== SECTION 1 : Templates disponibles =========== -->
+  <section>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
+        Templates disponibles
+      </h2>
+    </div>
+
+    <div class="flex items-center justify-between mb-6">
+      <ng-container *ngIf="isAdmin">
+        <button
+          type="button"
+          (click)="openTemplateModal()"
+          class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-200 transform hover:scale-105 rounded px-4 py-2 shadow-sm"
+        >
+          + Ajouter une collection
+        </button>
+      </ng-container>
+    </div>
+
+
+    <p *ngIf="isLoading" class="text-slate-500 dark:text-slate-400">Chargement…</p>
+
+    <div *ngIf="!isLoading && error"
+         class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
+                dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
+      Erreur de chargement.
+    </div>
+
+    <div *ngIf="!isLoading && !error"
+         class="overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
+
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
+             *ngIf="templates.length; else noTpl">
+        <thead class="bg-slate-50 dark:bg-slate-900/60">
+        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          <th class="px-4 py-3 w-16">#</th>
+          <th class="px-4 py-3">Nom</th>
+          <th class="px-4 py-3">Archétype</th>
+          <th class="px-4 py-3 text-right w-48">Action</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100 bg-white dark:bg-slate-900 dark:divide-slate-800">
+        <tr *ngFor="let t of templates; trackBy: trackByIdTemplate"
+            class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+          <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+            {{ t.id }}
+          </td>
+          <td class="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {{ t.name }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              {{ t.archetype }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 shadow-sm transition disabled:opacity-70"
+              [disabled]="loadingTemplateId === t.id"
+              (click)="createFromTemplate(t.id)">
+              <ng-container *ngIf="loadingTemplateId !== t.id; else loadingIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                  <path fill-rule="evenodd"
+                        d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z"
+                        clip-rule="evenodd" />
+                </svg>
+                Ajouter
+              </ng-container>
+              <ng-template #loadingIcon>
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10"
+                          stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+              </ng-template>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noTpl>
+        <p class="p-4 text-slate-500 dark:text-slate-400">Aucun template trouvé.</p>
+      </ng-template>
+    </div>
+  </section>
+
+  <!-- =========== SECTION 2 : Mes collections =========== -->
+  <section>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Mes collections</h2>
+    </div>
+
+    <p *ngIf="isLoadingUser" class="text-slate-500 dark:text-slate-400">Chargement…</p>
+
+    <div *ngIf="!isLoadingUser && errorUser"
+         class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
+                dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
+      Erreur lors du chargement des collections.
+    </div>
+
+    <div *ngIf="!isLoadingUser && !errorUser"
+         class="overflow-hidden rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-900">
+      <app-loading-overlay *ngIf="userReloading"></app-loading-overlay>
+
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 table-fixed">
+        <thead class="bg-slate-50 dark:bg-slate-900/60">
+        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          <th class="w-10 px-3 py-3"></th>
+          <th class="px-4 py-3">Nom</th>
+          <th class="px-4 py-3">Template</th>
+          <th class="px-4 py-3 text-right">Action</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        <ng-container *ngFor="let c of myCollections; trackBy: trackByIdCollection">
+
+          <!-- Ligne principale -->
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+              (click)="toggleCollectionRow(c.id)"
+              [attr.aria-expanded]="expandedId === c.id">
+
+            <td class="px-3 py-3 align-top">
+              <button type="button"
+                      class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-300 dark:border-slate-700
+                             hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      (click)="$event.stopPropagation(); toggleCollectionRow(c.id)"
+                      [attr.aria-expanded]="expandedId === c.id">
+                <svg aria-hidden="true"
+                     class="h-4 w-4 transition-transform duration-200 transform"
+                     [class.rotate-90]="expandedId === c.id"
+                     viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
+
+            <td class="px-4 py-3 align-top">
+              <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ c.name }}</div>
+            </td>
+
+            <td class="px-4 py-3 align-top">
+              <div class="text-xs text-slate-600 dark:text-slate-300">
+                {{ templateNameById.get(c.templateId) || ('#' + c.templateId) }}
+              </div>
+            </td>
+
+            <td class="px-4 py-3 align-middle text-right">
+              <button type="button"
+                      class="px-2 py-1.5 text-xs font-semibold rounded-md border border-red-400 text-red-600
+                             hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40 transition"
+                      (click)="$event.stopPropagation(); deleteCollection(c.id)">
+                Supprimer
+              </button>
+            </td>
+          </tr>
+
+          <!-- Détails de la collection -->
+          <tr *ngIf="expandedId === c.id" class="bg-slate-50/60 dark:bg-slate-800/40">
+            <td colspan="4" class="px-4 py-4">
+              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
+                <div *ngIf="rowLoading.has(c.id)" class="text-slate-500 dark:text-slate-400">Chargement des détails…</div>
+
+                <div *ngIf="!rowLoading.has(c.id) && rowError.has(c.id)"
+                     class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
+                            dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
+                  Erreur lors du chargement des détails.
+                </div>
+
+                <ng-container *ngIf="!rowLoading.has(c.id) && !rowError.has(c.id)">
+                  <ng-container *ngIf="detailCache.get(c.id) as d">
+                    <ng-container [ngTemplateOutlet]="gridTpl" [ngTemplateOutletContext]="{tpl: d.template, d: d}"></ng-container>
+                  </ng-container>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+
+        </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========= TEMPLATE DE LA GRILLE ========= -->
+  <ng-template #gridTpl let-tpl="tpl" let-d="d">
+    <div class="overflow-auto">
+      <div class="rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden">
+        <table class="min-w-full table-fixed">
+          <thead>
+          <tr class="text-xs uppercase text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800">
+            <th class="px-3 py-2 text-left">Variante</th>
+            <th class="px-3 py-2 text-center"
+                *ngFor="let x of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
+              {{ x }}
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let y of getAxisLabels(tpl?.axisY || d.axisY); let yi = index"
+              class="border-t border-slate-200 dark:border-slate-700">
+            <th class="px-3 py-2 text-left text-slate-700 dark:text-slate-300 font-medium">{{ y }}</th>
+
+            <td class="px-3 py-2 text-center"
+                *ngFor="let _ of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
+              <button type="button"
+                      class="h-7 w-7 rounded-md border text-xs font-semibold mx-auto flex items-center justify-center
+                             border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                      [class.bg-blue-600]="isChecked(d, xi, yi)"
+                      [class.text-white]="isChecked(d, xi, yi)"
+                      (click)="$event.stopPropagation(); toggleLocal(d, xi, yi)">
+                {{ isChecked(d, xi, yi) ? '✓' : '' }}
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+
+</div>
+
+<!-- MODAL AJOUT TEMPLATE -->
+<div *ngIf="showTemplateModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+     (click)="closeTemplateModal()">
+
+  <div class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-lg shadow-xl w-full max-w-3xl p-6 relative"
+       (click)="$event.stopPropagation()">
+
+    <!-- Bouton fermer -->
+    <button (click)="closeTemplateModal()"
+            class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">✖</button>
+
+    <h2 class="text-2xl font-bold mb-4">Créer un nouveau template</h2>
+
+    <!-- Formulaire -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm mb-1">Nom du template</label>
+        <input [(ngModel)]="newTemplate.name"
+               type="text"
+               class="w-full px-3 py-2 border rounded dark:bg-slate-800 dark:border-slate-700" />
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Archétype</label>
+        <input [(ngModel)]="newTemplate.archetype"
+               type="text"
+               class="w-full px-3 py-2 border rounded dark:bg-slate-800 dark:border-slate-700" />
+      </div>
+    </div>
+
+    <!-- Axes -->
+    <div class="mt-6">
+      <h3 class="font-semibold mb-2">Axes du tableau</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- Axe X -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium">Axe X</span>
+            <button (click)="addAxisValue('x')"
+                    class="text-xs text-blue-600 hover:text-blue-800">+ Ajouter</button>
+          </div>
+          <div *ngFor="let val of newTemplate.axisX; let i = index" class="flex items-center gap-2 mb-1">
+            <input [(ngModel)]="val.label" placeholder="Label"
+                   class="flex-1 px-2 py-1 border rounded text-sm dark:bg-slate-800 dark:border-slate-700" />
+            <button (click)="removeAxisValue('x', i)" class="text-red-500 text-sm">✖</button>
+          </div>
+        </div>
+
+        <!-- Axe Y -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium">Axe Y</span>
+            <button (click)="addAxisValue('y')"
+                    class="text-xs text-blue-600 hover:text-blue-800">+ Ajouter</button>
+          </div>
+          <div *ngFor="let val of newTemplate.axisY; let i = index" class="flex items-center gap-2 mb-1">
+            <input [(ngModel)]="val.label" placeholder="Label"
+                   class="flex-1 px-2 py-1 border rounded text-sm dark:bg-slate-800 dark:border-slate-700" />
+            <button (click)="removeAxisValue('y', i)" class="text-red-500 text-sm">✖</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="mt-6 border-t pt-4">
+      <h3 class="font-semibold mb-3">Aperçu du tableau</h3>
+      <div class="overflow-auto">
+        <table class="min-w-full border border-slate-300 dark:border-slate-700 text-sm">
+          <thead>
+          <tr class="bg-slate-100 dark:bg-slate-800">
+            <th class="px-3 py-2">Y \\ X</th>
+            <th *ngFor="let x of newTemplate.axisX" class="px-3 py-2">{{ x.label }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let y of newTemplate.axisY">
+            <th class="px-3 py-2 font-medium">{{ y.label }}</th>
+            <td *ngFor="let _ of newTemplate.axisX" class="border px-3 py-2 text-center">⬜</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Boutons -->
+    <div class="flex justify-end gap-4 mt-6">
+      <button (click)="closeTemplateModal()"
+              class="px-4 py-2 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+        Annuler
+      </button>
+      <button (click)="createTemplate()"
+              class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-semibold transition">
+        Créer
+      </button>
+    </div>
+  </div>
+</div>

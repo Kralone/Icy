@@ -30,7 +30,10 @@ export class GoalComponent implements OnInit {
       this.goals = goals
       this.isLoading = false;
     });
-    this.isAdmin = this.authService.isAdmin();
+    this.authService.isAdmin().subscribe(isAdmin => {
+      this.isAdmin = isAdmin;
+    });
+
   }
 
   sortGoals(goals: Goal[]): Goal[] {

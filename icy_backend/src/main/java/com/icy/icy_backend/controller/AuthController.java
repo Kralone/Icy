@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.LoginRequest;
 import com.icy.icy_backend.controller.dto.ResetPasswordRequest;
 import com.icy.icy_backend.controller.dto.response.LoginResponseDTO;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.security.JwtUtil;
 import com.icy.icy_backend.service.UserService;
 import com.icy.icy_backend.service.rest.AuthService;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,4 +87,10 @@ public class AuthController {
         }
         return ResponseEntity.status(200).build();
     }
+
+    @GetMapping("/isAdmin")
+    public ResponseEntity<Boolean> getAuthenticatedUser() {
+        return ResponseEntity.ok(AuthUtils.isAdmin());
+    }
+
 }

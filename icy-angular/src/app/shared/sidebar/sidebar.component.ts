@@ -17,7 +17,7 @@ export class SidebarComponent {
   @Output() sidebarToggled = new EventEmitter<boolean>();
   @HostBinding('class.sidebar-visible') isVisible = false;
 
-  isAdminUser = false;
+  isAdmin = false;
 
   constructor(
     private authService: AuthService,
@@ -25,7 +25,10 @@ export class SidebarComponent {
   }
 
   ngOnInit() {
-    this.isAdminUser = this.authService.isAdmin();
+    this.authService.isAdmin().subscribe(isAdmin => {
+      this.isAdmin = isAdmin;
+    });
+
 
     setTimeout(() => {
       this.isVisible = true;
@@ -36,7 +39,8 @@ export class SidebarComponent {
     { icon: '🚀', label: 'Mon Hangar', link: '/icy/hangar' },
     { icon: '🛸', label: 'La flotte', link: '/icy/fleet' },
     { icon: '📆', label: 'Events', link: '/icy/events' },
-    { icon: '📈', label: 'Objectifs', link: '/icy/goals' }
+    { icon: '📈', label: 'Objectifs', link: '/icy/goals' },
+    { icon: '📦', label: 'Collection', link: '/icy/collection' },
   ];
 
   isCollapsed = false;

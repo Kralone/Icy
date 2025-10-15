@@ -15,4 +15,15 @@ public class AuthUtils {
 
         throw new IllegalStateException("Aucun utilisateur authentifié trouvé dans le contexte.");
     }
+
+    public static boolean isAdmin() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
 }

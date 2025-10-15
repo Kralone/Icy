@@ -10,6 +10,7 @@ import {GoalComponent} from './features/goal/goal.component';
 import {AdminMenuComponent} from './features/admin/menu/menu.component';
 import {FleetComponent} from './features/fleet/fleet.component';
 import {RecrutementComponent} from './features/front/recruit/recruit.component';
+import {CollectionComponent} from './features/collection/collection.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -28,6 +29,7 @@ export const routes: Routes = [
       { path: 'admin/members', component: AdminDashboardComponent },
       { path: 'events', component: EventsComponent },
       { path: 'goals', component: GoalComponent },
+      { path: 'collection', component: CollectionComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

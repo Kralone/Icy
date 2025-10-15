@@ -24,7 +24,7 @@
           <span class="menu-text text-sm uppercase tracking-wide">{{ item.label }}</span>
         </a>
       </li>
-      <li *ngIf="isAdminUser">
+      <li *ngIf="isAdmin">
         <a
           [routerLink]="['/icy/admin']"
           routerLinkActive="active"

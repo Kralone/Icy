@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/IceForge.iml" filepath="$PROJECT_DIR$/.idea/IceForge.iml" />
+      <module fileurl="file://$PROJECT_DIR$/icy_backend/iceforge-backend.iml" filepath="$PROJECT_DIR$/icy_backend/iceforge-backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/icy/icy.iml" filepath="$PROJECT_DIR$/icy/icy.iml" />
     </modules>
   </component>

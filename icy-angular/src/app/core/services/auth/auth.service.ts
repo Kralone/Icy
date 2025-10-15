@@ -21,7 +21,7 @@ export class AuthService {
         const refreshToken = response.tokens.refreshToken;
         localStorage.setItem('token', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('user', JSON.stringify(response.user.username));
       }),
       map(() => true)
     );
@@ -80,13 +80,9 @@ export class AuthService {
   getCurrentUser(): any {
     const userJson = localStorage.getItem('user');
     if (!userJson) return null;
-    return JSON.parse(userJson);
+    return userJson;
   }
 
-  isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    return user?.roles?.includes('ADMIN');
-  }
 
   forceResetPassword(userId: string): Promise<void> {
     return fetch(`/api/auth/admin/force-reset-password?id=${userId}`, {
@@ -101,4 +97,9 @@ export class AuthService {
       }
     });
   }
+
+  isAdmin(): Observable<boolean> {
+    return this.http.get<boolean>('/api/auth/isAdmin');
+  }
+
 }

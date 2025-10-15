@@ -33,39 +33,50 @@ public class AuthService {
         this.userService = userService;
     }
 
-    public LoginResponseDTO  authenticate(String username, String password) {
+    public LoginResponseDTO authenticate(String username, String password) {
         logger.info("Tentative d'authentification pour l'utilisateur: {}", username);
-        logger.debug(passwordEncoder.encode("test"));
+
         try {
-            // Authentification manuelle
+            // Charger les détails utilisateur
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // Vérification du mot de passe
             if (!passwordEncoder.matches(password, userDetails.getPassword())) {
                 logger.warn("Échec d'authentification pour l'utilisateur: {}", username);
                 throw new InvalidCredentialsException("Identifiants incorrects !");
             }
+
             logger.info("Authentification réussie pour l'utilisateur: {}", username);
 
-            // Générer accessToken et refreshToken
-            String accessToken = jwtUtil.generateAccessToken(username);
-            String refreshToken = jwtUtil.generateRefreshToken(username);
-
             // Charger l'utilisateur complet depuis la BDD (avec les rôles)
-
-            // Récupération de l'utilisateur complet
             User user = userService.getByUsername(username);
             UserResponseDTO userDto = new UserResponseDTO(user);
-            if(user.getPwdReset())
-            {
+
+            // Si l'utilisateur doit réinitialiser son mot de passe
+            if (user.getPwdReset()) {
                 return new LoginResponseDTO("resetPwd", "resetPwd", userDto);
             }
 
+            // ✅ Génération du JWT avec les rôles
+            String accessToken = jwtUtil.generateAccessToken(
+                    userDetails.getUsername(),
+                    userDetails.getAuthorities()
+            );
+
+            String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
+
             logger.info("Tokens générés avec succès pour l'utilisateur: {}", username);
+
             return new LoginResponseDTO(accessToken, refreshToken, userDto);
+
+        } catch (InvalidCredentialsException e) {
+            throw e; // garde le message utilisateur
         } catch (Exception e) {
             logger.error("Erreur lors de l'authentification de l'utilisateur: {}", username, e);
             throw new InvalidCredentialsException("Erreur lors de l'authentification.");
         }
     }
+
 
 
     public Map<String, String> refreshAccessToken(String oldRefreshToken) {
@@ -79,16 +90,24 @@ public class AuthService {
         String username = jwtUtil.getSubjectFromToken(oldRefreshToken);
         logger.info("Rafraîchissement réussi pour l'utilisateur: {}", username);
 
-        // Génère un nouveau refresh token
-        String newRefreshToken = jwtUtil.generateRefreshToken(username);
-        String newAccessToken = jwtUtil.generateAccessToken(username);
+        // ⚙️ Récupérer les rôles depuis la BDD (source fiable)
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        logger.info("Nouveaux tokens générés pour l'utilisateur: {}", username);
+        // 🔁 Générer les nouveaux tokens
+        String newAccessToken = jwtUtil.generateAccessToken(
+                username,
+                userDetails.getAuthorities()
+        );
+
+        String newRefreshToken = jwtUtil.generateRefreshToken(username);
+
+        logger.info("Nouveaux tokens générés avec succès pour l'utilisateur: {}", username);
 
         return Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", newRefreshToken
         );
     }
+
 
 }

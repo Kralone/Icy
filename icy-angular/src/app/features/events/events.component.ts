@@ -77,7 +77,10 @@ export class EventsComponent {
 
   ngAfterViewInit() {
     this.wsService.connectEvent();
-    this.isAdmin = this.authService.isAdmin();
+    this.authService.isAdmin().subscribe(isAdmin => {
+      this.isAdmin = isAdmin;
+    });
+
     this.isLoading = true;
 
     this.eventService.listenForEventUpdate().subscribe((message) => {

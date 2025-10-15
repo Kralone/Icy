@@ -62,7 +62,12 @@ export class TopbarComponent {
       this.renderer.addClass(document.body, 'dark');
     }
 
-    console.log(this.authService.getCurrentUser())
-    this.name = this.authService.getCurrentUser().username;
+    const rawUsername = this.authService.getCurrentUser();
+
+    const cleanUsername = rawUsername.replace(/^"|"$/g, '');
+
+    this.name = `CMDR ${cleanUsername}`;
+
+    console.log(this.name);
   }
 }
