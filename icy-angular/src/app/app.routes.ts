@@ -11,6 +11,7 @@ import {AdminMenuComponent} from './features/admin/menu/menu.component';
 import {FleetComponent} from './features/fleet/fleet.component';
 import {RecrutementComponent} from './features/front/recruit/recruit.component';
 import {CollectionComponent} from './features/collection/collection.component';
+import {CollectionManagementComponent} from './features/admin/collection-management/collection-management.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -27,6 +28,7 @@ export const routes: Routes = [
       { path: 'fleet', component: FleetComponent },
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/members', component: AdminDashboardComponent },
+      { path: 'admin/collections', component: CollectionManagementComponent },
       { path: 'events', component: EventsComponent },
       { path: 'goals', component: GoalComponent },
       { path: 'collection', component: CollectionComponent },
