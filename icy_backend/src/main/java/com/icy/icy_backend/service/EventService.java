@@ -223,5 +223,26 @@ public class EventService {
         return messageService.buildResponse("event.type.deleted", null);
     }
 
+    public ResponseEntity<MessageResponse<EventType>> updateEventType(String name, EventType updatedType) {
+        EventType existing = eventTypeRepository.findById(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Type d’événement introuvable : " + name));
+
+        existing.setTextColor(updatedType.getTextColor());
+        existing.setImageUrl(updatedType.getImageUrl());
+        existing.setBackgroundColor(updatedType.getBackgroundColor());
+
+
+        // Si on veut aussi pouvoir renommer :
+        if (updatedType.getName() != null && !updatedType.getName().equals(name)) {
+            eventTypeRepository.deleteById(name);
+            existing.setName(updatedType.getName());
+
+        }
+
+        EventType saved = eventTypeRepository.save(existing);
+        logger.info("Type d’événement mis à jour : {}", saved.getName());
+        return messageService.buildResponse("event.type.updated", saved);
+    }
+
 
 }

@@ -86,4 +86,10 @@ export class EventService {
     return this.http.delete<void>(`/api/events/types/${name}`);
   }
 
+  updateEventType(type: any) {
+    return this.http.put(`${this.baseUrl}/types/${type.name}`, type);
+  }
+
+
+
 }

@@ -199,7 +199,25 @@
             </div>
           </td>
 
-          <td class="px-4 py-3 text-right">
+          <td class="px-4 py-3 text-right flex justify-end gap-2">
+            <button
+              type="button"
+              (click)="editType(type)"
+              class="inline-flex items-center gap-1.5 rounded-md border border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-900/30 text-xs font-semibold px-3 py-1.5 transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                <path
+                  d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
+                />
+                <path
+                  fill-rule="evenodd"
+                  d="M2 16.25A1.75 1.75 0 013.75 14.5h12.5a.75.75 0 010 1.5H3.75a.25.25 0 00-.25.25v.75a.25.25 0 00.25.25h12.5a.75.75 0 010 1.5H3.75A1.75 1.75 0 012 17.25v-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Modifier
+            </button>
+
             <button
               type="button"
               (click)="deleteType(type.name)"
@@ -227,6 +245,82 @@
     </div>
   </section>
 
-
-
 </div>
+
+<!-- === MODAL MODIFICATION TYPE === -->
+<div
+  *ngIf="editingType"
+  class="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+>
+  <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-lg shadow-lg">
+    <h3 class="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">
+      Modifier le type d’événement
+    </h3>
+
+    <div class="space-y-4">
+      <!-- Nom (readonly) -->
+      <input
+        [(ngModel)]="editingType.name"
+        name="name"
+        readonly
+        class="w-full p-2 rounded-md border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-not-allowed"
+      />
+
+      <!-- Couleur du texte -->
+      <div class="relative">
+        <span
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-slate-400"
+          [ngStyle]="{ backgroundColor: editingType.textColor || '#ffffff' }"
+        ></span>
+        <input
+          [(ngModel)]="editingType.textColor"
+          name="textColor"
+          placeholder="Couleur du texte (#fff)"
+          class="w-full pl-10 p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+
+      <!-- Couleur de fond -->
+      <div class="relative">
+        <span
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-slate-400"
+          [ngStyle]="{ backgroundColor: editingType.backgroundColor || '#000000' }"
+        ></span>
+        <input
+          [(ngModel)]="editingType.backgroundColor"
+          name="backgroundColor"
+          placeholder="Couleur du fond (#000)"
+          class="w-full pl-10 p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+
+      <!-- Image -->
+      <input
+        [(ngModel)]="editingType.imageUrl"
+        name="imageUrl"
+        placeholder="URL image"
+        class="w-full p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      />
+    </div>
+
+    <!-- Boutons -->
+    <div class="flex justify-end gap-3 mt-6">
+      <button
+        (click)="cancelEdit()"
+        class="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+      >
+        Annuler
+      </button>
+
+      <button
+        (click)="updateType()"
+        [disabled]="isTypeUpdating"
+        class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-60"
+      >
+        {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+

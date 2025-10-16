@@ -74,6 +74,10 @@ public class EventController {
         return eventService.getUpcomingEvents();
     }
 
+    @PutMapping("/types/{name}")
+    public ResponseEntity<MessageResponse<EventType>> updateType(@PathVariable String name, @RequestBody EventType updatedType) {
+        return eventService.updateEventType(name, updatedType);
+    }
 
 
 }

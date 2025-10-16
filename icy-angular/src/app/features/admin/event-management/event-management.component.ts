@@ -24,6 +24,9 @@ export class EventManagementComponent implements OnInit {
   isSubmitting = false;
   isLoadingTypes = false;
 
+  editingType: any = null;
+  isTypeUpdating = false;
+
   // 🧱 Gestion des types d'événements
   newType: EventType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
   isTypeSubmitting = false;
@@ -112,4 +115,39 @@ export class EventManagementComponent implements OnInit {
       error: (err) => console.error('Erreur suppression type', err),
     });
   }
+
+  editType(type: any) {
+    this.editingType = { ...type }; // clone pour éviter de modifier directement la liste
+  }
+
+  cancelEdit() {
+    this.editingType = null;
+  }
+
+  updateType() {
+    if (!this.editingType) return;
+    this.isTypeUpdating = true;
+
+    this.eventService.updateEventType(this.editingType).subscribe({
+      next: () => {
+        console.log('✅ Type modifié avec succès');
+        this.isTypeUpdating = false;
+
+        // 🔄 Recharge proprement la liste depuis le backend
+        this.loadEventTypes();
+
+        // 🔒 Ferme le modal s’il est ouvert
+        const modal = document.getElementById('editTypeModal') as HTMLDialogElement;
+        if (modal) modal.close();
+
+        // 🧹 Réinitialise l’état local
+        this.editingType = null;
+      },
+      error: (err) => {
+        console.error('❌ Erreur mise à jour type', err);
+        this.isTypeUpdating = false;
+      },
+    });
+  }
+
 }
