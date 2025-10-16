@@ -1,0 +1,159 @@
+<div class="relative p-6 space-y-10">
+
+  <!-- ===================== VAISSEAUX ===================== -->
+  <section>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Vaisseaux</h2>
+    </div>
+
+    <!-- Formulaire d’ajout -->
+    <div class="rounded-lg bg-white dark:bg-slate-900 ring-1 ring-black/5 dark:ring-white/10 p-4 space-y-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <input [(ngModel)]="newShip.name" placeholder="Nom"
+               class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+        <select
+          id="brand"
+          [(ngModel)]="newShip.brand"
+          name="brand"
+          class="w-full bg-gray-800 text-white p-2 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="" disabled selected>Choisir une marque...</option>
+          <option *ngFor="let brand of brands" [value]="brand.name">
+            {{ brand.name }}
+          </option>
+        </select>
+        <input [(ngModel)]="newShip.imageUrl" placeholder="URL Image"
+               class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+      </div>
+
+      <div class="flex justify-end">
+        <button (click)="createOrUpdateShip()" [disabled]="isSubmittingShip"
+                class="inline-flex items-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 shadow-sm transition disabled:opacity-60">
+          {{ editingShip ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Tableau des vaisseaux -->
+    <div class="overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+        <thead class="bg-slate-50 dark:bg-slate-900/60">
+        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          <th class="px-4 py-3">Nom</th>
+          <th class="px-4 py-3">Marque</th>
+          <th class="px-4 py-3">Image</th>
+          <th class="px-4 py-3 text-right w-32">Action</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100 bg-white dark:bg-slate-900 dark:divide-slate-800">
+        <tr *ngFor="let ship of paginatedShips.slice((shipPage - 1) * itemsPerPage, shipPage * itemsPerPage)"
+            class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+          <td class="px-4 py-3">{{ ship.name }}</td>
+          <td class="px-4 py-3">{{ ship.brand?.name }}</td>
+          <td class="px-4 py-3">
+            <img *ngIf="ship.imageUrl" [src]="ship.imageUrl" class="w-40 h-15 rounded border object-cover" />
+          </td>
+          <td class="px-4 py-3 text-right space-x-2">
+            <button (click)="editShip(ship)" class="text-xs text-blue-600 hover:underline">Éditer</button>
+            <button (click)="deleteShip(ship.id, ship.name)" class="text-xs text-red-600 hover:underline">Supprimer</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flex justify-center items-center mt-4 space-x-4">
+      <button
+        (click)="prevShipPage()"
+        [disabled]="currentShipPage === 1"
+        class="px-3 py-1 bg-blue-700 text-white rounded-md disabled:opacity-40"
+      >
+        ◀ Précédent
+      </button>
+
+      <span class="text-gray-300">
+    Page {{ currentShipPage }} / {{ totalShipPages }}
+  </span>
+
+      <button
+        (click)="nextShipPage()"
+        [disabled]="currentShipPage === totalShipPages"
+        class="px-3 py-1 bg-blue-700 text-white rounded-md disabled:opacity-40"
+      >
+        Suivant ▶
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== MARQUES ===================== -->
+  <section>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Marques</h2>
+    </div>
+
+    <!-- Formulaire d’ajout -->
+    <div class="rounded-lg bg-white dark:bg-slate-900 ring-1 ring-black/5 dark:ring-white/10 p-4 space-y-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <input [(ngModel)]="newBrand.name" placeholder="Nom"
+               class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+        <input [(ngModel)]="newBrand.imageUrl" placeholder="URL Image"
+               class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+      </div>
+
+      <div class="flex justify-end">
+        <button (click)="createOrUpdateBrand()" [disabled]="isSubmittingBrand"
+                class="inline-flex items-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 shadow-sm transition disabled:opacity-60">
+          {{ editingBrand ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Tableau des marques -->
+    <div class="overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+        <thead class="bg-slate-50 dark:bg-slate-900/60">
+        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          <th class="px-4 py-3">Nom</th>
+          <th class="px-4 py-3">Image</th>
+          <th class="px-4 py-3 text-right w-32">Action</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100 bg-white dark:bg-slate-900 dark:divide-slate-800">
+        <tr *ngFor="let brand of paginatedBrands.slice((brandPage - 1) * itemsPerPage, brandPage * itemsPerPage)"
+            class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+          <td class="px-4 py-3">{{ brand.name }}</td>
+          <td class="px-4 py-3">
+            <img *ngIf="brand.imageUrl" [src]="brand.imageUrl" class="w-40 h-20 rounded border object-cover" />
+          </td>
+          <td class="px-4 py-3 text-right space-x-2">
+            <button (click)="editBrand(brand)" class="text-xs text-blue-600 hover:underline">Éditer</button>
+            <button (click)="deleteBrand(brand.name)" class="text-xs text-red-600 hover:underline">Supprimer</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flex justify-center items-center mt-4 space-x-4">
+      <button
+        (click)="prevBrandPage()"
+        [disabled]="currentBrandPage === 1"
+        class="px-3 py-1 bg-blue-700 text-white rounded-md disabled:opacity-40"
+      >
+        ◀ Précédent
+      </button>
+
+      <span class="text-gray-300">
+    Page {{ currentBrandPage }} / {{ totalBrandPages }}
+  </span>
+
+      <button
+        (click)="nextBrandPage()"
+        [disabled]="currentBrandPage === totalBrandPages"
+        class="px-3 py-1 bg-blue-700 text-white rounded-md disabled:opacity-40"
+      >
+        Suivant ▶
+      </button>
+    </div>
+  </section>
+</div>

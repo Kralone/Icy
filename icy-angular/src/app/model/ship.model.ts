@@ -11,3 +11,12 @@ export interface Ship {
   inGamePurchase?: boolean;
   loaner?: boolean;
 }
+
+export interface ShipCreateDTO {
+  name: string;
+  brand: { name: string }; // le nom de la marque, côté backend tu résous en objet
+  imageUrl: string;
+  focus?: string;
+  crew?: string;
+  link?: string; // si tu veux garder un lien optionnel
+}

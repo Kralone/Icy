@@ -32,7 +32,7 @@ export class AdminMenuComponent {
     {
       label: 'Vaisseaux',
       imageUrl: 'https://media.starcitizen.tools/thumb/e/e2/SC_MultiShip_Roles.jpg/800px-SC_MultiShip_Roles.jpg.webp',
-      route: '/',
+      route: '/icy/admin/ships',
     },
     {
       label: 'Événements',
@@ -42,7 +42,7 @@ export class AdminMenuComponent {
     {
       label: 'Coming Soon',
       imageUrl: 'https://screenplaysmag.com/wp-content/uploads/2024/12/Untitled-design-5-1.png',
-      route: '/',
+      route: '/icy/admin/#',
     },
   ];
 }

@@ -34,7 +34,7 @@ public class Ship {
     private String crew;
 
     @Column(nullable = false)
-    private Boolean flightReady;
+    private Boolean flightReady = false;
 
     @Column(nullable = false)
     private String imageUrl;

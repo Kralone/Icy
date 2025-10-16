@@ -22,11 +22,24 @@ public class ShipController {
         this.brandService = brandService;
     }
 
+    // === SHIPS ===
     @GetMapping
     public ResponseEntity<MessageResponse<List<Ship>>> getAllShips() {
         return shipService.getAllShips();
     }
 
+    @GetMapping("/shipsByBrand")
+    public ResponseEntity<MessageResponse<List<Ship>>> getShipsByBrand(@RequestParam String brand) {
+        return shipService.getShipsByBrand(brand);
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<MessageResponse<Ship>> createShip(@RequestBody Ship ship) {
+        return shipService.createShip(ship);
+    }
+
+
+    // === BRANDS ===
     @GetMapping("/brands")
     public ResponseEntity<MessageResponse<List<String>>> getAllBrands() {
         return brandService.getAllBrands();
@@ -37,8 +50,18 @@ public class ShipController {
         return brandService.getAllBrandsWithImages();
     }
 
-    @GetMapping("/shipsByBrand")
-    public ResponseEntity<MessageResponse<List<Ship>>> getShipsByBrand(@RequestParam String brand) {
-        return shipService.getShipsByBrand(brand);
+    @PostMapping("/brands/create")
+    public ResponseEntity<MessageResponse<Brand>> createBrand(@RequestBody Brand brand) {
+        return brandService.createBrand(brand);
+    }
+
+    @PutMapping("/brands/update")
+    public ResponseEntity<MessageResponse<Brand>> updateBrand(@RequestBody Brand brand) {
+        return brandService.updateBrand(brand);
+    }
+
+    @DeleteMapping("/brands/delete")
+    public ResponseEntity<MessageResponse<String>> deleteBrand(@RequestParam String name) {
+        return brandService.deleteBrand(name);
     }
 }

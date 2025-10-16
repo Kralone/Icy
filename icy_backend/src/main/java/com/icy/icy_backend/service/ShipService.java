@@ -43,16 +43,17 @@ public class ShipService {
         return messageService.buildResponse("ship.found", ship, ship.getName());
     }
 
-    public ResponseEntity<MessageResponse<List<String>>> getAllBrands() {
-        logger.info("Récupération de toutes les marques de vaisseaux");
+    public ResponseEntity<MessageResponse<Ship>> createShip(Ship ship) {
+        logger.info("Création d’un nouveau vaisseau : {}", ship.getName());
 
-        List<String> brands = brandRepository.findAll()
-                .stream()
-                .map(Brand::getName)
-                .sorted()
-                .collect(Collectors.toList());
+        // Vérifie que la marque existe
+        Brand brand = brandRepository.findByName(ship.getBrand().getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + ship.getBrand().getName()));
 
-        return messageService.buildResponse("ship.brands.found", brands);
+        ship.setBrand(brand);
+        Ship savedShip = shipRepository.save(ship);
+
+        return messageService.buildResponse("ship.created", savedShip, savedShip.getName());
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getShipsByBrand(String brandName) {
@@ -72,4 +73,5 @@ public class ShipService {
                     return new ResourceNotFoundException("Aucun vaisseau trouvé avec l'ID: " + shipId);
                 });
     }
+
 }
