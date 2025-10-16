@@ -49,6 +49,16 @@ public class EventController {
         return eventService.getAllEventsTypes();
     }
 
+    @PostMapping("/types")
+    public ResponseEntity<MessageResponse<EventType>> createType(@RequestBody EventType type) {
+        return eventService.createEventType(type.getName(), type.getTextColor(), type.getImageUrl());
+    }
+
+    @DeleteMapping("/types/{name}")
+    public ResponseEntity<MessageResponse<Void>> deleteType(@PathVariable String name) {
+        return eventService.deleteEventType(name);
+    }
+
     @PostMapping( "/participation")
     public ResponseEntity<MessageResponse<Void>> setParticipation(@RequestBody EventParticipationRequest dto) {
         return eventService.setParticipation(dto.getEventId(), dto.getStatus());
@@ -63,4 +73,7 @@ public class EventController {
     public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
         return eventService.getUpcomingEvents();
     }
+
+
+
 }

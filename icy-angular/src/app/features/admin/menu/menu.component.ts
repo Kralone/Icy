@@ -37,7 +37,7 @@ export class AdminMenuComponent {
     {
       label: 'Événements',
       imageUrl: 'https://robertsspaceindustries.com/i/08fe2244a8775fd0035d274b01dab7d7902a28d4/ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjResf17hC1c31dKDgMVCohp9HDpEHngVixnEz/3-16_patchbanner_crop.webp',
-      route: '/',
+      route: '/icy/admin/events',
     },
     {
       label: 'Coming Soon',

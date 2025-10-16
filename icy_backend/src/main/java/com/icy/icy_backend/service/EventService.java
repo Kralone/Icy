@@ -9,6 +9,7 @@ import com.icy.icy_backend.db.repository.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.EventRepository;
 import com.icy.icy_backend.db.repository.EventTypeRepository;
 import com.icy.icy_backend.db.repository.UserRepository;
+import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.rest.AuthService;
@@ -154,10 +155,6 @@ public class EventService {
         }
     }
 
-    public ResponseEntity<MessageResponse<List<EventType>>> getAllEventsTypes() {
-        return messageService.buildResponse("event.type.list", eventTypeRepository.findAll());
-    }
-
 
 // ------------------------------Event Type Service--------------------------------------
 
@@ -189,4 +186,42 @@ public class EventService {
         }
 
     }
+
+// -----------------------------
+// Types d'événements
+// -----------------------------
+
+
+    public ResponseEntity<MessageResponse<List<EventType>>> getAllEventsTypes() {
+        return messageService.buildResponse("event.type.list", eventTypeRepository.findAll());
+    }
+
+    public ResponseEntity<MessageResponse<EventType>> createEventType(String name, String textColor, String imageUrl) {
+        if (eventTypeRepository.existsById(name)) {
+            logger.warn("Tentative de création d’un type d’événement existant : {}", name);
+            throw new ResourceAlreadyExistsException("Le type d’événement existe déjà : " + name);
+        }
+
+        EventType newType = new EventType();
+        newType.setName(name);
+        newType.setTextColor(textColor);
+        newType.setImageUrl(imageUrl);
+
+        EventType saved = eventTypeRepository.save(newType);
+        logger.info("Type d’événement créé : {}", saved.getName());
+        return messageService.buildResponse("event.type.created", saved);
+    }
+
+    public ResponseEntity<MessageResponse<Void>> deleteEventType(String name) {
+        if (!eventTypeRepository.existsById(name)) {
+            logger.warn("Tentative de suppression d’un type d’événement inexistant : {}", name);
+            throw new ResourceNotFoundException("Type d’événement introuvable : " + name);
+        }
+
+        eventTypeRepository.deleteById(name);
+        logger.info("Type d’événement supprimé : {}", name);
+        return messageService.buildResponse("event.type.deleted", null);
+    }
+
+
 }

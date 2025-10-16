@@ -12,6 +12,7 @@ import {FleetComponent} from './features/fleet/fleet.component';
 import {RecrutementComponent} from './features/front/recruit/recruit.component';
 import {CollectionComponent} from './features/collection/collection.component';
 import {CollectionManagementComponent} from './features/admin/collection-management/collection-management.component';
+import {EventManagementComponent} from './features/admin/event-management/event-management.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/members', component: AdminDashboardComponent },
       { path: 'admin/collections', component: CollectionManagementComponent },
+      { path: 'admin/events', component: EventManagementComponent },
       { path: 'events', component: EventsComponent },
       { path: 'goals', component: GoalComponent },
       { path: 'collection', component: CollectionComponent },

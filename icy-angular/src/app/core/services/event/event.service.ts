@@ -75,4 +75,15 @@ export class EventService {
   getUpcomingEvents(): Observable<{ data: EventDTO[] }> {
     return this.http.get<{ data: EventDTO[] }>('/api/events/upcoming');
   }
+
+  createType(type: any): Observable<EventType> {
+    return this.http.post<{ data: EventType }>('/api/events/types', type).pipe(
+      map(res => res.data)
+    );
+  }
+
+  deleteType(name: string): Observable<void> {
+    return this.http.delete<void>(`/api/events/types/${name}`);
+  }
+
 }
