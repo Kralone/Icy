@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import {CollectionsService} from '../../../core/services/collection/collection.service';
-
+import { CollectionsService } from '../../../core/services/collection/collection.service';
 
 type AxisItem = { label: string };
 
@@ -15,42 +14,19 @@ type AxisItem = { label: string };
 })
 export class CollectionManagementComponent {
 
-  // État local identique à l'ancien modal (avec {label:string})
-  newTemplate: {
-    name: string;
-    archetype: string;
-    axisX: AxisItem[];
-    axisY: AxisItem[];
-  } = {
+  // --- Création ---
+  newTemplate = {
     name: '',
     archetype: '',
-    axisX: [{ label: '' }], // un champ vide par défaut pour UX
+    axisX: [{ label: '' }],
     axisY: [{ label: '' }],
   };
 
   isSubmitting = false;
+  isLoadingTemplateDetail = false;
 
-  constructor(
-    private service: CollectionsService,
-    private router: Router
-  ) {}
 
-  // --- Gestion des axes ---
-
-  addAxisValue(axis: 'x' | 'y') {
-    const list = axis === 'x' ? this.newTemplate.axisX : this.newTemplate.axisY;
-    list.push({ label: '' });
-  }
-
-  removeAxisValue(axis: 'x' | 'y', index: number) {
-    const list = axis === 'x' ? this.newTemplate.axisX : this.newTemplate.axisY;
-    if (list.length > 1) {
-      list.splice(index, 1);
-    } else {
-      // on garde au moins une ligne pour UX : on vide simplement
-      list[0].label = '';
-    }
-  }
+  constructor(private service: CollectionsService, private router: Router) {}
 
   trackByIndex = (_: number, __: unknown) => _;
 
@@ -62,28 +38,19 @@ export class CollectionManagementComponent {
     return nameOk && archetypeOk && axisXOk && axisYOk && !this.isSubmitting;
   }
 
-  // --- Création ---
-
   async createTemplate() {
     if (!this.canCreate) return;
-
     this.isSubmitting = true;
 
-    // Conversion {label}[] -> string[]
     const payload = {
       name: this.newTemplate.name.trim(),
       archetype: this.newTemplate.archetype.trim(),
-      axisX: this.newTemplate.axisX
-        .map(a => a.label.trim())
-        .filter(Boolean),
-      axisY: this.newTemplate.axisY
-        .map(a => a.label.trim())
-        .filter(Boolean),
+      axisX: this.newTemplate.axisX.map(a => a.label.trim()).filter(Boolean),
+      axisY: this.newTemplate.axisY.map(a => a.label.trim()).filter(Boolean),
     };
 
     try {
       await this.service.createTemplate(payload);
-      // retour à la liste
       await this.router.navigate(['/collections']);
     } catch (error) {
       console.error('Erreur lors de la création du template :', error);
@@ -95,4 +62,140 @@ export class CollectionManagementComponent {
   cancel() {
     this.router.navigate(['/collections']);
   }
+
+  // --- Gestion des templates existants ---
+  templates: any[] = [];
+  isLoadingTemplates = false;
+  editingTemplate: any = null;
+  isUpdatingTemplate = false;
+
+  ngOnInit() {
+    this.loadTemplates();
+  }
+
+  loadTemplates() {
+    this.isLoadingTemplates = true;
+    this.service.getAllTemplates().subscribe({
+      next: (res) => {
+        this.templates = res.data || res;
+        this.isLoadingTemplates = false;
+      },
+      error: (err) => {
+        console.error('Erreur chargement templates', err);
+        this.isLoadingTemplates = false;
+      },
+    });
+  }
+
+  deleteTemplate(template: any) {
+    if (!confirm(`Supprimer le template "${template.name}" ?`)) return;
+    this.service.deleteTemplate(template.name).subscribe({
+      next: () => this.loadTemplates(),
+      error: (err) => console.error('Erreur suppression template', err),
+    });
+  }
+
+  // 🧩 Charger et ouvrir l’édition complète du template
+  editTemplate(template: any) {
+    this.editingTemplate = { loading: true };
+    this.isLoadingTemplateDetail = true;
+
+    this.service.getTemplateById(template.id).subscribe({
+      next: (res) => {
+        const t = res.data || res;
+
+        // 🧩 Fonction pour transformer la structure du backend
+        const normalizeAxis = (axis: any): { label: string }[] => {
+          if (!axis) return [];
+          if (Array.isArray(axis)) return axis.map(v => ({ label: v.label ?? v }));
+          if (axis.values && Array.isArray(axis.values)) {
+            return axis.values.map((v: any) => ({ label: v.label ?? '' }));
+          }
+          return [];
+        };
+
+        this.editingTemplate = {
+          id: t.id,
+          name: t.name,
+          archetype: t.archetype,
+          axisX: normalizeAxis(t.axisX),
+          axisY: normalizeAxis(t.axisY),
+        };
+
+        this.isLoadingTemplateDetail = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement du template complet', err);
+        this.isLoadingTemplateDetail = false;
+        this.editingTemplate = null;
+      },
+    });
+  }
+
+
+  cancelEdit() {
+    this.editingTemplate = null;
+  }
+
+  updateTemplate() {
+    if (!this.editingTemplate) return;
+    this.isUpdatingTemplate = true;
+
+    const payload = {
+      id: this.editingTemplate.id,
+      name: this.editingTemplate.name,
+      archetype: this.editingTemplate.archetype,
+      axisX: {
+        name: 'X',
+        values: this.editingTemplate.axisX.map((a: any, index: number) => ({
+          id: a.label.toLowerCase().replace(/\s+/g, '_'),
+          label: a.label.trim(),
+        })),
+      },
+      axisY: {
+        name: 'Y',
+        values: this.editingTemplate.axisY.map((a: any, index: number) => ({
+          id: a.label.toLowerCase().replace(/\s+/g, '_'),
+          label: a.label.trim(),
+        })),
+      },
+    };
+
+    this.service.updateTemplate(payload).subscribe({
+      next: () => {
+        this.isUpdatingTemplate = false;
+        this.editingTemplate = null;
+        this.loadTemplates();
+      },
+      error: (err) => {
+        console.error('Erreur mise à jour template', err);
+        this.isUpdatingTemplate = false;
+      },
+    });
+  }
+
+
+// Ajoute un axe (création ou édition)
+  addAxis(axis: 'x' | 'y', target: 'new' | 'edit' = 'new') {
+    const template = target === 'new' ? this.newTemplate : this.editingTemplate;
+    if (!template) return;
+
+    const key = axis === 'x' ? 'axisX' : 'axisY';
+    template[key] = template[key] || [];
+    template[key].push({ label: '' });
+  }
+
+// Supprime un axe (création ou édition)
+  removeAxis(axis: 'x' | 'y', index: number, target: 'new' | 'edit' = 'new') {
+    const template = target === 'new' ? this.newTemplate : this.editingTemplate;
+    if (!template) return;
+
+    const key = axis === 'x' ? 'axisX' : 'axisY';
+    if (template[key].length > 1) {
+      template[key].splice(index, 1);
+    } else {
+      template[key][0].label = '';
+    }
+  }
+
 }

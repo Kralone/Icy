@@ -53,4 +53,23 @@ export class CollectionsService {
     return this.http.post(`${this.baseUrl}/templates`, payload);
   }
 
+  getAllTemplates() {
+    return this.http.get<{ data: any[] }>(`${this.baseUrl}/templates`);
+  }
+
+  updateTemplate(template: any) {
+    return this.http.put(`${this.baseUrl}/templates/${encodeURIComponent(template.name)}`, template);
+  }
+
+  deleteTemplate(name: string) {
+    return this.http.delete(`${this.baseUrl}/templates/${encodeURIComponent(name)}`);
+  }
+
+  getTemplateById(id: number) {
+    return this.http.get<any>(`${this.baseUrl}/templates/${id}`);
+  }
+
+
+
+
 }

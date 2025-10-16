@@ -9,73 +9,75 @@
     </a>
   </div>
 
-  <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
-    Ajouter un événement
-  </h1>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+      Ajouter un événement
+    </h1>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div>
-      <label class="block text-sm mb-1">Titre</label>
-      <input
-        [(ngModel)]="newEvent.title"
-        type="text"
-        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-      />
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm mb-1">Titre</label>
+        <input
+          [(ngModel)]="newEvent.title"
+          type="text"
+          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Type</label>
+        <select
+          [(ngModel)]="newEvent.type"
+          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+        >
+          <option value="" disabled selected hidden>Choisir un type</option>
+          <option *ngFor="let type of types" [value]="type.name">
+            {{ type.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-sm mb-1">Description</label>
+        <textarea
+          [(ngModel)]="newEvent.description"
+          rows="3"
+          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Début</label>
+        <input
+          [(ngModel)]="newEvent.startDateTime"
+          type="datetime-local"
+          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Fin</label>
+        <input
+          [(ngModel)]="newEvent.endDateTime"
+          type="datetime-local"
+          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
     </div>
 
-    <div>
-      <label class="block text-sm mb-1">Type</label>
-      <select
-        [(ngModel)]="newEvent.type"
-        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+    <div class="flex justify-end mt-8">
+      <button
+        (click)="createEvent()"
+        [disabled]="isFormInvalid"
+        class="px-4 py-2 rounded shadow-md font-semibold transition
+               text-white bg-green-600 hover:bg-green-700
+               disabled:bg-gray-300 dark:disabled:bg-gray-600
+               disabled:text-gray-500 dark:disabled:text-gray-400
+               disabled:cursor-not-allowed"
       >
-        <option value="" disabled selected hidden>Choisir un type</option>
-        <option *ngFor="let type of types" [value]="type.name">
-          {{ type.name }}
-        </option>
-      </select>
+        {{ isSubmitting ? 'Création…' : 'Ajouter' }}
+      </button>
     </div>
-
-    <div class="sm:col-span-2">
-      <label class="block text-sm mb-1">Description</label>
-      <textarea
-        [(ngModel)]="newEvent.description"
-        rows="3"
-        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-      ></textarea>
-    </div>
-
-    <div>
-      <label class="block text-sm mb-1">Début</label>
-      <input
-        [(ngModel)]="newEvent.startDateTime"
-        type="datetime-local"
-        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-      />
-    </div>
-
-    <div>
-      <label class="block text-sm mb-1">Fin</label>
-      <input
-        [(ngModel)]="newEvent.endDateTime"
-        type="datetime-local"
-        class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-      />
-    </div>
-  </div>
-
-  <div class="flex justify-end mt-8">
-    <button
-      (click)="createEvent()"
-      [disabled]="isFormInvalid"
-      class="px-4 py-2 rounded shadow-md font-semibold transition
-             text-white bg-green-600 hover:bg-green-700
-             disabled:bg-gray-300 dark:disabled:bg-gray-600
-             disabled:text-gray-500 dark:disabled:text-gray-400
-             disabled:cursor-not-allowed"
-    >
-      {{ isSubmitting ? 'Création…' : 'Ajouter' }}
-    </button>
   </div>
 
   <!-- ========== SECTION : Types d'événements ========== -->
