@@ -49,15 +49,20 @@ export class CollectionManagementComponent {
       axisY: this.newTemplate.axisY.map(a => a.label.trim()).filter(Boolean),
     };
 
-    try {
-      await this.service.createTemplate(payload);
-      await this.router.navigate(['/collections']);
-    } catch (error) {
-      console.error('Erreur lors de la création du template :', error);
-    } finally {
-      this.isSubmitting = false;
-    }
+    this.service.createTemplate(payload).subscribe({
+      next: (res) => {
+        console.log('✅ Template créé avec succès :', res);
+        this.isSubmitting = false;
+        this.newTemplate = { name: '', archetype: '', axisX: [{ label: '' }], axisY: [{ label: '' }] };
+        this.loadTemplates(); // Recharge la liste immédiatement
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la création du template :', err);
+        this.isSubmitting = false;
+      }
+    });
   }
+
 
   cancel() {
     this.router.navigate(['/collections']);

@@ -47,8 +47,12 @@ export class GoalComponent implements OnInit {
   }
 
   calculateProgress(goal: Goal): number {
-    return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+    if (!goal || goal.target <= 0) return 0;
+    const ratio = (goal.current / goal.target) * 100;
+    return Math.min(Math.max(ratio, 0), 100);
   }
+
+
 
   handleAddGoal(data: any) {
     this.goalService.addGoal(data).subscribe(() => this.loadGoals());

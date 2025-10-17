@@ -1,28 +1,28 @@
-<div class="relative p-6 space-y-10">
+<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8 space-y-12">
+
+  <!-- Halo lumineux d’arrière-plan -->
+  <div class="absolute inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
 
   <!-- =========== SECTION 1 : Templates disponibles =========== -->
-  <section>
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
-        Templates disponibles
-      </h2>
+  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 transition hover:shadow-cyan-500/10">
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl font-bold text-cyan-200">Templates disponibles</h2>
     </div>
 
-    <p *ngIf="isLoading" class="text-slate-500 dark:text-slate-400">Chargement…</p>
+    <p *ngIf="isLoading" class="text-gray-400 text-center">Chargement…</p>
 
     <div *ngIf="!isLoading && error"
-         class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
-                dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
-      Erreur de chargement.
+         class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+      ❌ Erreur de chargement.
     </div>
 
-    <div *ngIf="!isLoading && !error"
-         class="overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
-
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
-             *ngIf="templates.length; else noTpl">
-        <thead class="bg-slate-50 dark:bg-slate-900/60">
-        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+    <div *ngIf="!isLoading && !error" class="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <table class="min-w-full divide-y divide-white/10" *ngIf="templates.length; else noTpl">
+        <thead class="bg-white/10 text-cyan-300 uppercase text-xs font-semibold">
+        <tr class="text-left">
           <th class="px-4 py-3 w-16">#</th>
           <th class="px-4 py-3">Nom</th>
           <th class="px-4 py-3">Archétype</th>
@@ -30,24 +30,19 @@
         </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 bg-white dark:bg-slate-900 dark:divide-slate-800">
-        <tr *ngFor="let t of templates; trackBy: trackByIdTemplate"
-            class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
-          <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">
-            {{ t.id }}
-          </td>
-          <td class="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {{ t.name }}
-          </td>
+        <tbody class="divide-y divide-white/5 text-gray-200">
+        <tr *ngFor="let t of templates; trackBy: trackByIdTemplate" class="hover:bg-white/5 transition">
+          <td class="px-4 py-3 text-sm text-gray-400 tabular-nums">{{ t.id }}</td>
+          <td class="px-4 py-3 text-sm font-semibold text-white">{{ t.name }}</td>
           <td class="px-4 py-3">
-            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {{ t.archetype }}
-            </span>
+              <span class="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+                {{ t.archetype }}
+              </span>
           </td>
           <td class="px-4 py-3 text-right">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 shadow-sm transition disabled:opacity-70"
+              class="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan-600 to-blue-700 hover:scale-[1.03] transition text-white text-xs font-semibold px-3 py-1.5 shadow-lg disabled:opacity-70"
               [disabled]="loadingTemplateId === t.id"
               (click)="createFromTemplate(t.id)">
               <ng-container *ngIf="loadingTemplateId !== t.id; else loadingIcon">
@@ -74,32 +69,30 @@
       </table>
 
       <ng-template #noTpl>
-        <p class="p-4 text-slate-500 dark:text-slate-400">Aucun template trouvé.</p>
+        <p class="p-4 text-gray-400 text-center">Aucun template trouvé.</p>
       </ng-template>
     </div>
   </section>
 
   <!-- =========== SECTION 2 : Mes collections =========== -->
-  <section>
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Mes collections</h2>
+  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 transition hover:shadow-cyan-500/10">
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl font-bold text-cyan-200">Mes collections</h2>
     </div>
 
-    <p *ngIf="isLoadingUser" class="text-slate-500 dark:text-slate-400">Chargement…</p>
+    <p *ngIf="isLoadingUser" class="text-gray-400 text-center">Chargement…</p>
 
     <div *ngIf="!isLoadingUser && errorUser"
-         class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
-                dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
-      Erreur lors du chargement des collections.
+         class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+      ❌ Erreur lors du chargement des collections.
     </div>
 
-    <div *ngIf="!isLoadingUser && !errorUser"
-         class="overflow-hidden rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-900">
+    <div *ngIf="!isLoadingUser && !errorUser" class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 relative">
       <app-loading-overlay *ngIf="userReloading"></app-loading-overlay>
 
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 table-fixed">
-        <thead class="bg-slate-50 dark:bg-slate-900/60">
-        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+      <table class="min-w-full divide-y divide-white/10 table-fixed">
+        <thead class="bg-white/10 text-cyan-300 uppercase text-xs font-semibold">
+        <tr class="text-left">
           <th class="w-10 px-3 py-3"></th>
           <th class="px-4 py-3">Nom</th>
           <th class="px-4 py-3">Template</th>
@@ -107,18 +100,17 @@
         </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody class="divide-y divide-white/10">
         <ng-container *ngFor="let c of myCollections; trackBy: trackByIdCollection">
 
           <!-- Ligne principale -->
-          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+          <tr class="hover:bg-white/5 cursor-pointer transition"
               (click)="toggleCollectionRow(c.id)"
               [attr.aria-expanded]="expandedId === c.id">
 
             <td class="px-3 py-3 align-top">
               <button type="button"
-                      class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-300 dark:border-slate-700
-                             hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-cyan-400/40 hover:bg-cyan-500/10 transition"
                       (click)="$event.stopPropagation(); toggleCollectionRow(c.id)"
                       [attr.aria-expanded]="expandedId === c.id">
                 <svg aria-hidden="true"
@@ -132,36 +124,28 @@
               </button>
             </td>
 
-            <td class="px-4 py-3 align-top">
-              <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ c.name }}</div>
+            <td class="px-4 py-3 text-white font-semibold">{{ c.name }}</td>
+            <td class="px-4 py-3 text-cyan-300 text-sm">
+              {{ templateNameById.get(c.templateId) || ('#' + c.templateId) }}
             </td>
-
-            <td class="px-4 py-3 align-top">
-              <div class="text-xs text-slate-600 dark:text-slate-300">
-                {{ templateNameById.get(c.templateId) || ('#' + c.templateId) }}
-              </div>
-            </td>
-
-            <td class="px-4 py-3 align-middle text-right">
+            <td class="px-4 py-3 text-right">
               <button type="button"
-                      class="px-2 py-1.5 text-xs font-semibold rounded-md border border-red-400 text-red-600
-                             hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40 transition"
+                      class="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-400/50 text-red-300 hover:bg-red-400/10 transition"
                       (click)="$event.stopPropagation(); deleteCollection(c.id)">
                 Supprimer
               </button>
             </td>
           </tr>
 
-          <!-- Détails de la collection -->
-          <tr *ngIf="expandedId === c.id" class="bg-slate-50/60 dark:bg-slate-800/40">
+          <!-- Détails -->
+          <tr *ngIf="expandedId === c.id" class="bg-white/5">
             <td colspan="4" class="px-4 py-4">
-              <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
-                <div *ngIf="rowLoading.has(c.id)" class="text-slate-500 dark:text-slate-400">Chargement des détails…</div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div *ngIf="rowLoading.has(c.id)" class="text-gray-400 text-center">Chargement des détails…</div>
 
                 <div *ngIf="!rowLoading.has(c.id) && rowError.has(c.id)"
-                     class="rounded-lg border border-red-300/60 bg-red-50 text-red-700 px-4 py-3
-                            dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
-                  Erreur lors du chargement des détails.
+                     class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+                  ❌ Erreur lors du chargement des détails.
                 </div>
 
                 <ng-container *ngIf="!rowLoading.has(c.id) && !rowError.has(c.id)">
@@ -182,10 +166,10 @@
   <!-- ========= TEMPLATE DE LA GRILLE ========= -->
   <ng-template #gridTpl let-tpl="tpl" let-d="d">
     <div class="overflow-auto">
-      <div class="rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden">
+      <div class="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
         <table class="min-w-full table-fixed">
           <thead>
-          <tr class="text-xs uppercase text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800">
+          <tr class="text-xs uppercase text-cyan-300 bg-white/10">
             <th class="px-3 py-2 text-left">Variante</th>
             <th class="px-3 py-2 text-center"
                 *ngFor="let x of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
@@ -195,15 +179,15 @@
           </thead>
           <tbody>
           <tr *ngFor="let y of getAxisLabels(tpl?.axisY || d.axisY); let yi = index"
-              class="border-t border-slate-200 dark:border-slate-700">
-            <th class="px-3 py-2 text-left text-slate-700 dark:text-slate-300 font-medium">{{ y }}</th>
+              class="border-t border-white/10">
+            <th class="px-3 py-2 text-left text-white font-medium">{{ y }}</th>
 
             <td class="px-3 py-2 text-center"
                 *ngFor="let _ of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
               <button type="button"
                       class="h-7 w-7 rounded-md border text-xs font-semibold mx-auto flex items-center justify-center
-                             border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                      [class.bg-blue-600]="isChecked(d, xi, yi)"
+                               border-cyan-400/40 hover:bg-cyan-500/10 transition"
+                      [class.bg-cyan-600]="isChecked(d, xi, yi)"
                       [class.text-white]="isChecked(d, xi, yi)"
                       (click)="$event.stopPropagation(); toggleLocal(d, xi, yi)">
                 {{ isChecked(d, xi, yi) ? '✓' : '' }}
@@ -215,5 +199,4 @@
       </div>
     </div>
   </ng-template>
-
 </div>

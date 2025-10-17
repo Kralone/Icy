@@ -1,47 +1,41 @@
-<!-- Zone principale avec loading overlay -->
-<div class="relative h-full min-h-[calc(100vh-64px)]">
-  <!-- Overlay de chargement -->
+<!-- ================== PAGE VAISSEAUX (STYLE ICY corrigé) ================== -->
+<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
   <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
 
-  <!-- Contenu flouté pendant le chargement -->
   <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300">
-
-    <!-- Filtres et bouton Ajouter -->
-    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4">
-      <!-- Groupe input + dropdown -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <!-- Input recherche -->
+    <!-- Header filtres + Ajouter -->
+    <div class="flex flex-wrap justify-between items-center px-6 pt-6 pb-4 gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <input
           [(ngModel)]="shipFilter"
           (ngModelChange)="onFilterChange()"
           type="text"
-          placeholder="Rechercher un vaisseau..."
-          class="text-sm px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+          placeholder="Rechercher un vaisseau…"
+          class="w-64 px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 backdrop-blur-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
         />
 
-        <!-- Dropdown marques avec clic extérieur -->
         <div class="relative" appClickOutside (appClickOutside)="showBrandDropdown = false">
           <button
             type="button"
             (click)="showBrandDropdown = !showBrandDropdown"
-            class="text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded shadow-sm hover:bg-gray-100 dark:hover:bg-gray-600"
+            class="px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 transition backdrop-blur-lg"
           >
             Marques
           </button>
 
           <div
             *ngIf="showBrandDropdown"
-            class="absolute left-0 mt-2 w-60 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-20 p-2 max-h-64 overflow-y-auto"
+            class="absolute left-0 mt-2 w-56 bg-[#0d1b2a]/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg z-20 p-3 max-h-64 overflow-y-auto"
           >
             <label
               *ngFor="let brand of brands"
-              class="flex items-center gap-2 text-sm text-gray-800 dark:text-white px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
+              class="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white/20 cursor-pointer"
             >
               <input
                 type="checkbox"
                 [checked]="selectedBrands.includes(brand.name)"
                 (change)="toggleBrand(brand.name)"
-                class="form-checkbox text-blue-600"
+                class="text-cyan-400 accent-cyan-400"
               />
               {{ brand.name }}
             </label>
@@ -49,193 +43,161 @@
         </div>
       </div>
 
-      <!-- Bouton Ajouter -->
       <button
-        class="text-sm text-white dark:text-gray-800 bg-gray-800 dark:bg-gray-200 border border-transparent hover:bg-gray-700 dark:hover:bg-gray-300 transition duration-200 transform hover:scale-105 cursor-pointer rounded px-4 py-2 shadow-sm"
         (click)="openModal()"
+        class="px-4 py-2 text-sm rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold
+               shadow-[0_0_12px_rgba(56,189,248,0.35)] hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] transform hover:scale-105 transition"
       >
         + Ajouter
       </button>
     </div>
 
-
-
-
-    <!-- Grille de vaisseaux -->
+    <!-- Grille -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
-      <div *ngFor="let ship of filteredShips" class="group relative bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
-        <!-- Bouton Supprimer -->
+      <div
+        *ngFor="let ship of filteredShips"
+        class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg overflow-hidden transition transform hover:scale-105 hover:border-cyan-400"
+      >
         <button
           (click)="deleteShip(ship.shipId)"
-          class="absolute top-2 right-2 cursor-pointer text-red-600 bg-white dark:bg-gray-900 rounded-full p-1 shadow hover:bg-red-100 dark:hover:bg-red-900
-         opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
+          title="Supprimer"
         >
-          <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><path d="M20 18h2v16h-2z"/><path d="M24 18h2v16h-2z"/><path d="M28 18h2v16h-2z"/><path d="M12 12h26v2H12z"/><path d="M30 12h-2v-1c0-.6-.4-1-1-1h-4c-.6 0-1 .4-1 1v1h-2v-1c0-1.7 1.3-3 3-3h4c1.7 0 3 1.3 3 3v1z"/><path d="M31 40H19c-1.6 0-3-1.3-3.2-2.9l-1.8-24 2-.2 1.8 24c0 .6.6 1.1 1.2 1.1h12c.6 0 1.1-.5 1.2-1.1l1.8-24 2 .2-1.8 24C34 38.7 32.6 40 31 40z"/></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-        <!-- Image -->
-        <img [src]="ship.imageUrl" class="w-full h-40 object-cover" />
 
+        <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
 
-        <!-- Infos -->
-        <div class="p-4">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ ship.name }}</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-300">Fabricant: {{ ship.brand }}</p>
-          <p class="text-sm text-gray-600 dark:text-gray-300">Rôle: {{ ship.focus }}</p>
-          <p class="text-sm text-gray-600 dark:text-gray-300">Équipage: {{ ship.crew }}</p>
+        <div class="p-4 space-y-1">
+          <h2 class="text-lg font-semibold text-white">{{ ship.name }}</h2>
+          <p class="text-sm text-gray-300">Fabricant : {{ ship.brand }}</p>
+          <p class="text-sm text-gray-300">Rôle : {{ ship.focus }}</p>
+          <p class="text-sm text-gray-300">Équipage : {{ ship.crew }}</p>
         </div>
-        <!-- Tag d’acquisition -->
+
         <div
-          class="absolute bottom-2 right-2 px-3 py-1 rounded-full text-xs font-semibold border shadow-sm transition backdrop-blur-sm"
+          class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border bg-white/10 border-white/20 backdrop-blur-md shadow-sm"
           [ngClass]="{
-    'bg-blue-100 text-blue-800 border-blue-500 dark:bg-blue-600 dark:text-white dark:border-blue-400': !ship.inGamePurchase && !ship.loaner,
-    'bg-green-100 text-green-800 border-green-500 dark:bg-green-600 dark:text-white dark:border-green-400': ship.inGamePurchase,
-    'bg-yellow-100 text-yellow-800 border-yellow-500 dark:bg-yellow-600 dark:text-white dark:border-yellow-400': ship.loaner
-  }"
+            'text-blue-400 border-blue-400': !ship.inGamePurchase && !ship.loaner,
+            'text-green-400 border-green-400': ship.inGamePurchase,
+            'text-yellow-400 border-yellow-400': ship.loaner
+          }"
         >
-          {{
-            ship.loaner
-              ? 'Loaner'
-              : ship.inGamePurchase
-                ? 'In Game'
-                : 'RSI'
-          }}
+          {{ ship.loaner ? 'Loaner' : ship.inGamePurchase ? 'In Game' : 'RSI' }}
         </div>
-
-
       </div>
     </div>
-  </div>
-    <!-- Message si aucun vaisseau -->
-    <div
-      *ngIf="!isLoading && ships.length === 0"
-      class="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-300 text-lg"
-    >
-      <svg class="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M20 21V7a2 2 0 0 0-2-2h-4.586a1 1 0 0 1-.707-.293l-1.414-1.414a1 1 0 0 0-.707-.293H6a2 2 0 0 0-2 2v16" />
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9 17h6m-6-4h6m-6-4h6" />
+
+    <!-- Aucun vaisseau -->
+    <div *ngIf="!isLoading && ships.length === 0" class="flex flex-col items-center justify-center h-96 text-gray-300">
+      <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 21V7a2 2 0 0 0-2-2h-4.586a1 1 0 0 1-.707-.293l-1.414-1.414a1 1 0 0 0-.707-.293H6a2 2 0 0 0-2 2v16" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6m-6-4h6m-6-4h6" />
       </svg>
       Aucun vaisseau enregistré pour le moment.
     </div>
+  </div>
 </div>
 
-<div *ngIf="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="closeModal()">
-  <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg shadow-xl w-full max-w-2xl p-6 relative" (click)="$event.stopPropagation()">
+<!-- ================== MODAL AJOUT corrigé ================== -->
+<div
+  *ngIf="isModalOpen"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl px-4"
+  (click)="closeModal()"
+>
+  <div
+    class="relative w-full max-w-2xl bg-[#0d1b2a]/90 text-white backdrop-blur-2xl border border-white/20
+           rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.35)] p-6"
+    (click)="$event.stopPropagation()"
+  >
+    <button (click)="closeModal()" class="absolute top-3 right-3 text-gray-300 hover:text-white">✖</button>
 
-    <!-- Fermeture -->
-    <button (click)="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">✖</button>
+    <div class="relative w-full h-64 mb-6 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/20">
+      <img *ngIf="selectedShipImageUrl" [src]="selectedShipImageUrl" alt="Vaisseau" class="w-full h-full object-cover" />
+      <div *ngIf="!selectedShipImageUrl" class="w-full h-full grid place-items-center bg-white/5 text-gray-400">
+        Aperçu du vaisseau
+      </div>
 
-    <div class="relative w-full h-64 mb-6 rounded-md overflow-hidden shadow-lg">
-      <!-- Image du vaisseau -->
-      <img
-        *ngIf="selectedShipImageUrl"
-        [src]="selectedShipImageUrl"
-        alt="Vaisseau"
-        class="w-full h-full object-cover"
-      />
-
-      <!-- Logo de la marque en superposition -->
       <img
         *ngIf="selectedBrandImageUrl"
         [src]="selectedBrandImageUrl"
         alt="Logo marque"
-        class="absolute top-2 right-2 w-20 h-20 object-contain bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-md"
+        class="absolute top-3 right-3 w-20 h-20 object-contain bg-white/20 rounded-full p-2 shadow-md"
       />
     </div>
 
-
-    <!-- Sélection de la marque -->
+    <!-- Sélection marque -->
     <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Marque</label>
-      <select [(ngModel)]="selectedBrand" (change)="onBrandChange()" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
+      <label class="block text-sm font-medium mb-1 text-cyan-200">Marque</label>
+      <select
+        [(ngModel)]="selectedBrand"
+        (change)="onBrandChange()"
+        class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+      >
         <option *ngFor="let brand of brands" [value]="brand.name">{{ brand.name }}</option>
       </select>
     </div>
 
-    <!-- Sélection du vaisseau -->
+    <!-- Sélection vaisseau -->
     <div *ngIf="filteredShipsModal.length > 0" class="mb-4">
-      <label class="block text-sm font-medium mb-1">Vaisseau</label>
-      <select [(ngModel)]="selectedShip" (change)="onShipChange()" [compareWith]="compareShips" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
+      <label class="block text-sm font-medium mb-1 text-cyan-200">Vaisseau</label>
+      <select
+        [(ngModel)]="selectedShip"
+        (change)="onShipChange()"
+        [compareWith]="compareShips"
+        class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+      >
         <option *ngFor="let ship of filteredShipsModal" [ngValue]="ship">{{ ship.name }}</option>
       </select>
     </div>
+
+    <!-- Méthode d'acquisition -->
     <div class="mb-4">
-      <label class="block text-sm font-medium mb-2 text-gray-800 dark:text-white">Méthode d'acquisition</label>
+      <label class="block text-sm font-medium mb-2 text-cyan-200">Méthode d’acquisition</label>
       <div class="flex flex-wrap gap-2">
-        <!-- RSI -->
         <label
+          class="cursor-pointer px-4 py-2 rounded-xl border border-white/20 bg-[#1b263b]/60 hover:bg-[#1b263b]/80 transition duration-200 shadow-sm text-sm font-medium"
           [ngClass]="{
-        'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white border-blue-600 ring-2 ring-blue-300 dark:ring-blue-400':
-          acquisitionType === 'rsi',
-        'bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600':
-          acquisitionType !== 'rsi'
-      }"
-          class="cursor-pointer px-4 py-2 rounded-xl border transition duration-200 shadow-sm text-sm font-medium"
+            'ring-2 ring-cyan-400 bg-cyan-500/10 border-cyan-400': acquisitionType === 'rsi'
+          }"
         >
-          <input
-            type="radio"
-            name="acquisition"
-            value="rsi"
-            [(ngModel)]="acquisitionType"
-            class="sr-only"
-          />
+          <input type="radio" name="acquisition" value="rsi" [(ngModel)]="acquisitionType" class="sr-only" />
           Achat RSI
         </label>
 
-        <!-- In Game -->
         <label
+          class="cursor-pointer px-4 py-2 rounded-xl border border-white/20 bg-[#1b263b]/60 hover:bg-[#1b263b]/80 transition duration-200 shadow-sm text-sm font-medium"
           [ngClass]="{
-        'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white border-blue-600 ring-2 ring-blue-300 dark:ring-blue-400':
-          acquisitionType === 'ingame',
-        'bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600':
-          acquisitionType !== 'ingame'
-      }"
-          class="cursor-pointer px-4 py-2 rounded-xl border transition duration-200 shadow-sm text-sm font-medium"
+            'ring-2 ring-cyan-400 bg-cyan-500/10 border-cyan-400': acquisitionType === 'ingame'
+          }"
         >
-          <input
-            type="radio"
-            name="acquisition"
-            value="ingame"
-            [(ngModel)]="acquisitionType"
-            class="sr-only"
-          />
+          <input type="radio" name="acquisition" value="ingame" [(ngModel)]="acquisitionType" class="sr-only" />
           Achat in-game
         </label>
 
-        <!-- Loaner -->
         <label
+          class="cursor-pointer px-4 py-2 rounded-xl border border-white/20 bg-[#1b263b]/60 hover:bg-[#1b263b]/80 transition duration-200 shadow-sm text-sm font-medium"
           [ngClass]="{
-        'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white border-blue-600 ring-2 ring-blue-300 dark:ring-blue-400':
-          acquisitionType === 'loaner',
-        'bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600':
-          acquisitionType !== 'loaner'
-      }"
-          class="cursor-pointer px-4 py-2 rounded-xl border transition duration-200 shadow-sm text-sm font-medium"
+            'ring-2 ring-cyan-400 bg-cyan-500/10 border-cyan-400': acquisitionType === 'loaner'
+          }"
         >
-          <input
-            type="radio"
-            name="acquisition"
-            value="loaner"
-            [(ngModel)]="acquisitionType"
-            class="sr-only"
-          />
+          <input type="radio" name="acquisition" value="loaner" [(ngModel)]="acquisitionType" class="sr-only" />
           Loaner
         </label>
       </div>
     </div>
 
-
+    <!-- Bouton -->
     <div class="flex justify-end mt-6">
       <button
         (click)="onAddShip()"
-        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded shadow-md transition"
+        class="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500
+               shadow-lg transition disabled:opacity-50"
       >
         Ajouter
       </button>
     </div>
   </div>
 </div>
-
-

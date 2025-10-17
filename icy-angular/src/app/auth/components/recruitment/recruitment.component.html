@@ -1,0 +1,97 @@
+<div class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+
+  <!-- Effet de brillance en arrière-plan -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/20 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="relative z-10 w-[450px] bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 animate__animated animate__fadeInUp">
+
+    <!-- Logo -->
+    <div class="flex flex-col items-center mb-6">
+      <img src="assets/images/home/iceforgeLogo.png" alt="Logo Corpo" class="w-20 h-20 drop-shadow-lg mb-3" />
+      <h1 class="text-3xl text-center font-bold tracking-wide text-cyan-200 uppercase">Rejoindre <br> Iceforge Industries</h1>
+      <p class="text-sm text-gray-300 mt-1 text-center">
+        Forgés dans la glace, unis dans le feu.
+      </p>
+    </div>
+
+    <!-- Formulaire -->
+    <form [formGroup]="recruitmentForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+
+      <div>
+        <label class="text-gray-300 text-sm">Nom en jeu</label>
+        <input type="text" formControlName="username"
+               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+               placeholder="Handle RSI ou pseudo" />
+      </div>
+
+      <div>
+        <label class="text-gray-300 text-sm">Discord Tag</label>
+        <input type="text" formControlName="discordTag"
+               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+               placeholder="Ex: Glace#1337" />
+      </div>
+
+      <div>
+        <label class="text-gray-300 text-sm">Motivation</label>
+        <textarea rows="3" formControlName="motivation"
+                  class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                  placeholder="Pourquoi veux-tu rejoindre l’organisation ?"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-gray-300 text-sm">Parrain (optionnel)</label>
+          <input type="text" formControlName="referral"
+                 class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                 placeholder="Nom du membre" />
+        </div>
+
+        <div>
+          <label class="text-gray-300 text-sm">Expérience en jeu</label>
+          <input type="text" formControlName="experience"
+                 class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                 placeholder="Ex: 300h de vol, exploration..." />
+        </div>
+      </div>
+
+      <div>
+        <label class="text-gray-300 text-sm">Gameplay préféré</label>
+        <input type="text" formControlName="preferredGameplay"
+               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+               placeholder="Commerce, Exploration, Combat, etc." />
+      </div>
+
+      <button type="submit"
+              [disabled]="loading || recruitmentForm.invalid"
+              class="relative mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
+        <span *ngIf="!loading">🚀 Envoyer ma candidature</span>
+        <span *ngIf="loading" class="flex justify-center items-center">
+          <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          Envoi en cours...
+        </span>
+      </button>
+
+      <p *ngIf="successMessage" class="text-green-400 text-center mt-3 animate__animated animate__fadeIn">
+        {{ successMessage }}
+      </p>
+
+      <p *ngIf="errorMessage" class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
+        {{ errorMessage }}
+      </p>
+    </form>
+
+    <button
+      type="button"
+      routerLink="/"
+      class="mt-6 text-sm text-gray-400 hover:text-cyan-300 hover:underline transition self-center block mx-auto">
+      ← Accueil
+    </button>
+  </div>
+</div>

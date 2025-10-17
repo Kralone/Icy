@@ -49,7 +49,8 @@ export class EventsComponent {
     locale: 'fr',
     firstDay: 1,
     events: [],
-    height: '95%',
+    height: 'auto',
+    contentHeight: 'auto',
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',

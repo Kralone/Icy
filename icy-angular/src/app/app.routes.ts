@@ -9,17 +9,17 @@ import {EventsComponent} from './features/events/events.component';
 import {GoalComponent} from './features/goal/goal.component';
 import {AdminMenuComponent} from './features/admin/menu/menu.component';
 import {FleetComponent} from './features/fleet/fleet.component';
-import {RecrutementComponent} from './features/front/recruit/recruit.component';
 import {CollectionComponent} from './features/collection/collection.component';
 import {CollectionManagementComponent} from './features/admin/collection-management/collection-management.component';
 import {EventManagementComponent} from './features/admin/event-management/event-management.component';
 import {ShipManagementComponent} from './features/admin/ship-management/ship-management.component';
+import {RecruitmentComponent} from './auth/components/recruitment/recruitment.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
   // { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'recrutement', component: RecrutementComponent },
+  { path: 'recrutement', component: RecruitmentComponent },
 
   {
     path: 'icy',

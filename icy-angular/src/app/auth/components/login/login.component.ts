@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import { Router } from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import {firstValueFrom} from 'rxjs';
 import {NgIf} from '@angular/common';
@@ -10,7 +10,8 @@ import {NgIf} from '@angular/common';
   templateUrl: './login.component.html',
   imports: [
     ReactiveFormsModule,
-    NgIf
+    NgIf,
+    RouterLink
   ],
   styleUrls: ['./login.component.css']
 })

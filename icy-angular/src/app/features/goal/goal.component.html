@@ -1,24 +1,46 @@
-<div class="p-6 overflow-y-auto">
+<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8">
+
+  <!-- Arrière-plan lumineux -->
+  <div class="absolute inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
+
   <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
 
   <!-- Contenu flouté pendant le chargement -->
-  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300">
+  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300 space-y-6">
 
+    <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Objectifs</h1>
-      <button *ngIf="isAdmin" class="bg-blue-600 text-white px-4 py-2 rounded shadow" (click)="showAddModal = true">+ Ajouter</button>
+      <h1 class="text-3xl font-bold text-cyan-200 tracking-wide">🎯 Objectifs</h1>
+      <button
+        *ngIf="isAdmin"
+        class="bg-gradient-to-r from-cyan-600 to-blue-700 text-white px-5 py-2 rounded-xl shadow-md hover:scale-[1.03] transition"
+        (click)="showAddModal = true">
+        + Ajouter
+      </button>
     </div>
 
-    <div *ngIf="isLoading" class="text-gray-500">Chargement...</div>
+    <!-- États -->
+    <div *ngIf="isLoading" class="text-gray-400 text-center">Chargement...</div>
+    <div *ngIf="!isLoading && goals.length === 0" class="text-gray-400 text-center">Aucun objectif.</div>
 
-    <div *ngIf="!isLoading && goals.length === 0" class="text-gray-500">Aucun objectif.</div>
-
-    <div *ngFor="let goal of goals">
-      <app-goal-sub [goal]="goal" [depth]="0" [isAdmin]="isAdmin" (refresh)="ngOnInit()" [showChildren]="true"></app-goal-sub>
+    <!-- Liste des objectifs -->
+    <div *ngFor="let goal of goals" class="animate-fadeInUp">
+      <app-goal-sub
+        [goal]="goal"
+        [depth]="0"
+        [isAdmin]="isAdmin"
+        (refresh)="ngOnInit()"
+        [showChildren]="true">
+      </app-goal-sub>
     </div>
+
   </div>
 </div>
 
+<!-- Modal d’ajout -->
 <app-add-goal-modal
   *ngIf="showAddModal"
   [allGoals]="goals"
