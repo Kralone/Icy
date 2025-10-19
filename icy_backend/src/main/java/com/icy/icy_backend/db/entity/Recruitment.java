@@ -58,7 +58,7 @@ public class Recruitment {
         this.experience = dto.getExperience();
         this.preferredGameplay = dto.getPreferredGameplay();
         this.accept = dto.isAccept();
-        this.status = dto.getStatus();
+        this.status = dto.getStatus() != null ? dto.getStatus() : "PENDING";
         this.comment = dto.getComment();
         this.createdAt = dto.getCreatedAt() != null ? dto.getCreatedAt() : Instant.now();
     }
@@ -72,7 +72,7 @@ public class Recruitment {
         this.experience = dto.getExperience();
         this.preferredGameplay = dto.getPreferredGameplay();
         this.accept = dto.isAccept();
-        this.status = dto.getStatus();
+        this.status = dto.getStatus() != null ? dto.getStatus() : "PENDING";
         this.comment = dto.getComment();
     }
 }

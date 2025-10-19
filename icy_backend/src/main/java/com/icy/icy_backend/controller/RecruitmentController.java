@@ -42,4 +42,17 @@ public class RecruitmentController {
         recruitmentService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/accept")
+    public ResponseEntity<Void> acceptRecruitment(@PathVariable Long id) {
+        recruitmentService.updateStatus(id, "ACCEPTED");
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/refuse")
+    public ResponseEntity<Void> refuseRecruitment(@PathVariable Long id) {
+        recruitmentService.updateStatus(id, "REFUSED");
+        return ResponseEntity.ok().build();
+    }
+
 }

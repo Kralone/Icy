@@ -4,12 +4,15 @@ import com.icy.icy_backend.controller.dto.RecruitmentDTO;
 import com.icy.icy_backend.db.entity.Recruitment;
 import com.icy.icy_backend.db.repository.RecruitmentRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class RecruitmentService {
 
@@ -52,4 +55,15 @@ public class RecruitmentService {
         recruitmentRepository.delete(existing);
         logger.warn("Deleted recruitment {}", id);
     }
+
+    @Transactional
+    public void updateStatus(Long id, String status) {
+        Recruitment recruitment = recruitmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recruitment not found"));
+
+        recruitment.setStatus(status);
+        recruitmentRepository.save(recruitment);
+        log.info("Recruitment {} marked as {}", id, status);
+    }
+
 }

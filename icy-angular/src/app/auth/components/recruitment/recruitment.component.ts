@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RecruitmentService } from './recruitment.service';
 import { Recruitment } from './recruitment.model';
 import {Router, RouterLink} from '@angular/router';
+import {RecruitmentService} from '../../../core/services/recruitment/recruitment.service';
 
 @Component({
   selector: 'app-recruitment',
@@ -36,19 +36,24 @@ export class RecruitmentComponent implements OnInit {
   }
 
   onSubmit() {
+    console.log('🚀 onSubmit() déclenché');
     if (this.recruitmentForm.invalid) return;
 
     this.loading = true;
     this.successMessage = '';
     this.errorMessage = '';
 
-    const recruitment: Recruitment = {
-      ...this.recruitmentForm.value,
-      accept: false,
-      status: 'PENDING'
-    } as Recruitment;
+    // ✅ Envoi d’un objet propre et typé
+    const recruitmentData = {
+      username: this.recruitmentForm.value.username,
+      discordTag: this.recruitmentForm.value.discordTag,
+      motivation: this.recruitmentForm.value.motivation,
+      referral: this.recruitmentForm.value.referral,
+      experience: this.recruitmentForm.value.experience,
+      preferredGameplay: this.recruitmentForm.value.preferredGameplay,
+    };
 
-    this.recruitmentService.create(recruitment).subscribe({
+    this.recruitmentService.create(recruitmentData).subscribe({
       next: () => {
         this.loading = false;
         this.successMessage = '✅ Candidature envoyée avec succès !';
@@ -57,10 +62,12 @@ export class RecruitmentComponent implements OnInit {
         // Redirection automatique après 3 secondes
         setTimeout(() => this.router.navigate(['/auth/login']), 3000);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Erreur création candidature :', err);
         this.loading = false;
         this.errorMessage = '❌ Une erreur est survenue. Merci de réessayer.';
       }
     });
   }
+
 }

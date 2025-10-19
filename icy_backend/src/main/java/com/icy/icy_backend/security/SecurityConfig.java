@@ -42,8 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/refresh",
-                                "/api/auth/reset-password",
-                                "/api/auth/admin/force-reset-password",
+                                "/api/recruitment",
                                 "/ws/**"
                         ).permitAll()
                         // toutes les autres requêtes nécessitent un token valide

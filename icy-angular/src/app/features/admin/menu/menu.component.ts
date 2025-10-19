@@ -22,7 +22,7 @@ export class AdminMenuComponent {
     {
       label: 'Recrutement',
       imageUrl: 'https://static1.dualshockersimages.com/wordpress/wp-content/uploads/2022/07/Star-Citizen-3172-1-scaled.jpg',
-      route: '/events',
+      route: '/icy/admin/recrutement',
     },
     {
       label: 'Collections',
