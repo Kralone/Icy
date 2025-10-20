@@ -38,6 +38,14 @@ public class CollectionController {
         return collectionService.getTemplate(id);
     }
 
+    @PutMapping("/templates/{name}")
+    public TemplateDetailDTO updateTemplateByName(@PathVariable String name, @RequestBody TemplateCreateDTO dto) {
+        log.debug("Mise à jour du template name={} avec données={}", name, dto);
+        return collectionService.updateTemplateByName(name, dto);
+    }
+
+
+
     // ==============================
     // ===== USER COLLECTIONS =======
     // ==============================

@@ -177,4 +177,26 @@ public class CollectionService {
         }
     }
 
+    @Transactional
+    public TemplateDetailDTO updateTemplateByName(String name, TemplateCreateDTO dto) {
+        CollectionTemplate existing = templateRepository.findByName(name)
+                .orElseThrow(() -> new BadRequestException("Template introuvable : " + name));
+
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new BadRequestException("Le nom du template ne peut pas être vide.");
+        }
+
+        try {
+            existing.setName(dto.getName());
+            existing.setArchetype(dto.getArchetype());
+            existing.setAxisX(objectMapper.writeValueAsString(dto.getAxisX()));
+            existing.setAxisY(objectMapper.writeValueAsString(dto.getAxisY()));
+            CollectionTemplate saved = templateRepository.save(existing);
+            return new TemplateDetailDTO(saved);
+        } catch (Exception e) {
+            log.error("Erreur lors de la mise à jour du template '{}'", name, e);
+            throw new InternalErrorException("Erreur interne lors de la mise à jour du template.");
+        }
+    }
+
 }

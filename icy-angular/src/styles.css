@@ -103,3 +103,43 @@
   transition: background 0.2s ease;
 }
 
+/* ========== ICY THEME for Angular Editor ========== */
+
+/* Toolbar */
+.angular-editor-toolbar {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 1rem !important;
+  color: #e0f2ff !important;
+}
+
+.angular-editor-toolbar select,
+.angular-editor-toolbar input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e0f2ff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0.4rem !important;
+}
+
+.angular-editor-toolbar select option {
+  background-color: #1b263b !important;
+  color: #e0f2ff !important;
+}
+
+/* Textarea / Content zone */
+.angular-editor-textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8faff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0.8rem !important;
+  padding: 1rem !important;
+}
+
+/* Scrollbars and dropdown fix */
+.angular-editor-toolbar select:focus {
+  background-color: rgba(0, 200, 255, 0.15) !important;
+  border-color: rgba(0, 200, 255, 0.5) !important;
+}
+
+

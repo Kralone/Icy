@@ -15,6 +15,7 @@ import {EventManagementComponent} from './features/admin/event-management/event-
 import {ShipManagementComponent} from './features/admin/ship-management/ship-management.component';
 import {RecruitmentComponent} from './auth/components/recruitment/recruitment.component';
 import {RecruitmentManagementComponent} from './features/admin/recruitment-management/recruitment-management.component';
+import {NewsManagementComponent} from './features/admin/news-management/news-management.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -35,6 +36,7 @@ export const routes: Routes = [
       { path: 'admin/events', component: EventManagementComponent },
       { path: 'admin/ships', component: ShipManagementComponent },
       { path: 'admin/recrutement', component: RecruitmentManagementComponent },
+      { path: 'admin/news', component: NewsManagementComponent },
       { path: 'events', component: EventsComponent },
       { path: 'goals', component: GoalComponent },
       { path: 'collection', component: CollectionComponent },

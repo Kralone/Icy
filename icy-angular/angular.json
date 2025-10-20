@@ -25,6 +25,11 @@
                 "glob": "**/*",
                 "input": "public"
               },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@kolkov/angular-editor/assets/",
+                "output": "/assets/"
+              },
               "src/assets"
             ],
             "styles": [
@@ -93,6 +98,7 @@
             "styles": [
               "node_modules/@fullcalendar/common/main.css",
               "node_modules/@fullcalendar/daygrid/main.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.css"
             ],
             "scripts": []

@@ -40,6 +40,11 @@ export class AdminMenuComponent {
       route: '/icy/admin/events',
     },
     {
+      label: 'Actualités',
+      imageUrl: 'https://media.starcitizen.tools/9/91/Careers_Overview_Concept.png',
+      route: '/icy/admin/news',
+    },
+    {
       label: 'Coming Soon',
       imageUrl: 'https://screenplaysmag.com/wp-content/uploads/2024/12/Untitled-design-5-1.png',
       route: '/icy/admin/#',

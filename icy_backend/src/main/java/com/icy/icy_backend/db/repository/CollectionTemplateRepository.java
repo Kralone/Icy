@@ -4,6 +4,7 @@ import com.icy.icy_backend.db.entity.CollectionTemplate;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 public interface CollectionTemplateRepository extends JpaRepository<CollectionTemplate, Long> {
     @Query("""
@@ -15,4 +16,6 @@ public interface CollectionTemplateRepository extends JpaRepository<CollectionTe
                           @Param("search") String search);
 
     boolean existsByName(String name);
+
+    Optional<CollectionTemplate> findByName(String name);
 }
