@@ -1,66 +1,78 @@
-<div class="p-6 space-y-8">
+<div class="p-8 space-y-10 min-h-screen bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+
   <!-- === SECTION 1 : Ajouter un événement === -->
   <div class="flex items-center justify-between">
     <a
       routerLink="/icy/events"
-      class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white inline-flex items-center gap-1"
+      class="text-sm text-gray-300 hover:text-white inline-flex items-center gap-1 transition"
     >
       <span class="text-lg">←</span> Retour au calendrier
     </a>
   </div>
 
-  <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-800">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
-      Ajouter un événement
-    </h1>
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl space-y-6">
+    <h1 class="text-2xl font-bold text-cyan-300">Ajouter un événement</h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Titre -->
       <div>
-        <label class="block text-sm mb-1">Titre</label>
+        <label class="block text-sm mb-1 text-gray-300">Titre</label>
         <input
           [(ngModel)]="newEvent.title"
           type="text"
-          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          placeholder="Nom de l’événement"
         />
       </div>
 
+      <!-- Type -->
       <div>
-        <label class="block text-sm mb-1">Type</label>
+        <label class="block text-sm mb-1 text-gray-300">Type</label>
         <select
           [(ngModel)]="newEvent.type"
-          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition
+                 [class.text-gray-400]='!newEvent.type'"
         >
           <option value="" disabled selected hidden>Choisir un type</option>
-          <option *ngFor="let type of types" [value]="type.name">
+          <option *ngFor="let type of types" [value]="type.name" class="bg-[#1e293b] text-white">
             {{ type.name }}
           </option>
         </select>
       </div>
 
+      <!-- Description -->
       <div class="sm:col-span-2">
-        <label class="block text-sm mb-1">Description</label>
+        <label class="block text-sm mb-1 text-gray-300">Description</label>
         <textarea
           [(ngModel)]="newEvent.description"
           rows="3"
-          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          placeholder="Détails de l’événement..."
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-none"
         ></textarea>
       </div>
 
+      <!-- Début -->
       <div>
-        <label class="block text-sm mb-1">Début</label>
+        <label class="block text-sm mb-1 text-gray-300">Début</label>
         <input
           [(ngModel)]="newEvent.startDateTime"
           type="datetime-local"
-          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
 
+      <!-- Fin -->
       <div>
-        <label class="block text-sm mb-1">Fin</label>
+        <label class="block text-sm mb-1 text-gray-300">Fin</label>
         <input
           [(ngModel)]="newEvent.endDateTime"
           type="datetime-local"
-          class="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
     </div>
@@ -69,47 +81,45 @@
       <button
         (click)="createEvent()"
         [disabled]="isFormInvalid"
-        class="px-4 py-2 rounded shadow-md font-semibold transition
-               text-white bg-green-600 hover:bg-green-700
-               disabled:bg-gray-300 dark:disabled:bg-gray-600
-               disabled:text-gray-500 dark:disabled:text-gray-400
-               disabled:cursor-not-allowed"
+        class="px-5 py-2 rounded-lg font-semibold shadow-md bg-gradient-to-r from-cyan-500 to-blue-600
+               hover:from-cyan-400 hover:to-blue-500 text-white transition transform hover:scale-105
+               disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {{ isSubmitting ? 'Création…' : 'Ajouter' }}
       </button>
     </div>
   </div>
 
-  <!-- ========== SECTION : Types d'événements ========== -->
-  <section class="relative p-6 space-y-10">
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">
-        Types d'événements
-      </h2>
-    </div>
+  <!-- === SECTION 2 : Types d'événements === -->
+  <section class="space-y-8">
+    <h2 class="text-xl font-bold text-cyan-300">Types d'événements</h2>
 
-    <!-- Formulaire de création -->
-    <div class="rounded-lg bg-white dark:bg-slate-900 ring-1 ring-black/5 dark:ring-white/10 p-4 space-y-4 mb-6">
+    <!-- Formulaire -->
+    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <input
           [(ngModel)]="newType.name"
           placeholder="Nom du type"
-          class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
         <input
           [(ngModel)]="newType.textColor"
           placeholder="Couleur texte (#fff)"
-          class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
         <input
           [(ngModel)]="newType.backgroundColor"
           placeholder="Couleur fond (#123abc)"
-          class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
         <input
           [(ngModel)]="newType.imageUrl"
           placeholder="URL image (optionnel)"
-          class="p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
 
@@ -117,17 +127,12 @@
         <button
           (click)="createType()"
           [disabled]="isTypeSubmitting"
-          class="inline-flex items-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 shadow-sm transition disabled:opacity-60"
+          class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600
+                 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-4 py-2 shadow-md
+                 transition transform hover:scale-105 disabled:opacity-60"
         >
           <ng-container *ngIf="!isTypeSubmitting; else loadingIcon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-              <path
-                fill-rule="evenodd"
-                d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            Ajouter le type
+            ➕ Ajouter le type
           </ng-container>
           <ng-template #loadingIcon>
             <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -142,187 +147,129 @@
       </div>
     </div>
 
-    <!-- Tableau des types existants -->
-    <div class="overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10">
-      <table
-        class="min-w-full divide-y divide-slate-200 dark:divide-slate-800"
-        *ngIf="types.length; else noTypes"
-      >
-        <thead class="bg-slate-50 dark:bg-slate-900/60">
-        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-          <th class="px-4 py-3">Nom</th>
-          <th class="px-4 py-3">Texte</th>
-          <th class="px-4 py-3">Fond</th>
-          <th class="px-4 py-3">Image</th>
-          <th class="px-4 py-3 text-right w-32">Action</th>
+    <!-- Tableau -->
+    <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
+      <table class="min-w-full divide-y divide-white/10">
+        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">Nom</th>
+          <th class="px-4 py-3 text-left">Texte</th>
+          <th class="px-4 py-3 text-left">Fond</th>
+          <th class="px-4 py-3 text-left">Image</th>
+          <th class="px-4 py-3 text-right">Action</th>
         </tr>
         </thead>
 
-        <tbody class="divide-y divide-slate-100 bg-white dark:bg-slate-900 dark:divide-slate-800">
+        <tbody>
         <tr
           *ngFor="let type of types"
-          class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+          class="hover:bg-white/10 transition duration-200 border-b border-white/10"
         >
-          <td class="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {{ type.name }}
-          </td>
+          <td class="px-4 py-3 font-medium">{{ type.name }}</td>
 
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+          <td class="px-4 py-3">
             <div class="flex items-center gap-2">
-              <span
-                class="inline-block w-5 h-5 rounded-full border border-slate-300 dark:border-slate-600"
-                [style.backgroundColor]="type.textColor"
-              ></span>
+                <span
+                  class="inline-block w-5 h-5 rounded-full border border-white/20"
+                  [style.backgroundColor]="type.textColor"
+                ></span>
               <span>{{ type.textColor }}</span>
             </div>
           </td>
 
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+          <td class="px-4 py-3">
             <div class="flex items-center gap-2">
-              <span
-                class="inline-block w-5 h-5 rounded-full border border-slate-300 dark:border-slate-600"
-                [style.backgroundColor]="type.backgroundColor"
-              ></span>
+                <span
+                  class="inline-block w-5 h-5 rounded-full border border-white/20"
+                  [style.backgroundColor]="type.backgroundColor"
+                ></span>
               <span>{{ type.backgroundColor }}</span>
             </div>
           </td>
 
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-            <div class="flex items-center justify-start gap-2">
-              <img
-                *ngIf="type.imageUrl; else noImage"
-                [src]="type.imageUrl"
-                alt="aperçu"
-                class="w-40 h-16 rounded-md border border-slate-200 dark:border-slate-700 object-cover"
-              />
-              <ng-template #noImage>
-                <span class="text-slate-400 dark:text-slate-500">–</span>
-              </ng-template>
-            </div>
+          <td class="px-4 py-3">
+            <img
+              *ngIf="type.imageUrl; else noImage"
+              [src]="type.imageUrl"
+              alt="aperçu"
+              class="w-40 h-16 rounded-lg border border-white/20 object-cover"
+            />
+            <ng-template #noImage>
+              <span class="text-gray-400 italic">–</span>
+            </ng-template>
           </td>
 
-          <td class="px-4 py-3 text-right flex justify-end gap-2">
+          <td class="px-4 py-3 text-right space-x-3">
             <button
               type="button"
               (click)="editType(type)"
-              class="inline-flex items-center gap-1.5 rounded-md border border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-900/30 text-xs font-semibold px-3 py-1.5 transition"
+              class="text-yellow-400 hover:text-yellow-300 transition"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                <path
-                  d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
-                />
-                <path
-                  fill-rule="evenodd"
-                  d="M2 16.25A1.75 1.75 0 013.75 14.5h12.5a.75.75 0 010 1.5H3.75a.25.25 0 00-.25.25v.75a.25.25 0 00.25.25h12.5a.75.75 0 010 1.5H3.75A1.75 1.75 0 012 17.25v-1z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              Modifier
+              ✏️ Modifier
             </button>
-
             <button
               type="button"
               (click)="deleteType(type.name)"
-              class="inline-flex items-center gap-1.5 rounded-md border border-red-400 text-red-600 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40 text-xs font-semibold px-3 py-1.5 transition"
+              class="text-red-400 hover:text-red-300 transition"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                <path
-                  fill-rule="evenodd"
-                  d="M9 3a1 1 0 00-.894.553L7.382 5H4a1 1 0 100 2h.293l.853 9.447A2 2 0 007.14 18h5.72a2 2 0 001.994-1.553L15.707 7H16a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 3H9zM8 7a.75.75 0 011.5 0v7a.75.75 0 01-1.5 0V7zm3.5 0a.75.75 0 011.5 0v7a.75.75 0 01-1.5 0V7z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              Supprimer
+              🗑️ Supprimer
             </button>
           </td>
         </tr>
         </tbody>
       </table>
-
-      <ng-template #noTypes>
-        <p class="p-4 text-slate-500 dark:text-slate-400">
-          Aucun type d’événement trouvé.
-        </p>
-      </ng-template>
     </div>
   </section>
 
-</div>
+  <!-- === MODAL MODIFICATION TYPE === -->
+  <div *ngIf="editingType" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+    <div class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-8 relative text-white">
+      <h3 class="text-2xl font-semibold mb-6 text-cyan-300">Modifier le type d’événement</h3>
 
-<!-- === MODAL MODIFICATION TYPE === -->
-<div
-  *ngIf="editingType"
-  class="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
->
-  <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-lg shadow-lg">
-    <h3 class="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">
-      Modifier le type d’événement
-    </h3>
-
-    <div class="space-y-4">
-      <!-- Nom (readonly) -->
-      <input
-        [(ngModel)]="editingType.name"
-        name="name"
-        readonly
-        class="w-full p-2 rounded-md border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-not-allowed"
-      />
-
-      <!-- Couleur du texte -->
-      <div class="relative">
-        <span
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-slate-400"
-          [ngStyle]="{ backgroundColor: editingType.textColor || '#ffffff' }"
-        ></span>
+      <div class="space-y-4">
+        <input
+          [(ngModel)]="editingType.name"
+          readonly
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-400 cursor-not-allowed"
+        />
         <input
           [(ngModel)]="editingType.textColor"
-          name="textColor"
           placeholder="Couleur du texte (#fff)"
-          class="w-full pl-10 p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
-      </div>
-
-      <!-- Couleur de fond -->
-      <div class="relative">
-        <span
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-slate-400"
-          [ngStyle]="{ backgroundColor: editingType.backgroundColor || '#000000' }"
-        ></span>
         <input
           [(ngModel)]="editingType.backgroundColor"
-          name="backgroundColor"
           placeholder="Couleur du fond (#000)"
-          class="w-full pl-10 p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+        />
+        <input
+          [(ngModel)]="editingType.imageUrl"
+          placeholder="URL image"
+          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
 
-      <!-- Image -->
-      <input
-        [(ngModel)]="editingType.imageUrl"
-        name="imageUrl"
-        placeholder="URL image"
-        class="w-full p-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-      />
-    </div>
-
-    <!-- Boutons -->
-    <div class="flex justify-end gap-3 mt-6">
-      <button
-        (click)="cancelEdit()"
-        class="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-      >
-        Annuler
-      </button>
-
-      <button
-        (click)="updateType()"
-        [disabled]="isTypeUpdating"
-        class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-60"
-      >
-        {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
-      </button>
+      <div class="flex justify-end gap-4 pt-6">
+        <button
+          type="button"
+          (click)="cancelEdit()"
+          class="text-gray-400 hover:text-white transition"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="updateType()"
+          [disabled]="isTypeUpdating"
+          class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+                 text-white px-5 py-2 rounded-lg font-semibold shadow-md transition disabled:opacity-60"
+        >
+          {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>
-
-
