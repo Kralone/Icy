@@ -1,25 +1,52 @@
-<header [class.hidden-topbar]="isHidden"
-        class="topbar bg-white dark:bg-gray-900 p-4 flex justify-end items-center space-x-4 shadow-md transition-all duration-500 ease-in-out">
+<header
+  class="topbar flex items-center justify-between px-4 sm:px-6 py-3
+         bg-gradient-to-r from-[#0d1b2a]/90 via-[#1b263b]/80 to-[#415a77]/90
+         backdrop-blur-xl border-b border-white/10 shadow-md sticky top-0 z-30"
+>
+  <!-- ✅ Burger menu (mobile only) -->
+  <button
+    class="text-2xl text-cyan-300 transition-transform duration-200 hover:scale-110 xl:hidden"
+    (click)="onToggleSidebar()"
+  >
+    ☰
+  </button>
 
-  <!-- Toggle Mode -->
-  <label class="relative inline-flex items-center cursor-pointer">
-    <input type="checkbox" id="dark-mode-toggle" class="sr-only peer" [checked]="isDarkMode" (change)="toggleDarkMode()">
-    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800
-                rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full
-                peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px]
-                after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
-                after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+  <!-- ✅ Logo centré -->
+  <div
+    class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2 group select-none"
+  >
+    <img
+      src="assets/images/home/iceforgeLogo.png"
+      alt="IceForge Logo"
+      class="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(56,189,248,0.4)]"
+    />
+  </div>
+
+  <!-- ✅ Zone droite -->
+  <div class="flex items-center gap-4 ml-auto">
+    <!-- Dark Mode -->
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        id="dark-mode-toggle"
+        class="sr-only peer"
+        [checked]="isDarkMode"
+        (change)="toggleDarkMode()"
+      />
+      <div
+        class="w-10 h-5 bg-gray-700 rounded-full peer-checked:bg-cyan-500 transition-all after:content-['']
+               after:absolute after:w-4 after:h-4 after:bg-white after:rounded-full after:top-0.5 after:left-0.5
+               after:transition-transform peer-checked:after:translate-x-5"
+      ></div>
+    </label>
+
+    <!-- Notifications -->
+    <span class="text-xl text-cyan-300 hover:scale-110 transition-transform cursor-pointer">🔔</span>
+
+    <!-- Profil -->
+    <div class="flex items-center gap-2">
+      <span class="hidden sm:inline text-sm text-gray-200">{{ name }}</span>
+      <span class="rounded-full bg-cyan-500/30 w-8 h-8 border border-cyan-400/40"></span>
     </div>
-  </label>
-
-  <!-- Cloche de notification -->
-  <span class="text-xl text-gray-600 dark:text-gray-300">🔔</span>
-
-  <!-- Profil utilisateur -->
-  <div class="flex items-center space-x-2">
-    <span id="username" class="text-gray-700 dark:text-gray-300 transition-colors duration-300">
-      {{name}}
-    </span>
-    <span class="rounded-full bg-gray-400 dark:bg-gray-600 w-8 h-8"></span>
   </div>
 </header>

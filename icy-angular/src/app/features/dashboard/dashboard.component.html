@@ -1,7 +1,13 @@
-<main class="flex flex-1 min-h-screen p-6 bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white overflow-y-auto">
+<main
+  class="flex flex-col xl:flex-row flex-1 min-h-screen p-4 sm:p-6
+         bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77]
+         text-white overflow-y-auto overflow-x-hidden"
+>
   <!-- Contenu principal -->
-  <div class="flex-1 mr-6">
-    <h1 class="text-3xl font-bold mb-6 text-cyan-300 drop-shadow-md">❄️ Bienvenue sur le Dashboard</h1>
+  <div class="flex-1 xl:mr-6 mb-6 xl:mb-0">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-cyan-300 drop-shadow-md text-center xl:text-left">
+      ❄️ Bienvenue sur le Dashboard
+    </h1>
 
     <div class="space-y-6">
       <app-dashboard-goal></app-dashboard-goal>
@@ -10,34 +16,36 @@
   </div>
 
   <!-- Panneau latéral -->
-  <aside class="w-80 flex flex-col h-full gap-6">
-
+  <aside class="w-full xl:w-80 flex flex-col h-full gap-6 shrink-0">
     <!-- Résumé de la flotte -->
-    <div class="flex-[3] p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden">
-      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md">🛸 Résumé de la flotte</h2>
+    <div
+      class="flex-[3] p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+             hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+    >
+      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
+        🛸 Résumé de la flotte
+      </h2>
 
       <div class="overflow-y-auto scrollbar-custom pr-1 max-h-[55vh]">
-        <div *ngIf="isLoading" class="h-16 flex items-center justify-center">
-          <app-loading-overlay [isLoading]="true"></app-loading-overlay>
-        </div>
-
-        <div *ngIf="fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
+        <ng-container *ngIf="fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
           <div *ngFor="let focus of objectKeys(fleetSummary)" class="mb-4">
             <h3 class="text-sm font-bold text-cyan-200 uppercase tracking-wide mb-1">
               {{ focus }}
             </h3>
             <ul class="list-none pl-0 text-gray-200 text-sm space-y-1 overflow-hidden">
-              <li *ngFor="let ship of fleetSummary[focus]"
-                  class="relative flex items-center justify-start h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition">
-                <div *ngIf="ship.imageUrl" class="absolute top-0 left-0 w-full h-full">
+              <li
+                *ngFor="let ship of fleetSummary[focus]"
+                class="relative flex items-center justify-start h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition"
+              >
+                <div *ngIf="ship.imageUrl" class="absolute inset-0">
                   <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-70" />
-                  <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
+                  <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
                 </div>
                 <span class="relative z-10 pl-2 truncate">{{ ship.name }}</span>
               </li>
             </ul>
           </div>
-        </div>
+        </ng-container>
 
         <ng-template #noFleet>
           <p class="text-gray-400 text-sm italic">Aucun vaisseau dans la flotte.</p>
@@ -46,26 +54,29 @@
     </div>
 
     <!-- Événements -->
-    <div class="flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]">
-      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md">📅 Événements</h2>
+    <div
+      class="flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+             hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]"
+    >
+      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
+        📅 Événements
+      </h2>
 
       <div class="overflow-y-auto scrollbar-custom pr-1 max-h-[25vh]">
-        <div *ngIf="isEventsLoading" class="h-16 flex items-center justify-center">
-          <app-loading-overlay [isLoading]="true"></app-loading-overlay>
-        </div>
-
-        <div *ngIf="events && events.length > 0; else noEvents">
+        <ng-container *ngIf="events && events.length > 0; else noEvents">
           <ul class="text-gray-200 text-sm space-y-2">
-            <li *ngFor="let event of events"
-                class="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition">
+            <li
+              *ngFor="let event of events"
+              class="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition text-center xl:text-left"
+            >
               {{ event.name }} — {{ event.date | date:'dd/MM/yyyy à HH:mm' }} —
               <strong class="text-cyan-300">{{ event.type }}</strong>
             </li>
           </ul>
-        </div>
+        </ng-container>
 
         <ng-template #noEvents>
-          <p class="text-gray-400 text-sm italic">Aucun événement prévu.</p>
+          <p class="text-gray-400 text-sm italic text-center">Aucun événement prévu.</p>
         </ng-template>
       </div>
     </div>

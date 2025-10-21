@@ -1,9 +1,9 @@
-<div class="rounded-2xl p-6 mb-6
-            bg-white/10 backdrop-blur-xl
-            border border-white/20
-            shadow-lg  text-white">
-
-  <h1 class="text-3xl font-bold text-cyan-300 mb-6 drop-shadow-md">🎯 Objectif actuel</h1>
+<div
+  class="rounded-2xl p-4 sm:p-6 mb-6 bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg text-white"
+>
+  <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300 mb-6 drop-shadow-md text-center sm:text-left">
+    🎯 Objectif actuel
+  </h1>
 
   <div *ngIf="isLoading" class="text-center text-gray-400">Chargement...</div>
 
@@ -11,31 +11,42 @@
     Aucun objectif défini.
   </div>
 
-  <div *ngFor="let goal of goals"
-       class="mb-8 p-5 rounded-2xl bg-white/5 border border-white/20 shadow-inner">
-
-    <div class="flex justify-between items-center mb-3">
-      <h2 class="text-2xl font-semibold text-cyan-200">{{ goal.name }}</h2>
-      <span *ngIf="goal.completed" class="text-green-400 font-medium">✔ Terminé</span>
+  <div
+    *ngFor="let goal of goals"
+    class="mb-8 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/20 shadow-inner"
+  >
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3">
+      <h2 class="text-xl sm:text-2xl font-semibold text-cyan-200 text-center sm:text-left">
+        {{ goal.name }}
+      </h2>
+      <span *ngIf="goal.completed" class="text-green-400 font-medium text-center sm:text-right">
+        ✔ Terminé
+      </span>
     </div>
 
-    <p class="text-sm text-gray-300 mb-2">{{ goal.description }}</p>
-    <p class="text-xs text-gray-400 mb-4">Créé le {{ goal.createdAt | date:'medium' }}</p>
+    <p class="text-sm text-gray-300 mb-2 text-justify">{{ goal.description }}</p>
+    <p class="text-xs text-gray-400 mb-4 text-center sm:text-left">
+      Créé le {{ goal.createdAt | date:'medium' }}
+    </p>
 
-    <!-- Barre de progression principale -->
     <div class="relative w-full bg-white/10 rounded-full h-3 overflow-hidden mb-2">
-      <div class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-500"
-           [style.width.%]="calculateProgress(goal)">
-      </div>
+      <div
+        class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-500"
+        [style.width.%]="calculateProgress(goal)"
+      ></div>
     </div>
-    <div class="text-sm text-gray-300 mb-3">
+
+    <div class="text-sm text-gray-300 mb-3 text-center sm:text-left">
       {{ goal.current }} / {{ goal.target }} ({{ calculateProgress(goal) | number:'1.0-0' }}%)
     </div>
 
-    <!-- Sous-objectifs -->
-    <div *ngIf="goal.subGoals && goal.subGoals.length > 0"
-         class="mt-4 pl-4 border-l border-white/20">
-      <h3 class="text-lg font-semibold text-cyan-300 mb-3">Sous-objectifs</h3>
+    <div
+      *ngIf="goal.subGoals && goal.subGoals.length > 0"
+      class="mt-4 pl-4 border-l border-white/20"
+    >
+      <h3 class="text-lg font-semibold text-cyan-300 mb-3 text-center sm:text-left">
+        Sous-objectifs
+      </h3>
 
       <ng-container *ngFor="let sub of goal.subGoals">
         <div class="mb-3">
@@ -45,9 +56,10 @@
           </div>
 
           <div class="relative w-full bg-white/10 rounded-full h-2 overflow-hidden">
-            <div class="absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r from-green-400 to-cyan-500 transition-all duration-500"
-                 [style.width.%]="calculateProgress(sub)">
-            </div>
+            <div
+              class="absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r from-green-400 to-cyan-500 transition-all duration-500"
+              [style.width.%]="calculateProgress(sub)"
+            ></div>
           </div>
         </div>
       </ng-container>

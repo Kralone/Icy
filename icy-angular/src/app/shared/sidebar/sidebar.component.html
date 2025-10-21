@@ -1,47 +1,69 @@
-<aside class="sidebar bg-gray-900 border-l border-gray-700 p-5 shadow-xl" [class.collapsed]="isCollapsed">
+<aside
+  class="h-full w-full flex flex-col justify-between
+         bg-gradient-to-b from-[#1b263b]/95 to-[#0d1b2a]/95
+         backdrop-blur-xl border-r border-white/10
+         shadow-[0_0_25px_rgba(56,189,248,0.15)]
+         p-5 text-white z-50 overflow-y-auto"
+>
 
-  <!-- Sidebar header avec logo cliquable -->
-  <div class="sidebar-header flex flex-col items-center justify-center mb-6 space-y-4">
-    <a [routerLink]="['/icy/dashboard']" class="block">
-      <img src="assets/images/home/iceforgeLogo.png"
-           alt="IceForge Logo"
-           class="h-20 w-20 object-contain transition-transform duration-300 hover:scale-105" />
+  <!-- ✅ Logo -->
+  <div class="flex flex-col items-center justify-center mt-10 mb-6 space-y-2">
+    <a [routerLink]="['/icy/dashboard']" class="flex flex-col items-center gap-2 group">
+      <div class="relative flex items-center justify-center">
+        <img
+          src="assets/images/home/iceforgeLogo.png"
+          alt="IceForge Logo"
+          class="h-16 w-16 object-contain transition-transform duration-300
+               group-hover:scale-110 drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]"
+        />
+        <!-- petit effet glow derrière -->
+        <div class="absolute inset-0 rounded-full bg-cyan-400/20 blur-2xl scale-125"></div>
+      </div>
     </a>
-
-    <button class="burger-btn text-white text-2xl" (click)="toggleSidebar()">☰</button>
   </div>
 
-  <!-- Navigation -->
-  <nav>
+
+  <!-- ✅ Navigation -->
+  <nav class="flex-1">
     <ul class="space-y-2">
       <li *ngFor="let item of menuItems">
         <a
           [routerLink]="item.link"
-          routerLinkActive="active"
-          class="nav-item group flex items-center gap-4 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-md transition duration-300 ease-in-out"
+          routerLinkActive="bg-white/10 text-cyan-300"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300
+                 hover:bg-white/10 hover:text-cyan-300 transition-colors duration-300"
+          (click)="onClose()"
         >
           <span class="text-xl">{{ item.icon }}</span>
-          <span class="menu-text text-sm uppercase tracking-wide">{{ item.label }}</span>
+          <span class="text-sm uppercase tracking-wide">{{ item.label }}</span>
         </a>
       </li>
-      <li *ngIf="isAdmin">
+
+      <li *ngIf="isAdmin" class="pt-2 border-t border-white/10">
         <a
           [routerLink]="['/icy/admin']"
-          routerLinkActive="active"
-          class="nav-item group flex items-center gap-4 px-4 py-2 text-blue-400 hover:bg-gray-800 rounded-md transition"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg
+                 text-blue-400 hover:bg-blue-400/10 transition-colors duration-300"
+          (click)="onClose()"
         >
           <span class="text-xl">🛡️</span>
-          <span class="menu-text text-sm uppercase tracking-wide">Admin</span>
+          <span class="text-sm uppercase tracking-wide">Admin</span>
         </a>
       </li>
     </ul>
   </nav>
 
-  <!-- Logout -->
-  <button class="logout-btn flex items-center justify-center gap-2" (click)="logout()">
-    🚪
-    <span class="menu-text">Logout</span>
-  </button>
-
+  <!-- ✅ Logout -->
+  <div class="pt-4 border-t border-white/10">
+    <button
+      class="w-full flex items-center justify-center gap-2
+             bg-red-600/80 hover:bg-red-700 text-white font-semibold py-2 rounded-xl
+             shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-all duration-300
+             hover:scale-105 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]"
+      (click)="logout(); onClose()"
+    >
+      🚪 Logout
+    </button>
+  </div>
 
 </aside>

@@ -1,12 +1,39 @@
-<div class="layout-container">
-  <!-- Sidebar fixe -->
-  <app-sidebar class="sidebar" [class.collapsed]="isSidebarCollapsed" (sidebarToggled)="isSidebarCollapsed = $event"></app-sidebar>
+<div class="layout-container flex min-h-screen w-screen bg-[#0d1b2a] text-white relative overflow-x-hidden">
 
-  <!-- Conteneur principal -->
-  <div class="content-container">
-    <app-topbar class="topbar"></app-topbar>
-    <div class="main-content">
+
+<!-- ✅ Overlay sombre -->
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 xl:hidden
+           transition-opacity duration-500 ease-in-out"
+    [class.opacity-100]="isSidebarOpen"
+    [class.opacity-0]="!isSidebarOpen"
+    [class.pointer-events-none]="!isSidebarOpen"
+    (click)="closeSidebar()"
+  ></div>
+
+  <!-- ✅ Sidebar -->
+  <app-sidebar
+    class="fixed inset-y-0 left-0 z-40 w-64 sm:w-72 h-full transform transition-transform duration-500 ease-in-out
+         xl:static xl:translate-x-0 overflow-x-hidden flex-shrink-0"
+    [class.-translate-x-full]="!isSidebarOpen && !isDesktop"
+    [class.translate-x-0]="isSidebarOpen || isDesktop"
+    (requestClose)="closeSidebar()"
+  ></app-sidebar>
+
+
+  <!-- ✅ Contenu principal -->
+  <div
+    class="flex flex-col min-h-screen bg-[#0d1b2a] transition-all duration-500 transform w-full overflow-x-hidden"
+    [ngClass]="{ 'xl:ml-0': true, 'ml-0': !isSidebarOpen || !isDesktop, 'ml-64 sm:ml-72': isSidebarOpen && !isDesktop }"
+  >
+    <app-topbar (sidebarToggle)="toggleSidebar()"></app-topbar>
+
+    <div
+      class="main-content flex-1 overflow-y-auto overflow-x-hidden box-border"
+    >
       <router-outlet></router-outlet>
     </div>
   </div>
+
+
 </div>

@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+
 .fc {
   --fc-border-color: #d1d5db;        /* gray-300 */
   --fc-page-bg-color: #ffffff;       /* white */
@@ -26,6 +27,22 @@
 @layer utilities {
   .animate-spin-custom {
     animation: spin-custom 1s linear infinite;
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .animate-fadeOut {
+    animation: fadeOut 0.5s ease-in-out;
   }
 }
 
