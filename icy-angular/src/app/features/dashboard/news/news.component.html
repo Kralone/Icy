@@ -1,27 +1,35 @@
 <div
-  class="rounded-2xl p-4 sm:p-6 mb-6 bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg text-white"
+  class="rounded-2xl p-4 mb-6
+         bg-white/10 backdrop-blur-xl
+         border border-white/20
+         shadow-lg text-white"
 >
-  <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300 tracking-wide drop-shadow-md mb-4 text-center sm:text-left">
+  <h1 class="text-2xl font-bold text-cyan-300 tracking-wide drop-shadow-md mb-4">
     🧊 Actualités
   </h1>
 
+  <!-- LISTE DES NEWS -->
   <div *ngIf="newsList.length > 0; else noNews" class="space-y-6">
     <div
       *ngFor="let n of newsList"
       class="relative flex flex-col md:flex-row overflow-hidden rounded-2xl border border-white/20 shadow-lg
              bg-gradient-to-br from-[#0d1b2a]/90 to-[#1b263b]/90
-             hover:border-cyan-400 hover:shadow-cyan-400/30 transition-all duration-500 hover:scale-[1.01] group"
+             hover:border-cyan-400 hover:shadow-cyan-400/30
+             transition-all duration-500 hover:scale-[1.01] group"
     >
-      <!-- Image -->
-      <div class="relative md:w-1/3 w-full h-40 sm:h-48 md:h-auto overflow-hidden">
+      <!-- IMAGE GAUCHE -->
+      <div class="relative md:w-1/3 w-full h-32 md:h-auto overflow-hidden">
         <img
           [src]="n.type?.imageUrl"
           alt="Image"
           class="absolute inset-0 w-full h-full object-cover transform transition-transform duration-[2000ms]
                  group-hover:scale-110 group-hover:translate-x-1"
         />
+
+        <!-- Dégradé vers le texte -->
         <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/60 via-transparent to-transparent"></div>
 
+        <!-- Badge type -->
         <div
           class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold text-black shadow-md"
           [style.backgroundColor]="n.type?.color || '#38bdf8'"
@@ -30,18 +38,29 @@
         </div>
       </div>
 
-      <!-- Contenu -->
-      <div class="relative flex-1 p-4 flex flex-col justify-between bg-gradient-to-l from-transparent via-[#1b263b]/80 to-[#0d1b2a]/90">
+      <!-- CONTENU -->
+      <div
+        class="relative flex-1 p-4 flex flex-col justify-between
+               bg-gradient-to-l from-transparent via-[#1b263b]/80 to-[#0d1b2a]/90"
+      >
+        <!-- Effet fondu entre image et texte -->
+        <div class="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0d1b2a]/80 via-[#0d1b2a]/20 to-transparent pointer-events-none"></div>
+
         <div class="relative z-10">
-          <h2 class="text-lg font-bold text-cyan-200 drop-shadow-lg mb-1">{{ n.title }}</h2>
-          <p class="text-[11px] text-gray-400 mb-2">{{ n.createdAt | date: 'dd MMM yyyy' }}</p>
+          <h2 class="text-lg font-bold text-cyan-200 drop-shadow-lg mb-1">
+            {{ n.title }}
+          </h2>
+          <p class="text-[11px] text-gray-400 mb-2">
+            {{ n.createdAt | date: 'dd MMM yyyy' }}
+          </p>
           <p class="text-gray-200 text-justify line-clamp-2" [innerHTML]="n.content"></p>
         </div>
 
         <div class="mt-3 flex justify-end relative z-10">
           <button
             (click)="openModal(n)"
-            class="px-3 py-1.5 rounded-md bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-sm hover:bg-cyan-500/30 transition-all"
+            class="px-3 py-1.5 rounded-md bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-sm
+                   hover:bg-cyan-500/30 transition-all"
           >
             Lire la suite →
           </button>
@@ -51,8 +70,82 @@
   </div>
 
   <ng-template #noNews>
-    <p class="text-gray-300 italic mt-4 text-center text-sm">
-      Aucune actualité disponible pour le moment.
-    </p>
+    <p class="text-gray-300 italic mt-4 text-sm">Aucune actualité disponible pour le moment.</p>
   </ng-template>
 </div>
+
+<!-- MODAL LECTURE NEWS -->
+<div
+  *ngIf="selectedNews as n"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+  (click)="closeModal()"
+  (keydown.escape)="closeModal()"
+  tabindex="0"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="n.title"
+>
+  <div
+    class="relative w-full max-w-3xl rounded-2xl overflow-hidden border border-white/20
+           bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Image + fondu -->
+    <div class="relative h-56">
+      <img
+        *ngIf="n.type?.imageUrl"
+        [src]="n.type?.imageUrl"
+        alt="Illustration"
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#1b263b]"></div>
+
+      <!-- Badge type -->
+      <span
+        class="absolute top-3 right-3 px-3 py-1.5 rounded-full text-sm font-semibold text-black shadow-md"
+        [style.backgroundColor]="n.type?.color || '#38bdf8'"
+      >
+        {{ n.type?.name }}
+      </span>
+
+      <!-- Titre -->
+      <div class="absolute bottom-5 left-6">
+        <h2 class="text-2xl font-bold text-cyan-200 drop-shadow">
+          {{ n.title }}
+        </h2>
+        <p class="text-xs text-gray-300">
+          {{ n.author }} • {{ n.createdAt | date:'dd MMM yyyy' }}
+        </p>
+      </div>
+
+      <!-- Bouton fermer -->
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="absolute top-3 left-3 inline-flex items-center justify-center w-9 h-9 rounded-full
+               bg-white/10 hover:bg-white/20 border border-white/20 text-white"
+        aria-label="Fermer"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <div class="p-6 max-h-[70vh] overflow-y-auto">
+      <div class="prose prose-invert max-w-none" [innerHTML]="n.content"></div>
+
+      <div class="mt-6 flex justify-end">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-300
+                 hover:bg-cyan-500/30 transition"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
