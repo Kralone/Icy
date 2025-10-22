@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import {FullCalendarComponent, FullCalendarModule} from '@fullcalendar/angular';
-import {EventService, EventCreateRequest, EventDTO} from '../../core/services/event/event.service';
+import {EventService, EventDTO} from '../../core/services/event/event.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {EventType} from '../../model/event-type.model';
 import {AuthService} from '../../core/services/auth/auth.service';
@@ -16,32 +16,19 @@ import {AuthService} from '../../core/services/auth/auth.service';
   templateUrl: './events.component.html'
 })
 export class EventsComponent {
-  showModal = false;
   calendarEvents: any[] = [];
-
   messages: string[] = [];
-
   selectedEvent: any = null;
   showDetailsModal = false;
   types: EventType[] = [];
 
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
-  newEvent: EventCreateRequest = {
-    type: '',
-    title: '',
-    description: '',
-    startDateTime: '',
-    endDateTime: ''
-  };
-
   participationsByStatus = {
     confirmed: [] as any[],
     maybe: [] as any[],
     refused: [] as any[]
   };
-
-
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
@@ -66,15 +53,16 @@ export class EventsComponent {
     eventContent: this.renderCustomEvent.bind(this),
     eventClick: this.onEventClick.bind(this),
     eventDidMount: this.applyBackgroundColor.bind(this),
-    // eventDidMount: this.decorateEventCell.bind(this),
-    //todo eventDidUnmount
   };
-  isLoading = false;
-  editMode = false;
 
+  isLoading = false;
   isAdmin = false;
 
-  constructor(private eventService: EventService, private wsService: WebSocketService, private authService: AuthService) {}
+  constructor(
+    private eventService: EventService,
+    private wsService: WebSocketService,
+    private authService: AuthService
+  ) {}
 
   ngAfterViewInit() {
     this.wsService.connectEvent();
@@ -88,29 +76,26 @@ export class EventsComponent {
       try {
         const parsed = JSON.parse(message);
 
-        if(Array.isArray(parsed.events) && parsed.events.length > 0 && parsed.action === 'INIT') {
+        if (Array.isArray(parsed.events) && parsed.events.length > 0 && parsed.action === 'INIT') {
           console.log('📦 Chargement initial des events');
 
-             this.calendarEvents = parsed.events.map((event: EventDTO) => ({
-               id: event.id,
-               title: event.title,
-               start: event.startDateTime,
-               end: event.endDateTime,
-               backgroundColor: event.type.backgroundColor,
-               extendedProps: {
-                 type: event.type,
-                 description: event.description,
-                 finished: event.finished
-              }
+          this.calendarEvents = parsed.events.map((event: EventDTO) => ({
+            id: event.id,
+            title: event.title,
+            start: event.startDateTime,
+            end: event.endDateTime,
+            backgroundColor: event.type.backgroundColor,
+            extendedProps: {
+              type: event.type,
+              description: event.description,
+              finished: event.finished
+            }
           }));
           this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
-        } else if(parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') { // update d'un élément
-          if(parsed.action === 'ADD') {
-            //todo add websocket broken (types in cause)
+        } else if (parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') {
+          if (parsed.action === 'ADD') {
             parsed.event = parsed.events[0];
-            console.log(parsed.event);
-            console.log(parsed);
             this.calendarEvents.push({
               id: parsed.event.id,
               title: parsed.event.title,
@@ -124,12 +109,11 @@ export class EventsComponent {
               }
             });
             this.calendarOptions.events = [...this.calendarEvents];
-          } else if(parsed.action === 'DELETE') {
+          } else if (parsed.action === 'DELETE') {
             this.calendarEvents = this.calendarEvents.filter(e => e.id !== parsed.events[0].id);
             this.calendarOptions.events = [...this.calendarEvents];
           } else if (parsed.action === 'UPDATE') {
             const updated = parsed.events[0];
-
             this.calendarEvents = this.calendarEvents.map(ev =>
               ev.id === updated.id
                 ? {
@@ -145,75 +129,18 @@ export class EventsComponent {
                 }
                 : ev
             );
-
             this.calendarOptions.events = [...this.calendarEvents];
           }
         }
-      }
-      catch {
+      } catch {
         this.messages.push(message);
       }
-    })
-
-    this.eventService.getAllTypes().subscribe(response => {
-      this.types = response
     });
 
+    this.eventService.getAllTypes().subscribe(response => {
+      this.types = response;
+    });
   }
-
-  openModal() {
-    this.showModal = true;
-    const now = new Date().toISOString().slice(0, 16);
-    this.newEvent.startDateTime = now;
-    this.newEvent.endDateTime = now;
-  }
-
-  closeModal() {
-    this.showModal = false;
-    this.newEvent = {
-      type: '',
-      title: '',
-      description: '',
-      startDateTime: '',
-      endDateTime: ''
-    };
-  }
-
-  addEventToBackend() {
-    console.log('edit mode : ', this.editMode);
-    if (this.editMode) {
-      this.eventService.updateEvent(this.newEvent).subscribe({
-        next: () => {
-          this.closeModal(); // Le WS s’occupe du reste
-        },
-        error: (err) => console.error('Erreur lors de la mise à jour de l’événement', err)
-      });
-    } else {
-      this.eventService.createEvent(this.newEvent).subscribe({
-        next: () => {
-          this.closeModal(); // Le WS s’occupe du reste
-        },
-        error: (err) => console.error('Erreur lors de la création de l’événement', err)
-      });
-    }
-  }
-
-
-  get isFormInvalid(): boolean {
-    const { type, title, description, startDateTime, endDateTime } = this.newEvent;
-
-    if (!type || !title || !description || !startDateTime || !endDateTime) return true;
-
-    const now = new Date();
-    const start = new Date(startDateTime);
-    const end = new Date(endDateTime);
-
-    return (
-      start.getTime() <= now.getTime() || // doit être STRICTEMENT dans le futur
-      end.getTime() <= start.getTime()    // fin doit être après début (pas égal)
-    );
-  }
-
 
   renderCustomEvent(arg: any): { html: string } {
     const startTime = new Date(arg.event.start).toLocaleTimeString('fr-FR', {
@@ -224,21 +151,6 @@ export class EventsComponent {
     return {
       html: `<span class="font-mono text-sm" style="color: ${arg.event.extendedProps.type.textColor}">${startTime} | ${arg.event.title}</span>`
     };
-  }
-
-  decorateEventCell(info: any) {
-    const imageUrl = info.event.extendedProps?.type?.imageUrl || 'default';
-
-    const el = info.el; // l'élément HTML de l'event
-
-    // remonte jusqu’à la cellule jour (td)
-    const dayCell = el.closest('.fc-daygrid-day');
-
-    if (dayCell) {
-      dayCell.style.backgroundImage = `url('${imageUrl}')`;
-      dayCell.style.backgroundSize = 'cover';
-      dayCell.style.backgroundPosition = 'center';
-    }
   }
 
   applyBackgroundColor(info: any) {
@@ -272,11 +184,8 @@ export class EventsComponent {
       finished: event.extendedProps.finished
     };
     this.showDetailsModal = true;
-    this.editMode = false;
     this.initializeParticipationData();
-
   }
-
 
   private initializeParticipationData() {
     this.eventService.getParticipations(this.selectedEvent.id).subscribe((response: any) => {
@@ -290,17 +199,6 @@ export class EventsComponent {
     });
   }
 
-  openEditModal() {
-    this.editMode = true;
-    this.newEvent = { ...this.selectedEvent,
-    startDateTime: this.toDatetimeLocalFormat(this.selectedEvent.startDateTime),
-    endDateTime: this.toDatetimeLocalFormat(this.selectedEvent.endDateTime)
-    };
-    this.showDetailsModal = false;
-    this.showModal = true;
-  }
-
-
   deleteSelectedEvent() {
     if (!this.selectedEvent?.id) return;
     this.eventService.deleteEvent(this.selectedEvent.id).subscribe(() => {
@@ -308,26 +206,17 @@ export class EventsComponent {
     });
   }
 
-  private toDatetimeLocalFormat(date: string): string {
-    return new Date(date).toISOString().slice(0, 16);
-  }
-
   setParticipationStatus(status: number) {
     if (!this.selectedEvent) return;
 
-    this.eventService.setParticipationStatus(this.selectedEvent.id, status)
-      .subscribe({
-        next: () => {
-          // Optionnel : notification ou mise à jour locale
-          console.log('Participation enregistrée avec succès');
-          this.initializeParticipationData()
-        },
-        error: (err) => {
-          console.error('Erreur lors de la participation', err);
-        }
-      });
+    this.eventService.setParticipationStatus(this.selectedEvent.id, status).subscribe({
+      next: () => {
+        console.log('Participation enregistrée avec succès');
+        this.initializeParticipationData();
+      },
+      error: (err) => {
+        console.error('Erreur lors de la participation', err);
+      }
+    });
   }
-
-
-
 }

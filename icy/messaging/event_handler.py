@@ -113,6 +113,9 @@ class EventHandler:
         type_info = payload.get("type", {}) or {}
         image_url = type_info.get("imageUrl")
         type_name = type_info.get("name", "Événement")
+        type_color = type_info.get("color")
+
+        color_value = discord.Color(int(type_color.replace("#", ""), 16)) if type_color else discord.Color.blue()
 
         # --- Participants ---
         participants = payload.get("participants", [])
@@ -127,7 +130,7 @@ class EventHandler:
         embed = discord.Embed(
             title=f"{type_name} : {title}",
             description=f"📅 **Date :** {date}\n\n💬 {description}",
-            color=discord.Color.blue(),
+            color=color_value
         )
         embed.add_field(name="✅ Confirmés", value=fmt_list(confirmed), inline=True)
         embed.add_field(name="❔ Peut-être", value=fmt_list(maybe), inline=True)

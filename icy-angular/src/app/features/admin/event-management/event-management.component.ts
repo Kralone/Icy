@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {Router, RouterModule} from '@angular/router';
-import { EventService } from '../../../core/services/event/event.service';
+import { Router, RouterModule } from '@angular/router';
+import { EventService, EventDTO } from '../../../core/services/event/event.service';
 import { EventType } from '../../../model/event-type.model';
 
 @Component({
@@ -12,7 +12,7 @@ import { EventType } from '../../../model/event-type.model';
   templateUrl: './event-management.component.html',
 })
 export class EventManagementComponent implements OnInit {
-  // 🧱 Gestion des événements
+  // === Création d’événement ===
   newEvent = {
     title: '',
     type: '',
@@ -20,40 +20,66 @@ export class EventManagementComponent implements OnInit {
     startDateTime: '',
     endDateTime: '',
   };
+
+  // === Liste des événements ===
+  events: EventDTO[] = [];
+  isLoadingEvents = false;
+
+  // === Types ===
   types: EventType[] = [];
-  isSubmitting = false;
   isLoadingTypes = false;
 
-  editingType: any = null;
-  isTypeUpdating = false;
+  // === État de création / édition ===
+  isSubmitting = false;
+  editingEvent: EventDTO | null = null;
+  isUpdatingEvent = false;
 
-  // 🧱 Gestion des types d'événements
+  // === Types d’événements ===
   newType: EventType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
   isTypeSubmitting = false;
+  editingType: any = null;
+  isTypeUpdating = false;
 
   constructor(private eventService: EventService, private router: Router) {}
 
   ngOnInit() {
     this.loadTypes();
-    this.loadEventTypes();
+    this.loadAllEvents();
   }
 
-  loadEventTypes() {
-    this.isLoadingTypes = true;
-    this.eventService.getAllTypes().subscribe({
-      next: (types) => {
-        this.types = types;
-        this.isLoadingTypes = false;
+  // === Charger tous les événements ===
+  loadAllEvents() {
+    this.isLoadingEvents = true;
+    this.eventService.getAll().subscribe({
+      next: (response) => {
+        this.events = response.sort(
+          (a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime()
+        );
+        this.isLoadingEvents = false;
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des types', err);
-        this.isLoadingTypes = false;
-      }
+        console.error('Erreur chargement événements', err);
+        this.isLoadingEvents = false;
+      },
     });
   }
 
+  // === Charger les types ===
+  loadTypes() {
+    this.isLoadingTypes = true;
+    this.eventService.getAllTypes().subscribe({
+      next: (response) => {
+        this.types = response;
+        this.isLoadingTypes = false;
+      },
+      error: (err) => {
+        console.error('Erreur chargement des types', err);
+        this.isLoadingTypes = false;
+      },
+    });
+  }
 
-  // === Événements ===
+  // === Création ===
   get isFormInvalid(): boolean {
     const e = this.newEvent;
     return (
@@ -72,7 +98,8 @@ export class EventManagementComponent implements OnInit {
     this.eventService.createEvent(this.newEvent).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.router.navigate(['/events']);
+        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
+        this.loadAllEvents();
       },
       error: (err) => {
         console.error('Erreur création événement', err);
@@ -81,14 +108,49 @@ export class EventManagementComponent implements OnInit {
     });
   }
 
-  // === Types d'événements ===
-  loadTypes() {
-    this.eventService.getAllTypes().subscribe({
-      next: (response) => (this.types = response),
-      error: (err) => console.error('Erreur chargement des types', err),
+  // === Modifier un événement ===
+  openEditEventModal(event: EventDTO) {
+    this.editingEvent = {
+      ...event,
+      startDateTime: event.startDateTime.slice(0, 16),
+      endDateTime: event.endDateTime.slice(0, 16),
+    };
+  }
+
+  cancelEditEvent() {
+    this.editingEvent = null;
+  }
+
+  updateEvent() {
+    if (!this.editingEvent) return;
+    this.isUpdatingEvent = true;
+
+    // 🔹 Prépare un objet conforme au backend
+    const payload = {
+      id: this.editingEvent.id,
+      title: this.editingEvent.title,
+      description: this.editingEvent.description,
+      startDateTime: this.editingEvent.startDateTime,
+      endDateTime: this.editingEvent.endDateTime,
+      finished: this.editingEvent.finished ?? false,
+      type: this.editingEvent.type?.name || this.editingEvent.type // ⚠️ envoie une String
+    };
+
+    this.eventService.updateEvent(payload).subscribe({
+      next: () => {
+        this.isUpdatingEvent = false;
+        this.editingEvent = null;
+        this.loadAllEvents();
+      },
+      error: (err) => {
+        console.error('Erreur mise à jour événement', err);
+        this.isUpdatingEvent = false;
+      },
     });
   }
 
+
+  // === Types ===
   createType() {
     if (!this.newType.name.trim()) return;
     this.isTypeSubmitting = true;
@@ -96,7 +158,6 @@ export class EventManagementComponent implements OnInit {
     this.eventService.createType(this.newType).subscribe({
       next: () => {
         this.isTypeSubmitting = false;
-        this.loadEventTypes();
         this.newType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
         this.loadTypes();
       },
@@ -117,10 +178,10 @@ export class EventManagementComponent implements OnInit {
   }
 
   editType(type: any) {
-    this.editingType = { ...type }; // clone pour éviter de modifier directement la liste
+    this.editingType = { ...type };
   }
 
-  cancelEdit() {
+  cancelEditType() {
     this.editingType = null;
   }
 
@@ -130,24 +191,14 @@ export class EventManagementComponent implements OnInit {
 
     this.eventService.updateEventType(this.editingType).subscribe({
       next: () => {
-        console.log('✅ Type modifié avec succès');
         this.isTypeUpdating = false;
-
-        // 🔄 Recharge proprement la liste depuis le backend
-        this.loadEventTypes();
-
-        // 🔒 Ferme le modal s’il est ouvert
-        const modal = document.getElementById('editTypeModal') as HTMLDialogElement;
-        if (modal) modal.close();
-
-        // 🧹 Réinitialise l’état local
         this.editingType = null;
+        this.loadTypes();
       },
       error: (err) => {
-        console.error('❌ Erreur mise à jour type', err);
+        console.error('Erreur mise à jour type', err);
         this.isTypeUpdating = false;
       },
     });
   }
-
 }

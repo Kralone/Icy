@@ -90,6 +90,72 @@
     </div>
   </div>
 
+  <section class="space-y-6">
+    <h2 class="text-xl font-bold text-cyan-300">Événements créés</h2>
+
+    <div *ngIf="isLoadingEvents" class="text-center text-gray-400 italic">Chargement des événements...</div>
+
+    <div *ngIf="!isLoadingEvents && events.length === 0" class="text-center text-gray-400 italic">
+      Aucun événement pour le moment.
+    </div>
+
+    <div
+      *ngIf="!isLoadingEvents && events.length > 0"
+      class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl"
+    >
+      <table class="min-w-full divide-y divide-white/10">
+        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">Titre</th>
+          <th class="px-4 py-3 text-left">Type</th>
+          <th class="px-4 py-3 text-left">Début</th>
+          <th class="px-4 py-3 text-left">Fin</th>
+          <th class="px-4 py-3 text-left">Statut</th>
+          <th class="px-4 py-3 text-right">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr
+          *ngFor="let e of events"
+          [ngClass]="{
+              'opacity-50 italic text-gray-400': e.finished,
+              'hover:bg-white/10 transition duration-200 border-b border-white/10': true
+            }"
+        >
+          <td class="px-4 py-3 font-medium">{{ e.title }}</td>
+          <td class="px-4 py-3">{{ e.type.name }}</td>
+          <td class="px-4 py-3">{{ e.startDateTime | date:'short' }}</td>
+          <td class="px-4 py-3">{{ e.endDateTime | date:'short' }}</td>
+          <td class="px-4 py-3">
+              <span
+                [ngClass]="{
+                  'text-green-400': !e.finished,
+                  'text-gray-400': e.finished
+                }"
+              >
+                {{ e.finished ? 'Terminé' : 'À venir' }}
+              </span>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <button
+              (click)="openEditEventModal(e)"
+              [disabled]="e.finished"
+              class="font-semibold transition px-3 py-1.5 rounded-lg shadow-md
+                     border border-white/10
+                     bg-gradient-to-r from-yellow-400 to-amber-500
+                     hover:from-yellow-300 hover:to-amber-400
+                     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-yellow-400 disabled:hover:to-amber-500"
+            >
+              ✏️ Modifier
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- === SECTION 2 : Types d'événements === -->
   <section class="space-y-8">
     <h2 class="text-xl font-bold text-cyan-300">Types d'événements</h2>
@@ -255,7 +321,7 @@
       <div class="flex justify-end gap-4 pt-6">
         <button
           type="button"
-          (click)="cancelEdit()"
+          (click)="cancelEditType()"
           class="text-gray-400 hover:text-white transition"
         >
           Annuler
@@ -270,6 +336,31 @@
           {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="editingEvent" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+  <div class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-lg p-8 relative text-white">
+    <h3 class="text-2xl font-semibold mb-6 text-cyan-300">Modifier l’événement</h3>
+
+    <div class="space-y-4">
+      <input [(ngModel)]="editingEvent.title" placeholder="Titre" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white" />
+      <select [(ngModel)]="editingEvent.type.name" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white">
+        <option *ngFor="let type of types" [value]="type.name">{{ type.name }}</option>
+      </select>
+      <textarea [(ngModel)]="editingEvent.description" rows="3" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white"></textarea>
+      <div class="grid grid-cols-2 gap-4">
+        <input [(ngModel)]="editingEvent.startDateTime" type="datetime-local" class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white" />
+        <input [(ngModel)]="editingEvent.endDateTime" type="datetime-local" class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white" />
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-4 pt-6">
+      <button (click)="cancelEditEvent()" class="text-gray-400 hover:text-white transition">Annuler</button>
+      <button (click)="updateEvent()" [disabled]="isUpdatingEvent" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-2 rounded-lg font-semibold shadow-md transition disabled:opacity-60">
+        {{ isUpdatingEvent ? 'Mise à jour…' : 'Sauvegarder' }}
+      </button>
     </div>
   </div>
 </div>

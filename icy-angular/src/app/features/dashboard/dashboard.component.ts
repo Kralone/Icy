@@ -23,7 +23,6 @@ interface ShipSummary {
   standalone: true,
   imports: [
     CommonModule,
-    LoadingOverlayComponent,
     GoalComponent,
     NewsComponent
   ],
