@@ -11,6 +11,7 @@ import com.icy.icy_backend.db.repository.EventTypeRepository;
 import com.icy.icy_backend.db.repository.UserRepository;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.messaging.EventPublisher;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.rest.AuthService;
 import com.icy.icy_backend.service.rest.MessageService;
@@ -43,8 +44,9 @@ public class EventService {
     private final EventParticipationRepository participationRepository;
     private final UserService userService;
     private final AuthService authService;
+    private final EventPublisher eventPublisher;
 
-    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository, EventParticipationRepository participationRepository, UserService userService, AuthService authService) {
+    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository, EventParticipationRepository participationRepository, UserService userService, AuthService authService, EventPublisher eventPublisher) {
         this.eventRepository = eventRepository;
         this.messageService = messageService;
         this.eventWebSocketService = eventWebSocketService;
@@ -52,9 +54,24 @@ public class EventService {
         this.participationRepository = participationRepository;
         this.userService = userService;
         this.authService = authService;
+        this.eventPublisher = eventPublisher;
     }
 
-    public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(String type, String title, String description, LocalDateTime start, LocalDateTime end) {
+    public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
+            String type,
+            String title,
+            String description,
+            LocalDateTime start,
+            LocalDateTime end
+    ) {
+        // 🔹 Récupération du créateur (user connecté)
+        UUID userId = AuthUtils.getCurrentUserId();
+        User creator = userService.findUserById(userId);
+        if (creator == null) {
+            logger.warn("Impossible d’associer un créateur à l’événement — utilisateur introuvable (ID={})", userId);
+        }
+
+        // 🔹 Création de l’événement
         Event event = new Event();
         event.setType(getEventTypeByName(type));
         event.setTitle(title);
@@ -62,10 +79,20 @@ public class EventService {
         event.setStartDateTime(start);
         event.setEndDateTime(end);
         event.setFinished(false);
+        event.setCreatedAt(LocalDateTime.now());
+        event.setUpdatedAt(LocalDateTime.now());
+        event.setCreator(creator); // ✅ Important
+
+        // 🔹 Persistance
         Event saved = eventRepository.save(event);
+
+        // 🔹 Diffusion temps réel + message RabbitMQ
         eventWebSocketService.sendEventUpdate(saved, "ADD");
+        eventPublisher.publishEventCreated(saved);
+
         return messageService.buildResponse("event.created", new EventResponseDTO(saved));
     }
+
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(UUID id, String type, String title, String description, LocalDateTime start, LocalDateTime end, boolean finished) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
@@ -77,6 +104,7 @@ public class EventService {
         event.setFinished(finished);
         Event saved = eventRepository.save(event);
         eventWebSocketService.sendEventUpdate(saved, "UPDATE");
+        eventPublisher.publishEventUpdated(saved);
         return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
     }
 
@@ -84,6 +112,7 @@ public class EventService {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
         eventRepository.delete(event);
         eventWebSocketService.sendEventUpdate(event, "DELETE");
+        eventPublisher.publishEventDeleted(event);
         return messageService.buildResponse("event.deleted", null);
     }
 
@@ -171,6 +200,8 @@ public class EventService {
         participation.setStatus(status);
 
         participationRepository.save(participation);
+
+        eventPublisher.publishEventUpdated(event);
 
         return messageService.buildResponse("event.participation.set", null);
     }

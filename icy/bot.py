@@ -1,4 +1,5 @@
 import os
+import socket
 import sys
 import discord
 import asyncio
@@ -33,7 +34,16 @@ logger.info(f"🌍 Mode: {env_mode.upper()}")
 # Récupération des variables
 token = os.getenv("DISCORD_TOKEN")
 guild_id_str = os.getenv("GUILD_ID")
-rabbit_url = os.getenv("RABBITMQ_URL", "amqp://icy:icyforge@rabbitmq:5672/")
+
+# --- RabbitMQ config ---
+rabbit_host = os.getenv("RABBITMQ_HOST", "localhost")
+rabbit_port = os.getenv("RABBITMQ_PORT", "5672")
+rabbit_user = os.getenv("RABBITMQ_USER", "icy")
+rabbit_pass = os.getenv("RABBITMQ_PSWD", "icy123")
+
+rabbit_url = f"amqp://{rabbit_user}:{rabbit_pass}@{rabbit_host}:{rabbit_port}/"
+logger.info(f"🔌 RabbitMQ URL générée : {rabbit_url}")
+
 
 # Vérifications préliminaires
 if not token:
@@ -78,7 +88,7 @@ async def on_ready():
     logger.info(f"🔍 Cogs actifs: {list(bot.cogs.keys())}")
 
     # Connexion à RabbitMQ
-    await wait_for_rabbitmq()
+    await wait_for_rabbitmq(host=rabbit_host, port=int(rabbit_port))
     rabbit = RabbitManager(rabbit_url, bot)
     await rabbit.connect()
     logger.info("🐇 RabbitMQ connecté et en écoute.")
@@ -91,18 +101,22 @@ async def on_ready():
         logger.exception("❌ Erreur lors de la synchronisation des commandes slash.")
 
 
-async def wait_for_rabbitmq(host="rabbitmq", port=5672, timeout=30):
-    import socket
-    for i in range(timeout):
+async def wait_for_rabbitmq(host, port, timeout: int = 10):
+
+    logger.debug(f"⏳ Vérification de la disponibilité de RabbitMQ sur {host}:{port}")
+
+    for attempt in range(1, timeout + 1):
         try:
             with socket.create_connection((host, port), timeout=2):
-                print(f"✅ RabbitMQ est prêt (tentative {i+1})")
+                logger.info(f"✅ RabbitMQ est prêt (tentative {attempt})")
                 return True
-        except Exception:
-            print(f"⏳ En attente de RabbitMQ... (tentative {i+1})")
+        except Exception as e:
+            logger.warning(f"⏳ En attente de RabbitMQ... (tentative {attempt})")
+            logger.debug(f"Détail : {repr(e)}")
             await asyncio.sleep(2)
-    print("❌ RabbitMQ n'est pas accessible après 30s")
-    return False
+
+    logger.error(f"❌ RabbitMQ n'est pas accessible après {timeout * 2}s sur {host}:{port}")
+    sys.exit(1)
 
 
 @bot.event

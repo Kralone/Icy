@@ -12,51 +12,60 @@ logger = logging.getLogger("icy.rabbit")
 class RabbitManager:
     """
     Gère la connexion RabbitMQ, la consommation de messages
-    et la publication d'événements.
+    et la publication d'événements (news + events).
     """
 
-    def __init__(self, amqp_url: str, bot, queue_name: str = "news.queue", exchange_name: str = "icy.exchange"):
+    def __init__(self, amqp_url: str, bot, exchange_name: str = "icy.exchange"):
         self.amqp_url = amqp_url
-        self.queue_name = queue_name
         self.exchange_name = exchange_name
         self.connection = None
         self.channel = None
         self.bot = bot
 
-        # Ces deux attributs seront initialisés après connexion
+        # Components
         self.publisher = None
         self.handler = None
+
+        # Queues écoutées
+        self.queues = {
+            "news": "news.queue",
+            "events": "events.queue"
+        }
 
     async def connect(self):
         """Établit la connexion à RabbitMQ et configure les composants."""
         logger.info(f"🐇 Connexion à RabbitMQ ({self.amqp_url})...")
+
         try:
             self.connection = await aio_pika.connect_robust(self.amqp_url)
             self.channel = await self.connection.channel()
 
-            # Exchange + Queue
+            # Exchange principal
             exchange = await self.channel.declare_exchange(
                 self.exchange_name, aio_pika.ExchangeType.TOPIC, durable=True
             )
-            queue = await self.channel.declare_queue(self.queue_name, durable=True)
 
-            # Liaison pour écouter les messages news.*
-            await queue.bind(exchange, routing_key="news.*")
-            await queue.consume(self.on_message)
+            # Déclaration et binding des deux queues
+            for key, queue_name in self.queues.items():
+                queue = await self.channel.declare_queue(queue_name, durable=True)
+                routing_pattern = f"{key}.*"
+                await queue.bind(exchange, routing_key=routing_pattern)
+                await queue.consume(self.on_message)
+                logger.info(f"🎧 Écoute activée sur {queue_name} (clé: {routing_pattern})")
 
-            # Crée le publisher pour les envois sortants
+            # Publisher pour les envois sortants
             self.publisher = MessagePublisher(self.connection)
 
-            # Crée le handler pour traiter les messages entrants
+            # Handler pour les messages entrants
             self.handler = MessageHandler(self.bot, self.publisher)
 
-            logger.info(f"✅ Connecté à RabbitMQ et en écoute sur : {self.queue_name}")
+            logger.info("✅ RabbitMQ connecté et en écoute sur toutes les files.")
 
         except Exception as e:
             logger.exception(f"❌ Erreur lors de la connexion à RabbitMQ : {e}")
 
     async def on_message(self, message: aio_pika.IncomingMessage):
-        """Callback exécuté à chaque message reçu sur la queue."""
+        """Callback exécuté à chaque message reçu sur les queues."""
         async with message.process():
             try:
                 payload = json.loads(message.body)
