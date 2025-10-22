@@ -6,7 +6,7 @@ import aiohttp
 class APIClient(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.api_base_url = "http://localhost:8080"  # Remplace par l'URL de ton API
+        self.api_base_url = "http://backend:8080"  # Remplace par l'URL de ton API
 
     async def api_request(self, method, endpoint, data=None, headers=None, ctx=None):
         url = f"{self.api_base_url}/{endpoint}"

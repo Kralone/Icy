@@ -35,11 +35,21 @@ public class CollectionService {
     // --- Templates ---
     @Transactional(readOnly = true)
     public List<TemplateListItemDTO> getTemplates(String archetype, String query) {
-        if (query == null) query = ""; // évite l'erreur lower(bytea)
-        return templateRepository.search(archetype, query).stream()
+        final String searchQuery = (query == null) ? "" : query.toLowerCase();
+
+        List<CollectionTemplate> templates;
+        if (archetype != null && !archetype.isBlank()) {
+            templates = templateRepository.findAllByArchetypeOrderByCreatedAtDesc(archetype);
+        } else {
+            templates = templateRepository.findAllByOrderByCreatedAtDesc();
+        }
+
+        return templates.stream()
+                .filter(t -> t.getName().toLowerCase().contains(searchQuery))
                 .map(t -> new TemplateListItemDTO(t.getId(), t.getName(), t.getArchetype()))
                 .collect(Collectors.toList());
     }
+
 
     @Transactional(readOnly = true)
     public TemplateDetailDTO getTemplate(Long id) {

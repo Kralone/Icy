@@ -4,6 +4,14 @@ spring:
 
     messages:
         encoding: UTF-8
+
+    rabbitmq:
+      host: rabbitmq
+      port: 5672
+      username: icy
+      password: icy123
+      virtual-host: /
+
     datasource:
         url: jdbc:postgresql://localhost:5432/iceforgedb
         username: iceforge

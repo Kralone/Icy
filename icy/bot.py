@@ -1,64 +1,120 @@
 import os
+import sys
 import discord
-from discord.ext import commands
 import asyncio
+import logging
+from discord.ext import commands
 from dotenv import load_dotenv
-import threading
-from utils.bot_api import launch_api
+from messaging.rabbit_manager import RabbitManager
 
-env_mode = os.getenv("ENV_MODE", "development")  # Valeur par défaut : "development"
 
-# Sélectionner le bon fichier .env à charger
-env_file = ".env.prod" if env_mode == "production" else ".env"
+# --- CONFIG LOGGING GLOBALE ---
+logging.basicConfig(
+    level=logging.DEBUG if os.getenv("ENV_MODE", "development") == "development" else logging.INFO,
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
-print(f"[LOG] Running in '{env_mode.upper()}' mode")
-print(f"[LOG] Loading environment variables from '{env_file}'")
+# Réduit le bruit de certains loggers
+for logger_name in ["discord", "aio_pika", "asyncio"]:
+    logging.getLogger(logger_name).setLevel(logging.INFO)
 
-# Charger les variables d'environnement
-load_dotenv(dotenv_path=env_file)
+logger = logging.getLogger("icy.bot")
+logger.info("🔧 Logging initialisé.")
 
+
+# --- ENVIRONMENT VARIABLES ---
+env_mode = os.getenv("ENV_MODE", "development")
+
+# Charge automatiquement le .env uniquement si présent (utile en local)
+load_dotenv()
+logger.info(f"🌍 Mode: {env_mode.upper()}")
+
+# Récupération des variables
 token = os.getenv("DISCORD_TOKEN")
-guild_id = int(os.getenv("GUILD_ID"))
+guild_id_str = os.getenv("GUILD_ID")
+rabbit_url = os.getenv("RABBITMQ_URL", "amqp://icy:icyforge@rabbitmq:5672/")
 
+# Vérifications préliminaires
+if not token:
+    logger.error("❌ Variable d'environnement DISCORD_TOKEN manquante. Vérifie ton .env ou ton env_file Docker.")
+    sys.exit(1)
+
+if not guild_id_str:
+    logger.error("❌ Variable d'environnement GUILD_ID manquante.")
+    sys.exit(1)
+
+try:
+    guild_id = int(guild_id_str)
+except ValueError:
+    logger.error(f"❌ GUILD_ID invalide : '{guild_id_str}' (doit être un entier).")
+    sys.exit(1)
+
+logger.info("✅ Variables d'environnement chargées avec succès.")
+
+
+# --- CONFIG DISCORD ---
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
+
 async def setup():
-    # Charger tous les cogs présents dans le dossier "cogs"
+    """Charge dynamiquement tous les COGs"""
     cogs_dir = "cogs"
     for filename in os.listdir(cogs_dir):
         if filename.endswith(".py") and not filename.startswith("__"):
             cog_name = f"{cogs_dir}.{filename[:-3]}"
             try:
                 await bot.load_extension(cog_name)
-                print(f"✅ Cog chargé : {cog_name}")
+                logger.info(f"✅ Cog chargé : {cog_name}")
             except Exception as e:
-                print(f"❌ Erreur lors du chargement de {cog_name} : {e}")
+                logger.exception(f"❌ Erreur lors du chargement de {cog_name}: {e}")
+
 
 @bot.event
 async def on_ready():
-    print(f"✅ Connecté en tant que {bot.user}")
-    print("🔍 Cogs chargés :", bot.cogs.keys())  # Affiche tous les cogs chargés
-    threading.Thread(target=launch_api, args=(bot,), daemon=True).start()
+    logger.info(f"✅ Connecté en tant que {bot.user}")
+    logger.info(f"🔍 Cogs actifs: {list(bot.cogs.keys())}")
 
+    # Connexion à RabbitMQ
+    await wait_for_rabbitmq()
+    rabbit = RabbitManager(rabbit_url, bot)
+    await rabbit.connect()
+    logger.info("🐇 RabbitMQ connecté et en écoute.")
+
+    # Synchronisation des commandes slash
     try:
         synced = await bot.tree.sync(guild=discord.Object(id=guild_id))
-        print(f"🔃 {len(synced)} commande(s) slash synchronisée(s) avec succès dans la guilde {guild_id} :")
-        # Afficher la liste des noms des commandes synchronisées
-        for command in synced:
-            print(f"   • {command.name}")
+        logger.info(f"🔃 {len(synced)} commande(s) slash synchronisée(s): {[cmd.name for cmd in synced]}")
     except Exception as e:
-        print(f"❌ Erreur lors de la synchronisation des commandes slash : {e}")
+        logger.exception("❌ Erreur lors de la synchronisation des commandes slash.")
+
+
+async def wait_for_rabbitmq(host="rabbitmq", port=5672, timeout=30):
+    import socket
+    for i in range(timeout):
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                print(f"✅ RabbitMQ est prêt (tentative {i+1})")
+                return True
+        except Exception:
+            print(f"⏳ En attente de RabbitMQ... (tentative {i+1})")
+            await asyncio.sleep(2)
+    print("❌ RabbitMQ n'est pas accessible après 30s")
+    return False
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(f"❌ Erreur inconnue : {str(error)}")
+    logger.error(f"❌ Erreur de commande: {error}")
+
 
 async def main():
     async with bot:
         await setup()
         await bot.start(token)
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())

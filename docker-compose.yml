@@ -15,6 +15,7 @@ services:
       - internal
       - external
 
+
   backend:
     build: ./app
     container_name: iceforge_backend
@@ -25,6 +26,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: iceforgepassword
     depends_on:
       - db
+      - rabbitmq
     ports:
       - "8080:8080"
     volumes:
@@ -52,18 +54,34 @@ services:
     build: ./bot
     container_name: iceforge_bot
     restart: always
-    environment:
-      DISCORD_TOKEN: ${DISCORD_TOKEN}
-      API_URL: http://backend:8080
+    env_file:
+      - .env
     ports:
       - "8090:8090"
     depends_on:
       - backend
+      - rabbitmq
     volumes:
       - bot_config:/app/config
     networks:
       - internal
       - external
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: iceforge_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: icy
+      RABBITMQ_DEFAULT_PASS: icy123
+    ports:
+      - "5672:5672"   # Port du broker AMQP
+      - "15672:15672" # Interface de management (http://localhost:15672)
+    networks:
+      - internal
+      - external
+
 
 volumes:
   postgres_data:

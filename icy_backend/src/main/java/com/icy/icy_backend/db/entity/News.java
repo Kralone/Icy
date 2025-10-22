@@ -32,4 +32,11 @@ public class News {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "discord_message_id")
+    private Long discordMessageId;
+
+    @Column(name = "discord_channel_id")
+    private Long discordChannelId;
+
 }

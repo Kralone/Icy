@@ -18,4 +18,7 @@ public interface CollectionTemplateRepository extends JpaRepository<CollectionTe
     boolean existsByName(String name);
 
     Optional<CollectionTemplate> findByName(String name);
+    List<CollectionTemplate> findAllByArchetypeOrderByCreatedAtDesc(String archetype);
+    List<CollectionTemplate> findAllByOrderByCreatedAtDesc();
+
 }

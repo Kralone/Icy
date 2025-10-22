@@ -5,12 +5,13 @@ import { AngularEditorModule, AngularEditorConfig } from '@kolkov/angular-editor
 import { NewsService } from '../../../core/services/news/news.service';
 import { News } from '../../../model/news.model';
 import { NewsType } from '../../../model/news-type.model';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-news-management',
   standalone: true,
   templateUrl: './news-management.component.html',
-  imports: [CommonModule, FormsModule, AngularEditorModule],
+  imports: [CommonModule, FormsModule, AngularEditorModule, RouterLink],
 })
 export class NewsManagementComponent implements OnInit {
   // === ACTUALITÉS ===
