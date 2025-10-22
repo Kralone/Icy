@@ -199,13 +199,6 @@ export class EventsComponent {
     });
   }
 
-  deleteSelectedEvent() {
-    if (!this.selectedEvent?.id) return;
-    this.eventService.deleteEvent(this.selectedEvent.id).subscribe(() => {
-      this.showDetailsModal = false;
-    });
-  }
-
   setParticipationStatus(status: number) {
     if (!this.selectedEvent) return;
 

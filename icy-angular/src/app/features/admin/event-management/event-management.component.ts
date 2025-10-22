@@ -149,6 +149,30 @@ export class EventManagementComponent implements OnInit {
     });
   }
 
+  confirmDeleteEvent() {
+    if (!this.editingEvent?.id) return;
+
+    const confirmed = confirm(
+      `Voulez-vous vraiment supprimer l’événement “${this.editingEvent.title}” ?`
+    );
+    if (!confirmed) return;
+
+    this.isLoadingEvents = true; // tu utilises déjà ce flag pour le chargement
+    this.eventService.deleteEvent(this.editingEvent.id).subscribe({
+      next: () => {
+        this.isLoadingEvents = false;
+        this.cancelEditEvent();   // ✅ ferme le modal d’édition
+        this.loadAllEvents();
+      },
+      error: (err) => {
+        console.error('Erreur suppression :', err);
+        this.isLoadingEvents = false;
+      },
+    });
+  }
+
+
+
 
   // === Types ===
   createType() {

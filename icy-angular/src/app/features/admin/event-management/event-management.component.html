@@ -356,11 +356,40 @@
       </div>
     </div>
 
-    <div class="flex justify-end gap-4 pt-6">
-      <button (click)="cancelEditEvent()" class="text-gray-400 hover:text-white transition">Annuler</button>
-      <button (click)="updateEvent()" [disabled]="isUpdatingEvent" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-2 rounded-lg font-semibold shadow-md transition disabled:opacity-60">
-        {{ isUpdatingEvent ? 'Mise à jour…' : 'Sauvegarder' }}
+    <!-- BOUTONS DU MODAL -->
+    <div class="mt-6 flex justify-between items-center">
+      <!-- Bouton Supprimer -->
+      <button
+        type="button"
+        (click)="confirmDeleteEvent()"
+        class="px-4 py-2 rounded-lg bg-red-500/20 border border-red-400/50 text-red-300
+           hover:bg-red-500/30 transition-all hover:scale-105 active:scale-95
+           shadow-[0_0_10px_rgba(255,0,0,0.3)]"
+      >
+        🗑️ Supprimer
       </button>
+
+      <div class="flex gap-3">
+        <button
+          type="button"
+          (click)="cancelEditEvent()"
+          class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300
+             hover:bg-white/20 transition-all"
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          (click)="updateEvent()"
+          class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-300
+             hover:bg-cyan-500/30 transition-all hover:scale-105 active:scale-95
+             shadow-[0_0_10px_rgba(0,255,255,0.3)]"
+        >
+          💾 Enregistrer
+        </button>
+      </div>
     </div>
+
   </div>
 </div>

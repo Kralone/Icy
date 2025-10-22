@@ -6,7 +6,7 @@ spring:
         encoding: UTF-8
 
     rabbitmq:
-      host: localhost
+      host: rabbitmq
       port: 5672
       username: icy
       password: icy123
