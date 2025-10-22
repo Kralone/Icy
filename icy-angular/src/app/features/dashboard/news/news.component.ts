@@ -33,4 +33,25 @@ export class NewsComponent implements OnInit {
   closeModal(): void {
     this.selectedNews = null;
   }
+
+  currentPage = 1;
+  itemsPerPage = 3; // nombre d’articles par page
+
+  get paginatedNews() {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.newsList.slice(start, start + this.itemsPerPage);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.newsList.length / this.itemsPerPage);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
 }

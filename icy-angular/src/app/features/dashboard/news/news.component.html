@@ -9,9 +9,9 @@
   </h1>
 
   <!-- LISTE DES NEWS -->
-  <div *ngIf="newsList.length > 0; else noNews" class="space-y-6">
+  <div *ngIf="paginatedNews.length > 0; else noNews" class="space-y-6">
     <div
-      *ngFor="let n of newsList"
+      *ngFor="let n of paginatedNews"
       class="relative flex flex-col md:flex-row overflow-hidden rounded-2xl border border-white/20 shadow-lg
              bg-gradient-to-br from-[#0d1b2a]/90 to-[#1b263b]/90
              hover:border-cyan-400 hover:shadow-cyan-400/30
@@ -26,7 +26,6 @@
                  group-hover:scale-110 group-hover:translate-x-1"
         />
 
-        <!-- Dégradé vers le texte -->
         <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/60 via-transparent to-transparent"></div>
 
         <!-- Badge type -->
@@ -43,7 +42,6 @@
         class="relative flex-1 p-4 flex flex-col justify-between
                bg-gradient-to-l from-transparent via-[#1b263b]/80 to-[#0d1b2a]/90"
       >
-        <!-- Effet fondu entre image et texte -->
         <div class="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0d1b2a]/80 via-[#0d1b2a]/20 to-transparent pointer-events-none"></div>
 
         <div class="relative z-10">
@@ -72,6 +70,32 @@
   <ng-template #noNews>
     <p class="text-gray-300 italic mt-4 text-sm">Aucune actualité disponible pour le moment.</p>
   </ng-template>
+
+  <!-- PAGINATION -->
+  <div
+    *ngIf="totalPages > 1"
+    class="flex justify-center items-center gap-4 mt-8 text-gray-300"
+  >
+    <button
+      (click)="prevPage()"
+      [disabled]="currentPage === 1"
+      class="px-3 py-1 rounded-lg bg-white/10 border border-white/20 hover:bg-white/20
+             disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      ← Précédent
+    </button>
+
+    <span>Page {{ currentPage }} / {{ totalPages }}</span>
+
+    <button
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages"
+      class="px-3 py-1 rounded-lg bg-white/10 border border-white/20 hover:bg-white/20
+             disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      Suivant →
+    </button>
+  </div>
 </div>
 
 <!-- MODAL LECTURE NEWS -->
@@ -90,7 +114,6 @@
            bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white shadow-2xl"
     (click)="$event.stopPropagation()"
   >
-    <!-- Image + fondu -->
     <div class="relative h-56">
       <img
         *ngIf="n.type?.imageUrl"
@@ -101,7 +124,6 @@
       <div class="absolute inset-0 bg-black/50"></div>
       <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#1b263b]"></div>
 
-      <!-- Badge type -->
       <span
         class="absolute top-3 right-3 px-3 py-1.5 rounded-full text-sm font-semibold text-black shadow-md"
         [style.backgroundColor]="n.type?.color || '#38bdf8'"
@@ -109,7 +131,6 @@
         {{ n.type?.name }}
       </span>
 
-      <!-- Titre -->
       <div class="absolute bottom-5 left-6">
         <h2 class="text-2xl font-bold text-cyan-200 drop-shadow">
           {{ n.title }}
@@ -119,7 +140,6 @@
         </p>
       </div>
 
-      <!-- Bouton fermer -->
       <button
         type="button"
         (click)="closeModal()"
@@ -131,7 +151,6 @@
       </button>
     </div>
 
-    <!-- Contenu scrollable -->
     <div class="p-6 max-h-[70vh] overflow-y-auto">
       <div class="prose prose-invert max-w-none" [innerHTML]="n.content"></div>
 
@@ -148,4 +167,3 @@
     </div>
   </div>
 </div>
-
