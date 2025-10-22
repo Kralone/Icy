@@ -16,6 +16,10 @@ class EventHandler:
 
     async def handle(self, routing_key: str, payload: dict):
         """Redirige les sous-événements event.* vers les bonnes fonctions."""
+        if routing_key == "news.discordLinked":
+            logger.debug("↩️ Ignoré (retour backend).")
+            return
+
         if routing_key == "events.created":
             await self.handle_event_created(payload)
         elif routing_key == "events.updated":
