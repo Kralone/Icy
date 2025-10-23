@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -44,17 +45,17 @@ public class DiscordEventParticipationListener {
             }
 
             // 🔹 Trouver l'événement
-            Event event = eventRepository.findById(java.util.UUID.fromString(eventIdStr))
-                    .orElseThrow(() -> new IllegalStateException("Event non trouvé"));
+            Event event = eventRepository.findById(UUID.fromString(eventIdStr))
+                    .orElseThrow(() -> new IllegalStateException("Event non trouvé (ID=" + eventIdStr + ")"));
 
-            // 🔹 Trouver ou créer l’utilisateur
-            User user = userRepository.findByDiscordId(userIdStr).orElseGet(() -> {
-                User newUser = new User();
-                newUser.setDiscordId(userIdStr);
-                newUser.setUsername(username);
-                newUser.setActive(true);
-                return userRepository.save(newUser);
-            });
+            // 🔹 Trouver l’utilisateur existant (obligatoire)
+            Optional<User> userOpt = userRepository.findByDiscordId(userIdStr);
+            if (userOpt.isEmpty()) {
+                log.warn("⚠️ Utilisateur Discord inconnu ({}) — participation ignorée.", username);
+                return;
+            }
+
+            User user = userOpt.get();
 
             // 🔹 Trouver ou créer la participation
             Optional<EventParticipation> existing = participationRepository.findByEventAndUser(event, user);

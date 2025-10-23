@@ -51,7 +51,7 @@ class EventHandler:
         refused = [p["username"] for p in participants if p["status"] == -1]
 
         def fmt_list(lst):
-            return ", ".join(lst) if lst else "–"
+            return "\n".join(lst) if lst else "–"
 
         # --- Embed principal ---
         embed = discord.Embed(
@@ -128,7 +128,7 @@ class EventHandler:
         refused = [p["username"] for p in participants if p["status"] == -1]
 
         def fmt_list(lst):
-            return ", ".join(lst) if lst else "–"
+            return "\n".join(lst) if lst else "–"
 
         # --- Reconstruction de l’embed ---
         embed = discord.Embed(
