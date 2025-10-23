@@ -1,0 +1,26 @@
+<header class="flex items-center justify-between py-2">
+  <!-- Titre -->
+  <div class="flex items-center gap-2">
+    <div class="text-2xl">🏔️</div>
+    <h1 class="text-2xl font-bold text-cyan-300 tracking-wide">IceLink Builder</h1>
+  </div>
+
+  <!-- Boutons -->
+  <div class="flex items-center gap-3">
+    <button
+      (click)="handleReset()"
+      class="px-4 py-1.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/30
+             hover:bg-red-500/30 hover:scale-105 active:scale-95 transition-all"
+    >
+      🔄 Réinitialiser
+    </button>
+
+    <button
+      (click)="handleSave()"
+      class="px-4 py-1.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-400/30
+             hover:bg-cyan-500/30 hover:scale-105 active:scale-95 transition-all"
+    >
+      💾 Sauvegarder
+    </button>
+  </div>
+</header>

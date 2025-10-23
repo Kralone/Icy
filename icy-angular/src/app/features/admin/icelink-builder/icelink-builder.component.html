@@ -1,0 +1,28 @@
+<div
+  class="p-8 space-y-6 min-h-screen bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white
+         flex flex-col"
+>
+
+  <app-icelink-header
+    (onReset)="reset()"
+    (onSave)="save()"
+  ></app-icelink-header>
+
+  <app-icelink-dropzone
+    [blocks]="icelinkBlocks"
+    (onBlockRemoved)="blocksPanel.addBlock($event)"
+    class="mt-2"
+  ></app-icelink-dropzone>
+
+  <div class="flex flex-col lg:flex-row gap-4 mt-4">
+    <app-icelink-preview
+      [text]="generatedText"
+      class="flex-[3]"
+    ></app-icelink-preview>
+
+    <app-icelink-block-panel
+      #blocksPanel
+      class="flex-1"
+    ></app-icelink-block-panel>
+  </div>
+</div>

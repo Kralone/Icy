@@ -1,0 +1,34 @@
+<div
+  cdkDropList
+  id="blocksPanel"
+  [cdkDropListData]="availableBlocks"
+  [cdkDropListConnectedTo]="['dropZone']"
+  (cdkDropListDropped)="drop($event)"
+  class="w-full box-border bg-white/5 backdrop-blur-xl border border-white/10
+         rounded-xl p-4 shadow-md overflow-hidden"
+>
+  <h2 class="text-lg font-semibold mb-3 text-cyan-300">📦 Blocs disponibles</h2>
+
+  <div class="flex flex-wrap justify-start gap-3 w-full">
+    <div
+      *ngFor="let block of availableBlocks"
+      cdkDrag
+      [cdkDragData]="block"
+      class="group cursor-grab select-none bg-white/10 border border-white/20 rounded-lg
+              w-full h-[110px] flex flex-col justify-between p-3
+             hover:bg-white/20 hover:scale-[1.02] transition-all duration-200"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">{{ block.icon }}</span>
+          <span class="font-semibold text-sm">{{ block.title }}</span>
+        </div>
+        <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">⇅</span>
+      </div>
+
+      <p class="text-[11px] text-gray-400 leading-snug line-clamp-2 overflow-hidden">
+        {{ block.content }}
+      </p>
+    </div>
+  </div>
+</div>

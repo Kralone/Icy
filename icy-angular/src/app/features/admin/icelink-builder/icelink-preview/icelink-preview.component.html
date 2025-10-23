@@ -1,0 +1,25 @@
+<div
+  class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl flex flex-col h-full
+         transition-all duration-300 hover:shadow-[0_0_25px_rgba(56,189,248,0.2)]"
+>
+  <h2 class="text-xl font-semibold mb-4 text-cyan-300 flex items-center gap-2">
+    👀 Aperçu
+  </h2>
+
+  <!-- Aperçu texte -->
+  <div
+    class="flex-1 overflow-y-auto custom-scrollbar bg-black/40 border border-white/10 rounded-xl p-5 text-gray-100 leading-relaxed
+           font-mono text-sm shadow-inner"
+  >
+    <ng-container *ngIf="text && text.trim().length > 0; else noContent">
+      <pre class="whitespace-pre-wrap">{{ text }}</pre>
+    </ng-container>
+
+    <ng-template #noContent>
+      <div class="text-gray-500 italic text-center py-10">
+        Aucun contenu généré pour le moment 🧊
+        <br />Ajoutez des blocs pour commencer à construire votre IceLink.
+      </div>
+    </ng-template>
+  </div>
+</div>
