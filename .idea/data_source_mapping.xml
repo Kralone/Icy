@@ -3,6 +3,8 @@
   <component name="DataSourcePerFileMappings">
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/460e591e-f710-4a34-8287-d79e7c5d4971/console_1.sql" value="460e591e-f710-4a34-8287-d79e7c5d4971" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/460e591e-f710-4a34-8287-d79e7c5d4971/console_2.sql" value="460e591e-f710-4a34-8287-d79e7c5d4971" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/460e591e-f710-4a34-8287-d79e7c5d4971/console_3.sql" value="460e591e-f710-4a34-8287-d79e7c5d4971" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/460e591e-f710-4a34-8287-d79e7c5d4971/console_4.sql" value="460e591e-f710-4a34-8287-d79e7c5d4971" />
     <file url="file://$PROJECT_DIR$/icy_backend/src/main/resources/db/migration/V15__add_discord_and_audit_fields_to_event.sql" value="460e591e-f710-4a34-8287-d79e7c5d4971" />
   </component>
 </project>

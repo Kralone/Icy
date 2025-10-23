@@ -37,13 +37,13 @@
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-1">
         <span class="text-base">{{ block.icon }}</span>
-        <span class="font-semibold text-sm">{{ block.title }}</span>
+        <span class="font-semibold text-sm">{{ block.name }}</span>
       </div>
       <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">⇅</span>
     </div>
 
     <div class="text-[11px] text-gray-300 leading-snug line-clamp-2 overflow-hidden">
-      {{ block.content || 'Bloc vide...' }}
+      {{ block.headline || 'Bloc vide...' }}
     </div>
   </div>
 </div>

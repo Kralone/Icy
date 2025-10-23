@@ -4,14 +4,8 @@ import { IceLinkHeaderComponent } from './icelink-header/icelink-header.componen
 import { IceLinkDropzoneComponent } from './icelink-dropzone/icelink-dropzone.component';
 import { IceLinkBlockPanelComponent } from './icelink-block-panel/icelink-block-panel.component';
 import { IceLinkPreviewComponent } from './icelink-preview/icelink-preview.component';
-
-export interface IceLinkBlock {
-  id: string;
-  title: string;
-  icon: string;
-  content: string;
-  description?: string;
-}
+import {IceLinkBlock} from '../../../core/services/icelink/icelink-block.service';
+import {IceLinkBlockAdminComponent} from './icelink-block-admin/icelink-block-admin.component';
 
 @Component({
   selector: 'app-icelink-builder',
@@ -21,7 +15,8 @@ export interface IceLinkBlock {
     IceLinkHeaderComponent,
     IceLinkDropzoneComponent,
     IceLinkBlockPanelComponent,
-    IceLinkPreviewComponent
+    IceLinkPreviewComponent,
+    IceLinkBlockAdminComponent
   ],
   templateUrl: './icelink-builder.component.html',
 })
@@ -51,4 +46,10 @@ export class IceLinkBuilderComponent {
 
     return header + this.icelinkBlocks.map(b => b.content.trim()).join('\n\n---\n\n');
   }
+
+  handleBlockDeleted(blockId: number) {
+    // ✅ Retire de la dropzone s’il est présent
+    this.icelinkBlocks = this.icelinkBlocks.filter(b => b.id !== blockId);
+  }
+
 }

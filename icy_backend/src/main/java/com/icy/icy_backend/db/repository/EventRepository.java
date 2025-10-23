@@ -11,5 +11,7 @@ public interface EventRepository extends CrudRepository<Event, UUID> {
 
     List<Event> findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime now);
     List<Event> findByEndDateTimeBetweenAndFinishedFalse(LocalDateTime start, LocalDateTime end);
+    List<Event> findByStartDateTimeBetweenOrderByStartDateTimeAsc(LocalDateTime start, LocalDateTime end);
+
 
 }

@@ -144,6 +144,17 @@ public class EventService {
     }
 
 
+    public List<Event> getEventsBetween(LocalDate start, LocalDate end) {
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+        List<Event> events = eventRepository.findByStartDateTimeBetweenOrderByStartDateTimeAsc(startDateTime, endDateTime);
+        logger.info("Récupération de {} événements entre {} et {}", events.size(), startDateTime, endDateTime);
+
+        return events;
+    }
+
+
     @Transactional
     @Scheduled(cron = "0 1 0 * * *")
     public void markPastDayEventsAsFinished() {
@@ -183,9 +194,6 @@ public class EventService {
             }
         }
     }
-
-
-// ------------------------------Event Type Service--------------------------------------
 
     public ResponseEntity<MessageResponse<Void>> setParticipation(UUID eventId, int status) {
         Event event = findEventById(eventId);

@@ -6,15 +6,30 @@
     👀 Aperçu
   </h2>
 
-  <!-- Aperçu texte -->
   <div
-    class="flex-1 overflow-y-auto custom-scrollbar bg-black/40 border border-white/10 rounded-xl p-5 text-gray-100 leading-relaxed
-           font-mono text-sm shadow-inner"
+    class="flex-1 overflow-y-auto custom-scrollbar bg-black/40 border border-white/10 rounded-xl p-5
+           text-gray-100 leading-relaxed font-mono text-sm shadow-inner whitespace-pre-wrap"
   >
-    <ng-container *ngIf="text && text.trim().length > 0; else noContent">
-      <pre class="whitespace-pre-wrap">{{ text }}</pre>
+    <!-- ✅ Si des blocs existent -->
+    <ng-container *ngIf="blocks.length > 0; else noContent">
+      <!-- En-tête IceLink -->
+      <div class="mb-4 text-white">
+        <div class="text-[13px] text-gray-400 mb-1">&lt;&#64;&amp;1325528040322896025&gt;</div>
+        <div class="text-lg font-semibold"># 🏔️ IceLink - {{ currentDate }}</div>
+        <div class="border-t border-white/10 my-3"></div>
+      </div>
+
+      <!-- 🧊 Liste des blocs -->
+      <div *ngFor="let block of blocks; let last = last" class="mb-6">
+        <div class="text-cyan-300 font-semibold">{{ block.headline }}</div>
+        <div class="text-gray-300 whitespace-pre-line">{{ block.content }}</div>
+
+        <!-- Séparateur entre blocs -->
+        <div *ngIf="!last" class="my-5 border-t border-white/10 opacity-50"></div>
+      </div>
     </ng-container>
 
+    <!-- 🩶 Aucun contenu -->
     <ng-template #noContent>
       <div class="text-gray-500 italic text-center py-10">
         Aucun contenu généré pour le moment 🧊

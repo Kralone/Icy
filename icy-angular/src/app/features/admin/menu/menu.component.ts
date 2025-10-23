@@ -45,7 +45,7 @@ export class AdminMenuComponent {
       route: '/icy/admin/news',
     },
     {
-      label: 'Coming Soon',
+      label: 'IceLink Builder',
       imageUrl: 'https://www.fredzone.org/wp-content/uploads/2017/12/starcitizen-proc%C3%A8s.jpg',
       route: '/icy/admin/icelinkBuilder',
     },

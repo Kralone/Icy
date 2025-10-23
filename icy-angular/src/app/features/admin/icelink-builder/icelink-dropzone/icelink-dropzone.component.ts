@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop';
-import { IceLinkBlock } from '../icelink-builder.component';
+import {IceLinkBlock} from '../../../../core/services/icelink/icelink-block.service';
 
 @Component({
   selector: 'app-icelink-dropzone',
@@ -23,11 +23,12 @@ export class IceLinkDropzoneComponent {
   }
 
   drop(event: CdkDragDrop<IceLinkBlock[]>) {
-    this.isActive = false;
-
     if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      moveItemInArray(this.blocks, event.previousIndex, event.currentIndex);
     } else {
+      const block = event.previousContainer.data[event.previousIndex];
+
+      // ✅ transfert réel (pas de copie)
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,

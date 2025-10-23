@@ -1,0 +1,211 @@
+<!-- ================== ICEFORGE - BLOCK ADMIN PANEL ================== -->
+<div class="min-h-screen space-y-12">
+  <!-- Bloc de création -->
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 space-y-8">
+
+    <h1 class="text-3xl font-semibold text-cyan-300">Créer un nouveau bloc</h1>
+
+    <!-- Form -->
+    <form (ngSubmit)="createBlock()" class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label class="block mb-2 text-sm text-gray-300">Nom du bloc</label>
+          <input
+            [(ngModel)]="newBlock.name"
+            name="name"
+            placeholder="Nom du bloc"
+            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
+          />
+        </div>
+
+        <div>
+          <label class="block mb-2 text-sm text-gray-300">Icône (emoji)</label>
+          <input
+            [(ngModel)]="newBlock.icon"
+            name="icon"
+            placeholder="🚀"
+            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm text-gray-300">Contenu</label>
+        <textarea
+          [(ngModel)]="newBlock.content"
+          name="content"
+          rows="3"
+          placeholder="> Votre texte ici..."
+          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm text-gray-300">Description</label>
+        <input
+          [(ngModel)]="newBlock.description"
+          name="description"
+          placeholder="Courte description interne"
+          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+        />
+      </div>
+
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          [disabled]="isSubmitting"
+          class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+                 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition transform hover:scale-105
+                 disabled:opacity-50">
+          {{ isSubmitting ? 'Création…' : 'Ajouter' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Liste des blocs -->
+  <section class="space-y-6">
+    <h2 class="text-2xl font-semibold text-cyan-300 flex items-center gap-2">
+      <span class="text-amber-400 text-2xl leading-none">📦</span> Blocs existants
+    </h2>
+
+    <div *ngIf="isLoading" class="text-center py-6 text-gray-300 animate-pulse">
+      Chargement des blocs...
+    </div>
+
+    <div *ngIf="!isLoading && blocks.length === 0" class="text-center italic text-gray-400 py-6">
+      Aucun bloc enregistré pour le moment ❄️
+    </div>
+
+    <div *ngIf="!isLoading && blocks.length > 0"
+         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        *ngFor="let block of blocks"
+        class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl
+               hover:bg-white/15 transition-all duration-300 relative group"
+      >
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">{{ block.icon }}</span>
+            <span class="font-semibold text-white">{{ block.name }}</span>
+          </div>
+          <div class="flex gap-2">
+            <button
+              (click)="editBlock(block)"
+              class="p-2 rounded-full bg-yellow-500/10 text-yellow-400
+                     hover:bg-yellow-500/20 hover:shadow-[0_0_12px_rgba(250,204,21,0.8)]
+                     active:scale-95 transition-all duration-200"
+            >
+              ✏️
+            </button>
+            <button
+              (click)="deleteBlock(block.id!)"
+              class="p-2 rounded-full bg-red-500/10 text-red-400
+                     hover:bg-red-500/20 hover:shadow-[0_0_12px_rgba(239,68,68,0.8)]
+                     active:scale-95 transition-all duration-200"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div class="text-xs text-cyan-300 font-semibold mb-1">{{ block.headline }}</div>
+        <p class="text-[11px] text-gray-400 line-clamp-3">{{ block.content }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== MODAL ÉDITION BLOC - STYLE ICY ================== -->
+  <div *ngIf="editingBlock" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      class="bg-gradient-to-b from-[#1b263b]/95 to-[#0d1b2a]/95 backdrop-blur-2xl border border-white/20
+           rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.2)] w-full max-w-2xl p-8 text-white relative
+           flex flex-col space-y-6 animate-[fadeIn_0.3s_ease-in-out]"
+    >
+      <!-- ✖ Bouton de fermeture -->
+      <button
+        (click)="cancelEdit()"
+        class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl leading-none transition"
+      >
+        ✖
+      </button>
+
+      <!-- 🧊 Titre -->
+      <h3 class="text-2xl font-semibold text-cyan-300 border-b border-white/10 pb-3">
+        ✏️ Modifier le bloc : <span class="text-white">{{ editingBlock.name }}</span>
+      </h3>
+
+      <!-- 🧩 Champs -->
+      <div class="space-y-4 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block mb-1 text-sm text-gray-300">Nom</label>
+            <input
+              [(ngModel)]="editingBlock.name"
+              class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
+              placeholder="Nom du bloc"
+            />
+          </div>
+
+          <div>
+            <label class="block mb-1 text-sm text-gray-300">Icône (emoji)</label>
+            <input
+              [(ngModel)]="editingBlock.icon"
+              class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
+              placeholder="🚀"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Contenu</label>
+          <textarea
+            [(ngModel)]="editingBlock.content"
+            rows="4"
+            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition resize-none"
+            placeholder="> Votre texte ici..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block mb-1 text-sm text-gray-300">Description</label>
+          <input
+            [(ngModel)]="editingBlock.description"
+            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            placeholder="Courte description interne"
+          />
+        </div>
+      </div>
+
+      <!-- 🧭 Boutons d’action -->
+      <div class="flex justify-end gap-4 border-t border-white/10 pt-4">
+        <button
+          (click)="cancelEdit()"
+          class="px-5 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300 hover:text-white
+               hover:bg-white/20 transition-all duration-200 font-medium"
+        >
+          ❌ Annuler
+        </button>
+
+        <button
+          (click)="updateBlock()"
+          [disabled]="isUpdating"
+          class="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold
+               hover:from-cyan-400 hover:to-blue-500 shadow-md transition transform hover:scale-105
+               disabled:opacity-50"
+        >
+          💾 {{ isUpdating ? 'Sauvegarde…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

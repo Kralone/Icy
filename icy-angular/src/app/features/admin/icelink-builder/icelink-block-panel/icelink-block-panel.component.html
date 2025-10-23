@@ -1,34 +1,54 @@
 <div
-  cdkDropList
-  id="blocksPanel"
-  [cdkDropListData]="availableBlocks"
-  [cdkDropListConnectedTo]="['dropZone']"
-  (cdkDropListDropped)="drop($event)"
-  class="w-full box-border bg-white/5 backdrop-blur-xl border border-white/10
-         rounded-xl p-4 shadow-md overflow-hidden"
+  class="w-full h-full box-border bg-white/5 backdrop-blur-xl border border-white/10
+         rounded-xl p-4 shadow-md flex flex-col min-h-0"
 >
   <h2 class="text-lg font-semibold mb-3 text-cyan-300">📦 Blocs disponibles</h2>
 
-  <div class="flex flex-wrap justify-start gap-3 w-full">
-    <div
-      *ngFor="let block of availableBlocks"
-      cdkDrag
-      [cdkDragData]="block"
-      class="group cursor-grab select-none bg-white/10 border border-white/20 rounded-lg
-              w-full h-[110px] flex flex-col justify-between p-3
-             hover:bg-white/20 hover:scale-[1.02] transition-all duration-200"
-    >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">{{ block.icon }}</span>
-          <span class="font-semibold text-sm">{{ block.title }}</span>
-        </div>
-        <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">⇅</span>
-      </div>
+  <div class="flex-1 min-h-0">
+    <ng-container *ngIf="availableBlocks?.length; else noBlocks">
+      <div
+        cdkDropList
+        id="blocksPanel"
+        [cdkDropListData]="availableBlocks"
+        [cdkDropListConnectedTo]="['dropZone']"
+        (cdkDropListDropped)="drop($event)"
+        class="h-full overflow-y-auto pr-2 space-y-3 scrollbar-custom"
+      >
+        <div
+          *ngFor="let block of availableBlocks"
+          cdkDrag
+          [cdkDragData]="block"
+          class="group cursor-grab select-none bg-white/10 border border-white/20 rounded-lg
+                  w-full min-h-[110px] flex flex-col justify-between p-3
+                  hover:bg-white/20 transition-all duration-200"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">{{ block.icon }}</span>
+              <span class="font-semibold text-sm">{{ block.name }}</span>
+            </div>
+            <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">⇅</span>
+          </div>
 
-      <p class="text-[11px] text-gray-400 leading-snug line-clamp-2 overflow-hidden">
-        {{ block.content }}
-      </p>
-    </div>
+          <p class="text-[12px] text-white/90 font-medium leading-snug truncate">
+            {{ block.headline }}
+          </p>
+
+          <p
+            class="text-[11px] text-gray-400 leading-snug overflow-hidden whitespace-pre-line
+                   max-h-[3.5rem] line-clamp-3"
+            [title]="block.content"
+          >
+            {{ block.content }}
+          </p>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noBlocks>
+      <div class="flex items-center justify-center h-full text-gray-400 text-sm italic">
+        Aucun bloc disponible pour le moment ❄️
+      </div>
+    </ng-template>
   </div>
 </div>
