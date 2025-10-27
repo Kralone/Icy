@@ -17,6 +17,7 @@ import {RecruitmentComponent} from './auth/components/recruitment/recruitment.co
 import {RecruitmentManagementComponent} from './features/admin/recruitment-management/recruitment-management.component';
 import {NewsManagementComponent} from './features/admin/news-management/news-management.component';
 import {IceLinkBuilderComponent} from './features/admin/icelink-builder/icelink-builder.component';
+import {ImageLibraryComponent} from './features/admin/image-library/image-library.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -28,9 +29,15 @@ export const routes: Routes = [
     path: 'icy',
     component: LayoutComponent,
     children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
       { path: 'dashboard', component: DashboardComponent },
       { path: 'hangar', component: HangarComponent },
       { path: 'fleet', component: FleetComponent },
+      { path: 'events', component: EventsComponent },
+      { path: 'goals', component: GoalComponent },
+      { path: 'collection', component: CollectionComponent },
+
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/members', component: AdminDashboardComponent },
       { path: 'admin/collections', component: CollectionManagementComponent },
@@ -39,10 +46,7 @@ export const routes: Routes = [
       { path: 'admin/recrutement', component: RecruitmentManagementComponent },
       { path: 'admin/news', component: NewsManagementComponent },
       { path: 'admin/icelinkBuilder', component: IceLinkBuilderComponent },
-      { path: 'events', component: EventsComponent },
-      { path: 'goals', component: GoalComponent },
-      { path: 'collection', component: CollectionComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+      { path: 'admin/images', component: ImageLibraryComponent },
     ]
   }
 ];

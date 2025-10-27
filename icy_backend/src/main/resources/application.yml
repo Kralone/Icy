@@ -6,7 +6,7 @@ spring:
         encoding: UTF-8
 
     rabbitmq:
-      host: localhost
+      host: rabbitmq
       port: 5672
       username: icy
       password: icy123
@@ -30,17 +30,28 @@ spring:
         locations: classpath:db/migration
         validate-on-migrate: true
 
+    servlet:
+      multipart:
+        max-file-size: 50MB       # limite pour chaque fichier
+        max-request-size: 100MB   # limite totale pour la requête
+
 jwt:
     secret: "MySuperSecretKeyForJWTGeneration"
     access-expiration: 900000   # 15 minutes (access token)
     refresh-expiration: 604800000  # 7 jours (refresh token)
     rotation-enabled: true  # Activation de la rotation des refresh tokens
 
+icy:
+  image:
+    path: /app/uploads/images
+    base-url: ${IMAGE_BASE_URL:http://localhost:8081/images/}
+
+
 security:
     csrf:
         enabled: true  # Protection CSRF activée
     cors:
-        allowed-origins: "https://iceforge.com,http://localhost:3000"  # Seul ton frontend est autorisé
+        allowed-origins: "https://iceforge.fr,http://localhost:3000"  # Seul ton frontend est autorisé
         allowed-methods: "GET,POST,PUT,DELETE"
         allowed-headers: "Authorization,Content-Type,X-XSRF-TOKEN"
         allow-credentials: true  # Autoriser les cookies (refreshToken)

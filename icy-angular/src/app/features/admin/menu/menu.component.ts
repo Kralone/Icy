@@ -46,13 +46,13 @@ export class AdminMenuComponent {
     },
     {
       label: 'IceLink Builder',
-      imageUrl: 'https://www.fredzone.org/wp-content/uploads/2017/12/starcitizen-proc%C3%A8s.jpg',
+      imageUrl: 'https://media.starcitizen.tools/9/9c/Microtech-new-babbage-cityscape-01.jpg',
       route: '/icy/admin/icelinkBuilder',
     },
     {
-      label: 'Coming Soon',
-      imageUrl: 'https://screenplaysmag.com/wp-content/uploads/2024/12/Untitled-design-5-1.png',
-      route: '/icy/admin/#',
+      label: 'Images',
+      imageUrl: 'https://www.fredzone.org/wp-content/uploads/2017/12/starcitizen-proc%C3%A8s.jpg',
+      route: '/icy/admin/images',
     },
   ];
 }

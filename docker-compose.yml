@@ -15,7 +15,6 @@ services:
       - internal
       - external
 
-
   backend:
     build: ./app
     container_name: iceforge_backend
@@ -24,6 +23,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/iceforge_db
       SPRING_DATASOURCE_USERNAME: iceforge
       SPRING_DATASOURCE_PASSWORD: iceforgepassword
+      IMAGE_BASE_URL: https://iceforge.fr/images/
     depends_on:
       - db
       - rabbitmq
@@ -31,6 +31,7 @@ services:
       - "8080:8080"
     volumes:
       - backend_logs:/app/logs
+      - icy_images_data:/app/uploads/images   # ✅ même volume partagé
     networks:
       - internal
       - external
@@ -46,16 +47,15 @@ services:
       - ./frontend:/usr/share/nginx/html
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - icy_images_data:/usr/share/nginx/html/images:ro
+
     networks:
       - external
-
 
   bot:
     build: ./bot
     container_name: iceforge_bot
     restart: always
-    env_file:
-      - .env
     ports:
       - "8090:8090"
     depends_on:
@@ -67,6 +67,16 @@ services:
       - internal
       - external
 
+  icy-images:
+    image: nginx:latest
+    container_name: icy-images
+    volumes:
+      - icy_images_data:/usr/share/nginx/html/images:ro   # ✅ même volume que backend
+    ports:
+      - "8081:80"
+    networks:
+      - internal
+      - external
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -76,12 +86,11 @@ services:
       RABBITMQ_DEFAULT_USER: icy
       RABBITMQ_DEFAULT_PASS: icy123
     ports:
-      - "5672:5672"   # Port du broker AMQP
-      - "15672:15672" # Interface de management (http://localhost:15672)
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - internal
       - external
-
 
 volumes:
   postgres_data:
@@ -89,6 +98,9 @@ volumes:
   backend_logs:
     driver: local
   bot_config:
+    driver: local
+  icy_images_data:
+    name: icy_images_data        # ✅ Nom fixe, inchangé, même dossier ou serveur
     driver: local
 
 networks:

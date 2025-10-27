@@ -29,7 +29,6 @@ public class DiscordEventListener {
      */
     @Transactional
     @RabbitListener(queues = {
-            "discord.event.queue",
             "events.discordLinked.queue"
     })
     public void onDiscordLinked(Map<String, Object> message) {
