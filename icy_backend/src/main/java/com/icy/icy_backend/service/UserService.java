@@ -1,6 +1,5 @@
 package com.icy.icy_backend.service;
 
-import com.icy.icy_backend.clients.DiscordIcyClient;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.UserResponseDTO;
 import com.icy.icy_backend.db.entity.User;
@@ -9,10 +8,9 @@ import com.icy.icy_backend.db.entity.UserRole;
 import com.icy.icy_backend.db.repository.UserRepository;
 import com.icy.icy_backend.db.repository.RoleRepository;
 import com.icy.icy_backend.db.repository.UserRoleRepository;
-import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.messaging.UserPublisher;
 import com.icy.icy_backend.service.rest.MessageService;
-import org.hibernate.ObjectNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
@@ -36,15 +32,15 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
-    private final DiscordIcyClient discordNotifier;
+    private final UserPublisher userPublisher;
 
-    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, DiscordIcyClient discordNotifier) {
+    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.messageService = messageService;
-        this.discordNotifier = discordNotifier;
+        this.userPublisher = userPublisher;
     }
 
     /**
@@ -80,7 +76,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
 
-        discordNotifier.sendTemporaryPassword(discordId, tempPassword);
+        userPublisher.sendTemporaryPassword(discordId, tempPassword);
 
         Role defaultRole = findRoleByName(role);
         user.assignDefaultRole(defaultRole);
@@ -191,7 +187,7 @@ public class UserService {
         userRepository.save(user);
 
         logger.info("Mot de passe temporaire réinitialisé pour {}", user.getUsername());
-        discordNotifier.sendTemporaryPassword(user.getDiscordId(), tempPassword);
+        userPublisher.sendTemporaryPassword(user.getDiscordId(), tempPassword);
     }
 
 

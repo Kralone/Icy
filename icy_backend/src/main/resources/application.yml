@@ -80,3 +80,7 @@ management:
 
 bot:
     api-key: jK9LmN2pQ5VtYB8GhX4CsR7Md6wX9Jz3kLmN2pQ5VtYB8GhX4CsR7Md6wX9Jz
+    url: ${BOT_URL:http://bot:8090}
+
+openai:
+  api-key: "REMOVED_OPENAI_KEY"   # ⚠️ Remplace par ta vraie clé OpenAI

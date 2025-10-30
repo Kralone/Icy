@@ -17,6 +17,7 @@ public class RabbitConfig {
     // === ROUTING KEYS ===
     public static final String NEWS_ROUTING_KEY = "news.*";
     public static final String EVENTS_ROUTING_KEY = "events.*";
+    public static final String USERS_ROUTING_KEY = "users.*";
 
     // === QUEUES SORTANTES (backend → bot) ===
     public static final String NEWS_QUEUE = "news.queue";
@@ -31,6 +32,8 @@ public class RabbitConfig {
 
     public static final String EVENTS_PARTICIPATION_QUEUE = "events.participation.queue";
     public static final String EVENTS_PARTICIPATION_KEY = "events.participation";
+
+    public static final String USERS_QUEUE = "users.queue";
 
     // === EXCHANGE ===
     @Bean
@@ -47,6 +50,11 @@ public class RabbitConfig {
     @Bean
     public Queue eventsQueue() {
         return new Queue(EVENTS_QUEUE, true);
+    }
+
+    @Bean
+    public Queue usersQueue() {
+        return new Queue(USERS_QUEUE, true);
     }
 
     // === QUEUES RETOUR (bot → backend) ===
@@ -100,6 +108,13 @@ public class RabbitConfig {
         return BindingBuilder.bind(eventsParticipationQueue)
                 .to(icyExchange)
                 .with(EVENTS_PARTICIPATION_KEY);
+    }
+
+    @Bean
+    public Binding usersBinding(Queue usersQueue, TopicExchange icyExchange) {
+        return BindingBuilder.bind(usersQueue)
+                .to(icyExchange)
+                .with(USERS_ROUTING_KEY);
     }
 
     // === CONVERTISSEUR JSON ===

@@ -11,22 +11,24 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  login(username: string, password: string): Observable<boolean> {
+  login(username: string, password: string): Observable<{
+    tokens: { accessToken: string, refreshToken: string },
+    user: User
+  }> {
     return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User }>(
       `${this.apiUrl}/login`,
       { username, password }
     ).pipe(
       tap(response => {
-        const accessToken = response.tokens.accessToken;
-        const refreshToken = response.tokens.refreshToken;
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.user.username));
-      }),
-      map(() => true)
+        // 🧊 Ne rien stocker si c’est un mot de passe temporaire
+        if (response.tokens.accessToken !== 'resetPwd' && response.tokens.refreshToken !== 'resetPwd') {
+          localStorage.setItem('token', response.tokens.accessToken);
+          localStorage.setItem('refreshToken', response.tokens.refreshToken);
+          localStorage.setItem('user', JSON.stringify(response.user.username));
+        }
+      })
     );
   }
-
 
   logout(): void {
     localStorage.removeItem('user');
@@ -88,19 +90,14 @@ export class AuthService {
   }
 
 
-  forceResetPassword(userId: string): Promise<void> {
-    return fetch(`/api/auth/admin/force-reset-password?id=${userId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    }).then(response => {
-      if (!response.ok) {
-        throw new Error('Erreur lors de la réinitialisation du mot de passe.');
-      }
-    });
+  forceResetPassword(userId: string): Observable<void> {
+    return this.http.post<void>(
+      `/api/auth/admin/force-reset-password?id=${userId}`,
+      {},
+      { withCredentials: true }
+    );
   }
+
 
   isAdmin(): Observable<boolean> {
     return this.http.get<boolean>('/api/auth/isAdmin');

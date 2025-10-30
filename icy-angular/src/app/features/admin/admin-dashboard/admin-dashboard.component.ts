@@ -159,14 +159,15 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   resetPassword(userId: string) {
-    this.authService.forceResetPassword(userId)
-      .then(() => {
+    this.authService.forceResetPassword(userId).subscribe({
+      next: () => {
         alert('Mot de passe temporaire envoyé sur Discord.');
-      })
-      .catch(err => {
+      },
+      error: (err) => {
         console.error(err);
         alert('Échec de la réinitialisation.');
-      });
+      }
+    });
   }
 
   get filteredUsers(): any[] {

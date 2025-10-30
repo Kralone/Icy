@@ -20,6 +20,7 @@ export class LoginComponent implements OnInit {
   passwordForm: FormGroup;
   errorMessage: string = '';
   showResetModal: boolean = false;
+  private tempUser: any = null;
 
   constructor(
     private fb: FormBuilder,
@@ -45,28 +46,34 @@ export class LoginComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    console.log(this.loginForm.value);
-    if (this.loginForm.valid) {
-      const {username, password} = this.loginForm.value;
-      try {
-        const success = await firstValueFrom(this.authService.login(username, password));
-        if (success) {
+    this.errorMessage = '';
 
+    if (this.loginForm.invalid) {
+      this.errorMessage = 'Veuillez remplir tous les champs.';
+      return;
+    }
 
-          if (localStorage.getItem('refreshToken') === "resetPwd" && localStorage.getItem('token') === "resetPwd") {
-            this.showResetModal = true;
-          } else {
-            await this.router.navigate(['/icy/dashboard']);
-          }
+    const { username, password } = this.loginForm.value;
 
-        } else {
-          this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
-        }
-      } catch (error) {
-        this.errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+    try {
+      const response = await firstValueFrom(this.authService.login(username, password));
+
+      // 🔍 Cas spécial : utilisateur en reset password
+      if (response.tokens.accessToken === 'resetPwd' && response.tokens.refreshToken === 'resetPwd') {
+        this.tempUser = response.user; // stockage temporaire en mémoire
+        this.showResetModal = true;
+        return;
       }
+
+      // ✅ Login normal
+      await this.router.navigate(['/icy/dashboard']);
+
+    } catch (error) {
+      console.error('Erreur de login', error);
+      this.errorMessage = 'Nom d’utilisateur ou mot de passe incorrect.';
     }
   }
+
 
 async onResetPassword(): Promise<void> {
   this.errorMessage = ''; // reset erreur
@@ -89,9 +96,8 @@ async onResetPassword(): Promise<void> {
     return;
   }
 
-  const user = JSON.parse(localStorage.getItem('user')!);
   const resetPayload = {
-    id: user.id,
+    id: this.tempUser.id,
     newPassword
   };
 
@@ -99,7 +105,7 @@ async onResetPassword(): Promise<void> {
     const response = await firstValueFrom(this.authService.resetPassword(resetPayload));
     localStorage.setItem('token', response.tokens.accessToken);
     localStorage.setItem('refreshToken', response.tokens.refreshToken);
-    localStorage.setItem('user', JSON.stringify(response.user));
+    localStorage.setItem('user', JSON.stringify(response.user.username));
 
     this.showResetModal = false;
     this.router.navigate(['/icy/dashboard']);
