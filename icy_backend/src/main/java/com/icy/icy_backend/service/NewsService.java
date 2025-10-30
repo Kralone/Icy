@@ -4,7 +4,6 @@ import com.icy.icy_backend.controller.dto.NewsDTO;
 import com.icy.icy_backend.controller.dto.NewsTypeDTO;
 import com.icy.icy_backend.db.entity.News;
 import com.icy.icy_backend.db.entity.NewsType;
-import com.icy.icy_backend.db.entity.User;
 import com.icy.icy_backend.db.repository.NewsRepository;
 import com.icy.icy_backend.db.repository.NewsTypeRepository;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
@@ -16,11 +15,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +76,36 @@ public class NewsService {
 
         return saved;
     }
+
+    public void createHebdoReport(News news) {
+        log.info("Création automatique d’un rapport hebdomadaire Star Citizen.");
+
+        // 🔹 Recherche du type "Actualités Hebdo"
+        Optional<NewsType> optionalType = typeRepository.findByName("Actualités Hebdo");
+
+        if (optionalType.isEmpty()) {
+            log.error("❌ Le type 'Actualités Hebdo' est introuvable en base. Abandon de la création du rapport.");
+            throw new ResourceNotFoundException("Le type d’actualité 'Actualités Hebdo' est introuvable. Veuillez le créer avant d’exécuter le rapport hebdomadaire.");
+        }
+
+        NewsType type = optionalType.get();
+        news.setType(type);
+
+        // 🔹 Définition des métadonnées
+        news.setAuthor("ICY-System");
+        news.setTitle("Rapport Hebdomadaire Star Citizen");
+
+        if (news.getContent() == null || news.getContent().isBlank()) {
+            log.warn("⚠️ Le contenu du rapport hebdo est vide !");
+            news.setContent("Rapport hebdomadaire non généré.");
+        }
+
+        News saved = newsRepository.save(news);
+        newsMessagingService.sendNewsCreated(saved);
+
+        log.info("✅ Rapport hebdomadaire enregistré avec succès (ID: {})", saved.getId());
+    }
+
 
 
     public NewsDTO update(Long id, News updated) {

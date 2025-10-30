@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface NewsTypeRepository extends JpaRepository<NewsType, Long> {
     Optional<NewsType> findByNameIgnoreCase(String name);
     List<NewsType> findAllByOrderByNameAsc();
+
+    Optional<NewsType> findByName(String type);
 }
