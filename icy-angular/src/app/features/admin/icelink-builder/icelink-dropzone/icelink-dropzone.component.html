@@ -3,6 +3,7 @@
   id="dropZone"
   [cdkDropListData]="blocks"
   [cdkDropListConnectedTo]="['blocksPanel']"
+  [cdkDropListOrientation]="'horizontal'"
   (cdkDropListDropped)="drop($event)"
   (cdkDropListEntered)="onEnter()"
   (cdkDropListExited)="onLeave()"
@@ -13,18 +14,25 @@
     'border-cyan-400/70 shadow-[0_0_20px_#22d3ee]/40': isActive
   }"
 >
-  <div *ngIf="blocks.length === 0" class="w-full text-center italic text-gray-400 select-none">
+  <!-- Message quand la zone est vide -->
+  <div
+    *ngIf="blocks.length === 0"
+    class="w-full text-center italic text-gray-400 select-none"
+  >
     Glissez vos blocs ici 🧊
   </div>
 
+  <!-- Blocs déposés -->
   <div
-    *ngFor="let block of blocks; let i = index"
+    *ngFor="let block of blocks; let i = index; trackBy: trackByIndex"
     cdkDrag
     [cdkDragData]="block"
     class="relative w-[220px] h-[110px] flex-shrink-0 bg-white/10 border border-white/20 rounded-lg p-3
-           transition-all duration-200 cursor-grab group hover:bg-white/20 hover:scale-[1.02]
-           flex flex-col justify-between"
+           cursor-grab group hover:bg-white/20 hover:scale-[1.02]
+           flex flex-col justify-between
+           transition-transform duration-300 ease-in-out"
   >
+    <!-- Bouton suppression -->
     <button
       (click)="removeBlock(i)"
       class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500/60 text-white
@@ -34,15 +42,21 @@
       ✕
     </button>
 
+    <!-- En-tête bloc -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-1">
         <span class="text-base">{{ block.icon }}</span>
         <span class="font-semibold text-sm">{{ block.name }}</span>
       </div>
-      <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">⇅</span>
+      <span class="text-gray-400 text-xs group-hover:text-cyan-300 transition">
+        ⇅
+      </span>
     </div>
 
-    <div class="text-[11px] text-gray-300 leading-snug line-clamp-2 overflow-hidden">
+    <!-- Contenu bloc -->
+    <div
+      class="text-[11px] text-gray-300 leading-snug line-clamp-2 overflow-hidden"
+    >
       {{ block.headline || 'Bloc vide...' }}
     </div>
   </div>

@@ -11,9 +11,28 @@ export interface IceLinkBlock {
   description?: string;
 }
 
+export const ICELINK_DEFAULT_BLOCKS: IceLinkBlock[] = [
+  {
+    id: 1,
+    name: 'Activité',
+    icon: '📅',
+    headline: 'Suivi des événements et activités',
+    content: 'Affiche les activités et événements récents.',
+  },
+  {
+    id: 2,
+    name: 'Bloc texte',
+    icon: '📝',
+    headline: 'Texte libre modifiable',
+    content: 'Écrivez votre texte ici...',
+  },
+];
+
+
 @Injectable({ providedIn: 'root' })
 export class IceLinkBlockService {
   private readonly apiUrl = '/api/icelink/blocks';
+
 
   // 🔹 Source réactive centrale
   private _blocks$ = new BehaviorSubject<IceLinkBlock[]>([]);
