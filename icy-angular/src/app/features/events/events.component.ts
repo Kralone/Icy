@@ -8,11 +8,12 @@ import {EventService, EventDTO} from '../../core/services/event/event.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {EventType} from '../../model/event-type.model';
 import {AuthService} from '../../core/services/auth/auth.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule],
+  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink],
   templateUrl: './events.component.html'
 })
 export class EventsComponent {

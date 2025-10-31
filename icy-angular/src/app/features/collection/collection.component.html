@@ -6,6 +6,22 @@
     <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
   </div>
 
+  <div *ngIf="isAdmin" class="absolute top-6 right-6 z-10">
+    <button
+      routerLink="/icy/admin/collections"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+             bg-white/10 backdrop-blur-md border border-cyan-400/30
+             text-cyan-200 font-semibold text-sm shadow-lg
+             hover:bg-cyan-500/20 hover:scale-105 transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+           stroke="currentColor" class="w-5 h-5 text-cyan-300">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 7h18M3 12h18M3 17h18"/>
+      </svg>
+      Gérer les collections
+    </button>
+  </div>
+
   <!-- =========== SECTION 1 : Templates disponibles =========== -->
   <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 transition hover:shadow-cyan-500/10">
     <div class="mb-6 flex items-center justify-between">

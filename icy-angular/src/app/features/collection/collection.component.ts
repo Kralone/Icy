@@ -12,11 +12,12 @@ import {
 import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
 import {FormsModule} from '@angular/forms';
 import {AuthService} from '../../core/services/auth/auth.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-collection',
   standalone: true,
-  imports: [CommonModule, LoadingOverlayComponent, FormsModule],
+  imports: [CommonModule, LoadingOverlayComponent, FormsModule, RouterLink],
   templateUrl: './collection.component.html',
 })
 export class CollectionComponent implements OnInit {
