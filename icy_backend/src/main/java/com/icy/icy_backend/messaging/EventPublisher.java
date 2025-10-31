@@ -78,4 +78,14 @@ public class EventPublisher {
         rabbitTemplate.convertAndSend("icy.exchange", routingKey, payload);
         log.info("📤 Événement RabbitMQ envoyé : {} ({})", routingKey, event.getTitle());
     }
+
+    public void publishEventEnded(Event event) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("id", event.getId());
+        payload.put("title", event.getTitle());
+        payload.put("channelId", event.getDiscordChannelId());
+        payload.put("messageId", event.getDiscordMessageId());
+
+        rabbitTemplate.convertAndSend("icy.exchange", "events.ended", payload);
+    }
 }

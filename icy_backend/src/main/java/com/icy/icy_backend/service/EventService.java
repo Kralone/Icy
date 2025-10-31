@@ -156,7 +156,7 @@ public class EventService {
 
 
     @Transactional
-    @Scheduled(cron = "0 1 0 * * *")
+    @Scheduled(cron = "0 1 0 * * *", zone = "Europe/Paris")
     public void markPastDayEventsAsFinished() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime startOfYesterday = yesterday.atStartOfDay();
@@ -174,6 +174,13 @@ public class EventService {
             event.setFinished(true);
             logger.info("Événement terminé automatiquement : {}", event.getId());
             eventWebSocketService.sendEventUpdate(event, "UPDATE");
+
+            try {
+                eventPublisher.publishEventEnded(event);
+                logger.info("Message RabbitMQ envoyé pour la fin de l'événement {}", event.getId());
+            } catch (Exception e) {
+                logger.error("Erreur lors de l'envoi RabbitMQ pour l'événement {} : {}", event.getId(), e.getMessage());
+            }
         }
 
         eventRepository.saveAll(eventsToFinish);
