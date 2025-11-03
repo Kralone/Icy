@@ -10,6 +10,10 @@ def html_to_discord(html: str) -> str:
 
     soup = BeautifulSoup(html, "html.parser")
 
+    # 🔹 <br> → saut de ligne
+    for br in soup.find_all("br"):
+        br.replace_with("\n")
+
     # <b> ou <strong> → **gras**
     for b in soup.find_all(["b", "strong"]):
         b.insert_before("**")
