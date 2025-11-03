@@ -29,7 +29,7 @@ public class StarCitizenReportService {
     }
 
     // 🔹 Planification automatique : chaque lundi à 15h27 (heure locale)
-    @Scheduled(cron = "* * 12 * * SAT", zone = "Europe/Paris")
+    @Scheduled(cron = "0 0 12 * * SAT", zone = "Europe/Paris")
     public String generateWeeklyReport() {
         logger.info("🔭 Génération du rapport Star Citizen avec web_search...");
 
