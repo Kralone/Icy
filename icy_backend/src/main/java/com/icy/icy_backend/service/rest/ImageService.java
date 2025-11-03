@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,18 +44,27 @@ public class ImageService {
     }
 
     public ImageMetadata upload(MultipartFile file, UUID uploaderId, String uploadedBy) throws IOException {
-        String filename = file.getOriginalFilename();
-        if (filename == null || filename.isBlank()) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
             throw new IllegalArgumentException("Nom de fichier invalide.");
         }
 
-        Path destination = root.resolve(filename);
+        // 🔧 Nettoyage basique du nom (remplace espaces et caractères spéciaux)
+        String safeName = originalFilename
+                .replaceAll("\\s+", "_")      // espaces → underscores
+                .replaceAll("[^a-zA-Z0-9._-]", ""); // supprime caractères interdits
+
+        // 📁 Enregistre le fichier
+        Path destination = root.resolve(safeName);
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         log.info("📸 Image uploadée sur disque : {}", destination);
 
+        // 🌐 URL propre
+        String url = imageBaseUrl + URLEncoder.encode(safeName, StandardCharsets.UTF_8);
+
         ImageMetadata meta = ImageMetadata.builder()
-                .name(filename)
-                .url(imageBaseUrl + filename)
+                .name(safeName)
+                .url(url)
                 .size(file.getSize())
                 .uploadedAt(LocalDateTime.now())
                 .uploaderId(uploaderId)
@@ -62,6 +73,7 @@ public class ImageService {
 
         return repo.save(meta);
     }
+
 
     public List<ImageMetadata> listAll() {
         return repo.findAll();
