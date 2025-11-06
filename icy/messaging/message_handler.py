@@ -20,6 +20,13 @@ class MessageHandler:
         self.user_handler = UserHandler(bot)  # 👈 ajouté
 
     async def handle_message(self, routing_key: str, payload: dict):
+
+        if not self.bot.is_ready():
+            logger.warning(f"⚠️ Bot Discord pas encore prêt, message {routing_key} mis en attente.")
+            await self.bot.wait_until_ready()
+            logger.info(f"✅ Bot prêt, reprise du traitement de {routing_key}.")
+
+
         logger.info(f"🔔 Message RabbitMQ reçu ({routing_key})")
         logger.debug(json.dumps(payload, indent=2, ensure_ascii=False))
 
