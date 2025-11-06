@@ -1,15 +1,16 @@
-<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8 space-y-12">
+<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8 space-y-12">
 
-  <!-- Halo lumineux d’arrière-plan -->
+  <!-- Halo lumineux -->
   <div class="absolute inset-0 overflow-hidden -z-10">
-    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
-    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+    <div class="absolute -top-40 -left-40 w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
   </div>
 
-  <div *ngIf="isAdmin" class="absolute top-6 right-6 z-10">
+  <!-- Bouton admin -->
+  <div *ngIf="isAdmin" class="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
     <button
       routerLink="/icy/admin/collections"
-      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+      class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl
              bg-white/10 backdrop-blur-md border border-cyan-400/30
              text-cyan-200 font-semibold text-sm shadow-lg
              hover:bg-cyan-500/20 hover:scale-105 transition-all">
@@ -18,15 +19,13 @@
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M3 7h18M3 12h18M3 17h18"/>
       </svg>
-      Gérer les collections
+      Gérer
     </button>
   </div>
 
-  <!-- =========== SECTION 1 : Templates disponibles =========== -->
-  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 transition hover:shadow-cyan-500/10">
-    <div class="mb-6 flex items-center justify-between">
-      <h2 class="text-2xl font-bold text-cyan-200">Templates disponibles</h2>
-    </div>
+  <!-- SECTION 1 : Templates -->
+  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6 transition hover:shadow-cyan-500/10">
+    <h2 class="text-xl sm:text-2xl font-bold text-cyan-200 mb-4 sm:mb-6">Templates disponibles</h2>
 
     <p *ngIf="isLoading" class="text-gray-400 text-center">Chargement…</p>
 
@@ -35,66 +34,73 @@
       ❌ Erreur de chargement.
     </div>
 
-    <div *ngIf="!isLoading && !error" class="overflow-hidden rounded-xl border border-white/10 bg-white/5">
-      <table class="min-w-full divide-y divide-white/10" *ngIf="templates.length; else noTpl">
-        <thead class="bg-white/10 text-cyan-300 uppercase text-xs font-semibold">
-        <tr class="text-left">
-          <th class="px-4 py-3 w-16">#</th>
-          <th class="px-4 py-3">Nom</th>
-          <th class="px-4 py-3">Archétype</th>
-          <th class="px-4 py-3 text-right w-48">Action</th>
-        </tr>
-        </thead>
-
-        <tbody class="divide-y divide-white/5 text-gray-200">
-        <tr *ngFor="let t of templates; trackBy: trackByIdTemplate" class="hover:bg-white/5 transition">
-          <td class="px-4 py-3 text-sm text-gray-400 tabular-nums">{{ t.id }}</td>
-          <td class="px-4 py-3 text-sm font-semibold text-white">{{ t.name }}</td>
-          <td class="px-4 py-3">
+    <!-- TABLE DESKTOP / CARDS MOBILE -->
+    <div *ngIf="!isLoading && !error">
+      <div class="hidden sm:block overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        <table class="min-w-full divide-y divide-white/10">
+          <thead class="bg-white/10 text-cyan-300 uppercase text-xs font-semibold">
+          <tr class="text-left">
+            <th class="px-4 py-3 w-16">#</th>
+            <th class="px-4 py-3">Nom</th>
+            <th class="px-4 py-3">Archétype</th>
+            <th class="px-4 py-3 text-right w-48">Action</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5 text-gray-200">
+          <tr *ngFor="let t of templates; trackBy: trackByIdTemplate" class="hover:bg-white/5 transition">
+            <td class="px-4 py-3 text-sm text-gray-400 tabular-nums">{{ t.id }}</td>
+            <td class="px-4 py-3 text-sm font-semibold text-white">{{ t.name }}</td>
+            <td class="px-4 py-3">
               <span class="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
                 {{ t.archetype }}
               </span>
-          </td>
-          <td class="px-4 py-3 text-right">
-            <button
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan-600 to-blue-700 hover:scale-[1.03] transition text-white text-xs font-semibold px-3 py-1.5 shadow-lg disabled:opacity-70"
-              [disabled]="loadingTemplateId === t.id"
-              (click)="createFromTemplate(t.id)">
-              <ng-container *ngIf="loadingTemplateId !== t.id; else loadingIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                  <path fill-rule="evenodd"
-                        d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z"
-                        clip-rule="evenodd" />
-                </svg>
-                Ajouter
-              </ng-container>
-              <ng-template #loadingIcon>
-                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                     viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10"
-                          stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
-              </ng-template>
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button type="button"
+                      class="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan-600 to-blue-700 hover:scale-[1.03] transition text-white text-xs font-semibold px-3 py-1.5 shadow-lg disabled:opacity-70"
+                      [disabled]="loadingTemplateId === t.id"
+                      (click)="createFromTemplate(t.id)">
+                <ng-container *ngIf="loadingTemplateId !== t.id; else loadingIcon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path fill-rule="evenodd" d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z" clip-rule="evenodd" />
+                  </svg>
+                  Ajouter
+                </ng-container>
+                <ng-template #loadingIcon>
+                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                       viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                            stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                </ng-template>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <ng-template #noTpl>
-        <p class="p-4 text-gray-400 text-center">Aucun template trouvé.</p>
-      </ng-template>
+      <!-- Version cartes (mobile) -->
+      <div class="grid sm:hidden gap-3">
+        <div *ngFor="let t of templates" class="rounded-xl border border-white/20 bg-white/5 p-3 flex flex-col gap-2 shadow-md">
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-white">{{ t.name }}</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 text-cyan-300">{{ t.archetype }}</span>
+          </div>
+          <button (click)="createFromTemplate(t.id)"
+                  class="w-full py-2 rounded-md bg-gradient-to-r from-cyan-600 to-blue-700 hover:scale-[1.02] transition text-white text-sm font-semibold">
+            Ajouter
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- =========== SECTION 2 : Mes collections =========== -->
-  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 transition hover:shadow-cyan-500/10">
-    <div class="mb-6 flex items-center justify-between">
-      <h2 class="text-2xl font-bold text-cyan-200">Mes collections</h2>
-    </div>
+  <!-- SECTION 2 : Collections -->
+  <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6 transition hover:shadow-cyan-500/10">
+    <h2 class="text-xl sm:text-2xl font-bold text-cyan-200 mb-4 sm:mb-6">Mes collections</h2>
 
     <p *ngIf="isLoadingUser" class="text-gray-400 text-center">Chargement…</p>
 
@@ -103,7 +109,8 @@
       ❌ Erreur lors du chargement des collections.
     </div>
 
-    <div *ngIf="!isLoadingUser && !errorUser" class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 relative">
+    <!-- TABLEAU desktop -->
+    <div *ngIf="!isLoadingUser && !errorUser" class="hidden sm:block overflow-hidden rounded-2xl border border-white/10 bg-white/5 relative">
       <app-loading-overlay *ngIf="userReloading"></app-loading-overlay>
 
       <table class="min-w-full divide-y divide-white/10 table-fixed">
@@ -118,19 +125,14 @@
 
         <tbody class="divide-y divide-white/10">
         <ng-container *ngFor="let c of myCollections; trackBy: trackByIdCollection">
-
-          <!-- Ligne principale -->
           <tr class="hover:bg-white/5 cursor-pointer transition"
               (click)="toggleCollectionRow(c.id)"
               [attr.aria-expanded]="expandedId === c.id">
-
             <td class="px-3 py-3 align-top">
               <button type="button"
                       class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-cyan-400/40 hover:bg-cyan-500/10 transition"
-                      (click)="$event.stopPropagation(); toggleCollectionRow(c.id)"
-                      [attr.aria-expanded]="expandedId === c.id">
-                <svg aria-hidden="true"
-                     class="h-4 w-4 transition-transform duration-200 transform"
+                      (click)="$event.stopPropagation(); toggleCollectionRow(c.id)">
+                <svg class="h-4 w-4 transition-transform duration-200"
                      [class.rotate-90]="expandedId === c.id"
                      viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd"
@@ -158,12 +160,10 @@
             <td colspan="4" class="px-4 py-4">
               <div class="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div *ngIf="rowLoading.has(c.id)" class="text-gray-400 text-center">Chargement des détails…</div>
-
                 <div *ngIf="!rowLoading.has(c.id) && rowError.has(c.id)"
                      class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
                   ❌ Erreur lors du chargement des détails.
                 </div>
-
                 <ng-container *ngIf="!rowLoading.has(c.id) && !rowError.has(c.id)">
                   <ng-container *ngIf="detailCache.get(c.id) as d">
                     <ng-container [ngTemplateOutlet]="gridTpl" [ngTemplateOutletContext]="{tpl: d.template, d: d}"></ng-container>
@@ -172,44 +172,141 @@
               </div>
             </td>
           </tr>
-
         </ng-container>
         </tbody>
       </table>
     </div>
+
+    <!-- MOBILE : cartes -->
+    <!-- MOBILE : cartes extensibles -->
+    <div class="grid sm:hidden gap-4 mt-4">
+      <div
+        *ngFor="let c of myCollections"
+        class="rounded-2xl border border-white/20 bg-white/5 shadow-lg overflow-hidden transition"
+      >
+        <!-- En-tête cliquable -->
+        <button
+          type="button"
+          class="w-full text-left px-4 py-3 flex justify-between items-center focus:outline-none"
+          (click)="toggleCollectionRow(c.id)"
+        >
+          <div>
+            <h3 class="font-semibold text-white text-base">{{ c.name }}</h3>
+            <p class="text-cyan-300 text-xs">
+              {{ templateNameById.get(c.templateId) || ('#' + c.templateId) }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <svg
+              class="w-5 h-5 text-cyan-300 transform transition-transform duration-300"
+              [class.rotate-90]="expandedId === c.id"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </button>
+
+        <!-- Contenu dépliant -->
+        <div
+          class="overflow-hidden transition-all duration-500 ease-in-out"
+          [class.max-h-0]="expandedId !== c.id"
+          [class.max-h-[1000px]]="expandedId === c.id"
+        >
+          <div
+            class="border-t border-white/10 bg-white/5 p-3"
+          >
+            <!-- Loader -->
+            <div
+              *ngIf="rowLoading.has(c.id)"
+              class="text-gray-400 text-center text-sm py-4"
+            >
+              Chargement des détails…
+            </div>
+
+            <!-- Erreur -->
+            <div
+              *ngIf="!rowLoading.has(c.id) && rowError.has(c.id)"
+              class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center text-sm"
+            >
+              ❌ Erreur lors du chargement des détails.
+            </div>
+
+            <!-- Contenu scrollable -->
+            <div
+              *ngIf="!rowLoading.has(c.id) && !rowError.has(c.id)"
+              class="w-full overflow-x-auto overflow-y-hidden touch-pan-x scroll-smooth icy-scrollbar"
+              style="-webkit-overflow-scrolling: touch;"
+            >
+              <div class="min-w-[480px] sm:min-w-0">
+                <ng-container *ngIf="detailCache.get(c.id) as d">
+                  <ng-container
+                    [ngTemplateOutlet]="gridTpl"
+                    [ngTemplateOutletContext]="{ tpl: d.template, d: d }"
+                  ></ng-container>
+                </ng-container>
+              </div>
+            </div>
+
+            <!-- Bouton supprimer -->
+            <div class="text-right mt-3">
+              <button
+                (click)="deleteCollection(c.id)"
+                class="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-400/50 text-red-300 hover:bg-red-400/10 transition"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </section>
 
-  <!-- ========= TEMPLATE DE LA GRILLE ========= -->
+  <!-- TEMPLATE grille (inchangé) -->
   <ng-template #gridTpl let-tpl="tpl" let-d="d">
     <div class="overflow-auto">
       <div class="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-        <table class="min-w-full table-fixed">
+        <table class="min-w-full table-fixed text-sm">
           <thead>
           <tr class="text-xs uppercase text-cyan-300 bg-white/10">
             <th class="px-3 py-2 text-left">Variante</th>
             <th class="px-3 py-2 text-center"
-                *ngFor="let x of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
+                *ngFor="let x of getAxisLabels(tpl?.axisX || d.axisX)">
               {{ x }}
             </th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let y of getAxisLabels(tpl?.axisY || d.axisY); let yi = index"
-              class="border-t border-white/10">
+          <tr *ngFor="let y of getAxisLabels(tpl?.axisY || d.axisY); let yi = index" class="border-t border-white/10">
             <th class="px-3 py-2 text-left text-white font-medium">{{ y }}</th>
 
-            <td class="px-3 py-2 text-center"
-                *ngFor="let _ of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
-              <button type="button"
-                      class="h-7 w-7 rounded-md border text-xs font-semibold mx-auto flex items-center justify-center
-                               border-cyan-400/40 hover:bg-cyan-500/10 transition"
-                      [class.bg-cyan-600]="isChecked(d, xi, yi)"
-                      [class.text-white]="isChecked(d, xi, yi)"
-                      (click)="$event.stopPropagation(); toggleLocal(d, xi, yi)">
-                {{ isChecked(d, xi, yi) ? '✓' : '' }}
-              </button>
-            </td>
+            <ng-container *ngFor="let _ of getAxisLabels(tpl?.axisX || d.axisX); let xi = index">
+              <td class="px-3 py-2 text-center">
+                <button
+                  type="button"
+                  class="h-7 w-7 rounded-md border text-xs font-semibold mx-auto flex items-center justify-center
+               border-cyan-400/40 hover:bg-cyan-500/10 transition"
+                  [class.bg-cyan-600]="isChecked(d, xi, yi)"
+                  [class.text-white]="isChecked(d, xi, yi)"
+                  (click)="$event.stopPropagation(); toggleLocal(d, xi, yi)">
+                  {{ isChecked(d, xi, yi) ? '✓' : '' }}
+                </button>
+              </td>
+            </ng-container>
           </tr>
+
           </tbody>
         </table>
       </div>

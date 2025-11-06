@@ -1,29 +1,29 @@
 <!-- ================== ADMIN USERS - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8 space-y-8">
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8 space-y-8">
 
   <!-- Header -->
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
     <input
       [(ngModel)]="searchTerm"
       type="text"
       placeholder="🔍 Rechercher un utilisateur..."
-      class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20
+      class="w-full sm:w-1/3 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20
              text-white placeholder-gray-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-cyan-400
-             transition w-1/3"
+             transition"
     />
 
     <button
       (click)="isAddUserModalOpen = true"
       class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-             text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition transform hover:scale-105"
+             text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105 w-full sm:w-auto"
     >
       + Ajouter un membre
     </button>
   </div>
 
-  <!-- Tableau -->
-  <div class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
-    <table class="min-w-full text-sm text-gray-200">
+  <!-- Tableau responsive -->
+  <div class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl icy-scrollbar">
+    <table class="min-w-[700px] w-full text-sm text-gray-200">
       <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
       <tr>
         <th class="px-4 py-3 text-left">Nom</th>
@@ -37,17 +37,17 @@
         *ngFor="let user of filteredUsers"
         class="hover:bg-white/10 transition duration-200 border-b border-white/10"
       >
-        <td class="px-4 py-3 font-medium">{{ user.username }}</td>
-        <td class="px-4 py-3">{{ user.discordId }}</td>
+        <td class="px-4 py-3 font-medium break-words">{{ user.username }}</td>
+        <td class="px-4 py-3 break-all">{{ user.discordId }}</td>
         <td class="px-4 py-3">
           <span
             *ngFor="let role of user.roles"
-            class="inline-block bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-xs px-2 py-1 rounded-full mr-1 shadow-sm"
+            class="inline-block bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-xs px-2 py-1 rounded-full mr-1 shadow-sm whitespace-nowrap"
           >
             {{ role }}
           </span>
         </td>
-        <td class="px-4 py-3 space-x-3">
+        <td class="px-4 py-3 flex flex-wrap gap-2">
           <button class="text-blue-400 hover:text-blue-300 transition" (click)="editUser(user)">✏️ Modifier</button>
           <button class="text-red-400 hover:text-red-300 transition" (click)="deleteUser(user.id)">🗑️ Supprimer</button>
           <button class="text-yellow-400 hover:text-yellow-300 transition" (click)="resetPassword(user.id)">🔁 Reset PW</button>
@@ -64,9 +64,9 @@
   </div>
 
   <!-- Pagination -->
-  <div class="flex justify-between items-center pt-4">
-    <div>
-      <label class="text-sm mr-2 text-gray-300">Éléments par page :</label>
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 text-sm">
+    <div class="flex items-center gap-2">
+      <label class="text-gray-300">Éléments par page :</label>
       <select
         [(ngModel)]="itemsPerPage"
         class="px-2 py-1 bg-white/10 border border-white/20 rounded text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
@@ -74,7 +74,7 @@
         <option *ngFor="let size of [10, 20, 30]" [value]="size">{{ size }}</option>
       </select>
     </div>
-    <div class="space-x-2">
+    <div class="space-x-2 flex items-center">
       <button
         (click)="prevPage()"
         [disabled]="currentPage === 1"
@@ -101,7 +101,7 @@
   (click)="isAddUserModalOpen = false"
 >
   <div
-    class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-8 relative text-white"
+    class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative text-white"
     (click)="$event.stopPropagation()"
   >
     <button (click)="isAddUserModalOpen = false" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">
@@ -123,7 +123,7 @@
           name="username"
           placeholder="Nom"
           [(ngModel)]="newUser.username"
-          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-cyan-400"
+          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         />
       </div>
@@ -136,7 +136,7 @@
           name="discordId"
           placeholder="0123456789"
           [(ngModel)]="newUser.discordId"
-          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-cyan-400"
+          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         />
       </div>
@@ -147,10 +147,10 @@
         <select
           name="role"
           [(ngModel)]="newUser.role"
-          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-100 focus:ring-2 focus:ring-cyan-400"
+          class="w-full px-4 py-2 bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         >
-          <option *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
+          <option class="bg-[#1b263b]" *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
         </select>
       </div>
 

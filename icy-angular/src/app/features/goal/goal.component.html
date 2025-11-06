@@ -1,22 +1,23 @@
-<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8">
+<div class="relative min-h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8">
 
   <!-- Arrière-plan lumineux -->
   <div class="absolute inset-0 overflow-hidden -z-10">
-    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
-    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+    <div class="absolute -top-40 -left-40 w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
   </div>
 
   <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
 
-  <!-- Contenu flouté pendant le chargement -->
-  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300 space-y-6">
+  <!-- Contenu -->
+  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading"
+       class="transition duration-300 flex flex-col flex-1 space-y-6">
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-cyan-200 tracking-wide">🎯 Objectifs</h1>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+      <h1 class="text-2xl sm:text-3xl font-bold text-cyan-200 tracking-wide">🎯 Objectifs</h1>
       <button
         *ngIf="isAdmin"
-        class="bg-gradient-to-r from-cyan-600 to-blue-700 text-white px-5 py-2 rounded-xl shadow-md hover:scale-[1.03] transition"
+        class="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-700 text-white px-5 py-2 rounded-xl shadow-md hover:scale-[1.03] transition text-center"
         (click)="showAddModal = true">
         + Ajouter
       </button>
@@ -27,16 +28,17 @@
     <div *ngIf="!isLoading && goals.length === 0" class="text-gray-400 text-center">Aucun objectif.</div>
 
     <!-- Liste des objectifs -->
-    <div *ngFor="let goal of goals" class="animate-fadeInUp">
-      <app-goal-sub
-        [goal]="goal"
-        [depth]="0"
-        [isAdmin]="isAdmin"
-        (refresh)="ngOnInit()"
-        [showChildren]="true">
-      </app-goal-sub>
+    <div class="flex-1 overflow-y-auto space-y-4 pb-8">
+      <div *ngFor="let goal of goals" class="animate-fadeInUp">
+        <app-goal-sub
+          [goal]="goal"
+          [depth]="0"
+          [isAdmin]="isAdmin"
+          (refresh)="ngOnInit()"
+          [showChildren]="true">
+        </app-goal-sub>
+      </div>
     </div>
-
   </div>
 </div>
 
