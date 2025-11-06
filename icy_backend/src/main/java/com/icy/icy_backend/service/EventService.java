@@ -17,22 +17,24 @@ import com.icy.icy_backend.service.rest.AuthService;
 import com.icy.icy_backend.service.rest.MessageService;
 import com.icy.icy_backend.controller.dto.response.MessageResponse;
 import com.icy.icy_backend.websocket.EventWebSocketService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.context.event.EventListener;
+
+
+@Slf4j
 @Service
 public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
@@ -158,7 +160,8 @@ public class EventService {
     @Transactional
     @Scheduled(cron = "0 1 0 * * *", zone = "Europe/Paris")
     public void markPastDayEventsAsFinished() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        ZoneId parisZone = ZoneId.of("Europe/Paris");
+        LocalDate yesterday = LocalDate.now(parisZone).minusDays(1);
         LocalDateTime startOfYesterday = yesterday.atStartOfDay();
         LocalDateTime endOfYesterday = yesterday.atTime(LocalTime.MAX);
 
@@ -186,6 +189,73 @@ public class EventService {
         eventRepository.saveAll(eventsToFinish);
         logger.info("{} événements marqués comme terminés pour {}", eventsToFinish.size(), yesterday);
     }
+
+    @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Paris")
+    public void sendDailyPing() {
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Paris"));
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
+        List<Event> todaysEvents = eventRepository.findAllBetween(startOfDay, endOfDay);
+
+        if (todaysEvents.isEmpty()) {
+            log.info("📭 Aucun événement prévu aujourd’hui — pas de ping global.");
+            return;
+        }
+
+        log.info("📢 Ping global programmé à 12h pour {} événement(s).", todaysEvents.size());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("date", today.toString());
+        payload.put("events", todaysEvents.stream()
+                .map(e -> Map.of("id", e.getId(), "title", e.getTitle()))
+                .collect(Collectors.toList()));
+
+        eventPublisher.sendGeneric("events.dailyPing", payload);
+    }
+
+
+    /**
+     * ⏰ Toutes les 15 minutes : ping 1h avant chaque événement à venir.
+     */
+    @Transactional(readOnly = true)
+    @Scheduled(cron = "0 0/15 * * * *", zone = "Europe/Paris")
+    public void sendOneHourReminder() {
+        log.info("✅ [Startup] One hour event reminder ping");
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
+        ZonedDateTime from = now.plusMinutes(50);
+        ZonedDateTime to = now.plusMinutes(70);
+
+        List<Event> upcomingEvents = eventRepository.findAllBetween(from.toLocalDateTime(), to.toLocalDateTime());
+
+        if (upcomingEvents.isEmpty()) {
+            return;
+        }
+
+        for (Event event : upcomingEvents) {
+            List<EventParticipation> participations = participationRepository.findAllByEvent(event).orElse(List.of());
+            List<Map<String, Object>> participants = participations.stream()
+                    .filter(p -> p.getStatus() >= 0) // 0 = peut-être, 1 = confirmé
+                    .map(p -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("username", p.getUser().getUsername());
+                        map.put("status", p.getStatus());
+                        map.put("discordId", p.getUser().getDiscordId());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventId", event.getId());
+            payload.put("title", event.getTitle());
+            payload.put("date", event.getStartDateTime().toString());
+            payload.put("participants", participants);
+
+            log.info("⏰ Rappel 1h avant envoyé pour l’événement {}", event.getTitle());
+            eventPublisher.sendGeneric("events.reminderOneHour", payload);
+        }
+    }
+
 
 // ------------------------------Event Type Service--------------------------------------
 
@@ -290,5 +360,20 @@ public class EventService {
         return messageService.buildResponse("event.type.updated", saved);
     }
 
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void runScheduledTasksAtStartup() {
+        log.info("🚀 [Startup] Exécution initiale des tâches planifiées...");
+
+        try {
+            markPastDayEventsAsFinished();
+            sendOneHourReminder();
+
+            log.info("✅ [Startup] Tâches planifiées exécutées avec succès au démarrage.");
+        } catch (Exception e) {
+            log.error("❌ [Startup] Erreur lors de l’exécution des tâches planifiées : {}", e.getMessage(), e);
+        }
+    }
 
 }

@@ -88,4 +88,10 @@ public class EventPublisher {
 
         rabbitTemplate.convertAndSend("icy.exchange", "events.ended", payload);
     }
+
+    public void sendGeneric(String routingKey, Map<String, Object> payload) {
+        rabbitTemplate.convertAndSend("icy.exchange", routingKey, payload);
+        log.info("📤 Message RabbitMQ envoyé ({}) : {}", routingKey, payload);
+    }
+
 }

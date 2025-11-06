@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import discord
 from discord import ui, ButtonStyle
@@ -5,6 +6,26 @@ from utils.html_to_discord import html_to_discord
 import logging
 
 logger = logging.getLogger("icy.event_handler")
+
+def format_date(date_str: str) -> str:
+    """Convertit une date ISO (ex: 2025-11-03T12:30:00) en format lisible français, sans dépendre de la locale système."""
+    if not date_str:
+        return "Date inconnue"
+
+    jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    mois = [
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+    ]
+
+    try:
+        dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        jour_nom = jours[dt.weekday()]
+        mois_nom = mois[dt.month - 1]
+        return f"{jour_nom} {dt.day} {mois_nom} {dt.year} à {dt.hour:02d}h{dt.minute:02d}"
+    except Exception:
+        return date_str
+
 
 
 class EventHandler:
@@ -26,56 +47,21 @@ class EventHandler:
         elif routing_key == "events.deleted":
             await self.handle_event_deleted(payload)
         elif routing_key == "events.ended":
-            await self.handle_event_ended(payload)  # 🧊 nouveau
+            await self.handle_event_ended(payload)
+        elif routing_key == "events.dailyPing":
+            await self.handle_daily_ping(payload)
+        elif routing_key == "events.reminderOneHour":
+            await self.handle_reminder_one_hour(payload)
+
         else:
             logger.warning(f"⚠️ Clé inconnue pour EventHandler : {routing_key}")
 
-
-    async def handle_event_ended(self, payload: dict):
-        """Met à jour le message Discord pour signaler la fin de l'événement."""
-        event_id = payload.get("id")
-        channel_id = payload.get("channelId")
-        message_id = payload.get("messageId")
-
-        if not (channel_id and message_id):
-            logger.warning(f"⚠️ Données incomplètes pour event.ended ({event_id})")
-            return
-
-        channel = self.bot.get_channel(int(channel_id))
-        if not channel:
-            logger.error(f"⚠️ Channel introuvable ({channel_id})")
-            return
-
-        try:
-            message = await channel.fetch_message(int(message_id))
-        except discord.NotFound:
-            logger.warning(f"⚠️ Message introuvable pour event {event_id}")
-            return
-
-        embed = message.embeds[0] if message.embeds else None
-        if not embed:
-            logger.warning(f"⚠️ Aucun embed trouvé pour event {event_id}")
-            return
-
-        # 🔧 Mise à jour de l’embed pour marquer l’événement terminé
-        embed.color = discord.Color.dark_grey()
-        embed.title = f"🧊 [TERMINÉ] {embed.title}"
-        embed.add_field(
-            name="Statut",
-            value="✅ Cet événement est terminé automatiquement.",
-            inline=False,
-        )
-
-        # ❌ Retrait des boutons
-        await message.edit(embed=embed, view=None)
-
-        logger.info(f"🏁 Événement terminé et mis à jour sur Discord (eventId={event_id})")
 
     async def handle_event_created(self, payload: dict):
         title = payload.get("title", "Sans titre")
         description = html_to_discord(payload.get("description", ""))
         creator = payload.get("author", "Inconnu")
-        date = payload.get("date", "Date inconnue")
+        date = format_date(payload.get("date"))
 
         type_info = payload.get("type", {}) or {}
         image_url = type_info.get("imageUrl")
@@ -146,7 +132,7 @@ class EventHandler:
         title = payload.get("title", "Sans titre")
         description = html_to_discord(payload.get("description", ""))
         creator = payload.get("author", "Inconnu")
-        date = payload.get("date", "Date inconnue")
+        date = format_date(payload.get("date"))
 
         type_info = payload.get("type", {}) or {}
         image_url = type_info.get("imageUrl")
@@ -179,6 +165,76 @@ class EventHandler:
         await message.edit(embed=embed, view=view)
         logger.info(f"✏️ Événement mis à jour dans #{channel.name} ({title})")
 
+
+    async def handle_event_ended(self, payload: dict):
+        """Met à jour le message Discord pour signaler la fin d'un événement,
+        ou supprime le dailyPing du jour si aucun ID n'est fourni."""
+        event_id = payload.get("id")
+        channel_id = payload.get("channelId")
+        message_id = payload.get("messageId")
+
+        # 🧹 Cas spécial : signal de nettoyage du dailyPing (aucun message lié)
+        if not (channel_id and message_id):
+            logger.info("🧹 Signal reçu : suppression du message dailyPing du jour.")
+            await self.cleanup_daily_ping()
+            return
+
+        # --- Cas classique : un événement Discord à terminer ---
+        channel = self.bot.get_channel(int(channel_id))
+        if not channel:
+            logger.error(f"⚠️ Channel introuvable ({channel_id})")
+            return
+
+        try:
+            message = await channel.fetch_message(int(message_id))
+        except discord.NotFound:
+            logger.warning(f"⚠️ Message introuvable pour event {event_id}")
+            return
+
+        embed = message.embeds[0] if message.embeds else None
+        if not embed:
+            logger.warning(f"⚠️ Aucun embed trouvé pour event {event_id}")
+            return
+
+        # 🔧 Mise à jour de l’embed pour marquer l’événement terminé
+        embed.color = discord.Color.dark_grey()
+        embed.title = f"🧊 [TERMINÉ] {embed.title}"
+        embed.add_field(
+            name="Statut",
+            value="✅ Cet événement est terminé automatiquement.",
+            inline=False,
+        )
+
+        # ❌ Retrait des boutons
+        await message.edit(embed=embed, view=None)
+
+        logger.info(f"🏁 Événement terminé et mis à jour sur Discord (eventId={event_id})")
+
+
+    async def cleanup_daily_ping(self):
+        """Supprime le message dailyPing du jour dans le canal d’événements."""
+        channel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            logger.error("⚠️ Salon Discord introuvable pour nettoyage dailyPing")
+            return
+
+        from datetime import datetime
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        async for message in channel.history(limit=30):
+            if message.author != self.bot.user:
+                continue
+            if today in message.content and "événement(s)" in message.content:
+                try:
+                    await message.delete()
+                    logger.info(f"🧹 Message dailyPing du {today} supprimé.")
+                except Exception as e:
+                    logger.error(f"❌ Erreur lors du nettoyage dailyPing : {e}")
+                return
+
+        logger.warning(f"⚠️ Aucun message dailyPing trouvé pour {today}.")
+
+
     async def handle_event_deleted(self, payload: dict):
         event_id = payload.get("eventId")
         channel_id = payload.get("channelId")
@@ -199,6 +255,59 @@ class EventHandler:
             logger.info(f"🗑️ Événement supprimé de Discord (eventId={event_id})")
         except Exception as e:
             logger.exception(f"❌ Erreur lors de la suppression de l’event Discord : {e}")
+
+
+    async def handle_daily_ping(self, payload: dict):
+        channel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            logger.error("⚠️ Salon introuvable pour dailyPing")
+            return
+
+        events = payload.get("events", [])
+        date = format_date(payload.get("date"))
+        titles = "\n".join([f"• {e['title']}" for e in events])
+        msg = f"<@&1325528040322896025> \n 🔔 **{len(events)} événement(s)** prévu(s) aujourd’hui ({date}) :\n{titles}\n\nPensez à confirmer votre participation !"
+        await channel.send(msg)
+        logger.info("📢 Daily ping envoyé.")
+
+    async def handle_reminder_one_hour(self, payload: dict):
+        """Ping individuel des membres confirmés ou indécis 1h avant l’événement."""
+        channel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            logger.error("⚠️ Salon Discord introuvable pour reminderOneHour")
+            return
+
+        title = payload.get("title")
+        participants = payload.get("participants", [])
+
+        if not participants:
+            logger.info(f"⚠️ Aucun participant à notifier pour {title}")
+            return
+
+        # Séparation confirmés / indécis
+        confirmed = [p for p in participants if p.get("status") == 1]
+        maybe     = [p for p in participants if p.get("status") == 0]
+
+        def mention_from(p):
+            discord_id = p.get("discordId")
+            if discord_id:         # mention directe par ID (fiable, ping garanti)
+                return f"<@{discord_id}>"
+            username = p.get("username")
+            # Fallback : en gras si aucun ID (ne ping pas mais montre le pseudo)
+            return f"**{username}**" if username else "**Inconnu**"
+
+        confirmed_mentions = " ".join(mention_from(p) for p in confirmed) or "_(personne)_"
+        maybe_mentions = " ".join(mention_from(p) for p in maybe) or r"¯\\\_(ツ)\_/¯"
+
+        msg = (
+            f"⏰ **Rappel** : l’événement **{title}** commence dans **1h** !\n"
+            f"✅ **Confirmés** : {confirmed_mentions}\n"
+            f"❔ **Indécis** : {maybe_mentions}"
+        )
+
+        await channel.send(msg)
+        logger.info(f"⏰ Rappel 1h avant envoyé pour {title} ({len(confirmed)} confirmés, {len(maybe)} indécis).")
+
 
 
 # --- Classe View pour les boutons ---
