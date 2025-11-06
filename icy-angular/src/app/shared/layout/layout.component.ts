@@ -25,7 +25,7 @@ export class LayoutComponent {
 
   private checkViewport(): void {
     this.isDesktop = window.innerWidth >= 1280; // breakpoint XL
-    if (this.isDesktop) this.isSidebarOpen = true;
+    if (this.isDesktop) this.isSidebarOpen = false;
   }
 
   toggleSidebar(): void {
