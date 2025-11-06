@@ -98,27 +98,59 @@
   }
 }
 
-/* Thème ICY léger pour FullCalendar */
+/* === Hauteur & flex corrects === */
 .fc {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  padding: 1rem;
+  height: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.fc .fc-toolbar-title {
-  color: #e0f2fe;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+/* === Le calendrier prend toute la place === */
+.fc-view-harness {
+  flex: 1 !important;
+  height: 100% !important;
 }
 
-.fc .fc-day-today {
-  background: rgba(56, 189, 248, 0.15) !important;
+/* === Empêche les débordements horizontaux === */
+.fc-scroller {
+  overflow-x: hidden !important;
 }
 
-.fc .fc-daygrid-day:hover {
-  background: rgba(255, 255, 255, 0.07);
-  transition: background 0.2s ease;
+/* === Toolbar responsive === */
+.fc-header-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem 0 !important;
 }
+
+/* === Titre & boutons plus petits sur mobile === */
+@media (max-width: 640px) {
+  .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .fc-button {
+    font-size: 0.8rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  .fc-toolbar-chunk {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+}
+
 
 /* ========== ICY THEME for Angular Editor ========== */
 

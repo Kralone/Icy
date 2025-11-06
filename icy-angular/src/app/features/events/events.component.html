@@ -1,18 +1,19 @@
-<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white px-8 pt-8 pb-12">
+<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white px-4 sm:px-6 lg:px-8 pt-6 pb-16">
 
   <!-- Titre -->
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-3xl font-bold flex items-center gap-2">
-      <span class="text-cyan-400 text-2xl">❄️</span> Calendrier des Événements
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+    <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+      <span class="text-cyan-400 text-xl sm:text-2xl">❄️</span>
+      Calendrier des Événements
     </h1>
 
     <button
       *ngIf="isAdmin"
       routerLink="/icy/admin/events"
-      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                 bg-white/10 backdrop-blur-md border border-cyan-400/30
-                 text-cyan-200 font-semibold text-sm shadow-lg
-                 hover:bg-cyan-500/20 hover:scale-105 transition-all">
+      class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+             bg-white/10 backdrop-blur-md border border-cyan-400/30
+             text-cyan-200 font-semibold text-sm shadow-lg
+             hover:bg-cyan-500/20 hover:scale-105 transition-all">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
            stroke="currentColor" class="w-5 h-5 text-cyan-300">
         <path stroke-linecap="round" stroke-linejoin="round"
@@ -23,30 +24,38 @@
   </div>
 
   <!-- Conteneur calendrier -->
-  <div class="p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
-    <full-calendar [options]="calendarOptions" class="w-full text-gray-100"></full-calendar>
+  <div
+    class="flex-1 p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl
+         overflow-y-auto flex flex-col"
+  >
+    <full-calendar
+      [options]="calendarOptions"
+      class="flex-1 min-h-[400px] sm:min-h-[600px] w-full text-gray-100"
+    ></full-calendar>
   </div>
+
+
 </div>
 
 <!-- MODAL DETAILS -->
 <div
   *ngIf="showDetailsModal"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl px-4"
   (click)="showDetailsModal = false"
 >
   <div
-    class="relative w-full max-w-xl bg-white/10 backdrop-blur-2xl border border-white/20
-           shadow-[0_0_25px_rgba(56,189,248,0.4)] rounded-2xl p-8 text-white animate-fade-in"
+    class="relative w-full max-w-sm sm:max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20
+           shadow-[0_0_25px_rgba(56,189,248,0.4)] rounded-2xl p-6 sm:p-8 text-white animate-fade-in overflow-y-auto max-h-[90vh]"
     (click)="$event.stopPropagation()"
   >
-    <button (click)="showDetailsModal = false" class="absolute top-4 right-4 text-gray-300 hover:text-white text-xl">✖</button>
+    <button (click)="showDetailsModal = false" class="absolute top-4 right-4 text-gray-300 hover:text-white text-lg sm:text-xl">✖</button>
 
     <div *ngIf="selectedEvent?.type?.imageUrl" class="-mt-6 -mx-6 mb-6">
       <img [src]="selectedEvent.type.imageUrl" alt="Illustration du type d'événement"
-           class="w-full h-48 object-cover rounded-t-2xl border-b border-white/20" />
+           class="w-full h-40 sm:h-48 object-cover rounded-t-2xl border-b border-white/20" />
     </div>
 
-    <h2 class="text-2xl font-bold mb-4 text-cyan-300">{{ selectedEvent?.title }}</h2>
+    <h2 class="text-xl sm:text-2xl font-bold mb-4 text-cyan-300 break-words">{{ selectedEvent?.title }}</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
       <p><strong>Type :</strong> {{ selectedEvent?.type.name }}</p>
@@ -61,14 +70,15 @@
 
     <div class="mt-4 text-sm">
       <p><strong>Description :</strong></p>
-      <p class="mt-1 text-gray-300">{{ selectedEvent?.description }}</p>
+      <p class="mt-1 text-gray-300 break-words">{{ selectedEvent?.description }}</p>
     </div>
 
     <!-- Participation -->
     <div class="mt-6 border-t border-white/10 pt-4">
-      <h3 class="text-lg font-semibold mb-3 text-cyan-200">Participation</h3>
-      <div class="grid grid-cols-3 text-sm mb-4 text-center divide-x divide-white/20">
-        <div>
+      <h3 class="text-base sm:text-lg font-semibold mb-3 text-cyan-200">Participation</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 text-sm mb-4 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/20">
+        <div class="py-3 sm:py-0">
           <p class="font-semibold text-green-400 mb-2">✔ Confirmés</p>
           <ul *ngIf="participationsByStatus.confirmed.length > 0; else noConfirmed" class="space-y-1">
             <li *ngFor="let p of participationsByStatus.confirmed">{{ p.user.username }}</li>
@@ -76,7 +86,7 @@
           <ng-template #noConfirmed><p class="italic text-gray-400">Aucun</p></ng-template>
         </div>
 
-        <div>
+        <div class="py-3 sm:py-0">
           <p class="font-semibold text-yellow-400 mb-2">❔ Indécis</p>
           <ul *ngIf="participationsByStatus.maybe.length > 0; else noMaybe" class="space-y-1">
             <li *ngFor="let p of participationsByStatus.maybe">{{ p.user.username }}</li>
@@ -84,7 +94,7 @@
           <ng-template #noMaybe><p class="italic text-gray-400">Aucun</p></ng-template>
         </div>
 
-        <div>
+        <div class="py-3 sm:py-0">
           <p class="font-semibold text-red-400 mb-2">❌ Refusés</p>
           <ul *ngIf="participationsByStatus.refused.length > 0; else noRefused" class="space-y-1">
             <li *ngFor="let p of participationsByStatus.refused">{{ p.user.username }}</li>
@@ -93,7 +103,7 @@
         </div>
       </div>
 
-      <div class="flex justify-center gap-4">
+      <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
         <button
           (click)="setParticipationStatus(1)"
           [disabled]="selectedEvent?.finished"
@@ -116,4 +126,5 @@
         </button>
       </div>
     </div>
+  </div>
 </div>

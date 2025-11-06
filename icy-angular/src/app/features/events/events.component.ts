@@ -1,14 +1,14 @@
-import {Component, ViewChild} from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import {FullCalendarComponent, FullCalendarModule} from '@fullcalendar/angular';
-import {EventService, EventDTO} from '../../core/services/event/event.service';
-import {WebSocketService} from '../../core/services/websocket/websocket.service';
-import {EventType} from '../../model/event-type.model';
-import {AuthService} from '../../core/services/auth/auth.service';
-import {RouterLink} from '@angular/router';
+import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
+import { EventService, EventDTO } from '../../core/services/event/event.service';
+import { WebSocketService } from '../../core/services/websocket/websocket.service';
+import { EventType } from '../../model/event-type.model';
+import { AuthService } from '../../core/services/auth/auth.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-events',
@@ -16,14 +16,15 @@ import {RouterLink} from '@angular/router';
   imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink],
   templateUrl: './events.component.html'
 })
-export class EventsComponent {
+export class EventsComponent implements AfterViewInit {
+  @ViewChild(FullCalendarComponent) calendarComponent?: FullCalendarComponent;
+
   calendarEvents: any[] = [];
-  messages: string[] = [];
+  types: EventType[] = [];
   selectedEvent: any = null;
   showDetailsModal = false;
-  types: EventType[] = [];
-
-  @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
+  isLoading = false;
+  isAdmin = false;
 
   participationsByStatus = {
     confirmed: [] as any[],
@@ -33,53 +34,82 @@ export class EventsComponent {
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
-    initialView: 'dayGridMonth',
     locale: 'fr',
     firstDay: 1,
-    events: [],
-    height: 'auto',
-    contentHeight: 'auto',
+    initialView: 'dayGridWeek', // 🧊 desktop par défaut
+    height: '100%',
+    expandRows: true,
+    contentHeight: '100%',
+    handleWindowResize: true,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,dayGridWeek'
+      right: 'threeDay,dayGridWeek,dayGridMonth'
     },
     buttonText: {
-      today:    'Aujourd\'hui',
-      month:    'Mois',
-      week:     'Semaine',
-      day:      'Jour',
-      list:     'Liste'
+      today: 'Aujourd\'hui',
+      month: 'Mois',
+      week: 'Semaine',
+      threeDay: '3 jours'
     },
-    eventContent: this.renderCustomEvent.bind(this),
-    eventClick: this.onEventClick.bind(this),
-    eventDidMount: this.applyBackgroundColor.bind(this),
+    views: {
+      // ✅ vue 3 jours valide (dayGridWeek + duration)
+      threeDay: {
+        type: 'dayGridWeek',
+        duration: { days: 3 },
+        buttonText: '3 jours'
+      }
+    },
+    eventContent: (arg) => this.renderCustomEvent(arg),
+    eventClick: (arg) => this.onEventClick(arg),
+    eventDidMount: (info) => this.applyBackgroundColor(info),
   };
-
-  isLoading = false;
-  isAdmin = false;
 
   constructor(
     private eventService: EventService,
     private wsService: WebSocketService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ngZone: NgZone
   ) {}
 
   ngAfterViewInit() {
     this.wsService.connectEvent();
-    this.authService.isAdmin().subscribe(isAdmin => {
-      this.isAdmin = isAdmin;
-    });
-
+    this.authService.isAdmin().subscribe(isAdmin => (this.isAdmin = isAdmin));
     this.isLoading = true;
+    this.loadEvents();
 
+    // 🕓 Attendre que FullCalendar soit rendu avant d'appliquer la vue
+    this.ngZone.onStable.subscribe(() => {
+      this.updateCalendarView();
+    });
+  }
+
+  @HostListener('window:resize', [])
+  onWindowResize() {
+    this.updateCalendarView();
+  }
+
+  private updateCalendarView() {
+    const calendarApi = this.calendarComponent?.getApi();
+    if (!calendarApi) return;
+
+    const isMobile = window.innerWidth < 640;
+    const newView = isMobile ? 'threeDay' : 'dayGridWeek';
+
+    if (calendarApi.view.type !== newView) {
+      calendarApi.changeView(newView);
+      console.log(`📆 Vue changée → ${newView}`);
+    }
+
+    // Force toujours la hauteur 100%
+    calendarApi.setOption('height', '100%');
+  }
+
+  private loadEvents() {
     this.eventService.listenForEventUpdate().subscribe((message) => {
       try {
         const parsed = JSON.parse(message);
-
-        if (Array.isArray(parsed.events) && parsed.events.length > 0 && parsed.action === 'INIT') {
-          console.log('📦 Chargement initial des events');
-
+        if (parsed.action === 'INIT' && Array.isArray(parsed.events)) {
           this.calendarEvents = parsed.events.map((event: EventDTO) => ({
             id: event.id,
             title: event.title,
@@ -94,53 +124,13 @@ export class EventsComponent {
           }));
           this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
-        } else if (parsed.action === 'ADD' || parsed.action === 'DELETE' || parsed.action === 'UPDATE') {
-          if (parsed.action === 'ADD') {
-            parsed.event = parsed.events[0];
-            this.calendarEvents.push({
-              id: parsed.event.id,
-              title: parsed.event.title,
-              start: parsed.event.startDateTime,
-              end: parsed.event.endDateTime,
-              backgroundColor: parsed.event.type.backgroundColor,
-              extendedProps: {
-                type: parsed.event.type,
-                description: parsed.event.description,
-                finished: parsed.event.finished
-              }
-            });
-            this.calendarOptions.events = [...this.calendarEvents];
-          } else if (parsed.action === 'DELETE') {
-            this.calendarEvents = this.calendarEvents.filter(e => e.id !== parsed.events[0].id);
-            this.calendarOptions.events = [...this.calendarEvents];
-          } else if (parsed.action === 'UPDATE') {
-            const updated = parsed.events[0];
-            this.calendarEvents = this.calendarEvents.map(ev =>
-              ev.id === updated.id
-                ? {
-                  ...ev,
-                  title: updated.title,
-                  start: updated.startDateTime,
-                  end: updated.endDateTime,
-                  extendedProps: {
-                    type: updated.type,
-                    description: updated.description,
-                    finished: updated.finished
-                  }
-                }
-                : ev
-            );
-            this.calendarOptions.events = [...this.calendarEvents];
-          }
         }
       } catch {
-        this.messages.push(message);
+        console.warn('Erreur de parsing', message);
       }
     });
 
-    this.eventService.getAllTypes().subscribe(response => {
-      this.types = response;
-    });
+    this.eventService.getAllTypes().subscribe(res => (this.types = res));
   }
 
   renderCustomEvent(arg: any): { html: string } {
@@ -148,16 +138,21 @@ export class EventsComponent {
       hour: '2-digit',
       minute: '2-digit'
     });
-
     return {
-      html: `<span class="font-mono text-sm" style="color: ${arg.event.extendedProps.type.textColor}">${startTime} | ${arg.event.title}</span>`
+      html: `
+        <div class="flex items-center gap-1 px-1 w-full overflow-hidden text-ellipsis whitespace-nowrap">
+          <span class="font-mono text-[11px] sm:text-sm truncate"
+                style="color: ${arg.event.extendedProps.type.textColor}">
+            ${startTime} | ${arg.event.title}
+          </span>
+        </div>
+      `
     };
   }
 
   applyBackgroundColor(info: any) {
     const color = info.event.extendedProps?.type?.backgroundColor;
     const isFinished = info.event.extendedProps?.finished;
-
     if (color) {
       const rgba = isFinished ? this.hexToRgba(color, 0.25) : color;
       info.el.style.backgroundColor = rgba;
@@ -191,7 +186,6 @@ export class EventsComponent {
   private initializeParticipationData() {
     this.eventService.getParticipations(this.selectedEvent.id).subscribe((response: any) => {
       const participations = response.data;
-
       this.participationsByStatus = {
         confirmed: participations.filter((p: any) => p.status === 1),
         maybe: participations.filter((p: any) => p.status === 0),
@@ -202,15 +196,9 @@ export class EventsComponent {
 
   setParticipationStatus(status: number) {
     if (!this.selectedEvent) return;
-
     this.eventService.setParticipationStatus(this.selectedEvent.id, status).subscribe({
-      next: () => {
-        console.log('Participation enregistrée avec succès');
-        this.initializeParticipationData();
-      },
-      error: (err) => {
-        console.error('Erreur lors de la participation', err);
-      }
+      next: () => this.initializeParticipationData(),
+      error: (err) => console.error('Erreur lors de la participation', err)
     });
   }
 }
