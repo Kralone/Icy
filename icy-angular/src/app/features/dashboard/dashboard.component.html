@@ -5,9 +5,24 @@
 >
   <!-- Contenu principal -->
   <div class="flex-1 xl:mr-6 mb-6 xl:mb-0">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-cyan-300 drop-shadow-md text-center xl:text-left">
-      ❄️ Bienvenue sur le Dashboard
-    </h1>
+    <!-- Header avec bouton -->
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <h1
+        class="text-2xl sm:text-3xl font-bold text-cyan-300 drop-shadow-md text-center xl:text-left flex-1"
+      >
+        ❄️ Bienvenue sur le Dashboard
+      </h1>
+
+      <!-- Bouton d’installation PWA -->
+      <button
+        (click)="installApp()"
+        class="px-4 py-2 rounded-xl bg-white/10 border border-cyan-400 text-cyan-300
+               backdrop-blur-md hover:bg-cyan-500/20 hover:text-white transition
+               shadow-lg hover:shadow-cyan-500/30 whitespace-nowrap"
+      >
+        ⚡ Installer Iceforge
+      </button>
+    </div>
 
     <div class="space-y-6">
       <app-dashboard-goal></app-dashboard-goal>

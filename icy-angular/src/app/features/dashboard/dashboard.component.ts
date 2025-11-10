@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, HostListener} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
@@ -7,7 +7,7 @@ import {EventService} from '../../core/services/event/event.service';
 import {GoalComponent} from './goal/goal.component';
 import {NewsComponent} from './news/news.component';
 
-interface Event {
+interface IcyEvent {
   name: string;
   date: string;
   type: string;
@@ -34,7 +34,7 @@ export class DashboardComponent {
   isEventsLoading = true;
 
   fleetSummary: { [focus: string]: ShipSummary[] } = {};
-  events: Event[] = [];
+  events: IcyEvent[] = [];
 
   objectKeys = Object.keys;
 
@@ -108,4 +108,33 @@ export class DashboardComponent {
   ngOnDestroy() {
     this.wsService.disconnectFleetUpdate();
   }
+
+
+  installPromptEvent: any; // stockera l’événement PWA
+
+  @HostListener('window:beforeinstallprompt', ['$event'])
+  onBeforeInstallPrompt(e: Event) {
+    e.preventDefault();
+    this.installPromptEvent = e;
+    console.log('📱 beforeinstallprompt détecté ✅');
+  }
+
+  installApp() {
+    if (this.installPromptEvent) {
+      this.installPromptEvent.prompt();
+      this.installPromptEvent.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ Iceforge installée');
+        } else {
+          console.log('❌ Installation annulée');
+        }
+        this.installPromptEvent = null;
+      });
+    } else {
+      alert('💡 Pour installer Iceforge : utilisez le menu du navigateur → “Installer l’application”');
+    }
+  }
+
+
+
 }
