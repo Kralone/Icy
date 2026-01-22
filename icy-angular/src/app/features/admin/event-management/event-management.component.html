@@ -32,10 +32,16 @@
         <label class="block text-sm mb-1 text-gray-300">Type</label>
         <select
           [(ngModel)]="newEvent.type"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20
-                 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-lg
+                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                 border border-white/20
+                 text-white
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+          required
         >
-          <option value="" disabled selected hidden>Choisir un type</option>
+          <option value="" disabled selected hidden class="bg-[#1b263b] text-gray-400">
+            Choisir un type
+          </option>
           <option *ngFor="let type of types" [value]="type.name" class="bg-[#1b263b] text-white">
             {{ type.name }}
           </option>
@@ -94,19 +100,36 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <h2 class="text-xl font-bold text-cyan-300">Événements créés</h2>
 
-      <!-- Items per page -->
-      <div class="flex items-center gap-2 text-sm">
-        <span class="text-gray-300">Éléments par page :</span>
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <!-- Filtre par type -->
+        <select
+          [(ngModel)]="selectedTypeFilter"
+          (ngModelChange)="applyEventFilter()"
+          class="px-4 py-2 rounded-lg
+                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                 border border-white/20
+                 text-white
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+        >
+          <option value="ALL" class="bg-[#1b263b] text-white">Tous les types</option>
+          <option *ngFor="let type of types" [value]="type.name" class="bg-[#1b263b] text-white">
+            {{ type.name }}
+          </option>
+        </select>
+
+        <!-- Items per page -->
         <select
           [(ngModel)]="itemsPerPageEvents"
           (ngModelChange)="onItemsPerPageEventsChange()"
-          class="px-2 py-1 bg-white/10 border border-white/20 rounded text-gray-200
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          class="px-4 py-2 rounded-lg
+                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                 border border-white/20
+                 text-white
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
         >
-          <option [value]="2">2</option>
-          <option [value]="10">10</option>
-          <option [value]="20">20</option>
-          <option [value]="30">30</option>
+          <option [value]="10" class="bg-[#1b263b] text-white">10</option>
+          <option [value]="20" class="bg-[#1b263b] text-white">20</option>
+          <option [value]="30" class="bg-[#1b263b] text-white">30</option>
         </select>
       </div>
     </div>
@@ -384,11 +407,13 @@
 
         <select
           [(ngModel)]="editingEvent.type.name"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-lg
+                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                 border border-white/20
+                 text-white
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
         >
-          <option *ngFor="let type of types" [value]="type.name" class="bg-[#1e293b] text-white">
+          <option *ngFor="let type of types" [value]="type.name" class="bg-[#1b263b] text-white">
             {{ type.name }}
           </option>
         </select>

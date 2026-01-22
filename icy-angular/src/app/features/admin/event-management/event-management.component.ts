@@ -45,6 +45,11 @@ export class EventManagementComponent implements OnInit {
   editingType: any = null;
   isTypeUpdating = false;
 
+  // === Filtre par type ===
+  selectedTypeFilter: string = 'ALL';
+  filteredEvents: EventDTO[] = [];
+
+
   constructor(private eventService: EventService, private router: Router) {}
 
   ngOnInit() {
@@ -62,10 +67,7 @@ export class EventManagementComponent implements OnInit {
           (a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime()
         );
 
-        // reset pagination si page out-of-range
-        this.currentPageEvents = 1;
-        this.updateEventsPagination();
-
+        this.applyEventFilter(); // ⬅️ IMPORTANT
         this.isLoadingEvents = false;
       },
       error: (err) => {
@@ -75,20 +77,18 @@ export class EventManagementComponent implements OnInit {
     });
   }
 
+
   // === Pagination helpers ===
   get totalPagesEvents(): number {
-    return Math.max(1, Math.ceil(this.events.length / this.itemsPerPageEvents));
+    return Math.max(1, Math.ceil(this.filteredEvents.length / this.itemsPerPageEvents));
   }
 
   updateEventsPagination(): void {
-    // clamp page
-    if (this.currentPageEvents > this.totalPagesEvents) this.currentPageEvents = this.totalPagesEvents;
-    if (this.currentPageEvents < 1) this.currentPageEvents = 1;
-
     const start = (this.currentPageEvents - 1) * this.itemsPerPageEvents;
     const end = start + this.itemsPerPageEvents;
-    this.paginatedEvents = this.events.slice(start, end);
+    this.paginatedEvents = this.filteredEvents.slice(start, end);
   }
+
 
   prevPageEvents(): void {
     if (this.currentPageEvents > 1) {
@@ -266,4 +266,18 @@ export class EventManagementComponent implements OnInit {
       },
     });
   }
+
+  applyEventFilter(): void {
+    if (this.selectedTypeFilter === 'ALL') {
+      this.filteredEvents = [...this.events];
+    } else {
+      this.filteredEvents = this.events.filter(
+        e => e.type?.name === this.selectedTypeFilter
+      );
+    }
+
+    this.currentPageEvents = 1;
+    this.updateEventsPagination();
+  }
+
 }
