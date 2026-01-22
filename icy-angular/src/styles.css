@@ -86,16 +86,11 @@
   .rotate-90 {
     transform: rotate(90deg);
   }
-
 }
 
 @keyframes spin-custom {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* === Hauteur & flex corrects === */
@@ -216,7 +211,6 @@
   transition: none !important;
 }
 
-
 .cdk-drag-animating {
   transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -236,4 +230,197 @@
   opacity: 0;
 }
 
+/* =========================
+   ICY EVENTS (clean unified)
+   ========================= */
 
+/* Neutralise le look FC par défaut des events */
+.fc .fc-daygrid-event,
+.fc .fc-daygrid-event-harness {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* ✅ Plus de grosse selection blanche/bleue */
+.fc .fc-day-today,
+.fc .fc-daygrid-day.fc-day-today,
+.fc .fc-timegrid-col.fc-day-today {
+  background: transparent !important;
+}
+
+/* ✅ Aujourd’hui discret */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
+  position: relative;
+  background: rgba(56,189,248,0.05) !important;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,0.10);
+}
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 10px;
+  box-shadow: 0 0 26px rgba(56,189,248,0.10);
+  pointer-events: none;
+}
+
+.fc .fc-highlight {
+  background: rgba(56,189,248,0.08) !important;
+}
+
+/* ✅ spacing cellule */
+.fc .fc-daygrid-day-events {
+  margin: 10px 8px 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ✅ Carte unifiée + clean (plus d’overlay/degradé) */
+.fc .icy-event-host {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 18px !important;
+  overflow: hidden;
+  min-height: 112px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.25),
+    inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* on neutralise toute tentative d’after/overlay */
+.fc .icy-event-host::before,
+.fc .icy-event-host::after {
+  content: none !important;
+}
+
+/* finished */
+.fc .icy-event-host.icy-event-host--finished {
+  opacity: 0.62;
+  filter: saturate(0.9);
+}
+
+/* === ICY : image en haut, texte en bas === */
+.fc .icy-event__inner{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  padding: 12px !important;
+}
+
+/* ✅ Zone image (simple, clean) */
+.fc .icy-event__spacer {
+  height: 72px;
+  width: 100%;
+  border-radius: 14px;
+
+  background-color: rgba(255,255,255,0.06);
+  background-image: var(--icy-bg);
+  background-size: cover;
+  background-position: center;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.12),
+    0 6px 18px rgba(0,0,0,0.25);
+}
+
+
+/* ✅ BADGE couleur (heure + titre) */
+.fc .icy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--icy-pill-bg, rgba(14,165,233,0.55));
+  border: 1px solid var(--icy-pill-border, rgba(14,165,233,0.55));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  backdrop-filter: blur(10px);
+  max-width: 100%;
+}
+
+/* heure style mono */
+.fc .icy-pill__time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.fc .icy-pill__sep {
+  opacity: 0.85;
+  font-weight: 900;
+}
+
+/* ✅ titre */
+.fc .icy-pill__title {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* hover clean */
+.fc .icy-event-host:hover {
+  box-shadow:
+    0 0 28px rgba(56,189,248,0.25),
+    0 10px 30px rgba(0,0,0,0.25),
+    inset 0 0 0 1px rgba(56,189,248,0.18);
+  transform: translateY(-1px);
+  transition: box-shadow 140ms ease, transform 140ms ease;
+}
+
+
+/* Type au-dessus de l'image */
+.fc .icy-event__type{
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.22);
+  text-shadow: 0 1px 10px rgba(0,0,0,0.35);
+  margin-bottom: 8px;
+}
+
+/* Layout: type -> image -> pill */
+.fc .icy-event__inner{
+  display:flex;
+  flex-direction:column;
+}
+
+/* Image block (stable + joli) */
+.fc .icy-event__spacer{
+  height: 72px;
+  width: 100%;
+  border-radius: 14px;
+  background-color: rgba(255,255,255,0.06);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.12),
+    0 6px 18px rgba(0,0,0,0.25);
+}
+
+
+/* mobile */
+@media (max-width: 640px) {
+  .fc .fc-daygrid-day-events {
+    margin: 8px 6px 0 !important;
+    gap: 10px;
+  }
+  .fc .icy-event-host { min-height: 104px; }
+  .fc .icy-event__inner { padding: 10px !important; }
+  .fc .icy-event__spacer { height: 68px; }
+  .fc .icy-pill { padding: 8px 11px; }
+  .fc .icy-pill__title { font-size: 12.5px; -webkit-line-clamp: 2; }
+  .fc .icy-pill__time { font-size: 11px; }
+}

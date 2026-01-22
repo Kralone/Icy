@@ -36,11 +36,15 @@ export class EventsComponent implements AfterViewInit {
     plugins: [dayGridPlugin],
     locale: 'fr',
     firstDay: 1,
-    initialView: 'dayGridWeek', // 🧊 desktop par défaut
+    initialView: 'dayGridWeek',
     height: '100%',
     expandRows: true,
     contentHeight: '100%',
     handleWindowResize: true,
+
+    // ✅ Important: laisse nos cartes prendre leur place
+    eventDisplay: 'block',
+
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
@@ -53,16 +57,18 @@ export class EventsComponent implements AfterViewInit {
       threeDay: '3 jours'
     },
     views: {
-      // ✅ vue 3 jours valide (dayGridWeek + duration)
       threeDay: {
         type: 'dayGridWeek',
         duration: { days: 3 },
         buttonText: '3 jours'
       }
     },
-    eventContent: (arg) => this.renderCustomEvent(arg),
+
+    eventContent: (arg) => this.renderIcyEvent(arg),
     eventClick: (arg) => this.onEventClick(arg),
-    eventDidMount: (info) => this.applyBackgroundColor(info),
+
+    // ✅ Ajoute classes + états (finished, image/no-image) + sécurité affichage
+    eventDidMount: (info) => this.onEventDidMount(info),
   };
 
   constructor(
@@ -75,10 +81,11 @@ export class EventsComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.wsService.connectEvent();
     this.authService.isAdmin().subscribe(isAdmin => (this.isAdmin = isAdmin));
+
     this.isLoading = true;
     this.loadEvents();
 
-    // 🕓 Attendre que FullCalendar soit rendu avant d'appliquer la vue
+    // Attendre que FullCalendar soit rendu avant d'appliquer la vue
     this.ngZone.onStable.subscribe(() => {
       this.updateCalendarView();
     });
@@ -98,10 +105,8 @@ export class EventsComponent implements AfterViewInit {
 
     if (calendarApi.view.type !== newView) {
       calendarApi.changeView(newView);
-      console.log(`📆 Vue changée → ${newView}`);
     }
 
-    // Force toujours la hauteur 100%
     calendarApi.setOption('height', '100%');
   }
 
@@ -115,13 +120,15 @@ export class EventsComponent implements AfterViewInit {
             title: event.title,
             start: event.startDateTime,
             end: event.endDateTime,
-            backgroundColor: event.type.backgroundColor,
+
+            // on stocke tout dans extendedProps
             extendedProps: {
               type: event.type,
               description: event.description,
               finished: event.finished
             }
           }));
+
           this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
         }
@@ -133,39 +140,93 @@ export class EventsComponent implements AfterViewInit {
     this.eventService.getAllTypes().subscribe(res => (this.types = res));
   }
 
-  renderCustomEvent(arg: any): { html: string } {
-    const startTime = new Date(arg.event.start).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  private escapeHtml(input: string): string {
+    return (input || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+// ✅ Rendu “carte” ICY : image en haut + pill en bas
+  renderIcyEvent(arg: any): { html: string } {
+    const type = arg.event.extendedProps?.type as EventType | undefined;
+
+    const img = type?.imageUrl?.trim();
+    const hasImg = !!img;
+
+    const pillBg = type?.backgroundColor?.trim() || '#0ea5e9';
+    const pillText = type?.textColor?.trim() || '#e0f2ff';
+
+    const finished = !!arg.event.extendedProps?.finished;
+
+    // ✅ startTime défini
+    const startTime = arg.event.start
+      ? new Date(arg.event.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      : '';
+
+    // (optionnel) sécurité HTML si tu veux éviter les titres “bizarres”
+    const safeTitle = this.escapeHtml(arg.event.title || '');
+    const safeTime = this.escapeHtml(startTime);
+
+    const typeName = (type?.name || '').trim();
+    const safeType = this.escapeHtml(typeName || '');
+
+// si tu veux que le spacer existe même sans image (layout stable)
+    const spacerStyle = hasImg ? `background-image: url('${img}')` : `background-image: none`;
+
     return {
       html: `
-        <div class="flex items-center gap-1 px-1 w-full overflow-hidden text-ellipsis whitespace-nowrap">
-          <span class="font-mono text-[11px] sm:text-sm truncate"
-                style="color: ${arg.event.extendedProps.type.textColor}">
-            ${startTime} | ${arg.event.title}
-          </span>
+    <div class="icy-event-host ${finished ? 'icy-event-host--finished' : ''}">
+      <div class="icy-event__inner">
+
+        ${typeName ? `
+          <div class="icy-event__type"
+               style="
+                 background: ${pillBg};
+                 color: ${pillText};
+                 border-color: ${pillBg};
+               ">
+            ${safeType}
+          </div>
+        ` : ''}
+
+        <div class="icy-event__spacer" style="${spacerStyle}"></div>
+
+        <div class="icy-pill"
+             style="
+               background: ${pillBg};
+               border-color: ${pillBg};
+               color: ${pillText};
+             ">
+          <span class="icy-pill__time">${safeTime}</span>
+          <span class="icy-pill__sep">|</span>
+          <span class="icy-pill__title">${safeTitle}</span>
         </div>
-      `
+
+      </div>
+    </div>
+  `
     };
+
+
   }
 
-  applyBackgroundColor(info: any) {
-    const color = info.event.extendedProps?.type?.backgroundColor;
-    const isFinished = info.event.extendedProps?.finished;
-    if (color) {
-      const rgba = isFinished ? this.hexToRgba(color, 0.25) : color;
-      info.el.style.backgroundColor = rgba;
-    }
-  }
 
-  private hexToRgba(hex: string, opacity: number): string {
-    const sanitizedHex = hex.replace('#', '');
-    const bigint = parseInt(sanitizedHex, 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  private onEventDidMount(info: any) {
+    const type = info.event.extendedProps?.type as EventType | undefined;
+    const finished = !!info.event.extendedProps?.finished;
+    const hasImg = !!type?.imageUrl?.trim();
+
+    info.el.classList.add('icy-event'); // hook global
+    if (finished) info.el.classList.add('icy-event--finished');
+    if (hasImg) info.el.classList.add('icy-event--has-image');
+    else info.el.classList.add('icy-event--no-image');
+
+    // le <a> FullCalendar a parfois des styles, on neutralise un peu
+    info.el.style.background = 'transparent';
+    info.el.style.border = 'none';
   }
 
   onEventClick(arg: any): void {
