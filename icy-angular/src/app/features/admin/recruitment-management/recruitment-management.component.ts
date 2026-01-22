@@ -1,3 +1,4 @@
+// recruitment-management.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +16,26 @@ export class RecruitmentManagementComponent implements OnInit {
   openRecruitments: RecruitmentAdmin[] = [];
   processedRecruitments: RecruitmentAdmin[] = [];
 
+  // Pagination
+  pageSizes: number[] = [10, 20, 30];
+
+  openPage = 1;
+  openItemsPerPage = 10;
+
+  processedPage = 1;
+  processedItemsPerPage = 10;
+
+  // Loading
   isLoading = false;
-  editingRecruitment: RecruitmentAdmin | null = null;
   isUpdating = false;
+
+  // Modal
+  motivationModalOpen = false;
+  selectedRecruitment: RecruitmentAdmin | null = null;
+
+  // Comment
+  modalComment = '';
+  isSavingComment = false;
 
   constructor(
     private recruitmentService: RecruitmentService,
@@ -30,14 +48,34 @@ export class RecruitmentManagementComponent implements OnInit {
 
   loadRecruitments(): void {
     this.isLoading = true;
+
     this.recruitmentService.getAll().subscribe({
       next: (data: RecruitmentAdmin[]) => {
-        this.openRecruitments = data.filter(
-          (r: RecruitmentAdmin) => r.status === 'PENDING'
-        );
-        this.processedRecruitments = data.filter(
-          (r: RecruitmentAdmin) => r.status === 'ACCEPTED' || r.status === 'REFUSED'
-        );
+        const all = data ?? [];
+
+        const open = all.filter(r => r.status === 'PENDING');
+        const processed = all.filter(r => r.status === 'ACCEPTED' || r.status === 'REFUSED');
+
+        // Tri demandé:
+        // - ouverts: plus vieux -> plus récent
+        this.openRecruitments = open.sort((a, b) => this.toTime(a.createdAt) - this.toTime(b.createdAt));
+
+        // - traités: plus récent -> plus vieux
+        this.processedRecruitments = processed.sort((a, b) => this.toTime(b.createdAt) - this.toTime(a.createdAt));
+
+        // Reset pages si besoin
+        this.openPage = 1;
+        this.processedPage = 1;
+
+        // Si modal ouverte, resync sur l'item (au cas où statut/comment a changé)
+        if (this.selectedRecruitment) {
+          const refreshed = all.find(r => r.id === this.selectedRecruitment!.id);
+          if (refreshed) {
+            this.selectedRecruitment = refreshed;
+            this.modalComment = refreshed.comment ?? '';
+          }
+        }
+
         this.isLoading = false;
       },
       error: (err: unknown) => {
@@ -47,69 +85,109 @@ export class RecruitmentManagementComponent implements OnInit {
     });
   }
 
-  processRecruitment(recruitment: RecruitmentAdmin): void {
-    if (
-      !confirm(
-        `Marquer la candidature de ${recruitment.username} comme traitée ?`
-      )
-    ) return;
+  private toTime(dateStr: string): number {
+    const t = Date.parse(dateStr);
+    return Number.isNaN(t) ? 0 : t;
+  }
 
-    this.isUpdating = true;
-    this.recruitmentService.markProcessed(recruitment.id).subscribe({
+  // ===================== PAGINATION OPEN =====================
+  get openTotalPages(): number {
+    const total = Math.ceil(this.openRecruitments.length / this.openItemsPerPage);
+    return total <= 0 ? 0 : total;
+  }
+
+  get openPaginatedRecruitments(): RecruitmentAdmin[] {
+    if (this.openRecruitments.length === 0) return [];
+    const start = (this.openPage - 1) * this.openItemsPerPage;
+    return this.openRecruitments.slice(start, start + this.openItemsPerPage);
+  }
+
+  onOpenPageSizeChange(): void {
+    this.openPage = 1;
+  }
+
+  prevOpenPage(): void {
+    if (this.openPage > 1) this.openPage--;
+  }
+
+  nextOpenPage(): void {
+    if (this.openPage < this.openTotalPages) this.openPage++;
+  }
+
+  // ===================== PAGINATION PROCESSED =====================
+  get processedTotalPages(): number {
+    const total = Math.ceil(this.processedRecruitments.length / this.processedItemsPerPage);
+    return total <= 0 ? 0 : total;
+  }
+
+  get processedPaginatedRecruitments(): RecruitmentAdmin[] {
+    if (this.processedRecruitments.length === 0) return [];
+    const start = (this.processedPage - 1) * this.processedItemsPerPage;
+    return this.processedRecruitments.slice(start, start + this.processedItemsPerPage);
+  }
+
+  onProcessedPageSizeChange(): void {
+    this.processedPage = 1;
+  }
+
+  prevProcessedPage(): void {
+    if (this.processedPage > 1) this.processedPage--;
+  }
+
+  nextProcessedPage(): void {
+    if (this.processedPage < this.processedTotalPages) this.processedPage++;
+  }
+
+  // ===================== MODAL =====================
+  openMotivation(rec: RecruitmentAdmin): void {
+    this.selectedRecruitment = rec;
+    this.modalComment = rec.comment ?? '';
+    this.motivationModalOpen = true;
+  }
+
+  closeMotivation(): void {
+    this.motivationModalOpen = false;
+    this.selectedRecruitment = null;
+    this.modalComment = '';
+    this.isSavingComment = false;
+  }
+
+  saveComment(): void {
+    if (!this.selectedRecruitment) return;
+
+    const updated: RecruitmentAdmin = {
+      ...this.selectedRecruitment,
+      comment: (this.modalComment ?? '').trim(),
+    };
+
+    this.isSavingComment = true;
+
+    // On utilise update() que tu as déjà dans ton service
+    this.recruitmentService.update(updated).subscribe({
       next: () => {
+        // On reload pour refléter partout (tables + badge 💬)
+        this.isSavingComment = false;
         this.loadRecruitments();
-        this.isUpdating = false;
       },
       error: (err: unknown) => {
-        console.error('Erreur traitement recrutement', err);
-        this.isUpdating = false;
-      },
+        console.error('Erreur sauvegarde commentaire', err);
+        this.isSavingComment = false;
+        alert('Échec de la sauvegarde du commentaire.');
+      }
     });
   }
 
-  deleteRecruitment(id: number): void {
-    if (!confirm(`Supprimer cette candidature ?`)) return;
-
-    this.recruitmentService.delete(id).subscribe({
-      next: () => this.loadRecruitments(),
-      error: (err: unknown) =>
-        console.error('Erreur suppression recrutement', err),
-    });
-  }
-
-  editRecruitment(rec: RecruitmentAdmin): void {
-    this.editingRecruitment = { ...rec };
-  }
-
-  cancelEdit(): void {
-    this.editingRecruitment = null;
-  }
-
-  updateRecruitment(): void {
-    if (!this.editingRecruitment) return;
-    this.isUpdating = true;
-
-    this.recruitmentService.update(this.editingRecruitment).subscribe({
-      next: () => {
-        this.loadRecruitments();
-        this.isUpdating = false;
-        this.editingRecruitment = null;
-      },
-      error: (err: unknown) => {
-        console.error('Erreur mise à jour recrutement', err);
-        this.isUpdating = false;
-      },
-    });
-  }
-
+  // ===================== ACTIONS =====================
   acceptRecruitment(rec: RecruitmentAdmin): void {
     if (!confirm(`Accepter la candidature de ${rec.username} ?`)) return;
 
     this.isUpdating = true;
     this.recruitmentService.accept(rec.id).subscribe({
       next: () => {
-        this.loadRecruitments();
         this.isUpdating = false;
+        // Si on accepte depuis la modal, on ferme (optionnel)
+        if (this.selectedRecruitment?.id === rec.id) this.closeMotivation();
+        this.loadRecruitments();
       },
       error: (err: unknown) => {
         console.error('Erreur acceptation recrutement', err);
@@ -124,8 +202,9 @@ export class RecruitmentManagementComponent implements OnInit {
     this.isUpdating = true;
     this.recruitmentService.refuse(rec.id).subscribe({
       next: () => {
-        this.loadRecruitments();
         this.isUpdating = false;
+        if (this.selectedRecruitment?.id === rec.id) this.closeMotivation();
+        this.loadRecruitments();
       },
       error: (err: unknown) => {
         console.error('Erreur refus recrutement', err);
@@ -133,5 +212,4 @@ export class RecruitmentManagementComponent implements OnInit {
       },
     });
   }
-
 }
