@@ -5,6 +5,7 @@
   <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
     <input
       [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()"
       type="text"
       placeholder="🔍 Rechercher un utilisateur..."
       class="w-full sm:w-1/3 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20
@@ -26,15 +27,19 @@
     <table class="min-w-[700px] w-full text-sm text-gray-200">
       <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
       <tr>
-        <th class="px-4 py-3 text-left">Nom</th>
+        <th class="px-4 py-3 text-left cursor-pointer select-none" (click)="sortBy('username')">
+          Nom
+          <span class="ml-1 opacity-70" *ngIf="sortColumn === 'username'">{{ sortAsc ? '▲' : '▼' }}</span>
+        </th>
         <th class="px-4 py-3 text-left">Discord ID</th>
         <th class="px-4 py-3 text-left">Rôles</th>
         <th class="px-4 py-3 text-left">Actions</th>
       </tr>
       </thead>
+
       <tbody>
       <tr
-        *ngFor="let user of filteredUsers"
+        *ngFor="let user of paginatedUsers"
         class="hover:bg-white/10 transition duration-200 border-b border-white/10"
       >
         <td class="px-4 py-3 font-medium break-words">{{ user.username }}</td>
@@ -59,6 +64,12 @@
           <app-loading-overlay [isLoading]="true"></app-loading-overlay>
         </td>
       </tr>
+
+      <tr *ngIf="!isLoading && filteredUsers.length === 0">
+        <td colspan="4" class="py-8 text-center text-gray-300">
+          Aucun utilisateur trouvé.
+        </td>
+      </tr>
       </tbody>
     </table>
   </div>
@@ -69,11 +80,13 @@
       <label class="text-gray-300">Éléments par page :</label>
       <select
         [(ngModel)]="itemsPerPage"
+        (ngModelChange)="onPageSizeChange()"
         class="px-2 py-1 bg-white/10 border border-white/20 rounded text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
       >
-        <option *ngFor="let size of [10, 20, 30]" [value]="size">{{ size }}</option>
+        <option *ngFor="let size of [10, 20, 30]" [ngValue]="size">{{ size }}</option>
       </select>
     </div>
+
     <div class="space-x-2 flex items-center">
       <button
         (click)="prevPage()"
@@ -82,10 +95,12 @@
       >
         Préc.
       </button>
+
       <span>Page {{ currentPage }} / {{ totalPages }}</span>
+
       <button
         (click)="nextPage()"
-        [disabled]="currentPage === totalPages"
+        [disabled]="currentPage === totalPages || totalPages === 0"
         class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40 hover:bg-white/20 transition"
       >
         Suiv.
@@ -98,13 +113,13 @@
 <div
   *ngIf="isAddUserModalOpen"
   class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-  (click)="isAddUserModalOpen = false"
+  (click)="closeModal()"
 >
   <div
     class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative text-white"
     (click)="$event.stopPropagation()"
   >
-    <button (click)="isAddUserModalOpen = false" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">
+    <button (click)="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">
       ✖
     </button>
 
@@ -159,7 +174,7 @@
         <button
           type="button"
           class="text-gray-400 hover:text-white transition"
-          (click)="isAddUserModalOpen = false"
+          (click)="closeModal()"
         >
           Annuler
         </button>

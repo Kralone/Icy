@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import {User} from '../../../model/user.model';
-import {UserService} from '../../../core/services/user/user.service';
-import {FormsModule} from '@angular/forms';
-import {CommonModule} from '@angular/common';
-import {AuthService} from '../../../core/services/auth/auth.service';
-import {LoadingOverlayComponent} from '../../../shared/loading-overlay/loading-overlay.component';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+import { User } from '../../../model/user.model';
+import { UserService } from '../../../core/services/user/user.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -17,6 +18,7 @@ import {LoadingOverlayComponent} from '../../../shared/loading-overlay/loading-o
 })
 export class AdminDashboardComponent implements OnInit {
   users: User[] = [];
+  filteredUsers: User[] = [];
   paginatedUsers: User[] = [];
 
   sortColumn: keyof User = 'username';
@@ -26,11 +28,24 @@ export class AdminDashboardComponent implements OnInit {
   itemsPerPage: number = 10;
 
   isLoading = true;
-
   searchTerm: string = '';
+
+  isAddUserModalOpen = false;
 
   isEditMode = false;
   editedUserId: string | null = null;
+
+  newUser: {
+    username: string;
+    discordId: string;
+    role: string;
+  } = {
+    username: '',
+    discordId: '',
+    role: 'USER'
+  };
+
+  availableRoles: string[] = ['ADMIN', 'USER'];
 
   constructor(private userService: UserService, private authService: AuthService) {}
 
@@ -43,12 +58,13 @@ export class AdminDashboardComponent implements OnInit {
 
     this.userService.getAllUsers().subscribe({
       next: (response) => {
-        this.users = response.data;
-        this._filteredUsers = this.users;
+        this.users = response.data ?? [];
+        this.filteredUsers = [...this.users];
+        this.currentPage = 1;
         this.applyFilters();
       },
       error: (err) => {
-        console.error("Erreur de chargement des utilisateurs :", err);
+        console.error('Erreur de chargement des utilisateurs :', err);
       },
       complete: () => {
         this.isLoading = false;
@@ -56,14 +72,23 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  // ==== Filters / Search ====
+  onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
 
   applyFilters(): void {
+    const term = this.searchTerm.toLowerCase().trim();
+
     this.filteredUsers = this.users.filter((user) =>
-      user.username.toLowerCase().includes(this.searchTerm.toLowerCase())
+      (user.username ?? '').toLowerCase().includes(term)
     );
+
     this.sortUsers();
   }
 
+  // ==== Sorting ====
   sortBy(column: keyof User): void {
     if (this.sortColumn === column) {
       this.sortAsc = !this.sortAsc;
@@ -75,22 +100,36 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   sortUsers(): void {
-    this.filteredUsers.sort((a, b) => {
-      const aVal = a[this.sortColumn];
-      const bVal = b[this.sortColumn];
+    this.filteredUsers.sort((a: any, b: any) => {
+      const aVal = (a?.[this.sortColumn] ?? '') as any;
+      const bVal = (b?.[this.sortColumn] ?? '') as any;
+
+      if (aVal === bVal) return 0;
       return (aVal < bVal ? -1 : 1) * (this.sortAsc ? 1 : -1);
     });
+
+    this.updatePagination();
+  }
+
+  // ==== Pagination ====
+  onPageSizeChange(): void {
+    this.currentPage = 1;
     this.updatePagination();
   }
 
   updatePagination(): void {
+    const pages = this.totalPages;
+    if (this.currentPage > pages) {
+      this.currentPage = Math.max(1, pages);
+    }
+
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
     this.paginatedUsers = this.filteredUsers.slice(start, end);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.itemsPerPage));
   }
 
   prevPage(): void {
@@ -107,30 +146,10 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  isAddUserModalOpen = false;
-
-  newUser: {
-    username: string;
-    discordId: string;
-    role: string;
-  } = {
-    username: '',
-    discordId: '',
-    role: 'USER'
-  };
-
-
-  availableRoles: string[] = ['ADMIN', 'USER'];
-
-  addUser(): void {
-    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role) return;
-
-    console.log(this.newUser);
-    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role).subscribe(() => {
-      this.isAddUserModalOpen = false;
-      this.resetForm();
-      this.loadUsers();
-    });
+  // ==== Modal helpers ====
+  closeModal(): void {
+    this.isAddUserModalOpen = false;
+    this.resetForm();
   }
 
   resetForm(): void {
@@ -143,52 +162,29 @@ export class AdminDashboardComponent implements OnInit {
     this.editedUserId = null;
   }
 
+  // ==== CRUD actions ====
+  addUser(): void {
+    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role) return;
 
-  deleteUser(id: string): void {
-    if (!confirm("Es-tu sûr de vouloir supprimer cet utilisateur ?")) return;
-
-    this.userService.deleteUser(id).subscribe({
+    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role).subscribe({
       next: () => {
-        this.loadUsers(); // recharge la liste
-      },
-      error: (err) => {
-        console.error('Erreur de suppression', err);
-        // Tu peux afficher une notification ici si tu en as une
-      }
-    });
-  }
-
-  resetPassword(userId: string) {
-    this.authService.forceResetPassword(userId).subscribe({
-      next: () => {
-        alert('Mot de passe temporaire envoyé sur Discord.');
+        this.closeModal();
+        this.loadUsers();
       },
       error: (err) => {
         console.error(err);
-        alert('Échec de la réinitialisation.');
+        alert("Échec de l'ajout.");
       }
     });
   }
-
-  get filteredUsers(): any[] {
-    return this._filteredUsers.filter(user =>
-      user.username.toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
-  }
-
-  set filteredUsers(value: any[]) {
-    this._filteredUsers = value;
-  }
-
-  private _filteredUsers: any[] = [];
 
   editUser(user: User): void {
     this.newUser = {
       username: user.username,
       discordId: user.discordId,
-      role: typeof user.roles[0] === 'string' ? user.roles[0] : 'USER'
+      role: (user.roles?.[0] as any) || 'USER'
     };
-    console.log(user.roles);
+
     this.editedUserId = user.id;
     this.isEditMode = true;
     this.isAddUserModalOpen = true;
@@ -200,15 +196,14 @@ export class AdminDashboardComponent implements OnInit {
     const payload = {
       id: this.editedUserId,
       username: this.newUser.username,
-      discordId: this.newUser.discordId!,
+      discordId: this.newUser.discordId,
       role: this.newUser.role
     };
 
     this.userService.updateUser(payload).subscribe({
       next: () => {
-        this.resetForm();
-        this.isAddUserModalOpen = false;
-        this.loadUsers(); // rafraîchir la liste
+        this.closeModal();
+        this.loadUsers();
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour', err);
@@ -217,5 +212,29 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  deleteUser(id: string): void {
+    if (!confirm('Es-tu sûr de vouloir supprimer cet utilisateur ?')) return;
 
+    this.userService.deleteUser(id).subscribe({
+      next: () => {
+        this.loadUsers();
+      },
+      error: (err) => {
+        console.error('Erreur de suppression', err);
+        alert('Échec de la suppression');
+      }
+    });
+  }
+
+  resetPassword(userId: string): void {
+    this.authService.forceResetPassword(userId).subscribe({
+      next: () => {
+        alert('Mot de passe temporaire envoyé sur Discord.');
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Échec de la réinitialisation.');
+      }
+    });
+  }
 }
