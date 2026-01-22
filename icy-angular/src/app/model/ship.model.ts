@@ -14,9 +14,14 @@ export interface Ship {
 
 export interface ShipCreateDTO {
   name: string;
-  brand: { name: string }; // le nom de la marque, côté backend tu résous en objet
+  brand: { name: string };
   imageUrl: string;
+
   focus?: string;
+  scu?: number;
+  size?: string;
   crew?: string;
-  link?: string; // si tu veux garder un lien optionnel
+
+  flightReady: boolean;
 }
+

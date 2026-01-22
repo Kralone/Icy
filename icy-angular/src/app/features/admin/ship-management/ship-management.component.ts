@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShipService } from '../../../core/services/ship/ship.service';
+import {ShipCreateDTO} from '../../../model/ship.model';
 
 @Component({
   selector: 'app-ship-management',
@@ -13,7 +14,17 @@ import { ShipService } from '../../../core/services/ship/ship.service';
 export class ShipManagementComponent implements OnInit {
   // === Ships ===
   ships: any[] = [];
-  newShip = { name: '', brand: '', link: '', imageUrl: '' };
+  newShip = {
+    name: '',
+    brandName: '',
+    imageUrl: '',
+    focus: '',
+    scu: null as number | null,
+    size: '',
+    crew: '',
+    flightReady: false,
+  };
+
   isSubmittingShip = false;
   editingShip: any | null = null;
 
@@ -49,13 +60,32 @@ export class ShipManagementComponent implements OnInit {
 
   createOrUpdateShip() {
     if (this.isSubmittingShip) return;
+
+    // 🔒 Champs requis côté DB
+    if (!this.newShip.name?.trim() || !this.newShip.brandName?.trim() || !this.newShip.imageUrl?.trim()) {
+      console.error('Nom, Marque et Image URL sont requis.');
+      return;
+    }
+
     this.isSubmittingShip = true;
 
-    // 🧠 Correction : si le champ brand est une string (nom), on le transforme en objet
-    const shipPayload = {
-      ...this.newShip,
-      brand: {name: this.newShip.brand}
+    // ✅ Payload conforme à Ship entity (Brand en objet + champs DB)
+    const shipPayload: ShipCreateDTO = {
+      name: this.newShip.name.trim(),
+      brand: { name: this.newShip.brandName },
+      imageUrl: this.newShip.imageUrl.trim(),
+      flightReady: this.newShip.flightReady,
+
+      focus: this.newShip.focus?.trim() || undefined,
+      size: this.newShip.size?.trim() || undefined,
+      crew: this.newShip.crew?.trim() || undefined,
+      scu:
+        this.newShip.scu === null || this.newShip.scu === undefined
+          ? undefined
+          : Number(this.newShip.scu),
     };
+
+
 
     const req = this.editingShip
       ? this.shipService.updateShip(this.editingShip.id, shipPayload)
@@ -77,7 +107,18 @@ export class ShipManagementComponent implements OnInit {
 
   editShip(ship: any) {
     this.editingShip = ship;
-    this.newShip = { ...ship };
+
+    // ✅ On remplit le form en gardant brandName pour le <select>
+    this.newShip = {
+      name: ship.name ?? '',
+      brandName: ship.brand?.name ?? '',
+      focus: ship.focus ?? '',
+      scu: ship.scu ?? null,
+      size: ship.size ?? '',
+      crew: ship.crew ?? '',
+      flightReady: !!ship.flightReady,
+      imageUrl: ship.imageUrl ?? '',
+    };
   }
 
   deleteShip(id: string, name: string) {
@@ -90,7 +131,16 @@ export class ShipManagementComponent implements OnInit {
 
   resetShipForm() {
     this.editingShip = null;
-    this.newShip = { name: '', brand: '', link: '', imageUrl: '' };
+    this.newShip = {
+      name: '',
+      brandName: '',
+      focus: '',
+      scu: null,
+      size: '',
+      crew: '',
+      flightReady: false,
+      imageUrl: '',
+    };
   }
 
   // 🏷 Brands

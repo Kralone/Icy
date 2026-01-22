@@ -9,38 +9,106 @@
 
     <!-- Formulaire d’ajout -->
     <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
         <!-- Nom -->
-        <input
-          [(ngModel)]="newShip.name"
-          placeholder="Nom du vaisseau"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Nom</label>
+          <input
+            [(ngModel)]="newShip.name"
+            placeholder="Nom du vaisseau"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
 
-        <!-- Marque -->
-        <select
-          [(ngModel)]="newShip.brand"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20
-         text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition
-         [class.text-gray-400]='!newShip.brand'"
-        >
-          <option value="" disabled selected hidden>Choisir une marque...</option>
-          <option *ngFor="let brand of brands" [value]="brand.name" class="text-white bg-[#1e293b]">
-            {{ brand.name }}
-          </option>
-        </select>
+        <!-- Marque (ICY select) -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Marque</label>
+          <select
+            [(ngModel)]="newShip.brandName"
+            class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20
+               text-white focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            required
+          >
+            <option value="" disabled selected hidden class="bg-[#1b263b] text-gray-400">Choisir une marque...</option>
+            <option *ngFor="let brand of brands" [value]="brand.name" class="bg-[#1b263b] text-white">
+              {{ brand.name }}
+            </option>
+          </select>
+        </div>
 
+        <!-- Image URL (required en DB) -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Image URL</label>
+          <input
+            [(ngModel)]="newShip.imageUrl"
+            placeholder="URL de l’image"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
 
+        <!-- Focus -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Focus</label>
+          <input
+            [(ngModel)]="newShip.focus"
+            placeholder="Ex: Exploration, Combat..."
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
 
+        <!-- SCU (int) -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">SCU</label>
+          <input
+            [(ngModel)]="newShip.scu"
+            type="number"
+            min="0"
+            placeholder="Ex: 64"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
 
-        <!-- Image -->
-        <input
-          [(ngModel)]="newShip.imageUrl"
-          placeholder="URL de l’image"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
+        <!-- Size -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Taille</label>
+          <input
+            [(ngModel)]="newShip.size"
+            placeholder="Ex: S / M / L / Capital"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
+
+        <!-- Crew -->
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Équipage</label>
+          <input
+            [(ngModel)]="newShip.crew"
+            placeholder="Ex: 1-3, 2, 6-12..."
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
+
+        <!-- Flight Ready (bool) -->
+        <div class="flex items-center gap-3 pt-6">
+          <input
+            id="flightReady"
+            type="checkbox"
+            [(ngModel)]="newShip.flightReady"
+            class="h-5 w-5 rounded border border-white/30 bg-white/10
+               accent-cyan-400 focus:ring-2 focus:ring-cyan-400"
+          />
+          <label for="flightReady" class="text-sm text-gray-200 select-none">
+            Flight Ready
+          </label>
+        </div>
+
       </div>
 
       <div class="flex justify-end">
@@ -48,13 +116,14 @@
           (click)="createOrUpdateShip()"
           [disabled]="isSubmittingShip"
           class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-                 text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105
-                 disabled:opacity-50"
+             text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105
+             disabled:opacity-50"
         >
           {{ editingShip ? 'Mettre à jour' : '+ Ajouter un vaisseau' }}
         </button>
       </div>
     </div>
+
 
     <!-- Tableau des vaisseaux -->
     <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
