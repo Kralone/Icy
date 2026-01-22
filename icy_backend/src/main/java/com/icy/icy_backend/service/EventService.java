@@ -339,12 +339,16 @@ public class EventService {
 // Types d'événements
 // -----------------------------
 
-
     public ResponseEntity<MessageResponse<List<EventType>>> getAllEventsTypes() {
         return messageService.buildResponse("event.type.list", eventTypeRepository.findAll());
     }
 
-    public ResponseEntity<MessageResponse<EventType>> createEventType(String name, String textColor, String imageUrl) {
+    public ResponseEntity<MessageResponse<EventType>> createEventType(
+            String name,
+            String textColor,
+            String backgroundColor,
+            String imageUrl
+    ) {
         if (eventTypeRepository.existsById(name)) {
             logger.warn("Tentative de création d’un type d’événement existant : {}", name);
             throw new ResourceAlreadyExistsException("Le type d’événement existe déjà : " + name);
@@ -353,22 +357,12 @@ public class EventService {
         EventType newType = new EventType();
         newType.setName(name);
         newType.setTextColor(textColor);
+        newType.setBackgroundColor(backgroundColor); // ✅ FIX ICI
         newType.setImageUrl(imageUrl);
 
         EventType saved = eventTypeRepository.save(newType);
         logger.info("Type d’événement créé : {}", saved.getName());
         return messageService.buildResponse("event.type.created", saved);
-    }
-
-    public ResponseEntity<MessageResponse<Void>> deleteEventType(String name) {
-        if (!eventTypeRepository.existsById(name)) {
-            logger.warn("Tentative de suppression d’un type d’événement inexistant : {}", name);
-            throw new ResourceNotFoundException("Type d’événement introuvable : " + name);
-        }
-
-        eventTypeRepository.deleteById(name);
-        logger.info("Type d’événement supprimé : {}", name);
-        return messageService.buildResponse("event.type.deleted", null);
     }
 
     public ResponseEntity<MessageResponse<EventType>> updateEventType(String name, EventType updatedType) {
@@ -379,17 +373,27 @@ public class EventService {
         existing.setImageUrl(updatedType.getImageUrl());
         existing.setBackgroundColor(updatedType.getBackgroundColor());
 
-
         // Si on veut aussi pouvoir renommer :
         if (updatedType.getName() != null && !updatedType.getName().equals(name)) {
             eventTypeRepository.deleteById(name);
             existing.setName(updatedType.getName());
-
         }
 
         EventType saved = eventTypeRepository.save(existing);
         logger.info("Type d’événement mis à jour : {}", saved.getName());
         return messageService.buildResponse("event.type.updated", saved);
+    }
+
+
+    public ResponseEntity<MessageResponse<Void>> deleteEventType(String name) {
+        if (!eventTypeRepository.existsById(name)) {
+            logger.warn("Tentative de suppression d’un type d’événement inexistant : {}", name);
+            throw new ResourceNotFoundException("Type d’événement introuvable : " + name);
+        }
+
+        eventTypeRepository.deleteById(name);
+        logger.info("Type d’événement supprimé : {}", name);
+        return messageService.buildResponse("event.type.deleted", null);
     }
 
 

@@ -51,7 +51,12 @@ public class EventController {
 
     @PostMapping("/types")
     public ResponseEntity<MessageResponse<EventType>> createType(@RequestBody EventType type) {
-        return eventService.createEventType(type.getName(), type.getTextColor(), type.getImageUrl());
+        return eventService.createEventType(
+                type.getName(),
+                type.getTextColor(),
+                type.getBackgroundColor(),
+                type.getImageUrl()
+        );
     }
 
     @DeleteMapping("/types/{name}")
