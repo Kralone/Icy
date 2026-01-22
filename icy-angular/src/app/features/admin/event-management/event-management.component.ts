@@ -23,7 +23,12 @@ export class EventManagementComponent implements OnInit {
 
   // === Liste des événements ===
   events: EventDTO[] = [];
+  paginatedEvents: EventDTO[] = [];
   isLoadingEvents = false;
+
+  // === Pagination Events ===
+  currentPageEvents = 1;
+  itemsPerPageEvents = 10;
 
   // === Types ===
   types: EventType[] = [];
@@ -52,9 +57,15 @@ export class EventManagementComponent implements OnInit {
     this.isLoadingEvents = true;
     this.eventService.getAll().subscribe({
       next: (response) => {
+        // tri : plus récent en premier
         this.events = response.sort(
           (a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime()
         );
+
+        // reset pagination si page out-of-range
+        this.currentPageEvents = 1;
+        this.updateEventsPagination();
+
         this.isLoadingEvents = false;
       },
       error: (err) => {
@@ -62,6 +73,40 @@ export class EventManagementComponent implements OnInit {
         this.isLoadingEvents = false;
       },
     });
+  }
+
+  // === Pagination helpers ===
+  get totalPagesEvents(): number {
+    return Math.max(1, Math.ceil(this.events.length / this.itemsPerPageEvents));
+  }
+
+  updateEventsPagination(): void {
+    // clamp page
+    if (this.currentPageEvents > this.totalPagesEvents) this.currentPageEvents = this.totalPagesEvents;
+    if (this.currentPageEvents < 1) this.currentPageEvents = 1;
+
+    const start = (this.currentPageEvents - 1) * this.itemsPerPageEvents;
+    const end = start + this.itemsPerPageEvents;
+    this.paginatedEvents = this.events.slice(start, end);
+  }
+
+  prevPageEvents(): void {
+    if (this.currentPageEvents > 1) {
+      this.currentPageEvents--;
+      this.updateEventsPagination();
+    }
+  }
+
+  nextPageEvents(): void {
+    if (this.currentPageEvents < this.totalPagesEvents) {
+      this.currentPageEvents++;
+      this.updateEventsPagination();
+    }
+  }
+
+  onItemsPerPageEventsChange(): void {
+    this.currentPageEvents = 1;
+    this.updateEventsPagination();
   }
 
   // === Charger les types ===
@@ -125,7 +170,6 @@ export class EventManagementComponent implements OnInit {
     if (!this.editingEvent) return;
     this.isUpdatingEvent = true;
 
-    // 🔹 Prépare un objet conforme au backend
     const payload = {
       id: this.editingEvent.id,
       title: this.editingEvent.title,
@@ -133,7 +177,7 @@ export class EventManagementComponent implements OnInit {
       startDateTime: this.editingEvent.startDateTime,
       endDateTime: this.editingEvent.endDateTime,
       finished: this.editingEvent.finished ?? false,
-      type: this.editingEvent.type?.name || this.editingEvent.type // ⚠️ envoie une String
+      type: this.editingEvent.type?.name || (this.editingEvent as any).type
     };
 
     this.eventService.updateEvent(payload).subscribe({
@@ -157,11 +201,11 @@ export class EventManagementComponent implements OnInit {
     );
     if (!confirmed) return;
 
-    this.isLoadingEvents = true; // tu utilises déjà ce flag pour le chargement
+    this.isLoadingEvents = true;
     this.eventService.deleteEvent(this.editingEvent.id).subscribe({
       next: () => {
         this.isLoadingEvents = false;
-        this.cancelEditEvent();   // ✅ ferme le modal d’édition
+        this.cancelEditEvent();
         this.loadAllEvents();
       },
       error: (err) => {
@@ -170,9 +214,6 @@ export class EventManagementComponent implements OnInit {
       },
     });
   }
-
-
-
 
   // === Types ===
   createType() {

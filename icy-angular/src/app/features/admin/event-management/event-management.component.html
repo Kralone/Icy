@@ -91,7 +91,25 @@
 
   <!-- === SECTION 2 : Événements créés === -->
   <section class="space-y-6">
-    <h2 class="text-xl font-bold text-cyan-300">Événements créés</h2>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <h2 class="text-xl font-bold text-cyan-300">Événements créés</h2>
+
+      <!-- Items per page -->
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-gray-300">Éléments par page :</span>
+        <select
+          [(ngModel)]="itemsPerPageEvents"
+          (ngModelChange)="onItemsPerPageEventsChange()"
+          class="px-2 py-1 bg-white/10 border border-white/20 rounded text-gray-200
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        >
+          <option [value]="2">2</option>
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="30">30</option>
+        </select>
+      </div>
+    </div>
 
     <div *ngIf="isLoadingEvents" class="text-center text-gray-400 italic">Chargement des événements...</div>
     <div *ngIf="!isLoadingEvents && events.length === 0" class="text-center text-gray-400 italic">
@@ -115,7 +133,7 @@
         </thead>
 
         <tbody>
-        <tr *ngFor="let e of events"
+        <tr *ngFor="let e of paginatedEvents"
             [ngClass]="{
               'opacity-50 italic text-gray-400': e.finished,
               'hover:bg-white/10 transition border-b border-white/10': true
@@ -148,6 +166,34 @@
         </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination controls -->
+    <div *ngIf="!isLoadingEvents && events.length > 0"
+         class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-sm">
+      <div class="text-gray-300">
+        Page {{ currentPageEvents }} / {{ totalPagesEvents }}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          (click)="prevPageEvents()"
+          [disabled]="currentPageEvents === 1"
+          class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40
+                 hover:bg-white/20 transition"
+        >
+          Préc.
+        </button>
+
+        <button
+          (click)="nextPageEvents()"
+          [disabled]="currentPageEvents === totalPagesEvents"
+          class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40
+                 hover:bg-white/20 transition"
+        >
+          Suiv.
+        </button>
+      </div>
     </div>
   </section>
 
@@ -199,7 +245,6 @@
         </button>
       </div>
     </div>
-
 
     <!-- Tableau -->
     <div class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl icy-scrollbar">
@@ -259,9 +304,7 @@
         Modifier le type d’événement
       </h3>
 
-      <!-- Champs du formulaire -->
       <div class="space-y-4">
-        <!-- Nom -->
         <input
           [(ngModel)]="editingType.name"
           readonly
@@ -269,7 +312,6 @@
                border border-white/30 text-gray-400 cursor-not-allowed select-none"
         />
 
-        <!-- Couleur texte -->
         <input
           [(ngModel)]="editingType.textColor"
           placeholder="Couleur du texte (#fff)"
@@ -278,7 +320,6 @@
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
-        <!-- Couleur fond -->
         <input
           [(ngModel)]="editingType.backgroundColor"
           placeholder="Couleur du fond (#000)"
@@ -287,7 +328,6 @@
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
-        <!-- Image -->
         <input
           [(ngModel)]="editingType.imageUrl"
           placeholder="URL image (optionnel)"
@@ -297,7 +337,6 @@
         />
       </div>
 
-      <!-- Boutons -->
       <div class="flex justify-end gap-4 pt-6">
         <button
           type="button"
@@ -321,8 +360,6 @@
     </div>
   </div>
 
-
-  <!-- Événement -->
   <!-- === MODAL MODIFICATION ÉVÉNEMENT === -->
   <div
     *ngIf="editingEvent"
@@ -336,9 +373,7 @@
         Modifier l’événement
       </h3>
 
-      <!-- Champs -->
       <div class="space-y-4">
-        <!-- Titre -->
         <input
           [(ngModel)]="editingEvent.title"
           placeholder="Titre"
@@ -347,7 +382,6 @@
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
-        <!-- Type -->
         <select
           [(ngModel)]="editingEvent.type.name"
           class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
@@ -359,7 +393,6 @@
           </option>
         </select>
 
-        <!-- Description -->
         <textarea
           [(ngModel)]="editingEvent.description"
           rows="3"
@@ -369,7 +402,6 @@
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         ></textarea>
 
-        <!-- Dates -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input
             [(ngModel)]="editingEvent.startDateTime"
@@ -388,9 +420,7 @@
         </div>
       </div>
 
-      <!-- Boutons -->
       <div class="mt-6 flex flex-col sm:flex-row justify-between gap-4 items-center">
-        <!-- Supprimer -->
         <button
           type="button"
           (click)="confirmDeleteEvent()"
@@ -401,7 +431,6 @@
           🗑️ Supprimer
         </button>
 
-        <!-- Valider / Annuler -->
         <div class="flex w-full sm:w-auto justify-end gap-3">
           <button
             type="button"
