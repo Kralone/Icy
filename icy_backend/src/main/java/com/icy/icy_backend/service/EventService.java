@@ -96,19 +96,51 @@ public class EventService {
     }
 
 
-    public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(UUID id, String type, String title, String description, LocalDateTime start, LocalDateTime end, boolean finished) {
-        Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
+    @Transactional
+    public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(
+            UUID id,
+            String type,
+            String title,
+            String description,
+            LocalDateTime start,
+            LocalDateTime end,
+            boolean finished
+    ) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
+
+        // --- Détecter changement de date AVANT d'écrire les nouvelles valeurs
+        LocalDateTime oldStart = event.getStartDateTime();
+        LocalDateTime oldEnd = event.getEndDateTime();
+
+        boolean dateChanged = !Objects.equals(oldStart, start) || !Objects.equals(oldEnd, end);
+
+        // --- Mise à jour event
         event.setType(getEventTypeByName(type));
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
         event.setEndDateTime(end);
         event.setFinished(finished);
+        event.setUpdatedAt(LocalDateTime.now());
+
+        // --- Si date changée : on purge les participations
+        if (dateChanged) {
+            logger.info("Date modifiée pour event {} ({}->{} / {}->{}). Suppression des participations.",
+                    event.getId(), oldStart, start, oldEnd, end);
+
+            participationRepository.deleteAllByEvent(event);
+        }
+
         Event saved = eventRepository.save(event);
+
+        // --- Realtime + Rabbit
         eventWebSocketService.sendEventUpdate(saved, "UPDATE");
         eventPublisher.publishEventUpdated(saved);
+
         return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
     }
+
 
     public ResponseEntity<MessageResponse<Void>> deleteEvent(UUID id) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
