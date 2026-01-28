@@ -14,7 +14,9 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
   @Input() isAdmin = false;
   @Input() depth = 0;
   @Input() showChildren = true;
+
   @Output() refresh = new EventEmitter<void>();
+  @Output() expandedChange = new EventEmitter<{ id: number; expanded: boolean }>();
 
   loading = false;
   progressWidth = '0%';
@@ -22,6 +24,10 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
   constructor(private goalService: GoalService) {}
 
   ngOnChanges(): void {
+    const expanded = (this.goal as any).__expanded;
+    if (expanded !== undefined) {
+      this.showChildren = expanded;
+    }
     this.updateProgressBar();
   }
 
@@ -29,11 +35,8 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
     this.updateProgressBar();
   }
 
-  /** 🔥 Gère l'animation fluide et la visibilité à 100% */
   private updateProgressBar(): void {
     const progress = this.calculateProgress(this.goal);
-
-    // On force Angular à redessiner avant d'appliquer la nouvelle largeur
     requestAnimationFrame(() => {
       this.progressWidth = progress.toFixed(2) + '%';
     });
@@ -42,20 +45,36 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
   calculateProgress(goal: Goal): number {
     if (!goal || goal.target === 0) return 0;
     const ratio = (goal.current / goal.target) * 100;
-    // clamp entre 0 et 100
     return Math.min(Math.max(ratio, 0), 100);
   }
 
+  isDone(goal: Goal): boolean {
+    if ((goal as any).completed !== undefined) return !!(goal as any).completed;
+    if (!goal || goal.target <= 0) return false;
+    return (goal.current ?? 0) >= (goal.target ?? 0);
+  }
+
+  private normalizeText(value: any): string {
+    return (value ?? '')
+      .toString()
+      .trim()
+      .toLocaleLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
   get sortedSubGoals(): Goal[] {
-    if (!this.goal.subGoals) return [];
+    if (!this.goal?.subGoals) return [];
     return [...this.goal.subGoals].sort((a, b) => {
-      const progressA = this.calculateProgress(a);
-      const progressB = this.calculateProgress(b);
-      const aDone = progressA >= 100;
-      const bDone = progressB >= 100;
-      if (aDone && !bDone) return 1;
-      if (!aDone && bDone) return -1;
-      return progressA - progressB;
+      const aDone = this.isDone(a);
+      const bDone = this.isDone(b);
+
+      if (aDone !== bDone) return aDone ? 1 : -1;
+
+      const an = this.normalizeText(a.name);
+      const bn = this.normalizeText(b.name);
+
+      return an.localeCompare(bn);
     });
   }
 
@@ -73,9 +92,9 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
 
     this.goalService.incrementGoal(goalId, delta).subscribe({
       next: () => {
-        this.goal.current = Math.max(0, Math.min(this.goal.target, this.goal.current + delta));
+        this.goal.current = Math.max(0, Math.min(this.goal.target, (this.goal.current ?? 0) + delta));
         this.loading = false;
-        this.updateProgressBar(); // ✅ met à jour visuellement la largeur
+        this.updateProgressBar();
       },
       error: (err) => {
         console.error('Erreur de mise à jour :', err);
@@ -86,5 +105,6 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
 
   toggleChildrenVisibility(): void {
     this.showChildren = !this.showChildren;
+    this.expandedChange.emit({ id: this.goal.id, expanded: this.showChildren });
   }
 }

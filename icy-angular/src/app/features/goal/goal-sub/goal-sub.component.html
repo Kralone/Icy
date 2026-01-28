@@ -1,4 +1,5 @@
 <div class="relative w-full">
+
   <!-- Ligne verticale -->
   <div
     class="absolute top-0 left-3 bottom-0 w-px bg-white/20"
@@ -7,27 +8,47 @@
 
   <!-- Bloc principal -->
   <div
-    class="pl-4 sm:pl-6 w-full"
+    class="w-full"
     [ngClass]="{
+      'pl-4 sm:pl-6': depth === 0,
+      'pl-4 sm:pl-5': depth === 1,
+      'pl-3 sm:pl-4': depth >= 2,
+
       'mt-6': goal.parentId === null,
       'mt-3': goal.parentId !== null
     }"
   >
     <div
-      class="flex flex-col gap-3 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.15)] p-4 sm:p-3 transition hover:shadow-cyan-500/10"
+      class="flex flex-col border rounded-2xl transition"
+      [ngClass]="{
+        'gap-3 bg-white/10 backdrop-blur-2xl border-white/20 shadow-[0_0_25px_rgba(56,189,248,0.15)] p-4 sm:p-3 hover:shadow-cyan-500/10': depth === 0,
+        'gap-2 bg-white/8 border-white/20 shadow-none p-3 sm:p-2.5': depth === 1,
+        'gap-2 bg-white/6 border-white/15 shadow-none p-2 sm:p-2': depth >= 2
+      }"
     >
 
       <!-- Titre + Description -->
       <div class="flex items-start justify-between flex-wrap gap-2">
-        <div class="flex items-center gap-2 flex-wrap text-sm sm:text-base">
+        <div class="flex items-center gap-2 flex-wrap">
           <button
-            *ngIf="goal.subGoals?.length && depth >= 1"
+            *ngIf="goal.subGoals?.length"
             (click)="toggleChildrenVisibility()"
-            class="p-1 focus:outline-none text-cyan-300 hover:text-cyan-100 transition"
+            class="rounded-lg focus:outline-none text-cyan-300 hover:text-cyan-100 hover:bg-white/5 transition"
+            [ngClass]="{
+              'p-2 -m-2': depth === 0,
+              'p-1.5 -m-1.5': depth === 1,
+              'p-1 -m-1': depth >= 2
+            }"
+            aria-label="Déplier / replier"
           >
             <svg
               [class.rotate-90]="showChildren"
-              class="w-4 h-4 transform transition-transform duration-300"
+              class="transform transition-transform duration-300"
+              [ngClass]="{
+                'w-4 h-4': depth === 0,
+                'w-3.5 h-3.5': depth === 1,
+                'w-3 h-3': depth >= 2
+              }"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -37,18 +58,41 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M7 7l5 5-5 5 M12 7l5 5-5 5"
+                d="M8 5l8 7-8 7"
               />
             </svg>
           </button>
 
-          <h3 class="font-semibold text-white truncate max-w-[180px]">
+          <h3
+            class="font-semibold text-white truncate"
+            [ngClass]="{
+              'text-base sm:text-base max-w-[220px]': depth === 0,
+              'text-sm sm:text-sm max-w-[240px]': depth === 1,
+              'text-xs sm:text-xs max-w-[260px]': depth >= 2
+            }"
+          >
             {{ goal.name }}
           </h3>
+
+          <span
+            *ngIf="isDone(goal)"
+            class="rounded-full border border-white/15 bg-white/5 text-white/60"
+            [ngClass]="{
+              'text-[11px] px-2 py-0.5': depth === 0,
+              'text-[10px] px-2 py-0.5': depth === 1,
+              'text-[10px] px-1.5 py-0.5': depth >= 2
+            }"
+          >
+            Terminé
+          </span>
         </div>
 
         <span
-          class="text-xs sm:text-sm text-gray-300 italic w-full sm:w-auto"
+          class="text-gray-300 italic w-full sm:w-auto"
+          [ngClass]="{
+            'text-xs sm:text-sm': depth === 0,
+            'text-xs': depth >= 1
+          }"
         >
           {{ goal.description }}
         </span>
@@ -57,23 +101,30 @@
       <!-- Barre de progression -->
       <div class="w-full">
         <div
-          class="relative w-full h-2 rounded-md border border-white/10 overflow-hidden"
+          class="relative w-full rounded-md border border-white/10 overflow-hidden bg-white/10"
+          [ngClass]="{
+            'h-2': depth === 0,
+            'h-1.5': depth === 1,
+            'h-1': depth >= 2
+          }"
         >
           <div
-            class="absolute inset-0 rounded-md transition-all duration-500 ease-out"
+            class="h-full rounded-md transition-all duration-500 ease-out"
             [ngStyle]="{
-              'background-image': calculateProgress(goal) >= 100
+              'width': progressWidth,
+              'background-image': isDone(goal)
                 ? 'linear-gradient(to right, #22d3ee, #22c55e)'
-                : 'linear-gradient(to right, #06b6d4, #2563eb)',
-              'background-size': calculateProgress(goal) + '% 100%',
-              'background-repeat': 'no-repeat',
-              'background-color': 'rgba(255,255,255,0.1)'
+                : 'linear-gradient(to right, #06b6d4, #2563eb)'
             }"
           ></div>
         </div>
 
         <div
-          class="text-xs text-gray-300 mt-1 text-right"
+          class="text-gray-300 mt-1 text-right"
+          [ngClass]="{
+            'text-xs': depth === 0,
+            'text-[10px]': depth >= 1
+          }"
         >
           {{ goal.current }} / {{ goal.target }}
           ({{ calculateProgress(goal) | number:'1.0-0' }}%)
@@ -81,63 +132,84 @@
       </div>
 
       <!-- Actions -->
-      <div
-        class="flex flex-wrap justify-between items-center gap-3 mt-2 sm:mt-0"
-      >
+      <div class="flex flex-wrap justify-between items-center gap-3">
+
         <!-- Boutons +1 / -1 -->
         <div class="flex gap-2">
           <button
             (click)="increment(goal.id, -1)"
             [disabled]="goal.current <= 0 || loading"
-            class="px-3 py-1 rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition"
+            class="rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition"
+            [ngClass]="{
+              'px-3 py-1 text-sm': depth === 0,
+              'px-2.5 py-1 text-xs': depth === 1,
+              'px-2 py-0.5 text-xs': depth >= 2
+            }"
           >
             -1
           </button>
+
           <button
             (click)="increment(goal.id, 1)"
             [disabled]="goal.current >= goal.target || loading"
-            class="px-3 py-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 transition"
+            class="rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 transition"
+            [ngClass]="{
+              'px-3 py-1 text-sm': depth === 0,
+              'px-2.5 py-1 text-xs': depth === 1,
+              'px-2 py-0.5 text-xs': depth >= 2
+            }"
           >
             +1
           </button>
         </div>
 
         <!-- Boutons admin -->
-        <div
-          *ngIf="isAdmin"
-          class="flex gap-2"
-        >
+        <div *ngIf="isAdmin" class="flex gap-2">
           <button
             *ngIf="goal.parentId === null"
             (click)="togglePinned()"
             [disabled]="goal.pinned"
             [ngClass]="{
               'bg-green-500/20 text-green-300 border-green-400/40 cursor-not-allowed': goal.pinned,
-              'bg-yellow-500/20 text-yellow-200 hover:bg-yellow-400/30 border-yellow-400/40 cursor-pointer': !goal.pinned
+              'bg-yellow-500/20 text-yellow-200 hover:bg-yellow-400/30 border-yellow-400/40 cursor-pointer': !goal.pinned,
+              'px-3 py-1 text-sm': depth === 0,
+              'px-2.5 py-1 text-xs': depth === 1,
+              'px-2 py-0.5 text-xs': depth >= 2
             }"
-            class="px-3 py-1 rounded-md border text-sm font-medium transition"
+            class="rounded-md border font-medium transition"
           >
             📌
           </button>
+
           <button
             (click)="deleteGoal()"
-            class="bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/40 px-3 py-1 rounded-md text-sm font-medium transition"
+            class="bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/40 rounded-md font-medium transition"
+            [ngClass]="{
+              'px-3 py-1 text-sm': depth === 0,
+              'px-2.5 py-1 text-xs': depth === 1,
+              'px-2 py-0.5 text-xs': depth >= 2
+            }"
           >
             🗑️
           </button>
         </div>
       </div>
+
     </div>
   </div>
 
   <!-- Sous-objectifs -->
-  <div class="pl-6 sm:pl-8">
+  <div
+    [ngClass]="{
+      'pl-6 sm:pl-8': depth === 0,
+      'pl-5 sm:pl-7': depth === 1,
+      'pl-4 sm:pl-6': depth >= 2
+    }"
+  >
     <div
-      class="transition-all duration-500 ease-in-out overflow-hidden"
-      [class.max-h-0]="!showChildren"
-      [class.max-h-[9999px]]="showChildren"
-      [class.opacity-0]="!showChildren"
-      [class.opacity-100]="showChildren"
+      class="overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out"
+      [style.maxHeight]="showChildren ? '9999px' : '0px'"
+      [style.opacity]="showChildren ? '1' : '0'"
     >
       <ng-container *ngFor="let sub of sortedSubGoals">
         <app-goal-sub
@@ -146,8 +218,10 @@
           [depth]="depth + 1"
           [showChildren]="false"
           (refresh)="refresh.emit()"
+          (expandedChange)="expandedChange.emit($event)"
         ></app-goal-sub>
       </ng-container>
     </div>
   </div>
+
 </div>

@@ -9,4 +9,7 @@ export interface Goal {
   createdAt: string;
   parentId: number | null;
   subGoals: Goal[];
+
+  /** UI only */
+  __expanded?: boolean;
 }
