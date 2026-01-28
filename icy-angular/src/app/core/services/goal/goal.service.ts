@@ -22,7 +22,7 @@ export class GoalService {
   }
 
   togglePinned(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/pin`, id);
+    return this.http.post<void>(`${this.apiUrl}/${id}/pin`, null);
   }
 
   addGoal(goal: any): Observable<any> {
@@ -36,5 +36,10 @@ export class GoalService {
   incrementGoal(id: number, delta: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/increment?delta=${delta}`, null);
   }
+
+  updateGoal(id: number, payload: Partial<Goal>): Observable<Goal> {
+    return this.http.put<Goal>(`${this.apiUrl}/${id}`, payload);
+  }
+
 
 }

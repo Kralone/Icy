@@ -18,6 +18,7 @@ import {RecruitmentManagementComponent} from './features/admin/recruitment-manag
 import {NewsManagementComponent} from './features/admin/news-management/news-management.component';
 import {IceLinkBuilderComponent} from './features/admin/icelink-builder/icelink-builder.component';
 import {ImageLibraryComponent} from './features/admin/image-library/image-library.component';
+import {GoalManagementComponent} from './features/admin/goal-management/goal-management.component';
 
 export const routes: Routes = [
   { path: '',component: HomeComponent },
@@ -47,6 +48,7 @@ export const routes: Routes = [
       { path: 'admin/news', component: NewsManagementComponent },
       { path: 'admin/icelinkBuilder', component: IceLinkBuilderComponent },
       { path: 'admin/images', component: ImageLibraryComponent },
+      { path: 'admin/goals', component: GoalManagementComponent },
     ]
   }
 ];

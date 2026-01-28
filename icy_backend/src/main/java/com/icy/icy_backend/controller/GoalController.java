@@ -22,6 +22,13 @@ public class GoalController {
         return ResponseEntity.ok().build();
     }
 
+    /** ✅ UPDATE via le même DTO */
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateGoal(@PathVariable Long id, @RequestBody CreateGoalDTO dto) {
+        goalService.updateGoal(id, dto);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<GoalDTO>> getAllGoals() {
         return ResponseEntity.ok(goalService.getAllTopLevelGoals());
@@ -31,7 +38,6 @@ public class GoalController {
     public GoalDTO getPinnedGoal() {
         return goalService.getPinnedGoal();
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGoal(@PathVariable Long id) {
@@ -48,5 +54,4 @@ public class GoalController {
     public void incrementGoal(@PathVariable Long id, @RequestParam("delta") int delta) {
         goalService.incrementGoal(id, delta);
     }
-
 }

@@ -35,6 +35,11 @@ export class AdminMenuComponent {
       route: '/icy/admin/ships',
     },
     {
+      label: 'Objectifs',
+      imageUrl: 'https://images.cybersport.ru/images/material-card/plain/6d/6de6fece-dd72-48f6-89d0-d1117b131f86.jpg@jpg',
+      route: '/icy/admin/goals',
+    },
+    {
       label: 'Événements',
       imageUrl: 'https://robertsspaceindustries.com/i/08fe2244a8775fd0035d274b01dab7d7902a28d4/ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjResf17hC1c31dKDgMVCohp9HDpEHngVixnEz/3-16_patchbanner_crop.webp',
       route: '/icy/admin/events',
