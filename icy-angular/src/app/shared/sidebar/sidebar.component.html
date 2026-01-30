@@ -6,7 +6,6 @@
          p-5 text-white z-50 overflow-y-auto"
 >
 
-  <!-- ✅ Logo -->
   <div class="flex flex-col items-center justify-center mt-10 mb-6 space-y-2">
     <a [routerLink]="['/icy/dashboard']" class="flex flex-col items-center gap-2 group">
       <div class="relative flex items-center justify-center">
@@ -16,26 +15,44 @@
           class="h-16 w-16 object-contain transition-transform duration-300
                group-hover:scale-110 drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]"
         />
-        <!-- petit effet glow derrière -->
         <div class="absolute inset-0 rounded-full bg-cyan-400/20 blur-2xl scale-125"></div>
       </div>
     </a>
   </div>
 
-
-  <!-- ✅ Navigation -->
   <nav class="flex-1">
     <ul class="space-y-2">
       <li *ngFor="let item of menuItems">
         <a
           [routerLink]="item.link"
           routerLinkActive="bg-white/10 text-cyan-300"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300
-                 hover:bg-white/10 hover:text-cyan-300 transition-colors duration-300"
+          class="relative flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300
+                 hover:bg-white/10 hover:text-cyan-300 transition-colors duration-300 group"
           (click)="onClose()"
         >
-          <span class="text-xl">{{ item.icon }}</span>
-          <span class="text-sm uppercase tracking-wide">{{ item.label }}</span>
+          <span
+            *ngIf="item.kind === 'scwe' && hasActiveScEvent"
+            class="pointer-events-none absolute inset-0 rounded-lg
+                   bg-cyan-400/10 blur-xl opacity-80"
+          ></span>
+
+          <span class="text-xl relative">
+            {{ item.icon }}
+          </span>
+
+          <span class="text-sm uppercase tracking-wide relative">
+            {{ item.label }}
+          </span>
+
+          <span
+            *ngIf="item.kind === 'scwe' && hasActiveScEvent"
+            class="ml-auto px-2 py-0.5 rounded text-[10px] font-black tracking-widest
+                   bg-cyan-500/20 text-cyan-300 border border-cyan-400/30
+                   shadow-[0_0_10px_rgba(34,211,238,0.3)]
+                   animate-pulse whitespace-nowrap"
+          >
+            LIVE
+          </span>
         </a>
       </li>
 
@@ -53,7 +70,6 @@
     </ul>
   </nav>
 
-  <!-- ✅ Logout -->
   <div class="pt-4 border-t border-white/10">
     <button
       class="w-full flex items-center justify-center gap-2
