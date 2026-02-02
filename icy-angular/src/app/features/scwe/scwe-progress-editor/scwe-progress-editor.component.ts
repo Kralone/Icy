@@ -1,10 +1,7 @@
 import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import {
-  ScWorldEventDto,
-  ScWorldEventParticipationDto
-} from '../../../model/scwe-player.model';
+import { ScWorldEventDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
 import { ScwePlayerService } from '../../../core/services/scworldevent/scwe-player.service';
 
 type ProgressForm = FormGroup<Record<string, FormControl<number>>>;
@@ -26,11 +23,13 @@ export class ScweProgressEditorComponent implements OnChanges {
   savedOk = false;
   error: string | null = null;
 
-  // On utilise 'any' car les interfaces de Schema ne sont plus exportées
   schema: any | null = null;
   fields: any[] = [];
 
   form: ProgressForm | null = null;
+
+  // ✅ AJOUT : Pour gérer l'ouverture des tooltips sur mobile
+  activeMilestoneIndex: string | null = null;
 
   protected readonly Math = Math;
 
@@ -38,8 +37,6 @@ export class ScweProgressEditorComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['event'] || changes['participation']) {
-      // ✅ Correction : scoreSchemaSnapshot n'existe plus, on utilise scoreSchema
-      // Et on parse le JSON si c'est une string
       const rawSchema = (this.event as any)?.scoreSchema;
       try {
         this.schema = typeof rawSchema === 'string' ? JSON.parse(rawSchema) : rawSchema;
@@ -57,18 +54,24 @@ export class ScweProgressEditorComponent implements OnChanges {
     }
   }
 
+  // ✅ AJOUT : Méthode pour le clic Milestone
+  toggleMilestone(uid: string, event: Event) {
+    event.stopPropagation();
+    event.preventDefault(); // Pour éviter les comportements natifs indésirables sur mobile
+    if (this.activeMilestoneIndex === uid) {
+      this.activeMilestoneIndex = null;
+    } else {
+      this.activeMilestoneIndex = uid;
+    }
+  }
+
   private buildForm() {
     let rawPoints = this.participation?.points;
-
     const progress = rawPoints ?? {};
-
     const controls: Record<string, FormControl<number>> = {};
 
     for (const f of this.fields) {
-      // On force la conversion en nombre
       const val = Number(progress[f.key]);
-
-      // Si val est NaN (pas trouvé), on met 0
       controls[f.key] = new FormControl<number>(Number.isFinite(val) ? val : 0, { nonNullable: true });
     }
 
@@ -77,7 +80,6 @@ export class ScweProgressEditorComponent implements OnChanges {
     if (this.readonly) this.form.disable({ emitEvent: false });
   }
 
-  // ... [getTotal, clamp, step, onManualInput restent identiques] ...
   getTotal(): number {
     const keys = this.schema?.total?.keys ?? this.fields.map(f => f.key);
     let total = 0;
@@ -112,23 +114,17 @@ export class ScweProgressEditorComponent implements OnChanges {
     this.savedOk = false;
     this.error = null;
 
-    // Construction de l'objet points (Record<string, number>)
     const points: Record<string, number> = {};
     for (const f of this.fields) {
       points[f.key] = Number(this.form.controls[f.key].value ?? 0);
     }
 
-    // ✅ Correction TS2554 : On passe (id, status, points)
     const status = this.participation?.status ?? 0;
 
     this.scwe.updateMyParticipation(this.event.id, status, points).subscribe({
       next: (res) => {
-        console.log('Réponse succès :', res);
-
         this.participation = res;
-
         this.saved.emit(res);
-
         this.saving = false;
         this.savedOk = true;
         setTimeout(() => (this.savedOk = false), 2000);

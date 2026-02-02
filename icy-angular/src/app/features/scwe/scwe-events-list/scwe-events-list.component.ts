@@ -1,18 +1,13 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// Import du dossier frère pour l'éditeur
+import { ScWorldEventParticipationViewDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
 import { ScweProgressEditorComponent } from '../scwe-progress-editor/scwe-progress-editor.component';
-import {
-  ScWorldEventParticipationViewDto,
-  ScWorldEventParticipationDto,
-  ScweScoreSchema
-} from '../../../model/scwe-player.model';
 
 @Component({
   selector: 'app-scwe-events-list',
   standalone: true,
   imports: [CommonModule, ScweProgressEditorComponent],
-  templateUrl: './scwe-events-list.component.html'
+  templateUrl: './scwe-events-list.component.html',
 })
 export class ScweEventsListComponent {
   @Input() items: ScWorldEventParticipationViewDto[] = [];
@@ -20,37 +15,56 @@ export class ScweEventsListComponent {
   @Output() updated = new EventEmitter<{ viewItem: ScWorldEventParticipationViewDto, part: ScWorldEventParticipationDto }>();
 
   expanded: Record<string, boolean> = {};
+
+  // Variable pour stocker quel tooltip est ouvert sur mobile
+  activeMilestoneIndex: string | null = null;
+
   protected readonly Math = Math;
 
-  toggle(id: string) {
-    this.expanded[id] = !this.expanded[id];
+  toggle(eventId: string) {
+    this.expanded[eventId] = !this.expanded[eventId];
+    // Ferme les tooltips si on manipule la carte
+    this.activeMilestoneIndex = null;
   }
 
-  trackByEventId(index: number, it: ScWorldEventParticipationViewDto): string {
-    return it.event?.id || `idx-${index}`;
+  toggleMilestone(uid: string, event: Event) {
+    // Important : empêche le clic de remonter et de déclencher d'autres actions
+    event.stopPropagation();
+    event.preventDefault(); // Sécurité supplémentaire pour le tactile
+
+    if (this.activeMilestoneIndex === uid) {
+      this.activeMilestoneIndex = null;
+    } else {
+      this.activeMilestoneIndex = uid;
+    }
   }
 
-  isActiveEvent(startAt: string, endAt?: string | null): boolean {
-    const now = Date.now();
-    const startOk = new Date(startAt).getTime() <= now;
-    const endOk = !endAt || new Date(endAt).getTime() >= now;
-    return startOk && endOk;
+  trackByEventId(index: number, item: ScWorldEventParticipationViewDto): string {
+    return item.event.id;
+  }
+
+  onSave(viewItem: ScWorldEventParticipationViewDto, updatedPart: ScWorldEventParticipationDto) {
+    this.updated.emit({ viewItem, part: updatedPart });
+  }
+
+  isActiveEvent(start: string, end?: string | null): boolean {
+    const now = new Date().getTime();
+    const s = new Date(start).getTime();
+
+    if (now < s) return false;
+
+    // Si pas de date de fin, c'est toujours actif
+    if (!end) return true;
+
+    return now <= new Date(end).getTime();
   }
 
   getGlobalMax(schema: any): number {
-    const s = schema as ScweScoreSchema;
-    if (!s?.fields) return 10000;
-
-    let sumMax = s.fields.reduce((acc, f) => acc + (f.max || 0), 0);
-
-    if (s.total?.milestones?.length) {
-      const maxMilestone = Math.max(...s.total.milestones.map(m => m.at));
-      if (maxMilestone > sumMax) return maxMilestone;
+    if (!schema || !schema.total) return 1000;
+    if (schema.total.milestones && Array.isArray(schema.total.milestones) && schema.total.milestones.length > 0) {
+      const last = schema.total.milestones[schema.total.milestones.length - 1];
+      return last.at || 1000;
     }
-    return sumMax || 10000;
-  }
-
-  onSave(viewItem: ScWorldEventParticipationViewDto, part: ScWorldEventParticipationDto) {
-    this.updated.emit({ viewItem, part });
+    return schema.total.max || 1000;
   }
 }
