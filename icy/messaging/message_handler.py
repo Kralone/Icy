@@ -2,6 +2,7 @@ import logging
 import json
 from messaging.news_handler import NewsHandler
 from messaging.event_handler import EventHandler  # à venir
+from messaging.scwe_handler import ScweHandler
 from messaging.user_handler import UserHandler  # 👈 nouveau import
 
 logger = logging.getLogger("icy.handler")
@@ -18,6 +19,7 @@ class MessageHandler:
         self.news_handler = NewsHandler(bot, rabbit)
         self.event_handler = EventHandler(bot, rabbit)  # sera ajouté plus tard
         self.user_handler = UserHandler(bot)  # 👈 ajouté
+        self.scwe_handler = ScweHandler(bot, rabbit)
 
     async def handle_message(self, routing_key: str, payload: dict):
 
@@ -41,6 +43,10 @@ class MessageHandler:
         # --- USERS ---
         elif routing_key.startswith("users."):
             await self.user_handler.handle(routing_key, payload)
+
+        # --- SCWE ---
+        elif routing_key.startswith("scwe."):
+            await self.scwe_handler.handle(routing_key, payload)
 
         # --- AUCUN MATCH ---
         else:

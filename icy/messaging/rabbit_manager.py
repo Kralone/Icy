@@ -30,7 +30,8 @@ class RabbitManager:
         self.queues = {
             "news": "news.queue",
             "events": "events.queue",
-            "users": "users.queue"
+            "users": "users.queue",
+            "scwe": "scwe.queue"
         }
 
     async def connect(self):
