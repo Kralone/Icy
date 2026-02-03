@@ -83,7 +83,7 @@
                      'items-center left-1/2 -translate-x-1/2': !isLast
                    }">
 
-                <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-xl flex flex-col items-center min-w-[120px] backdrop-blur-xl">
+                <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-xl flex flex-col items-center min-w-[140px] backdrop-blur-xl">
 
                   <img *ngIf="m.imageUrl"
                        [src]="m.imageUrl"
@@ -100,6 +100,12 @@
                       <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
                     </svg>
                   </div>
+
+                  <div *ngIf="m.reward" class="mt-2 pt-2 w-full border-t border-white/20 text-center">
+                    <div class="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">Récompense</div>
+                    <div class="font-bold text-amber-300 text-sm drop-shadow-md">{{ m.reward }}</div>
+                  </div>
+
                 </div>
 
                 <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-black/90"

@@ -28,7 +28,6 @@
     </div>
   </div>
 
-  <!-- ===================== FORM TAB ===================== -->
   <div *ngIf="tab === 'form'" class="space-y-6">
 
     <div class="flex items-center justify-between">
@@ -115,92 +114,94 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between">
-          <div class="text-sm text-white/80">Paliers (milestones)</div>
+        <div class="flex items-center justify-between pt-2 border-t border-white/5 mt-2">
+          <div class="text-sm text-white/80 font-medium">Paliers (milestones)</div>
           <button
             type="button"
             (click)="addFieldMilestone(i)"
-            class="px-3 py-2 rounded-xl bg-white/5 border border-white/20 hover:bg-white/10 transition active:scale-95"
+            class="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-200 hover:bg-cyan-500/20 transition text-xs font-bold uppercase tracking-wider"
           >
-            + Palier
+            + Ajouter
           </button>
         </div>
 
         <div class="space-y-3">
           <div *ngFor="let m of f.milestones; let j = index"
-               class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2 items-end bg-white/5 border border-white/10 rounded-2xl p-3">
+               class="bg-black/20 border border-white/10 rounded-xl p-3 relative group">
 
-            <div>
-              <label class="text-xs text-white/60">At</label>
-              <input
-                type="number"
-                [(ngModel)]="m.at"
-                (ngModelChange)="onAnyChange()"
-                (blur)="onAnyBlur()"
-                placeholder="8000"
-                class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                       placeholder:text-white/40
-                       focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3 items-start xl:items-end">
+
+              <div class="xl:col-span-1">
+                <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">At (Points)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="m.at"
+                  (ngModelChange)="onAnyChange()"
+                  (blur)="onAnyBlur()"
+                  placeholder="8000"
+                  class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm font-mono
+                         focus:outline-none focus:border-cyan-400 transition"
+                />
+              </div>
+
+              <div class="xl:col-span-2">
+                <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Label</label>
+                <input
+                  [(ngModel)]="m.label"
+                  (ngModelChange)="onAnyChange()"
+                  (blur)="onAnyBlur()"
+                  placeholder="Phase 2"
+                  class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm
+                         focus:outline-none focus:border-cyan-400 transition"
+                />
+              </div>
+
+              <div class="xl:col-span-2">
+                <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Image URL</label>
+                <input
+                  [(ngModel)]="m.imageUrl"
+                  (ngModelChange)="onAnyChange()"
+                  (blur)="onAnyBlur()"
+                  placeholder="/img/sc/..."
+                  class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm
+                         focus:outline-none focus:border-cyan-400 transition"
+                />
+              </div>
+
+              <div class="xl:col-span-2 relative">
+                <div class="flex gap-2">
+                  <div class="w-full">
+                    <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Reward</label>
+                    <input
+                      [(ngModel)]="m.reward"
+                      (ngModelChange)="onAnyChange()"
+                      (blur)="onAnyBlur()"
+                      placeholder="Badge..."
+                      class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-amber-200 text-sm placeholder:text-white/20
+                                focus:outline-none focus:border-amber-400 transition"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    (click)="removeFieldMilestone(i, j)"
+                    class="h-[36px] w-[36px] mt-auto rounded-lg border border-red-500/20 bg-red-500/10
+                            hover:bg-red-500/20 text-red-300 transition shrink-0
+                            flex items-center justify-center"
+                    title="Supprimer ce palier"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
             </div>
-
-            <div class="lg:col-span-2">
-              <label class="text-xs text-white/60">Label</label>
-              <input
-                [(ngModel)]="m.label"
-                (ngModelChange)="onAnyChange()"
-                (blur)="onAnyBlur()"
-                placeholder="Phase 2"
-                class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                       placeholder:text-white/40
-                       focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-            </div>
-
-            <div class="lg:col-span-2">
-              <label class="text-xs text-white/60">Image URL</label>
-              <input
-                [(ngModel)]="m.imageUrl"
-                (ngModelChange)="onAnyChange()"
-                (blur)="onAnyBlur()"
-                placeholder="/img/sc/combat_8k.png"
-                class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                       placeholder:text-white/40
-                       focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-            </div>
-
-            <div>
-              <label class="text-xs text-white/60">Reward</label>
-              <input
-                [(ngModel)]="m.reward"
-                (ngModelChange)="onAnyChange()"
-                (blur)="onAnyBlur()"
-                placeholder="Badge (optionnel)"
-                class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                       placeholder:text-white/40
-                       focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-            </div>
-
-            <button
-              type="button"
-              (click)="removeFieldMilestone(i, j)"
-              class="h-[40px] w-[40px] rounded-xl border border-white/15 bg-white/5
-                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95
-                     flex items-center justify-center text-sm"
-              title="Supprimer"
-            >
-              🗑️
-            </button>
-
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Total -->
     <div class="bg-white/5 border border-white/15 rounded-2xl p-4 space-y-4">
       <div class="font-semibold text-white/90">Total</div>
 
@@ -233,12 +234,12 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between">
-        <div class="text-sm text-white/80">Paliers globaux</div>
+      <div class="flex items-center justify-between pt-2 border-t border-white/5 mt-2">
+        <div class="text-sm text-white/80 font-medium">Paliers globaux</div>
         <button
           type="button"
           (click)="addTotalMilestone()"
-          class="px-3 py-2 rounded-xl bg-white/5 border border-white/20 hover:bg-white/10 transition active:scale-95"
+          class="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-200 hover:bg-cyan-500/20 transition text-xs font-bold uppercase tracking-wider"
         >
           + Palier
         </button>
@@ -246,79 +247,65 @@
 
       <div class="space-y-3">
         <div *ngFor="let m of local.total.milestones; let j = index"
-             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2 items-end bg-white/5 border border-white/10 rounded-2xl p-3">
+             class="bg-black/20 border border-white/10 rounded-xl p-3 relative">
 
-          <div>
-            <label class="text-xs text-white/60">At</label>
-            <input
-              type="number"
-              [(ngModel)]="m.at"
-              (ngModelChange)="onAnyChange()"
-              (blur)="onAnyBlur()"
-              placeholder="10000"
-              class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                     placeholder:text-white/40
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3 items-start xl:items-end">
+
+            <div class="xl:col-span-1">
+              <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">At</label>
+              <input
+                type="number"
+                [(ngModel)]="m.at"
+                (ngModelChange)="onAnyChange()"
+                (blur)="onAnyBlur()"
+                class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm font-mono focus:border-cyan-400 outline-none"
+              />
+            </div>
+
+            <div class="xl:col-span-2">
+              <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Label</label>
+              <input
+                [(ngModel)]="m.label"
+                (ngModelChange)="onAnyChange()"
+                (blur)="onAnyBlur()"
+                class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-400 outline-none"
+              />
+            </div>
+
+            <div class="xl:col-span-2">
+              <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Image URL</label>
+              <input
+                [(ngModel)]="m.imageUrl"
+                (ngModelChange)="onAnyChange()"
+                (blur)="onAnyBlur()"
+                class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-400 outline-none"
+              />
+            </div>
+
+            <div class="xl:col-span-2 flex gap-2">
+              <div class="w-full">
+                <label class="text-[10px] uppercase text-white/40 font-bold mb-1 block">Reward</label>
+                <input
+                  [(ngModel)]="m.reward"
+                  (ngModelChange)="onAnyChange()"
+                  (blur)="onAnyBlur()"
+                  class="w-full h-[36px] px-3 rounded-lg bg-white/5 border border-white/10 text-amber-200 text-sm focus:border-amber-400 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                (click)="removeTotalMilestone(j)"
+                class="h-[36px] w-[36px] mt-auto rounded-lg border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-300 flex items-center justify-center shrink-0"
+              >✕</button>
+            </div>
+
           </div>
-
-          <div class="lg:col-span-2">
-            <label class="text-xs text-white/60">Label</label>
-            <input
-              [(ngModel)]="m.label"
-              (ngModelChange)="onAnyChange()"
-              (blur)="onAnyBlur()"
-              placeholder="Global OK"
-              class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                     placeholder:text-white/40
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-
-          <div class="lg:col-span-2">
-            <label class="text-xs text-white/60">Image URL</label>
-            <input
-              [(ngModel)]="m.imageUrl"
-              (ngModelChange)="onAnyChange()"
-              (blur)="onAnyBlur()"
-              placeholder="/img/sc/total_done.png"
-              class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                     placeholder:text-white/40
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-
-          <div>
-            <label class="text-xs text-white/60">Reward</label>
-            <input
-              [(ngModel)]="m.reward"
-              (ngModelChange)="onAnyChange()"
-              (blur)="onAnyBlur()"
-              placeholder="Récompense (optionnel)"
-              class="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                     placeholder:text-white/40
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-
-          <button
-            type="button"
-            (click)="removeTotalMilestone(j)"
-            class="h-[40px] w-[40px] rounded-xl border border-white/15 bg-white/5
-                   hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95
-                   flex items-center justify-center text-sm"
-            title="Supprimer"
-          >
-            🗑️
-          </button>
-
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- ===================== JSON TAB ===================== -->
   <div *ngIf="tab === 'json'" class="bg-white/5 border border-white/15 rounded-2xl p-4">
     <div class="text-sm text-white/70 mb-2">JSON généré automatiquement (lecture seule).</div>
     <textarea

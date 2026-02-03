@@ -1,7 +1,6 @@
 <div class="space-y-8">
 
   <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
-
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div class="text-lg font-semibold text-cyan-200">
         {{ editingEvent ? '✏️ Édition Event' : '➕ Création Event' }}
@@ -126,44 +125,46 @@
       </button>
     </div>
 
-    <div *ngFor="let e of events" class="border-b border-white/10">
-      <div class="flex items-center justify-between px-4 py-3 hover:bg-white/10 transition">
-        <div class="flex items-center gap-3">
-          <div class="w-14 h-10 rounded-xl bg-white/5 border border-white/15 overflow-hidden flex items-center justify-center">
+    <div *ngFor="let e of events" class="border-b border-white/10 last:border-0">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-4 hover:bg-white/10 transition gap-4">
+
+        <div class="flex items-start sm:items-center gap-4 w-full">
+          <div class="w-full sm:w-16 h-24 sm:h-12 rounded-xl bg-white/5 border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
             <img *ngIf="e.bannerImageUrl" [src]="e.bannerImageUrl" class="w-full h-full object-cover" />
-            <span *ngIf="!e.bannerImageUrl" class="text-white/40">BANNER</span>
+            <span *ngIf="!e.bannerImageUrl" class="text-white/40 text-xs">BANNER</span>
           </div>
 
-          <div>
-            <div class="font-semibold tracking-wide flex items-center gap-2">
-              {{ e.title }}
-              <span *ngIf="!isEventActive(e)" class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/50 border border-white/10">Clôturé</span>
+          <div class="flex-grow min-w-0">
+            <div class="font-semibold tracking-wide flex flex-wrap items-center gap-2 text-white">
+              <span class="truncate">{{ e.title }}</span>
+              <span *ngIf="!isEventActive(e)" class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/50 border border-white/10 whitespace-nowrap">Clôturé</span>
             </div>
-            <div class="text-xs text-white/60">
-              <span class="mr-2" [style.color]="e.typeTextColor || '#67e8f9'">{{ e.typeName }}</span>
-              • <span class="font-mono">{{ e.startAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            <div class="text-xs text-white/60 mt-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
+              <span class="font-bold mr-2" [style.color]="e.typeTextColor || '#67e8f9'">{{ e.typeName }}</span>
+              <span class="hidden sm:inline mx-1">•</span>
+              <span class="font-mono">{{ e.startAt | date:'dd/MM/yyyy HH:mm' }}</span>
               <span *ngIf="e.endAt"> ➔ {{ e.endAt | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2 self-end sm:self-auto shrink-0">
           <button
             *ngIf="isEventActive(e)"
             (click)="closeEvent(e)"
-            class="px-2 py-1 rounded-lg border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-200 transition active:scale-95"
+            class="h-9 px-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-200 transition active:scale-95 flex items-center"
             title="Clôturer maintenant"
           >🏁</button>
 
           <button
             (click)="editEvent(e)"
-            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+            class="h-9 px-3 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition active:scale-95 flex items-center"
             title="Éditer"
           >✏️</button>
 
           <button
             (click)="deleteEvent(e)"
-            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+            class="h-9 px-3 rounded-lg border border-white/15 bg-white/5 hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95 flex items-center"
             title="Supprimer"
           >🗑️</button>
         </div>
