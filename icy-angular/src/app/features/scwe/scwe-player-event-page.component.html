@@ -3,11 +3,21 @@
   <div class="flex items-center justify-between gap-4 flex-wrap bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
     <div>
       <div class="text-3xl font-bold text-cyan-200 tracking-wide drop-shadow-lg">SC World Events</div>
-      <div class="text-base text-white/70 mt-1">Suivi de ta progression et de tes récompenses.</div>
+      <div class="text-base text-white/70 mt-1">Suivi de la progression de l'event.</div>
     </div>
-    <button (click)="refresh()" class="px-6 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 transition active:scale-95 font-semibold shadow-lg shadow-black/20">
-      🔄 Rafraîchir
-    </button>
+
+    <div class="px-5 py-2 rounded-xl border border-white/10 bg-black/20 flex items-center gap-3 shadow-inner">
+      <div class="relative w-5 h-5 flex items-center justify-center">
+        <svg class="animate-spin w-full h-full text-cyan-500/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <div class="text-sm font-medium text-white/60">
+        Rafraîchissement dans <span class="font-mono font-bold text-cyan-300 w-6 inline-block text-center">{{ timeLeft }}</span>s
+      </div>
+    </div>
+
   </div>
 
   <div class="flex justify-center">
@@ -60,12 +70,12 @@
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div class="space-y-2">
                     <div class="flex items-center gap-3 flex-wrap">
-                          <span class="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider"
+                          <span class="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider select-none"
                                 [style.color]="leaderboardEvent.typeTextColor || '#67e8f9'">
                              {{ leaderboardEvent.typeName }}
                           </span>
-                      <span class="px-3 py-1 text-xs font-bold rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] animate-pulse">
-                            EN COURS
+                      <span class="px-3 py-1 text-xs font-bold rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] animate-pulse select-none">
+                            CLASSEMENT EN COURS
                           </span>
                     </div>
                     <h2 class="text-2xl md:text-3xl font-bold text-white shadow-black drop-shadow-md">

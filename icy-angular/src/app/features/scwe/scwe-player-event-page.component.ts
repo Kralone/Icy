@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core'; // ✅ Ajout OnDestroy
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 
@@ -21,7 +21,7 @@ type ViewMode = 'active' | 'history' | 'leaderboard';
   imports: [CommonModule, ScweEventsListComponent, ScweLeaderboardComponent],
   templateUrl: './scwe-player-event-page.component.html',
 })
-export class ScwePlayerPageComponent implements OnInit {
+export class ScwePlayerPageComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   viewMode: ViewMode = 'active';
@@ -36,6 +36,10 @@ export class ScwePlayerPageComponent implements OnInit {
   private loadedHistory = false;
   private loadedLeaderboard = false;
 
+  // ✅ AUTO REFRESH
+  timeLeft = 30;
+  private refreshInterval: any;
+
   constructor(
     private scwePlayer: ScwePlayerService,
     private scweEvent: ScWorldEventService
@@ -43,6 +47,32 @@ export class ScwePlayerPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load(false);
+    this.startAutoRefresh(); // ✅ Lancement du timer
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh(); // ✅ Nettoyage impératif
+  }
+
+  // --- LOGIQUE TIMER ---
+  private startAutoRefresh() {
+    this.stopAutoRefresh(); // Sécurité
+    this.timeLeft = 30;
+
+    this.refreshInterval = setInterval(() => {
+      this.timeLeft--;
+      if (this.timeLeft <= 0) {
+        this.refresh();
+        this.timeLeft = 30; // Reset
+      }
+    }, 1000);
+  }
+
+  private stopAutoRefresh() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
   }
 
   switchMode(mode: ViewMode) {
@@ -52,12 +82,16 @@ export class ScwePlayerPageComponent implements OnInit {
 
   refresh() {
     if (this.viewMode === 'active') this.loadedActive = false;
-    if (this.viewMode === 'history') this.loadedHistory = false;
+    // On ne force pas le reload de l'historique en auto-refresh car ça bouge peu
+    // Mais on reload le leaderboard
     if (this.viewMode === 'leaderboard') this.loadedLeaderboard = false;
+
+    // On garde le timeLeft à 30 si c'est un refresh manuel (ou auto)
+    this.timeLeft = 30;
+
     this.load(true);
   }
 
-  // Update depuis l'enfant -> invalide le leaderboard
   onItemUpdated(event: { viewItem: ScWorldEventParticipationViewDto, part: ScWorldEventParticipationDto }) {
     event.viewItem.participation = event.part;
     this.loadedLeaderboard = false;
@@ -70,7 +104,10 @@ export class ScwePlayerPageComponent implements OnInit {
     if (this.viewMode === 'leaderboard') {
       if (this.loadedLeaderboard && !force) return;
 
-      this.loading = true;
+      // On évite le loader global intempestif sur l'auto-refresh pour ne pas faire "clignoter" l'interface
+      // On met loading=true seulement si on n'a pas encore de données
+      if (!this.leaderboardParticipants.length) this.loading = true;
+
       this.scweEvent.getCurrent().subscribe({
         next: (event) => {
           if (!event) {
@@ -107,7 +144,9 @@ export class ScwePlayerPageComponent implements OnInit {
     if (isHistory && this.loadedHistory && !force) return;
     if (!isHistory && this.loadedActive && !force) return;
 
-    this.loading = true;
+    if (!isHistory && !this.activeItems.length) this.loading = true;
+    if (isHistory && !this.historyItems.length) this.loading = true;
+
     const obs = isHistory ? this.scweEvent.getHistory(0, 50) : this.scweEvent.getPlayable(0, 50);
 
     forkJoin({ events: obs, parts: this.scwePlayer.getMyParticipations() }).subscribe({
