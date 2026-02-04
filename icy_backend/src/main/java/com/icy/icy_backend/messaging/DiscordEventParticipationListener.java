@@ -1,11 +1,11 @@
 package com.icy.icy_backend.messaging;
 
-import com.icy.icy_backend.db.entity.Event;
-import com.icy.icy_backend.db.entity.EventParticipation;
-import com.icy.icy_backend.db.entity.User;
-import com.icy.icy_backend.db.repository.EventParticipationRepository;
-import com.icy.icy_backend.db.repository.EventRepository;
-import com.icy.icy_backend.db.repository.UserRepository;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.EventParticipation;
+import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.db.repository.event.EventRepository;
+import com.icy.icy_backend.db.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -76,3 +76,8 @@ public class DiscordEventParticipationListener {
         }
     }
 }
+
+
+
+
+

@@ -164,3 +164,4 @@ public class ScWorldEventService {
         return s.isEmpty() ? fallback : s;
     }
 }
+

@@ -11,7 +11,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 @Entity
-@Table(name = "sc_world_event_type")
+@Table(name = "sc_world_event_type", schema = "scworld")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,3 +40,6 @@ public class ScWorldEventType {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }
+
+
+

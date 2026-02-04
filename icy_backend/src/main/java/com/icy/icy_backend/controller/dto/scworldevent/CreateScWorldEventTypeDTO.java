@@ -12,3 +12,5 @@ public class CreateScWorldEventTypeDTO {
      */
     private String scoreSchema;
 }
+
+

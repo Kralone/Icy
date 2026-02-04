@@ -1,7 +1,7 @@
 package com.icy.icy_backend.security;
 
-import com.icy.icy_backend.db.entity.User;
-import com.icy.icy_backend.service.UserService;
+import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.service.user.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -105,3 +105,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+
+
+
+
+

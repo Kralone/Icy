@@ -1,7 +1,7 @@
 package com.icy.icy_backend.db.entity.scworldevent;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.icy.icy_backend.db.entity.User;
+import com.icy.icy_backend.db.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sc_world_event_participation")
+@Table(name = "sc_world_event_participation", schema = "scworld")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -49,3 +49,9 @@ public class ScWorldEventParticipation {
     @Column(name = "updated_at")
     private Instant updatedAt;
 }
+
+
+
+
+
+

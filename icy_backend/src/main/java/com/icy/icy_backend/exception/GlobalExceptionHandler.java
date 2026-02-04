@@ -1,10 +1,10 @@
 package com.icy.icy_backend.exception;
 
-import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
-import com.icy.icy_backend.service.rest.MessageService;
+import com.icy.icy_backend.service.common.MessageService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,3 +52,6 @@ public class GlobalExceptionHandler {
         return messageService.buildResponse("server.internal", null);
     }
 }
+
+
+

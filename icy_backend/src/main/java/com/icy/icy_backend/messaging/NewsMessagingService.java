@@ -1,8 +1,8 @@
 package com.icy.icy_backend.messaging;
 
 import com.icy.icy_backend.config.RabbitConfig;
-import com.icy.icy_backend.db.entity.News;
-import com.icy.icy_backend.db.entity.NewsType;
+import com.icy.icy_backend.db.entity.news.News;
+import com.icy.icy_backend.db.entity.news.NewsType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -115,3 +115,8 @@ public class NewsMessagingService {
         );
     }
 }
+
+
+
+
+

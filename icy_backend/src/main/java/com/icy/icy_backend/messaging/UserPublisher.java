@@ -32,3 +32,5 @@ public class UserPublisher {
         log.info("📤 Message 'users.password_reset' envoyé à RabbitMQ pour Discord ID={}", discordId);
     }
 }
+
+

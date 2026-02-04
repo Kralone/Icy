@@ -1,9 +1,9 @@
 package com.icy.icy_backend.messaging;
 
-import com.icy.icy_backend.db.entity.Event;
-import com.icy.icy_backend.db.entity.EventParticipation;
-import com.icy.icy_backend.db.entity.EventType;
-import com.icy.icy_backend.db.repository.EventParticipationRepository;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.EventParticipation;
+import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -95,3 +95,8 @@ public class EventPublisher {
     }
 
 }
+
+
+
+
+

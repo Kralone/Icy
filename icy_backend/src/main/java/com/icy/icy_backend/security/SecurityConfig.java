@@ -1,6 +1,6 @@
 package com.icy.icy_backend.security;
 
-import com.icy.icy_backend.db.repository.UserRepository;
+import com.icy.icy_backend.db.repository.user.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -89,3 +89,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+
+
+

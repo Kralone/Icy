@@ -14,3 +14,5 @@ public class UpdateScWorldEventDTO {
     private String bannerImageUrl;
     private String gallery;
 }
+
+

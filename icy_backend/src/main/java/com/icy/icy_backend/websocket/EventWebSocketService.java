@@ -1,7 +1,7 @@
 package com.icy.icy_backend.websocket;
 
-import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
-import com.icy.icy_backend.db.entity.Event;
+import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.websocket.dto.EventWebSocketMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,3 +31,8 @@ public class EventWebSocketService {
         messagingTemplate.convertAndSend(destination, payload);
     }
 }
+
+
+
+
+

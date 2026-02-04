@@ -94,3 +94,4 @@ public class ScWorldEventController {
         return ResponseEntity.ok().build();
     }
 }
+

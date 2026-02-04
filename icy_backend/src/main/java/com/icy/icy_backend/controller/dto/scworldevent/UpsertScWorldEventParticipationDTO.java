@@ -19,3 +19,5 @@ public class UpsertScWorldEventParticipationDTO {
      */
     private Map<String, Integer> points;
 }
+
+

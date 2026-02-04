@@ -1,10 +1,10 @@
 package com.icy.icy_backend.websocket.listener;
 
-import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
-import com.icy.icy_backend.controller.dto.response.UserShipDTO;
-import com.icy.icy_backend.db.entity.User;
-import com.icy.icy_backend.service.UserService;
-import com.icy.icy_backend.service.UserShipService;
+import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
+import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
+import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.service.user.UserService;
+import com.icy.icy_backend.service.user.UserShipService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.websocket.dto.FleetWebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -71,3 +71,7 @@ public class UserShipWebSocketListener {
         }
     }
 }
+
+
+
+

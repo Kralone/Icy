@@ -3,13 +3,13 @@ package com.icy.icy_backend.service.scworldevent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.controller.dto.scworldevent.UpsertScWorldEventParticipationDTO;
-import com.icy.icy_backend.db.entity.User;
+import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.scworldevent.ScWorldEvent;
 import com.icy.icy_backend.db.entity.scworldevent.ScWorldEventParticipation;
 import com.icy.icy_backend.db.repository.scworldevent.ScWorldEventParticipationRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.ScWorldEventPublisher;
-import com.icy.icy_backend.service.UserService;
+import com.icy.icy_backend.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -205,3 +205,7 @@ public class ScWorldEventParticipationService {
         return repository.findLeaderboard(eventId, PageRequest.of(page, size));
     }
 }
+
+
+
+

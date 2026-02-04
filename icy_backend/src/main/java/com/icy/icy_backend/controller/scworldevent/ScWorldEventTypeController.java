@@ -45,3 +45,5 @@ public class ScWorldEventTypeController {
         return ResponseEntity.ok().build();
     }
 }
+
+

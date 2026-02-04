@@ -17,3 +17,5 @@ public class CreateScWorldEventDTO {
      */
     private String gallery;
 }
+
+

@@ -38,3 +38,5 @@ public interface ScWorldEventRepository extends JpaRepository<ScWorldEvent, UUID
     @Query("SELECT e FROM ScWorldEvent e WHERE e.endAt IS NOT NULL AND e.endAt < :now")
     Page<ScWorldEvent> findPast(@Param("now") Instant now, Pageable pageable);
 }
+
+

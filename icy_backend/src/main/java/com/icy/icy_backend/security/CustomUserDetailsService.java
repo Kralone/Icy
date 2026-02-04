@@ -1,8 +1,8 @@
 package com.icy.icy_backend.security;
 
-import com.icy.icy_backend.db.entity.User;
-import com.icy.icy_backend.db.entity.UserRole;
-import com.icy.icy_backend.db.repository.UserRepository;
+import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.entity.user.UserRole;
+import com.icy.icy_backend.db.repository.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
@@ -54,3 +54,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     }
 }
+
+
+
+
+

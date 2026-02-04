@@ -1,7 +1,7 @@
 package com.icy.icy_backend.websocket.dto;
 
-import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
-import com.icy.icy_backend.controller.dto.response.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
+import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 
@@ -19,3 +19,6 @@ public class FleetWebSocketMessage
         this.fleet = fleet;
     }
 }
+
+
+

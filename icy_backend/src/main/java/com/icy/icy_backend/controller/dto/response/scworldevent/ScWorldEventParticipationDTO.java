@@ -52,3 +52,4 @@ public class ScWorldEventParticipationDTO {
                 .build();
     }
 }
+

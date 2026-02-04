@@ -37,3 +37,5 @@ public class MessagePublisher {
         publish(exchange, routingKey, Map.of("type", type, "message", message));
     }
 }
+
+

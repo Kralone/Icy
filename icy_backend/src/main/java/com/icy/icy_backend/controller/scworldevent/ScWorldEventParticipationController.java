@@ -91,3 +91,5 @@ public class ScWorldEventParticipationController {
                 .map(ScWorldEventParticipationDTO::from));
     }
 }
+
+

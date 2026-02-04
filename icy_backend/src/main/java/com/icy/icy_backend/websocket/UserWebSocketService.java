@@ -1,8 +1,8 @@
 package com.icy.icy_backend.websocket;
 
-import com.icy.icy_backend.controller.dto.response.UserShipDTO;
-import com.icy.icy_backend.db.entity.Ship;
-import com.icy.icy_backend.db.entity.UserShip;
+import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
+import com.icy.icy_backend.db.entity.ship.Ship;
+import com.icy.icy_backend.db.entity.user.UserShip;
 import com.icy.icy_backend.websocket.dto.ShipWebSocketMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,3 +46,8 @@ public class UserWebSocketService {
     }
 
 }
+
+
+
+
+

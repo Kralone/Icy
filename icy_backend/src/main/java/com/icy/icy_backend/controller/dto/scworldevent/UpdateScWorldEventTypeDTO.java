@@ -8,3 +8,5 @@ public class UpdateScWorldEventTypeDTO {
     private String imageUrl;
     private String scoreSchema;
 }
+
+

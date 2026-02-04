@@ -1,7 +1,9 @@
+package com.icy.icy_backend.utils;
+
 //package com.icy.icy_backend.utils;
 //
-//import com.icy.icy_backend.db.entity.Ship;
-//import com.icy.icy_backend.db.repository.ShipRepository;
+//import com.icy.icy_backend.db.entity.ship.Ship;
+//import com.icy.icy_backend.db.repository.ship.ShipRepository;
 //import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.boot.context.event.ApplicationReadyEvent;
 //import org.springframework.context.event.EventListener;
@@ -79,3 +81,8 @@
 //        return rawCrew.trim();
 //    }
 //}
+
+
+
+
+

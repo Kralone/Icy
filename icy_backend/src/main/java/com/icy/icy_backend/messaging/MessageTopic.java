@@ -38,3 +38,5 @@ public enum MessageTopic {
 
     private final String routingKey;
 }
+
+

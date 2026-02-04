@@ -1,6 +1,6 @@
 package com.icy.icy_backend.websocket;
 
-import com.icy.icy_backend.controller.dto.response.FleetSummaryResponse;
+import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
 import com.icy.icy_backend.websocket.dto.FleetWebSocketMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,3 +28,6 @@ public class ShipFleetWebSocketService {
         messagingTemplate.convertAndSend(destination, payload);
     }
 }
+
+
+

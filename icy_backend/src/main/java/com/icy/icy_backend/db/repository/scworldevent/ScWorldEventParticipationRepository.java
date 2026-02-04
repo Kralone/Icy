@@ -22,3 +22,5 @@ public interface ScWorldEventParticipationRepository extends JpaRepository<ScWor
     Page<ScWorldEventParticipation> findLeaderboard(@Param("eventId") UUID eventId, Pageable pageable);
 
 }
+
+

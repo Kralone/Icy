@@ -1,6 +1,6 @@
 package com.icy.icy_backend.websocket.dto;
 
-import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -13,3 +13,6 @@ public class EventWebSocketMessage {
     private List<EventResponseDTO> events;
     private String action; // "ADD", "UPDATE", "DELETE"
 }
+
+
+

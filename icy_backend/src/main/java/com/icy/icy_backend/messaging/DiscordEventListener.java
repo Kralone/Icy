@@ -1,9 +1,9 @@
 package com.icy.icy_backend.messaging;
 
-import com.icy.icy_backend.db.entity.Event;
-import com.icy.icy_backend.db.entity.News;
-import com.icy.icy_backend.db.repository.EventRepository;
-import com.icy.icy_backend.db.repository.NewsRepository;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.news.News;
+import com.icy.icy_backend.db.repository.event.EventRepository;
+import com.icy.icy_backend.db.repository.news.NewsRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,3 +81,8 @@ public class DiscordEventListener {
         log.info("✅ Event #{} lié à Discord (msg={}, channel={})", eventId, messageId, channelId);
     }
 }
+
+
+
+
+

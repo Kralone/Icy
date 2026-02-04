@@ -1,7 +1,7 @@
 package com.icy.icy_backend.websocket.dto;
 
-import com.icy.icy_backend.controller.dto.response.UserShipDTO;
-import com.icy.icy_backend.db.entity.Ship;
+import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
+import com.icy.icy_backend.db.entity.ship.Ship;
 import lombok.Getter;
 
 @Getter
@@ -17,3 +17,8 @@ public class ShipWebSocketMessage {
     }
 
 }
+
+
+
+
+

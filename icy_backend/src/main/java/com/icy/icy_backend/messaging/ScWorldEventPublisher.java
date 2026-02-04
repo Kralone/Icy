@@ -1,6 +1,6 @@
 package com.icy.icy_backend.messaging;
 
-import com.icy.icy_backend.db.entity.User;
+import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.scworldevent.ScWorldEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,3 +68,7 @@ public class ScWorldEventPublisher {
         }
     }
 }
+
+
+
+

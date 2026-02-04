@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sc_world_event")
+@Table(name = "sc_world_event", schema = "scworld")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -55,3 +55,5 @@ public class ScWorldEvent {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }
+
+

@@ -87,3 +87,5 @@ public class ScWorldEventTypeService {
         return s.isEmpty() ? fallback : s;
     }
 }
+
+

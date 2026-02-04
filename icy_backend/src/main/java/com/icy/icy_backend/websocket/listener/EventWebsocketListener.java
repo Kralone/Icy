@@ -1,8 +1,8 @@
 package com.icy.icy_backend.websocket.listener;
 
-import com.icy.icy_backend.controller.dto.response.EventResponseDTO;
-import com.icy.icy_backend.controller.dto.response.MessageResponse;
-import com.icy.icy_backend.service.EventService;
+import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.service.event.EventService;
 import com.icy.icy_backend.websocket.dto.EventWebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -46,3 +46,6 @@ public class EventWebsocketListener {
         }
     }
 }
+
+
+
