@@ -1,5 +1,6 @@
 package com.icy.icy_backend.messaging;
 
+import com.icy.icy_backend.config.RabbitConfig;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.news.News;
 import com.icy.icy_backend.db.repository.event.EventRepository;
@@ -29,7 +30,8 @@ public class DiscordEventListener {
      */
     @Transactional
     @RabbitListener(queues = {
-            "events.discordLinked.queue"
+            RabbitConfig.NEWS_DISCORD_LINKED_QUEUE,
+            RabbitConfig.EVENTS_DISCORD_LINKED_QUEUE
     })
     public void onDiscordLinked(Map<String, Object> message) {
         try {
