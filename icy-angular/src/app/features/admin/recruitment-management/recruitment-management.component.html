@@ -1,21 +1,21 @@
 <!-- recruitment-management.component.html -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8 space-y-10">
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-6 sm:p-10 space-y-10">
 
   <!-- === RETOUR === -->
   <div class="flex items-center justify-between">
     <a
       routerLink="/icy/admin"
-      class="text-sm text-cyan-300 hover:text-cyan-100 inline-flex items-center gap-1 transition"
+      class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
     >
       <span class="text-lg">←</span> Retour au tableau de bord
     </a>
   </div>
 
   <!-- ===================== RECRUTEMENTS OUVERTS ===================== -->
-  <section class="bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-xl border border-white/20">
+  <section class="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-cyan-200">Recrutements ouverts</h1>
+        <h1 class="text-2xl font-semibold text-cyan-200">Recrutements ouverts</h1>
       </div>
 
       <!-- Pagination controls (open) -->
@@ -25,7 +25,7 @@
           <select
             [(ngModel)]="openItemsPerPage"
             (ngModelChange)="onOpenPageSizeChange()"
-            class="px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            class="px-2 py-1 bg-[#0b1324] border border-white/10 rounded-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
             <option *ngFor="let size of pageSizes" [ngValue]="size">{{ size }}</option>
           </select>
@@ -35,7 +35,7 @@
           <button
             (click)="prevOpenPage()"
             [disabled]="openPage === 1"
-            class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 disabled:opacity-40 hover:bg-white/20 transition"
+            class="px-3 py-1.5 rounded-full bg-[#0b1324] border border-white/10 disabled:opacity-40 hover:border-cyan-400/40 transition"
           >
             Préc.
           </button>
@@ -43,7 +43,7 @@
           <button
             (click)="nextOpenPage()"
             [disabled]="openPage === openTotalPages || openTotalPages === 0"
-            class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 disabled:opacity-40 hover:bg-white/20 transition"
+            class="px-3 py-1.5 rounded-full bg-[#0b1324] border border-white/10 disabled:opacity-40 hover:border-cyan-400/40 transition"
           >
             Suiv.
           </button>
@@ -58,10 +58,10 @@
 
     <div
       *ngIf="!isLoading && openRecruitments.length > 0"
-      class="overflow-x-auto rounded-2xl bg-black/10 border border-white/10 shadow-inner icy-scrollbar"
+      class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
     >
       <table class="min-w-[1050px] w-full text-sm">
-        <thead class="sticky top-0 z-10 bg-[#1b263b]/90 backdrop-blur-xl text-cyan-300 uppercase text-xs tracking-wider border-b border-white/10">
+        <thead class="sticky top-0 z-10 bg-[#0b1324] text-cyan-200 uppercase text-xs tracking-[0.2em] border-b border-white/10">
         <tr>
           <th class="px-4 py-3 text-left w-[160px]">Candidat</th>
           <th class="px-4 py-3 text-left w-[150px]">Discord</th>
@@ -78,7 +78,7 @@
         <tbody class="text-gray-100">
         <tr
           *ngFor="let rec of openPaginatedRecruitments; let i = index"
-          class="border-b border-white/10 transition hover:bg-white/[0.04]"
+          class="border-b border-white/10 transition hover:bg-white/5"
           [ngClass]="i % 2 === 0 ? 'bg-white/[0.03]' : 'bg-transparent'"
         >
           <td class="px-4 py-3 font-semibold whitespace-nowrap align-top">{{ rec.username }}</td>
@@ -89,7 +89,7 @@
           <td class="px-4 py-3 whitespace-nowrap text-gray-200 align-top">{{ rec.createdAt | date:'short' }}</td>
 
           <td class="px-4 py-3 whitespace-nowrap align-top">
-            <span class="px-2 py-1 rounded-lg text-xs font-semibold uppercase border border-cyan-400/50 bg-cyan-500/10 text-cyan-200">
+            <span class="px-2 py-1 rounded-full text-xs font-semibold uppercase border border-cyan-400/50 bg-cyan-500/10 text-cyan-200">
               PENDING
             </span>
           </td>
@@ -97,7 +97,7 @@
           <td class="px-4 py-3 align-top">
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40
+              class="inline-flex items-center gap-2 rounded-full border border-cyan-400/40
                      bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20
                      text-xs font-semibold px-4 py-2 transition"
               (click)="openMotivation(rec)"
@@ -110,14 +110,14 @@
             <div class="inline-flex justify-end flex-wrap gap-2">
               <button
                 (click)="acceptRecruitment(rec)"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-green-400/60 bg-green-500/10 text-green-200 hover:bg-green-500/20 text-xs font-semibold px-3 py-2 transition"
+                class="inline-flex items-center gap-1.5 rounded-full border border-green-400/60 bg-green-500/10 text-green-200 hover:bg-green-500/20 text-xs font-semibold px-3 py-2 transition"
               >
                 ✅ Accepter
               </button>
 
               <button
                 (click)="refuseRecruitment(rec)"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-red-400/60 bg-red-500/10 text-red-200 hover:bg-red-500/20 text-xs font-semibold px-3 py-2 transition"
+                class="inline-flex items-center gap-1.5 rounded-full border border-red-400/60 bg-red-500/10 text-red-200 hover:bg-red-500/20 text-xs font-semibold px-3 py-2 transition"
               >
                 ❌ Refuser
               </button>
@@ -130,10 +130,10 @@
   </section>
 
   <!-- ===================== RECRUTEMENTS TRAITÉS ===================== -->
-  <section class="bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-xl border border-white/20">
+  <section class="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-cyan-200">Recrutements traités</h1>
+        <h1 class="text-2xl font-semibold text-cyan-200">Recrutements traités</h1>
       </div>
 
       <!-- Pagination controls (processed) -->
@@ -143,7 +143,7 @@
           <select
             [(ngModel)]="processedItemsPerPage"
             (ngModelChange)="onProcessedPageSizeChange()"
-            class="px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            class="px-2 py-1 bg-[#0b1324] border border-white/10 rounded-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
             <option *ngFor="let size of pageSizes" [ngValue]="size">{{ size }}</option>
           </select>
@@ -153,7 +153,7 @@
           <button
             (click)="prevProcessedPage()"
             [disabled]="processedPage === 1"
-            class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 disabled:opacity-40 hover:bg-white/20 transition"
+            class="px-3 py-1.5 rounded-full bg-[#0b1324] border border-white/10 disabled:opacity-40 hover:border-cyan-400/40 transition"
           >
             Préc.
           </button>
@@ -161,7 +161,7 @@
           <button
             (click)="nextProcessedPage()"
             [disabled]="processedPage === processedTotalPages || processedTotalPages === 0"
-            class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 disabled:opacity-40 hover:bg-white/20 transition"
+            class="px-3 py-1.5 rounded-full bg-[#0b1324] border border-white/10 disabled:opacity-40 hover:border-cyan-400/40 transition"
           >
             Suiv.
           </button>
@@ -176,10 +176,10 @@
 
     <div
       *ngIf="!isLoading && processedRecruitments.length > 0"
-      class="overflow-x-auto rounded-2xl bg-black/10 border border-white/10 shadow-inner icy-scrollbar"
+      class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
     >
       <table class="min-w-[1050px] w-full text-sm">
-        <thead class="sticky top-0 z-10 bg-[#1b263b]/90 backdrop-blur-xl text-cyan-300 uppercase text-xs tracking-wider border-b border-white/10">
+        <thead class="sticky top-0 z-10 bg-[#0b1324] text-cyan-200 uppercase text-xs tracking-[0.2em] border-b border-white/10">
         <tr>
           <th class="px-4 py-3 text-left w-[160px]">Candidat</th>
           <th class="px-4 py-3 text-left w-[150px]">Discord</th>
@@ -207,7 +207,7 @@
 
           <td class="px-4 py-3 whitespace-nowrap align-top">
             <span
-              class="px-2 py-1 rounded-lg text-xs font-semibold uppercase border"
+              class="px-2 py-1 rounded-full text-xs font-semibold uppercase border"
               [ngClass]="{
                 'border-green-400/50 bg-green-500/10 text-green-200': rec.status === 'ACCEPTED',
                 'border-red-400/50 bg-red-500/10 text-red-200': rec.status === 'REFUSED'
@@ -220,7 +220,7 @@
           <td class="px-4 py-3 align-top">
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40
+              class="inline-flex items-center gap-2 rounded-full border border-cyan-400/40
                      bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20
                      text-xs font-semibold px-4 py-2 transition"
               (click)="openMotivation(rec)"
@@ -242,7 +242,7 @@
   (click)="closeMotivation()"
 >
   <div
-    class="w-full max-w-3xl rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl shadow-2xl"
+    class="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0b1324] shadow-[0_28px_60px_rgba(0,0,0,0.6)]"
     (click)="$event.stopPropagation()"
   >
     <!-- Header -->
@@ -251,7 +251,7 @@
         <div class="text-cyan-200 font-semibold text-lg">
           {{ selectedRecruitment?.username }}
         </div>
-        <div class="text-gray-300 text-sm">
+        <div class="text-slate-300 text-sm">
           {{ selectedRecruitment?.discordTag }} • {{ selectedRecruitment?.createdAt | date:'medium' }}
         </div>
       </div>
@@ -269,24 +269,24 @@
     <div class="px-6 py-5 space-y-4">
       <!-- Infos essentielles -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-        <div class="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
+        <div class="rounded-xl border border-white/10 bg-[#101a2f] px-4 py-3">
           <div class="text-gray-400 text-xs uppercase tracking-wider">Expérience</div>
           <div class="text-gray-100 mt-1">{{ selectedRecruitment?.experience || '-' }}</div>
         </div>
 
-        <div class="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
+        <div class="rounded-xl border border-white/10 bg-[#101a2f] px-4 py-3">
           <div class="text-gray-400 text-xs uppercase tracking-wider">Gameplay</div>
           <div class="text-gray-100 mt-1">{{ selectedRecruitment?.preferredGameplay || '-' }}</div>
         </div>
 
-        <div class="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
+        <div class="rounded-xl border border-white/10 bg-[#101a2f] px-4 py-3">
           <div class="text-gray-400 text-xs uppercase tracking-wider">Référé par</div>
           <div class="text-gray-100 mt-1">{{ selectedRecruitment?.referral || '-' }}</div>
         </div>
       </div>
 
       <!-- Motivation -->
-      <div class="rounded-xl border border-white/10 bg-black/10 px-4 py-4">
+      <div class="rounded-xl border border-white/10 bg-[#101a2f] px-4 py-4">
         <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Motivation</div>
         <div class="text-gray-100 whitespace-pre-wrap break-words leading-relaxed max-h-[40vh] overflow-auto icy-scrollbar pr-2">
           {{ selectedRecruitment?.motivation }}
@@ -294,7 +294,7 @@
       </div>
 
       <!-- Commentaire -->
-      <div class="rounded-xl border border-white/10 bg-black/10 px-4 py-4 space-y-2">
+      <div class="rounded-xl border border-white/10 bg-[#101a2f] px-4 py-4 space-y-2">
         <div class="flex items-center justify-between">
           <div class="text-gray-400 text-xs uppercase tracking-wider">Commentaire admin</div>
         </div>
@@ -303,7 +303,7 @@
           [(ngModel)]="modalComment"
           rows="4"
           placeholder="Ajouter un commentaire (visible côté admin)…"
-          class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder-gray-400
+          class="w-full px-4 py-3 rounded-xl bg-[#0b1324] border border-white/10 text-gray-100 placeholder-gray-500
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 resize-none"
         ></textarea>
 
@@ -316,7 +316,7 @@
             type="button"
             (click)="saveComment()"
             [disabled]="isSavingComment"
-            class="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/50
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-cyan-400/50
                    bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20
                    px-4 py-2 text-sm font-semibold transition disabled:opacity-50"
           >
@@ -329,14 +329,14 @@
       <div class="flex justify-end gap-2 pt-2" *ngIf="selectedRecruitment?.status === 'PENDING'">
         <button
           (click)="acceptRecruitment(selectedRecruitment!)"
-          class="inline-flex items-center gap-2 rounded-xl border border-green-400/60 bg-green-500/10 text-green-200 hover:bg-green-500/20 text-sm font-semibold px-4 py-2 transition"
+          class="inline-flex items-center gap-2 rounded-full border border-green-400/60 bg-green-500/10 text-green-200 hover:bg-green-500/20 text-sm font-semibold px-4 py-2 transition"
         >
           ✅ Accepter
         </button>
 
         <button
           (click)="refuseRecruitment(selectedRecruitment!)"
-          class="inline-flex items-center gap-2 rounded-xl border border-red-400/60 bg-red-500/10 text-red-200 hover:bg-red-500/20 text-sm font-semibold px-4 py-2 transition"
+          class="inline-flex items-center gap-2 rounded-full border border-red-400/60 bg-red-500/10 text-red-200 hover:bg-red-500/20 text-sm font-semibold px-4 py-2 transition"
         >
           ❌ Refuser
         </button>

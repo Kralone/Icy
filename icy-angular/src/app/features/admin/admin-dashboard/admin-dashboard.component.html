@@ -1,5 +1,5 @@
 <!-- ================== ADMIN USERS - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8 space-y-8">
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-6 sm:p-10 space-y-8">
 
   <!-- Header -->
   <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
@@ -8,24 +8,25 @@
       (ngModelChange)="onSearchChange()"
       type="text"
       placeholder="🔍 Rechercher un utilisateur..."
-      class="w-full sm:w-1/3 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20
-             text-white placeholder-gray-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-cyan-400
+      class="w-full sm:w-1/3 px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10
+             text-white placeholder-gray-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-cyan-400
              transition"
     />
 
     <button
       (click)="isAddUserModalOpen = true"
-      class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-             text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105 w-full sm:w-auto"
+      class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+             text-slate-900 font-semibold px-6 py-2 rounded-full shadow-[0_18px_40px_rgba(0,255,255,0.2)]
+             transition transform hover:scale-[1.02] w-full sm:w-auto"
     >
       + Ajouter un membre
     </button>
   </div>
 
   <!-- Tableau responsive -->
-  <div class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl icy-scrollbar">
+  <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
     <table class="min-w-[700px] w-full text-sm text-gray-200">
-      <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
+      <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
       <tr>
         <th class="px-4 py-3 text-left cursor-pointer select-none" (click)="sortBy('username')">
           Nom
@@ -40,7 +41,7 @@
       <tbody>
       <tr
         *ngFor="let user of paginatedUsers"
-        class="hover:bg-white/10 transition duration-200 border-b border-white/10"
+        class="hover:bg-white/5 transition duration-200 border-b border-white/10"
       >
         <td class="px-4 py-3 font-medium break-words">{{ user.username }}</td>
         <td class="px-4 py-3 break-all">{{ user.discordId }}</td>
@@ -53,9 +54,9 @@
           </span>
         </td>
         <td class="px-4 py-3 flex flex-wrap gap-2">
-          <button class="text-blue-400 hover:text-blue-300 transition" (click)="editUser(user)">✏️ Modifier</button>
-          <button class="text-red-400 hover:text-red-300 transition" (click)="deleteUser(user.id)">🗑️ Supprimer</button>
-          <button class="text-yellow-400 hover:text-yellow-300 transition" (click)="resetPassword(user.id)">🔁 Reset PW</button>
+          <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="editUser(user)">Modifier</button>
+          <button class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition" (click)="deleteUser(user.id)">Supprimer</button>
+          <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="resetPassword(user.id)">Reset PW</button>
         </td>
       </tr>
 
@@ -77,11 +78,11 @@
   <!-- Pagination -->
   <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 text-sm">
     <div class="flex items-center gap-2">
-      <label class="text-gray-300">Éléments par page :</label>
+      <label class="text-slate-400">Éléments par page :</label>
       <select
         [(ngModel)]="itemsPerPage"
         (ngModelChange)="onPageSizeChange()"
-        class="px-2 py-1 bg-white/10 border border-white/20 rounded text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        class="px-2 py-1 bg-[#0b1324] border border-white/10 rounded-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
       >
         <option *ngFor="let size of [10, 20, 30]" [ngValue]="size">{{ size }}</option>
       </select>
@@ -91,7 +92,7 @@
       <button
         (click)="prevPage()"
         [disabled]="currentPage === 1"
-        class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40 hover:bg-white/20 transition"
+        class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
       >
         Préc.
       </button>
@@ -101,7 +102,7 @@
       <button
         (click)="nextPage()"
         [disabled]="currentPage === totalPages || totalPages === 0"
-        class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40 hover:bg-white/20 transition"
+        class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
       >
         Suiv.
       </button>
@@ -112,18 +113,18 @@
 <!-- ================== MODAL ================== -->
 <div
   *ngIf="isAddUserModalOpen"
-  class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
   (click)="closeModal()"
 >
   <div
-    class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative text-white"
+    class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-md p-6 sm:p-8 relative text-white"
     (click)="$event.stopPropagation()"
   >
     <button (click)="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">
       ✖
     </button>
 
-    <h2 class="text-2xl font-semibold mb-6 text-cyan-300">
+    <h2 class="text-2xl font-semibold mb-6 text-cyan-200">
       {{ isEditMode ? 'Modifier un utilisateur' : 'Ajouter un utilisateur' }}
     </h2>
 
@@ -132,37 +133,37 @@
 
       <!-- Username -->
       <div>
-        <label class="block mb-1 text-sm text-gray-300">Nom</label>
+        <label class="block mb-1 text-sm text-slate-300">Nom</label>
         <input
           type="text"
           name="username"
           placeholder="Nom"
           [(ngModel)]="newUser.username"
-          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+          class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         />
       </div>
 
       <!-- Discord ID -->
       <div>
-        <label class="block mb-1 text-sm text-gray-300">Discord ID</label>
+        <label class="block mb-1 text-sm text-slate-300">Discord ID</label>
         <input
           type="text"
           name="discordId"
           placeholder="0123456789"
           [(ngModel)]="newUser.discordId"
-          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
+          class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         />
       </div>
 
       <!-- Rôle -->
       <div>
-        <label class="block mb-1 text-sm text-gray-300">Rôle</label>
+        <label class="block mb-1 text-sm text-slate-300">Rôle</label>
         <select
           name="role"
           [(ngModel)]="newUser.role"
-          class="w-full px-4 py-2 bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+          class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         >
           <option class="bg-[#1b263b]" *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
@@ -173,7 +174,7 @@
       <div class="flex justify-end gap-4 pt-6">
         <button
           type="button"
-          class="text-gray-400 hover:text-white transition"
+          class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
           (click)="closeModal()"
         >
           Annuler
@@ -182,8 +183,8 @@
         <button
           type="submit"
           [disabled]="addUserForm.invalid"
-          class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-                 text-white px-5 py-2 rounded-lg font-semibold shadow-md transition"
+          class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition"
         >
           {{ isEditMode ? 'Modifier' : 'Ajouter' }}
         </button>

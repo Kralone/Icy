@@ -1,18 +1,21 @@
-<div class="p-4 sm:p-8 space-y-10 min-h-screen bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+<div class="min-h-screen bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-10 space-y-10">
 
   <!-- === RETOUR === -->
   <div class="flex items-center justify-between">
     <a
       routerLink="/icy/events"
-      class="text-sm text-gray-300 hover:text-white inline-flex items-center gap-1 transition"
+      class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
     >
       <span class="text-lg">←</span> Retour au calendrier
     </a>
   </div>
 
   <!-- === SECTION 1 : Ajouter un événement === -->
-  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-8 shadow-2xl space-y-6">
-    <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300">Ajouter un événement</h1>
+  <div class="bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.4)] space-y-6">
+    <div class="flex flex-col gap-2">
+      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Creation</p>
+      <h1 class="text-2xl sm:text-3xl font-semibold text-cyan-200">Ajouter un evenement</h1>
+    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Titre -->
@@ -22,7 +25,7 @@
           [(ngModel)]="newEvent.title"
           type="text"
           placeholder="Nom de l’événement"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white placeholder-gray-500
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
@@ -32,9 +35,9 @@
         <label class="block text-sm mb-1 text-gray-300">Type</label>
         <select
           [(ngModel)]="newEvent.type"
-          class="w-full px-4 py-2 rounded-lg
-                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                 border border-white/20
+          class="w-full px-4 py-2 rounded-xl
+                 bg-[#0b1324]
+                 border border-white/10
                  text-white
                  focus:ring-2 focus:ring-cyan-400 outline-none transition"
           required
@@ -55,7 +58,7 @@
           [(ngModel)]="newEvent.description"
           rows="3"
           placeholder="Détails de l’événement..."
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white placeholder-gray-500
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-none"
         ></textarea>
       </div>
@@ -66,7 +69,7 @@
         <input
           [(ngModel)]="newEvent.startDateTime"
           type="datetime-local"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
@@ -76,7 +79,7 @@
         <input
           [(ngModel)]="newEvent.endDateTime"
           type="datetime-local"
-          class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
@@ -86,8 +89,8 @@
       <button
         (click)="createEvent()"
         [disabled]="isFormInvalid"
-        class="px-5 py-2 rounded-lg font-semibold shadow-md bg-gradient-to-r from-cyan-500 to-blue-600
-               hover:from-cyan-400 hover:to-blue-500 text-white transition transform hover:scale-105
+        class="px-6 py-2 rounded-full font-semibold shadow-[0_18px_40px_rgba(0,255,255,0.2)] bg-gradient-to-r from-cyan-400 to-sky-500
+               hover:from-cyan-300 hover:to-sky-400 text-slate-900 transition transform hover:scale-[1.02]
                disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {{ isSubmitting ? 'Création…' : 'Ajouter' }}
@@ -98,16 +101,19 @@
   <!-- === SECTION 2 : Événements créés === -->
   <section class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <h2 class="text-xl font-bold text-cyan-300">Événements créés</h2>
+      <div class="space-y-1">
+        <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Historique</p>
+        <h2 class="text-xl font-semibold text-cyan-200">Evenements crees</h2>
+      </div>
 
       <div class="flex flex-wrap items-center gap-3 text-sm">
         <!-- Filtre par type -->
         <select
           [(ngModel)]="selectedTypeFilter"
           (ngModelChange)="applyEventFilter()"
-          class="px-4 py-2 rounded-lg
-                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                 border border-white/20
+          class="px-4 py-2 rounded-xl
+                 bg-[#0b1324]
+                 border border-white/10
                  text-white
                  focus:ring-2 focus:ring-cyan-400 outline-none transition"
         >
@@ -121,9 +127,9 @@
         <select
           [(ngModel)]="itemsPerPageEvents"
           (ngModelChange)="onItemsPerPageEventsChange()"
-          class="px-4 py-2 rounded-lg
-                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                 border border-white/20
+          class="px-4 py-2 rounded-xl
+                 bg-[#0b1324]
+                 border border-white/10
                  text-white
                  focus:ring-2 focus:ring-cyan-400 outline-none transition"
         >
@@ -134,17 +140,17 @@
       </div>
     </div>
 
-    <div *ngIf="isLoadingEvents" class="text-center text-gray-400 italic">Chargement des événements...</div>
-    <div *ngIf="!isLoadingEvents && events.length === 0" class="text-center text-gray-400 italic">
+    <div *ngIf="isLoadingEvents" class="text-center text-slate-400 italic">Chargement des événements...</div>
+    <div *ngIf="!isLoadingEvents && events.length === 0" class="text-center text-slate-400 italic">
       Aucun événement pour le moment.
     </div>
 
     <div
       *ngIf="!isLoadingEvents && events.length > 0"
-      class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl icy-scrollbar"
+      class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]"
     >
       <table class="min-w-[800px] w-full divide-y divide-white/10 text-sm">
-        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider">
+        <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em]">
         <tr>
           <th class="px-4 py-3 text-left">Titre</th>
           <th class="px-4 py-3 text-left">Type</th>
@@ -159,7 +165,7 @@
         <tr *ngFor="let e of paginatedEvents"
             [ngClass]="{
               'opacity-50 italic text-gray-400': e.finished,
-              'hover:bg-white/10 transition border-b border-white/10': true
+              'hover:bg-white/5 transition border-b border-white/10': true
             }">
           <td class="px-4 py-3 font-medium">{{ e.title }}</td>
           <td class="px-4 py-3">{{ e.type.name }}</td>
@@ -178,10 +184,8 @@
             <button
               (click)="openEditEventModal(e)"
               [disabled]="e.finished"
-              class="font-semibold transition px-3 py-1.5 rounded-lg shadow-md
-                     bg-gradient-to-r from-yellow-400 to-amber-500
-                     hover:from-yellow-300 hover:to-amber-400
-                     disabled:opacity-40 disabled:cursor-not-allowed"
+              class="font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5
+                     hover:border-cyan-400/40 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ✏️ Modifier
             </button>
@@ -194,7 +198,7 @@
     <!-- Pagination controls -->
     <div *ngIf="!isLoadingEvents && events.length > 0"
          class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-sm">
-      <div class="text-gray-300">
+      <div class="text-slate-300">
         Page {{ currentPageEvents }} / {{ totalPagesEvents }}
       </div>
 
@@ -202,8 +206,8 @@
         <button
           (click)="prevPageEvents()"
           [disabled]="currentPageEvents === 1"
-          class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40
-                 hover:bg-white/20 transition"
+          class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40
+                 hover:border-cyan-400/40 transition"
         >
           Préc.
         </button>
@@ -211,8 +215,8 @@
         <button
           (click)="nextPageEvents()"
           [disabled]="currentPageEvents === totalPagesEvents"
-          class="px-3 py-1 bg-white/10 border border-white/20 rounded disabled:opacity-40
-                 hover:bg-white/20 transition"
+          class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40
+                 hover:border-cyan-400/40 transition"
         >
           Suiv.
         </button>
@@ -222,37 +226,40 @@
 
   <!-- === SECTION 3 : Types d'événements === -->
   <section class="space-y-8">
-    <h2 class="text-xl font-bold text-cyan-300">Types d'événements</h2>
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Configuration</p>
+      <h2 class="text-xl font-semibold text-cyan-200">Types d'evenements</h2>
+    </div>
 
     <!-- Formulaire d’ajout de type -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)] space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <input
           [(ngModel)]="newType.name"
           placeholder="Nom du type"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20 border border-white/30
-             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10
+             text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <input
           [(ngModel)]="newType.textColor"
           placeholder="Couleur texte (#fff)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20 border border-white/30
-             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10
+             text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <input
           [(ngModel)]="newType.backgroundColor"
           placeholder="Couleur fond (#123abc)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20 border border-white/30
-             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10
+             text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <input
           [(ngModel)]="newType.imageUrl"
           placeholder="URL image (optionnel)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20 border border-white/30
-             text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10
+             text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
 
@@ -260,9 +267,9 @@
         <button
           (click)="createType()"
           [disabled]="isTypeSubmitting"
-          class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600
-             hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-4 py-2 shadow-md
-             transition transform hover:scale-105 disabled:opacity-60"
+          class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500
+             hover:from-cyan-300 hover:to-sky-400 text-slate-900 font-semibold px-5 py-2 shadow-md
+             transition transform hover:scale-[1.02] disabled:opacity-60"
         >
           ➕ Ajouter le type
         </button>
@@ -270,9 +277,9 @@
     </div>
 
     <!-- Tableau -->
-    <div class="overflow-x-auto rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl icy-scrollbar">
+    <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
       <table class="min-w-[700px] w-full divide-y divide-white/10 text-sm">
-        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider">
+        <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em]">
         <tr>
           <th class="px-4 py-3 text-left">Nom</th>
           <th class="px-4 py-3 text-left">Texte</th>
@@ -282,7 +289,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let type of types" class="hover:bg-white/10 transition border-b border-white/10">
+        <tr *ngFor="let type of types" class="hover:bg-white/5 transition border-b border-white/10">
           <td class="px-4 py-3 font-medium">{{ type.name }}</td>
           <td class="px-4 py-3">
             <div class="flex items-center gap-2">
@@ -304,8 +311,8 @@
             </ng-template>
           </td>
           <td class="px-4 py-3 text-right space-x-3">
-            <button (click)="editType(type)" class="text-yellow-400 hover:text-yellow-300 transition">✏️</button>
-            <button (click)="deleteType(type.name)" class="text-red-400 hover:text-red-300 transition">🗑️</button>
+            <button (click)="editType(type)" class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition">Modifier</button>
+            <button (click)="deleteType(type.name)" class="px-3 py-1 rounded-full border border-red-400/30 text-red-300 hover:border-red-400/60 transition">Supprimer</button>
           </td>
         </tr>
         </tbody>
@@ -315,15 +322,12 @@
 
   <!-- === MODALES === -->
   <!-- === MODAL MODIFICATION TYPE === -->
-  <div
-    *ngIf="editingType"
-    class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
-  >
+  <div *ngIf="editingType" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
     <div
-      class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl
+      class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)]
            w-full max-w-md p-6 sm:p-8 relative text-white max-h-[90vh] overflow-y-auto"
     >
-      <h3 class="text-2xl font-semibold mb-6 text-cyan-300">
+      <h3 class="text-2xl font-semibold mb-6 text-cyan-200">
         Modifier le type d’événement
       </h3>
 
@@ -331,31 +335,31 @@
         <input
           [(ngModel)]="editingType.name"
           readonly
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-gray-700/30 to-gray-600/30
-               border border-white/30 text-gray-400 cursor-not-allowed select-none"
+          class="w-full px-4 py-2 rounded-xl bg-[#101a2f]
+               border border-white/10 text-gray-400 cursor-not-allowed select-none"
         />
 
         <input
           [(ngModel)]="editingType.textColor"
           placeholder="Couleur du texte (#fff)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
+               border border-white/10 text-white placeholder-gray-500
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <input
           [(ngModel)]="editingType.backgroundColor"
           placeholder="Couleur du fond (#000)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
+               border border-white/10 text-white placeholder-gray-500
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <input
           [(ngModel)]="editingType.imageUrl"
           placeholder="URL image (optionnel)"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
+               border border-white/10 text-white placeholder-gray-500
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
       </div>
@@ -364,7 +368,7 @@
         <button
           type="button"
           (click)="cancelEditType()"
-          class="text-gray-400 hover:text-white transition"
+          class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
         >
           Annuler
         </button>
@@ -373,8 +377,8 @@
           type="button"
           (click)="updateType()"
           [disabled]="isTypeUpdating"
-          class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-               text-white px-5 py-2 rounded-lg font-semibold shadow-md transition
+          class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+               text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition
                disabled:opacity-60"
         >
           {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
@@ -384,15 +388,12 @@
   </div>
 
   <!-- === MODAL MODIFICATION ÉVÉNEMENT === -->
-  <div
-    *ngIf="editingEvent"
-    class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
-  >
+  <div *ngIf="editingEvent" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
     <div
-      class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl
+      class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)]
            w-full max-w-lg p-6 sm:p-8 relative text-white max-h-[90vh] overflow-y-auto"
     >
-      <h3 class="text-2xl font-semibold mb-6 text-cyan-300">
+      <h3 class="text-2xl font-semibold mb-6 text-cyan-200">
         Modifier l’événement
       </h3>
 
@@ -400,16 +401,16 @@
         <input
           [(ngModel)]="editingEvent.title"
           placeholder="Titre"
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
+               border border-white/10 text-white placeholder-gray-500
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         />
 
         <select
           [(ngModel)]="editingEvent.type.name"
-          class="w-full px-4 py-2 rounded-lg
-                 bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                 border border-white/20
+          class="w-full px-4 py-2 rounded-xl
+                 bg-[#0b1324]
+                 border border-white/10
                  text-white
                  focus:ring-2 focus:ring-cyan-400 outline-none transition"
         >
@@ -422,8 +423,8 @@
           [(ngModel)]="editingEvent.description"
           rows="3"
           placeholder="Description de l’événement..."
-          class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-               border border-white/30 text-white placeholder-gray-400 resize-none
+          class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
+               border border-white/10 text-white placeholder-gray-500 resize-none
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
         ></textarea>
 
@@ -431,15 +432,15 @@
           <input
             [(ngModel)]="editingEvent.startDateTime"
             type="datetime-local"
-            class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-                 border border-white/30 text-white focus:outline-none focus:ring-2
+            class="px-4 py-2 rounded-xl bg-[#0b1324]
+                 border border-white/10 text-white focus:outline-none focus:ring-2
                  focus:ring-cyan-400 transition"
           />
           <input
             [(ngModel)]="editingEvent.endDateTime"
             type="datetime-local"
-            class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-700/20 to-blue-700/20
-                 border border-white/30 text-white focus:outline-none focus:ring-2
+            class="px-4 py-2 rounded-xl bg-[#0b1324]
+                 border border-white/10 text-white focus:outline-none focus:ring-2
                  focus:ring-cyan-400 transition"
           />
         </div>
@@ -449,9 +450,8 @@
         <button
           type="button"
           (click)="confirmDeleteEvent()"
-          class="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-500/20 border border-red-400/50 text-red-300
-               hover:bg-red-500/30 transition-all hover:scale-105 active:scale-95
-               shadow-[0_0_10px_rgba(255,0,0,0.3)]"
+          class="w-full sm:w-auto px-4 py-2 rounded-full border border-red-400/40 text-red-300
+               hover:border-red-400/70 transition-all"
         >
           🗑️ Supprimer
         </button>
@@ -460,8 +460,8 @@
           <button
             type="button"
             (click)="cancelEditEvent()"
-            class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300
-                 hover:bg-white/20 transition-all"
+            class="px-4 py-2 rounded-full border border-white/10 text-gray-300
+                 hover:border-cyan-400/40 transition-all"
           >
             Annuler
           </button>
@@ -469,9 +469,8 @@
           <button
             type="button"
             (click)="updateEvent()"
-            class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-300
-                 hover:bg-cyan-500/30 transition-all hover:scale-105 active:scale-95
-                 shadow-[0_0_10px_rgba(0,255,255,0.3)]"
+            class="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-900
+                 hover:from-cyan-300 hover:to-sky-400 transition-all"
           >
             💾 Enregistrer
           </button>

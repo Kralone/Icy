@@ -1,21 +1,24 @@
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8 space-y-10">
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-10">
 
   <!-- Header -->
   <div class="flex items-center justify-between gap-4 flex-wrap">
-    <h2 class="text-3xl font-semibold text-cyan-300">🛰️ Admin – SC World Events</h2>
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Console</p>
+      <h2 class="text-2xl font-semibold text-cyan-200">Admin SC World Events</h2>
+    </div>
 
     <!-- Tabs -->
-    <div class="flex gap-2 bg-white/5 border border-white/15 rounded-2xl p-1">
+    <div class="flex gap-2 bg-[#0b1324] border border-white/10 rounded-full p-1">
       <button
         (click)="switchTab('events')"
-        class="px-4 py-2 rounded-xl transition active:scale-95"
+        class="px-4 py-2 rounded-full transition active:scale-95"
         [ngClass]="tab === 'events' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
       >
         Events
       </button>
       <button
         (click)="switchTab('types')"
-        class="px-4 py-2 rounded-xl transition active:scale-95"
+        class="px-4 py-2 rounded-full transition active:scale-95"
         [ngClass]="tab === 'types' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
       >
         Types & Schema
