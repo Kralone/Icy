@@ -89,9 +89,8 @@ export class ScweProgressEditorComponent implements OnChanges {
 
   clamp(val: number, f: any): number {
     const min = Number(f.min ?? 0);
-    const max = Number(f.max ?? Number.MAX_SAFE_INTEGER);
     if (!Number.isFinite(val)) val = 0;
-    return Math.min(max, Math.max(min, val));
+    return Math.max(min, val);
   }
 
   step(f: any, delta: number) {
@@ -101,10 +100,16 @@ export class ScweProgressEditorComponent implements OnChanges {
     c.setValue(next, { emitEvent: false });
   }
 
-  onManualInput(f: any) {
+  onManualBlur(f: any) {
     if (!this.form) return;
     const c = this.form.controls[f.key];
-    c.setValue(this.clamp(Number(c.value ?? 0), f), { emitEvent: false });
+    const raw = Number(c.value ?? 0);
+    if (!Number.isFinite(raw)) {
+      c.setValue(0, { emitEvent: false });
+      return;
+    }
+    const min = Number(f.min ?? 0);
+    if (raw < min) c.setValue(min, { emitEvent: false });
   }
 
   save() {

@@ -166,8 +166,6 @@ public class ScWorldEventParticipationService {
             int v = value == null ? 0 : value;
             JsonNode min = field.get("min");
             if (min != null && min.isNumber() && v < min.asInt()) throw new IllegalArgumentException("Valeur trop petite pour : " + key);
-            JsonNode max = field.get("max");
-            if (max != null && max.isNumber() && v > max.asInt()) throw new IllegalArgumentException("Valeur trop grande pour : " + key);
         }
     }
 

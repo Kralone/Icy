@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <div *ngFor="let it of items; trackBy: trackByEventId"
-       class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-hidden transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 group">
+       class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-visible transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 group">
 
     <div (click)="mode === 'history' ? toggle(it.event.id) : null"
          class="w-full text-left block outline-none"
@@ -124,10 +124,12 @@
       </div>
     </div>
 
-    <div class="overflow-hidden transition-all duration-500 ease-in-out border-t border-white/5 bg-black/20"
+    <div class="transition-all duration-500 ease-in-out border-t border-white/5 bg-black/20"
          [ngClass]="{
             'max-h-0 opacity-0': mode === 'history' && !expanded[it.event.id],
-            'max-h-[3000px] opacity-100': mode === 'active' || expanded[it.event.id]
+            'max-h-[3000px] opacity-100': mode === 'active' || expanded[it.event.id],
+            'overflow-hidden': mode === 'history' && !expanded[it.event.id],
+            'overflow-visible': mode === 'active' || expanded[it.event.id]
          }">
 
       <div class="p-6 md:p-8 space-y-8">
