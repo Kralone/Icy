@@ -83,12 +83,11 @@
                      'items-center left-1/2 -translate-x-1/2': !isLast
                    }">
 
-                <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-xl flex flex-col items-center min-w-[140px] backdrop-blur-xl">
+                <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-xl flex flex-col items-center min-w-[140px] w-max max-w-[320px] backdrop-blur-xl">
 
-                  <img *ngIf="m.imageUrl"
-                       [src]="m.imageUrl"
-                       class="w-48 h-32 object-cover rounded border border-white/10 mb-2 bg-black/50"
-                       alt="Reward" />
+                  <div *ngIf="m.imageUrl" class="h-32 w-auto rounded border border-white/10 mb-2 bg-black/50 inline-flex items-center justify-center">
+                    <img [src]="m.imageUrl" class="h-full w-auto max-w-full object-contain" alt="Reward" />
+                  </div>
 
                   <div class="flex items-center justify-center gap-2 w-full px-1">
                     <div class="text-center whitespace-nowrap">
