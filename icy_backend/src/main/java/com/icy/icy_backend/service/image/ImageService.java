@@ -1,7 +1,13 @@
 package com.icy.icy_backend.service.image;
 
+import com.icy.icy_backend.db.entity.image.ImageCategory;
 import com.icy.icy_backend.db.entity.image.ImageMetadata;
+import com.icy.icy_backend.db.entity.image.ImageSubcategory;
+import com.icy.icy_backend.db.entity.image.ImageTag;
+import com.icy.icy_backend.db.repository.image.ImageCategoryRepository;
 import com.icy.icy_backend.db.repository.image.ImageMetadataRepository;
+import com.icy.icy_backend.db.repository.image.ImageSubcategoryRepository;
+import com.icy.icy_backend.db.repository.image.ImageTagRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,22 +23,36 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class ImageService {
 
+    private static final String DEFAULT_TAG_COLOR = "#22d3ee";
+
     private final Path root;
     private final ImageMetadataRepository repo;
+    private final ImageTagRepository tagRepo;
+    private final ImageCategoryRepository categoryRepo;
+    private final ImageSubcategoryRepository subcategoryRepo;
 
     @Value("${icy.image.base-url:http://localhost:8081/images/}")
     private String imageBaseUrl;
 
     public ImageService(ImageMetadataRepository repo,
+                        ImageTagRepository tagRepo,
+                        ImageCategoryRepository categoryRepo,
+                        ImageSubcategoryRepository subcategoryRepo,
                         @Value("${icy.image.path:images}") String imagePath) throws IOException {
 
         this.repo = repo;
+        this.tagRepo = tagRepo;
+        this.categoryRepo = categoryRepo;
+        this.subcategoryRepo = subcategoryRepo;
         this.root = Paths.get(imagePath).toAbsolutePath().normalize();
 
         if (!Files.exists(root)) {
@@ -43,7 +63,13 @@ public class ImageService {
         }
     }
 
-    public ImageMetadata upload(MultipartFile file, UUID uploaderId, String uploadedBy) throws IOException {
+    public ImageMetadata upload(MultipartFile file,
+                                UUID uploaderId,
+                                String uploadedBy,
+                                List<String> tags,
+                                String category,
+                                String subcategory,
+                                Map<String, String> tagColors) throws IOException {
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || originalFilename.isBlank()) {
             throw new IllegalArgumentException("Nom de fichier invalide.");
@@ -62,6 +88,14 @@ public class ImageService {
         // 🌐 URL propre
         String url = imageBaseUrl + URLEncoder.encode(safeName, StandardCharsets.UTF_8);
 
+        String safeCategory = normalize(category);
+        String safeSubcategory = normalize(subcategory);
+        upsertCategory(safeCategory);
+        upsertSubcategory(safeCategory, safeSubcategory);
+
+        List<String> safeTags = tags == null ? List.of() : tags;
+        upsertTagColors(safeTags, tagColors);
+
         ImageMetadata meta = ImageMetadata.builder()
                 .name(safeName)
                 .url(url)
@@ -69,6 +103,9 @@ public class ImageService {
                 .uploadedAt(LocalDateTime.now())
                 .uploaderId(uploaderId)
                 .uploadedBy(uploadedBy)
+                .category(safeCategory)
+                .subcategory(safeSubcategory)
+                .tags(safeTags)
                 .build();
 
         return repo.save(meta);
@@ -77,6 +114,100 @@ public class ImageService {
 
     public List<ImageMetadata> listAll() {
         return repo.findAll();
+    }
+
+    public List<String> listCategories() {
+        return categoryRepo.findAll().stream()
+                .map(ImageCategory::getName)
+                .sorted(String::compareToIgnoreCase)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> listSubcategories(String category) {
+        String safeCategory = normalize(category);
+        if (safeCategory == null) {
+            return List.of();
+        }
+        return subcategoryRepo.findByCategoryNameOrderByNameAsc(safeCategory).stream()
+                .map(ImageSubcategory::getName)
+                .collect(Collectors.toList());
+    }
+
+    public List<ImageTag> listTags() {
+        return tagRepo.findAll();
+    }
+
+    public void upsertTagColors(Map<String, String> tagColors) {
+        upsertTagColors(List.of(), tagColors);
+    }
+
+    private void upsertTagColors(List<String> tags, Map<String, String> tagColors) {
+        if (tags == null) {
+            tags = List.of();
+        }
+        if (tagColors != null) {
+            for (Map.Entry<String, String> entry : tagColors.entrySet()) {
+                String name = entry.getKey();
+                String color = entry.getValue();
+                if (name == null || name.isBlank() || color == null || color.isBlank()) {
+                    continue;
+                }
+                tagRepo.save(ImageTag.builder().name(name).color(color).build());
+            }
+        }
+        for (String tag : tags) {
+            Optional<ImageTag> existing = tagRepo.findById(tag);
+            if (existing.isEmpty()) {
+                tagRepo.save(ImageTag.builder().name(tag).color(DEFAULT_TAG_COLOR).build());
+            }
+        }
+    }
+
+    public void createCategory(String name) {
+        String safeName = normalize(name);
+        if (safeName == null) {
+            return;
+        }
+        if (!categoryRepo.existsById(safeName)) {
+            categoryRepo.save(ImageCategory.builder().name(safeName).build());
+        }
+    }
+
+    public void createSubcategory(String category, String subcategory) {
+        String safeCategory = normalize(category);
+        String safeSubcategory = normalize(subcategory);
+        if (safeCategory == null || safeSubcategory == null) {
+            return;
+        }
+        createCategory(safeCategory);
+        if (!subcategoryRepo.existsByCategoryNameAndName(safeCategory, safeSubcategory)) {
+            subcategoryRepo.save(ImageSubcategory.builder()
+                    .categoryName(safeCategory)
+                    .name(safeSubcategory)
+                    .build());
+        }
+    }
+
+    private void upsertCategory(String category) {
+        if (category == null) {
+            return;
+        }
+        createCategory(category);
+    }
+
+    private void upsertSubcategory(String category, String subcategory) {
+        if (category == null || subcategory == null) {
+            return;
+        }
+        createSubcategory(category, subcategory);
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isBlank() ? null : trimmed;
     }
 
     public Resource getImage(String filename) {
@@ -104,6 +235,29 @@ public class ImageService {
 
         repo.delete(meta);
         log.info("🧹 Métadonnée supprimée : {}", meta.getId());
+    }
+
+    public ImageMetadata updateMetadata(UUID id,
+                                        String category,
+                                        String subcategory,
+                                        List<String> tags,
+                                        Map<String, String> tagColors) {
+        ImageMetadata meta = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Image non trouvée : " + id));
+
+        String safeCategory = normalize(category);
+        String safeSubcategory = normalize(subcategory);
+        upsertCategory(safeCategory);
+        upsertSubcategory(safeCategory, safeSubcategory);
+
+        List<String> safeTags = tags == null ? List.of() : tags;
+        upsertTagColors(safeTags, tagColors);
+
+        meta.setCategory(safeCategory);
+        meta.setSubcategory(safeSubcategory);
+        meta.setTags(safeTags);
+
+        return repo.save(meta);
     }
 }
 

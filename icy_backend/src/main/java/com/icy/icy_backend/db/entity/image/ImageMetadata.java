@@ -46,6 +46,12 @@ public class ImageMetadata {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String category;
+
+    @Column(columnDefinition = "TEXT")
+    private String subcategory;
+
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "tags", columnDefinition = "TEXT[]")
     private List<String> tags;

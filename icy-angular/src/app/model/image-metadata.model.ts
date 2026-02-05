@@ -5,5 +5,7 @@ url: string; // e.g. "/api/images/<file>"
 size: number; // bytes
 uploadedAt: string; // ISO string
 description?: string;
+category?: string;
+subcategory?: string;
 tags?: string[];
 }

@@ -23,6 +23,99 @@
   <section class="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl p-6 space-y-6">
     <h1 class="text-2xl font-bold text-cyan-300">📸 Bibliothèque d’images</h1>
 
+    <!-- Catégories -->
+    <div class="space-y-3">
+      <h2 class="text-sm uppercase tracking-widest text-slate-300">Catégories</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <button
+          (click)="selectCategory('Toutes')"
+          class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
+          [class.ring-2]="selectedCategory === 'Toutes'"
+          [class.ring-cyan-400]="selectedCategory === 'Toutes'"
+        >
+          <div class="h-16 bg-gradient-to-br from-cyan-500/20 to-blue-600/20"></div>
+          <div class="p-2 text-xs">
+            <div class="font-semibold text-white">Toutes</div>
+            <div class="text-slate-400">{{ images.length }} images</div>
+          </div>
+        </button>
+        <button
+          *ngFor="let c of categories"
+          (click)="selectCategory(c.name)"
+          class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
+          [class.ring-2]="selectedCategory === c.name"
+          [class.ring-cyan-400]="selectedCategory === c.name"
+        >
+          <div
+            class="h-16 bg-black/30 bg-center bg-cover"
+            [style.backgroundImage]="c.coverUrl ? 'url(' + c.coverUrl + ')' : 'none'"
+          ></div>
+          <div class="p-2 text-xs">
+            <div class="font-semibold text-white truncate" [title]="c.name">{{ c.name }}</div>
+            <div class="text-slate-400">{{ c.count }} images</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sous-catégories -->
+    <div *ngIf="selectedCategory !== 'Toutes'" class="space-y-3">
+      <h2 class="text-sm uppercase tracking-widest text-slate-300">Sous-catégories</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <button
+          (click)="selectSubcategory('Toutes')"
+          class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
+          [class.ring-2]="selectedSubcategory === 'Toutes'"
+          [class.ring-cyan-400]="selectedSubcategory === 'Toutes'"
+        >
+          <div class="h-14 bg-gradient-to-br from-cyan-500/10 to-blue-600/10"></div>
+          <div class="p-2 text-xs">
+            <div class="font-semibold text-white">Toutes</div>
+          </div>
+        </button>
+        <button
+          *ngFor="let sc of subcategoryCards(selectedCategory)"
+          (click)="selectSubcategory(sc.name)"
+          class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
+          [class.ring-2]="selectedSubcategory === sc.name"
+          [class.ring-cyan-400]="selectedSubcategory === sc.name"
+        >
+          <div
+            class="h-14 bg-black/30 bg-center bg-cover"
+            [style.backgroundImage]="sc.coverUrl ? 'url(' + sc.coverUrl + ')' : 'none'"
+          ></div>
+          <div class="p-2 text-xs">
+            <div class="font-semibold text-white truncate" [title]="sc.name">{{ sc.name }}</div>
+            <div class="text-slate-400">{{ sc.count }} images</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="space-y-2">
+      <h2 class="text-sm uppercase tracking-widest text-slate-300">Tags</h2>
+      <div class="flex flex-wrap gap-2">
+        <button
+          (click)="selectTag('Tous')"
+          class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
+          [ngClass]="selectedTag === 'Tous' ? 'bg-cyan-500/20 text-cyan-200' : ''"
+        >
+          Tous
+        </button>
+        <button
+          *ngFor="let tag of availableTags"
+          (click)="selectTag(tag)"
+          class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
+          [ngClass]="selectedTag === tag ? 'text-white' : 'text-slate-200'"
+          [style.backgroundColor]="selectedTag === tag ? tagColor(tag) : 'transparent'"
+        >
+          #{{ tag }}
+        </button>
+        <span *ngIf="availableTags.length === 0" class="text-xs text-slate-400 italic">Aucun tag</span>
+      </div>
+    </div>
+
     <!-- Barre de recherche -->
     <div class="flex items-center gap-3">
       <input
@@ -66,11 +159,28 @@
             <div>
               <h3 class="text-white font-semibold truncate max-w-[220px]" [title]="img.name">{{ img.name }}</h3>
               <p class="text-slate-400 text-xs">{{ img.size | number }} octets • {{ img.uploadedAt | date:'medium' }}</p>
+              <p *ngIf="img.category || img.subcategory" class="text-slate-300 text-xs mt-1">
+                {{ img.category || '—' }} / {{ img.subcategory || '—' }}
+              </p>
             </div>
-            <button (click)="delete(img)"
-                    class="text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg px-2 py-1 text-xs transition">
-              🗑
-            </button>
+            <div class="flex items-center gap-2">
+              <button (click)="openEditModal(img)"
+                      class="text-yellow-300 hover:text-yellow-200 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-2 py-1 text-xs transition">
+                ✏️
+              </button>
+              <button (click)="delete(img)"
+                      class="text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg px-2 py-1 text-xs transition">
+                🗑
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="img.tags?.length" class="flex flex-wrap gap-2">
+            <span *ngFor="let tag of img.tags"
+                  class="text-xs text-white border border-white/20 rounded-full px-2 py-0.5"
+                  [style.backgroundColor]="tagColor(tag)">
+              #{{ tag }}
+            </span>
           </div>
 
           <div class="flex items-center justify-between">
@@ -94,5 +204,283 @@
        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white/10 text-cyan-200 border border-white/20
               backdrop-blur-xl px-6 py-3 rounded-xl shadow-lg animate-fade-in-out">
     {{ toastMessage }}
+  </div>
+</div>
+
+<!-- Modal upload -->
+<div *ngIf="uploadModalOpen"
+     class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+  <div class="w-full max-w-3xl bg-[#0d1b2a] border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <h2 class="text-lg font-semibold text-cyan-200">Ajouter une image</h2>
+      <button (click)="closeUploadModal()" class="text-slate-300 hover:text-white">✕</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <div class="bg-black/30 rounded-xl overflow-hidden border border-white/10">
+        <img *ngIf="uploadPreviewUrl" [src]="uploadPreviewUrl" alt="Apercu"
+             class="w-full h-full object-contain max-h-[320px]" />
+        <div *ngIf="!uploadPreviewUrl" class="text-center text-slate-400 p-6">Apercu non disponible</div>
+      </div>
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Catégorie</label>
+          <div class="flex items-center gap-2">
+            <select
+              *ngIf="!useNewCategory"
+              [(ngModel)]="uploadCategory"
+              (change)="onCategorySelectChange(uploadCategory)"
+              class="flex-1 px-4 py-2 rounded-lg
+                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                     border border-white/20 text-white
+                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            >
+              <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
+              <option *ngFor="let c of categoriesDb" [value]="c" class="bg-[#1b263b] text-white">{{ c }}</option>
+            </select>
+            <input
+              *ngIf="useNewCategory"
+              type="text"
+              [(ngModel)]="newCategoryName"
+              placeholder="Nouvelle catégorie"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <button *ngIf="!useNewCategory" (click)="enableNewCategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              +
+            </button>
+            <button *ngIf="useNewCategory" (click)="saveNewCategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✓
+            </button>
+            <button *ngIf="useNewCategory" (click)="cancelNewCategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Sous-catégorie</label>
+          <div class="flex items-center gap-2">
+            <select
+              *ngIf="!useNewSubcategory"
+              [(ngModel)]="uploadSubcategory"
+              class="flex-1 px-4 py-2 rounded-lg
+                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                     border border-white/20 text-white
+                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            >
+              <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
+              <option *ngFor="let sc of subcategoriesDb" [value]="sc" class="bg-[#1b263b] text-white">{{ sc }}</option>
+            </select>
+            <input
+              *ngIf="useNewSubcategory"
+              type="text"
+              [(ngModel)]="newSubcategoryName"
+              placeholder="Nouvelle sous-catégorie"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <button *ngIf="!useNewSubcategory" (click)="enableNewSubcategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              +
+            </button>
+            <button *ngIf="useNewSubcategory" (click)="saveNewSubcategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✓
+            </button>
+            <button *ngIf="useNewSubcategory" (click)="cancelNewSubcategory()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Tags</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let tag of availableTagsForUpload"
+              (click)="toggleUploadTag(tag)"
+              class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
+              [ngClass]="uploadTags.includes(tag) ? 'text-white' : 'text-slate-200'"
+              [style.backgroundColor]="uploadTags.includes(tag) ? tagColor(tag) : 'transparent'"
+            >
+              #{{ tag }}
+            </button>
+            <span *ngIf="availableTagsForUpload.length === 0" class="text-xs text-slate-400 italic">Aucun tag</span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Nouveau tag</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              [(ngModel)]="newTagName"
+              placeholder="Nom du tag"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <input type="color" [(ngModel)]="newTagColor" class="h-10 w-12 rounded border border-white/20 bg-transparent" />
+            <button (click)="addNewTag()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              Ajouter
+            </button>
+          </div>
+        </div>
+
+        
+        <div class="flex gap-3 justify-end">
+          <button (click)="closeUploadModal()"
+                  class="px-4 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+            Annuler
+          </button>
+          <button (click)="confirmUpload()"
+                  class="px-5 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-400 text-white font-semibold">
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal edit -->
+<div *ngIf="editModalOpen"
+     class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+  <div class="w-full max-w-3xl bg-[#0d1b2a] border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <h2 class="text-lg font-semibold text-cyan-200">Modifier l'image</h2>
+      <button (click)="closeEditModal()" class="text-slate-300 hover:text-white">✕</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <div class="bg-black/30 rounded-xl overflow-hidden border border-white/10">
+        <img *ngIf="editingImage" [src]="urlOf(editingImage)" alt="Apercu"
+             class="w-full h-full object-contain max-h-[320px]" />
+      </div>
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Catégorie</label>
+          <div class="flex items-center gap-2">
+            <select
+              *ngIf="!editUseNewCategory"
+              [(ngModel)]="editCategory"
+              (change)="onEditCategorySelectChange(editCategory)"
+              class="flex-1 px-4 py-2 rounded-lg
+                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                     border border-white/20 text-white
+                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            >
+              <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
+              <option *ngFor="let c of categoriesDb" [value]="c" class="bg-[#1b263b] text-white">{{ c }}</option>
+            </select>
+            <input
+              *ngIf="editUseNewCategory"
+              type="text"
+              [(ngModel)]="editNewCategoryName"
+              placeholder="Nouvelle catégorie"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <button *ngIf="!editUseNewCategory" (click)="enableNewCategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              +
+            </button>
+            <button *ngIf="editUseNewCategory" (click)="saveNewCategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✓
+            </button>
+            <button *ngIf="editUseNewCategory" (click)="cancelNewCategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Sous-catégorie</label>
+          <div class="flex items-center gap-2">
+            <select
+              *ngIf="!editUseNewSubcategory"
+              [(ngModel)]="editSubcategory"
+              class="flex-1 px-4 py-2 rounded-lg
+                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
+                     border border-white/20 text-white
+                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
+            >
+              <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
+              <option *ngFor="let sc of subcategoriesDb" [value]="sc" class="bg-[#1b263b] text-white">{{ sc }}</option>
+            </select>
+            <input
+              *ngIf="editUseNewSubcategory"
+              type="text"
+              [(ngModel)]="editNewSubcategoryName"
+              placeholder="Nouvelle sous-catégorie"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <button *ngIf="!editUseNewSubcategory" (click)="enableNewSubcategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              +
+            </button>
+            <button *ngIf="editUseNewSubcategory" (click)="saveNewSubcategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✓
+            </button>
+            <button *ngIf="editUseNewSubcategory" (click)="cancelNewSubcategoryEdit()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Tags</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let tag of availableTagsForEdit"
+              (click)="toggleEditTag(tag)"
+              class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
+              [ngClass]="editTags.includes(tag) ? 'text-white' : 'text-slate-200'"
+              [style.backgroundColor]="editTags.includes(tag) ? tagColor(tag) : 'transparent'"
+            >
+              #{{ tag }}
+            </button>
+            <span *ngIf="availableTagsForEdit.length === 0" class="text-xs text-slate-400 italic">Aucun tag</span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs uppercase tracking-widest text-slate-300">Nouveau tag</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              [(ngModel)]="editNewTagName"
+              placeholder="Nom du tag"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
+                     focus:ring-2 focus:ring-cyan-400 outline-none"
+            />
+            <input type="color" [(ngModel)]="editNewTagColor" class="h-10 w-12 rounded border border-white/20 bg-transparent" />
+            <button (click)="addNewEditTag()"
+                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+              Ajouter
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button (click)="closeEditModal()"
+                  class="px-4 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
+            Annuler
+          </button>
+          <button (click)="confirmEdit()"
+                  class="px-5 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-400 text-white font-semibold">
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
