@@ -1,49 +1,33 @@
-<header class="min-h-screen relative overflow-hidden text-white parallax-section">
-  <!-- Image de fond fixe -->
-  <div class="absolute inset-0 z-0 hero-background"></div>
+<header class="front-hero-logo">
+  <div class="front-hero-logo__bg"></div>
+  <div class="front-hero-logo__mist"></div>
 
-  <!-- Bouton Espace Membre -->
-  <a
-    [routerLink]="['/login']"
-    class="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 text-xs sm:text-sm text-gray-300 bg-white/10 backdrop-blur-sm
-         px-3 py-1.5 sm:px-4 sm:py-2 rounded-md transition duration-300
-         hover:bg-white/20 hover:text-white hover:shadow-md flex items-center space-x-2 leading-none
-         invisible-before-anim animate-fade-in-opacity"
-  >
-    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round"
-            d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-    <span>{{strings.memberSpace}}</span>
-  </a>
-
-
-  <!-- Contenu central -->
-  <div class="relative z-10 flex flex-col items-center justify-center min-h-screen sm:min-h-[90vh] py-12 px-4 text-center parallax-content">
-    <img src="assets/images/home/iceforgeLogo.png"
-         class="w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 invisible-before-anim animate-fade-in-up" />
-
-    <h1 class="text-3xl sm:text-5xl md:text-6xl font-bold tracking-wide uppercase invisible-before-anim animate-fade-in-up delay-200">
-      {{strings.title}}
-    </h1>
-
-    <p class="text-xs sm:text-sm md:text-base text-gray-200 max-w-[90%] sm:max-w-md md:max-w-xl leading-snug mx-auto break-words invisible-before-anim animate-fade-in-up delay-400 uppercase">
-      {{strings.subtitle}}
-    </p>
-
-
-    <button
-      class="mt-4 sm:mt-6 px-6 sm:px-8 py-2 sm:py-3 bg-white text-gray-900 rounded-full shadow-xl
-             hover:scale-105 transition-transform duration-300
-             invisible-before-anim animate-fade-in-opacity cursor-pointer" (click)="goToRecruitment()">
-      {{strings.joinButton}}
-    </button>
+  <div class="front-hero-logo__nav">
+    <div class="front-hero-logo__brand">
+      <img src="assets/images/home/iceforgeLogo.png" alt="Logo IceForge" class="front-hero-logo__logo" />
+      <span class="front-hero-logo__brand-text">ICEFORGE</span>
+    </div>
+    <a [routerLink]="['/login']" class="front-hero-logo__login">
+      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span>{{strings.memberSpace}}</span>
+    </a>
   </div>
 
-  <!-- Scroll indicator -->
-  <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
-    <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-    </svg>
+  <div class="front-hero-logo__center">
+    <div class="front-hero-logo__badge">CORPORATION</div>
+    <div class="front-hero-logo__mark">
+      <img src="assets/images/home/iceforgeLogo.png" alt="Logo IceForge" />
+    </div>
+    <h1 class="front-hero-logo__title">{{strings.title}}</h1>
+    <p class="front-hero-logo__subtitle whitespace-pre-line">{{strings.subtitle}}</p>
+    <div class="front-hero-logo__actions">
+      <button class="front-hero-logo__cta" (click)="goToRecruitment()">
+        {{strings.joinButton}}
+      </button>
+    </div>
   </div>
+
 </header>

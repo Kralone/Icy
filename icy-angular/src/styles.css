@@ -1,8 +1,36 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
 @import "@ngxpert/hot-toast/styles.css";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --front-ink: #0b1220;
+  --front-surface: #0f172a;
+  --front-ice: #7dd3fc;
+  --front-cyan: #22d3ee;
+  --front-glow: rgba(34, 211, 238, 0.35);
+  --front-muted: #94a3b8;
+  --front-contrast: #e2e8f0;
+}
+
+.front-shell {
+  font-family: "Space Grotesk", "Sora", "Noto Sans", sans-serif;
+  background: var(--front-ink);
+  color: var(--front-contrast);
+}
+
+.front-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.front-section {
+  position: relative;
+  padding: 5rem 0;
+}
 
 
 .fc {

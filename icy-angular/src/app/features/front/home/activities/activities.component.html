@@ -1,52 +1,43 @@
-<section class="pt-6 pb-6 space-y-6 bg-gray-100 flex-1">
-  <!-- Première ligne -->
-  <div class="flex flex-col md:grid md:grid-cols-2 md:gap-6">
-    <div appScrollAnimation [startScroll]="0" [endScroll]="200" class="bg-white shadow-lg p-4 flex flex-col items-stretch justify-between rounded-br-[100px] rounded-tr-[30px] z-[2] transition-all duration-500 ease-in-out h-full">
-      <div class="grid grid-cols-10 w-full h-full items-center">
-        <p class="text-gray-700 col-span-7 flex items-center justify-center h-full text-sm text-center px-2 md:text-base md:text-left md:px-0" [innerHTML]="strings.quote1">
-        </p>
-        <div class="h-full w-1 bg-gradient-to-b from-gray-500 to-gray-300 col-span-1 rounded-md hidden md:block"></div>
-        <div class="bg-gray-300 w-24 h-24 sm:w-28 sm:h-28 md:w-40 md:h-40 flex items-center justify-center col-span-4 md:col-span-2 rounded-full ml-0 md:ml-[-30px]">
-          <img src="assets/images/home/logotest.png" class="object-contain max-w-full max-h-full">
-        </div>
-      </div>
+<section class="front-section activities-section">
+  <div class="front-container">
+    <div class="activities-header">
+      <h2 class="activities-title">Activites</h2>
+      <p class="activities-subtitle">Des operations coordonnees, de l'extraction a la securite.</p>
     </div>
-    <div appScrollAnimation [startScroll]="200" [endScroll]="400" [offsetX]="10" class="relative flex justify-center items-center h-full md:-ml-[20%] rounded-r-full">
-      <img src="assets/images/home/activities/mining.jpg" alt="Illustration" class="w-full max-w-[80%] h-auto object-cover md:absolute md:left-[-10%] md:w-[140%] md:max-w-none md:h-full">
-    </div>
-  </div>
 
-  <!-- Deuxième ligne -->
-  <div class="flex flex-col md:grid md:grid-cols-2 md:gap-6">
-    <div appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="10" [reverse]="true" class="relative flex justify-center items-center h-full md:-mr-[20%] rounded-r-full">
-      <img src="assets/images/home/activities/cargo.jpg" alt="Illustration" class="w-full max-w-[80%] h-auto object-cover md:absolute md:right-[-10%] md:w-[120%] md:max-w-none md:h-full object">
-    </div>
-    <div appScrollAnimation [startScroll]="0" [endScroll]="50" [reverse]="true" class="bg-white shadow-lg p-4 flex flex-col items-stretch justify-between rounded-bl-[100px] rounded-tl-[30px] z-[2] transition-all duration-500 ease-in-out pl-4 md:pl-12 h-full">
-      <div class="grid grid-cols-10 w-full h-full items-center">
-        <div class="bg-gray-300 w-24 h-24 sm:w-28 sm:h-28 md:w-40 md:h-40 flex items-center justify-center col-span-3 md:col-span-3 rounded-full ml-0">
-          <img src="assets/images/home/logotest.png" class="object-contain max-w-full max-h-full">
+    <div class="activities-grid">
+      <article appScrollAnimation [startScroll]="0" [endScroll]="200" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/mining.jpg" alt="Extraction" />
+          <div class="activity-card__shade"></div>
         </div>
-        <div class="h-full w-1 bg-gradient-to-b from-gray-500 to-gray-300 col-span-1 rounded-md hidden md:block"></div>
-        <p class="text-gray-700 col-span-6 flex items-center justify-center h-full text-sm text-center px-2 md:text-base md:text-left md:px-0" [innerHTML]="strings.quote2">
-        </p>
-      </div>
-    </div>
-  </div>
+        <div class="activity-card__body">
+          <span class="activity-card__index">01</span>
+          <p [innerHTML]="strings.quote1"></p>
+        </div>
+      </article>
 
-  <!-- Troisième ligne -->
-  <div class="flex flex-col md:grid md:grid-cols-2 md:gap-6">
-    <div appScrollAnimation [startScroll]="0" [endScroll]="50" class="bg-white shadow-lg p-4 flex flex-col items-stretch justify-between rounded-br-[100px] rounded-tr-[30px] z-[2] transition-all duration-500 ease-in-out h-full">
-      <div class="grid grid-cols-10 w-full h-full items-center">
-        <p class="text-gray-700 col-span-7 flex items-center justify-center h-full text-sm text-center px-2 md:text-base md:text-left md:px-0" [innerHTML]="strings.quote3">
-        </p>
-        <div class="h-full w-1 bg-gradient-to-b from-gray-500 to-gray-300 col-span-1 rounded-md hidden md:block"></div>
-        <div class="bg-gray-300 w-24 h-24 sm:w-28 sm:h-28 md:w-40 md:h-40 flex items-center justify-center col-span-4 md:col-span-2 rounded-full ml-0 md:ml-[-30px]">
-          <img src="assets/images/home/logotest.png" class="object-contain max-w-full max-h-full">
+      <article appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="10" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/cargo.jpg" alt="Logistique" />
+          <div class="activity-card__shade"></div>
         </div>
-      </div>
-    </div>
-    <div appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="-10" class="relative flex justify-center items-center h-full md:-ml-[20%] rounded-r-full">
-      <img src="assets/images/home/activities/space-combat.jpg" alt="Illustration" class="w-full max-w-[80%] h-auto object-cover md:absolute md:left-[-10%] md:w-[120%] md:max-w-none md:h-full">
+        <div class="activity-card__body">
+          <span class="activity-card__index">02</span>
+          <p [innerHTML]="strings.quote2"></p>
+        </div>
+      </article>
+
+      <article appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="-10" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/space-combat.jpg" alt="Sécurité" />
+          <div class="activity-card__shade"></div>
+        </div>
+        <div class="activity-card__body">
+          <span class="activity-card__index">03</span>
+          <p [innerHTML]="strings.quote3"></p>
+        </div>
+      </article>
     </div>
   </div>
 </section>

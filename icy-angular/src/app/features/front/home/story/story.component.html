@@ -1,70 +1,55 @@
-<section class="story-section py-12 bg-[#111] text-white">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-
-      <!-- Image -->
-      <div class="story-image relative overflow-hidden rounded-xl">
-        <img src="assets/images/home/space-journey.webp"
-             alt="Histoire de la Corpo"
-             class="object-cover w-full h-full max-h-[350px] sm:max-h-[400px] md:max-h-full fade-in rounded-2xl"
-             appFadeInOnScroll />
-      </div>
-
-      <!-- Texte -->
-      <div class="story-text">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+<section id="story" class="front-section story-intro">
+  <div class="front-container">
+    <div class="story-grid">
+      <div class="story-copy">
+        <h2 class="story-title">
           {{strings.mainTitle}}
         </h2>
-        <p class="text-sm sm:text-base md:text-lg leading-relaxed animate-fade-in-up" [innerHTML]="strings.mainParagraph">
-        </p>
+        <div class="story-line"></div>
+        <p class="story-text" [innerHTML]="strings.mainParagraph"></p>
       </div>
 
+      <div class="story-media" appFadeInOnScroll>
+        <div class="story-media__frame">
+          <img
+            src="assets/images/home/space-journey.webp"
+            alt="Histoire de la Corpo"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-
-<section class="pt-10 bg-gray-900 relative overflow-hidden pb-15">
-  <div class="max-w-6xl mx-auto px-4 flex flex-col lg:flex-row gap-12 relative">
-
-    <div class="w-full lg:w-1/2 flex items-center justify-center text-center lg:text-left min-h-[500px]">
-      <div>
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-white">
-          {{strings.sectionTitle}}
-        </h2>
-        <p class="text-sm sm:text-base md:text-lg leading-relaxed text-white max-w-md mx-auto lg:mx-0" [innerHTML]="strings.sectionParagraph"></p>
-        <br>
-        <p class="text-sm sm:text-base md:text-lg leading-relaxed text-white max-w-md mx-auto lg:mx-0" [innerHTML]="strings.sectionParagraph2"></p>
-
-      </div>
+<section class="front-section story-foundation">
+  <div class="front-container foundation-grid">
+    <div class="foundation-card">
+      <h2 class="foundation-title">
+        {{strings.sectionTitle}}
+      </h2>
+      <p class="foundation-text" [innerHTML]="strings.sectionParagraph"></p>
+      <p class="foundation-text" [innerHTML]="strings.sectionParagraph2"></p>
     </div>
 
     <div
-      class="w-full lg:w-1/2 relative px-4 lg:px-8 flex justify-center"
+      class="foundation-stack"
       [ngStyle]="{ height: isDesktop ? (staggeredImages.length * 160 + 'px') : null }"
     >
       <ng-container *ngFor="let image of staggeredImages; let i = index">
         <img
           [src]="image"
           alt="image"
-          class="object-cover rounded-xl shadow-lg transition-transform duration-300
-        w-44 sm:w-56 md:w-64 lg:w-72 xl:w-[22rem]
-        h-28 sm:h-36 md:h-40 lg:h-48 xl:h-56
-        relative lg:absolute mx-auto"
+          class="foundation-stack__image"
           [ngClass]="{
-        '-translate-x-[30%]': i % 2 === 0,
-        'translate-x-[30%]': i % 2 !== 0,
-        'lg:-translate-x-[15%]': i % 2 === 0,
-        'lg:translate-x-[15%]': i % 2 !== 0,
-        'mt-[-28px]': i > 0
-      }"
+            'foundation-stack__image--left': i % 2 === 0,
+            'foundation-stack__image--right': i % 2 !== 0,
+            'foundation-stack__image--shift': i > 0
+          }"
           [style.zIndex]="10 - i"
           [style.top.px]="isDesktop ? i * 160 : null"
         />
       </ng-container>
     </div>
-
-
   </div>
 </section>
 

@@ -1,13 +1,14 @@
-<div class="flex flex-col min-h-screen overflow-x-hidden">
+<div class="front-shell flex flex-col min-h-screen overflow-x-hidden">
   <front-header></front-header>
   <front-story></front-story>
   <front-activities></front-activities>
   <front-carousel></front-carousel>
   <!-- Footer Placeholder -->
-  <footer class="bg-black text-gray-400 text-sm py-6">
-    <div class="max-w-6xl mx-auto px-4 flex flex-col gap-2 text-center">
-      <p class="text-white font-semibold text-base">{{strings.footerCopyright}}</p>
-      <p [innerHTML]="strings.footerDisclaimer">
+  <footer class="relative bg-slate-950 text-gray-400 text-sm py-10">
+    <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.15),transparent_55%)]"></div>
+    <div class="relative max-w-6xl mx-auto px-4 flex flex-col gap-2 text-center">
+      <p class="text-slate-100 font-semibold text-base tracking-wide">{{strings.footerCopyright}}</p>
+      <p class="text-slate-400" [innerHTML]="strings.footerDisclaimer">
       </p>
     </div>
   </footer>
