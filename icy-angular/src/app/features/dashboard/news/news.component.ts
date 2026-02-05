@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NewsService } from '../../../core/services/news/news.service';
 import { News } from '../../../model/news.model';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MarkdownPipe],
   templateUrl: './news.component.html',
 })
 export class NewsComponent implements OnInit {

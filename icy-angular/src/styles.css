@@ -89,6 +89,82 @@
   }
 }
 
+@layer base {
+  .markdown-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0.6rem 0 0.4rem;
+  }
+
+  .markdown-content p {
+    margin: 0.4rem 0;
+  }
+
+  .markdown-content strong {
+    font-weight: 700;
+  }
+
+  .markdown-content em {
+    font-style: italic;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .markdown-content li {
+    margin: 0.2rem 0;
+  }
+
+  .markdown-content a {
+    color: #67e8f9;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .markdown-content blockquote {
+    margin: 0.6rem 0;
+    padding: 0.5rem 0.8rem;
+    border-left: 3px solid rgba(103, 232, 249, 0.6);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .markdown-content code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.95em;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+  }
+
+  .markdown-content pre {
+    margin: 0.6rem 0;
+    padding: 0.8rem;
+    overflow: auto;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 0.5rem;
+  }
+
+  .markdown-content pre code {
+    background: transparent;
+    padding: 0;
+  }
+}
+
 @keyframes spin-custom {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
