@@ -1,8 +1,15 @@
-<!-- ================== FLOTTE - STYLE ICY sans ombre basse ================== -->
+<!-- ================== FLOTTE - STYLE ICY ================== -->
 <div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8">
-  <h2 class="text-3xl font-bold mb-8 text-white drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]">
-    🛸 Résumé complet de la flotte
-  </h2>
+  <div class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_55%)]"></div>
+    <div class="relative space-y-3">
+      <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte</p>
+      <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Atlas des vaisseaux</h2>
+      <p class="text-sm text-slate-400 max-w-2xl">
+        Un focus, un vaisseau phare, puis une liste compacte pour garder la vue globale lisible.
+      </p>
+    </div>
+  </div>
 
   <!-- Chargement -->
   <div *ngIf="isLoading" class="h-24 flex items-center justify-center">
@@ -12,39 +19,44 @@
   <!-- Résumé -->
   <ng-container *ngIf="!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
 
-    <div *ngFor="let focus of objectKeys(fleetSummary)" class="space-y-4 mb-10">
-      <!-- Titre de catégorie -->
-      <h3 class="text-xl font-semibold uppercase tracking-wide text-cyan-300 border-b border-cyan-600/40 pb-2">
-        {{ focus }}
-        <span class="text-gray-400 text-sm">({{ fleetSummary[focus].length }})</span>
-      </h3>
+    <div *ngFor="let focus of objectKeys(fleetSummary)" class="mb-12">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-1/4 rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Focus</p>
+          <h3 class="text-2xl font-semibold text-cyan-200 mt-2">{{ focus }}</h3>
+          <div class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+            <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+            {{ fleetSummary[focus].length }} vaisseaux
+          </div>
+        </div>
 
-      <!-- Grille -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div
-          *ngFor="let ship of fleetSummary[focus]"
-          class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden shadow-lg
-                 transition-transform duration-300 transform hover:scale-105 hover:border-cyan-400"
-        >
-          <!-- Image -->
-          <img
-            *ngIf="ship.imageUrl"
-            [src]="ship.imageUrl"
-            alt="{{ ship.name }}"
-            class="w-full h-44 object-cover opacity-90 group-hover:opacity-100 transition duration-300"
-          />
-
-          <!-- Overlay -->
+        <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           <div
-            class="absolute inset-0 bg-gradient-to-t from-[#0d1b2a]/90 via-transparent opacity-0 group-hover:opacity-100
-                   transition-opacity duration-300"
-          ></div>
+            *ngFor="let ship of fleetSummary[focus]; let i = index"
+            class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
+          >
+            <div class="relative w-full" style="aspect-ratio: 4 / 3;">
+              <img
+                *ngIf="ship.imageUrl"
+                [src]="ship.imageUrl"
+                alt="{{ ship.name }}"
+                class="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
+              <div class="absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
+                {{ i + 1 }}
+              </div>
+            </div>
 
-          <!-- Infos -->
-          <div class="absolute bottom-0 w-full p-4 bg-[#0d1b2a]/70 backdrop-blur-md border-t border-white/10">
-            <h4 class="font-semibold text-base truncate" [title]="ship.name">
+            <div class="p-4 space-y-2">
+            <div class="text-lg font-semibold text-white truncate" [title]="ship.name">
               {{ ship.name }}
-            </h4>
+            </div>
+              <div class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
+                <span class="h-2 w-2 rounded-full bg-cyan-400/80"></span>
+                {{ focus }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -54,7 +66,7 @@
 
   <!-- Aucun vaisseau -->
   <ng-template #noFleet>
-    <div class="flex flex-col items-center justify-center h-96 text-gray-400">
+    <div class="flex flex-col items-center justify-center h-96 text-slate-400">
       <svg class="w-14 h-14 mb-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
