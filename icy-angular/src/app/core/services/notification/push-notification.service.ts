@@ -166,26 +166,30 @@ export class PushNotificationService {
     this.hasSubscription = false;
   }
 
-  async showLocalNotification(title: string, body: string, url?: string): Promise<boolean> {
-    this.playNotificationSound();
+  async showLocalNotification(title: string, body: string, url?: string, priority: number = 2): Promise<boolean> {
+    if (priority >= 2) {
+      this.playNotificationSound();
+    }
     this.notifications.add({
       id: crypto.randomUUID(),
       title,
       body,
       createdAt: new Date(),
       read: false,
+      priority,
       link: url,
     });
 
     return true;
   }
 
-  async sendTest(title: string, body: string, url?: string): Promise<void> {
+  async sendTest(title: string, body: string, url?: string, priority: number = 2): Promise<void> {
     await firstValueFrom(
       this.http.post(`${this.baseUrl}/test`, {
         title,
         body,
         url,
+        priority,
       })
     );
   }
@@ -276,19 +280,29 @@ export class PushNotificationService {
     const notification = payload?.notification ?? payload;
     const title = dataPayload?.title ?? notification?.title ?? 'Notification';
     const body = dataPayload?.body ?? notification?.body ?? '';
+    const rawPriority =
+      dataPayload?.priority ??
+      notification?.data?.priority ??
+      notification?.priority ??
+      payload?.data?.priority ??
+      2;
+    const priority = Number.isFinite(Number(rawPriority)) ? Number(rawPriority) : 2;
     const link =
       dataPayload?.url ??
       notification?.data?.url ??
       payload?.data?.url ??
       undefined;
 
-    this.playNotificationSound();
+    if (priority >= 2) {
+      this.playNotificationSound();
+    }
     this.notifications.add({
       id: crypto.randomUUID(),
       title,
       body,
       createdAt: new Date(),
       read: false,
+      priority,
       link,
     });
   }

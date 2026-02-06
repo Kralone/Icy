@@ -7,6 +7,7 @@ import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.db.repository.brand.BrandRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,13 @@ public class ShipService {
     private final ShipRepository shipRepository;
     private final BrandRepository brandRepository;
     private final MessageService messageService;
+    private final NotificationPushService notificationPushService;
 
-    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService) {
+    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService, NotificationPushService notificationPushService) {
         this.shipRepository = shipRepository;
         this.brandRepository = brandRepository;
         this.messageService = messageService;
+        this.notificationPushService = notificationPushService;
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getAllShips() {
@@ -52,6 +55,12 @@ public class ShipService {
 
         ship.setBrand(brand);
         Ship savedShip = shipRepository.save(ship);
+        notificationPushService.sendBroadcast(
+                "Catalogue : nouveau vaisseau",
+                savedShip.getName() + " est disponible.",
+                "/icy/hangar",
+                1
+        );
 
         return messageService.buildResponse("ship.created", savedShip, savedShip.getName());
     }

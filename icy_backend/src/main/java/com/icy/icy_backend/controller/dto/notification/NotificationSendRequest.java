@@ -10,6 +10,7 @@ public class NotificationSendRequest {
     private String title;
     private String body;
     private String url;
+    private Integer priority;
     private boolean broadcast;
     private List<UUID> userIds;
 }

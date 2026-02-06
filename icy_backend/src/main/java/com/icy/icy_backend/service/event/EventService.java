@@ -16,6 +16,7 @@ import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.auth.AuthService;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.user.UserService;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.websocket.EventWebSocketService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,8 +49,9 @@ public class EventService {
     private final UserService userService;
     private final AuthService authService;
     private final EventPublisher eventPublisher;
+    private final NotificationPushService notificationPushService;
 
-    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository, EventParticipationRepository participationRepository, UserService userService, AuthService authService, EventPublisher eventPublisher) {
+    public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository, EventParticipationRepository participationRepository, UserService userService, AuthService authService, EventPublisher eventPublisher, NotificationPushService notificationPushService) {
         this.eventRepository = eventRepository;
         this.messageService = messageService;
         this.eventWebSocketService = eventWebSocketService;
@@ -58,6 +60,7 @@ public class EventService {
         this.userService = userService;
         this.authService = authService;
         this.eventPublisher = eventPublisher;
+        this.notificationPushService = notificationPushService;
     }
 
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
@@ -92,6 +95,12 @@ public class EventService {
         // 🔹 Diffusion temps réel + message RabbitMQ
         eventWebSocketService.sendEventUpdate(saved, "ADD");
         eventPublisher.publishEventCreated(saved);
+        notificationPushService.sendBroadcast(
+                "Evenement : cree",
+                saved.getTitle() + " est disponible.",
+                "/icy/events",
+                2
+        );
 
         return messageService.buildResponse("event.created", new EventResponseDTO(saved));
     }
@@ -138,6 +147,30 @@ public class EventService {
         // --- Realtime + Rabbit
         eventWebSocketService.sendEventUpdate(saved, "UPDATE");
         eventPublisher.publishEventUpdated(saved);
+        if (dateChanged) {
+            notificationPushService.sendBroadcast(
+                    "Evenement : mis a jour",
+                    saved.getTitle() + " a ete mis a jour.",
+                    "/icy/events",
+                    2
+            );
+            List<EventParticipation> participations = participationRepository.findAllByEvent(saved).orElse(List.of());
+            List<UUID> participantIds = participations.stream()
+                    .map(EventParticipation::getUser)
+                    .filter(Objects::nonNull)
+                    .map(User::getId)
+                    .distinct()
+                    .toList();
+            if (!participantIds.isEmpty()) {
+                notificationPushService.sendToUsers(
+                        participantIds,
+                        "Evenement : mis a jour",
+                        saved.getTitle() + " a ete mis a jour.",
+                        "/icy/events",
+                        2
+                );
+            }
+        }
 
         return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
     }
@@ -145,9 +178,31 @@ public class EventService {
 
     public ResponseEntity<MessageResponse<Void>> deleteEvent(UUID id) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
+        List<EventParticipation> participations = participationRepository.findAllByEvent(event).orElse(List.of());
+        List<UUID> participantIds = participations.stream()
+                .map(EventParticipation::getUser)
+                .filter(Objects::nonNull)
+                .map(User::getId)
+                .distinct()
+                .toList();
         eventRepository.delete(event);
         eventWebSocketService.sendEventUpdate(event, "DELETE");
         eventPublisher.publishEventDeleted(event);
+        notificationPushService.sendBroadcast(
+                "Evenement : supprime",
+                event.getTitle() + " a ete supprime.",
+                "/icy/events",
+                2
+        );
+        if (!participantIds.isEmpty()) {
+            notificationPushService.sendToUsers(
+                    participantIds,
+                    "Evenement : supprime",
+                    event.getTitle() + " a ete supprime.",
+                    "/icy/events",
+                    2
+            );
+        }
         return messageService.buildResponse("event.deleted", null);
     }
 
@@ -286,6 +341,22 @@ public class EventService {
 
             log.info("⏰ Rappel 1h avant envoyé pour l’événement {}", event.getTitle());
             eventPublisher.sendGeneric("events.reminderOneHour", payload);
+
+            List<UUID> participantIds = participations.stream()
+                    .map(EventParticipation::getUser)
+                    .filter(Objects::nonNull)
+                    .map(User::getId)
+                    .distinct()
+                    .toList();
+            if (!participantIds.isEmpty()) {
+                notificationPushService.sendToUsers(
+                        participantIds,
+                        "Evenement : rappel",
+                        event.getTitle() + " commence dans 1h.",
+                        "/icy/events",
+                        3
+                );
+            }
         }
     }
 

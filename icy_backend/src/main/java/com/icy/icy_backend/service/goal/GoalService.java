@@ -53,6 +53,12 @@ public class GoalService {
 
         goalRepository.save(goal);
         log.info("Objectif créé : {}", goal.getName());
+        notificationPushService.sendBroadcast(
+                "Objectif : cree",
+                goal.getName(),
+                "/icy/goals",
+                1
+        );
     }
 
     /** ✅ UPDATE via CreateGoalDTO */
@@ -60,6 +66,7 @@ public class GoalService {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
         boolean wasCompleted = goal.isCompleted();
+        boolean wasPinned = goal.isPinned();
 
         // ----- champs simples -----
         if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
@@ -123,6 +130,14 @@ public class GoalService {
         goalRepository.save(goal);
         log.info("Objectif mis à jour : {}", goal.getName());
 
+        if (wasPinned != goal.isPinned()) {
+            notificationPushService.sendBroadcast(
+                    "Objectif epingle : mis a jour",
+                    goal.getName(),
+                    "/icy/goals",
+                    1
+            );
+        }
         if (!wasCompleted && goal.isCompleted()) {
             notifyGoalCompleted(goal);
         }
@@ -185,6 +200,12 @@ public class GoalService {
         goalToPin.setPinned(true);
         goalRepository.save(goalToPin);
         log.info("Objectif épinglé : {}", goalToPin.getName());
+        notificationPushService.sendBroadcast(
+                "Objectif epingle : mis a jour",
+                goalToPin.getName(),
+                "/icy/goals",
+                1
+        );
     }
 
     public void incrementGoal(Long id, int delta) {
@@ -206,15 +227,18 @@ public class GoalService {
 
     private void notifyGoalCompleted(Goal goal) {
         String body;
+        String title;
         if (goal.getParent() != null) {
             body = "Le sous-objectif \"" + goal.getName()
                     + "\" de l'objectif \"" + goal.getParent().getName()
                     + "\" est complete.";
+            title = "Sous-objectif : termine";
         } else {
             body = "L'objectif \"" + goal.getName() + "\" est complete.";
+            title = "Objectif : termine";
         }
 
-        notificationPushService.sendBroadcast("Objectif termine", body, "/icy/goals");
+        notificationPushService.sendBroadcast(title, body, "/icy/goals", 2);
     }
 }
 

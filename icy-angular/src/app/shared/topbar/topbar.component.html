@@ -66,6 +66,7 @@
           class="notif-item relative rounded-xl border border-white/10 bg-white/5 p-3 pr-14 cursor-pointer hover:bg-white/10 transition"
           [class.opacity-70]="notification.read"
           [class.notif-unread]="!notification.read"
+          [class.notif-priority-high]="notification.priority === 3"
           (click)="openNotification(notification)"
         >
           <span

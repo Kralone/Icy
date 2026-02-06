@@ -18,15 +18,15 @@ public class NotificationWebSocketService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public void sendBroadcast(String title, String body, String url) {
+    public void sendBroadcast(String title, String body, String url, int priority) {
         String destination = "/topic/notifications";
-        NotificationWebSocketMessage payload = new NotificationWebSocketMessage(title, body, url);
+        NotificationWebSocketMessage payload = new NotificationWebSocketMessage(title, body, url, priority);
         logger.info("Envoi notification broadcast WebSocket");
         messagingTemplate.convertAndSend(destination, payload);
     }
 
-    public void sendToUsers(List<UUID> userIds, String title, String body, String url) {
-        NotificationWebSocketMessage payload = new NotificationWebSocketMessage(title, body, url);
+    public void sendToUsers(List<UUID> userIds, String title, String body, String url, int priority) {
+        NotificationWebSocketMessage payload = new NotificationWebSocketMessage(title, body, url, priority);
         for (UUID userId : userIds) {
             String destination = "/topic/user/" + userId + "/notifications";
             logger.info("Envoi notification WebSocket a {}", destination);

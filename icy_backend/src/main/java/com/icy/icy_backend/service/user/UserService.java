@@ -10,6 +10,7 @@ import com.icy.icy_backend.db.repository.user.RoleRepository;
 import com.icy.icy_backend.db.repository.user.UserRoleRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.UserPublisher;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import com.icy.icy_backend.service.common.MessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,14 +34,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
     private final UserPublisher userPublisher;
+    private final NotificationPushService notificationPushService;
 
-    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher) {
+    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.messageService = messageService;
         this.userPublisher = userPublisher;
+        this.notificationPushService = notificationPushService;
     }
 
     /**
@@ -83,6 +86,12 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         logger.info("Utilisateur créé avec succès: {}", savedUser.getId());
+        notificationPushService.sendBroadcast(
+                "Membre : nouveau",
+                savedUser.getUsername() + " a rejoint IceForge.",
+                "/icy/dashboard",
+                1
+        );
 
         return messageService.buildResponse("user.created", savedUser);
     }
@@ -93,6 +102,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setPwdReset(false);
         userRepository.save(user);
+        notificationPushService.sendToUsers(
+                List.of(id),
+                "Compte : mot de passe mis a jour",
+                "Le mot de passe a ete mis a jour.",
+                "/icy/dashboard",
+                2
+        );
 
         return user.getUsername();
     }
@@ -106,6 +122,12 @@ public class UserService {
             user.setActive(false);
             userRepository.save(user);
             logger.info("Utilisateur désactivé avec succès: {}", user.getUsername());
+            notifyAdmins(
+                    "Admin : compte desactive",
+                    "Le compte de " + user.getUsername() + " a ete desactive.",
+                    "/icy/admin/members",
+                    3
+            );
             return messageService.buildResponse("user.deleted", null);
         } catch (ResourceNotFoundException e) {
             return messageService.buildResponse("user.notfound", null);
@@ -188,6 +210,13 @@ public class UserService {
 
         logger.info("Mot de passe temporaire réinitialisé pour {}", user.getUsername());
         userPublisher.sendTemporaryPassword(user.getDiscordId(), tempPassword);
+        notificationPushService.sendToUsers(
+                List.of(user.getId()),
+                "Compte : mot de passe reinitialise",
+                "Un mot de passe temporaire a ete genere.",
+                "/login",
+                3
+        );
     }
 
 
@@ -196,6 +225,9 @@ public class UserService {
         logger.info("Mise à jour de l'utilisateur {}", id);
 
         User user = findUserById(id);
+        List<String> previousRoles = user.getRoles().stream()
+                .map(userRole -> userRole.getRole().getName())
+                .toList();
         user.setUsername(username);
         user.setDiscordId(discordId);
 
@@ -212,7 +244,28 @@ public class UserService {
         user.getRoles().add(userRole); // ajoute proprement
 
         User saved = userRepository.save(user);
+        if (!previousRoles.contains(roleName) || previousRoles.size() != 1) {
+            notifyAdmins(
+                    "Admin : roles mis a jour",
+                    "Roles de " + saved.getUsername() + " : " + roleName,
+                    "/icy/admin/members",
+                    2
+            );
+        }
         return messageService.buildResponse("user.updated", saved);
+    }
+
+    public List<UUID> getAdminUserIds() {
+        return userRepository.findAllByRoleName("ADMIN").stream()
+                .map(User::getId)
+                .toList();
+    }
+
+    private void notifyAdmins(String title, String body, String url, int priority) {
+        List<UUID> adminIds = getAdminUserIds();
+        if (!adminIds.isEmpty()) {
+            notificationPushService.sendToUsers(adminIds, title, body, url, priority);
+        }
     }
 
 }

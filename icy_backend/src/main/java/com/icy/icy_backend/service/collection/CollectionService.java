@@ -15,6 +15,7 @@ import com.icy.icy_backend.db.repository.collection.UserCollectionRepository;
 import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.InternalErrorException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class CollectionService {
 
     private final CollectionTemplateRepository templateRepository;
     private final UserCollectionRepository userCollectionRepository;
+    private final NotificationPushService notificationPushService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // --- Templates ---
@@ -182,6 +184,12 @@ public class CollectionService {
 
             CollectionTemplate saved = templateRepository.save(template);
             log.info("Template '{}' créé avec succès (id={})", saved.getName(), saved.getId());
+            notificationPushService.sendBroadcast(
+                    "Collection : nouveau template",
+                    "Le template \"" + saved.getName() + "\" est disponible.",
+                    "/icy/collection",
+                    1
+            );
 
             return new TemplateDetailDTO(saved);
 

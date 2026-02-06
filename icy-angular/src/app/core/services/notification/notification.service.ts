@@ -7,6 +7,7 @@ export interface NotificationItem {
   body: string;
   createdAt: Date;
   read: boolean;
+  priority: number;
   link?: string;
 }
 
@@ -81,6 +82,7 @@ export class NotificationService {
       const hydrated = parsed.map((item) => ({
         ...item,
         createdAt: new Date(item.createdAt),
+        priority: Number.isFinite(item.priority) ? item.priority : 2,
       }));
       return this.pruneOld(hydrated);
     } catch {
@@ -94,6 +96,7 @@ export class NotificationService {
       const payload = items.map((item) => ({
         ...item,
         createdAt: item.createdAt.toISOString(),
+        priority: Number.isFinite(item.priority) ? item.priority : 2,
       }));
       this.storage.setItem(this.storageKey, JSON.stringify(payload));
     } catch {

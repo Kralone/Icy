@@ -5,6 +5,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { NotificationService, NotificationItem } from '../../core/services/notification/notification.service';
 import { PushNotificationService } from '../../core/services/notification/push-notification.service';
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 @Component({
   selector: 'app-topbar',
@@ -38,7 +39,8 @@ export class TopbarComponent {
     private authService: AuthService,
     private notificationService: NotificationService,
     private pushNotifications: PushNotificationService,
-    private websocketService: WebSocketService
+    private websocketService: WebSocketService,
+    private toast: HotToastService
   ) {}
 
   ngOnInit(): void {
@@ -65,13 +67,24 @@ export class TopbarComponent {
       try {
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if (!parsed) return;
-        this.pushNotifications.playInAppSound();
+        const rawPriority = parsed.priority ?? parsed?.data?.priority ?? 2;
+        const priority = Number.isFinite(Number(rawPriority)) ? Number(rawPriority) : 2;
+        if (priority >= 2) {
+          this.pushNotifications.playInAppSound();
+        }
+        if (priority >= 3) {
+          const title = parsed.title ?? 'Notification';
+          const body = parsed.body ?? '';
+          const message = body ? `${title} — ${body}` : title;
+          this.toast.show(message, { duration: 5000 });
+        }
         this.notificationService.add({
           id: crypto.randomUUID(),
           title: parsed.title ?? 'Notification',
           body: parsed.body ?? '',
           createdAt: new Date(),
           read: false,
+          priority,
           link: parsed.url ?? undefined,
         });
       } catch {

@@ -114,17 +114,20 @@ public class NotificationPushService {
     }
 
     public void sendTest(UUID userId, NotificationTestPushRequest request) {
+        int priority = resolvePriority(request.getPriority());
         String jsonPayload = buildPayload(
                 request.getTitle(),
                 request.getBody(),
-                request.getUrl()
+                request.getUrl(),
+                priority
         );
 
         notificationWebSocketService.sendToUsers(
                 List.of(userId),
                 request.getTitle(),
                 request.getBody(),
-                request.getUrl()
+                request.getUrl(),
+                priority
         );
 
         if (pushService == null) {
@@ -139,12 +142,13 @@ public class NotificationPushService {
         sendToSubscriptions(subs, jsonPayload);
     }
 
-    public void sendToUsers(List<UUID> userIds, String title, String body, String url) {
+    public void sendToUsers(List<UUID> userIds, String title, String body, String url, Integer priority) {
         if (userIds == null || userIds.isEmpty()) {
             return;
         }
 
-        notificationWebSocketService.sendToUsers(userIds, title, body, url);
+        int resolvedPriority = resolvePriority(priority);
+        notificationWebSocketService.sendToUsers(userIds, title, body, url, resolvedPriority);
 
         if (pushService == null) {
             return;
@@ -153,12 +157,13 @@ public class NotificationPushService {
         if (subs.isEmpty()) {
             return;
         }
-        String jsonPayload = buildPayload(title, body, url);
+        String jsonPayload = buildPayload(title, body, url, resolvedPriority);
         sendToSubscriptions(subs, jsonPayload);
     }
 
-    public void sendBroadcast(String title, String body, String url) {
-        notificationWebSocketService.sendBroadcast(title, body, url);
+    public void sendBroadcast(String title, String body, String url, Integer priority) {
+        int resolvedPriority = resolvePriority(priority);
+        notificationWebSocketService.sendBroadcast(title, body, url, resolvedPriority);
         if (pushService == null) {
             return;
         }
@@ -166,11 +171,11 @@ public class NotificationPushService {
         if (subs.isEmpty()) {
             return;
         }
-        String jsonPayload = buildPayload(title, body, url);
+        String jsonPayload = buildPayload(title, body, url, resolvedPriority);
         sendToSubscriptions(subs, jsonPayload);
     }
 
-    private String buildPayload(String title, String body, String url) {
+    private String buildPayload(String title, String body, String url, int priority) {
         Map<String, Object> payload = new HashMap<>();
         Map<String, Object> notification = new HashMap<>();
         String resolvedTitle = title == null ? "IceForge" : title;
@@ -179,15 +184,18 @@ public class NotificationPushService {
         notification.put("title", resolvedTitle);
         notification.put("body", resolvedBody);
         notification.put("icon", "/assets/icons/icon-192x192.png");
+        notification.put("priority", priority);
         if (url != null && !url.isBlank()) {
             Map<String, Object> data = new HashMap<>();
             data.put("url", url);
+            data.put("priority", priority);
             notification.put("data", data);
         }
         payload.put("notification", notification);
         Map<String, Object> dataPayload = new HashMap<>();
         dataPayload.put("title", resolvedTitle);
         dataPayload.put("body", resolvedBody);
+        dataPayload.put("priority", priority);
         if (url != null && !url.isBlank()) {
             dataPayload.put("url", url);
         }
@@ -198,6 +206,19 @@ public class NotificationPushService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Erreur de serialization push", e);
         }
+    }
+
+    private int resolvePriority(Integer priority) {
+        if (priority == null) {
+            return 2;
+        }
+        if (priority < 1) {
+            return 1;
+        }
+        if (priority > 3) {
+            return 3;
+        }
+        return priority;
     }
 
     private void sendToSubscriptions(List<NotificationSubscription> subs, String jsonPayload) {

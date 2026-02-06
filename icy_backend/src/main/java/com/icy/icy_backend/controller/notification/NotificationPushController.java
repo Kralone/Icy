@@ -61,13 +61,13 @@ public class NotificationPushController {
             throw new BadRequestException("Notification invalide");
         }
         if (request.isBroadcast()) {
-            pushService.sendBroadcast(request.getTitle(), request.getBody(), request.getUrl());
+            pushService.sendBroadcast(request.getTitle(), request.getBody(), request.getUrl(), request.getPriority());
             return ResponseEntity.ok().build();
         }
         if (request.getUserIds() == null || request.getUserIds().isEmpty()) {
             throw new BadRequestException("Aucun utilisateur cible");
         }
-        pushService.sendToUsers(request.getUserIds(), request.getTitle(), request.getBody(), request.getUrl());
+        pushService.sendToUsers(request.getUserIds(), request.getTitle(), request.getBody(), request.getUrl(), request.getPriority());
         return ResponseEntity.ok().build();
     }
 }

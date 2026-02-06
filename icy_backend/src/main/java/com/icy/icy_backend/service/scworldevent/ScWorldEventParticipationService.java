@@ -10,6 +10,7 @@ import com.icy.icy_backend.db.repository.scworldevent.ScWorldEventParticipationR
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.ScWorldEventPublisher;
 import com.icy.icy_backend.service.user.UserService;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class ScWorldEventParticipationService {
     private final UserService userService;
     private final ObjectMapper objectMapper;
     private final ScWorldEventPublisher scWorldEventPublisher;
+    private final NotificationPushService notificationPushService;
 
     public List<ScWorldEventParticipation> getAllForUser(UUID userId) {
         return repository.findAllByUser_Id(userId);
@@ -138,6 +140,22 @@ public class ScWorldEventParticipationService {
 
                 // On passe rewardText au publisher
                 scWorldEventPublisher.publishTierPassed(event, user, milestoneLabel, categoryName, imageUrl, rewardText);
+
+                String title = "SCWE : palier atteint";
+                String body;
+                if ("Global".equalsIgnoreCase(categoryName)) {
+                    body = user.getUsername() + " a franchi le palier " + milestoneLabel + " sur " + event.getTitle() + ".";
+                    notificationPushService.sendBroadcast(title, body, "/icy/scwe", 2);
+                } else {
+                    body = "Tu as franchi le palier " + milestoneLabel + " en " + categoryName + ".";
+                    notificationPushService.sendToUsers(
+                            List.of(user.getId()),
+                            title,
+                            body,
+                            "/icy/scwe",
+                            2
+                    );
+                }
             }
         }
     }

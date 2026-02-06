@@ -4,6 +4,8 @@ import com.icy.icy_backend.controller.dto.recruitment.RecruitmentDTO;
 import com.icy.icy_backend.db.entity.recruitment.Recruitment;
 import com.icy.icy_backend.db.repository.recruitment.RecruitmentRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.service.notification.NotificationPushService;
+import com.icy.icy_backend.service.user.UserService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -17,16 +19,26 @@ import java.util.List;
 public class RecruitmentService {
 
     private final RecruitmentRepository recruitmentRepository;
+    private final UserService userService;
+    private final NotificationPushService notificationPushService;
     private static final Logger logger = LoggerFactory.getLogger(RecruitmentService.class);
 
-    public RecruitmentService(RecruitmentRepository recruitmentRepository) {
+    public RecruitmentService(RecruitmentRepository recruitmentRepository, UserService userService, NotificationPushService notificationPushService) {
         this.recruitmentRepository = recruitmentRepository;
+        this.userService = userService;
+        this.notificationPushService = notificationPushService;
     }
 
     public RecruitmentDTO create(RecruitmentDTO dto) {
         logger.info("Creating recruitment for {}", dto.getUsername());
         Recruitment recruitment = new Recruitment(dto);
-        return new RecruitmentDTO(recruitmentRepository.save(recruitment));
+        Recruitment saved = recruitmentRepository.save(recruitment);
+        notifyAdmins(
+                "Recrutement : nouvelle candidature",
+                "Candidature recue pour " + saved.getUsername() + ".",
+                "/icy/admin/recrutement"
+        );
+        return new RecruitmentDTO(saved);
     }
 
     public List<RecruitmentDTO> getAll() {
@@ -66,6 +78,12 @@ public class RecruitmentService {
         log.info("Recruitment {} marked as {}", id, status);
     }
 
+    private void notifyAdmins(String title, String body, String url) {
+        var adminIds = userService.getAdminUserIds();
+        if (!adminIds.isEmpty()) {
+            notificationPushService.sendToUsers(adminIds, title, body, url, 2);
+        }
+    }
 }
 
 

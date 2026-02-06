@@ -7,6 +7,7 @@ import com.icy.icy_backend.db.entity.scworldevent.ScWorldEvent;
 import com.icy.icy_backend.db.entity.scworldevent.ScWorldEventType;
 import com.icy.icy_backend.db.repository.scworldevent.ScWorldEventRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ public class ScWorldEventService {
     private final ScWorldEventRepository repository;
     private final ScWorldEventTypeService typeService;
     private final ObjectMapper objectMapper;
+    private final NotificationPushService notificationPushService;
 
     // =========================================================================
     // LECTURE
@@ -115,7 +117,14 @@ public class ScWorldEventService {
                 .createdAt(Instant.now())
                 .build();
 
-        return repository.save(e);
+        ScWorldEvent saved = repository.save(e);
+        notificationPushService.sendBroadcast(
+                "SCWE : cree",
+                saved.getTitle() + " est disponible.",
+                "/icy/scwe",
+                2
+        );
+        return saved;
     }
 
     public ScWorldEvent update(UUID id, UpdateScWorldEventDTO dto) {

@@ -7,4 +7,5 @@ public class NotificationTestPushRequest {
     private String title;
     private String body;
     private String url;
+    private Integer priority;
 }

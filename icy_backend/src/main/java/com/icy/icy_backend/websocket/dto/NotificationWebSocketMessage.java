@@ -9,4 +9,5 @@ public class NotificationWebSocketMessage {
     private String title;
     private String body;
     private String url;
+    private int priority;
 }

@@ -10,6 +10,7 @@ import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.NewsMessagingService;
 import com.icy.icy_backend.security.AuthUtils;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import com.icy.icy_backend.service.user.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class NewsService {
     private final NewsTypeRepository typeRepository;
     private final UserService userService;
     private final NewsMessagingService newsMessagingService;
+    private final NotificationPushService notificationPushService;
 
     // === NEWS ===
     public Page<NewsDTO> getAll(Pageable pageable) {
@@ -74,6 +76,12 @@ public class NewsService {
 
         News saved = newsRepository.save(news);
         newsMessagingService.sendNewsCreated(saved);
+        notificationPushService.sendBroadcast(
+                "Actualite : nouvelle",
+                saved.getTitle(),
+                "/icy/dashboard",
+                1
+        );
 
         return saved;
     }
@@ -117,6 +125,12 @@ public class NewsService {
         log.info("Updating news id={}", id);
         News saved = newsRepository.save(existing);
         newsMessagingService.sendNewsUpdated(saved);
+        notificationPushService.sendBroadcast(
+                "Actualite : mise a jour",
+                saved.getTitle(),
+                "/icy/dashboard",
+                1
+        );
         return toDTO(saved);
     }
 
