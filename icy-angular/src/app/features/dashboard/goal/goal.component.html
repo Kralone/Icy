@@ -42,7 +42,7 @@
         <div
           class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-900"
           [style.width.%]="getAnimatedProgress(goal)"
-          [ngClass]="{ 'goal-progress--parent': goal.subGoals?.length }"
+          [ngClass]="{ 'goal-progress--parent': goal.subGoals.length }"
         ></div>
       </div>
       <div
@@ -75,7 +75,9 @@
         <div class="mb-3">
           <div class="flex justify-between text-sm text-gray-300">
             <span>{{ sub.name }}</span>
-            <span>{{ sub.current }}/{{ sub.target }} ({{ calculateProgress(sub) | number:'1.0-0' }}%)</span>
+            <span class="text-base font-semibold text-cyan-200">
+              {{ sub.current }}/{{ sub.target }}
+            </span>
           </div>
 
           <div class="relative w-full bg-white/10 rounded-full h-2 overflow-hidden">

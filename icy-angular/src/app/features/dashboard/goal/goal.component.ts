@@ -33,12 +33,17 @@ export class GoalComponent implements OnInit {
 
   calculateProgress(goal: Goal): number {
     if (!goal) return 0;
-    if (goal.subGoals?.length) {
-      const summary = this.getSubGoalSummary(goal);
-      if (summary.total === 0) return 0;
-      return Math.min(Math.max((summary.done / summary.total) * 100, 0), 100);
-    }
-    return goal.target > 0 ? Math.min((goal.current / goal.target) * 100, 100) : 0;
+    const total = this.getTotalProgress(goal);
+    if (total.target === 0) return 0;
+    return Math.min(Math.max((total.current / total.target) * 100, 0), 100);
+  }
+
+  isDone(goal: Goal): boolean {
+    if ((goal as any).completed !== undefined) return !!(goal as any).completed;
+    if (!goal) return false;
+    const total = this.getTotalProgress(goal);
+    if (total.target <= 0) return false;
+    return total.current >= total.target;
   }
 
   getAnimatedProgress(goal: Goal): number {
@@ -65,25 +70,31 @@ export class GoalComponent implements OnInit {
 
   visibleSubGoals(goal: Goal): Goal[] {
     if (!goal.subGoals) return [];
-    return goal.__expanded ? goal.subGoals : goal.subGoals.slice(0, this.maxSubGoals);
+    const sorted = [...goal.subGoals].sort((a, b) => {
+      const aDone = this.isDone(a);
+      const bDone = this.isDone(b);
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      return this.calculateProgress(b) - this.calculateProgress(a);
+    });
+    return goal.__expanded ? sorted : sorted.slice(0, this.maxSubGoals);
   }
 
   toggleSubGoals(goal: Goal): void {
     goal.__expanded = !goal.__expanded;
   }
 
-  getSubGoalSummary(goal: Goal): { done: number; total: number } {
-    if (!goal.subGoals?.length) return { done: 0, total: 0 };
-    const total = goal.subGoals.length;
-    const done = goal.subGoals.filter((child) => this.hasAnyProgress(child)).length;
-    return { done, total };
-  }
-
-  hasAnyProgress(goal: Goal): boolean {
-    if (!goal) return false;
-    if ((goal.current ?? 0) > 0) return true;
-    if (!goal.subGoals?.length) return false;
-    return goal.subGoals.some((child) => this.hasAnyProgress(child));
+  getTotalProgress(goal: Goal): { current: number; target: number } {
+    if (!goal) return { current: 0, target: 0 };
+    if (!goal.subGoals?.length) {
+      return { current: goal.current ?? 0, target: goal.target ?? 0 };
+    }
+    return goal.subGoals.reduce(
+      (acc, child) => {
+        const totals = this.getTotalProgress(child);
+        return { current: acc.current + totals.current, target: acc.target + totals.target };
+      },
+      { current: 0, target: 0 }
+    );
   }
 
   private initializeAnimatedProgress(): void {

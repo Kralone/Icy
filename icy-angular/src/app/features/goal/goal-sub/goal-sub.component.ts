@@ -74,39 +74,32 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
 
   calculateProgress(goal: Goal): number {
     if (!goal) return 0;
-    if (goal.subGoals?.length) {
-      const summary = this.getSubGoalSummary(goal);
-      if (summary.total === 0) return 0;
-      return Math.min(Math.max((summary.done / summary.total) * 100, 0), 100);
-    }
-    if (goal.target === 0) return 0;
-    const ratio = (goal.current / goal.target) * 100;
+    const total = this.getTotalProgress(goal);
+    if (total.target === 0) return 0;
+    const ratio = (total.current / total.target) * 100;
     return Math.min(Math.max(ratio, 0), 100);
   }
 
   isDone(goal: Goal): boolean {
     if ((goal as any).completed !== undefined) return !!(goal as any).completed;
     if (!goal) return false;
-    if (goal.subGoals?.length) {
-      const summary = this.getSubGoalSummary(goal);
-      return summary.total > 0 && summary.done === summary.total;
+    const total = this.getTotalProgress(goal);
+    if (total.target <= 0) return false;
+    return total.current >= total.target;
+  }
+
+  getTotalProgress(goal: Goal): { current: number; target: number } {
+    if (!goal) return { current: 0, target: 0 };
+    if (!goal.subGoals?.length) {
+      return { current: goal.current ?? 0, target: goal.target ?? 0 };
     }
-    if (goal.target <= 0) return false;
-    return (goal.current ?? 0) >= (goal.target ?? 0);
-  }
-
-  getSubGoalSummary(goal: Goal): { done: number; total: number } {
-    if (!goal.subGoals?.length) return { done: 0, total: 0 };
-    const total = goal.subGoals.length;
-    const done = goal.subGoals.filter((child) => this.hasAnyProgress(child)).length;
-    return { done, total };
-  }
-
-  hasAnyProgress(goal: Goal): boolean {
-    if (!goal) return false;
-    if ((goal.current ?? 0) > 0) return true;
-    if (!goal.subGoals?.length) return false;
-    return goal.subGoals.some((child) => this.hasAnyProgress(child));
+    return goal.subGoals.reduce(
+      (acc, child) => {
+        const totals = this.getTotalProgress(child);
+        return { current: acc.current + totals.current, target: acc.target + totals.target };
+      },
+      { current: 0, target: 0 }
+    );
   }
 
   private normalizeText(value: any): string {

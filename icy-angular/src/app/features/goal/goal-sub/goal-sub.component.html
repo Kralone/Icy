@@ -28,7 +28,7 @@
     >
 
       <!-- Titre + Description -->
-      <div class="flex items-start justify-between flex-wrap gap-2">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
         <div class="flex items-center gap-2 flex-wrap">
           <button
             *ngIf="goal.subGoals?.length"
@@ -76,7 +76,7 @@
 
           <span
             *ngIf="isDone(goal)"
-            class="rounded-full border border-white/15 bg-white/5 text-white/60"
+            class="rounded-full border border-white/15 bg-white/5 text-white/60 shrink-0"
             [ngClass]="{
               'text-[11px] px-2 py-0.5': depth === 0,
               'text-[10px] px-2 py-0.5': depth === 1,
@@ -111,10 +111,10 @@
           <div class="absolute inset-0 overflow-hidden rounded-md">
             <div
             class="h-full rounded-md transition-all duration-900 ease-out"
-              [ngClass]="{ 'goal-progress--parent': goal.subGoals?.length }"
+              [ngClass]="{ 'goal-progress--parent': goal.subGoals.length }"
               [ngStyle]="{
                 'width': progressWidth,
-                'background-image': goal.subGoals?.length
+                'background-image': goal.subGoals.length
                   ? undefined
                   : (isDone(goal)
                     ? 'linear-gradient(to right, #22d3ee, #22c55e)'
@@ -137,6 +137,18 @@
           >
             {{ progressValue | number:'1.0-0' }}%
           </div>
+        </div>
+        <div
+          *ngIf="!goal.subGoals.length"
+          class="mt-1 flex justify-end text-gray-300"
+          [ngClass]="{
+            'text-sm': depth === 0,
+            'text-xs': depth === 1,
+            'text-[10px]': depth >= 2,
+            'pr-12': isAdmin && depth === 0
+          }"
+        >
+          {{ goal.current }} / {{ goal.target }}
         </div>
       </div>
 
