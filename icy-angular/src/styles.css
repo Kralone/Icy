@@ -226,6 +226,33 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes goal-holo {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes goal-green-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+.goal-progress--parent {
+  background-image: linear-gradient(120deg, rgba(14, 165, 233, 0.9), rgba(56, 189, 248, 0.8));
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.32);
+  position: relative;
+  overflow: hidden;
+}
+
+.goal-progress--parent::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0) 0%, rgba(74, 222, 128, 1) 45%, rgba(74, 222, 128, 1) 55%, rgba(74, 222, 128, 0) 100%);
+  animation: goal-green-sweep 3.6s linear infinite;
+  mix-blend-mode: normal;
+}
+
 /* === Hauteur & flex corrects === */
 .fc {
   height: 100% !important;

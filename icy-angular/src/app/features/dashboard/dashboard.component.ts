@@ -6,11 +6,17 @@ import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-over
 import {EventService} from '../../core/services/event/event.service';
 import {GoalComponent} from './goal/goal.component';
 import {NewsComponent} from './news/news.component';
+import { Router } from '@angular/router';
+import { ScweWidgetComponent } from './scwe-widget/scwe-widget.component';
 
 interface IcyEvent {
+  id: string;
   name: string;
   date: string;
   type: string;
+  typeTextColor?: string;
+  typeBackgroundColor?: string;
+  typeImageUrl?: string;
 }
 
 interface ShipSummary {
@@ -24,7 +30,8 @@ interface ShipSummary {
   imports: [
     CommonModule,
     GoalComponent,
-    NewsComponent
+    NewsComponent,
+    ScweWidgetComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
@@ -41,7 +48,8 @@ export class DashboardComponent {
   constructor(
     private shipService: ShipService,
     private wsService: WebSocketService,
-    private eventService: EventService
+    private eventService: EventService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -96,12 +104,28 @@ export class DashboardComponent {
   loadEvents() {
     this.eventService.getUpcomingEvents().subscribe(response => {
       this.events = response.data.map(evt => ({
+        id: evt.id,
         name: evt.title,
         date: evt.startDateTime,
-        type: evt.type.name
+        type: evt.type.name,
+        typeTextColor: evt.type.textColor,
+        typeBackgroundColor: evt.type.backgroundColor,
+        typeImageUrl: evt.type.imageUrl
       }));
       console.log('📅 Events loaded');
       this.isEventsLoading = false;
+    });
+  }
+
+  capitalizeFirst(value: string | null | undefined): string {
+    if (!value) return '';
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  openEvent(event: any): void {
+    if (!event?.id) return;
+    this.router.navigate(['/icy/events'], {
+      queryParams: { eventId: event.id }
     });
   }
 

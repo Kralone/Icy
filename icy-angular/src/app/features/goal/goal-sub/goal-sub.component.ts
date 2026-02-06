@@ -20,10 +20,19 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
 
   loading = false;
   progressWidth = '0%';
+  progressValue = 0;
+  progressLabelLeft = 0;
+  progressLabelAlign: 'left' | 'center' | 'right' = 'center';
+  private hasAnimated = false;
+  private lastGoalId: number | null = null;
 
   constructor(private goalService: GoalService) {}
 
   ngOnChanges(): void {
+    if (this.goal?.id !== this.lastGoalId) {
+      this.lastGoalId = this.goal?.id ?? null;
+      this.hasAnimated = false;
+    }
     const expanded = (this.goal as any).__expanded;
     if (expanded !== undefined) {
       this.showChildren = expanded;
@@ -37,21 +46,67 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
 
   private updateProgressBar(): void {
     const progress = this.calculateProgress(this.goal);
-    requestAnimationFrame(() => {
-      this.progressWidth = progress.toFixed(2) + '%';
-    });
+    const clamped = Math.min(100, Math.max(0, progress));
+    const labelLeft = clamped <= 6 ? 0 : clamped >= 94 ? 100 : clamped;
+    this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
+
+    if (!this.hasAnimated) {
+      this.progressWidth = '0%';
+      this.progressValue = 0;
+      this.progressLabelLeft = 4;
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          this.progressWidth = clamped.toFixed(2) + '%';
+          this.progressValue = clamped;
+          this.progressLabelLeft = labelLeft;
+          this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
+          this.hasAnimated = true;
+        }, 350);
+      });
+      return;
+    }
+
+    this.progressWidth = clamped.toFixed(2) + '%';
+    this.progressValue = clamped;
+    this.progressLabelLeft = labelLeft;
+    this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
   }
 
   calculateProgress(goal: Goal): number {
-    if (!goal || goal.target === 0) return 0;
+    if (!goal) return 0;
+    if (goal.subGoals?.length) {
+      const summary = this.getSubGoalSummary(goal);
+      if (summary.total === 0) return 0;
+      return Math.min(Math.max((summary.done / summary.total) * 100, 0), 100);
+    }
+    if (goal.target === 0) return 0;
     const ratio = (goal.current / goal.target) * 100;
     return Math.min(Math.max(ratio, 0), 100);
   }
 
   isDone(goal: Goal): boolean {
     if ((goal as any).completed !== undefined) return !!(goal as any).completed;
-    if (!goal || goal.target <= 0) return false;
+    if (!goal) return false;
+    if (goal.subGoals?.length) {
+      const summary = this.getSubGoalSummary(goal);
+      return summary.total > 0 && summary.done === summary.total;
+    }
+    if (goal.target <= 0) return false;
     return (goal.current ?? 0) >= (goal.target ?? 0);
+  }
+
+  getSubGoalSummary(goal: Goal): { done: number; total: number } {
+    if (!goal.subGoals?.length) return { done: 0, total: 0 };
+    const total = goal.subGoals.length;
+    const done = goal.subGoals.filter((child) => this.hasAnyProgress(child)).length;
+    return { done, total };
+  }
+
+  hasAnyProgress(goal: Goal): boolean {
+    if (!goal) return false;
+    if ((goal.current ?? 0) > 0) return true;
+    if (!goal.subGoals?.length) return false;
+    return goal.subGoals.some((child) => this.hasAnyProgress(child));
   }
 
   private normalizeText(value: any): string {

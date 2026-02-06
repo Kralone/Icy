@@ -8,7 +8,7 @@ import { EventService, EventDTO } from '../../core/services/event/event.service'
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { EventType } from '../../model/event-type.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-events',
@@ -75,7 +75,9 @@ export class EventsComponent implements AfterViewInit {
     private eventService: EventService,
     private wsService: WebSocketService,
     private authService: AuthService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngAfterViewInit() {
@@ -84,6 +86,14 @@ export class EventsComponent implements AfterViewInit {
 
     this.isLoading = true;
     this.loadEvents();
+
+    this.route.queryParamMap.subscribe(params => {
+      const eventId = params.get('eventId');
+      if (eventId) {
+        this.pendingEventId = eventId;
+        this.tryOpenEventFromQuery();
+      }
+    });
 
     // Attendre que FullCalendar soit rendu avant d'appliquer la vue
     this.ngZone.onStable.subscribe(() => {
@@ -131,6 +141,7 @@ export class EventsComponent implements AfterViewInit {
 
           this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
+          this.tryOpenEventFromQuery();
         }
       } catch {
         console.warn('Erreur de parsing', message);
@@ -231,7 +242,7 @@ export class EventsComponent implements AfterViewInit {
 
   onEventClick(arg: any): void {
     const event = arg.event;
-    this.selectedEvent = {
+    this.openEventModal({
       id: event.id,
       title: event.title,
       type: event.extendedProps.type,
@@ -239,9 +250,7 @@ export class EventsComponent implements AfterViewInit {
       startDateTime: event.startStr,
       endDateTime: event.endStr,
       finished: event.extendedProps.finished
-    };
-    this.showDetailsModal = true;
-    this.initializeParticipationData();
+    });
   }
 
   private initializeParticipationData() {
@@ -261,5 +270,36 @@ export class EventsComponent implements AfterViewInit {
       next: () => this.initializeParticipationData(),
       error: (err) => console.error('Erreur lors de la participation', err)
     });
+  }
+
+  private pendingEventId: string | null = null;
+
+  private tryOpenEventFromQuery(): void {
+    if (!this.pendingEventId || !this.calendarEvents.length) return;
+
+    const match = this.calendarEvents.find(evt => String(evt.id) === String(this.pendingEventId));
+    if (!match) {
+      this.pendingEventId = null;
+      return;
+    }
+
+    this.openEventModal({
+      id: match.id,
+      title: match.title,
+      type: match.extendedProps?.type,
+      description: match.extendedProps?.description,
+      startDateTime: match.start,
+      endDateTime: match.end,
+      finished: match.extendedProps?.finished
+    });
+
+    this.pendingEventId = null;
+    this.router.navigate([], { queryParams: { eventId: null }, queryParamsHandling: 'merge' });
+  }
+
+  private openEventModal(payload: any): void {
+    this.selectedEvent = payload;
+    this.showDetailsModal = true;
+    this.initializeParticipationData();
   }
 }
