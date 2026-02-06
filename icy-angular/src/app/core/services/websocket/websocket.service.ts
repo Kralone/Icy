@@ -11,6 +11,7 @@ export class WebSocketService {
   private shipUpdatesSubject = new Subject<string>();
   private fleetUpdatesSubject = new Subject<any>();
   private eventSubject = new Subject<string>();
+  private notificationSubject = new Subject<any>();
 
   constructor() {
     this.stompClient = new Client({
@@ -50,6 +51,10 @@ export class WebSocketService {
     this.ensureConnected(() => this.subscribeToEvent());
   }
 
+  connectNotifications(userId?: string): void {
+    this.ensureConnected(() => this.subscribeToNotifications(userId));
+  }
+
   disconnectFleetUpdate(): void {
     this.stompClient.unsubscribe('/topic/fleet/update');
   }
@@ -86,6 +91,18 @@ export class WebSocketService {
     });
   }
 
+  private subscribeToNotifications(userId?: string): void {
+    this.stompClient.subscribe('/topic/notifications', (message: IMessage) => {
+      this.notificationSubject.next(message.body);
+    });
+
+    if (userId) {
+      this.stompClient.subscribe(`/topic/user/${userId}/notifications`, (message: IMessage) => {
+        this.notificationSubject.next(message.body);
+      });
+    }
+  }
+
   getShipUpdates(): Observable<string> {
     return this.shipUpdatesSubject.asObservable();
   }
@@ -98,6 +115,10 @@ export class WebSocketService {
     return this.eventSubject.asObservable();
   }
 
+  getNotifications(): Observable<any> {
+    return this.notificationSubject.asObservable();
+  }
+
   listenForUserShips(userId: number): Observable<string> {
     return this.getShipUpdates();
   }
@@ -108,5 +129,9 @@ export class WebSocketService {
 
   listenForEvent(): Observable<string> {
     return this.getEvent();
+  }
+
+  listenForNotifications(): Observable<any> {
+    return this.getNotifications();
   }
 }

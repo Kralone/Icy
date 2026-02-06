@@ -23,25 +23,83 @@
   </div>
 
   <!-- ✅ Zone droite -->
-  <div class="flex items-center gap-4 ml-auto">
-    <!-- Dark Mode -->
-    <label class="relative inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        id="dark-mode-toggle"
-        class="sr-only peer"
-        [checked]="isDarkMode"
-        (change)="toggleDarkMode()"
-      />
-      <div
-        class="w-10 h-5 bg-gray-700 rounded-full peer-checked:bg-cyan-500 transition-all after:content-['']
-               after:absolute after:w-4 after:h-4 after:bg-white after:rounded-full after:top-0.5 after:left-0.5
-               after:transition-transform peer-checked:after:translate-x-5"
-      ></div>
-    </label>
-
+  <div class="flex items-center gap-4 ml-auto relative">
     <!-- Notifications -->
-    <span class="text-xl text-cyan-300 hover:scale-110 transition-transform cursor-pointer">🔔</span>
+    <button
+      type="button"
+      class="relative h-10 w-10 rounded-full border border-cyan-400/40 bg-cyan-500/10 text-xl text-cyan-200
+             shadow-[0_0_12px_rgba(34,211,238,0.18)] hover:bg-cyan-500/20 hover:scale-105 transition"
+      [ngClass]="{ 'bell-glow': unreadCount > 0 }"
+      (click)="toggleNotifications($event)"
+      aria-label="Notifications"
+    >
+      🔔
+      <span
+        *ngIf="unreadCount > 0"
+        class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+      ></span>
+    </button>
+
+    <div
+      *ngIf="showNotifications"
+      class="absolute right-0 top-full mt-3 w-80 rounded-2xl border border-white/15 bg-[#0f1a2a]/95
+             backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.2)] p-4 z-50"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-sm font-semibold text-cyan-200">Notifications</div>
+        <button
+          type="button"
+          class="text-xs text-cyan-200 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:text-white/40"
+          (click)="markAllRead()"
+          [disabled]="notifications.length === 0"
+        >
+          Tout marquer lu
+        </button>
+      </div>
+
+      <div class="space-y-2 max-h-72 overflow-y-auto scrollbar-custom pr-1">
+        <div *ngIf="notifications.length === 0" class="text-xs text-white/50 text-center py-4">
+          Aucune notification pour l'instant.
+        </div>
+        <div
+          *ngFor="let notification of notifications"
+          class="notif-item relative rounded-xl border border-white/10 bg-white/5 p-3 pr-14 cursor-pointer hover:bg-white/10 transition"
+          [class.opacity-70]="notification.read"
+          [class.notif-unread]="!notification.read"
+          (click)="openNotification(notification)"
+        >
+          <span
+            class="notif-chevron-right"
+            [class.notif-chevron-right--static]="notification.read"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 32 32" class="notif-chevron-right__icon">
+              <path d="M8 6l10 10-10 10" />
+              <path d="M14 6l10 10-10 10" />
+            </svg>
+          </span>
+          <span class="notif-aurora" aria-hidden="true"></span>
+          <span class="notif-unread-glow" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="notif-delete-btn"
+            (click)="deleteNotification($event, notification)"
+            aria-label="Supprimer la notification"
+          >
+            Supprimer
+          </button>
+          <div class="notif-content">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <div class="text-xs text-cyan-200/80 underline decoration-cyan-300/40 underline-offset-2">
+                {{ notification.title }}
+              </div>
+            </div>
+            <div class="text-xs text-white/70">{{ notification.body }}</div>
+            <div class="text-[10px] text-white/40 mt-2">{{ notification.createdAt | date:'short' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Profil -->
     <div class="flex items-center gap-2">

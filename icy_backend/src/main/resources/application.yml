@@ -87,3 +87,9 @@ bot:
 
 openai:
   api-key: "REMOVED_OPENAI_KEY"   # ⚠️ Remplace par ta vraie clé OpenAI
+
+push:
+  vapid:
+    public-key: ${VAPID_PUBLIC_KEY:BHk8_PsS3-yU9a_jzx0Fnln0jj0b-0SumxPVn-dRo-uDY_SekRiYQ0eao7gFouMQN-fLJsvOrmcni3-V9xsci5c}
+    private-key: ${VAPID_PRIVATE_KEY:lchCid42TAb1IHslbf6YBPXOhizgx0rb4FQG4RIZ2fI}
+    subject: ${VAPID_SUBJECT:mailto:admin@iceforge.fr}

@@ -5,6 +5,7 @@ import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
 import com.icy.icy_backend.db.entity.goal.Goal;
 import com.icy.icy_backend.db.repository.goal.GoalRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.List;
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final NotificationPushService notificationPushService;
 
     public List<GoalDTO> getAllTopLevelGoals() {
         List<Goal> rootGoals = goalRepository.findByParentIsNullOrderByPinnedDescCreatedAtAsc();
@@ -57,6 +59,7 @@ public class GoalService {
     public void updateGoal(Long id, CreateGoalDTO dto) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
+        boolean wasCompleted = goal.isCompleted();
 
         // ----- champs simples -----
         if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
@@ -119,6 +122,10 @@ public class GoalService {
 
         goalRepository.save(goal);
         log.info("Objectif mis à jour : {}", goal.getName());
+
+        if (!wasCompleted && goal.isCompleted()) {
+            notifyGoalCompleted(goal);
+        }
     }
 
     /**
@@ -184,12 +191,30 @@ public class GoalService {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
 
+        boolean wasCompleted = goal.isCompleted();
         int newCurrent = goal.getCurrent() + delta;
         goal.setCurrent(Math.max(0, newCurrent));
         goal.setCompleted(goal.getCurrent() >= goal.getTarget());
 
         goalRepository.save(goal);
         log.info("Objectif {} modifié de {}", goal.getName(), delta);
+
+        if (!wasCompleted && goal.isCompleted()) {
+            notifyGoalCompleted(goal);
+        }
+    }
+
+    private void notifyGoalCompleted(Goal goal) {
+        String body;
+        if (goal.getParent() != null) {
+            body = "Le sous-objectif \"" + goal.getName()
+                    + "\" de l'objectif \"" + goal.getParent().getName()
+                    + "\" est complete.";
+        } else {
+            body = "L'objectif \"" + goal.getName() + "\" est complete.";
+        }
+
+        notificationPushService.sendBroadcast("Objectif termine", body, "/icy/goals");
     }
 }
 
