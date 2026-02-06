@@ -1,3 +1,4 @@
 /icy/.env
 /.idea/db-forest-config.xml
+/.idea/data_source_mapping.xml
 /icy-angular/src/assets/version.json

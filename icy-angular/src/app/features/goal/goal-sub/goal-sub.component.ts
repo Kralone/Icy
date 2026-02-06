@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, AfterViewInit, DoCheck } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
@@ -9,14 +9,16 @@ import { Goal } from '../../../model/goal.model';
   imports: [CommonModule],
   templateUrl: './goal-sub.component.html',
 })
-export class GoalSubComponent implements OnChanges, AfterViewInit {
+export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   @Input() goal!: Goal;
   @Input() isAdmin = false;
   @Input() depth = 0;
   @Input() showChildren = true;
+  @Input() parentCompleted = false;
 
   @Output() refresh = new EventEmitter<void>();
   @Output() expandedChange = new EventEmitter<{ id: number; expanded: boolean }>();
+  @Output() progressChange = new EventEmitter<void>();
 
   loading = false;
   progressWidth = '0%';
@@ -25,6 +27,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
   progressLabelAlign: 'left' | 'center' | 'right' = 'center';
   private hasAnimated = false;
   private lastGoalId: number | null = null;
+  private lastTotals: { current: number; target: number } | null = null;
 
   constructor(private goalService: GoalService) {}
 
@@ -44,8 +47,18 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
     this.updateProgressBar();
   }
 
+  ngDoCheck(): void {
+    if (!this.goal) return;
+    const totals = this.getTotalProgress(this.goal);
+    if (!this.lastTotals || totals.current !== this.lastTotals.current || totals.target !== this.lastTotals.target) {
+      this.updateProgressBar();
+    }
+  }
+
   private updateProgressBar(): void {
-    const progress = this.calculateProgress(this.goal);
+    const totals = this.getTotalProgress(this.goal);
+    this.lastTotals = { current: totals.current, target: totals.target };
+    const progress = totals.target === 0 ? 0 : (totals.current / totals.target) * 100;
     const clamped = Math.min(100, Math.max(0, progress));
     const labelLeft = clamped <= 6 ? 0 : clamped >= 94 ? 100 : clamped;
     this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
@@ -72,17 +85,9 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
     this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
   }
 
-  calculateProgress(goal: Goal): number {
-    if (!goal) return 0;
-    const total = this.getTotalProgress(goal);
-    if (total.target === 0) return 0;
-    const ratio = (total.current / total.target) * 100;
-    return Math.min(Math.max(ratio, 0), 100);
-  }
-
   isDone(goal: Goal): boolean {
-    if ((goal as any).completed !== undefined) return !!(goal as any).completed;
     if (!goal) return false;
+    if ((goal as any).completed === true) return true;
     const total = this.getTotalProgress(goal);
     if (total.target <= 0) return false;
     return total.current >= total.target;
@@ -143,6 +148,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
         this.goal.current = Math.max(0, Math.min(this.goal.target, (this.goal.current ?? 0) + delta));
         this.loading = false;
         this.updateProgressBar();
+        this.progressChange.emit();
       },
       error: (err) => {
         console.error('Erreur de mise à jour :', err);
@@ -154,5 +160,15 @@ export class GoalSubComponent implements OnChanges, AfterViewInit {
   toggleChildrenVisibility(): void {
     this.showChildren = !this.showChildren;
     this.expandedChange.emit({ id: this.goal.id, expanded: this.showChildren });
+  }
+
+  onChildRefresh(): void {
+    this.updateProgressBar();
+    this.refresh.emit();
+  }
+
+  onChildProgress(): void {
+    this.updateProgressBar();
+    this.progressChange.emit();
   }
 }

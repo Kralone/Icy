@@ -153,14 +153,17 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-wrap justify-between items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3 justify-between">
 
         <!-- Boutons +1 / -1 -->
-        <div class="flex gap-2">
+        <div
+          class="flex gap-2"
+          *ngIf="!(goal.parentId === null && goal.target === 1)"
+        >
           <button
             (click)="increment(goal.id, -1)"
-            [disabled]="goal.current <= 0 || loading"
-            class="rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition"
+            [disabled]="goal.current <= 0 || loading || parentCompleted"
+            class="rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 transition"
             [ngClass]="{
               'px-3 py-1 text-sm': depth === 0,
               'px-2.5 py-1 text-xs': depth === 1,
@@ -172,8 +175,8 @@
 
           <button
             (click)="increment(goal.id, 1)"
-            [disabled]="goal.current >= goal.target || loading"
-            class="rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 transition"
+            [disabled]="goal.current >= goal.target || loading || parentCompleted"
+            class="rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cyan-500/10 transition"
             [ngClass]="{
               'px-3 py-1 text-sm': depth === 0,
               'px-2.5 py-1 text-xs': depth === 1,
@@ -238,7 +241,9 @@
           [isAdmin]="isAdmin"
           [depth]="depth + 1"
           [showChildren]="false"
-          (refresh)="refresh.emit()"
+          [parentCompleted]="parentCompleted || isDone(goal) || goal.completed"
+          (refresh)="onChildRefresh()"
+          (progressChange)="onChildProgress()"
           (expandedChange)="expandedChange.emit($event)"
         ></app-goal-sub>
       </ng-container>
