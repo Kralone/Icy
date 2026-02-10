@@ -68,7 +68,7 @@
 
     <div class="mt-4 text-sm">
       <p><strong>Description :</strong></p>
-      <p class="mt-1 text-gray-300 break-words">{{ selectedEvent?.description }}</p>
+      <p class="mt-1 text-gray-300 break-words" [innerHTML]="formatEventDescription(selectedEvent?.description)"></p>
     </div>
 
     <!-- Participation -->

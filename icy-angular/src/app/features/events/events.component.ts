@@ -9,6 +9,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
 import { EventType } from '../../model/event-type.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-events',
@@ -77,7 +78,8 @@ export class EventsComponent implements AfterViewInit {
     private authService: AuthService,
     private ngZone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngAfterViewInit() {
@@ -158,6 +160,16 @@ export class EventsComponent implements AfterViewInit {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  formatEventDescription(description?: string | null): SafeHtml {
+    if (!description) {
+      return '';
+    }
+    const escaped = this.escapeHtml(description);
+    const withBold = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const withLineBreaks = withBold.replace(/\r?\n/g, '<br>');
+    return this.sanitizer.bypassSecurityTrustHtml(withLineBreaks);
   }
 
 // ✅ Rendu “carte” ICY : image en haut + pill en bas
