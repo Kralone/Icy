@@ -352,16 +352,6 @@
                      focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
             />
           </div>
-          <div class="flex-1 min-w-[200px]">
-            <input
-              [(ngModel)]="node.userInput"
-              (input)="onTemplateUserInputChange(node)"
-              list="template-user-options"
-              placeholder="Utilisateur (optionnel)"
-              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
           <div class="flex gap-2">
             <button
               (click)="addTemplateChild(node)"
@@ -388,9 +378,6 @@
       </ng-template>
 
       <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: templateDraftRoot, depth: 0 }"></ng-container>
-      <datalist id="template-user-options">
-        <option *ngFor="let u of users" [value]="u.username"></option>
-      </datalist>
     </div>
 
     <div class="flex justify-end">
@@ -408,6 +395,19 @@
   <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
       <div class="text-sm text-white/70">Templates prêts à être ajoutés</div>
+      <div class="min-w-[240px]">
+        <input
+          [(ngModel)]="templateApplyUserInput"
+          (input)="onTemplateApplyUserInputChange()"
+          list="template-apply-user-options"
+          placeholder="Utilisateur (optionnel)"
+          class="w-full min-h-[36px] px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+        />
+        <datalist id="template-apply-user-options">
+          <option *ngFor="let u of users" [value]="u.username"></option>
+        </datalist>
+      </div>
     </div>
 
     <div *ngFor="let root of templateRoots" class="border-b border-white/10">

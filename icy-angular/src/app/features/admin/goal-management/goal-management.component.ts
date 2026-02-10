@@ -14,8 +14,6 @@ type TemplateDraftNode = {
   name: string;
   description: string;
   target: number;
-  userId: string | null;
-  userInput: string;
   children: TemplateDraftNode[];
 };
 
@@ -66,6 +64,8 @@ export class GoalManagementComponent implements OnInit {
 
   templateDraftRoot: TemplateDraftNode = this.createDraftRoot();
   private nextTemplateTempId = 2;
+  templateApplyUserInput = '';
+  templateApplyUserId: string | null = null;
 
   constructor(private goalService: GoalService, private userService: UserService) {}
 
@@ -298,7 +298,7 @@ export class GoalManagementComponent implements OnInit {
   }
 
   applyTemplate(template: GoalTemplate): void {
-    this.goalService.applyTemplate(template.id, {}).subscribe({
+    this.goalService.applyTemplate(template.id, { userId: this.templateApplyUserId }).subscribe({
       next: () => {
         this.loadGoals({ preserveUiState: true });
         this.scrollToTop();
@@ -401,8 +401,6 @@ export class GoalManagementComponent implements OnInit {
       name: '',
       description: '',
       target: 1,
-      userId: null,
-      userInput: '',
       children: [],
     };
   }
@@ -413,8 +411,6 @@ export class GoalManagementComponent implements OnInit {
       name: '',
       description: '',
       target: 1,
-      userId: null,
-      userInput: '',
       children: [],
     });
   }
@@ -448,7 +444,6 @@ export class GoalManagementComponent implements OnInit {
       name: node.name.trim(),
       description: (node.description ?? '').trim(),
       target: Number(node.target),
-      userId: node.userId,
       subTemplates: (node.children ?? []).map((child) => this.mapDraftToPayload(child)),
     };
   }
@@ -457,8 +452,8 @@ export class GoalManagementComponent implements OnInit {
     this.form.userId = this.resolveUserId(this.formUserInput);
   }
 
-  onTemplateUserInputChange(node: TemplateDraftNode): void {
-    node.userId = this.resolveUserId(node.userInput);
+  onTemplateApplyUserInputChange(): void {
+    this.templateApplyUserId = this.resolveUserId(this.templateApplyUserInput);
   }
 
   private resolveUserId(input: string): string | null {

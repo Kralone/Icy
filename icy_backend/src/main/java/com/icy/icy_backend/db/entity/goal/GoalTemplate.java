@@ -1,6 +1,5 @@
 package com.icy.icy_backend.db.entity.goal;
 
-import com.icy.icy_backend.db.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,10 +27,6 @@ public class GoalTemplate {
     private int target;
 
     private LocalDateTime createdAt;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")

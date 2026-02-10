@@ -5,7 +5,5 @@ export interface GoalTemplate {
   target: number;
   createdAt: string;
   parentId: number | null;
-  userId?: string | null;
-  username?: string | null;
   subTemplates: GoalTemplate[];
 }

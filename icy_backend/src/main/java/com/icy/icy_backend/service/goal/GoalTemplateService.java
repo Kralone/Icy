@@ -44,12 +44,6 @@ public class GoalTemplateService {
         template.setTarget(dto.getTarget() != null ? dto.getTarget() : 1);
         template.setCreatedAt(LocalDateTime.now());
 
-        if (dto.getUserId() != null) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
-            template.setUser(user);
-        }
-
         if (dto.getParentId() != null) {
             GoalTemplate parent = goalTemplateRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new ResourceNotFoundException("Template parent introuvable"));
@@ -73,14 +67,6 @@ public class GoalTemplateService {
 
         if (dto.getTarget() != null && dto.getTarget() > 0) {
             template.setTarget(dto.getTarget());
-        }
-
-        if (dto.getUserId() == null) {
-            template.setUser(null);
-        } else {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
-            template.setUser(user);
         }
 
         if (dto.getParentId() == null) {
@@ -152,12 +138,6 @@ public class GoalTemplateService {
         template.setCreatedAt(LocalDateTime.now());
         template.setParent(parent);
 
-        if (dto.getUserId() != null) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
-            template.setUser(user);
-        }
-
         goalTemplateRepository.save(template);
 
         if (dto.getSubTemplates() != null) {
@@ -177,7 +157,7 @@ public class GoalTemplateService {
         goal.setCompleted(false);
         goal.setCreatedAt(LocalDateTime.now());
         goal.setParent(parent);
-        goal.setUser(template.getUser() != null ? template.getUser() : user);
+        goal.setUser(user);
 
         goalRepository.save(goal);
 
@@ -195,8 +175,6 @@ public class GoalTemplateService {
                 .target(template.getTarget())
                 .createdAt(template.getCreatedAt())
                 .parentId(template.getParent() != null ? template.getParent().getId() : null)
-                .userId(template.getUser() != null ? template.getUser().getId() : null)
-                .username(template.getUser() != null ? template.getUser().getUsername() : null)
                 .subTemplates(template.getSubTemplates().stream().map(this::convertToDTO).toList())
                 .build();
     }
