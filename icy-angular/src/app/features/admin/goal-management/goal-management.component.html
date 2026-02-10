@@ -92,6 +92,21 @@
         </select>
       </div>
 
+      <div>
+        <label class="text-sm text-gray-300">Utilisateur lié (optionnel)</label>
+        <input
+          [(ngModel)]="formUserInput"
+          (input)="onUserInputChange()"
+          list="goal-user-options"
+          placeholder="Rechercher ou sélectionner un utilisateur..."
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+        />
+        <datalist id="goal-user-options">
+          <option *ngFor="let u of users" [value]="u.username"></option>
+        </datalist>
+      </div>
+
       <div class="flex items-end">
         <button
           (click)="form.pinned = !form.pinned"
@@ -152,6 +167,11 @@
             📌
           </span>
 
+          <span *ngIf="root.username"
+                class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20">
+            👤 {{ root.username }}
+          </span>
+
           <span *ngIf="isDone(root)"
                 class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
             Terminé
@@ -193,6 +213,11 @@
 
             <span *ngIf="node.goal.pinned"
                   class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
+
+            <span *ngIf="node.goal.username"
+                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20">
+              👤 {{ node.goal.username }}
+            </span>
 
             <span *ngIf="isDone(node.goal)"
                   class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
@@ -245,6 +270,222 @@
     >
       ❯
     </button>
+  </div>
+
+  <!-- ===================== TEMPLATES ===================== -->
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
+    <div class="flex items-center justify-between gap-3">
+      <div class="text-lg font-semibold text-cyan-200">🧩 Création d'un template complet</div>
+    </div>
+
+    <div class="space-y-4">
+      <div class="text-sm text-white/70">Objectif parent (racine)</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="text-sm text-gray-300">Nom</label>
+          <input
+            [(ngModel)]="templateDraftRoot.name"
+            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-300">Cible</label>
+          <input
+            type="number" min="1"
+            [(ngModel)]="templateDraftRoot.target"
+            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
+
+        <div class="lg:col-span-3">
+          <label class="text-sm text-gray-300">Description</label>
+          <textarea
+            [(ngModel)]="templateDraftRoot.description"
+            class="w-full min-h-[90px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          (click)="resetTemplateDraft()"
+          class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
+                 transition active:scale-95"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+      <div class="text-sm text-white/70">Prévisualisation</div>
+      <ng-template #draftNode let-node let-depth="depth">
+        <div
+          class="flex flex-wrap items-center gap-3 border border-white/10 bg-white/5 rounded-xl px-3 py-2"
+          [style.marginLeft.px]="depth * 16"
+        >
+          <div class="flex-1 min-w-[180px]">
+            <input
+              [(ngModel)]="node.name"
+              placeholder="Nom"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            />
+          </div>
+          <div class="w-24">
+            <input
+              type="number" min="1"
+              [(ngModel)]="node.target"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            />
+          </div>
+          <div class="flex-1 min-w-[220px]">
+            <input
+              [(ngModel)]="node.description"
+              placeholder="Description"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            />
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <input
+              [(ngModel)]="node.userInput"
+              (input)="onTemplateUserInputChange(node)"
+              list="template-user-options"
+              placeholder="Utilisateur (optionnel)"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            />
+          </div>
+          <div class="flex gap-2">
+            <button
+              (click)="addTemplateChild(node)"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+              title="Ajouter un sous-objectif"
+            >
+              ➕
+            </button>
+            <button
+              *ngIf="node !== templateDraftRoot"
+              (click)="removeTemplateNode(node)"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+              title="Supprimer"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+        <div *ngFor="let child of node.children" class="mt-2">
+          <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+        </div>
+      </ng-template>
+
+      <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: templateDraftRoot, depth: 0 }"></ng-container>
+      <datalist id="template-user-options">
+        <option *ngFor="let u of users" [value]="u.username"></option>
+      </datalist>
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        (click)="createTemplateTree()"
+        class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500
+               hover:from-cyan-300 hover:to-sky-400 transition font-semibold
+               active:scale-95"
+      >
+        + Enregistrer le template
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
+      <div class="text-sm text-white/70">Templates prêts à être ajoutés</div>
+    </div>
+
+    <div *ngFor="let root of templateRoots" class="border-b border-white/10">
+      <div
+        class="flex items-center justify-between px-4 py-3 cursor-pointer
+               transition-all duration-200
+               hover:bg-white/10 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]
+               active:scale-[0.995]"
+        (click)="toggleTemplateRoot(root)"
+      >
+        <div class="flex items-center gap-3">
+          <ng-container *ngIf="!isTemplateRootOpen(root); else openTemplateIcon">
+            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
+            </svg>
+          </ng-container>
+          <ng-template #openTemplateIcon>
+            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+            </svg>
+          </ng-template>
+
+          <span class="font-semibold tracking-wide">{{ root.name }}</span>
+        </div>
+
+        <div class="flex gap-2">
+          <button
+            (click)="applyTemplate(root); $event.stopPropagation()"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                   hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
+            title="Ajouter aux objectifs"
+          >
+            ➕
+          </button>
+          <button
+            (click)="deleteTemplate(root.id, root.name); $event.stopPropagation()"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                   hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+            title="Supprimer"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="isTemplateRootOpen(root)" class="bg-white/5 border-t border-white/10">
+        <div
+          *ngFor="let node of getVisibleTemplateTree(root)"
+          class="flex items-center justify-between px-4 py-2 border-t border-white/10
+                 transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+          [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-white/35">↳</span>
+            <span class="text-white/85">{{ node.template.name }}</span>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              (click)="applyTemplate(node.template); $event.stopPropagation()"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
+              title="Ajouter aux objectifs"
+            >
+              ➕
+            </button>
+            <button
+              (click)="deleteTemplate(node.template.id, node.template.name); $event.stopPropagation()"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+              title="Supprimer"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

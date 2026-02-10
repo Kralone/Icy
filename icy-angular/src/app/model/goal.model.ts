@@ -8,6 +8,8 @@ export interface Goal {
   completed: boolean;
   createdAt: string;
   parentId: number | null;
+  userId?: string | null;
+  username?: string | null;
   subGoals: Goal[];
 
   /** UI only */

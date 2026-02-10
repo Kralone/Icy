@@ -3,8 +3,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
+import { GoalTemplate } from '../../../model/goal-template.model';
+import { UserService } from '../../../core/services/user/user.service';
+import { User } from '../../../model/user.model';
 
 type FlatNode = { goal: Goal; depth: number };
+type TemplateFlatNode = { template: GoalTemplate; depth: number };
+type TemplateDraftNode = {
+  tempId: number;
+  name: string;
+  description: string;
+  target: number;
+  userId: string | null;
+  userInput: string;
+  children: TemplateDraftNode[];
+};
 
 @Component({
   selector: 'app-goal-management',
@@ -18,6 +31,14 @@ export class GoalManagementComponent implements OnInit {
   // Roots only
   rootGoals: Goal[] = [];
   paginatedRoots: Goal[] = [];
+
+  // Templates
+  templates: GoalTemplate[] = [];
+  templateRoots: GoalTemplate[] = [];
+  openedTemplateRootId: number | null = null;
+
+  // Users
+  users: User[] = [];
 
   // Fold: only one root open at a time
   openedRootId: number | null = null;
@@ -39,12 +60,19 @@ export class GoalManagementComponent implements OnInit {
     current: 0,
     parentId: null as number | null,
     pinned: false,
+    userId: null as string | null,
   };
+  formUserInput = '';
 
-  constructor(private goalService: GoalService) {}
+  templateDraftRoot: TemplateDraftNode = this.createDraftRoot();
+  private nextTemplateTempId = 2;
+
+  constructor(private goalService: GoalService, private userService: UserService) {}
 
   ngOnInit(): void {
+    this.loadUsers();
     this.loadGoals({ preserveUiState: true });
+    this.loadTemplates();
   }
 
   // ----------------- Smooth scroll (utilisé seulement quand demandé) -----------------
@@ -89,6 +117,24 @@ export class GoalManagementComponent implements OnInit {
         const root = this.rootGoals.find((r) => r.id === this.selectedRootId);
         this.subGoalsForSelectedRoot = root?.subGoals ?? [];
       }
+    });
+  }
+
+  loadTemplates(): void {
+    this.goalService.getAllTemplates().subscribe((templates) => {
+      this.templates = templates ?? [];
+      this.templateRoots = this.sortTemplatesAlpha(
+        this.templates.filter((t) => t.parentId === null)
+      );
+    });
+  }
+
+  loadUsers(): void {
+    this.userService.getAllUsers().subscribe({
+      next: (res) => {
+        this.users = res?.data ?? [];
+      },
+      error: (err) => console.error('Erreur chargement users:', err),
     });
   }
 
@@ -180,6 +226,7 @@ export class GoalManagementComponent implements OnInit {
       current: Number(this.form.current ?? 0),
       parentId: this.form.parentId,
       pinned: !!this.form.pinned,
+      userId: this.form.userId,
     };
 
     const req = this.editingGoal
@@ -210,7 +257,9 @@ export class GoalManagementComponent implements OnInit {
       current: (goal as any).current ?? 0,
       parentId: goal.parentId ?? null,
       pinned: !!(goal as any).pinned,
+      userId: (goal as any).userId ?? null,
     };
+    this.formUserInput = (goal as any).username ?? '';
 
     // Setup 2 lists properly (root list + its subs)
     // On cherche le root dans la page courante si possible, sinon on laisse la sélection libre
@@ -236,10 +285,47 @@ export class GoalManagementComponent implements OnInit {
     });
   }
 
+  deleteTemplate(id: number, name: string): void {
+    if (!confirm(`Supprimer le template "${name}" ?`)) return;
+
+    this.goalService.deleteTemplate(id).subscribe({
+      next: () => {
+        this.loadTemplates();
+        this.scrollToTop();
+      },
+      error: (err) => console.error('Erreur suppression template:', err),
+    });
+  }
+
+  applyTemplate(template: GoalTemplate): void {
+    this.goalService.applyTemplate(template.id, {}).subscribe({
+      next: () => {
+        this.loadGoals({ preserveUiState: true });
+        this.scrollToTop();
+      },
+      error: (err) => console.error('Erreur application template:', err),
+    });
+  }
+
+  createTemplateTree(): void {
+    if (!this.isTemplateDraftValid(this.templateDraftRoot)) return;
+
+    const payload = this.mapDraftToPayload(this.templateDraftRoot);
+    this.goalService.addTemplateTree(payload).subscribe({
+      next: () => {
+        this.resetTemplateDraft();
+        this.loadTemplates();
+        this.scrollToTop();
+      },
+      error: (err) => console.error('Erreur creation template:', err),
+    });
+  }
+
   resetForm(): void {
     this.editingGoal = null;
     this.selectedRootId = null;
     this.subGoalsForSelectedRoot = [];
+    this.formUserInput = '';
     this.form = {
       name: '',
       description: '',
@@ -247,6 +333,7 @@ export class GoalManagementComponent implements OnInit {
       current: 0,
       parentId: null,
       pinned: false,
+      userId: null,
     };
   }
 
@@ -278,6 +365,108 @@ export class GoalManagementComponent implements OnInit {
       // 2️⃣ alpha strict A → Z
       return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
     });
+  }
+
+  private sortTemplatesAlpha(templates: GoalTemplate[]): GoalTemplate[] {
+    return [...templates].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    );
+  }
+
+  toggleTemplateRoot(root: GoalTemplate): void {
+    this.openedTemplateRootId = this.openedTemplateRootId === root.id ? null : root.id;
+    this.scrollToTop();
+  }
+
+  isTemplateRootOpen(root: GoalTemplate): boolean {
+    return this.openedTemplateRootId === root.id;
+  }
+
+  getVisibleTemplateTree(root: GoalTemplate): TemplateFlatNode[] {
+    const out: TemplateFlatNode[] = [];
+
+    const walk = (node: GoalTemplate, depth: number) => {
+      out.push({ template: node, depth });
+      this.sortTemplatesAlpha(node.subTemplates ?? []).forEach((c) => walk(c, depth + 1));
+    };
+
+    this.sortTemplatesAlpha(root.subTemplates ?? []).forEach((c) => walk(c, 1));
+
+    return out;
+  }
+
+  private createDraftRoot(): TemplateDraftNode {
+    return {
+      tempId: 1,
+      name: '',
+      description: '',
+      target: 1,
+      userId: null,
+      userInput: '',
+      children: [],
+    };
+  }
+
+  addTemplateChild(node: TemplateDraftNode): void {
+    node.children.push({
+      tempId: this.nextTemplateTempId++,
+      name: '',
+      description: '',
+      target: 1,
+      userId: null,
+      userInput: '',
+      children: [],
+    });
+  }
+
+  removeTemplateNode(node: TemplateDraftNode): void {
+    if (node === this.templateDraftRoot) return;
+    this.templateDraftRoot.children = this.removeDraftNode(this.templateDraftRoot.children, node.tempId);
+  }
+
+  private removeDraftNode(nodes: TemplateDraftNode[], tempId: number): TemplateDraftNode[] {
+    return nodes
+      .filter((n) => n.tempId !== tempId)
+      .map((n) => ({
+        ...n,
+        children: this.removeDraftNode(n.children, tempId),
+      }));
+  }
+
+  resetTemplateDraft(): void {
+    this.templateDraftRoot = this.createDraftRoot();
+    this.nextTemplateTempId = 2;
+  }
+
+  isTemplateDraftValid(node: TemplateDraftNode): boolean {
+    if (!node.name?.trim() || Number(node.target) <= 0) return false;
+    return node.children.every((child) => this.isTemplateDraftValid(child));
+  }
+
+  private mapDraftToPayload(node: TemplateDraftNode): any {
+    return {
+      name: node.name.trim(),
+      description: (node.description ?? '').trim(),
+      target: Number(node.target),
+      userId: node.userId,
+      subTemplates: (node.children ?? []).map((child) => this.mapDraftToPayload(child)),
+    };
+  }
+
+  onUserInputChange(): void {
+    this.form.userId = this.resolveUserId(this.formUserInput);
+  }
+
+  onTemplateUserInputChange(node: TemplateDraftNode): void {
+    node.userId = this.resolveUserId(node.userInput);
+  }
+
+  private resolveUserId(input: string): string | null {
+    const value = (input ?? '').trim();
+    if (!value) return null;
+    const lowered = value.toLowerCase();
+    const user = this.users.find((u) => (u.username ?? '').toLowerCase() === lowered);
+    return user ? user.id : null;
   }
 
 }
