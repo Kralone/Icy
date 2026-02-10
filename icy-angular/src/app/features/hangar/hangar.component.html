@@ -60,13 +60,20 @@
       >
         <button
           (click)="deleteShip(ship.shipId)"
-          class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
+          class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
           title="Supprimer"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+
+        <img
+          *ngIf="getBrandLogo(ship.brand)"
+          [src]="getBrandLogo(ship.brand)"
+          alt="Logo marque"
+          class="absolute top-3 right-3 w-12 h-12 object-contain bg-white/20 rounded-full p-2 shadow-md"
+        />
 
         <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
 
@@ -128,30 +135,89 @@
       />
     </div>
 
-    <!-- Sélection marque -->
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1 text-cyan-200">Marque</label>
-      <select
-        [(ngModel)]="selectedBrand"
-        (change)="onBrandChange()"
-        class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
-      >
-        <option *ngFor="let brand of brands" [value]="brand.name">{{ brand.name }}</option>
-      </select>
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <div class="relative flex items-center bg-white/10 border border-white/20 rounded-full p-1 shadow-sm overflow-hidden">
+        <div
+          class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-gradient-to-r from-cyan-500/40 to-blue-500/40
+                 shadow-[0_0_12px_rgba(56,189,248,0.45)] transition-transform duration-200"
+          [ngClass]="{ 'translate-x-full': useClassicAddMode }"
+        ></div>
+        <button
+          type="button"
+          (click)="setAddMode(false)"
+          class="relative z-10 px-4 py-1.5 text-xs font-semibold rounded-full transition"
+          [ngClass]="{ 'text-cyan-100': !useClassicAddMode, 'text-white/60': useClassicAddMode }"
+        >
+          🔎 Recherche
+        </button>
+        <button
+          type="button"
+          (click)="setAddMode(true)"
+          class="relative z-10 px-4 py-1.5 text-xs font-semibold rounded-full transition"
+          [ngClass]="{ 'text-cyan-100': useClassicAddMode, 'text-white/60': !useClassicAddMode }"
+        >
+          🏷️ Marque
+        </button>
+      </div>
     </div>
 
-    <!-- Sélection vaisseau -->
-    <div *ngIf="filteredShipsModal.length > 0" class="mb-4">
-      <label class="block text-sm font-medium mb-1 text-cyan-200">Vaisseau</label>
-      <select
-        [(ngModel)]="selectedShip"
-        (change)="onShipChange()"
-        [compareWith]="compareShips"
-        class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
-      >
-        <option *ngFor="let ship of filteredShipsModal" [ngValue]="ship">{{ ship.name }}</option>
-      </select>
-    </div>
+    <ng-container *ngIf="useClassicAddMode; else searchMode">
+      <!-- Sélection marque -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-cyan-200">Marque</label>
+        <select
+          [(ngModel)]="selectedBrand"
+          (change)="onBrandChange()"
+          class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+        >
+          <option *ngFor="let brand of brands" [value]="brand.name">{{ brand.name }}</option>
+        </select>
+      </div>
+
+      <!-- Sélection vaisseau -->
+      <div *ngIf="filteredShipsModal.length > 0" class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-cyan-200">Vaisseau</label>
+        <select
+          [(ngModel)]="selectedShip"
+          (change)="onShipChange()"
+          [compareWith]="compareShips"
+          class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+        >
+          <option *ngFor="let ship of filteredShipsModal" [ngValue]="ship">{{ ship.name }}</option>
+        </select>
+      </div>
+    </ng-container>
+
+    <ng-template #searchMode>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-cyan-200">Recherche</label>
+        <input
+          [(ngModel)]="shipSearchQuery"
+          (ngModelChange)="onShipSearchChange()"
+          type="text"
+          placeholder="Rechercher un vaisseau..."
+          class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+        />
+      </div>
+
+      <div *ngIf="filteredShipsSearch.length > 0" class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-cyan-200">Vaisseau</label>
+        <select
+          [(ngModel)]="selectedShip"
+          (change)="onShipChange()"
+          [compareWith]="compareShips"
+          class="w-full px-3 py-2 rounded-lg bg-[#1b263b]/70 border border-white/20 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+        >
+          <option *ngFor="let ship of filteredShipsSearch" [ngValue]="ship">
+            {{ ship.name }} — {{ ship.brand.name }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="filteredShipsSearch.length === 0" class="mb-4 text-sm text-gray-400">
+        Aucun vaisseau ne correspond à la recherche.
+      </div>
+    </ng-template>
 
     <!-- Méthode d'acquisition -->
     <div class="mb-4">

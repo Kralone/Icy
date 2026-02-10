@@ -30,6 +30,11 @@ export class HangarComponent {
 
   acquisitionType: 'rsi' | 'ingame' | 'loaner' = 'rsi';
 
+  useClassicAddMode = false;
+  shipSearchQuery = '';
+  allShipsModal: Ship[] = [];
+  filteredShipsSearch: Ship[] = [];
+  private allShipsLoaded = false;
 
   formData = {
     name: '',
@@ -65,6 +70,11 @@ export class HangarComponent {
 
     this.isLoading = true;
     this.hasReceivedFirstMessage = false;
+    const loadingFallback = setTimeout(() => {
+      if (!this.hasReceivedFirstMessage) {
+        this.isLoading = false;
+      }
+    }, 5000);
 
     this.shipService.listenForUserShips(this.userId).subscribe((message) => {
       try {
@@ -76,6 +86,7 @@ export class HangarComponent {
           console.log('📦 Chargement initial de la flotte');
           this.hasReceivedFirstMessage = true;
           this.isLoading = false;
+          clearTimeout(loadingFallback);
           this.filteredShips = [...this.ships]; // initialise filtrés
         } else {
           this.messages.push(message); // Sinon, c’est un message événement individuel
@@ -91,6 +102,10 @@ export class HangarComponent {
         }
       } catch {
         this.messages.push(message);
+        if (!this.hasReceivedFirstMessage) {
+          this.isLoading = false;
+          clearTimeout(loadingFallback);
+        }
       }
       this.sortShipsByName();
     });
@@ -98,6 +113,9 @@ export class HangarComponent {
 
   openModal() {
     this.isModalOpen = true;
+    if (!this.allShipsLoaded) {
+      this.loadAllShipsForModal();
+    }
   }
 
   closeModal() {
@@ -121,7 +139,7 @@ export class HangarComponent {
         this.shipService.getShipsByBrand(this.selectedBrand).subscribe(shipResponse => {
           this.filteredShipsModal = shipResponse.data;
           this.selectedShip = this.filteredShipsModal.length > 0 ? this.filteredShipsModal[0] : null;
-          this.selectedShipImageUrl = this.selectedShip?.imageUrl || '';
+          this.updateSelectedShipPreview();
         });
       }
     });
@@ -136,7 +154,7 @@ export class HangarComponent {
 
       if (this.filteredShipsModal.length > 0) {
         this.selectedShip = this.filteredShipsModal[0];
-        this.selectedShipImageUrl = this.filteredShipsModal[0].imageUrl;
+        this.updateSelectedShipPreview();
       } else {
         this.selectedShip = null;
         this.selectedShipImageUrl = '';
@@ -147,11 +165,7 @@ export class HangarComponent {
 
 
   onShipChange() {
-    console.log(this.filteredShipsModal);
-    console.log(this.selectedShip?.name);
-    const ship = this.filteredShipsModal.find(s => s.name === this.selectedShip?.name);
-    console.log(ship);
-    this.selectedShipImageUrl = ship?.imageUrl || '';
+    this.updateSelectedShipPreview();
   }
 
   onAddShip(): void {
@@ -180,6 +194,28 @@ export class HangarComponent {
 
   deleteShip(shipId: number) {
     this.shipService.deleteShip(shipId).subscribe({})
+  }
+
+  onAddModeToggle(): void {
+    if (this.useClassicAddMode) {
+      if (!this.brands.length) {
+        this.loadBrands();
+      }
+    } else {
+      if (!this.allShipsLoaded) {
+        this.loadAllShipsForModal();
+      } else {
+        this.applyShipSearch();
+      }
+    }
+  }
+
+  setAddMode(useClassic: boolean): void {
+    if (this.useClassicAddMode === useClassic) {
+      return;
+    }
+    this.useClassicAddMode = useClassic;
+    this.onAddModeToggle();
   }
 
   private sortShipsByManufacturer() {
@@ -224,5 +260,43 @@ export class HangarComponent {
 
   sortShipsByName(): void {
     this.filteredShips.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  private loadAllShipsForModal(): void {
+    this.shipService.getAllShips().subscribe(response => {
+      this.allShipsModal = response.data || [];
+      this.allShipsLoaded = true;
+      this.applyShipSearch();
+    });
+  }
+
+  onShipSearchChange(): void {
+    this.applyShipSearch();
+  }
+
+  private applyShipSearch(): void {
+    const query = this.shipSearchQuery.trim().toLowerCase();
+    const filtered = this.allShipsModal.filter((ship) => {
+      const name = ship.name?.toLowerCase() ?? '';
+      const brand = ship.brand?.name?.toLowerCase() ?? '';
+      const focus = ship.focus?.toLowerCase() ?? '';
+      return name.includes(query) || brand.includes(query) || focus.includes(query);
+    });
+    this.filteredShipsSearch = filtered.sort((a, b) => a.name.localeCompare(b.name));
+    if (!this.selectedShip || !this.filteredShipsSearch.some(s => s.id === this.selectedShip?.id)) {
+      this.selectedShip = this.filteredShipsSearch[0] ?? null;
+    }
+    this.updateSelectedShipPreview();
+  }
+
+  private updateSelectedShipPreview(): void {
+    this.selectedShipImageUrl = this.selectedShip?.imageUrl || '';
+    const brandName = this.selectedShip?.brand?.name ?? this.selectedBrand;
+    const brand = this.brands.find(b => b.name === brandName);
+    this.selectedBrandImageUrl = brand?.imageUrl || '';
+  }
+
+  getBrandLogo(brandName: string): string {
+    return this.brands.find(b => b.name === brandName)?.imageUrl || '';
   }
 }
