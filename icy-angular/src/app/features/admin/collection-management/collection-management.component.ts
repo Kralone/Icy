@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CollectionsService } from '../../../core/services/collection/collection.service';
 
-type AxisItem = { label: string };
-
 @Component({
   selector: 'app-collection-management',
   standalone: true,
@@ -25,10 +23,16 @@ export class CollectionManagementComponent {
   isSubmitting = false;
   isLoadingTemplateDetail = false;
 
+  // UI state
+  templateSearchTerm = '';
+  templateFilterArchetype = 'all';
+  templatePage = 1;
+  readonly templatePageSize = 8;
 
   constructor(private service: CollectionsService, private router: Router) {}
 
   trackByIndex = (_: number, __: unknown) => _;
+  trackByTemplateId = (_: number, item: any) => item?.id ?? _;
 
   get canCreate(): boolean {
     const nameOk = this.newTemplate.name.trim().length > 0;
@@ -84,6 +88,7 @@ export class CollectionManagementComponent {
       next: (res) => {
         this.templates = res.data || res;
         this.isLoadingTemplates = false;
+        this.templatePage = 1;
       },
       error: (err) => {
         console.error('Erreur chargement templates', err);
@@ -179,6 +184,58 @@ export class CollectionManagementComponent {
     });
   }
 
+  get templateArchetypes(): string[] {
+    const values = new Set(
+      (this.templates || [])
+        .map((t: any) => t?.archetype)
+        .filter((v: string) => typeof v === 'string' && v.trim().length > 0)
+    );
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }
+
+  get filteredTemplates(): any[] {
+    const term = this.templateSearchTerm.trim().toLowerCase();
+    return (this.templates || []).filter((t: any) => {
+      const archetype = (t?.archetype ?? '').toLowerCase();
+      if (this.templateFilterArchetype !== 'all' && t?.archetype !== this.templateFilterArchetype) {
+        return false;
+      }
+      if (!term) return true;
+      const haystack = `${t?.name ?? ''} ${t?.archetype ?? ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }
+
+  get templateTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredTemplates.length / this.templatePageSize));
+  }
+
+  get templatePageIndex(): number {
+    return Math.min(this.templatePage, this.templateTotalPages);
+  }
+
+  get pagedTemplates(): any[] {
+    const start = (this.templatePageIndex - 1) * this.templatePageSize;
+    return this.filteredTemplates.slice(start, start + this.templatePageSize);
+  }
+
+  nextTemplatePage(): void {
+    if (this.templatePageIndex < this.templateTotalPages) this.templatePage += 1;
+  }
+
+  prevTemplatePage(): void {
+    if (this.templatePageIndex > 1) this.templatePage -= 1;
+  }
+
+  onTemplateSearchChange(term: string): void {
+    this.templateSearchTerm = term;
+    this.templatePage = 1;
+  }
+
+  onTemplateFilterChange(value: string): void {
+    this.templateFilterArchetype = value;
+    this.templatePage = 1;
+  }
 
 // Ajoute un axe (création ou édition)
   addAxis(axis: 'x' | 'y', target: 'new' | 'edit' = 'new') {
