@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 
@@ -12,6 +12,9 @@ export class WebSocketService {
   private fleetUpdatesSubject = new Subject<any>();
   private eventSubject = new Subject<string>();
   private notificationSubject = new Subject<any>();
+  private notificationsSubscription: StompSubscription | null = null;
+  private userNotificationsSubscription: StompSubscription | null = null;
+  private lastNotificationsUserId: string | null = null;
 
   constructor() {
     this.stompClient = new Client({
@@ -28,14 +31,18 @@ export class WebSocketService {
   }
 
   private ensureConnected(callback: () => void): void {
-    if (!this.stompClient.active) {
-      this.stompClient.onConnect = () => {
-        console.log('✅ WebSocket connecté');
-        callback();
-      };
-      this.stompClient.activate();
-    } else {
+    if (this.stompClient.connected) {
       callback();
+      return;
+    }
+
+    this.stompClient.onConnect = () => {
+      console.log('✅ WebSocket connecté');
+      callback();
+    };
+
+    if (!this.stompClient.active) {
+      this.stompClient.activate();
     }
   }
 
@@ -92,14 +99,24 @@ export class WebSocketService {
   }
 
   private subscribeToNotifications(userId?: string): void {
-    this.stompClient.subscribe('/topic/notifications', (message: IMessage) => {
-      this.notificationSubject.next(message.body);
-    });
-
-    if (userId) {
-      this.stompClient.subscribe(`/topic/user/${userId}/notifications`, (message: IMessage) => {
+    if (!this.notificationsSubscription) {
+      this.notificationsSubscription = this.stompClient.subscribe('/topic/notifications', (message: IMessage) => {
         this.notificationSubject.next(message.body);
       });
+    }
+
+    if (userId && userId !== this.lastNotificationsUserId) {
+      if (this.userNotificationsSubscription) {
+        this.userNotificationsSubscription.unsubscribe();
+        this.userNotificationsSubscription = null;
+      }
+      this.userNotificationsSubscription = this.stompClient.subscribe(
+        `/topic/user/${userId}/notifications`,
+        (message: IMessage) => {
+          this.notificationSubject.next(message.body);
+        }
+      );
+      this.lastNotificationsUserId = userId;
     }
   }
 
