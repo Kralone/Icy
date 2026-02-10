@@ -2,6 +2,8 @@ package com.icy.icy_backend.controller.dto.goal;
 
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class CreateGoalDTO {
 
@@ -17,6 +19,9 @@ public class CreateGoalDTO {
 
     /** null => root */
     private Long parentId;
+
+    /** Optionnel */
+    private UUID userId;
 }
 
 

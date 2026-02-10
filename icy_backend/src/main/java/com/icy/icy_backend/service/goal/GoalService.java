@@ -3,7 +3,9 @@ package com.icy.icy_backend.service.goal;
 import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
 import com.icy.icy_backend.db.entity.goal.Goal;
+import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.goal.GoalRepository;
+import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.List;
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final UserRepository userRepository;
     private final NotificationPushService notificationPushService;
 
     public List<GoalDTO> getAllTopLevelGoals() {
@@ -44,6 +47,12 @@ public class GoalService {
         goal.setCreatedAt(LocalDateTime.now());
         goal.setPinned(false);
         goal.setCompleted(false);
+
+        if (dto.getUserId() != null) {
+            User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+            goal.setUser(user);
+        }
 
         if (dto.getParentId() != null) {
             Goal parent = goalRepository.findById(dto.getParentId())
@@ -85,6 +94,15 @@ public class GoalService {
         // current éditable (admin)
         if (dto.getCurrent() != null) {
             goal.setCurrent(Math.max(0, dto.getCurrent()));
+        }
+
+        // ----- user -----
+        if (dto.getUserId() == null) {
+            goal.setUser(null);
+        } else {
+            User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+            goal.setUser(user);
         }
 
         // ----- parent -----
@@ -167,6 +185,8 @@ public class GoalService {
                 .completed(goal.isCompleted())
                 .createdAt(goal.getCreatedAt())
                 .parentId(goal.getParent() != null ? goal.getParent().getId() : null)
+                .userId(goal.getUser() != null ? goal.getUser().getId() : null)
+                .username(goal.getUser() != null ? goal.getUser().getUsername() : null)
                 .subGoals(goal.getSubGoals().stream().map(this::convertToDTO).toList())
                 .build();
     }

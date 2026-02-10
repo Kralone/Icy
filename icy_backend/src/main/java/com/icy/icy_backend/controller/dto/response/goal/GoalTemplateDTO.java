@@ -13,20 +13,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GoalDTO {
+public class GoalTemplateDTO {
     private Long id;
     private String name;
     private String description;
     private int target;
-    private int current;
-    private boolean pinned;
-    private boolean completed;
     private LocalDateTime createdAt;
     private Long parentId;
     private UUID userId;
     private String username;
-    private List<GoalDTO> subGoals;
+    private List<GoalTemplateDTO> subTemplates;
 }
-
-
-

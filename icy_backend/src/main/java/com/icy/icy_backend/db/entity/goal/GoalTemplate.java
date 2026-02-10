@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "goals", schema = "goals")
+@Table(name = "goal_templates", schema = "goals")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Goal {
+public class GoalTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,12 +27,6 @@ public class Goal {
 
     private int target;
 
-    private int current;
-
-    private boolean pinned;
-
-    private boolean completed;
-
     private LocalDateTime createdAt;
 
     @ManyToOne
@@ -41,15 +35,9 @@ public class Goal {
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
-    private Goal parent;
+    private GoalTemplate parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Goal> subGoals = new ArrayList<>();
+    private List<GoalTemplate> subTemplates = new ArrayList<>();
 }
-
-
-
-
-
-
