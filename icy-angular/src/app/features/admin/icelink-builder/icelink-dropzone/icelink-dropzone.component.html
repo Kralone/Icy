@@ -34,12 +34,22 @@
   >
     <!-- Bouton suppression -->
     <button
+      *ngIf="!block.isSystem"
       (click)="removeBlock(i)"
       class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500/60 text-white
              text-[10px] flex items-center justify-center shadow-md
              hover:bg-red-400 hover:scale-110 transition-all"
     >
       ✕
+    </button>
+    <button
+      *ngIf="block.isCustom"
+      (click)="openEdit(block, $event)"
+      class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-cyan-500/60 text-white
+             text-[10px] flex items-center justify-center shadow-md
+             hover:bg-cyan-400 hover:scale-110 transition-all"
+    >
+      ✎
     </button>
 
     <!-- En-tête bloc -->
@@ -58,6 +68,92 @@
       class="text-[11px] text-gray-300 leading-snug line-clamp-2 overflow-hidden"
     >
       {{ block.headline || 'Bloc vide...' }}
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="editingBlock && editDraft"
+  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-gradient-to-b from-[#1b263b]/95 to-[#0d1b2a]/95 backdrop-blur-2xl border border-white/20
+           rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.2)] w-full max-w-xl p-6 text-white relative
+           flex flex-col space-y-4"
+  >
+    <button
+      (click)="cancelEdit()"
+      class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none transition"
+    >
+      ✖
+    </button>
+
+    <h3 class="text-xl font-semibold text-cyan-300">
+      ✏️ Éditer le bloc custom
+    </h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block mb-1 text-sm text-gray-300">Nom</label>
+        <input
+          [(ngModel)]="editDraft.name"
+          class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+               focus:ring-2 focus:ring-cyan-400 outline-none transition"
+          placeholder="Bloc custom"
+        />
+      </div>
+      <div>
+        <label class="block mb-1 text-sm text-gray-300">Icône</label>
+        <div class="relative">
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="toggleEmojiPicker()"
+              class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white/80
+                     hover:bg-white/20 transition"
+            >
+              {{ editDraft.icon || '😀' }}
+            </button>
+            <span class="text-xs text-gray-400 self-center">Choisir un emoji</span>
+          </div>
+          <div
+            *ngIf="emojiPickerOpen"
+            class="absolute z-20 mt-2 bg-transparent"
+          >
+            <div class="emoji-picker-shell">
+              <emoji-picker (emoji-click)="onEmojiPick($event)"></emoji-picker>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Texte</label>
+      <textarea
+        [(ngModel)]="editDraft.content"
+        rows="4"
+        class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
+             focus:ring-2 focus:ring-cyan-400 outline-none transition resize-none"
+        placeholder="Votre texte..."
+      ></textarea>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2">
+      <button
+        (click)="cancelEdit()"
+        class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300 hover:text-white
+             hover:bg-white/20 transition-all duration-200 font-medium"
+      >
+        Annuler
+      </button>
+      <button
+        (click)="saveEdit()"
+        class="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold
+             hover:from-cyan-400 hover:to-blue-500 shadow-md transition transform hover:scale-105"
+      >
+        Enregistrer
+      </button>
     </div>
   </div>
 </div>

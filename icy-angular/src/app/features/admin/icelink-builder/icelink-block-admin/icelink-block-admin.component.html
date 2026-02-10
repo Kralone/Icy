@@ -21,13 +21,27 @@
 
         <div>
           <label class="block mb-2 text-sm text-gray-300">Icône (emoji)</label>
-          <input
-            [(ngModel)]="newBlock.icon"
-            name="icon"
-            placeholder="🚀"
-            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
-                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
-          />
+          <div class="relative">
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="toggleEmojiPicker('create')"
+                class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white/80
+                       hover:bg-white/20 transition"
+              >
+                {{ newBlock.icon || '😀' }}
+              </button>
+              <span class="text-xs text-gray-400 self-center">Choisir un emoji</span>
+            </div>
+            <div
+              *ngIf="emojiPickerOpen"
+              class="absolute z-20 mt-2 bg-transparent"
+            >
+              <div class="emoji-picker-shell">
+                <emoji-picker (emoji-click)="onEmojiPick($event, 'create')"></emoji-picker>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -155,12 +169,27 @@
 
           <div>
             <label class="block mb-1 text-sm text-gray-300">Icône (emoji)</label>
-            <input
-              [(ngModel)]="editingBlock.icon"
-              class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
-                   focus:ring-2 focus:ring-cyan-400 outline-none transition"
-              placeholder="🚀"
-            />
+            <div class="relative">
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  (click)="toggleEmojiPicker('edit')"
+                  class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white/80
+                       hover:bg-white/20 transition"
+                >
+                  {{ editingBlock.icon || '😀' }}
+                </button>
+                <span class="text-xs text-gray-400 self-center">Choisir un emoji</span>
+              </div>
+              <div
+                *ngIf="emojiPickerOpenEdit"
+                class="absolute z-20 mt-2 bg-transparent"
+              >
+                <div class="emoji-picker-shell">
+                  <emoji-picker (emoji-click)="onEmojiPick($event, 'edit')"></emoji-picker>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

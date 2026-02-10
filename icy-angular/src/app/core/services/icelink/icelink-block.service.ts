@@ -9,6 +9,9 @@ export interface IceLinkBlock {
   headline: string;
   content: string;
   description?: string;
+  isCustom?: boolean;
+  template?: boolean;
+  isSystem?: boolean;
 }
 
 export const ICELINK_DEFAULT_BLOCKS: IceLinkBlock[] = [

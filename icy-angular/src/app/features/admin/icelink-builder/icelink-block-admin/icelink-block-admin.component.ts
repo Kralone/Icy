@@ -1,13 +1,15 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IceLinkBlockService, IceLinkBlock } from '../../../../core/services/icelink/icelink-block.service';
+import 'emoji-picker-element';
 
 @Component({
   selector: 'app-icelink-block-admin',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './icelink-block-admin.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class IceLinkBlockAdminComponent implements OnInit {
   @Output() onBlockDeleted = new EventEmitter<number>();
@@ -16,6 +18,8 @@ export class IceLinkBlockAdminComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   isUpdating = false;
+  emojiPickerOpen = false;
+  emojiPickerOpenEdit = false;
 
   newBlock: IceLinkBlock = {
     name: '',
@@ -108,5 +112,32 @@ export class IceLinkBlockAdminComponent implements OnInit {
       },
       error: (err) => console.error('Erreur de suppression :', err),
     });
+  }
+
+  toggleEmojiPicker(mode: 'create' | 'edit') {
+    if (mode === 'create') {
+      this.emojiPickerOpen = !this.emojiPickerOpen;
+      return;
+    }
+    this.emojiPickerOpenEdit = !this.emojiPickerOpenEdit;
+  }
+
+  onEmojiPick(event: any, mode: 'create' | 'edit') {
+    const emoji = event?.detail?.unicode
+      || event?.detail?.emoji?.unicode
+      || event?.detail?.emoji?.native
+      || event?.detail?.emoji
+      || '';
+    if (!emoji) return;
+
+    if (mode === 'create') {
+      this.newBlock.icon = emoji;
+      this.emojiPickerOpen = false;
+      return;
+    }
+    if (this.editingBlock) {
+      this.editingBlock.icon = emoji;
+      this.emojiPickerOpenEdit = false;
+    }
   }
 }

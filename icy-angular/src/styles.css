@@ -390,6 +390,29 @@
   opacity: 0;
 }
 
+emoji-picker {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 12px;
+  --background: rgba(13, 27, 42, 0.96);
+  --border-color: rgba(255, 255, 255, 0.18);
+  --input-border-color: rgba(255, 255, 255, 0.22);
+  --input-background: rgba(255, 255, 255, 0.08);
+  --input-font-color: #e2e8f0;
+  --category-button-color: #94a3b8;
+  --category-button-active-color: #e2f7ff;
+  --category-button-active-background: rgba(34, 211, 238, 0.2);
+  --hover-background: rgba(255, 255, 255, 0.08);
+  --focus-indicator-color: rgba(34, 211, 238, 0.55);
+  --emoji-size: 20px;
+  --num-columns: 8;
+  --font-family: "Space Grotesk", "Sora", "Noto Sans", sans-serif;
+}
+
+.emoji-picker-shell {
+  display: inline-block;
+}
+
 /* =========================
    ICY EVENTS (clean unified)
    ========================= */
