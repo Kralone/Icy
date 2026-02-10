@@ -6,6 +6,7 @@ import com.icy.icy_backend.db.entity.ship.Ship;
 import com.icy.icy_backend.db.entity.user.id.UserShipId;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_ships", schema = "fleet")
@@ -34,6 +35,9 @@ public class UserShip {
 
     @Column(name = "loaner", nullable = false)
     private Boolean loaner = false;
+
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
 
 

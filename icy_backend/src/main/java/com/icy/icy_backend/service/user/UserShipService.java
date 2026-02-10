@@ -78,6 +78,9 @@ public class UserShipService {
         userShip.setId(new UserShipId(user.getId(), ship.getId()));
         userShip.setInGamePurchase(isInGame);
         userShip.setLoaner(isLoaner);
+        if (userShip.getCreatedAt() == null) {
+            userShip.setCreatedAt(java.time.LocalDateTime.now());
+        }
 
 
         userShipRepository.save(userShip);
@@ -128,7 +131,9 @@ public class UserShipService {
         userShipRepository.deleteByUserIdAndShipId(userId, shipId);
 
         logger.info("Vaisseau ID: {} supprimé pour l'utilisateur ID: {}", shipId, userId);
-        userWebSocketService.sendUserShipDeletion(new UserShip(null, user, shipService.findShipById(shipId), false, false));
+        userWebSocketService.sendUserShipDeletion(
+                new UserShip(null, user, shipService.findShipById(shipId), false, false, java.time.LocalDateTime.now())
+        );
         shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
         return messageService.buildResponse("user.ship.delete.success", null, "Vaisseau supprimé avec succès.");
     }

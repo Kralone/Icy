@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> {
     List<UserShip> findByUserId(UUID userId);
@@ -37,6 +38,14 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
 """)
     List<UserShip> findByUserIdWithShipAndBrand(@Param("userId") UUID userId);
 
+    @Query("""
+    SELECT us FROM UserShip us
+    JOIN FETCH us.ship s
+    JOIN FETCH us.user u
+    WHERE us.createdAt >= :since
+    ORDER BY us.createdAt DESC
+""")
+    List<UserShip> findRecentWithShipAndUser(@Param("since") LocalDateTime since);
 
 
     boolean existsByUserIdAndShipId(UUID userId, Long shipId);

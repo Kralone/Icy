@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByDiscordId(String discordId);
@@ -22,6 +23,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "LEFT JOIN FETCH ur.role " +
             "WHERE u.username = :username")
     Optional<User> findByUsernameWithRoles(@Param("username") String username);
+
+    List<User> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since);
 
 
 }
