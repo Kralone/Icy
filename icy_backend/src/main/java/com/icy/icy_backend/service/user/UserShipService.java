@@ -102,7 +102,12 @@ public class UserShipService {
         for (UserShip userShip : userShips) {
             Ship ship = userShip.getShip();
 
-            fleetSummary.add(new FleetSummaryResponse(ship.getName(), ship.getImageUrl(), ship.getFocus()));
+            fleetSummary.add(new FleetSummaryResponse(
+                    ship.getName(),
+                    ship.getImageUrl(),
+                    ship.getFocus(),
+                    ship.getBrand() != null ? ship.getBrand().getImageUrl() : null
+            ));
         }
 
         return fleetSummary;

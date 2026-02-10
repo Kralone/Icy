@@ -15,7 +15,7 @@ export class FleetComponent implements OnInit {
   private wsService: WebSocketService;
 
   isLoading = true;
-  fleetSummary: { [focus: string]: { name: string; imageUrl: string }[] } = {};
+  fleetSummary: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } = {};
 
   objectKeys = Object.keys;
 
@@ -37,8 +37,8 @@ export class FleetComponent implements OnInit {
     });
   }
 
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string }[]): { [focus: string]: { name: string; imageUrl: string }[] } {
-    const result: { [focus: string]: { name: string; imageUrl: string; count: number }[] } = {};
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } {
+    const result: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string; count: number }[] } = {};
 
     for (const ship of fleet) {
       if (!result[ship.focus]) {
@@ -49,15 +49,16 @@ export class FleetComponent implements OnInit {
       if (existing) {
         existing.count++;
       } else {
-        result[ship.focus].push({ name: ship.name, imageUrl: ship.imageUrl, count: 1 });
+        result[ship.focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, count: 1 });
       }
     }
 
-    const finalResult: { [focus: string]: { name: string; imageUrl: string }[] } = {};
+    const finalResult: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } = {};
     for (const focus of Object.keys(result)) {
       finalResult[focus] = result[focus].map(s => ({
         name: s.count > 1 ? `${s.name} (${s.count})` : s.name,
-        imageUrl: s.imageUrl
+        imageUrl: s.imageUrl,
+        brandImageUrl: s.brandImageUrl
       }));
     }
 

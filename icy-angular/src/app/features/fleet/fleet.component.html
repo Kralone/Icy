@@ -5,9 +5,6 @@
     <div class="relative space-y-3">
       <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte</p>
       <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Atlas des vaisseaux</h2>
-      <p class="text-sm text-slate-400 max-w-2xl">
-        Un focus, un vaisseau phare, puis une liste compacte pour garder la vue globale lisible.
-      </p>
     </div>
   </div>
 
@@ -43,9 +40,15 @@
                 class="absolute inset-0 h-full w-full object-cover opacity-90"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
-              <div class="absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
+              <div class="absolute top-3 left-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
                 {{ i + 1 }}
               </div>
+              <img
+                *ngIf="ship.brandImageUrl"
+                [src]="ship.brandImageUrl"
+                alt="Logo marque"
+                class="absolute top-3 right-3 w-10 h-10 object-contain rounded-full bg-white/20 p-2 shadow-md"
+              />
             </div>
 
             <div class="p-4 space-y-2">
