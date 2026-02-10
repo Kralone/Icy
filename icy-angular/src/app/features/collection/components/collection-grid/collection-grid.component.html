@@ -1,0 +1,35 @@
+<div class="overflow-auto">
+  <div class="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
+    <table class="min-w-full table-fixed text-sm">
+      <thead>
+      <tr class="text-xs uppercase text-cyan-300 bg-white/10">
+        <th class="px-3 py-2 text-left">Variante</th>
+        <th class="px-3 py-2 text-center"
+            *ngFor="let x of getAxisLabels(getAxisX())">
+          {{ x }}
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let y of getAxisLabels(getAxisY()); let yi = index" class="border-t border-white/10">
+        <th class="px-3 py-2 text-left text-white font-medium">{{ y }}</th>
+
+        <ng-container *ngFor="let _ of getAxisLabels(getAxisX()); let xi = index">
+          <td class="px-3 py-2 text-center">
+            <button
+              type="button"
+              class="h-7 w-7 rounded-md border text-xs font-semibold mx-auto flex items-center justify-center
+             border-cyan-400/40 hover:bg-cyan-500/10 transition"
+              [class.bg-cyan-600]="isChecked(xi, yi)"
+              [class.text-white]="isChecked(xi, yi)"
+              (click)="toggleCell.emit({ detail: detail, x: xi, y: yi })">
+              {{ isChecked(xi, yi) ? '✓' : '' }}
+            </button>
+          </td>
+        </ng-container>
+      </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
