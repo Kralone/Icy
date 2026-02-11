@@ -75,6 +75,13 @@
           </h3>
 
           <span
+            *ngIf="goal.username && depth === 0"
+            class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 text-white/70 shrink-0 leading-none text-[13px] pl-3.5 pr-5 py-1.5"
+          >
+            👤 {{ goal.username }}
+          </span>
+
+          <span
             *ngIf="isDone(goal)"
             class="rounded-full border border-white/15 bg-white/5 text-white/60 shrink-0"
             [ngClass]="{
