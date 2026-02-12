@@ -52,7 +52,7 @@
             <input
               type="checkbox"
               [(ngModel)]="showCompleted"
-              (change)="recomputeDisplay()"
+              (change)="onShowCompletedToggle()"
               class="sr-only"
             />
             <span
@@ -126,6 +126,7 @@
           [depth]="0"
           [isAdmin]="isAdmin"
           [showChildren]="false"
+          [disableAnimation]="suppressAnimations"
           (refresh)="reloadGoals()"
           (progressChange)="onProgressChange($event)"
           (expandedChange)="onExpandedChange($event)"

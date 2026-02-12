@@ -27,6 +27,7 @@ export class GoalComponent implements OnInit {
   search = '';
   showCompleted = true;
   showHistory = false;
+  suppressAnimations = false;
 
   /** ✅ Etat d'expansion persistant (clé = goal.id) */
   expandedById: Record<number, boolean> = {};
@@ -58,6 +59,14 @@ export class GoalComponent implements OnInit {
     this.showCompleted = true;
     this.showHistory = false;
     this.recomputeDisplay();
+  }
+
+  onShowCompletedToggle(): void {
+    this.suppressAnimations = true;
+    this.recomputeDisplay();
+    setTimeout(() => {
+      this.suppressAnimations = false;
+    });
   }
 
   toggleHistory(): void {
