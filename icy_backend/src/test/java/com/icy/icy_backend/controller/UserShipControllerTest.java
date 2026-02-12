@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class UserShipControllerTest {
 
     @Autowired
@@ -97,3 +98,7 @@ class UserShipControllerTest {
         return ResponseEntity.ok(body);
     }
 }
+
+
+
+

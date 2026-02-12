@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class ScWorldEventParticipationControllerTest {
 
     @Autowired
@@ -91,3 +92,7 @@ class ScWorldEventParticipationControllerTest {
                 .andExpect(status().isOk());
     }
 }
+
+
+
+
