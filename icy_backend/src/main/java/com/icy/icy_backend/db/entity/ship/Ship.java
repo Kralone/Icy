@@ -1,10 +1,12 @@
 package com.icy.icy_backend.db.entity.ship;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.icy.icy_backend.db.entity.brand.Brand;
 import jakarta.persistence.*;
 import lombok.*;
-import com.icy.icy_backend.db.entity.brand.Brand;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "ships", schema = "fleet")
 @Getter
 @Setter
