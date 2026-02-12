@@ -112,6 +112,8 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
       this.progressWidth = '0%';
       this.progressValue = 0;
       this.progressLabelLeft = 4;
+      this.progressLabelLeftValue = '0%';
+      this.progressLabelTransform = 'translateX(0)';
       requestAnimationFrame(() => {
         setTimeout(() => {
           this.progressWidth = widthValue;

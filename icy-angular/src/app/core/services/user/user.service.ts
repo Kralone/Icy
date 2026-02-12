@@ -13,6 +13,7 @@ export class UserService {
   private apiUrl = '/api/users';
   private profileSubject = new BehaviorSubject<UserProfile | null>(null);
   profile$ = this.profileSubject.asObservable();
+  private avatarCacheBuster: string | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -34,13 +35,21 @@ export class UserService {
 
   getMyProfile(): Observable<ApiResponse<UserProfile>> {
     return this.http.get<ApiResponse<UserProfile>>(`${this.apiUrl}/me/profile`).pipe(
-      tap((response) => this.profileSubject.next(response.data))
+      tap((response) => {
+        const data = this.applyAvatarCacheBuster(response.data);
+        response.data = data;
+        this.profileSubject.next(data);
+      })
     );
   }
 
   updateMyProfile(payload: UserProfileUpdate): Observable<ApiResponse<UserProfile>> {
     return this.http.patch<ApiResponse<UserProfile>>(`${this.apiUrl}/me/profile`, payload).pipe(
-      tap((response) => this.profileSubject.next(response.data))
+      tap((response) => {
+        const data = this.applyAvatarCacheBuster(response.data);
+        response.data = data;
+        this.profileSubject.next(data);
+      })
     );
   }
 
@@ -48,12 +57,25 @@ export class UserService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<ApiResponse<UserProfile>>(`${this.apiUrl}/me/avatar`, formData).pipe(
-      tap((response) => this.profileSubject.next(response.data))
+      tap((response) => {
+        this.avatarCacheBuster = Date.now().toString();
+        const data = this.applyAvatarCacheBuster(response.data);
+        response.data = data;
+        this.profileSubject.next(data);
+      })
     );
   }
 
   getOnlineUsers(): Observable<ApiResponse<UserOnline[]>> {
     return this.http.get<ApiResponse<UserOnline[]>>(`${this.apiUrl}/online`);
+  }
+
+  private applyAvatarCacheBuster(profile: UserProfile | null): UserProfile | null {
+    if (!profile?.avatarUrl || !this.avatarCacheBuster) return profile;
+    const [baseUrl, query] = profile.avatarUrl.split('?');
+    const params = new URLSearchParams(query ?? '');
+    params.set('v', this.avatarCacheBuster);
+    return { ...profile, avatarUrl: `${baseUrl}?${params.toString()}` };
   }
 
 }

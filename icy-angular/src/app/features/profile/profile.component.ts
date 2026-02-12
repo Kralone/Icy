@@ -167,9 +167,10 @@ export class ProfileComponent implements OnInit {
   saveProfileInfo(): void {
     if (this.isSavingProfile || !this.hasProfileChanges) return;
     const requests = [];
+    let avatarRequestIndex = -1;
 
     if (this.pendingAvatarFile) {
-      requests.push(this.userService.uploadMyAvatar(this.pendingAvatarFile));
+      avatarRequestIndex = requests.push(this.userService.uploadMyAvatar(this.pendingAvatarFile)) - 1;
     }
 
     if (this.pendingDescription !== this.profile.description) {
@@ -180,7 +181,14 @@ export class ProfileComponent implements OnInit {
 
     this.isSavingProfile = true;
     forkJoin(requests).subscribe({
-      next: () => {
+      next: (responses) => {
+        if (avatarRequestIndex >= 0) {
+          const avatarResponse = responses[avatarRequestIndex] as any;
+          const avatarUrl = avatarResponse?.data?.avatarUrl ?? '';
+          if (avatarUrl) {
+            this.profile.avatarUrl = avatarUrl;
+          }
+        }
         this.profile.description = this.pendingDescription;
         this.pendingAvatarFile = null;
         this.pendingAvatarPreview = '';
