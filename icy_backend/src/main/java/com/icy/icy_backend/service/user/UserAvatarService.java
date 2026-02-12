@@ -74,8 +74,8 @@ public class UserAvatarService {
                 user.getId(),
                 user.getUsername(),
                 List.of("avatar"),
-                user.getUsername(),
                 "Avatar",
+                null,
                 Map.of()
         );
 
