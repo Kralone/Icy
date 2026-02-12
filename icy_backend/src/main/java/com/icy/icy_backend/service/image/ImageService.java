@@ -111,6 +111,42 @@ public class ImageService {
         return repo.save(meta);
     }
 
+    public ImageMetadata registerExistingImage(String name,
+                                               String url,
+                                               long size,
+                                               UUID uploaderId,
+                                               String uploadedBy,
+                                               List<String> tags,
+                                               String category,
+                                               String subcategory,
+                                               Map<String, String> tagColors) {
+        String safeCategory = normalize(category);
+        String safeSubcategory = normalize(subcategory);
+        upsertCategory(safeCategory);
+        upsertSubcategory(safeCategory, safeSubcategory);
+
+        List<String> safeTags = tags == null ? List.of() : tags;
+        upsertTagColors(safeTags, tagColors);
+
+        Optional<ImageMetadata> existing = repo.findByName(name);
+        ImageMetadata meta = existing.orElseGet(ImageMetadata::new);
+        meta.setName(name);
+        meta.setUrl(url);
+        meta.setSize(size);
+        meta.setUploadedAt(LocalDateTime.now());
+        meta.setUploaderId(uploaderId);
+        meta.setUploadedBy(uploadedBy);
+        meta.setCategory(safeCategory);
+        meta.setSubcategory(safeSubcategory);
+        meta.setTags(safeTags);
+
+        return repo.save(meta);
+    }
+
+    public void deleteMetadataIfExists(String name) {
+        repo.findByName(name).ifPresent(repo::delete);
+    }
+
 
     public List<ImageMetadata> listAll() {
         return repo.findAll();

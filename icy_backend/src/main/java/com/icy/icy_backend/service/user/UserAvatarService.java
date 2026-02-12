@@ -1,6 +1,7 @@
 package com.icy.icy_backend.service.user;
 
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.service.image.ImageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -25,11 +27,14 @@ public class UserAvatarService {
 
     private final Path avatarRoot;
     private final String baseUrl;
+    private final ImageService imageService;
 
     public UserAvatarService(@Value("${icy.image.path:images}") String imagePath,
-                             @Value("${icy.image.base-url:http://localhost:8081/images/}") String imageBaseUrl) throws IOException {
+                             @Value("${icy.image.base-url:http://localhost:8081/images/}") String imageBaseUrl,
+                             ImageService imageService) throws IOException {
         this.avatarRoot = Paths.get(imagePath, "avatars").toAbsolutePath().normalize();
         this.baseUrl = ensureTrailingSlash(imageBaseUrl) + "avatars/";
+        this.imageService = imageService;
 
         if (!Files.exists(avatarRoot)) {
             Files.createDirectories(avatarRoot);
@@ -61,7 +66,20 @@ public class UserAvatarService {
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         log.info("🧊 Avatar enregistre : {}", destination);
 
-        return baseUrl + URLEncoder.encode(filename, StandardCharsets.UTF_8);
+        String url = baseUrl + URLEncoder.encode(filename, StandardCharsets.UTF_8);
+        imageService.registerExistingImage(
+                "avatars/" + filename,
+                url,
+                file.getSize(),
+                user.getId(),
+                user.getUsername(),
+                List.of("avatar"),
+                user.getUsername(),
+                "Avatar",
+                Map.of()
+        );
+
+        return url;
     }
 
     private void deletePreviousAvatar(User user, String newFilename) throws IOException {
@@ -79,6 +97,7 @@ public class UserAvatarService {
             Files.delete(existingPath);
             log.info("🗑️ Ancien avatar supprime : {}", existingFilename);
         }
+        imageService.deleteMetadataIfExists("avatars/" + existingFilename);
     }
 
     private String ensureTrailingSlash(String value) {
