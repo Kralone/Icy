@@ -18,6 +18,7 @@ export class GoalComponent implements OnInit {
 
   goals: Goal[] = [];
   displayGoals: Goal[] = [];
+  historyGoals: Goal[] = [];
 
   isAdmin = false;
   isLoading = true;
@@ -25,6 +26,7 @@ export class GoalComponent implements OnInit {
   // UI
   search = '';
   showCompleted = true;
+  showHistory = false;
 
   /** ✅ Etat d'expansion persistant (clé = goal.id) */
   expandedById: Record<number, boolean> = {};
@@ -54,7 +56,12 @@ export class GoalComponent implements OnInit {
   clearSearch(): void {
     this.search = '';
     this.showCompleted = true;
+    this.showHistory = false;
     this.recomputeDisplay();
+  }
+
+  toggleHistory(): void {
+    this.showHistory = !this.showHistory;
   }
 
   /** ✅ appelé par les GoalSub (toggle individuel) */
@@ -66,14 +73,17 @@ export class GoalComponent implements OnInit {
     const roots = this.goals.filter(g => g.parentId === null);
 
     const prepared = roots
-      .map(r => this.prepareTree(r))
+      .map(r => this.prepareTree(r, this.showCompleted))
       .filter((g): g is Goal => !!g);
 
-    this.displayGoals = this.sortRootGoals(prepared);
+    this.displayGoals = this.sortRootGoals(prepared.filter(g => !this.isDone(g)));
+    this.historyGoals = this.showCompleted
+      ? this.sortRootGoals(prepared.filter(g => this.isDone(g)))
+      : [];
   }
 
   /** Prépare l’arbre (recherche, filtre, tri des sous-goals) */
-  private prepareTree(goal: Goal): Goal | null {
+  private prepareTree(goal: Goal, includeCompleted: boolean): Goal | null {
     if (!goal) return null;
 
     const cloned: Goal = {
@@ -84,12 +94,12 @@ export class GoalComponent implements OnInit {
     };
 
     const children = (cloned.subGoals ?? [])
-      .map(c => this.prepareTree(c))
+      .map(c => this.prepareTree(c, includeCompleted))
       .filter((g): g is Goal => !!g);
 
     cloned.subGoals = this.sortGoalsStrict(children);
 
-    if (!this.showCompleted && this.isDone(cloned)) {
+    if (!includeCompleted && this.isDone(cloned)) {
       if ((cloned.subGoals?.length ?? 0) === 0) return null;
     }
 
@@ -107,9 +117,11 @@ export class GoalComponent implements OnInit {
 
   /** Terminé ? */
   private isDone(g: Goal): boolean {
-    if ((g as any).completed !== undefined) return !!(g as any).completed;
-    if (!g || (g as any).target <= 0) return false;
-    return (g as any).current >= (g as any).target;
+    if (!g) return false;
+    if ((g as any).completed === true) return true;
+    const totals = this.getTotalProgress(g);
+    if (totals.target <= 0) return false;
+    return totals.current >= totals.target;
   }
 
   /** Sous-goals : non-finis → finis → alpha */
@@ -148,6 +160,20 @@ export class GoalComponent implements OnInit {
       .toLocaleLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private getTotalProgress(goal: Goal): { current: number; target: number } {
+    if (!goal) return { current: 0, target: 0 };
+    if (!goal.subGoals?.length) {
+      return { current: goal.current ?? 0, target: goal.target ?? 0 };
+    }
+    return goal.subGoals.reduce(
+      (acc, child) => {
+        const totals = this.getTotalProgress(child);
+        return { current: acc.current + totals.current, target: acc.target + totals.target };
+      },
+      { current: 0, target: 0 }
+    );
   }
 
   expandAll(): void {

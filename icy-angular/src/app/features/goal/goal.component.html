@@ -114,7 +114,7 @@
 
     <!-- États -->
     <div *ngIf="isLoading" class="text-gray-400 text-center py-8">Chargement...</div>
-    <div *ngIf="!isLoading && displayGoals.length === 0" class="text-gray-400 text-center py-8">
+    <div *ngIf="!isLoading && displayGoals.length === 0 && (!showCompleted || historyGoals.length === 0)" class="text-gray-400 text-center py-8">
       Aucun objectif.
     </div>
 
@@ -127,8 +127,41 @@
           [isAdmin]="isAdmin"
           [showChildren]="false"
           (refresh)="reloadGoals()"
+          (progressChange)="recomputeDisplay()"
           (expandedChange)="onExpandedChange($event)"
         ></app-goal-sub>
+      </div>
+
+      <!-- Historique -->
+      <div *ngIf="showCompleted && historyGoals.length" class="mt-6">
+        <button
+          (click)="toggleHistory()"
+          class="w-full flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
+        >
+          <span>Historique</span>
+          <span class="text-xs text-white/50">
+            {{ showHistory ? 'Masquer' : 'Afficher' }} · {{ historyGoals.length }}
+          </span>
+        </button>
+
+        <div
+          class="mt-3 space-y-4 overflow-hidden transition-all duration-300 ease-out"
+          [style.maxHeight]="showHistory ? '2000px' : '0px'"
+          [style.opacity]="showHistory ? '1' : '0'"
+        >
+          <div *ngFor="let goal of historyGoals">
+            <app-goal-sub
+              [goal]="goal"
+              [depth]="0"
+              [isAdmin]="isAdmin"
+              [showChildren]="false"
+              [disableAnimation]="true"
+              (refresh)="reloadGoals()"
+              (progressChange)="recomputeDisplay()"
+              (expandedChange)="onExpandedChange($event)"
+            ></app-goal-sub>
+          </div>
+        </div>
       </div>
     </div>
 
