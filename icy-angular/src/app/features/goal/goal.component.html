@@ -120,7 +120,7 @@
 
     <!-- Liste -->
     <div class="flex-1 overflow-y-auto space-y-4 pb-8">
-      <div *ngFor="let goal of displayGoals" class="animate-fadeInUp">
+      <div *ngFor="let goal of displayGoals; trackBy: trackByGoalId" class="animate-fadeInUp">
         <app-goal-sub
           [goal]="goal"
           [depth]="0"
@@ -149,7 +149,7 @@
           [style.maxHeight]="showHistory ? '2000px' : '0px'"
           [style.opacity]="showHistory ? '1' : '0'"
         >
-          <div *ngFor="let goal of historyGoals">
+          <div *ngFor="let goal of historyGoals; trackBy: trackByGoalId">
             <app-goal-sub
               [goal]="goal"
               [depth]="0"

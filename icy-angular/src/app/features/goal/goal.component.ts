@@ -96,6 +96,7 @@ export class GoalComponent implements OnInit {
       ...goal,
       // ✅ réinjecte l'état depuis la map (pas depuis les clones)
       __expanded: this.expandedById[goal.id],
+      __allSubGoals: goal.subGoals ?? [],
       subGoals: goal.subGoals ? [...goal.subGoals] : [],
     };
 
@@ -170,10 +171,11 @@ export class GoalComponent implements OnInit {
 
   private getTotalProgress(goal: Goal): { current: number; target: number } {
     if (!goal) return { current: 0, target: 0 };
-    if (!goal.subGoals?.length) {
+    const allChildren = goal.__allSubGoals ?? goal.subGoals;
+    if (!allChildren?.length) {
       return { current: goal.current ?? 0, target: goal.target ?? 0 };
     }
-    return goal.subGoals.reduce(
+    return allChildren.reduce(
       (acc, child) => {
         const totals = this.getTotalProgress(child);
         return { current: acc.current + totals.current, target: acc.target + totals.target };
@@ -204,6 +206,10 @@ export class GoalComponent implements OnInit {
   collapseAll(): void {
     this.setExpandState(this.goals, false);
     this.recomputeDisplay();
+  }
+
+  trackByGoalId(_: number, goal: Goal): number {
+    return goal.id;
   }
 
   private setExpandState(goals: Goal[], state: boolean): void {

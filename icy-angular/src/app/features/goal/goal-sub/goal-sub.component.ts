@@ -149,11 +149,12 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
 
   getTotalProgress(goal: Goal): { current: number; target: number } {
     if (!goal) return { current: 0, target: 0 };
-    if (!goal.subGoals?.length) {
+    const allChildren = (goal as any).__allSubGoals ?? goal.subGoals;
+    if (!allChildren?.length) {
       return { current: goal.current ?? 0, target: goal.target ?? 0 };
     }
-    return goal.subGoals.reduce(
-      (acc, child) => {
+    return allChildren.reduce(
+      (acc: { current: number; target: number }, child: Goal) => {
         const totals = this.getTotalProgress(child);
         return { current: acc.current + totals.current, target: acc.target + totals.target };
       },
@@ -376,5 +377,9 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
     if (current <= 0) return 0;
     const raw = (p.delta * 100) / current;
     return Math.max(0, Math.min(100, raw));
+  }
+
+  trackByGoalId(_: number, goal: Goal): number {
+    return goal.id;
   }
 }

@@ -425,7 +425,7 @@
       [style.maxHeight]="showChildren ? '9999px' : '0px'"
       [style.opacity]="showChildren ? '1' : '0'"
     >
-      <ng-container *ngFor="let sub of sortedSubGoals">
+      <ng-container *ngFor="let sub of sortedSubGoals; trackBy: trackByGoalId">
         <app-goal-sub
           [goal]="sub"
           [isAdmin]="isAdmin"

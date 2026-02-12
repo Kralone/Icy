@@ -15,4 +15,5 @@ export interface Goal {
 
   /** UI only */
   __expanded?: boolean;
+  __allSubGoals?: Goal[];
 }
