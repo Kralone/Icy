@@ -245,7 +245,7 @@ public class UserService {
 
     public ResponseEntity<MessageResponse<UserQuickStatsResponseDTO>> getCurrentUserQuickStats(UUID userId) {
         long missions = goalParticipationRepository.countDistinctGoalsByUserId(userId);
-        long events = eventParticipationRepository.countByUser_IdAndStatus(userId, 1);
+        long events = eventParticipationRepository.countByUser_IdAndStatusAndEvent_FinishedTrue(userId, 1);
         long ships = userShipRepository.countByUser_Id(userId);
         long collections = userCollectionRepository.countByUserId(userId.toString());
         return messageService.buildResponse("user.stats.get", new UserQuickStatsResponseDTO(missions, events, ships, collections));

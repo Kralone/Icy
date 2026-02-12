@@ -17,6 +17,7 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
     void deleteAllByEvent(Event event);
     long countByUser_Id(UUID userId);
     long countByUser_IdAndStatus(UUID userId, int status);
+    long countByUser_IdAndStatusAndEvent_FinishedTrue(UUID userId, int status);
 }
 
 
