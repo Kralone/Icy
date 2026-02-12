@@ -6,9 +6,16 @@
 
       <div (click)="toggle(p.id)" class="p-4 flex items-center justify-between cursor-pointer group">
         <div class="flex items-center gap-4">
-          <div class="w-10 h-10 flex items-center justify-center rounded-full font-bold text-lg bg-black/20 border border-white/10 shadow-inner"
-               [ngClass]="{'text-yellow-400 border-yellow-500/30 shadow-[0_0_10px_rgba(250,204,21,0.2)]': i === 0, 'text-gray-300': i === 1, 'text-amber-600': i === 2}">
-            {{ i + 1 }}
+          <div
+            class="w-10 h-10 flex items-center justify-center rounded-full font-bold text-lg bg-black/20 border border-white/10 shadow-inner overflow-hidden text-gray-200"
+          >
+            <img
+              *ngIf="p.avatarUrl"
+              [src]="p.avatarUrl"
+              alt="Avatar"
+              class="h-full w-full object-cover"
+            />
+            <span *ngIf="!p.avatarUrl">{{ getInitial(p.username) }}</span>
           </div>
           <div>
             <div class="font-bold text-lg text-white group-hover:text-cyan-200 transition">{{ p.username || 'Joueur Inconnu' }}</div>

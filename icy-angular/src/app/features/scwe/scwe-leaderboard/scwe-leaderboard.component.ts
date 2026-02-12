@@ -35,4 +35,9 @@ export class ScweLeaderboardComponent {
   getFieldValue(p: ScWorldEventParticipationDto, key: string): number {
     return p.points ? (p.points[key] || 0) : 0;
   }
+
+  getInitial(username?: string | null): string {
+    const value = (username || '').trim();
+    return value ? value.charAt(0).toUpperCase() : '?';
+  }
 }

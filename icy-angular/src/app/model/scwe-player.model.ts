@@ -21,6 +21,7 @@ export type ScWorldEventParticipationDto = {
 
   // Champs spécifiques
   username?: string;
+  avatarUrl?: string;
   data?: string; // JSON string brut venant du back (parfois)
   points: Record<string, number>; // Objet parsé utilisé par le front
 

@@ -25,6 +25,7 @@ public class ScWorldEventParticipationDTO {
 
     private UUID userId;
     private String username;
+    private String avatarUrl;
 
     private int status;
 
@@ -43,8 +44,9 @@ public class ScWorldEventParticipationDTO {
                 .id(p.getId())
                 .event(ScWorldEventDTO.from(p.getScWorldEvent()))
 
-                .userId(p.getUser().getId())
+                .userId(p.getUser() != null ? p.getUser().getId() : null)
                 .username(p.getUser() != null ? p.getUser().getUsername() : "Joueur Inconnu")
+                .avatarUrl(p.getUser() != null ? p.getUser().getAvatarUrl() : null)
                 .status(p.getStatus())
                 .points(p.getPoints())
                 .total(p.getTotal())
