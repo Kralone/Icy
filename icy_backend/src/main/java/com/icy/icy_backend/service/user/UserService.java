@@ -330,7 +330,6 @@ public class UserService {
                 .orElseGet(() -> {
                     UserParam userParam = new UserParam();
                     userParam.setUser(user);
-                    userParam.setUserId(user.getId());
                     return userParamRepository.save(userParam);
                 });
     }
