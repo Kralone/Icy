@@ -6,6 +6,7 @@ import com.icy.icy_backend.db.entity.user.UserParam;
 import lombok.Data;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 public class UserProfileResponseDTO {
@@ -17,6 +18,7 @@ public class UserProfileResponseDTO {
     private String avatarUrl;
     private FavoriteShipDTO favoriteShip;
     private NotificationSettingsDTO notifications;
+    private List<String> roles;
 
     public UserProfileResponseDTO(User user, UserParam userParam) {
         this.id = user.getId();
@@ -26,6 +28,9 @@ public class UserProfileResponseDTO {
         this.status = user.getStatus() != null ? user.getStatus().toApiValue() : null;
         this.avatarUrl = user.getAvatarUrl();
         this.favoriteShip = buildFavoriteShip(user.getFavoriteShip());
+        this.roles = user.getRoles().stream()
+                .map(userRole -> userRole.getRole().getName())
+                .toList();
         if (userParam != null) {
             this.notifications = new NotificationSettingsDTO(
                     userParam.getNotifGlobal(),

@@ -7,6 +7,7 @@ export interface UserProfile {
   description?: string | null;
   status?: UserStatusKey | null;
   avatarUrl?: string | null;
+  roles?: string[] | null;
   favoriteShip?: {
     id: number;
     name: string;

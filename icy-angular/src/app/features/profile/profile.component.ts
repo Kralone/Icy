@@ -17,6 +17,10 @@ interface StatusOption {
   label: string;
   badgeClass: string;
 }
+interface RankOption {
+  key: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -46,12 +50,21 @@ export class ProfileComponent implements OnInit {
     indisponible: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
     horsligne: 'border-slate-400/30 bg-slate-400/10 text-slate-200'
   };
+  rankOptions: RankOption[] = [
+    { key: 'ADMIN', label: 'Directeur' },
+    { key: 'OFFICIER', label: 'Officier' },
+    { key: 'SPECIALISTE', label: 'Spécialiste' },
+    { key: 'INGENIEUR', label: 'Ingénieur' },
+    { key: 'ASSOCIE', label: 'Associé' },
+    { key: 'JUNIOR', label: 'Junior' }
+  ];
 
   profile = {
     username: 'Pilote',
     description: 'Explorateur glaciaire, fan de missions à haut risque.',
     status: 'connecte' as StatusKey,
     discordId: '',
+    roles: [] as string[],
     favoriteShip: '',
     avatarUrl: '',
     notifications: {
@@ -97,6 +110,7 @@ export class ProfileComponent implements OnInit {
       this.profile.discordId = data.discordId ?? this.profile.discordId;
       this.profile.status = (data.status as StatusKey) ?? this.profile.status;
       this.profile.avatarUrl = data.avatarUrl ?? this.profile.avatarUrl;
+      this.profile.roles = data.roles ?? this.profile.roles;
       this.pendingAvatarPreview = '';
       this.pendingAvatarFile = null;
       if (data.favoriteShip) {
@@ -146,6 +160,13 @@ export class ProfileComponent implements OnInit {
   get avatarInitials(): string {
     const value = (this.profile.username || 'P').trim();
     return value.charAt(0).toUpperCase();
+  }
+
+  get activeRankLabel(): string {
+    const roles = this.profile.roles ?? [];
+    const normalized = roles.map((role) => role.toUpperCase());
+    const matched = this.rankOptions.find((rank) => normalized.includes(rank.key));
+    return matched?.label ?? 'Junior';
   }
 
   onAvatarChange(event: Event): void {

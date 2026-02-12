@@ -1,7 +1,22 @@
 <main
-  class="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-[#0b1423] via-[#14223a] to-[#22324d]
+  class="relative min-h-screen p-4 sm:p-6 bg-gradient-to-br from-[#0b1423] via-[#14223a] to-[#22324d]
          text-white overflow-y-auto"
 >
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-40 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_60%)]"></div>
+    <div class="absolute right-4 top-8 text-[48px] sm:text-[64px] font-black tracking-[0.35em] text-white/10 uppercase">
+      {{ activeRankLabel }}
+    </div>
+    <div class="absolute left-6 bottom-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/20">
+      <span>Directeur</span>
+      <span>Officier</span>
+      <span>Spécialiste</span>
+      <span>Ingénieur</span>
+      <span>Associé</span>
+      <span>Junior</span>
+    </div>
+  </div>
+  <div class="relative z-20">
   <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
       <p class="text-sm uppercase tracking-[0.3em] text-cyan-200/60">Profil</p>
@@ -326,4 +341,5 @@
     (close)="isShipModalOpen = false"
     (confirmSelection)="onFavoriteShipSelected($event)"
   ></app-ship-selector>
+  </div>
 </main>
