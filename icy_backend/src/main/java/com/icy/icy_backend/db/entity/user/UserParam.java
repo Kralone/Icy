@@ -1,7 +1,18 @@
 package com.icy.icy_backend.db.entity.user;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.util.UUID;
 
@@ -11,7 +22,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserParam {
+public class UserParam implements Persistable<UUID> {
     @Id
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -35,4 +46,23 @@ public class UserParam {
 
     @Column(name = "notif_discord", nullable = false)
     private Boolean notifDiscord = false;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    private void markNotNew() {
+        this.isNew = false;
+    }
 }
