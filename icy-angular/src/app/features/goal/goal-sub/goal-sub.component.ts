@@ -116,6 +116,12 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  getInitial(value?: string | null): string {
+    const text = (value ?? '').trim();
+    if (!text) return '?';
+    return text.charAt(0).toUpperCase();
+  }
+
   get sortedSubGoals(): Goal[] {
     if (!this.goal?.subGoals) return [];
     return [...this.goal.subGoals].sort((a, b) => {

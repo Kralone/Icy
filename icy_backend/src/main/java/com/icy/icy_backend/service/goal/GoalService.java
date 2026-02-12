@@ -187,6 +187,7 @@ public class GoalService {
                 .parentId(goal.getParent() != null ? goal.getParent().getId() : null)
                 .userId(goal.getUser() != null ? goal.getUser().getId() : null)
                 .username(goal.getUser() != null ? goal.getUser().getUsername() : null)
+                .avatarUrl(goal.getUser() != null ? goal.getUser().getAvatarUrl() : null)
                 .subGoals(goal.getSubGoals().stream().map(this::convertToDTO).toList())
                 .build();
     }

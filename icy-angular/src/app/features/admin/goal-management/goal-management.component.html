@@ -168,8 +168,15 @@
           </span>
 
           <span *ngIf="root.username"
-                class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20">
-            👤 {{ root.username }}
+                class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+            <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+              <img *ngIf="root.avatarUrl; else rootAvatarInitial"
+                   [src]="root.avatarUrl"
+                   [alt]="root.username || 'Avatar'"
+                   class="w-full h-full object-cover" />
+              <ng-template #rootAvatarInitial>{{ getInitial(root.username) }}</ng-template>
+            </span>
+            <span class="truncate max-w-[140px]">{{ root.username }}</span>
           </span>
 
           <span *ngIf="isDone(root)"
@@ -215,8 +222,15 @@
                   class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
 
             <span *ngIf="node.goal.username"
-                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20">
-              👤 {{ node.goal.username }}
+                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+              <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                <img *ngIf="node.goal.avatarUrl; else nodeAvatarInitial"
+                     [src]="node.goal.avatarUrl"
+                     [alt]="node.goal.username || 'Avatar'"
+                     class="w-full h-full object-cover" />
+                <ng-template #nodeAvatarInitial>{{ getInitial(node.goal.username) }}</ng-template>
+              </span>
+              <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
             </span>
 
             <span *ngIf="isDone(node.goal)"

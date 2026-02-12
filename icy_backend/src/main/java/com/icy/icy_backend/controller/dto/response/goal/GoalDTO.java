@@ -25,6 +25,7 @@ public class GoalDTO {
     private Long parentId;
     private UUID userId;
     private String username;
+    private String avatarUrl;
     private List<GoalDTO> subGoals;
 }
 

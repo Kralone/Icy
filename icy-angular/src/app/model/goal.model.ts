@@ -10,6 +10,7 @@ export interface Goal {
   parentId: number | null;
   userId?: string | null;
   username?: string | null;
+  avatarUrl?: string | null;
   subGoals: Goal[];
 
   /** UI only */

@@ -84,6 +84,12 @@ export class GoalManagementComponent implements OnInit {
     return (goal.current ?? 0) >= (goal.target ?? 0);
   }
 
+  getInitial(value?: string | null): string {
+    const text = (value ?? '').trim();
+    if (!text) return '?';
+    return text.charAt(0).toUpperCase();
+  }
+
   // ----------------- Load + preserve UI state -----------------
   loadGoals(opts?: { preserveUiState?: boolean }): void {
     const preserve = !!opts?.preserveUiState;
