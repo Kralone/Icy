@@ -2,6 +2,8 @@ package com.icy.icy_backend.controller.goal;
 
 import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationSummaryDTO;
 import com.icy.icy_backend.service.goal.GoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +55,22 @@ public class GoalController {
     @PostMapping("/{id}/increment")
     public void incrementGoal(@PathVariable Long id, @RequestParam("delta") int delta) {
         goalService.incrementGoal(id, delta);
+    }
+
+    @GetMapping("/{id}/participations")
+    public ResponseEntity<List<GoalParticipationDTO>> getParticipations(
+            @PathVariable Long id,
+            @RequestParam(value = "limit", defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(goalService.getParticipations(id, limit));
+    }
+
+    @GetMapping("/{id}/participations/combined")
+    public ResponseEntity<List<GoalParticipationSummaryDTO>> getCombinedParticipations(
+            @PathVariable Long id,
+            @RequestParam(value = "limit", defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(goalService.getCombinedParticipations(id, limit));
     }
 }
 

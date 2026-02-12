@@ -2,18 +2,29 @@ package com.icy.icy_backend.service.goal;
 
 import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationSummaryDTO;
 import com.icy.icy_backend.db.entity.goal.Goal;
+import com.icy.icy_backend.db.entity.goal.GoalParticipation;
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.repository.goal.GoalParticipationRepository;
 import com.icy.icy_backend.db.repository.goal.GoalRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.notification.NotificationPushService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +32,7 @@ import java.util.List;
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final GoalParticipationRepository goalParticipationRepository;
     private final UserRepository userRepository;
     private final NotificationPushService notificationPushService;
 
@@ -239,6 +251,7 @@ public class GoalService {
         goal.setCompleted(goal.getCurrent() >= goal.getTarget());
 
         goalRepository.save(goal);
+        saveParticipation(goal, delta);
         log.info("Objectif {} modifié de {}", goal.getName(), delta);
 
         if (!wasCompleted && goal.isCompleted()) {
@@ -260,6 +273,117 @@ public class GoalService {
         }
 
         notificationPushService.sendBroadcast(title, body, "/icy/goals", 2);
+    }
+
+    public List<GoalParticipationDTO> getParticipations(Long goalId, int limit) {
+        if (!goalRepository.existsById(goalId)) {
+            throw new ResourceNotFoundException("Objectif introuvable");
+        }
+
+        var page = PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
+        return goalParticipationRepository.findByGoal_Id(goalId, page)
+                .stream()
+                .map(this::convertParticipationToDTO)
+                .toList();
+    }
+
+    public List<GoalParticipationSummaryDTO> getCombinedParticipations(Long goalId, int limit) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
+        loadSubGoalsRecursively(goal);
+
+        List<Long> goalIds = new ArrayList<>();
+        collectGoalIds(goal, goalIds);
+
+        int totalCurrent = getTotalCurrent(goal);
+        Map<UUID, GoalParticipationSummaryDTO> summaries = new HashMap<>();
+
+        for (GoalParticipation participation : goalParticipationRepository.findByGoal_IdIn(goalIds)) {
+            User user = participation.getUser();
+            GoalParticipationSummaryDTO existing = summaries.get(user.getId());
+            if (existing == null) {
+                existing = GoalParticipationSummaryDTO.builder()
+                        .userId(user.getId())
+                        .username(user.getUsername())
+                        .avatarUrl(user.getAvatarUrl())
+                        .totalDelta(0)
+                        .percentOfCurrent(0)
+                        .build();
+                summaries.put(user.getId(), existing);
+            }
+            existing.setTotalDelta(existing.getTotalDelta() + participation.getDelta());
+        }
+
+        List<GoalParticipationSummaryDTO> result = summaries.values().stream()
+                .sorted((a, b) -> Integer.compare(b.getTotalDelta(), a.getTotalDelta()))
+                .toList();
+
+        int max = Math.max(1, limit);
+        List<GoalParticipationSummaryDTO> limited = result.size() > max ? result.subList(0, max) : result;
+
+        int totalDelta = limited.stream().mapToInt(GoalParticipationSummaryDTO::getTotalDelta).sum();
+        if (totalDelta > 0) {
+            for (GoalParticipationSummaryDTO summary : limited) {
+                double percent = (summary.getTotalDelta() * 100.0) / totalDelta;
+                summary.setPercentOfCurrent(percent);
+            }
+        }
+
+        return limited;
+    }
+
+    private void saveParticipation(Goal goal, int delta) {
+        if (delta == 0) return;
+
+        UUID userId = AuthUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+
+        GoalParticipation participation = goalParticipationRepository
+                .findByGoal_IdAndUser_Id(goal.getId(), userId)
+                .orElseGet(() -> GoalParticipation.builder()
+                        .goal(goal)
+                        .user(user)
+                        .delta(0)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+
+        participation.setDelta(participation.getDelta() + delta);
+        participation.setTotalAfter(goal.getCurrent());
+        if (participation.getCreatedAt() == null) {
+            participation.setCreatedAt(LocalDateTime.now());
+        }
+        goalParticipationRepository.save(participation);
+    }
+
+    private GoalParticipationDTO convertParticipationToDTO(GoalParticipation participation) {
+        return GoalParticipationDTO.builder()
+                .id(participation.getId())
+                .goalId(participation.getGoal().getId())
+                .userId(participation.getUser().getId())
+                .username(participation.getUser().getUsername())
+                .avatarUrl(participation.getUser().getAvatarUrl())
+                .delta(participation.getDelta())
+                .totalAfter(participation.getTotalAfter())
+                .createdAt(participation.getCreatedAt())
+                .build();
+    }
+
+    private void collectGoalIds(Goal goal, List<Long> goalIds) {
+        goalIds.add(goal.getId());
+        if (goal.getSubGoals() == null) return;
+        for (Goal child : goal.getSubGoals()) {
+            collectGoalIds(child, goalIds);
+        }
+    }
+
+    private int getTotalCurrent(Goal goal) {
+        if (goal.getSubGoals() == null || goal.getSubGoals().isEmpty()) {
+            return goal.getCurrent();
+        }
+        return goal.getSubGoals().stream()
+                .mapToInt(this::getTotalCurrent)
+                .sum();
     }
 }
 
