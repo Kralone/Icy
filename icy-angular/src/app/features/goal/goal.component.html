@@ -127,7 +127,7 @@
           [isAdmin]="isAdmin"
           [showChildren]="false"
           (refresh)="reloadGoals()"
-          (progressChange)="recomputeDisplay()"
+          (progressChange)="onProgressChange($event)"
           (expandedChange)="onExpandedChange($event)"
         ></app-goal-sub>
       </div>
@@ -157,7 +157,7 @@
               [showChildren]="false"
               [disableAnimation]="true"
               (refresh)="reloadGoals()"
-              (progressChange)="recomputeDisplay()"
+              (progressChange)="onProgressChange($event)"
               (expandedChange)="onExpandedChange($event)"
             ></app-goal-sub>
           </div>

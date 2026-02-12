@@ -21,7 +21,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
 
   @Output() refresh = new EventEmitter<void>();
   @Output() expandedChange = new EventEmitter<{ id: number; expanded: boolean }>();
-  @Output() progressChange = new EventEmitter<void>();
+  @Output() progressChange = new EventEmitter<{ goalId: number; current: number; delta: number }>();
 
   loading = false;
   progressWidth = '0%';
@@ -207,10 +207,11 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
 
     this.goalService.incrementGoal(goalId, delta).subscribe({
       next: () => {
-        this.goal.current = Math.max(0, Math.min(this.goal.target, (this.goal.current ?? 0) + delta));
+        const nextCurrent = Math.max(0, Math.min(this.goal.target, (this.goal.current ?? 0) + delta));
+        this.goal.current = nextCurrent;
         this.loading = false;
         this.updateProgressBar();
-        this.progressChange.emit();
+        this.progressChange.emit({ goalId, current: nextCurrent, delta });
         if (this.showParticipations) {
           this.loadParticipations();
         }
@@ -235,9 +236,9 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
     this.refresh.emit();
   }
 
-  onChildProgress(): void {
+  onChildProgress(change: { goalId: number; current: number; delta: number }): void {
     this.updateProgressBar();
-    this.progressChange.emit();
+    this.progressChange.emit(change);
     if (this.showCombinedStack) {
       this.loadCombinedParticipations();
     }

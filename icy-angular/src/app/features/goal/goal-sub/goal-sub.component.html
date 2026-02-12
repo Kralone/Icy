@@ -131,7 +131,7 @@
             }"
           >
           <div class="absolute inset-0 rounded-md overflow-visible">
-            <ng-container *ngIf="showCombinedStack && depth === 0 && goal.subGoals?.length; else solidProgress">
+            <ng-container *ngIf="showCombinedStack && depth === 0 && goal.subGoals?.length && combinedSegments.length; else solidProgress">
               <div
                 class="relative h-full"
                 [style.width]="progressWidth"
@@ -415,7 +415,7 @@
           [parentCompleted]="parentCompleted || isDone(goal) || goal.completed"
           [disableAnimation]="disableAnimation"
           (refresh)="onChildRefresh()"
-          (progressChange)="onChildProgress()"
+          (progressChange)="onChildProgress($event)"
           (expandedChange)="expandedChange.emit($event)"
         ></app-goal-sub>
       </ng-container>

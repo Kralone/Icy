@@ -69,6 +69,12 @@ export class GoalComponent implements OnInit {
     this.expandedById[e.id] = e.expanded;
   }
 
+  onProgressChange(change: { goalId: number; current: number; delta: number }): void {
+    if (!change) return;
+    this.applyProgressChange(this.goals, change.goalId, change.current);
+    this.recomputeDisplay();
+  }
+
   recomputeDisplay(): void {
     const roots = this.goals.filter(g => g.parentId === null);
 
@@ -174,6 +180,20 @@ export class GoalComponent implements OnInit {
       },
       { current: 0, target: 0 }
     );
+  }
+
+  private applyProgressChange(goals: Goal[], goalId: number, current: number): boolean {
+    for (const goal of goals) {
+      if (goal.id === goalId) {
+        goal.current = current;
+        goal.completed = (goal.current ?? 0) >= (goal.target ?? 0);
+        return true;
+      }
+      if (goal.subGoals?.length && this.applyProgressChange(goal.subGoals, goalId, current)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   expandAll(): void {
