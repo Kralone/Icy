@@ -37,7 +37,6 @@ export class UserService {
     return this.http.get<ApiResponse<UserProfile>>(`${this.apiUrl}/me/profile`).pipe(
       tap((response) => {
         const data = this.applyAvatarCacheBuster(response.data);
-        response.data = data;
         this.profileSubject.next(data);
       })
     );
@@ -47,7 +46,6 @@ export class UserService {
     return this.http.patch<ApiResponse<UserProfile>>(`${this.apiUrl}/me/profile`, payload).pipe(
       tap((response) => {
         const data = this.applyAvatarCacheBuster(response.data);
-        response.data = data;
         this.profileSubject.next(data);
       })
     );
@@ -60,7 +58,6 @@ export class UserService {
       tap((response) => {
         this.avatarCacheBuster = Date.now().toString();
         const data = this.applyAvatarCacheBuster(response.data);
-        response.data = data;
         this.profileSubject.next(data);
       })
     );
