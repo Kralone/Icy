@@ -62,6 +62,12 @@ export class ProfileComponent implements OnInit {
       discord: false
     }
   };
+  quickStats = {
+    missions: 0,
+    events: 0,
+    ships: 0,
+    collections: 0
+  };
 
   isShipModalOpen = false;
   favoriteShipImageUrl = '';
@@ -104,6 +110,21 @@ export class ProfileComponent implements OnInit {
           fleet: data.notifications.fleet,
           goals: data.notifications.goals,
           discord: data.notifications.discord
+        };
+      }
+    });
+
+    this.userService.getMyQuickStats().subscribe({
+      next: (response) => {
+        if (!response.data) return;
+        this.quickStats = response.data;
+      },
+      error: () => {
+        this.quickStats = {
+          missions: 0,
+          events: 0,
+          ships: 0,
+          collections: 0
         };
       }
     });

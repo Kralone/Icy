@@ -11,10 +11,15 @@ import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserParam;
 import com.icy.icy_backend.db.entity.user.UserStatus;
 import com.icy.icy_backend.db.repository.ship.ShipRepository;
+import com.icy.icy_backend.db.repository.goal.GoalRepository;
+import com.icy.icy_backend.db.repository.goal.GoalParticipationRepository;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.db.repository.collection.UserCollectionRepository;
 import com.icy.icy_backend.db.repository.user.RoleRepository;
 import com.icy.icy_backend.db.repository.user.UserParamRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.db.repository.user.UserRoleRepository;
+import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.UserPublisher;
 import com.icy.icy_backend.service.common.MessageService;
@@ -52,11 +57,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         User user = new User();
@@ -82,11 +92,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         when(userRepository.findByDiscordId("123")).thenReturn(Optional.empty());
@@ -109,11 +124,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         when(userRepository.findByDiscordId("123")).thenReturn(Optional.of(new User()));
@@ -136,11 +156,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         when(userRepository.findByDiscordId("123")).thenReturn(Optional.empty());
@@ -175,11 +200,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         User user = new User();
@@ -207,11 +237,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         User user = new User();
@@ -236,11 +271,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         User user = new User();
@@ -269,11 +309,16 @@ class UserServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
         UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
 
         UserService userService = new UserService(
                 userRepository, userRoleRepository, roleRepository, passwordEncoder,
                 messageService, userPublisher, notificationPushService, shipRepository,
-                userParamRepository, userAvatarService
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
         User user = new User();

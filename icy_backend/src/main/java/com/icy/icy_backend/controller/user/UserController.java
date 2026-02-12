@@ -6,6 +6,7 @@ import com.icy.icy_backend.controller.dto.user.UpdateUserProfileRequest;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserProfileResponseDTO;
+import com.icy.icy_backend.controller.dto.response.user.UserQuickStatsResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.security.AuthUtils;
@@ -73,6 +74,11 @@ public class UserController {
     @GetMapping("/me/profile")
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> getMyProfile() {
         return userService.getCurrentUserProfile(AuthUtils.getCurrentUserId());
+    }
+
+    @GetMapping("/me/stats")
+    public ResponseEntity<MessageResponse<UserQuickStatsResponseDTO>> getMyQuickStats() {
+        return userService.getCurrentUserQuickStats(AuthUtils.getCurrentUserId());
     }
 
     @PatchMapping("/me/profile")

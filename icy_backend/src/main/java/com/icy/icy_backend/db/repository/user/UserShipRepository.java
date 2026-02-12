@@ -50,6 +50,7 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
 
     boolean existsByUserIdAndShipId(UUID userId, Long shipId);
 
+    long countByUser_Id(UUID userId);
 
 }
 

@@ -15,6 +15,8 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
     Optional<EventParticipation> findByEventAndUser(Event event, User user);
     Optional<List<EventParticipation>> findAllByEvent(Event event);
     void deleteAllByEvent(Event event);
+    long countByUser_Id(UUID userId);
+    long countByUser_IdAndStatus(UUID userId, int status);
 }
 
 

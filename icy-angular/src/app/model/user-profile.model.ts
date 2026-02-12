@@ -33,3 +33,10 @@ export interface UserProfileUpdate {
   notifGoals?: boolean;
   notifDiscord?: boolean;
 }
+
+export interface UserQuickStats {
+  missions: number;
+  events: number;
+  ships: number;
+  collections: number;
+}

@@ -8,6 +8,8 @@ public interface UserCollectionRepository extends JpaRepository<UserCollection, 
     List<UserCollection> findByUserIdOrderByCreatedAtDesc(String userId);
 
     void deleteByIdAndUserId(Long id, String userId);
+
+    long countByUserId(String userId);
 }
 
 

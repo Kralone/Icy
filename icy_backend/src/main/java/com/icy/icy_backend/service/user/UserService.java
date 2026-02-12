@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserProfileResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
+import com.icy.icy_backend.controller.dto.response.user.UserQuickStatsResponseDTO;
 import com.icy.icy_backend.controller.dto.user.UpdateUserProfileRequest;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserParam;
@@ -15,6 +16,11 @@ import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.db.repository.user.RoleRepository;
 import com.icy.icy_backend.db.repository.user.UserRoleRepository;
 import com.icy.icy_backend.db.repository.user.UserParamRepository;
+import com.icy.icy_backend.db.repository.goal.GoalRepository;
+import com.icy.icy_backend.db.repository.goal.GoalParticipationRepository;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.db.repository.user.UserShipRepository;
+import com.icy.icy_backend.db.repository.collection.UserCollectionRepository;
 import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.UserPublisher;
@@ -50,8 +56,13 @@ public class UserService {
     private final ShipRepository shipRepository;
     private final UserParamRepository userParamRepository;
     private final UserAvatarService userAvatarService;
+    private final GoalRepository goalRepository;
+    private final GoalParticipationRepository goalParticipationRepository;
+    private final EventParticipationRepository eventParticipationRepository;
+    private final UserShipRepository userShipRepository;
+    private final UserCollectionRepository userCollectionRepository;
 
-    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService, ShipRepository shipRepository, UserParamRepository userParamRepository, UserAvatarService userAvatarService) {
+    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService, ShipRepository shipRepository, UserParamRepository userParamRepository, UserAvatarService userAvatarService, GoalRepository goalRepository, GoalParticipationRepository goalParticipationRepository, EventParticipationRepository eventParticipationRepository, UserShipRepository userShipRepository, UserCollectionRepository userCollectionRepository) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
@@ -62,6 +73,11 @@ public class UserService {
         this.shipRepository = shipRepository;
         this.userParamRepository = userParamRepository;
         this.userAvatarService = userAvatarService;
+        this.goalRepository = goalRepository;
+        this.goalParticipationRepository = goalParticipationRepository;
+        this.eventParticipationRepository = eventParticipationRepository;
+        this.userShipRepository = userShipRepository;
+        this.userCollectionRepository = userCollectionRepository;
     }
 
     /**
@@ -225,6 +241,14 @@ public class UserService {
         userRepository.save(user);
         UserParam userParam = getOrCreateUserParam(user);
         return messageService.buildResponse("user.profile.get", new UserProfileResponseDTO(user, userParam));
+    }
+
+    public ResponseEntity<MessageResponse<UserQuickStatsResponseDTO>> getCurrentUserQuickStats(UUID userId) {
+        long missions = goalParticipationRepository.countDistinctGoalsByUserId(userId);
+        long events = eventParticipationRepository.countByUser_IdAndStatus(userId, 1);
+        long ships = userShipRepository.countByUser_Id(userId);
+        long collections = userCollectionRepository.countByUserId(userId.toString());
+        return messageService.buildResponse("user.stats.get", new UserQuickStatsResponseDTO(missions, events, ships, collections));
     }
 
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> updateCurrentUserProfile(UUID userId, UpdateUserProfileRequest request) {

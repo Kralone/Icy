@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import {User} from '../../../model/user.model';
 import {ApiResponse} from '../../../model/api-response.model';
-import { UserProfile, UserProfileUpdate } from '../../../model/user-profile.model';
+import { UserProfile, UserProfileUpdate, UserQuickStats } from '../../../model/user-profile.model';
 import { UserOnline } from '../../../model/user-online.model';
 
 @Injectable({
@@ -40,6 +40,10 @@ export class UserService {
         this.profileSubject.next(data);
       })
     );
+  }
+
+  getMyQuickStats(): Observable<ApiResponse<UserQuickStats>> {
+    return this.http.get<ApiResponse<UserQuickStats>>(`${this.apiUrl}/me/stats`);
   }
 
   updateMyProfile(payload: UserProfileUpdate): Observable<ApiResponse<UserProfile>> {
