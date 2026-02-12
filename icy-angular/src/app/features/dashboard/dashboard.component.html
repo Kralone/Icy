@@ -34,13 +34,73 @@
   <aside class="w-full xl:w-80 flex flex-col h-full gap-6 shrink-0">
     <app-scwe-widget></app-scwe-widget>
 
+    <!-- Membres en ligne -->
+    <div
+      class="p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+             hover:shadow-cyan-500/20 transition"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-cyan-300 drop-shadow-md">
+          🟢 En ligne
+        </h2>
+        <span class="text-xs text-cyan-100/60">
+          {{ onlineUsers.length }} actifs
+        </span>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngIf="onlineUsers.length === 0" class="text-xs text-cyan-100/60 text-center py-4">
+          Aucun membre en ligne.
+        </div>
+        <div
+          *ngFor="let member of paginatedOnlineUsers"
+          class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+        >
+          <div class="h-9 w-9 rounded-full overflow-hidden border border-white/10 bg-white/10 flex items-center justify-center">
+            <img *ngIf="member.avatarUrl" [src]="member.avatarUrl" [alt]="member.username" class="h-full w-full object-cover" />
+            <span *ngIf="!member.avatarUrl" class="text-sm font-bold text-cyan-200">
+              {{ member.username.charAt(0) }}
+            </span>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-white">{{ member.username }}</p>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="statusStyles[member.status].badgeClass">
+            {{ statusStyles[member.status].label }}
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="totalPages > 1" class="mt-4 flex items-center justify-between text-xs text-cyan-100/70">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="currentPage === 1"
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Prec
+        </button>
+        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="currentPage === totalPages"
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Suiv
+        </button>
+      </div>
+    </div>
+
     <!-- Événements -->
     <div
-      class="relative flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
-             hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+      class="relative flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg overflow-hidden"
+      [ngClass]="hasUpcomingEvents ? 'hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]' : ''"
     >
-      <div class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
-      <div class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
+      <div *ngIf="hasUpcomingEvents" class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
+      <div *ngIf="hasUpcomingEvents" class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
 
       <h2 class="relative text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
         📅 Événements

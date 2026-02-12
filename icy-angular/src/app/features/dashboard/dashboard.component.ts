@@ -8,6 +8,8 @@ import {GoalComponent} from './goal/goal.component';
 import {NewsComponent} from './news/news.component';
 import { Router } from '@angular/router';
 import { ScweWidgetComponent } from './scwe-widget/scwe-widget.component';
+import { UserService } from '../../core/services/user/user.service';
+import { UserOnline } from '../../model/user-online.model';
 
 interface IcyEvent {
   id: string;
@@ -22,6 +24,13 @@ interface IcyEvent {
 interface ShipSummary {
   name: string;
   imageUrl: string;
+}
+
+type OnlineStatus = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
+
+interface StatusStyle {
+  label: string;
+  badgeClass: string;
 }
 
 @Component({
@@ -42,6 +51,17 @@ export class DashboardComponent {
 
   fleetSummary: { [focus: string]: ShipSummary[] } = {};
   events: IcyEvent[] = [];
+  onlineUsers: UserOnline[] = [];
+  currentPage = 1;
+  readonly pageSize = 5;
+
+  statusStyles: Record<OnlineStatus, StatusStyle> = {
+    connecte: { label: 'Connecté', badgeClass: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' },
+    enjeu: { label: 'En jeu', badgeClass: 'border-violet-400/30 bg-violet-400/10 text-violet-200' },
+    absent: { label: 'Absent', badgeClass: 'border-amber-400/30 bg-amber-400/10 text-amber-200' },
+    indisponible: { label: 'Indisponible', badgeClass: 'border-rose-400/30 bg-rose-400/10 text-rose-200' },
+    horsligne: { label: 'Hors ligne', badgeClass: 'border-slate-400/30 bg-slate-400/10 text-slate-200' }
+  };
 
   objectKeys = Object.keys;
 
@@ -49,6 +69,7 @@ export class DashboardComponent {
     private shipService: ShipService,
     private wsService: WebSocketService,
     private eventService: EventService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -59,6 +80,7 @@ export class DashboardComponent {
     this.wsService.connectFleetUpdate();
     this.loadFleetSummary();
     this.loadEvents();
+    this.loadOnlineUsers();
   }
 
   loadFleetSummary() {
@@ -117,6 +139,44 @@ export class DashboardComponent {
     });
   }
 
+  loadOnlineUsers(): void {
+    this.userService.getOnlineUsers().subscribe((response) => {
+      this.onlineUsers = response.data ?? [];
+      this.currentPage = 1;
+    });
+  }
+
+  get sortedOnlineUsers(): UserOnline[] {
+    const priority: Record<OnlineStatus, number> = {
+      enjeu: 0,
+      connecte: 1,
+      indisponible: 2,
+      absent: 3,
+      horsligne: 4
+    };
+    return [...this.onlineUsers].sort((a, b) => {
+      const statusA = (a.status ?? 'connecte') as OnlineStatus;
+      const statusB = (b.status ?? 'connecte') as OnlineStatus;
+      const diff = priority[statusA] - priority[statusB];
+      if (diff !== 0) return diff;
+      return a.username.localeCompare(b.username);
+    });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.sortedOnlineUsers.length / this.pageSize));
+  }
+
+  get paginatedOnlineUsers(): UserOnline[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.sortedOnlineUsers.slice(start, start + this.pageSize);
+  }
+
+  changePage(delta: number): void {
+    const nextPage = this.currentPage + delta;
+    this.currentPage = Math.min(this.totalPages, Math.max(1, nextPage));
+  }
+
   capitalizeFirst(value: string | null | undefined): string {
     if (!value) return '';
     return value.charAt(0).toUpperCase() + value.slice(1);
@@ -127,6 +187,10 @@ export class DashboardComponent {
     this.router.navigate(['/icy/events'], {
       queryParams: { eventId: event.id }
     });
+  }
+
+  get hasUpcomingEvents(): boolean {
+    return !!this.events && this.events.length > 0;
   }
 
   ngOnDestroy() {
