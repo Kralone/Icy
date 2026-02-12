@@ -36,7 +36,7 @@ export class NewsComponent implements OnInit {
   }
 
   currentPage = 1;
-  itemsPerPage = 3; // nombre d’articles par page
+  itemsPerPage = 4; // nombre d’articles par page
 
   get paginatedNews() {
     const start = (this.currentPage - 1) * this.itemsPerPage;
