@@ -21,7 +21,7 @@ interface StatusOption {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ShipSelectorComponent],
+  imports: [CommonModule, FormsModule, ShipSelectorComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
