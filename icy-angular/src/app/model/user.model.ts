@@ -4,10 +4,5 @@ export interface User {
   discordId: string;
   createdAt: string;
   active: boolean;
-  roles: Role[];
-}
-
-export interface Role {
-  id: string;
-  name: string;
+  roles: string[];
 }

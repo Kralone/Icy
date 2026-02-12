@@ -50,7 +50,7 @@
             *ngFor="let role of user.roles"
             class="inline-block bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-xs px-2 py-1 rounded-full mr-1 shadow-sm whitespace-nowrap"
           >
-            {{ role }}
+            {{ roleLabels[role] || role }}
           </span>
         </td>
         <td class="px-4 py-3 flex flex-wrap gap-2">
@@ -166,7 +166,9 @@
           class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-400 outline-none"
           required
         >
-          <option class="bg-[#1b263b]" *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
+          <option class="bg-[#1b263b]" *ngFor="let role of availableRoles" [value]="role">
+            {{ roleLabels[role] || role }}
+          </option>
         </select>
       </div>
 

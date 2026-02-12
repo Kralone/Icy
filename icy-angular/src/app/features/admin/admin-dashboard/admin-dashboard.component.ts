@@ -42,10 +42,27 @@ export class AdminDashboardComponent implements OnInit {
   } = {
     username: '',
     discordId: '',
-    role: 'USER'
+    role: 'JUNIOR'
   };
 
-  availableRoles: string[] = ['ADMIN', 'USER'];
+  availableRoles: string[] = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
+  roleLabels: Record<string, string> = {
+    ADMIN: 'Directeur',
+    OFFICIER: 'Officier',
+    SPECIALISTE: 'Specialiste',
+    INGENIEUR: 'Ingenieur',
+    ASSOCIE: 'Associe',
+    JUNIOR: 'Junior',
+    USER: 'Junior',
+    MEMBRE: 'Junior',
+    RECRUE: 'Junior',
+    BOT: 'Bot'
+  };
+  roleAliases: Record<string, string> = {
+    USER: 'JUNIOR',
+    MEMBRE: 'JUNIOR',
+    RECRUE: 'JUNIOR'
+  };
 
   constructor(private userService: UserService, private authService: AuthService) {}
 
@@ -156,7 +173,7 @@ export class AdminDashboardComponent implements OnInit {
     this.newUser = {
       username: '',
       discordId: '',
-      role: 'USER'
+      role: 'JUNIOR'
     };
     this.isEditMode = false;
     this.editedUserId = null;
@@ -182,7 +199,7 @@ export class AdminDashboardComponent implements OnInit {
     this.newUser = {
       username: user.username,
       discordId: user.discordId,
-      role: (user.roles?.[0] as any) || 'USER'
+      role: this.normalizeRole(user.roles?.[0])
     };
 
     this.editedUserId = user.id;
@@ -210,6 +227,12 @@ export class AdminDashboardComponent implements OnInit {
         alert('Échec de la mise à jour');
       }
     });
+  }
+
+  private normalizeRole(role?: string | null): string {
+    const resolved = (role ?? 'JUNIOR').toUpperCase();
+    const normalized = this.roleAliases[resolved] ?? resolved;
+    return this.availableRoles.includes(normalized) ? normalized : 'JUNIOR';
   }
 
   deleteUser(id: string): void {
