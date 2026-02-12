@@ -44,7 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-    private static final String DEFAULT_ROLE_NAME = "USER";
+    private static final String DEFAULT_ROLE_NAME = "JUNIOR";
 
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
@@ -115,7 +115,8 @@ public class UserService {
 
         userPublisher.sendTemporaryPassword(discordId, tempPassword);
 
-        Role defaultRole = findRoleByName(role);
+        String roleName = (role == null || role.isBlank()) ? DEFAULT_ROLE_NAME : role;
+        Role defaultRole = findRoleByName(roleName);
         user.assignDefaultRole(defaultRole);
 
         User savedUser = userRepository.save(user);
