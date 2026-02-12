@@ -7,6 +7,7 @@ import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { forkJoin, of } from 'rxjs';
 import { ShipSelectorComponent } from '../../shared/ship-selector/ship-selector.component';
+import { RankOrbitComponent } from '../../shared/rank-orbit/rank-orbit.component';
 import { Ship } from '../../model/ship.model';
 import { AcquisitionType } from '../../shared/ship-selector/ship-selector.component';
 
@@ -25,7 +26,7 @@ interface RankOption {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShipSelectorComponent],
+  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -58,6 +59,11 @@ export class ProfileComponent implements OnInit {
     { key: 'ASSOCIE', label: 'Associé' },
     { key: 'JUNIOR', label: 'Junior' }
   ];
+  roleAliases: Record<string, string> = {
+    USER: 'JUNIOR',
+    MEMBRE: 'JUNIOR',
+    RECRUE: 'JUNIOR'
+  };
 
   profile = {
     username: 'Pilote',
@@ -162,10 +168,17 @@ export class ProfileComponent implements OnInit {
     return value.charAt(0).toUpperCase();
   }
 
-  get activeRankLabel(): string {
+  get activeRankKey(): string {
     const roles = this.profile.roles ?? [];
-    const normalized = roles.map((role) => role.toUpperCase());
+    const normalized = roles
+      .map((role) => (role ?? '').toUpperCase())
+      .map((role) => this.roleAliases[role] ?? role);
     const matched = this.rankOptions.find((rank) => normalized.includes(rank.key));
+    return matched?.key ?? 'JUNIOR';
+  }
+
+  get activeRankLabel(): string {
+    const matched = this.rankOptions.find((rank) => rank.key === this.activeRankKey);
     return matched?.label ?? 'Junior';
   }
 

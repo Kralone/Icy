@@ -1,0 +1,67 @@
+ :host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+}
+
+.orbit-whole {
+  animation: orbit-spin 18s linear infinite, orbit-glow 6s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+.orbit-glow {
+  animation: orbit-glow 7s ease-in-out infinite;
+}
+
+.orbit-spin {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.orbit-1 {
+  animation: orbit-spin 14s linear infinite;
+}
+
+.orbit-2 {
+  animation: orbit-spin 18s linear infinite;
+}
+
+.orbit-3 {
+  animation: orbit-spin 22s linear infinite;
+}
+
+.orbit-4 {
+  animation: orbit-spin 26s linear infinite;
+}
+
+.orbit-5 {
+  animation: orbit-spin 30s linear infinite;
+}
+
+.orbit-6 {
+  animation: orbit-spin 36s linear infinite;
+}
+
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 14px rgba(34, 211, 238, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.55));
+  }
+}
