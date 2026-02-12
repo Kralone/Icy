@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {Goal} from '../../../model/goal.model';
-import {GoalTemplate} from '../../../model/goal-template.model';
+import { Goal } from '../../../model/goal.model';
+import { GoalTemplate } from '../../../model/goal-template.model';
+import { GoalParticipation } from '../../../model/goal-participation.model';
+import { GoalParticipationSummary } from '../../../model/goal-participation-summary.model';
 
 @Injectable({ providedIn: 'root' })
 export class GoalService {
@@ -48,6 +50,18 @@ export class GoalService {
 
   incrementGoal(id: number, delta: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/increment?delta=${delta}`, null);
+  }
+
+  getParticipations(goalId: number, limit = 6): Observable<GoalParticipation[]> {
+    return this.http.get<GoalParticipation[]>(`${this.apiUrl}/${goalId}/participations`, {
+      params: { limit }
+    });
+  }
+
+  getCombinedParticipations(goalId: number, limit = 6): Observable<GoalParticipationSummary[]> {
+    return this.http.get<GoalParticipationSummary[]>(`${this.apiUrl}/${goalId}/participations/combined`, {
+      params: { limit }
+    });
   }
 
   updateGoal(id: number, payload: Partial<Goal>): Observable<Goal> {
