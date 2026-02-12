@@ -22,6 +22,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
         path: 'scwe',
         loadComponent: () => import('./features/scwe/scwe-player-event-page.component').then(m => m.ScwePlayerPageComponent)
       },

@@ -1,13 +1,21 @@
 package com.icy.icy_backend.service.user;
 
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
+import com.icy.icy_backend.controller.dto.response.user.UserProfileResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
+import com.icy.icy_backend.controller.dto.user.UpdateUserProfileRequest;
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.entity.user.UserParam;
 import com.icy.icy_backend.db.entity.user.Role;
 import com.icy.icy_backend.db.entity.user.UserRole;
+import com.icy.icy_backend.db.entity.user.UserStatus;
+import com.icy.icy_backend.db.entity.ship.Ship;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.db.repository.user.RoleRepository;
 import com.icy.icy_backend.db.repository.user.UserRoleRepository;
+import com.icy.icy_backend.db.repository.user.UserParamRepository;
+import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.UserPublisher;
 import com.icy.icy_backend.service.notification.NotificationPushService;
@@ -21,7 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.stream.StreamSupport;
+import java.io.IOException;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserService {
@@ -35,8 +47,11 @@ public class UserService {
     private final MessageService messageService;
     private final UserPublisher userPublisher;
     private final NotificationPushService notificationPushService;
+    private final ShipRepository shipRepository;
+    private final UserParamRepository userParamRepository;
+    private final UserAvatarService userAvatarService;
 
-    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService) {
+    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService, ShipRepository shipRepository, UserParamRepository userParamRepository, UserAvatarService userAvatarService) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
@@ -44,6 +59,9 @@ public class UserService {
         this.messageService = messageService;
         this.userPublisher = userPublisher;
         this.notificationPushService = notificationPushService;
+        this.shipRepository = shipRepository;
+        this.userParamRepository = userParamRepository;
+        this.userAvatarService = userAvatarService;
     }
 
     /**
@@ -199,6 +217,122 @@ public class UserService {
                 .toList();
 
         return messageService.buildResponse("user.list", userDtos);
+    }
+
+    public ResponseEntity<MessageResponse<UserProfileResponseDTO>> getCurrentUserProfile(UUID userId) {
+        User user = findUserById(userId);
+        user.setLastSeenAt(LocalDateTime.now());
+        userRepository.save(user);
+        UserParam userParam = getOrCreateUserParam(user);
+        return messageService.buildResponse("user.profile.get", new UserProfileResponseDTO(user, userParam));
+    }
+
+    public ResponseEntity<MessageResponse<UserProfileResponseDTO>> updateCurrentUserProfile(UUID userId, UpdateUserProfileRequest request) {
+        User user = findUserById(userId);
+        user.setLastSeenAt(LocalDateTime.now());
+        UserParam userParam = getOrCreateUserParam(user);
+
+        if (request.getDescription() != null) {
+            user.setDescription(request.getDescription());
+        }
+
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        if (request.getStatus() != null) {
+            UserStatus status = UserStatus.fromApiValue(request.getStatus());
+            if (status == null) {
+                return messageService.buildResponse("user.profile.invalid", null, "Statut invalide");
+            }
+            user.setStatus(status);
+        }
+
+        if (Boolean.TRUE.equals(request.getClearFavoriteShip())) {
+            user.setFavoriteShip(null);
+        } else if (request.getFavoriteShipId() != null) {
+            Ship ship = shipRepository.findById(request.getFavoriteShipId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Vaisseau introuvable avec ID: " + request.getFavoriteShipId()));
+            user.setFavoriteShip(ship);
+        }
+
+        if (request.getNotifGlobal() != null) {
+            userParam.setNotifGlobal(request.getNotifGlobal());
+        }
+        if (request.getNotifEvents() != null) {
+            userParam.setNotifEvents(request.getNotifEvents());
+        }
+        if (request.getNotifFleet() != null) {
+            userParam.setNotifFleet(request.getNotifFleet());
+        }
+        if (request.getNotifGoals() != null) {
+            userParam.setNotifGoals(request.getNotifGoals());
+        }
+        if (request.getNotifDiscord() != null) {
+            userParam.setNotifDiscord(request.getNotifDiscord());
+        }
+
+        User savedUser = userRepository.save(user);
+        userParamRepository.save(userParam);
+        return messageService.buildResponse("user.profile.updated", new UserProfileResponseDTO(savedUser, userParam));
+    }
+
+    public ResponseEntity<MessageResponse<List<UserOnlineResponseDTO>>> getOnlineUsers() {
+        List<User> users = StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .toList();
+
+        LocalDateTime absentCutoff = LocalDateTime.now().minus(Duration.ofMinutes(10));
+        LocalDateTime offlineCutoff = LocalDateTime.now().minus(Duration.ofMinutes(60));
+        boolean changed = false;
+
+        for (User user : users) {
+            LocalDateTime lastSeen = user.getLastSeenAt();
+            if (lastSeen == null) {
+                lastSeen = user.getCreatedAt();
+            }
+
+            if (lastSeen != null && user.getStatus() != null && user.getStatus() != UserStatus.INDISPONIBLE) {
+                if (lastSeen.isBefore(offlineCutoff) && user.getStatus() != UserStatus.HORS_LIGNE) {
+                    user.setStatus(UserStatus.HORS_LIGNE);
+                    changed = true;
+                } else if (lastSeen.isBefore(absentCutoff) && user.getStatus() != UserStatus.ABSENT) {
+                    user.setStatus(UserStatus.ABSENT);
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            userRepository.saveAll(users);
+        }
+
+        List<UserOnlineResponseDTO> online = users.stream()
+                .map(UserOnlineResponseDTO::new)
+                .toList();
+
+        return messageService.buildResponse("user.online.list", online);
+    }
+
+    public ResponseEntity<MessageResponse<UserProfileResponseDTO>> updateUserAvatar(UUID userId, MultipartFile file) throws IOException {
+        User user = findUserById(userId);
+        user.setLastSeenAt(LocalDateTime.now());
+
+        String avatarUrl = userAvatarService.storeAvatar(user, file);
+        user.setAvatarUrl(avatarUrl);
+
+        User savedUser = userRepository.save(user);
+        UserParam userParam = getOrCreateUserParam(savedUser);
+        return messageService.buildResponse("user.avatar.updated", new UserProfileResponseDTO(savedUser, userParam));
+    }
+
+    private UserParam getOrCreateUserParam(User user) {
+        return userParamRepository.findById(user.getId())
+                .orElseGet(() -> {
+                    UserParam userParam = new UserParam();
+                    userParam.setUser(user);
+                    userParam.setUserId(user.getId());
+                    return userParamRepository.save(userParam);
+                });
     }
 
     public void forceResetPassword(UUID userId) {

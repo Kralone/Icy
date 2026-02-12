@@ -1,6 +1,7 @@
 package com.icy.icy_backend.db.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.icy.icy_backend.db.entity.ship.Ship;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
@@ -31,6 +32,23 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String discordId;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.CONNECTE;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "favorite_ship_id")
+    private Ship favoriteShip;
 
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt = LocalDateTime.now();

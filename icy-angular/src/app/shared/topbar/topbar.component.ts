@@ -1,16 +1,19 @@
 import { Component, ElementRef, EventEmitter, HostListener, Output, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { NotificationService, NotificationItem } from '../../core/services/notification/notification.service';
 import { PushNotificationService } from '../../core/services/notification/push-notification.service';
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { HotToastService } from '@ngxpert/hot-toast';
+import { UserService } from '../../core/services/user/user.service';
+
+type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.css']
 })
@@ -32,11 +35,28 @@ export class TopbarComponent {
   localFallbackEnabled = false;
   private readonly isOpera = typeof navigator !== 'undefined' && navigator.userAgent.includes('OPR/');
 
+  statusOptions: { key: Exclude<StatusKey, 'horsligne'>; label: string; badgeClass: string }[] = [
+    { key: 'connecte', label: 'Connecté', badgeClass: 'border-emerald-400/60 bg-emerald-400/40 text-emerald-200' },
+    { key: 'enjeu', label: 'En jeu', badgeClass: 'border-violet-400/70 bg-violet-400/45 text-violet-200' },
+    { key: 'absent', label: 'Absent', badgeClass: 'border-amber-400/60 bg-amber-400/40 text-amber-200' },
+    { key: 'indisponible', label: 'Indisponible', badgeClass: 'border-rose-400/60 bg-rose-400/40 text-rose-200' }
+  ];
+  statusBadgeClasses: Record<StatusKey, string> = {
+    connecte: 'border-emerald-400/60 bg-emerald-400/40 text-emerald-200',
+    enjeu: 'border-violet-400/70 bg-violet-400/45 text-violet-200',
+    absent: 'border-amber-400/60 bg-amber-400/40 text-amber-200',
+    indisponible: 'border-rose-400/60 bg-rose-400/40 text-rose-200',
+    horsligne: 'border-slate-400/60 bg-slate-400/40 text-slate-200'
+  };
+  currentStatus: StatusKey = 'connecte';
+  avatarUrl: string | null = null;
+
   constructor(
     private renderer: Renderer2,
     private el: ElementRef,
     private router: Router,
     private authService: AuthService,
+    private userService: UserService,
     private notificationService: NotificationService,
     private pushNotifications: PushNotificationService,
     private websocketService: WebSocketService,
@@ -50,6 +70,14 @@ export class TopbarComponent {
     const rawUsername = this.authService.getCurrentUser();
     const cleanUsername = rawUsername.replace(/^"|"$/g, '');
     this.name = `CMDR ${cleanUsername}`;
+
+    this.userService.profile$.subscribe((profile) => {
+      if (profile?.status && this.statusOptions.some((opt) => opt.key === profile.status)) {
+        this.currentStatus = profile.status;
+      }
+      this.avatarUrl = profile?.avatarUrl ?? null;
+    });
+    this.userService.getMyProfile().subscribe();
 
     this.notificationService.refreshFromStorage();
     this.notificationService.notifications$.subscribe((items) => {
@@ -207,6 +235,20 @@ export class TopbarComponent {
     if (this.pushPermission === 'denied') return;
     if (this.pushEnabled || this.localFallbackEnabled) return;
     void this.enablePush();
+  }
+
+  setStatus(status: StatusKey): void {
+    this.currentStatus = status;
+    this.userService.updateMyProfile({ status }).subscribe();
+  }
+
+  get statusBadgeClass(): string {
+    return this.statusBadgeClasses[this.currentStatus] ?? '';
+  }
+
+  get avatarInitial(): string {
+    const raw = this.name.replace(/^CMDR\s+/i, '').trim();
+    return raw ? raw.charAt(0).toUpperCase() : 'P';
   }
 
   @HostListener('document:click', ['$event'])
