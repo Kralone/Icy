@@ -1,5 +1,5 @@
 import {Component, ElementRef, HostListener} from '@angular/core';
-import {CommonModule, NgForOf, NgStyle} from '@angular/common';
+import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {Ship} from '../../model/ship.model';
@@ -9,6 +9,8 @@ import {ClickOutsideDirective} from '../../directives/click-outside.directive';
 import {ShipListDTO} from '../../model/ShipListDTO.model';
 import {HotToastService} from '@ngxpert/hot-toast';
 import {AuthService} from '../../core/services/auth/auth.service';
+import {ShipSelectorComponent} from '../../shared/ship-selector/ship-selector.component';
+import {AcquisitionType} from '../../shared/ship-selector/ship-selector.component';
 
 @Component({
   selector: 'app-hangar',
@@ -17,7 +19,8 @@ import {AuthService} from '../../core/services/auth/auth.service';
     CommonModule,
     FormsModule,
     LoadingOverlayComponent,
-    ClickOutsideDirective
+    ClickOutsideDirective,
+    ShipSelectorComponent
   ],
   styleUrls: ['./hangar.component.css']
 })
@@ -28,26 +31,8 @@ export class HangarComponent {
   isLoading = true;
   hasReceivedFirstMessage = false;
 
-  acquisitionType: 'rsi' | 'ingame' | 'loaner' = 'rsi';
-
-  useClassicAddMode = false;
-  shipSearchQuery = '';
-  allShipsModal: Ship[] = [];
-  filteredShipsSearch: Ship[] = [];
-  private allShipsLoaded = false;
-
-  formData = {
-    name: '',
-  };
-
   brands: { name: string, imageUrl: string }[] = [];
   filteredShips: ShipListDTO[] = [];
-  filteredShipsModal: Ship[] = [];
-
-  selectedBrand: string = '';
-  selectedBrandImageUrl: string = '';
-  selectedShip: Ship | null = null;
-  selectedShipImageUrl: string = '';
 
   selectedBrands: string[] = [];
   showBrandDropdown: boolean = false;
@@ -113,109 +98,20 @@ export class HangarComponent {
 
   openModal() {
     this.isModalOpen = true;
-    if (!this.allShipsLoaded) {
-      this.loadAllShipsForModal();
-    }
   }
 
   closeModal() {
     this.isModalOpen = false;
   }
 
-  onSubmit() {
-    console.log(this.formData);
-    this.closeModal();
-  }
-
   loadBrands() {
     this.shipService.getAllBrandsWithImages().subscribe(response => {
       this.brands = response.data;
-      // Sélectionne la première marque automatiquement
-      if (this.brands.length > 0) {
-        this.selectedBrand = this.brands[0].name;
-        this.selectedBrandImageUrl = this.brands[0].imageUrl;
-
-        // Charge les vaisseaux de cette marque
-        this.shipService.getShipsByBrand(this.selectedBrand).subscribe(shipResponse => {
-          this.filteredShipsModal = shipResponse.data;
-          this.selectedShip = this.filteredShipsModal.length > 0 ? this.filteredShipsModal[0] : null;
-          this.updateSelectedShipPreview();
-        });
-      }
-    });
-  }
-
-  onBrandChange(): void {
-    const brand = this.brands.find(b => b.name === this.selectedBrand);
-    this.selectedBrandImageUrl = brand?.imageUrl || '';
-
-    this.shipService.getShipsByBrand(this.selectedBrand).subscribe(response => {
-      this.filteredShipsModal = response.data;
-
-      if (this.filteredShipsModal.length > 0) {
-        this.selectedShip = this.filteredShipsModal[0];
-        this.updateSelectedShipPreview();
-      } else {
-        this.selectedShip = null;
-        this.selectedShipImageUrl = '';
-      }
-    });
-
-  }
-
-
-  onShipChange() {
-    this.updateSelectedShipPreview();
-  }
-
-  onAddShip(): void {
-    if (!this.selectedShip) return;
-
-    console.log(this.selectedShip);
-
-    const payload = {
-      shipId: this.selectedShip.id,
-      inGamePurchase: this.acquisitionType === 'ingame',
-      loaner: this.acquisitionType === 'loaner'
-    };
-
-    console.log(payload.loaner);
-    console.log(payload.inGamePurchase);
-
-    this.shipService.addShipToUser(payload).subscribe({
-      next: () => {
-        this.closeModal();
-      },
-      error: err => {
-        this.toast.error('Erreur lors de l\'ajout du vaisseau', err.error.message);
-      }
     });
   }
 
   deleteShip(shipId: number) {
     this.shipService.deleteShip(shipId).subscribe({})
-  }
-
-  onAddModeToggle(): void {
-    if (this.useClassicAddMode) {
-      if (!this.brands.length) {
-        this.loadBrands();
-      }
-    } else {
-      if (!this.allShipsLoaded) {
-        this.loadAllShipsForModal();
-      } else {
-        this.applyShipSearch();
-      }
-    }
-  }
-
-  setAddMode(useClassic: boolean): void {
-    if (this.useClassicAddMode === useClassic) {
-      return;
-    }
-    this.useClassicAddMode = useClassic;
-    this.onAddModeToggle();
   }
 
   private sortShipsByManufacturer() {
@@ -254,49 +150,31 @@ export class HangarComponent {
     this.applyFilters()
   }
 
-  compareShips = (a: any, b: any): boolean => {
-    return a && b && a.id === b.id;
-  };
-
   sortShipsByName(): void {
     this.filteredShips.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  private loadAllShipsForModal(): void {
-    this.shipService.getAllShips().subscribe(response => {
-      this.allShipsModal = response.data || [];
-      this.allShipsLoaded = true;
-      this.applyShipSearch();
-    });
-  }
-
-  onShipSearchChange(): void {
-    this.applyShipSearch();
-  }
-
-  private applyShipSearch(): void {
-    const query = this.shipSearchQuery.trim().toLowerCase();
-    const filtered = this.allShipsModal.filter((ship) => {
-      const name = ship.name?.toLowerCase() ?? '';
-      const brand = ship.brand?.name?.toLowerCase() ?? '';
-      const focus = ship.focus?.toLowerCase() ?? '';
-      return name.includes(query) || brand.includes(query) || focus.includes(query);
-    });
-    this.filteredShipsSearch = filtered.sort((a, b) => a.name.localeCompare(b.name));
-    if (!this.selectedShip || !this.filteredShipsSearch.some(s => s.id === this.selectedShip?.id)) {
-      this.selectedShip = this.filteredShipsSearch[0] ?? null;
-    }
-    this.updateSelectedShipPreview();
-  }
-
-  private updateSelectedShipPreview(): void {
-    this.selectedShipImageUrl = this.selectedShip?.imageUrl || '';
-    const brandName = this.selectedShip?.brand?.name ?? this.selectedBrand;
-    const brand = this.brands.find(b => b.name === brandName);
-    this.selectedBrandImageUrl = brand?.imageUrl || '';
-  }
-
   getBrandLogo(brandName: string): string {
     return this.brands.find(b => b.name === brandName)?.imageUrl || '';
+  }
+
+  onShipSelected(payload: { ship: Ship | null; acquisitionType?: AcquisitionType }): void {
+    if (!payload.ship) return;
+
+    const acquisitionType = payload.acquisitionType ?? 'rsi';
+    const requestPayload = {
+      shipId: payload.ship.id,
+      inGamePurchase: acquisitionType === 'ingame',
+      loaner: acquisitionType === 'loaner'
+    };
+
+    this.shipService.addShipToUser(requestPayload).subscribe({
+      next: () => {
+        this.closeModal();
+      },
+      error: err => {
+        this.toast.error('Erreur lors de l\'ajout du vaisseau', err.error.message);
+      }
+    });
   }
 }
