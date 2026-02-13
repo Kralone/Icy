@@ -413,6 +413,17 @@ emoji-picker {
   display: inline-block;
 }
 
+.dashboard-widget {
+  max-height: 1400px;
+  transition: max-height 900ms ease, opacity 500ms ease;
+  will-change: max-height, opacity;
+}
+
+.dashboard-widget[data-loading="true"] {
+  max-height: 260px;
+  opacity: 0.85;
+}
+
 /* =========================
    ICY EVENTS (clean unified)
    ========================= */

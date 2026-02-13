@@ -1,14 +1,19 @@
 <div
-  class="relative flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+  class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
          hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+  [attr.data-loading]="loadingEvent"
 >
+  <app-loading-overlay
+    [isLoading]="loadingEvent"
+    [minDurationMs]="550"
+    [fadeOutMs]="450"
+    [softFade]="true"
+  ></app-loading-overlay>
   <div class="absolute -top-28 -left-28 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
   <div class="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
   <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
     🌍 SC World Event
   </h2>
-
-  <div *ngIf="loadingEvent" class="text-gray-400 text-sm text-center">Chargement...</div>
 
   <div *ngIf="!loadingEvent && error" class="text-red-300 text-sm text-center">
     {{ error }}
@@ -81,10 +86,17 @@
         </div>
       </button>
 
-      <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+      <div
+        class="relative rounded-xl border border-white/10 bg-white/5 p-3"
+        [attr.data-loading]="loadingLeaderboard"
+      >
+        <app-loading-overlay
+          [isLoading]="loadingLeaderboard"
+          [minDurationMs]="500"
+          [fadeOutMs]="400"
+          [softFade]="true"
+        ></app-loading-overlay>
         <p class="text-xs uppercase text-cyan-300/80 mb-2">Top 3 joueurs</p>
-
-        <div *ngIf="loadingLeaderboard" class="text-gray-400 text-sm text-center">Chargement...</div>
 
         <div *ngIf="!loadingLeaderboard && topPlayers.length === 0" class="text-gray-400 text-sm text-center">
           Aucun classement pour le moment.
@@ -96,7 +108,7 @@
             class="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2"
           >
             <span class="text-white font-semibold">
-              #{{ idx + 1 }} {{ player.username || 'Anonyme' }}
+              {{ player.username || 'Anonyme' }}
             </span>
             <span class="text-cyan-300">{{ player.total || 0 }}</span>
           </li>

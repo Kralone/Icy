@@ -1,9 +1,16 @@
 <div
-  class="rounded-2xl p-4 mb-6
+  class="relative dashboard-widget rounded-2xl p-4 mb-6
          bg-white/10 backdrop-blur-xl
          border border-white/20
          shadow-lg text-white"
+  [attr.data-loading]="isLoading"
 >
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="550"
+    [fadeOutMs]="450"
+    [softFade]="true"
+  ></app-loading-overlay>
   <h1 class="text-2xl font-bold text-cyan-300 tracking-wide drop-shadow-md mb-4">
     🧊 Actualités
   </h1>
