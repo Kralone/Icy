@@ -105,24 +105,29 @@
     <!-- Profil -->
     <div class="relative group flex items-center gap-2">
       <span class="hidden sm:inline text-sm text-gray-200">{{ name }}</span>
-      <a
-        [routerLink]="['/icy/profile']"
-        class="relative rounded-full bg-cyan-500/30 w-8 h-8 border border-cyan-400/40
-               hover:bg-cyan-400/30 transition flex items-center justify-center text-xs font-bold text-cyan-100"
-        aria-label="Acceder au profil"
-      >
-        <img
-          *ngIf="avatarUrl"
-          [src]="avatarUrl"
-          alt="Avatar"
-          class="h-full w-full rounded-full object-cover"
-        />
-        <span *ngIf="!avatarUrl">{{ avatarInitial }}</span>
-        <span
-          class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-[#0f1a2a]"
-          [ngClass]="statusBadgeClass"
-        ></span>
-      </a>
+      <div class="relative h-10 w-10 flex items-center justify-center">
+        <div class="profile-orbit" aria-hidden="true">
+          <app-rank-orbit [rank]="activeRankKey" [animateOrbits]="true" [glow]="true"></app-rank-orbit>
+        </div>
+        <a
+          [routerLink]="['/icy/profile']"
+          class="relative z-10 rounded-full bg-cyan-500/30 w-8 h-8 border border-cyan-400/40
+                 hover:bg-cyan-400/30 transition flex items-center justify-center text-xs font-bold text-cyan-100"
+          aria-label="Acceder au profil"
+        >
+          <img
+            *ngIf="avatarUrl"
+            [src]="avatarUrl"
+            alt="Avatar"
+            class="h-full w-full rounded-full object-cover"
+          />
+          <span *ngIf="!avatarUrl">{{ avatarInitial }}</span>
+          <span
+            class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-[#0f1a2a]"
+            [ngClass]="statusBadgeClass"
+          ></span>
+        </a>
+      </div>
 
       <div
         class="absolute right-0 top-full z-50 opacity-0 pointer-events-none transition

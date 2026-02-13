@@ -7,13 +7,14 @@ import { PushNotificationService } from '../../core/services/notification/push-n
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { UserService } from '../../core/services/user/user.service';
+import { RankOrbitComponent } from '../rank-orbit/rank-orbit.component';
 
 type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, RankOrbitComponent],
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.css']
 })
@@ -50,6 +51,13 @@ export class TopbarComponent {
   };
   currentStatus: StatusKey = 'connecte';
   avatarUrl: string | null = null;
+  activeRankKey = 'JUNIOR';
+  private readonly rankAliases: Record<string, string> = {
+    USER: 'JUNIOR',
+    MEMBRE: 'JUNIOR',
+    RECRUE: 'JUNIOR'
+  };
+  private readonly availableRanks = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
 
   constructor(
     private renderer: Renderer2,
@@ -76,6 +84,8 @@ export class TopbarComponent {
         this.currentStatus = profile.status;
       }
       this.avatarUrl = profile?.avatarUrl ?? null;
+      const roles = profile?.roles ?? [];
+      this.activeRankKey = this.normalizeRank(roles[0]);
     });
     this.userService.getMyProfile().subscribe();
 
@@ -249,6 +259,12 @@ export class TopbarComponent {
   get avatarInitial(): string {
     const raw = this.name.replace(/^CMDR\s+/i, '').trim();
     return raw ? raw.charAt(0).toUpperCase() : 'P';
+  }
+
+  private normalizeRank(role?: string | null): string {
+    const normalized = (role ?? '').trim().toUpperCase();
+    const mapped = this.rankAliases[normalized] ?? normalized;
+    return this.availableRanks.includes(mapped) ? mapped : 'JUNIOR';
   }
 
   @HostListener('document:click', ['$event'])
