@@ -172,8 +172,10 @@ public class UserService {
     public User resolveUser(Object identifier) {
         if (identifier instanceof UUID uuid) {
             return findUserById(uuid);
-        } else if (identifier instanceof String discordId) {
-            return findUserByDiscordId(discordId);
+        } else if (identifier instanceof CharSequence discordId) {
+            return findUserByDiscordId(discordId.toString());
+        } else if (identifier instanceof Number discordId) {
+            return findUserByDiscordId(String.valueOf(discordId));
         }
 
         logger.error("Type d'identifiant utilisateur non pris en charge : {}", identifier);

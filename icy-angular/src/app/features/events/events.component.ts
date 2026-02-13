@@ -10,11 +10,21 @@ import { EventType } from '../../model/event-type.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ShipService } from '../../core/services/ship/ship.service';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
+import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
+
+type FleetMiniShip = {
+  name: string;
+  imageUrl?: string;
+  brandName?: string;
+  brandImageUrl?: string;
+};
 
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink],
+  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent],
   templateUrl: './events.component.html'
 })
 export class EventsComponent implements AfterViewInit {
@@ -32,6 +42,12 @@ export class EventsComponent implements AfterViewInit {
     maybe: [] as any[],
     refused: [] as any[]
   };
+
+  showConfirmedFleets = false;
+  isFleetLoading = false;
+  fleetByBrand: Record<string, FleetMiniShip[]> = {};
+  fleetBrandKeys: string[] = [];
+  private userFleetCache: Record<string, FleetMiniShip[]> = {};
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
@@ -76,6 +92,7 @@ export class EventsComponent implements AfterViewInit {
     private eventService: EventService,
     private wsService: WebSocketService,
     private authService: AuthService,
+    private shipService: ShipService,
     private ngZone: NgZone,
     private route: ActivatedRoute,
     private router: Router,
@@ -273,6 +290,10 @@ export class EventsComponent implements AfterViewInit {
         maybe: participations.filter((p: any) => p.status === 0),
         refused: participations.filter((p: any) => p.status === -1)
       };
+
+      if (this.showConfirmedFleets) {
+        this.loadConfirmedFleets();
+      }
     });
   }
 
@@ -312,6 +333,97 @@ export class EventsComponent implements AfterViewInit {
   private openEventModal(payload: any): void {
     this.selectedEvent = payload;
     this.showDetailsModal = true;
+    this.showConfirmedFleets = false;
+    this.isFleetLoading = false;
+    this.fleetByBrand = {};
+    this.fleetBrandKeys = [];
     this.initializeParticipationData();
+  }
+
+  toggleConfirmedFleets(): void {
+    this.showConfirmedFleets = !this.showConfirmedFleets;
+    if (this.showConfirmedFleets) {
+      this.loadConfirmedFleets();
+    }
+  }
+
+  private loadConfirmedFleets(): void {
+    const confirmedUsers = this.participationsByStatus.confirmed
+      .map((p: any) => p.user)
+      .filter((user: any) => user?.discordId);
+    const uniqueDiscordIds = Array.from(new Set(confirmedUsers.map((user: any) => user.discordId)));
+
+    if (!uniqueDiscordIds.length) {
+      this.fleetByBrand = {};
+      this.fleetBrandKeys = [];
+      return;
+    }
+
+    this.isFleetLoading = true;
+    const requests = uniqueDiscordIds.map((discordId: string) => {
+      if (this.userFleetCache[discordId]) {
+        return of(this.userFleetCache[discordId]);
+      }
+
+      return this.shipService.getUserShipsByDiscordId(discordId).pipe(
+        map((res: any) => {
+          const ships = (res?.data || []).map((item: any) => item.ship).filter(Boolean);
+          const mapped = ships.map((ship: any) => ({
+            name: ship.name,
+            imageUrl: ship.imageUrl,
+            brandName: ship.brand?.name,
+            brandImageUrl: ship.brand?.imageUrl
+          })) as FleetMiniShip[];
+          this.userFleetCache[discordId] = mapped;
+          return mapped;
+        }),
+        catchError((err) => {
+          console.error('Erreur récupération flotte', discordId, err);
+          return of([] as FleetMiniShip[]);
+        })
+      );
+    });
+
+    forkJoin(requests)
+      .pipe(finalize(() => (this.isFleetLoading = false)))
+      .subscribe((fleets: FleetMiniShip[][]) => {
+        const allShips = fleets.flat();
+        this.fleetByBrand = this.groupShipsByBrand(allShips);
+        this.fleetBrandKeys = Object.keys(this.fleetByBrand).sort((a, b) => a.localeCompare(b));
+      });
+  }
+
+  private groupShipsByBrand(ships: FleetMiniShip[]): Record<string, FleetMiniShip[]> {
+    const grouped: Record<string, { name: string; imageUrl?: string; brandImageUrl?: string; count: number }[]> = {};
+
+    for (const ship of ships) {
+      const brandName = ship.brandName || 'Marque inconnue';
+      if (!grouped[brandName]) {
+        grouped[brandName] = [];
+      }
+
+      const existing = grouped[brandName].find((item) => item.name === ship.name);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        grouped[brandName].push({
+          name: ship.name,
+          imageUrl: ship.imageUrl,
+          brandImageUrl: ship.brandImageUrl,
+          count: 1
+        });
+      }
+    }
+
+    const finalGrouped: Record<string, FleetMiniShip[]> = {};
+    for (const brand of Object.keys(grouped)) {
+      finalGrouped[brand] = grouped[brand].map((item) => ({
+        name: item.count > 1 ? `${item.name} (${item.count})` : item.name,
+        imageUrl: item.imageUrl,
+        brandImageUrl: item.brandImageUrl
+      }));
+    }
+
+    return finalGrouped;
   }
 }

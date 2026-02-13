@@ -42,6 +42,13 @@ export class ShipService {
   }
 
   /**
+   * Récupère tous les vaisseaux d'un utilisateur via son discordId.
+   */
+  getUserShipsByDiscordId(discordId: string): Observable<{ data: any[] }> {
+    return this.http.get<{ data: any[] }>('/api/user-ships/bot', { params: { discordId } });
+  }
+
+  /**
    * Ajoute un vaisseau à la flotte d'un utilisateur.
    */
   addShipToUser(payload: { shipId: number; inGamePurchase: boolean; loaner: boolean }): Observable<any> {

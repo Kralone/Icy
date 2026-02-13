@@ -35,8 +35,7 @@ public class EventPublisher {
         payload.put("eventId", event.getId());
         payload.put("channelId", event.getDiscordChannelId());
         payload.put("messageId", event.getDiscordMessageId());
-        rabbitTemplate.convertAndSend("icy.exchange", "events.deleted", payload);
-        log.info("📤 Event supprimé publié (id={})", event.getId());
+        safeSend("events.deleted", payload, "Event supprimé", event.getId());
     }
 
     private void sendEventMessage(String routingKey, Event event) {
@@ -75,8 +74,7 @@ public class EventPublisher {
                 .collect(Collectors.toList());
         payload.put("participants", participantData);
 
-        rabbitTemplate.convertAndSend("icy.exchange", routingKey, payload);
-        log.info("📤 Événement RabbitMQ envoyé : {} ({})", routingKey, event.getTitle());
+        safeSend(routingKey, payload, event.getTitle(), event.getId());
     }
 
     public void publishEventEnded(Event event) {
@@ -86,12 +84,28 @@ public class EventPublisher {
         payload.put("channelId", event.getDiscordChannelId());
         payload.put("messageId", event.getDiscordMessageId());
 
-        rabbitTemplate.convertAndSend("icy.exchange", "events.ended", payload);
+        safeSend("events.ended", payload, "Event terminé", event.getId());
     }
 
     public void sendGeneric(String routingKey, Map<String, Object> payload) {
-        rabbitTemplate.convertAndSend("icy.exchange", routingKey, payload);
-        log.info("📤 Message RabbitMQ envoyé ({}) : {}", routingKey, payload);
+        safeSend(routingKey, payload, "Message générique", null);
+    }
+
+    private void safeSend(String routingKey, Object payload, String label, Object eventId) {
+        try {
+            rabbitTemplate.convertAndSend("icy.exchange", routingKey, payload);
+            if (eventId != null) {
+                log.info("📤 {} RabbitMQ envoyé : {} (id={})", label, routingKey, eventId);
+            } else {
+                log.info("📤 {} RabbitMQ envoyé : {}", label, routingKey);
+            }
+        } catch (Exception ex) {
+            if (eventId != null) {
+                log.warn("⚠️ RabbitMQ indisponible, message ignoré : {} (id={})", routingKey, eventId, ex);
+            } else {
+                log.warn("⚠️ RabbitMQ indisponible, message ignoré : {}", routingKey, ex);
+            }
+        }
     }
 
 }
