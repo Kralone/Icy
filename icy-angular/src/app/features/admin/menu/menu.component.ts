@@ -18,6 +18,7 @@ import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.compon
 export class AdminMenuComponent {
   activeRankKey = 'JUNIOR';
   activeRankLabel = 'Junior';
+  private roles: string[] = [];
   private readonly rankAliases: Record<string, string> = {
     USER: 'JUNIOR',
     MEMBRE: 'JUNIOR',
@@ -40,6 +41,7 @@ export class AdminMenuComponent {
       const roles = profile?.roles ?? [];
       this.activeRankKey = this.normalizeRank(roles[0]);
       this.activeRankLabel = this.rankLabels[this.activeRankKey] ?? this.activeRankKey;
+      this.roles = roles.map((role) => (role ?? '').trim().toUpperCase());
     });
     this.userService.getMyProfile().subscribe();
   }
@@ -99,8 +101,21 @@ export class AdminMenuComponent {
       label: 'Orbit Spinner Maker',
       imageUrl: 'https://images.hdqwalls.com/download/star-citizen-to-3840x2160.jpg',
       route: '/icy/admin/orbit-spinner-maker',
+      requiredRoles: ['ADMIN'],
     },
   ];
+
+  get visibleMenuItems() {
+    return this.menuItems.filter((item) => {
+      if (!item.requiredRoles?.length) return true;
+      return this.hasAnyRole(item.requiredRoles);
+    });
+  }
+
+  private hasAnyRole(requiredRoles: string[]): boolean {
+    const normalizedRequired = requiredRoles.map((role) => role.trim().toUpperCase());
+    return this.roles.some((role) => normalizedRequired.includes(role));
+  }
 
   private normalizeRank(role?: string | null): string {
     const normalized = (role ?? '').trim().toUpperCase();

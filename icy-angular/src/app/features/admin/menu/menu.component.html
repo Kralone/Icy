@@ -14,7 +14,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <div
-        *ngFor="let item of menuItems"
+        *ngFor="let item of visibleMenuItems"
         [routerLink]="[item.route]"
         class="group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
                shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300

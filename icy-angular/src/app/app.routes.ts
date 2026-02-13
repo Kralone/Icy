@@ -4,6 +4,7 @@ import { LayoutComponent } from './shared/layout/layout.component';
 import { LoginComponent } from './auth/components/login/login.component';
 import { HomeComponent } from './features/front/home/home.component';
 import {RecruitmentComponent} from './auth/components/recruitment/recruitment.component';
+import { roleGuard } from './auth/guards/role.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -53,47 +54,59 @@ export const routes: Routes = [
       // SECTION ADMIN
       {
         path: 'admin',
-        loadComponent: () => import('./features/admin/menu/menu.component').then(m => m.AdminMenuComponent)
-      },
-      {
-        path: 'admin/members',
-        loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
-      },
-      {
-        path: 'admin/collections',
-        loadComponent: () => import('./features/admin/collection-management/collection-management.component').then(m => m.CollectionManagementComponent)
-      },
-      {
-        path: 'admin/events',
-        loadComponent: () => import('./features/admin/event-management/event-management.component').then(m => m.EventManagementComponent)
-      },
-      {
-        path: 'admin/sc-world-events',
-        loadComponent: () => import('./features/admin/sc-world-event-management/sc-world-event-management.component').then(m => m.ScWorldEventManagementComponent)
-      },
-      {
-        path: 'admin/ships',
-        loadComponent: () => import('./features/admin/ship-management/ship-management.component').then(m => m.ShipManagementComponent)
-      },
-      {
-        path: 'admin/recrutement',
-        loadComponent: () => import('./features/admin/recruitment-management/recruitment-management.component').then(m => m.RecruitmentManagementComponent)
-      },
-      {
-        path: 'admin/news',
-        loadComponent: () => import('./features/admin/news-management/news-management.component').then(m => m.NewsManagementComponent)
-      },
-      {
-        path: 'admin/icelinkBuilder',
-        loadComponent: () => import('./features/admin/icelink-builder/icelink-builder.component').then(m => m.IceLinkBuilderComponent)
-      },
-      {
-        path: 'admin/images',
-        loadComponent: () => import('./features/admin/image-library/image-library.component').then(m => m.ImageLibraryComponent)
-      },
-      {
-        path: 'admin/goals',
-        loadComponent: () => import('./features/admin/goal-management/goal-management.component').then(m => m.GoalManagementComponent)
+        canActivateChild: [roleGuard],
+        data: { roles: ['ADMIN', 'OFFICIER'] },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/admin/menu/menu.component').then(m => m.AdminMenuComponent)
+          },
+          {
+            path: 'members',
+            loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+          },
+          {
+            path: 'collections',
+            loadComponent: () => import('./features/admin/collection-management/collection-management.component').then(m => m.CollectionManagementComponent)
+          },
+          {
+            path: 'events',
+            loadComponent: () => import('./features/admin/event-management/event-management.component').then(m => m.EventManagementComponent)
+          },
+          {
+            path: 'sc-world-events',
+            loadComponent: () => import('./features/admin/sc-world-event-management/sc-world-event-management.component').then(m => m.ScWorldEventManagementComponent)
+          },
+          {
+            path: 'ships',
+            loadComponent: () => import('./features/admin/ship-management/ship-management.component').then(m => m.ShipManagementComponent)
+          },
+          {
+            path: 'recrutement',
+            loadComponent: () => import('./features/admin/recruitment-management/recruitment-management.component').then(m => m.RecruitmentManagementComponent)
+          },
+          {
+            path: 'news',
+            loadComponent: () => import('./features/admin/news-management/news-management.component').then(m => m.NewsManagementComponent)
+          },
+          {
+            path: 'icelinkBuilder',
+            loadComponent: () => import('./features/admin/icelink-builder/icelink-builder.component').then(m => m.IceLinkBuilderComponent)
+          },
+          {
+            path: 'images',
+            loadComponent: () => import('./features/admin/image-library/image-library.component').then(m => m.ImageLibraryComponent)
+          },
+          {
+            path: 'goals',
+            loadComponent: () => import('./features/admin/goal-management/goal-management.component').then(m => m.GoalManagementComponent)
+          },
+          {
+            path: 'orbit-spinner-maker',
+            data: { roles: ['ADMIN'] },
+            loadComponent: () => import('./features/admin/orbit-spinner-maker/orbit-spinner-maker.component').then(m => m.OrbitSpinnerMakerComponent)
+          },
+        ]
       },
     ]
   }
