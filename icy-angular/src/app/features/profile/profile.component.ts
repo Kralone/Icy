@@ -67,7 +67,7 @@ export class ProfileComponent implements OnInit {
 
   profile = {
     username: 'Pilote',
-    description: 'Explorateur glaciaire, fan de missions à haut risque.',
+    description: 'Une petite description qui en dit long sur vous...',
     status: 'connecte' as StatusKey,
     discordId: '',
     roles: [] as string[],
