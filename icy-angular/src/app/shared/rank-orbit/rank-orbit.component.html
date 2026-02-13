@@ -1,4 +1,12 @@
-<svg viewBox="0 0 200 200" aria-hidden="true" [ngClass]="{ 'orbit-whole': animateWhole, 'orbit-glow': glow && !animateWhole }">
+<svg
+  viewBox="0 0 200 200"
+  aria-hidden="true"
+  [ngClass]="{
+    'orbit-whole': animateWhole,
+    'orbit-glow': glow && !animateWhole,
+    'orbit-staged': deploy
+  }"
+>
   <ng-container [ngSwitch]="normalizedRank">
     <ng-container *ngSwitchCase="'JUNIOR'">
       <g [ngClass]="orbitClass(1)">

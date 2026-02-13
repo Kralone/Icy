@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 @Service
 public class UserAvatarService {
-    private static final long MAX_FILE_SIZE = 1_000_000;
+    private static final long MAX_FILE_SIZE = 2_000_000;
     private static final Map<String, String> EXTENSIONS = Map.of(
             "image/jpeg", ".jpg",
             "image/jpg", ".jpg",
@@ -49,7 +49,7 @@ public class UserAvatarService {
             throw new IllegalArgumentException("Fichier vide.");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Fichier trop lourd (max 1 Mo).");
+            throw new IllegalArgumentException("Fichier trop lourd (max 2 Mo).");
         }
 
         String contentType = file.getContentType();

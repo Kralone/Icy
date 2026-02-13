@@ -4,10 +4,13 @@
 >
   <div class="pointer-events-none absolute inset-0 overflow-visible">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_60%)]"></div>
-    <div class="rank-orbit">
-      <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
+    <div class="rank-orbit is-ready" *ngIf="profileLoaded">
+      <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true" [deploy]="profileLoaded"></app-rank-orbit>
     </div>
-    <div class="absolute right-4 top-8 text-[28px] sm:text-[38px] font-black tracking-[0.24em] text-white/10 uppercase">
+    <div
+      *ngIf="profileLoaded"
+      class="rank-label absolute right-4 top-8 text-[28px] sm:text-[38px] font-black tracking-[0.24em] text-white/10 uppercase"
+    >
       {{ activeRankLabel }}
     </div>
   </div>
@@ -52,6 +55,10 @@
               </div>
               <input type="file" accept="image/*" class="hidden" (change)="onAvatarChange($event)" />
             </label>
+            <p class="text-[10px] text-cyan-100/60">
+              Formats: JPG, PNG, WebP.<br />
+              Taille max: 2 Mo.
+            </p>
           </div>
 
           <div class="flex-1 space-y-4">

@@ -13,6 +13,7 @@ export class RankOrbitComponent {
   @Input() animateOrbits = false;
   @Input() animateWhole = false;
   @Input() glow = true;
+  @Input() deploy = false;
 
   private roleAliases: Record<string, string> = {
     USER: 'JUNIOR',

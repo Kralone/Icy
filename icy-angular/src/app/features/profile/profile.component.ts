@@ -88,6 +88,7 @@ export class ProfileComponent implements OnInit {
     collections: 0
   };
 
+  profileLoaded = false;
   isShipModalOpen = false;
   favoriteShipImageUrl = '';
   pendingDescription = '';
@@ -107,30 +108,33 @@ export class ProfileComponent implements OnInit {
       this.profile.username = rawUsername.replace(/^"|"$/g, '');
     }
 
-    this.userService.getMyProfile().subscribe((response) => {
-      const data = response.data;
-      if (!data) return;
-      this.profile.username = data.username ?? this.profile.username;
-      this.profile.description = data.description ?? this.profile.description;
-      this.pendingDescription = this.profile.description;
-      this.profile.discordId = data.discordId ?? this.profile.discordId;
-      this.profile.status = (data.status as StatusKey) ?? this.profile.status;
-      this.profile.avatarUrl = data.avatarUrl ?? this.profile.avatarUrl;
-      this.profile.roles = data.roles ?? this.profile.roles;
-      this.pendingAvatarPreview = '';
-      this.pendingAvatarFile = null;
-      if (data.favoriteShip) {
-        this.profile.favoriteShip = data.favoriteShip.name;
-        this.favoriteShipImageUrl = data.favoriteShip.imageUrl ?? '';
-      }
-      if (data.notifications) {
-        this.profile.notifications = {
-          global: data.notifications.global,
-          events: data.notifications.events,
-          fleet: data.notifications.fleet,
-          goals: data.notifications.goals,
-          discord: data.notifications.discord
-        };
+    this.userService.getMyProfile().subscribe({
+      next: (response) => {
+        const data = response.data;
+        if (!data) return;
+        this.profile.username = data.username ?? this.profile.username;
+        this.profile.description = data.description ?? this.profile.description;
+        this.pendingDescription = this.profile.description;
+        this.profile.discordId = data.discordId ?? this.profile.discordId;
+        this.profile.status = (data.status as StatusKey) ?? this.profile.status;
+        this.profile.avatarUrl = data.avatarUrl ?? this.profile.avatarUrl;
+        this.profile.roles = data.roles ?? this.profile.roles;
+        this.pendingAvatarPreview = '';
+        this.pendingAvatarFile = null;
+        if (data.favoriteShip) {
+          this.profile.favoriteShip = data.favoriteShip.name;
+          this.favoriteShipImageUrl = data.favoriteShip.imageUrl ?? '';
+        }
+        if (data.notifications) {
+          this.profile.notifications = {
+            global: data.notifications.global,
+            events: data.notifications.events,
+            fleet: data.notifications.fleet,
+            goals: data.notifications.goals,
+            discord: data.notifications.discord
+          };
+        }
+        this.profileLoaded = true;
       }
     });
 
@@ -186,9 +190,9 @@ export class ProfileComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    const maxSize = 1_000_000;
+    const maxSize = 2_000_000;
     if (file.size > maxSize) {
-      this.toast.error('Image trop lourde. Taille max: 1 Mo.');
+      this.toast.error('Image trop lourde. Taille max: 2 Mo.');
       input.value = '';
       return;
     }
