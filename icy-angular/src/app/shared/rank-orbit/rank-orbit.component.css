@@ -24,27 +24,27 @@ svg {
 }
 
 .orbit-1 {
-  animation: orbit-spin 14s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 .orbit-2 {
-  animation: orbit-spin 18s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 .orbit-3 {
-  animation: orbit-spin 22s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 .orbit-4 {
-  animation: orbit-spin 26s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 .orbit-5 {
-  animation: orbit-spin 30s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 .orbit-6 {
-  animation: orbit-spin 36s linear infinite;
+  animation: orbit-spin 24s linear infinite;
 }
 
 @keyframes orbit-spin {
