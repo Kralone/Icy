@@ -389,8 +389,6 @@ public class UserService {
         user.setUsername(username);
         user.setDiscordId(discordId);
 
-        // Supprimer proprement les anciennes relations UserRole
-        userRoleRepository.deleteAllByUserId(user.getId());
         Role role = findRoleByName(roleName);
 
         user.getRoles().clear(); // supprime les anciens (orphanRemoval active ici)
