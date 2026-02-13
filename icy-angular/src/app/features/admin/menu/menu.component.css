@@ -1,0 +1,72 @@
+.admin-menu {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-rank-orbit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1500px;
+  height: 1500px;
+  opacity: 0.3;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+  will-change: transform;
+}
+
+.admin-content {
+  position: relative;
+  z-index: 20;
+}
+
+.admin-rank-label {
+  position: absolute;
+  top: 2rem;
+  right: 1rem;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.admin-rank-label::after {
+  content: '';
+  position: absolute;
+  inset: -80px -120px -80px -120px;
+  background: radial-gradient(
+    circle at top right,
+    rgba(34, 211, 238, 0.5) 0%,
+    rgba(34, 211, 238, 0.22) 35%,
+    rgba(34, 211, 238, 0.08) 60%,
+    rgba(34, 211, 238, 0.0) 78%
+  );
+  opacity: 0.65;
+  filter: blur(24px);
+  animation: adminRankGlow 6s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes adminRankGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(6px, -6px) scale(0.95);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(0, 0) scale(1.08);
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-rank-label {
+    top: 2rem;
+    right: 1rem;
+    font-size: 38px;
+  }
+}

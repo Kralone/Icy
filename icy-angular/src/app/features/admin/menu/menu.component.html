@@ -1,6 +1,12 @@
 <!-- ================== MENU - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12">
-  <div class="max-w-7xl mx-auto space-y-8">
+<div class="admin-menu min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12">
+  <div class="admin-rank-orbit" aria-hidden="true">
+    <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
+  </div>
+  <div class="admin-rank-label">
+    {{ activeRankLabel }}
+  </div>
+  <div class="admin-content max-w-7xl mx-auto space-y-8">
     <div class="flex flex-col gap-2 text-center">
       <h1 class="text-3xl sm:text-4xl font-semibold tracking-[0.2em] uppercase text-cyan-200">Admin Hub</h1>
       <p class="text-sm text-slate-400">Acces rapide a toutes les sections de gestion.</p>

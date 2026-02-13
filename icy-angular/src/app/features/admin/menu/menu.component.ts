@@ -1,18 +1,49 @@
 import { Component } from '@angular/core';
-import {RouterLink, RouterOutlet} from '@angular/router';
-import {CommonModule} from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { UserService } from '../../../core/services/user/user.service';
+import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
 
 @Component({
   standalone: true,
   selector: 'app-admin-menu',
   imports: [
     RouterLink,
-    CommonModule
+    CommonModule,
+    RankOrbitComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })
 export class AdminMenuComponent {
+  activeRankKey = 'JUNIOR';
+  activeRankLabel = 'Junior';
+  private readonly rankAliases: Record<string, string> = {
+    USER: 'JUNIOR',
+    MEMBRE: 'JUNIOR',
+    RECRUE: 'JUNIOR'
+  };
+  private readonly availableRanks = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
+  private readonly rankLabels: Record<string, string> = {
+    ADMIN: 'Directeur',
+    OFFICIER: 'Officier',
+    SPECIALISTE: 'Specialiste',
+    INGENIEUR: 'Ingenieur',
+    ASSOCIE: 'Associe',
+    JUNIOR: 'Junior'
+  };
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit(): void {
+    this.userService.profile$.subscribe((profile) => {
+      const roles = profile?.roles ?? [];
+      this.activeRankKey = this.normalizeRank(roles[0]);
+      this.activeRankLabel = this.rankLabels[this.activeRankKey] ?? this.activeRankKey;
+    });
+    this.userService.getMyProfile().subscribe();
+  }
+
   menuItems = [
     {
       label: 'Membres',
@@ -64,5 +95,16 @@ export class AdminMenuComponent {
       imageUrl: 'https://www.fredzone.org/wp-content/uploads/2017/12/starcitizen-proc%C3%A8s.jpg',
       route: '/icy/admin/images',
     },
+    {
+      label: 'Orbit Spinner Maker',
+      imageUrl: 'https://images.hdqwalls.com/download/star-citizen-to-3840x2160.jpg',
+      route: '/icy/admin/orbit-spinner-maker',
+    },
   ];
+
+  private normalizeRank(role?: string | null): string {
+    const normalized = (role ?? '').trim().toUpperCase();
+    const mapped = this.rankAliases[normalized] ?? normalized;
+    return this.availableRanks.includes(mapped) ? mapped : 'JUNIOR';
+  }
 }
