@@ -3,3 +3,5 @@
 /.idea/db-forest-config.xml
 /.idea/data_source_mapping.xml
 /icy-angular/src/assets/version.json
+/temp
+/icy-angular/src/app/features/admin/orbit-spinner-maker/
