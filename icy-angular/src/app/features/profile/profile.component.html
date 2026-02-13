@@ -14,6 +14,13 @@
       {{ activeRankLabel }}
     </div>
   </div>
+  <app-loading-overlay
+    [isLoading]="!dataReady"
+    [minDurationMs]="700"
+    [fadeOutMs]="350"
+    [softFade]="true"
+    (hidden)="profileLoaded = true"
+  ></app-loading-overlay>
   <div class="relative z-10">
   <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>

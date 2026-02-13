@@ -1,0 +1,40 @@
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 10, 20, 0.55);
+  backdrop-filter: blur(6px);
+  opacity: 1;
+  transition: opacity var(--fade-duration, 300ms) ease;
+}
+
+.loading-overlay.is-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-overlay__icon--soft {
+  animation: spinner-softfade 1.2s ease-in-out infinite;
+}
+
+@keyframes spinner-softfade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay {
+    transition: none;
+  }
+  .loading-overlay__icon--soft {
+    animation: none;
+  }
+}

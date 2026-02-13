@@ -8,6 +8,7 @@ import { HotToastService } from '@ngxpert/hot-toast';
 import { forkJoin, of } from 'rxjs';
 import { ShipSelectorComponent } from '../../shared/ship-selector/ship-selector.component';
 import { RankOrbitComponent } from '../../shared/rank-orbit/rank-orbit.component';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { Ship } from '../../model/ship.model';
 import { AcquisitionType } from '../../shared/ship-selector/ship-selector.component';
 
@@ -26,7 +27,7 @@ interface RankOption {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent],
+  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -89,6 +90,9 @@ export class ProfileComponent implements OnInit {
   };
 
   profileLoaded = false;
+  dataReady = false;
+  pendingProfile = true;
+  pendingStats = true;
   isShipModalOpen = false;
   favoriteShipImageUrl = '';
   pendingDescription = '';
@@ -111,7 +115,11 @@ export class ProfileComponent implements OnInit {
     this.userService.getMyProfile().subscribe({
       next: (response) => {
         const data = response.data;
-        if (!data) return;
+        if (!data) {
+        this.pendingProfile = false;
+        this.updateReadyState();
+        return;
+      }
         this.profile.username = data.username ?? this.profile.username;
         this.profile.description = data.description ?? this.profile.description;
         this.pendingDescription = this.profile.description;
@@ -134,14 +142,25 @@ export class ProfileComponent implements OnInit {
             discord: data.notifications.discord
           };
         }
-        this.profileLoaded = true;
+        this.pendingProfile = false;
+        this.updateReadyState();
+      },
+      error: () => {
+        this.pendingProfile = false;
+        this.updateReadyState();
       }
     });
 
     this.userService.getMyQuickStats().subscribe({
       next: (response) => {
-        if (!response.data) return;
+        if (!response.data) {
+          this.pendingStats = false;
+          this.updateReadyState();
+          return;
+        }
         this.quickStats = response.data;
+        this.pendingStats = false;
+        this.updateReadyState();
       },
       error: () => {
         this.quickStats = {
@@ -150,6 +169,8 @@ export class ProfileComponent implements OnInit {
           ships: 0,
           collections: 0
         };
+        this.pendingStats = false;
+        this.updateReadyState();
       }
     });
   }
@@ -268,5 +289,11 @@ export class ProfileComponent implements OnInit {
       this.pendingAvatarFile !== null ||
       this.pendingDescription !== this.profile.description
     );
+  }
+
+  private updateReadyState(): void {
+    if (!this.pendingProfile && !this.pendingStats) {
+      this.dataReady = true;
+    }
   }
 }
