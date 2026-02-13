@@ -16,7 +16,7 @@
   pointer-events: none;
 }
 
-.loading-overlay__icon--soft {
+.loading-overlay__spinner--soft {
   animation: spinner-softfade 1.2s ease-in-out infinite;
 }
 
@@ -34,7 +34,7 @@
   .loading-overlay {
     transition: none;
   }
-  .loading-overlay__icon--soft {
+  .loading-overlay__spinner--soft {
     animation: none;
   }
 }
