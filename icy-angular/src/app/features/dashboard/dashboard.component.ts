@@ -2,7 +2,7 @@ import {Component, HostListener} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
-import {LoadingOverlayComponent} from '../../shared/loading-overlay/loading-overlay.component';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {EventService} from '../../core/services/event/event.service';
 import {GoalComponent} from './goal/goal.component';
 import {NewsComponent} from './news/news.component';
@@ -40,7 +40,8 @@ interface StatusStyle {
     CommonModule,
     GoalComponent,
     NewsComponent,
-    ScweWidgetComponent
+    ScweWidgetComponent,
+    LoadingOverlayComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
@@ -48,6 +49,7 @@ interface StatusStyle {
 export class DashboardComponent {
   isLoading = true;
   isEventsLoading = true;
+  isOnlineLoading = true;
 
   fleetSummary: { [focus: string]: ShipSummary[] } = {};
   events: IcyEvent[] = [];
@@ -90,6 +92,8 @@ export class DashboardComponent {
       console.log(rawFleet);
       this.fleetSummary = this.groupShipsByFocus(rawFleet);
       console.log('📦 Fleet update');
+      this.isLoading = false;
+    }, () => {
       this.isLoading = false;
     });
   }
@@ -136,13 +140,19 @@ export class DashboardComponent {
       }));
       console.log('📅 Events loaded');
       this.isEventsLoading = false;
+    }, () => {
+      this.isEventsLoading = false;
     });
   }
 
   loadOnlineUsers(): void {
+    this.isOnlineLoading = true;
     this.userService.getOnlineUsers().subscribe((response) => {
       this.onlineUsers = response.data ?? [];
       this.currentPage = 1;
+      this.isOnlineLoading = false;
+    }, () => {
+      this.isOnlineLoading = false;
     });
   }
 

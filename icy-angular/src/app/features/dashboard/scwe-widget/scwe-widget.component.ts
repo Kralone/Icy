@@ -4,11 +4,12 @@ import { ScWorldEventService } from '../../../core/services/scworldevent/sc-worl
 import { ScwePlayerService } from '../../../core/services/scworldevent/scwe-player.service';
 import { Router } from '@angular/router';
 import { ScWorldEventDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
+import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-scwe-widget',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingOverlayComponent],
   templateUrl: './scwe-widget.component.html',
 })
 export class ScweWidgetComponent implements OnInit {
