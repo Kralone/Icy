@@ -38,6 +38,7 @@ export class EventManagementComponent implements OnInit {
   isSubmitting = false;
   editingEvent: EventDTO | null = null;
   isUpdatingEvent = false;
+  isViewMode = false;
 
   // === Types d’événements ===
   newType: EventType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
@@ -155,6 +156,16 @@ export class EventManagementComponent implements OnInit {
 
   // === Modifier un événement ===
   openEditEventModal(event: EventDTO) {
+    this.isViewMode = false;
+    this.editingEvent = {
+      ...event,
+      startDateTime: event.startDateTime.slice(0, 16),
+      endDateTime: event.endDateTime.slice(0, 16),
+    };
+  }
+
+  openViewEventModal(event: EventDTO) {
+    this.isViewMode = true;
     this.editingEvent = {
       ...event,
       startDateTime: event.startDateTime.slice(0, 16),
@@ -164,10 +175,11 @@ export class EventManagementComponent implements OnInit {
 
   cancelEditEvent() {
     this.editingEvent = null;
+    this.isViewMode = false;
   }
 
   updateEvent() {
-    if (!this.editingEvent) return;
+    if (!this.editingEvent || this.isViewMode) return;
     this.isUpdatingEvent = true;
 
     const payload = {
@@ -191,6 +203,27 @@ export class EventManagementComponent implements OnInit {
         this.isUpdatingEvent = false;
       },
     });
+  }
+
+  replanifyEventFromView() {
+    if (!this.editingEvent) return;
+
+    const confirmed = confirm(
+      `Replanifier l'événement \"${this.editingEvent.title}\" ? Le formulaire d'ajout sera prérempli, avec les dates à renseigner.`
+    );
+    if (!confirmed) return;
+
+    this.newEvent = {
+      title: this.editingEvent.title || '',
+      type: this.editingEvent.type?.name || '',
+      description: this.editingEvent.description || '',
+      startDateTime: '',
+      endDateTime: '',
+    };
+
+    this.cancelEditEvent();
+    alert('Formulaire prérempli. Il ne reste plus qu’à définir les nouvelles dates.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   confirmDeleteEvent() {

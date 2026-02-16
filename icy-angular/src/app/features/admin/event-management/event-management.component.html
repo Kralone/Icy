@@ -182,12 +182,20 @@
           </td>
           <td class="px-4 py-3 text-right">
             <button
+              *ngIf="!e.finished"
               (click)="openEditEventModal(e)"
-              [disabled]="e.finished"
               class="font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5
-                     hover:border-cyan-400/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                     hover:border-cyan-400/40"
             >
               ✏️ Modifier
+            </button>
+            <button
+              *ngIf="e.finished"
+              (click)="openViewEventModal(e)"
+              class="font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5
+                     hover:border-cyan-400/40"
+            >
+              👁️ Voir
             </button>
           </td>
         </tr>
@@ -394,12 +402,13 @@
            w-full max-w-lg p-6 sm:p-8 relative text-white max-h-[90vh] overflow-y-auto"
     >
       <h3 class="text-2xl font-semibold mb-6 text-cyan-200">
-        Modifier l’événement
+        {{ isViewMode ? 'Détails de l’événement' : 'Modifier l’événement' }}
       </h3>
 
       <div class="space-y-4">
         <input
           [(ngModel)]="editingEvent.title"
+          [readonly]="isViewMode"
           placeholder="Titre"
           class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
                border border-white/10 text-white placeholder-gray-500
@@ -408,6 +417,7 @@
 
         <select
           [(ngModel)]="editingEvent.type.name"
+          [disabled]="isViewMode"
           class="w-full px-4 py-2 rounded-xl
                  bg-[#0b1324]
                  border border-white/10
@@ -421,6 +431,7 @@
 
         <textarea
           [(ngModel)]="editingEvent.description"
+          [readonly]="isViewMode"
           rows="3"
           placeholder="Description de l’événement..."
           class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
@@ -432,6 +443,7 @@
           <input
             [(ngModel)]="editingEvent.startDateTime"
             type="datetime-local"
+            [disabled]="isViewMode"
             class="px-4 py-2 rounded-xl bg-[#0b1324]
                  border border-white/10 text-white focus:outline-none focus:ring-2
                  focus:ring-cyan-400 transition"
@@ -439,6 +451,7 @@
           <input
             [(ngModel)]="editingEvent.endDateTime"
             type="datetime-local"
+            [disabled]="isViewMode"
             class="px-4 py-2 rounded-xl bg-[#0b1324]
                  border border-white/10 text-white focus:outline-none focus:ring-2
                  focus:ring-cyan-400 transition"
@@ -446,7 +459,7 @@
         </div>
       </div>
 
-      <div class="mt-6 flex flex-col sm:flex-row justify-between gap-4 items-center">
+      <div *ngIf="!isViewMode" class="mt-6 flex flex-col sm:flex-row justify-between gap-4 items-center">
         <button
           type="button"
           (click)="confirmDeleteEvent()"
@@ -475,6 +488,26 @@
             💾 Enregistrer
           </button>
         </div>
+      </div>
+
+      <div *ngIf="isViewMode" class="mt-6 flex flex-col sm:flex-row justify-between gap-4 items-center">
+        <button
+          type="button"
+          (click)="replanifyEventFromView()"
+          class="w-full sm:w-auto px-4 py-2 rounded-full border border-amber-300/40 text-amber-200
+               hover:border-amber-300/70 transition-all"
+        >
+          🔁 Replanifier
+        </button>
+
+        <button
+          type="button"
+          (click)="cancelEditEvent()"
+          class="px-4 py-2 rounded-full border border-white/10 text-gray-300
+                 hover:border-cyan-400/40 transition-all"
+        >
+          Fermer
+        </button>
       </div>
     </div>
   </div>
