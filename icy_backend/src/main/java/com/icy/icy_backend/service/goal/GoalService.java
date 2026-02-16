@@ -13,6 +13,7 @@ import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.notification.NotificationPushService;
+import com.icy.icy_backend.websocket.GoalWebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ public class GoalService {
     private final GoalParticipationRepository goalParticipationRepository;
     private final UserRepository userRepository;
     private final NotificationPushService notificationPushService;
+    private final GoalWebSocketService goalWebSocketService;
 
     public List<GoalDTO> getAllTopLevelGoals() {
         List<Goal> rootGoals = goalRepository.findByParentIsNullOrderByPinnedDescCreatedAtAsc();
@@ -74,6 +76,7 @@ public class GoalService {
 
         goalRepository.save(goal);
         log.info("Objectif créé : {}", goal.getName());
+        goalWebSocketService.sendGoalUpdate(goal.getId(), "CREATE");
         notificationPushService.sendBroadcast(
                 "Objectif : cree",
                 goal.getName(),
@@ -159,6 +162,7 @@ public class GoalService {
 
         goalRepository.save(goal);
         log.info("Objectif mis à jour : {}", goal.getName());
+        goalWebSocketService.sendGoalUpdate(goal.getId(), "UPDATE");
 
         if (wasPinned != goal.isPinned()) {
             notificationPushService.sendBroadcast(
@@ -207,8 +211,10 @@ public class GoalService {
     public void deleteGoal(Long id) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
+        Long deletedGoalId = goal.getId();
         goalRepository.delete(goal);
         log.info("Objectif supprimé : {}", goal.getName());
+        goalWebSocketService.sendGoalUpdate(deletedGoalId, "DELETE");
     }
 
     public GoalDTO getPinnedGoal() {
@@ -233,6 +239,7 @@ public class GoalService {
         goalToPin.setPinned(true);
         goalRepository.save(goalToPin);
         log.info("Objectif épinglé : {}", goalToPin.getName());
+        goalWebSocketService.sendGoalUpdate(goalToPin.getId(), "PIN");
         notificationPushService.sendBroadcast(
                 "Objectif epingle : mis a jour",
                 goalToPin.getName(),
@@ -253,6 +260,7 @@ public class GoalService {
         goalRepository.save(goal);
         saveParticipation(goal, delta);
         log.info("Objectif {} modifié de {}", goal.getName(), delta);
+        goalWebSocketService.sendGoalUpdate(goal.getId(), "INCREMENT");
 
         if (!wasCompleted && goal.isCompleted()) {
             notifyGoalCompleted(goal);

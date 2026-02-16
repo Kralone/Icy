@@ -6,10 +6,12 @@ import { Goal } from '../../../model/goal.model';
 import { GoalTemplate } from '../../../model/goal-template.model';
 import { UserService } from '../../../core/services/user/user.service';
 import { User } from '../../../model/user.model';
+import { firstValueFrom } from 'rxjs';
 
 type FlatNode = { goal: Goal; depth: number };
 type TemplateFlatNode = { template: GoalTemplate; depth: number };
 type TemplateDraftNode = {
+  id?: number;
   tempId: number;
   name: string;
   description: string;
@@ -64,6 +66,7 @@ export class GoalManagementComponent implements OnInit {
 
   templateDraftRoot: TemplateDraftNode = this.createDraftRoot();
   private nextTemplateTempId = 2;
+  editingTemplateTreeRootId: number | null = null;
   templateApplyUserInput = '';
   templateApplyUserId: string | null = null;
 
@@ -296,11 +299,21 @@ export class GoalManagementComponent implements OnInit {
 
     this.goalService.deleteTemplate(id).subscribe({
       next: () => {
+        if (this.editingTemplateTreeRootId === id) {
+          this.resetTemplateDraft();
+        }
         this.loadTemplates();
         this.scrollToTop();
       },
       error: (err) => console.error('Erreur suppression template:', err),
     });
+  }
+
+  editTemplate(template: GoalTemplate): void {
+    this.editingTemplateTreeRootId = template.id;
+    this.templateDraftRoot = this.mapTemplateToDraft(template);
+    this.nextTemplateTempId = this.getMaxTempId(this.templateDraftRoot) + 1;
+    this.scrollToTop();
   }
 
   applyTemplate(template: GoalTemplate): void {
@@ -315,6 +328,11 @@ export class GoalManagementComponent implements OnInit {
 
   createTemplateTree(): void {
     if (!this.isTemplateDraftValid(this.templateDraftRoot)) return;
+
+    if (this.editingTemplateTreeRootId != null) {
+      this.updateTemplateTree();
+      return;
+    }
 
     const payload = this.mapDraftToPayload(this.templateDraftRoot);
     this.goalService.addTemplateTree(payload).subscribe({
@@ -350,6 +368,14 @@ export class GoalManagementComponent implements OnInit {
       if (this.containsId(r.subGoals ?? [], goalId)) return r.id;
     }
     return null;
+  }
+
+  private containsTemplateId(nodes: GoalTemplate[], id: number): boolean {
+    for (const n of nodes) {
+      if (n.id === id) return true;
+      if (n.subTemplates?.length && this.containsTemplateId(n.subTemplates, id)) return true;
+    }
+    return false;
   }
 
   private containsId(nodes: Goal[], id: number): boolean {
@@ -438,6 +464,7 @@ export class GoalManagementComponent implements OnInit {
   resetTemplateDraft(): void {
     this.templateDraftRoot = this.createDraftRoot();
     this.nextTemplateTempId = 2;
+    this.editingTemplateTreeRootId = null;
   }
 
   isTemplateDraftValid(node: TemplateDraftNode): boolean {
@@ -452,6 +479,52 @@ export class GoalManagementComponent implements OnInit {
       target: Number(node.target),
       subTemplates: (node.children ?? []).map((child) => this.mapDraftToPayload(child)),
     };
+  }
+
+  private mapTemplateToDraft(node: GoalTemplate): TemplateDraftNode {
+    return {
+      id: node.id,
+      tempId: this.nextTemplateTempId++,
+      name: node.name ?? '',
+      description: node.description ?? '',
+      target: node.target ?? 1,
+      children: (node.subTemplates ?? []).map((child) => this.mapTemplateToDraft(child)),
+    };
+  }
+
+  private getMaxTempId(node: TemplateDraftNode): number {
+    const childrenMax = (node.children ?? []).reduce((acc, child) => Math.max(acc, this.getMaxTempId(child)), node.tempId);
+    return Math.max(node.tempId, childrenMax);
+  }
+
+  private updateTemplateTree(): void {
+    this.updateTemplateTreeAsync().catch((err) => {
+      console.error('Erreur mise à jour template:', err);
+    });
+  }
+
+  private async updateTemplateTreeAsync(): Promise<void> {
+    await this.updateTemplateNode(this.templateDraftRoot, null);
+    this.resetTemplateDraft();
+    this.loadTemplates();
+    this.scrollToTop();
+  }
+
+  private async updateTemplateNode(node: TemplateDraftNode, parentId: number | null): Promise<void> {
+    if (!node.id) {
+      throw new Error('Edition invalide: un noeud du template n’a pas d’identifiant.');
+    }
+
+    await firstValueFrom(this.goalService.updateTemplate(node.id, {
+      name: node.name.trim(),
+      description: (node.description ?? '').trim(),
+      target: Number(node.target),
+      parentId,
+    }));
+
+    for (const child of node.children ?? []) {
+      await this.updateTemplateNode(child, node.id);
+    }
   }
 
   onUserInputChange(): void {

@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { Goal } from '../../model/goal.model';
 import { GoalService } from '../../core/services/goal/goal.service';
 import { GoalSubComponent } from './goal-sub/goal-sub.component';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { WebSocketService } from '../../core/services/websocket/websocket.service';
 
 @Component({
   selector: 'app-goal',
@@ -14,7 +16,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
   imports: [CommonModule, FormsModule, GoalSubComponent, LoadingOverlayComponent],
   templateUrl: './goal.component.html',
 })
-export class GoalComponent implements OnInit {
+export class GoalComponent implements OnInit, OnDestroy {
 
   goals: Goal[] = [];
   displayGoals: Goal[] = [];
@@ -31,26 +33,45 @@ export class GoalComponent implements OnInit {
 
   /** ✅ Etat d'expansion persistant (clé = goal.id) */
   expandedById: Record<number, boolean> = {};
+  private goalUpdatesSubscription?: Subscription;
 
   constructor(
     private goalService: GoalService,
-    private authService: AuthService
+    private authService: AuthService,
+    private wsService: WebSocketService
   ) {}
 
   ngOnInit(): void {
     this.reloadGoals();
+    this.wsService.connectGoalUpdates();
+    this.goalUpdatesSubscription = this.wsService.listenForGoalUpdates().subscribe(() => {
+      this.reloadGoals(false);
+    });
 
     this.authService.isAdmin().subscribe(isAdmin => {
       this.isAdmin = isAdmin;
     });
   }
 
-  reloadGoals(): void {
-    this.isLoading = true;
+  ngOnDestroy(): void {
+    this.goalUpdatesSubscription?.unsubscribe();
+    this.wsService.disconnectGoalUpdates();
+  }
+
+  reloadGoals(showLoader = true): void {
+    if (showLoader) {
+      this.isLoading = true;
+    }
     this.goalService.getAllGoals().subscribe(goals => {
       this.goals = goals ?? [];
-      this.isLoading = false;
+      if (showLoader) {
+        this.isLoading = false;
+      }
       this.recomputeDisplay();
+    }, () => {
+      if (showLoader) {
+        this.isLoading = false;
+      }
     });
   }
 

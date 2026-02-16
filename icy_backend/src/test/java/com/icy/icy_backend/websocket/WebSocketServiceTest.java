@@ -73,4 +73,13 @@ class WebSocketServiceTest {
         service.sendShipFleetUpdate(List.of(new FleetSummaryResponse("Ship", "img", "focus", null)));
         verify(template).convertAndSend(eq("/topic/fleet/update"), Mockito.any(Object.class));
     }
+
+    @Test
+    void goalWebSocketSendsGoalUpdate() {
+        SimpMessagingTemplate template = Mockito.mock(SimpMessagingTemplate.class);
+        GoalWebSocketService service = new GoalWebSocketService(template);
+
+        service.sendGoalUpdate(1L, "UPDATE");
+        verify(template).convertAndSend(eq("/topic/goals"), Mockito.any(Object.class));
+    }
 }

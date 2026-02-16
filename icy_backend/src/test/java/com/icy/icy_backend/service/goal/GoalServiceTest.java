@@ -9,6 +9,7 @@ import com.icy.icy_backend.db.repository.goal.GoalRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.notification.NotificationPushService;
+import com.icy.icy_backend.websocket.GoalWebSocketService;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -30,8 +31,9 @@ class GoalServiceTest {
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService);
+        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
 
         CreateGoalDTO dto = new CreateGoalDTO();
         dto.setName("Goal");
@@ -39,6 +41,7 @@ class GoalServiceTest {
 
         service.createGoal(dto);
         verify(goalRepository).save(any(Goal.class));
+        verify(goalWebSocketService).sendGoalUpdate(any(), any());
         verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
     }
 
@@ -48,8 +51,9 @@ class GoalServiceTest {
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService);
+        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
 
         Goal goal = new Goal();
         goal.setId(1L);
@@ -69,8 +73,9 @@ class GoalServiceTest {
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService);
+        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
 
         Goal goal = new Goal();
         goal.setId(1L);
@@ -93,6 +98,7 @@ class GoalServiceTest {
         }
 
         verify(participationRepository).save(any(GoalParticipation.class));
+        verify(goalWebSocketService).sendGoalUpdate(any(), any());
         verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
     }
 }

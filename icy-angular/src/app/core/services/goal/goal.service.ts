@@ -40,6 +40,10 @@ export class GoalService {
     return this.http.post<any>(`/api/goal-templates`, template);
   }
 
+  updateTemplate(id: number, payload: Partial<GoalTemplate>): Observable<void> {
+    return this.http.put<void>(`/api/goal-templates/${id}`, payload);
+  }
+
   addTemplateTree(template: any): Observable<void> {
     return this.http.post<void>(`/api/goal-templates/batch`, template);
   }

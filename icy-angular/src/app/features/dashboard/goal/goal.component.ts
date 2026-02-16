@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Goal } from '../../../model/goal.model';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
+import { WebSocketService } from '../../../core/services/websocket/websocket.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard-goal',
@@ -11,23 +13,50 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   imports: [CommonModule, RouterLink, LoadingOverlayComponent],
   templateUrl: './goal.component.html',
 })
-export class GoalComponent implements OnInit {
+export class GoalComponent implements OnInit, OnDestroy {
   goals: Goal[] = [];
   isLoading = true;
   readonly maxSubGoals = 3;
   animatedProgressById: Record<number, number> = {};
+  private goalUpdatesSubscription?: Subscription;
 
-  constructor(private goalService: GoalService) {}
+  constructor(private goalService: GoalService, private wsService: WebSocketService) {}
 
   ngOnInit(): void {
+    this.loadPinnedGoal();
+    this.wsService.connectGoalUpdates();
+    this.goalUpdatesSubscription = this.wsService.listenForGoalUpdates().subscribe(() => {
+      this.loadPinnedGoal(false, true);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.goalUpdatesSubscription?.unsubscribe();
+    this.wsService.disconnectGoalUpdates();
+  }
+
+  private loadPinnedGoal(showLoader = true, fromWebSocket = false): void {
+    if (showLoader) {
+      this.isLoading = true;
+    }
+
     this.goalService.getPinnedGoal().subscribe({
       next: (goal) => {
         this.goals = goal ? [goal] : [];
-        this.initializeAnimatedProgress();
-        this.isLoading = false;
+        if (fromWebSocket) {
+          this.updateAnimatedProgressTargets();
+        } else {
+          this.initializeAnimatedProgress();
+        }
+        if (showLoader) {
+          this.isLoading = false;
+        }
       },
       error: () => {
-        this.isLoading = false;
+        this.goals = [];
+        if (showLoader) {
+          this.isLoading = false;
+        }
       }
     });
   }
@@ -108,5 +137,22 @@ export class GoalComponent implements OnInit {
         }, 350);
       });
     }
+  }
+
+  private updateAnimatedProgressTargets(): void {
+    for (const goal of this.goals) {
+      const currentAnimated = this.animatedProgressById[goal.id];
+      if (currentAnimated === undefined) {
+        this.animatedProgressById[goal.id] = this.calculateProgress(goal);
+        continue;
+      }
+      requestAnimationFrame(() => {
+        this.animatedProgressById[goal.id] = this.calculateProgress(goal);
+      });
+    }
+  }
+
+  trackByGoalId(_: number, goal: Goal): number {
+    return goal.id;
   }
 }
