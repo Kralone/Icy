@@ -8,3 +8,7 @@
 /.secrets/
 /secrets/local.secrets.env
 /secrets/*.dec.env
+/secrets/*.env
+!/secrets/*.example.env
+/secrets/*.sops.env
+/secrets/*.sops.yaml
