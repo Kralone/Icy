@@ -7,6 +7,7 @@ import logging
 from discord.ext import commands
 from dotenv import load_dotenv
 from messaging.rabbit_manager import RabbitManager
+from utils.vault_loader import load_vault_secrets_into_env
 
 
 # --- CONFIG LOGGING GLOBALE ---
@@ -24,11 +25,11 @@ logger = logging.getLogger("icy.bot")
 logger.info("🔧 Logging initialisé.")
 
 
-# --- ENVIRONMENT VARIABLES ---
-env_mode = os.getenv("ENV_MODE", "development")
-
 # Charge automatiquement le .env uniquement si présent (utile en local)
 load_dotenv()
+# Charge ensuite les secrets depuis Vault (prioritaires) si activé
+load_vault_secrets_into_env()
+env_mode = os.getenv("ENV_MODE", "development")
 logger.info(f"🌍 Mode: {env_mode.upper()}")
 
 # Récupération des variables

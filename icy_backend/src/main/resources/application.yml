@@ -6,16 +6,16 @@ spring:
         encoding: UTF-8
 
     rabbitmq:
-      host: localhost
-      port: 5672
-      username: icy
-      password: icy123
-      virtual-host: /
+      host: ${RABBITMQ_HOST:localhost}
+      port: ${RABBITMQ_PORT:5672}
+      username: ${RABBITMQ_USERNAME:icy}
+      password: ${RABBITMQ_PASSWORD:}
+      virtual-host: ${RABBITMQ_VHOST:/}
 
     datasource:
-        url: jdbc:postgresql://localhost:5432/iceforgedb
-        username: iceforge
-        password: iceforge
+        url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/iceforgedb}
+        username: ${SPRING_DATASOURCE_USERNAME:iceforge}
+        password: ${SPRING_DATASOURCE_PASSWORD:}
         driver-class-name: org.postgresql.Driver
 
     jpa:
@@ -39,7 +39,7 @@ spring:
         max-request-size: 100MB   # limite totale pour la requête
 
 jwt:
-    secret: "MySuperSecretKeyForJWTGeneration"
+    secret: ${JWT_SECRET:CHANGE_ME_WITH_32_CHARS_MIN}
     access-expiration: 900000   # 15 minutes (access token)
     refresh-expiration: 604800000  # 7 jours (refresh token)
     rotation-enabled: true  # Activation de la rotation des refresh tokens
@@ -80,16 +80,26 @@ management:
             exposure:
                 include: health, info, metrics
 
+vault:
+  enabled: ${VAULT_ENABLED:false}
+  address: ${VAULT_ADDR:http://localhost:8200}
+  kv:
+    mount: ${VAULT_KV_MOUNT:secret}
+    path: ${VAULT_KV_PATH:iceforge/dev/backend}
+  auth:
+    role-id: ${VAULT_ROLE_ID:}
+    secret-id: ${VAULT_SECRET_ID:}
+  fail-fast: ${VAULT_FAIL_FAST:true}
 
 bot:
-    api-key: jK9LmN2pQ5VtYB8GhX4CsR7Md6wX9Jz3kLmN2pQ5VtYB8GhX4CsR7Md6wX9Jz
+    api-key: ${BOT_API_KEY:}
     url: ${BOT_URL:http://bot:8090}
 
 openai:
-  api-key: "REMOVED_OPENAI_KEY"   # ⚠️ Remplace par ta vraie clé OpenAI
+  api-key: ${OPENAI_API_KEY:}
 
 push:
   vapid:
-    public-key: ${VAPID_PUBLIC_KEY:BHk8_PsS3-yU9a_jzx0Fnln0jj0b-0SumxPVn-dRo-uDY_SekRiYQ0eao7gFouMQN-fLJsvOrmcni3-V9xsci5c}
-    private-key: ${VAPID_PRIVATE_KEY:lchCid42TAb1IHslbf6YBPXOhizgx0rb4FQG4RIZ2fI}
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
     subject: ${VAPID_SUBJECT:mailto:admin@iceforge.fr}

@@ -1,0 +1,21 @@
+services:
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: iceforge_vault
+    restart: unless-stopped
+    user: "0:0"
+    entrypoint: ["vault"]
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./.secrets/vault/data_raft:/vault/data
+      - ./vault/config:/vault/config
+    command: ["server", "-config=/vault/config/vault.hcl"]
+    networks:
+      - external
+
+networks:
+  external:
+    driver: bridge

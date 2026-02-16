@@ -5,3 +5,6 @@
 /icy-angular/src/assets/version.json
 /temp
 /icy-angular/src/app/features/admin/orbit-spinner-maker/
+/.secrets/
+/secrets/local.secrets.env
+/secrets/*.dec.env

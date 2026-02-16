@@ -4,9 +4,9 @@ services:
     container_name: iceforge_db
     restart: always
     environment:
-      POSTGRES_USER: iceforge
-      POSTGRES_PASSWORD: iceforgepassword
-      POSTGRES_DB: iceforge_db
+      POSTGRES_USER: ${POSTGRES_USER:-iceforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-iceforge_db}
     ports:
       - "5432:5432"
     volumes:
@@ -20,10 +20,26 @@ services:
     container_name: iceforge_backend
     restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/iceforge_db
-      SPRING_DATASOURCE_USERNAME: iceforge
-      SPRING_DATASOURCE_PASSWORD: iceforgepassword
-      IMAGE_BASE_URL: https://iceforge.fr/images/
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/iceforge_db}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-iceforge}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change_me}
+      IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://iceforge.fr/images/}
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_WITH_32_CHARS_MIN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      BOT_API_KEY: ${BOT_API_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iceforge.fr}
+      RABBITMQ_USERNAME: ${RABBITMQ_USER:-icy}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PSWD:-change_me}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
+      VAULT_ENABLED: ${VAULT_ENABLED:-false}
+      VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
+      VAULT_KV_MOUNT: ${VAULT_KV_MOUNT:-secret}
+      VAULT_KV_PATH: ${BACKEND_VAULT_KV_PATH:-iceforge/dev/backend}
+      VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID:-}
+      VAULT_FAIL_FAST: ${VAULT_FAIL_FAST:-true}
     depends_on:
       - db
       - rabbitmq
@@ -56,6 +72,25 @@ services:
     build: ./bot
     container_name: iceforge_bot
     restart: always
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+      GUILD_ID: ${GUILD_ID:-}
+      DISCORD_EVENTS_CHANNEL_ID: ${DISCORD_EVENTS_CHANNEL_ID:-}
+      DISCORD_NEWS_CHANNEL_ID: ${DISCORD_NEWS_CHANNEL_ID:-}
+      DISCORD_DISCUSSION_CHANNEL_ID: ${DISCORD_DISCUSSION_CHANNEL_ID:-}
+      ENV_MODE: ${ENV_MODE:-production}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-icy}
+      RABBITMQ_PSWD: ${RABBITMQ_PSWD:-change_me}
+      BOT_API_KEY: ${BOT_API_KEY:-}
+      VAULT_ENABLED: ${VAULT_ENABLED:-false}
+      VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
+      VAULT_KV_MOUNT: ${VAULT_KV_MOUNT:-secret}
+      VAULT_KV_PATH: ${BOT_VAULT_KV_PATH:-iceforge/dev/bot}
+      VAULT_ROLE_ID: ${BOT_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${BOT_VAULT_SECRET_ID:-}
+      VAULT_FAIL_FAST: ${VAULT_FAIL_FAST:-true}
     ports:
       - "8090:8090"
     depends_on:
@@ -83,8 +118,8 @@ services:
     container_name: iceforge_rabbitmq
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: icy
-      RABBITMQ_DEFAULT_PASS: icy123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-icy}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PSWD:-change_me}
     ports:
       - "5672:5672"
       - "15672:15672"
