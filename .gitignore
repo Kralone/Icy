@@ -12,3 +12,7 @@
 !/secrets/*.example.env
 /secrets/*.sops.env
 /secrets/*.sops.yaml
+
+# Python caches
+**/__pycache__/
+*.py[cod]
