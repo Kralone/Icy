@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 import { ScweWidgetComponent } from './scwe-widget/scwe-widget.component';
 import { UserService } from '../../core/services/user/user.service';
 import { UserOnline } from '../../model/user-online.model';
+import { interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 interface IcyEvent {
   id: string;
@@ -56,6 +58,7 @@ export class DashboardComponent {
   onlineUsers: UserOnline[] = [];
   currentPage = 1;
   readonly pageSize = 5;
+  private readonly destroy$ = new Subject<void>();
 
   statusStyles: Record<OnlineStatus, StatusStyle> = {
     connecte: { label: 'Connecté', badgeClass: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' },
@@ -83,6 +86,10 @@ export class DashboardComponent {
     this.loadFleetSummary();
     this.loadEvents();
     this.loadOnlineUsers();
+
+    interval(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.loadOnlineUsers();
+    });
   }
 
   loadFleetSummary() {
@@ -204,6 +211,8 @@ export class DashboardComponent {
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.wsService.disconnectFleetUpdate();
   }
 

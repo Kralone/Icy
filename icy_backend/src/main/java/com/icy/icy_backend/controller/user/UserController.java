@@ -86,6 +86,11 @@ public class UserController {
         return userService.updateCurrentUserProfile(AuthUtils.getCurrentUserId(), request);
     }
 
+    @PostMapping("/me/activity")
+    public ResponseEntity<MessageResponse<Void>> touchMyActivity() {
+        return userService.touchCurrentUserActivity(AuthUtils.getCurrentUserId());
+    }
+
     @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> uploadAvatar(@RequestParam("file") MultipartFile file) throws IOException {
         try {

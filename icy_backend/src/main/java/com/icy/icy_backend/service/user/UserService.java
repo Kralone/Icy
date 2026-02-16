@@ -45,6 +45,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private static final String DEFAULT_ROLE_NAME = "JUNIOR";
+    private static final Duration ACTIVITY_TOUCH_INTERVAL = Duration.ofSeconds(30);
+    private static final Duration ABSENT_THRESHOLD = Duration.ofMinutes(10);
+    private static final Duration OFFLINE_THRESHOLD = Duration.ofMinutes(60);
 
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
@@ -240,7 +243,7 @@ public class UserService {
 
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> getCurrentUserProfile(UUID userId) {
         User user = findUserById(userId);
-        user.setLastSeenAt(LocalDateTime.now());
+        touchUserActivity(user, LocalDateTime.now());
         userRepository.save(user);
         UserParam userParam = getOrCreateUserParam(user);
         return messageService.buildResponse("user.profile.get", new UserProfileResponseDTO(user, userParam));
@@ -256,7 +259,7 @@ public class UserService {
 
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> updateCurrentUserProfile(UUID userId, UpdateUserProfileRequest request) {
         User user = findUserById(userId);
-        user.setLastSeenAt(LocalDateTime.now());
+        touchUserActivity(user, LocalDateTime.now());
         UserParam userParam = getOrCreateUserParam(user);
 
         if (request.getDescription() != null) {
@@ -308,8 +311,9 @@ public class UserService {
         List<User> users = StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .toList();
 
-        LocalDateTime absentCutoff = LocalDateTime.now().minus(Duration.ofMinutes(10));
-        LocalDateTime offlineCutoff = LocalDateTime.now().minus(Duration.ofMinutes(60));
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime absentCutoff = now.minus(ABSENT_THRESHOLD);
+        LocalDateTime offlineCutoff = now.minus(OFFLINE_THRESHOLD);
         boolean changed = false;
 
         for (User user : users) {
@@ -318,7 +322,7 @@ public class UserService {
                 lastSeen = user.getCreatedAt();
             }
 
-            if (lastSeen != null && user.getStatus() != null && user.getStatus() != UserStatus.INDISPONIBLE) {
+            if (lastSeen != null && isAutoStatus(user.getStatus())) {
                 if (lastSeen.isBefore(offlineCutoff) && user.getStatus() != UserStatus.HORS_LIGNE) {
                     user.setStatus(UserStatus.HORS_LIGNE);
                     changed = true;
@@ -340,9 +344,18 @@ public class UserService {
         return messageService.buildResponse("user.online.list", online);
     }
 
+    public ResponseEntity<MessageResponse<Void>> touchCurrentUserActivity(UUID userId) {
+        User user = findUserById(userId);
+        LocalDateTime now = LocalDateTime.now();
+        if (touchUserActivity(user, now)) {
+            userRepository.save(user);
+        }
+        return messageService.buildResponse("user.activity.updated", null);
+    }
+
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> updateUserAvatar(UUID userId, MultipartFile file) throws IOException {
         User user = findUserById(userId);
-        user.setLastSeenAt(LocalDateTime.now());
+        touchUserActivity(user, LocalDateTime.now());
 
         String avatarUrl = userAvatarService.storeAvatar(user, file);
         user.setAvatarUrl(avatarUrl);
@@ -424,6 +437,27 @@ public class UserService {
         if (!adminIds.isEmpty()) {
             notificationPushService.sendToUsers(adminIds, title, body, url, priority);
         }
+    }
+
+    private boolean touchUserActivity(User user, LocalDateTime now) {
+        boolean changed = false;
+        LocalDateTime lastSeen = user.getLastSeenAt();
+        if (lastSeen == null || Duration.between(lastSeen, now).compareTo(ACTIVITY_TOUCH_INTERVAL) >= 0) {
+            user.setLastSeenAt(now);
+            changed = true;
+        }
+
+        UserStatus status = user.getStatus();
+        if (isAutoStatus(status) && status != UserStatus.CONNECTE) {
+            user.setStatus(UserStatus.CONNECTE);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private boolean isAutoStatus(UserStatus status) {
+        return status == null || (status != UserStatus.INDISPONIBLE && status != UserStatus.EN_JEU);
     }
 
 }

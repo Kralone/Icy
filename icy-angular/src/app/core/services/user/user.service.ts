@@ -71,6 +71,10 @@ export class UserService {
     return this.http.get<ApiResponse<UserOnline[]>>(`${this.apiUrl}/online`);
   }
 
+  touchActivity(): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/me/activity`, {});
+  }
+
   private applyAvatarCacheBuster(profile: UserProfile | null): UserProfile | null {
     if (!profile?.avatarUrl || !this.avatarCacheBuster) return profile;
     const [baseUrl, query] = profile.avatarUrl.split('?');

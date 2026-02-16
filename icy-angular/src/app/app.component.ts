@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ViewChild, TemplateRef } from '@angular/core
 import { RouterOutlet } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import {VersionService} from './core/services/config/version.service';
+import { UserActivityService } from './core/services/user/user-activity.service';
 
 @Component({
   selector: 'app-root',
@@ -19,9 +20,11 @@ export class AppComponent implements OnInit {
 
   private versionService = inject(VersionService);
   private toast = inject(HotToastService);
+  private userActivity = inject(UserActivityService);
 
   ngOnInit() {
     this.versionService.initVersionCheck();
+    this.userActivity.start();
 
     this.versionService.updateDetected$.subscribe(() => {
       this.showUpdateToast();
