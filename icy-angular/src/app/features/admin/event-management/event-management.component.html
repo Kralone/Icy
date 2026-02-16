@@ -162,15 +162,11 @@
         </thead>
 
         <tbody>
-        <tr *ngFor="let e of paginatedEvents"
-            [ngClass]="{
-              'opacity-50 italic text-gray-400': e.finished,
-              'hover:bg-white/5 transition border-b border-white/10': true
-            }">
-          <td class="px-4 py-3 font-medium">{{ e.title }}</td>
-          <td class="px-4 py-3">{{ e.type.name }}</td>
-          <td class="px-4 py-3 whitespace-nowrap">{{ e.startDateTime | date:'short' }}</td>
-          <td class="px-4 py-3 whitespace-nowrap">{{ e.endDateTime | date:'short' }}</td>
+        <tr *ngFor="let e of paginatedEvents" class="hover:bg-white/5 transition border-b border-white/10">
+          <td class="px-4 py-3 font-medium" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.title }}</td>
+          <td class="px-4 py-3" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.type.name }}</td>
+          <td class="px-4 py-3 whitespace-nowrap" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.startDateTime | date:'short' }}</td>
+          <td class="px-4 py-3 whitespace-nowrap" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.endDateTime | date:'short' }}</td>
           <td class="px-4 py-3">
               <span
                 [ngClass]="{
