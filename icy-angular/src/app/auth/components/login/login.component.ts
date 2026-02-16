@@ -20,6 +20,7 @@ export class LoginComponent implements OnInit {
   passwordForm: FormGroup;
   errorMessage: string = '';
   showResetModal: boolean = false;
+  isTransitioning: boolean = false;
   private tempUser: any = null;
 
   constructor(
@@ -66,7 +67,7 @@ export class LoginComponent implements OnInit {
       }
 
       // ✅ Login normal
-      await this.router.navigate(['/icy/dashboard']);
+      await this.navigateWithTransition('/icy/dashboard');
 
     } catch (error) {
       console.error('Erreur de login', error);
@@ -108,7 +109,7 @@ async onResetPassword(): Promise<void> {
     localStorage.setItem('user', JSON.stringify(response.user.username));
 
     this.showResetModal = false;
-    this.router.navigate(['/icy/dashboard']);
+    await this.navigateWithTransition('/icy/dashboard');
   } catch (err) {
     this.errorMessage = "Erreur lors de la réinitialisation.";
   }
@@ -119,6 +120,9 @@ async onResetPassword(): Promise<void> {
     this.router.navigate(['/']);
   }
 
-
+  private async navigateWithTransition(path: string): Promise<void> {
+    this.isTransitioning = true;
+    await this.router.navigateByUrl(path);
+  }
 
 }

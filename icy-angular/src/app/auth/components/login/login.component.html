@@ -1,4 +1,7 @@
-<div class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+<div
+  class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white login-screen"
+  [class.login-screen--leaving]="isTransitioning"
+>
 
   <!-- Effets lumineux d'arrière-plan -->
   <div class="absolute inset-0 overflow-hidden">
@@ -51,7 +54,7 @@
              placeholder="Mot de passe" />
 
       <button type="submit"
-              [disabled]="loginForm.invalid"
+              [disabled]="loginForm.invalid || isTransitioning"
               class="relative mt-2 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
         Se connecter
       </button>

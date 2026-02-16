@@ -7,6 +7,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpAuthInterceptor } from './core/interceptors/http.interceptor';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 const enableServiceWorker = () => {
   if (!isDevMode()) return true;
@@ -27,6 +28,7 @@ export const appConfig: ApplicationConfig = {
       useValue: 'fr-FR'
     },
     importProvidersFrom(FullCalendarModule),
+    provideAnimations(),
     provideServiceWorker('ngsw-worker.js', {
       enabled: enableServiceWorker(),
       registrationStrategy: 'registerWhenStable:30000'

@@ -7,13 +7,14 @@ import {RecruitmentComponent} from './auth/components/recruitment/recruitment.co
 import { roleGuard } from './auth/guards/role.guard';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'recrutement', component: RecruitmentComponent },
+  { path: '', component: HomeComponent, data: { animation: 'HomePage' } },
+  { path: 'login', component: LoginComponent, data: { animation: 'LoginPage' } },
+  { path: 'recrutement', component: RecruitmentComponent, data: { animation: 'RecruitmentPage' } },
 
   {
     path: 'icy',
     component: LayoutComponent,
+    data: { animation: 'IcyArea' },
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 

@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import {VersionService} from './core/services/config/version.service';
 import { UserActivityService } from './core/services/user/user-activity.service';
+import { animate, query, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,49 @@ import { UserActivityService } from './core/services/user/user-activity.service'
   imports: [
     RouterOutlet
   ],
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
+  animations: [
+    trigger('routeTransition', [
+      transition('LoginPage => IcyArea', [
+        query(':enter, :leave', [
+          style({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%'
+          })
+        ], { optional: true }),
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(20px) scale(0.98)', filter: 'blur(4px)' })
+        ], { optional: true }),
+        query(':leave', [
+          animate('280ms ease-in', style({ opacity: 0, transform: 'translateY(-12px) scale(1.01)', filter: 'blur(6px)' }))
+        ], { optional: true }),
+        query(':enter', [
+          animate('420ms 80ms cubic-bezier(0.22, 1, 0.36, 1)', style({ opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' }))
+        ], { optional: true })
+      ]),
+      transition('IcyArea => LoginPage', [
+        query(':enter, :leave', [
+          style({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%'
+          })
+        ], { optional: true }),
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(-16px) scale(0.99)', filter: 'blur(4px)' })
+        ], { optional: true }),
+        query(':leave', [
+          animate('240ms ease-in', style({ opacity: 0, transform: 'translateY(10px) scale(1.01)', filter: 'blur(4px)' }))
+        ], { optional: true }),
+        query(':enter', [
+          animate('360ms 60ms ease-out', style({ opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' }))
+        ], { optional: true })
+      ])
+    ])
+  ]
 })
 export class AppComponent implements OnInit {
   title = 'angular-iceforge';
@@ -63,5 +106,9 @@ export class AppComponent implements OnInit {
 
   reloadPage() {
     window.location.reload();
+  }
+
+  prepareRoute(outlet: RouterOutlet): string {
+    return (outlet.activatedRouteData?.['animation'] as string) ?? '';
   }
 }
