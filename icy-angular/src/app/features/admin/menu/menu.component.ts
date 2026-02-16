@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
+import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 
 @Component({
   standalone: true,
@@ -10,12 +11,15 @@ import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.compon
   imports: [
     RouterLink,
     CommonModule,
-    RankOrbitComponent
+    RankOrbitComponent,
+    LoadingOverlayComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })
 export class AdminMenuComponent {
+  isLoading = true;
+  cardsVisible = false;
   activeRankKey = 'JUNIOR';
   activeRankLabel = 'Junior';
   private roles: string[] = [];
@@ -43,7 +47,16 @@ export class AdminMenuComponent {
       this.activeRankLabel = this.rankLabels[this.activeRankKey] ?? this.activeRankKey;
       this.roles = roles.map((role) => (role ?? '').trim().toUpperCase());
     });
-    this.userService.getMyProfile().subscribe();
+    this.userService.getMyProfile().subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.cardsVisible = true;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.cardsVisible = true;
+      }
+    });
   }
 
   menuItems = [

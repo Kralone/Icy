@@ -1,7 +1,7 @@
-import { Component, HostListener, ViewChild, AfterViewInit, NgZone } from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CalendarOptions } from '@fullcalendar/core';
+import { CalendarOptions, DatesSetArg, ViewApi } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { EventService, EventDTO } from '../../core/services/event/event.service';
@@ -13,6 +13,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 
 type FleetMiniShip = {
   name: string;
@@ -24,7 +25,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent],
+  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent, LoadingOverlayComponent],
   templateUrl: './events.component.html'
 })
 export class EventsComponent implements AfterViewInit {
@@ -48,6 +49,9 @@ export class EventsComponent implements AfterViewInit {
   fleetByBrand: Record<string, FleetMiniShip[]> = {};
   fleetBrandKeys: string[] = [];
   private userFleetCache: Record<string, FleetMiniShip[]> = {};
+  private lastIsMobile: boolean | null = null;
+  private desktopPreferredView: ViewApi['type'] = 'dayGridWeek';
+  private mobilePreferredView: ViewApi['type'] = 'threeDay';
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
@@ -83,6 +87,7 @@ export class EventsComponent implements AfterViewInit {
 
     eventContent: (arg) => this.renderIcyEvent(arg),
     eventClick: (arg) => this.onEventClick(arg),
+    datesSet: (arg) => this.onDatesSet(arg),
 
     // ✅ Ajoute classes + états (finished, image/no-image) + sécurité affichage
     eventDidMount: (info) => this.onEventDidMount(info),
@@ -93,7 +98,6 @@ export class EventsComponent implements AfterViewInit {
     private wsService: WebSocketService,
     private authService: AuthService,
     private shipService: ShipService,
-    private ngZone: NgZone,
     private route: ActivatedRoute,
     private router: Router,
     private sanitizer: DomSanitizer
@@ -113,30 +117,50 @@ export class EventsComponent implements AfterViewInit {
         this.tryOpenEventFromQuery();
       }
     });
-
-    // Attendre que FullCalendar soit rendu avant d'appliquer la vue
-    this.ngZone.onStable.subscribe(() => {
-      this.updateCalendarView();
-    });
+    setTimeout(() => this.updateResponsiveCalendarLayout(true));
   }
 
   @HostListener('window:resize', [])
   onWindowResize() {
-    this.updateCalendarView();
+    this.updateResponsiveCalendarLayout();
   }
 
-  private updateCalendarView() {
+  private updateResponsiveCalendarLayout(force = false) {
     const calendarApi = this.calendarComponent?.getApi();
     if (!calendarApi) return;
 
     const isMobile = window.innerWidth < 640;
-    const newView = isMobile ? 'threeDay' : 'dayGridWeek';
-
-    if (calendarApi.view.type !== newView) {
-      calendarApi.changeView(newView);
+    if (!force && this.lastIsMobile === isMobile) {
+      calendarApi.updateSize();
+      return;
     }
 
-    calendarApi.setOption('height', '100%');
+    const targetView = isMobile ? this.mobilePreferredView : this.desktopPreferredView;
+
+    calendarApi.setOption('headerToolbar', isMobile
+      ? { left: 'prev,next', center: 'title', right: 'today' }
+      : { left: 'prev,next today', center: 'title', right: 'threeDay,dayGridWeek,dayGridMonth' });
+    calendarApi.setOption('footerToolbar', isMobile
+      ? { left: 'threeDay,dayGridWeek,dayGridMonth', center: '', right: '' }
+      : false);
+
+    if (calendarApi.view.type !== targetView) {
+      calendarApi.changeView(targetView);
+    }
+
+    calendarApi.updateSize();
+    this.lastIsMobile = isMobile;
+  }
+
+  private onDatesSet(arg: DatesSetArg): void {
+    const type = arg.view.type as ViewApi['type'];
+    if (type === 'threeDay') {
+      this.mobilePreferredView = type;
+      return;
+    }
+    if (type === 'dayGridWeek' || type === 'dayGridMonth') {
+      this.desktopPreferredView = type;
+    }
   }
 
   private loadEvents() {
@@ -154,12 +178,13 @@ export class EventsComponent implements AfterViewInit {
             extendedProps: {
               type: event.type,
               description: event.description,
-              finished: event.finished
+              finished: this.isEventFinished(event)
             }
           }));
 
           this.calendarOptions.events = this.calendarEvents;
           this.isLoading = false;
+          this.updateResponsiveCalendarLayout(true);
           this.tryOpenEventFromQuery();
         }
       } catch {
@@ -168,6 +193,27 @@ export class EventsComponent implements AfterViewInit {
     });
 
     this.eventService.getAllTypes().subscribe(res => (this.types = res));
+  }
+
+  private isEventFinished(event: any): boolean {
+    const raw = event?.finished ?? event?.isFinished;
+    if (typeof raw === 'boolean') {
+      return raw;
+    }
+    if (typeof raw === 'string') {
+      const normalized = raw.trim().toLowerCase();
+      if (['true', '1', 'yes', 'finished'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'ongoing'].includes(normalized)) return false;
+    }
+
+    const endValue = event?.endDateTime ?? event?.end;
+    if (endValue) {
+      const endDate = new Date(endValue);
+      if (!Number.isNaN(endDate.getTime())) {
+        return endDate.getTime() < Date.now();
+      }
+    }
+    return false;
   }
 
   private escapeHtml(input: string): string {
@@ -199,7 +245,10 @@ export class EventsComponent implements AfterViewInit {
     const pillBg = type?.backgroundColor?.trim() || '#0ea5e9';
     const pillText = type?.textColor?.trim() || '#e0f2ff';
 
-    const finished = !!arg.event.extendedProps?.finished;
+    const finished = this.isEventFinished({
+      finished: arg.event.extendedProps?.finished,
+      end: arg.event.end
+    });
 
     // ✅ startTime défini
     const startTime = arg.event.start
@@ -256,10 +305,14 @@ export class EventsComponent implements AfterViewInit {
 
   private onEventDidMount(info: any) {
     const type = info.event.extendedProps?.type as EventType | undefined;
-    const finished = !!info.event.extendedProps?.finished;
+    const finished = this.isEventFinished({
+      finished: info.event.extendedProps?.finished,
+      end: info.event.end
+    });
     const hasImg = !!type?.imageUrl?.trim();
 
     info.el.classList.add('icy-event'); // hook global
+    info.el.classList.add('icy-event--enter');
     if (finished) info.el.classList.add('icy-event--finished');
     if (hasImg) info.el.classList.add('icy-event--has-image');
     else info.el.classList.add('icy-event--no-image');
@@ -267,6 +320,10 @@ export class EventsComponent implements AfterViewInit {
     // le <a> FullCalendar a parfois des styles, on neutralise un peu
     info.el.style.background = 'transparent';
     info.el.style.border = 'none';
+
+    requestAnimationFrame(() => {
+      info.el.classList.add('icy-event--enter-visible');
+    });
   }
 
   onEventClick(arg: any): void {

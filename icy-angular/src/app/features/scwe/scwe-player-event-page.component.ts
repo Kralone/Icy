@@ -4,6 +4,7 @@ import { forkJoin } from 'rxjs';
 
 import { ScweEventsListComponent } from './scwe-events-list/scwe-events-list.component';
 import { ScweLeaderboardComponent } from './scwe-leaderboard/scwe-leaderboard.component';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 
 import {
   ScWorldEventDto,
@@ -18,7 +19,7 @@ type ViewMode = 'active' | 'history' | 'leaderboard';
 @Component({
   selector: 'app-scwe-player-page',
   standalone: true,
-  imports: [CommonModule, ScweEventsListComponent, ScweLeaderboardComponent],
+  imports: [CommonModule, ScweEventsListComponent, ScweLeaderboardComponent, LoadingOverlayComponent],
   templateUrl: './scwe-player-event-page.component.html',
 })
 export class ScwePlayerPageComponent implements OnInit, OnDestroy {

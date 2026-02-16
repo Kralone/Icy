@@ -6,7 +6,7 @@
   <app-loading-overlay
     [isLoading]="loadingEvent"
     [minDurationMs]="550"
-    [fadeOutMs]="450"
+    [fadeOutMs]="500"
     [softFade]="true"
   ></app-loading-overlay>
   <div class="absolute -top-28 -left-28 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
@@ -93,7 +93,7 @@
         <app-loading-overlay
           [isLoading]="loadingLeaderboard"
           [minDurationMs]="500"
-          [fadeOutMs]="400"
+          [fadeOutMs]="500"
           [softFade]="true"
         ></app-loading-overlay>
         <p class="text-xs uppercase text-cyan-300/80 mb-2">Top 3 joueurs</p>
@@ -117,3 +117,4 @@
     </div>
   </ng-container>
 </div>
+

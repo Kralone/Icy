@@ -6,12 +6,18 @@
     <div class="absolute bottom-0 right-0 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
   </div>
 
-  <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
 
   <!-- Contenu -->
   <div
     [class.pointer-events-none]="isLoading"
-    class="transition duration-300 flex flex-col flex-1 gap-4"
+    class="loading-reveal transition duration-300 flex flex-col flex-1 gap-4"
+    [attr.data-loading]="isLoading"
   >
 
     <!-- Header -->
@@ -113,7 +119,6 @@
     </div>
 
     <!-- États -->
-    <div *ngIf="isLoading" class="text-gray-400 text-center py-8">Chargement...</div>
     <div *ngIf="!isLoading && displayGoals.length === 0 && (!showCompleted || historyGoals.length === 0)" class="text-gray-400 text-center py-8">
       Aucun objectif.
     </div>
@@ -168,3 +173,5 @@
 
   </div>
 </div>
+
+

@@ -12,7 +12,8 @@ import { NgClass, NgIf } from '@angular/common';
 })
 export class LoadingOverlayComponent {
   @Input() minDurationMs = 0;
-  @Input() fadeOutMs = 300;
+  @Input() fadeInMs = 180;
+  @Input() fadeOutMs = 500;
   @Input() softFade = false;
   @Output() hidden = new EventEmitter<void>();
 

@@ -282,6 +282,15 @@
   padding: 0.25rem 0 !important;
 }
 
+.fc-footer-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem 0 !important;
+}
+
 /* === Titre & boutons plus petits sur mobile === */
 @media (max-width: 640px) {
   .fc-toolbar-title {
@@ -303,6 +312,10 @@
     width: 100% !important;
     display: flex;
     justify-content: center;
+  }
+
+  .fc-footer-toolbar {
+    margin-top: 0.35rem !important;
   }
 }
 
@@ -424,6 +437,21 @@ emoji-picker {
   opacity: 0.85;
 }
 
+.loading-reveal {
+  transition: opacity 520ms ease, transform 620ms ease;
+  will-change: opacity, transform;
+}
+
+.loading-reveal[data-loading="true"] {
+  opacity: 0.6;
+  transform: translateY(6px);
+}
+
+.loading-reveal[data-loading="false"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* =========================
    ICY EVENTS (clean unified)
    ========================= */
@@ -490,8 +518,17 @@ emoji-picker {
 
 /* finished */
 .fc .icy-event-host.icy-event-host--finished {
-  opacity: 0.62;
-  filter: saturate(0.9);
+  opacity: 0.5;
+  filter: grayscale(0.65) saturate(0.35);
+}
+
+.fc .icy-event.icy-event--finished .icy-event-host {
+  opacity: 0.5;
+  filter: grayscale(0.65) saturate(0.35);
+}
+
+.fc .icy-event.icy-event--finished .icy-event__spacer {
+  filter: grayscale(0.8);
 }
 
 /* === ICY : image en haut, texte en bas === */
@@ -567,6 +604,24 @@ emoji-picker {
   transition: box-shadow 140ms ease, transform 140ms ease;
 }
 
+.fc .icy-event.icy-event--finished .icy-event-host:hover {
+  transform: none;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.2),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.fc .icy-event--enter .icy-event-host {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.fc .icy-event--enter.icy-event--enter-visible .icy-event-host {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 420ms ease, transform 520ms ease;
+}
+
 
 /* Type au-dessus de l'image */
 .fc .icy-event__type{
@@ -617,4 +672,12 @@ emoji-picker {
   .fc .icy-pill { padding: 8px 11px; }
   .fc .icy-pill__title { font-size: 12.5px; -webkit-line-clamp: 2; }
   .fc .icy-pill__time { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc .icy-event--enter .icy-event-host {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

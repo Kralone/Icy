@@ -1,5 +1,14 @@
 <!-- ================== MENU - STYLE ICY ================== -->
-<div class="admin-menu min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12">
+<div
+  class="admin-menu loading-reveal min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12"
+  [attr.data-loading]="isLoading"
+>
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
   <div class="admin-rank-orbit" aria-hidden="true">
     <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
   </div>
@@ -14,12 +23,14 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <div
-        *ngFor="let item of visibleMenuItems"
+        *ngFor="let item of visibleMenuItems; let i = index"
         [routerLink]="[item.route]"
-        class="group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
+        class="admin-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
                shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
                hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
                cursor-pointer overflow-hidden"
+        [class.admin-menu-card--visible]="cardsVisible"
+        [style.--card-delay.ms]="i * 45"
       >
         <div class="relative h-48 w-full overflow-hidden">
           <img

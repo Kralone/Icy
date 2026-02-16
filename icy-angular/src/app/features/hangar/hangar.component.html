@@ -1,8 +1,18 @@
 <!-- ================== PAGE VAISSEAUX (STYLE ICY corrigé) ================== -->
 <div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
-  <app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
 
-  <div [class.blur-sm]="isLoading" [class.pointer-events-none]="isLoading" class="transition duration-300">
+  <div
+    [class.blur-sm]="isLoading"
+    [class.pointer-events-none]="isLoading"
+    class="loading-reveal transition duration-300"
+    [attr.data-loading]="isLoading"
+  >
     <!-- Header filtres + Ajouter -->
     <div class="flex flex-wrap justify-between items-center px-6 pt-6 pb-4 gap-3">
       <div class="flex flex-wrap items-center gap-3">
@@ -115,3 +125,5 @@
   (close)="closeModal()"
   (confirmSelection)="onShipSelected($event)"
 ></app-ship-selector>
+
+

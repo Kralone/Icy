@@ -1,16 +1,17 @@
 <!-- ================== FLOTTE - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8">
+<div class="relative loading-reveal min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8" [attr.data-loading]="isLoading">
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
   <div class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_55%)]"></div>
     <div class="relative space-y-3">
       <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte</p>
       <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Atlas des vaisseaux</h2>
     </div>
-  </div>
-
-  <!-- Chargement -->
-  <div *ngIf="isLoading" class="h-24 flex items-center justify-center">
-    <app-loading-overlay [isLoading]="true"></app-loading-overlay>
   </div>
 
   <!-- Résumé -->
@@ -78,3 +79,5 @@
     </div>
   </ng-template>
 </div>
+
+

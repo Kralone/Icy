@@ -43,7 +43,7 @@
       <app-loading-overlay
         [isLoading]="isEventsLoading"
         [minDurationMs]="500"
-        [fadeOutMs]="400"
+        [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
       <div *ngIf="hasUpcomingEvents" class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
@@ -138,7 +138,7 @@
       <app-loading-overlay
         [isLoading]="isOnlineLoading"
         [minDurationMs]="500"
-        [fadeOutMs]="400"
+        [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
       <div class="flex items-center justify-between mb-4">
@@ -205,7 +205,7 @@
       <app-loading-overlay
         [isLoading]="isLoading"
         [minDurationMs]="500"
-        [fadeOutMs]="400"
+        [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
       <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
@@ -241,3 +241,4 @@
 
   </aside>
 </main>
+

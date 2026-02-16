@@ -25,9 +25,16 @@
 
   <!-- Conteneur calendrier -->
   <div
-    class="flex-1 p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl
+    class="relative loading-reveal flex-1 p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl
          overflow-y-auto flex flex-col"
+    [attr.data-loading]="isLoading"
   >
+    <app-loading-overlay
+      [isLoading]="isLoading"
+      [minDurationMs]="0"
+      [fadeOutMs]="500"
+      [softFade]="true"
+    ></app-loading-overlay>
     <full-calendar
       [options]="calendarOptions"
       class="flex-1 min-h-[420px] sm:min-h-[640px] w-full text-gray-100"
@@ -49,3 +56,5 @@
   (participationChange)="setParticipationStatus($event)"
   (toggleFleets)="toggleConfirmedFleets()"
 ></app-event-details-modal>
+
+

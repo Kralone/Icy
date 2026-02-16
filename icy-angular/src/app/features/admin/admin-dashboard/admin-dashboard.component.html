@@ -24,7 +24,16 @@
   </div>
 
   <!-- Tableau responsive -->
-  <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
+  <div
+    class="relative loading-reveal overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]"
+    [attr.data-loading]="isLoading"
+  >
+    <app-loading-overlay
+      [isLoading]="isLoading"
+      [minDurationMs]="0"
+      [fadeOutMs]="500"
+      [softFade]="true"
+    ></app-loading-overlay>
     <table class="min-w-[700px] w-full text-sm text-gray-200">
       <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
       <tr>
@@ -57,12 +66,6 @@
           <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="editUser(user)">Modifier</button>
           <button class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition" (click)="deleteUser(user.id)">Supprimer</button>
           <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="resetPassword(user.id)">Reset PW</button>
-        </td>
-      </tr>
-
-      <tr *ngIf="isLoading">
-        <td colspan="4" class="py-6 text-center">
-          <app-loading-overlay [isLoading]="true"></app-loading-overlay>
         </td>
       </tr>
 
