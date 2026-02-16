@@ -256,7 +256,7 @@ class UserServiceTest {
 
         assertThat(userService.resolveUser(user.getId())).isEqualTo(user);
         assertThat(userService.resolveUser("123")).isEqualTo(user);
-        assertThatThrownBy(() -> userService.resolveUser(1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> userService.resolveUser(1)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
