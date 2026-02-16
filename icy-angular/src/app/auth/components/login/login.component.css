@@ -20,20 +20,3 @@
   opacity: 1;
   transform: scale(1);
 }
-
-.login-screen--leaving {
-  animation: loginFadeOut 450ms ease forwards;
-}
-
-@keyframes loginFadeOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.02);
-    filter: blur(6px);
-  }
-}

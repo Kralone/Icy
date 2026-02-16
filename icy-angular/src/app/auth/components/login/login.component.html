@@ -1,6 +1,5 @@
 <div
   class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white login-screen"
-  [class.login-screen--leaving]="isTransitioning"
 >
 
   <!-- Effets lumineux d'arrière-plan -->
@@ -30,7 +29,7 @@
   </div>
 
   <!-- Carte de connexion -->
-  <div class="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20 w-[420px] animate__animated animate__fadeInUp">
+  <div class="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20 w-[420px]">
 
     <!-- Logo -->
     <div class="flex flex-col items-center mb-6">
@@ -54,12 +53,12 @@
              placeholder="Mot de passe" />
 
       <button type="submit"
-              [disabled]="loginForm.invalid || isTransitioning"
+              [disabled]="loginForm.invalid"
               class="relative mt-2 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
         Se connecter
       </button>
 
-      <p *ngIf="errorMessage" class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
+      <p *ngIf="errorMessage" class="text-red-400 text-center mt-3">
         {{ errorMessage }}
       </p>
     </form>
@@ -81,7 +80,7 @@
 
   <!-- Modal de réinitialisation -->
   <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-xl w-[400px] border border-white/20 animate__animated animate__zoomIn">
+    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-xl w-[400px] border border-white/20">
       <h2 class="text-xl font-bold text-cyan-300 mb-4 text-center">🔐 Réinitialisation requise</h2>
       <p class="text-gray-300 mb-6 text-center">Tu dois changer ton mot de passe temporaire avant d'accéder à l'application.</p>
 
@@ -101,7 +100,7 @@
           Changer le mot de passe
         </button>
 
-        <p *ngIf="errorMessage" class="text-red-400 text-center mt-2 animate__animated animate__shakeX">
+        <p *ngIf="errorMessage" class="text-red-400 text-center mt-2">
           {{ errorMessage }}
         </p>
       </form>
