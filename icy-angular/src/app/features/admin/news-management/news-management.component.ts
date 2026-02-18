@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AngularEditorModule, AngularEditorConfig } from '@kolkov/angular-editor';
@@ -13,7 +13,12 @@ import {RouterLink} from '@angular/router';
   templateUrl: './news-management.component.html',
   imports: [CommonModule, FormsModule, AngularEditorModule, RouterLink],
 })
-export class NewsManagementComponent implements OnInit {
+export class NewsManagementComponent implements OnInit, OnDestroy {
+  private readonly draftStoragePrefix = 'admin-news-draft';
+  private autoSaveIntervalId: ReturnType<typeof setInterval> | null = null;
+  private lastAutoSavedPayload = '';
+  private pendingDraftTypeId: number | null = null;
+
   // === ACTUALITÉS ===
   news: News[] = [];
   isLoading = false;
@@ -39,6 +44,7 @@ export class NewsManagementComponent implements OnInit {
     type: null as NewsType | null,
     content: ''
   };
+  draftSavedAt: Date | null = null;
 
   // === CONFIGURATION DE L’ÉDITEUR RICHE ===
   editorConfig: AngularEditorConfig = {
@@ -62,6 +68,10 @@ export class NewsManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadNews();
     this.loadTypes();
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoSave();
   }
 
   // -------------------------------
@@ -105,13 +115,23 @@ export class NewsManagementComponent implements OnInit {
       this.editingNews = null;
       this.newsForm = { title: '', type: null, content: '' };
     }
+
+    this.restoreDraft();
     this.showForm = true;
+    this.startAutoSave();
   }
 
-  closeForm(): void {
+  closeForm(preserveDraft = true): void {
+    if (preserveDraft) {
+      this.persistDraft();
+    }
+    this.stopAutoSave();
     this.showForm = false;
     this.editingNews = null;
     this.newsForm = { title: '', type: null, content: '' };
+    this.draftSavedAt = null;
+    this.pendingDraftTypeId = null;
+    this.lastAutoSavedPayload = '';
   }
 
   saveNews(): void {
@@ -130,8 +150,9 @@ export class NewsManagementComponent implements OnInit {
       // Mise à jour
       this.newsService.updateNews(this.editingNews.id, payload).subscribe({
         next: () => {
+          this.clearDraft();
           this.loadNews();
-          this.closeForm();
+          this.closeForm(false);
         },
         error: (err) => console.error('Erreur mise à jour news', err),
       });
@@ -139,8 +160,9 @@ export class NewsManagementComponent implements OnInit {
       // Création
       this.newsService.createNews(payload).subscribe({
         next: () => {
+          this.clearDraft();
           this.loadNews();
-          this.closeForm();
+          this.closeForm(false);
         },
         error: (err) => console.error('Erreur création news', err),
       });
@@ -158,7 +180,10 @@ export class NewsManagementComponent implements OnInit {
   // -------------------------------
   loadTypes(): void {
     this.newsService.getTypes().subscribe({
-      next: (types) => (this.types = types),
+      next: (types) => {
+        this.types = types;
+        this.resolvePendingDraftType();
+      },
     });
   }
 
@@ -212,6 +237,119 @@ export class NewsManagementComponent implements OnInit {
     return this.newsForm.type;
   }
 
+  private startAutoSave(): void {
+    this.stopAutoSave();
+    this.autoSaveIntervalId = setInterval(() => this.persistDraft(), 5000);
+  }
+
+  private stopAutoSave(): void {
+    if (!this.autoSaveIntervalId) {
+      return;
+    }
+    clearInterval(this.autoSaveIntervalId);
+    this.autoSaveIntervalId = null;
+  }
+
+  private getDraftStorageKey(): string {
+    if (this.editingNews) {
+      return `${this.draftStoragePrefix}-edit-${this.editingNews.id}`;
+    }
+    return `${this.draftStoragePrefix}-new`;
+  }
+
+  private buildDraftPayload(): {
+    title: string;
+    typeId: number | null | undefined;
+    content: string;
+    savedAt: string;
+  } {
+    return {
+      title: this.newsForm.title,
+      typeId: this.newsForm.type?.id,
+      content: this.newsForm.content,
+      savedAt: new Date().toISOString(),
+    };
+  }
+
+  private persistDraft(): void {
+    if (!this.showForm) {
+      return;
+    }
+
+    const hasContent = !!(this.newsForm.title?.trim() || this.newsForm.content?.trim() || this.newsForm.type);
+    if (!hasContent) {
+      return;
+    }
+
+    const payload = this.buildDraftPayload();
+    const serializedPayload = JSON.stringify(payload);
+
+    if (serializedPayload === this.lastAutoSavedPayload) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(this.getDraftStorageKey(), serializedPayload);
+      this.lastAutoSavedPayload = serializedPayload;
+      this.draftSavedAt = new Date(payload.savedAt);
+    } catch {
+      // Ignore localStorage write failures (private mode/quota/etc.)
+    }
+  }
+
+  private restoreDraft(): void {
+    this.pendingDraftTypeId = null;
+    this.lastAutoSavedPayload = '';
+    const key = this.getDraftStorageKey();
+
+    try {
+      const rawDraft = localStorage.getItem(key);
+      if (!rawDraft) {
+        return;
+      }
+
+      const parsed = JSON.parse(rawDraft) as {
+        title?: string;
+        typeId?: number;
+        content?: string;
+        savedAt?: string;
+      };
+
+      this.newsForm.title = parsed.title ?? this.newsForm.title;
+      this.newsForm.content = parsed.content ?? this.newsForm.content;
+
+      if (typeof parsed.typeId === 'number') {
+        this.pendingDraftTypeId = parsed.typeId;
+        this.resolvePendingDraftType();
+      }
+
+      this.draftSavedAt = parsed.savedAt ? new Date(parsed.savedAt) : null;
+      this.lastAutoSavedPayload = rawDraft;
+    } catch {
+      // Ignore malformed draft content and keep current form values.
+    }
+  }
+
+  private resolvePendingDraftType(): void {
+    if (this.pendingDraftTypeId === null) {
+      return;
+    }
+
+    const matchedType = this.types.find((type) => type.id === this.pendingDraftTypeId) ?? null;
+    if (matchedType) {
+      this.newsForm.type = matchedType;
+      this.pendingDraftTypeId = null;
+    }
+  }
+
+  private clearDraft(): void {
+    try {
+      localStorage.removeItem(this.getDraftStorageKey());
+    } catch {
+      // Ignore localStorage failures.
+    }
+    this.lastAutoSavedPayload = '';
+  }
 
 
 

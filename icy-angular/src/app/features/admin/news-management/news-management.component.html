@@ -59,12 +59,14 @@
           class="hover:bg-white/5 border-b border-white/10 transition"
         >
           <td class="px-4 py-3 font-semibold">{{ n.title }}</td>
-          <td class="px-4 py-3 flex items-center gap-2">
+          <td class="px-4 py-3 align-middle">
+            <div class="flex items-center gap-2">
               <span
                 class="inline-block w-4 h-4 rounded-full border border-white/30"
                 [style.backgroundColor]="n.type?.color"
               ></span>
-            {{ n.type?.name }}
+              <span>{{ n.type?.name }}</span>
+            </div>
           </td>
           <td class="px-4 py-3">{{ n.author }}</td>
           <td class="px-4 py-3">{{ n.createdAt | date: 'medium' }}</td>
@@ -299,7 +301,6 @@
 <div
   *ngIf="showForm"
   class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-  (click)="closeForm()"
 >
   <div
     class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-4xl p-8 relative text-white
@@ -392,6 +393,9 @@
 
     <!-- Boutons -->
     <div class="flex justify-end gap-4 mt-6">
+      <div class="mr-auto text-xs text-slate-400 self-center" *ngIf="draftSavedAt">
+        Brouillon local sauvegardé à {{ draftSavedAt | date:'shortTime' }}
+      </div>
       <button
         (click)="closeForm()"
         class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
