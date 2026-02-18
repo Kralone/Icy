@@ -43,6 +43,8 @@
                 <button
                   type="button"
                   (click)="onToggleExecShip(row, $event)"
+                  [disabled]="!canManageExecShips"
+                  [attr.title]="canManageExecShips ? null : 'Reserve aux Admin/Officier'"
                   class="exec-switch"
                   [class.exec-switch--on]="row.hasExecShip"
                   [class.exec-switch--off]="!row.hasExecShip"

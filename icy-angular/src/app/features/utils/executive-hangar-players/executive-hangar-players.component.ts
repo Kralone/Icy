@@ -27,6 +27,7 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
   private readonly leaveAnimMs = 320;
   private readonly holdBeforeMoveMs = 220;
 
+  canManageExecShips = false;
   rows: PlayerRow[] = [];
   paginatedRows: PlayerRow[] = [];
   isLoading = false;
@@ -46,6 +47,7 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadPermissions();
     this.loadPlayers();
   }
 
@@ -68,6 +70,9 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
   }
 
   async onToggleExecShip(row: PlayerRow, event: MouseEvent): Promise<void> {
+    if (!this.canManageExecShips) {
+      return;
+    }
     if (this.togglingIds.has(row.id)) {
       return;
     }
@@ -136,6 +141,18 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
       error: () => {
         this.errorMessage = 'Impossible de charger la liste des joueurs.';
         this.isLoading = false;
+      }
+    });
+  }
+
+  private loadPermissions(): void {
+    this.userService.getMyProfile().subscribe({
+      next: (response) => {
+        const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').toUpperCase());
+        this.canManageExecShips = roles.includes('ADMIN') || roles.includes('OFFICIER');
+      },
+      error: () => {
+        this.canManageExecShips = false;
       }
     });
   }

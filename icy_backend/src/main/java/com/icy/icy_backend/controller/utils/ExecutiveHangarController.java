@@ -52,6 +52,7 @@ public class ExecutiveHangarController {
     }
 
     @PutMapping("/players/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<ExecutiveHangarPlayerStatusDTO>> setPlayerStatus(
             @PathVariable UUID userId,
             @RequestBody ExecutiveHangarUpdatePlayerStatusRequest request
