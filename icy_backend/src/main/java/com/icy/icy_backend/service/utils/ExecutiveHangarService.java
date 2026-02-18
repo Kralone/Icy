@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -24,10 +23,8 @@ import java.util.UUID;
 @Service
 public class ExecutiveHangarService {
     private static final short SINGLE_CONFIG_ID = 1;
-    private static final long OPEN_DURATION_MS = 3900338L;
-    private static final long CLOSE_DURATION_MS = 7200623L;
-    private static final long CYCLE_DURATION_MS = OPEN_DURATION_MS + CLOSE_DURATION_MS;
-    private static final LocalDateTime DEFAULT_INITIAL_OPEN = LocalDateTime.of(2026, 2, 1, 17, 9, 54, 775_000_000);
+    // Reference shared publicly (originally -05:00); store as an instant, then project to server zone.
+    private static final OffsetDateTime DEFAULT_NEXT_ONLINE = OffsetDateTime.parse("2026-02-01T17:09:54.775-05:00");
 
     private final ExecutiveHangarConfigRepository configRepository;
     private final ExecutiveHangarPlayerStatusRepository playerStatusRepository;
@@ -58,19 +55,15 @@ public class ExecutiveHangarService {
             return messageService.buildResponse("exec.hangar.invalid", null, "nextOnlineAt est obligatoire.");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime target = LocalDateTime.ofInstant(nextOnlineAt.toInstant(), ZoneId.systemDefault());
-        if (!target.isAfter(now)) {
+        if (!nextOnlineAt.isAfter(OffsetDateTime.now())) {
             return messageService.buildResponse("exec.hangar.invalid", null, "La date doit etre dans le futur.");
         }
 
-        long deltaMs = Duration.between(now, target).toMillis();
-        long deltaInCycle = toPositiveModulo(deltaMs, CYCLE_DURATION_MS);
-        long phaseInCycle = toPositiveModulo(CYCLE_DURATION_MS - deltaInCycle, CYCLE_DURATION_MS);
-        LocalDateTime newInitialOpen = now.minus(Duration.ofMillis(phaseInCycle));
+        // Persist the requested "next online" instant, projected to the server zone.
+        LocalDateTime targetLocal = LocalDateTime.ofInstant(nextOnlineAt.toInstant(), ZoneId.systemDefault());
 
         ExecutiveHangarConfig config = getOrCreateConfig();
-        config.setInitialOpenTime(newInitialOpen);
+        config.setInitialOpenTime(targetLocal);
         config.setUpdatedByUserId(actorId);
         ExecutiveHangarConfig saved = configRepository.save(config);
         return messageService.buildResponse("exec.hangar.config.updated", new ExecutiveHangarConfigDTO(saved));
@@ -79,7 +72,7 @@ public class ExecutiveHangarService {
     @Transactional
     public ResponseEntity<MessageResponse<ExecutiveHangarConfigDTO>> resetConfig(UUID actorId) {
         ExecutiveHangarConfig config = getOrCreateConfig();
-        config.setInitialOpenTime(DEFAULT_INITIAL_OPEN);
+        config.setInitialOpenTime(LocalDateTime.ofInstant(DEFAULT_NEXT_ONLINE.toInstant(), ZoneId.systemDefault()));
         config.setUpdatedByUserId(actorId);
         ExecutiveHangarConfig saved = configRepository.save(config);
         return messageService.buildResponse("exec.hangar.config.reset", new ExecutiveHangarConfigDTO(saved));
@@ -117,15 +110,10 @@ public class ExecutiveHangarService {
         return configRepository.findById(SINGLE_CONFIG_ID)
                 .orElseGet(() -> configRepository.save(new ExecutiveHangarConfig(
                         SINGLE_CONFIG_ID,
-                        DEFAULT_INITIAL_OPEN,
+                        LocalDateTime.ofInstant(DEFAULT_NEXT_ONLINE.toInstant(), ZoneId.systemDefault()),
                         null,
                         null,
                         null
                 )));
-    }
-
-    private long toPositiveModulo(long value, long modulo) {
-        long raw = value % modulo;
-        return raw < 0 ? raw + modulo : raw;
     }
 }

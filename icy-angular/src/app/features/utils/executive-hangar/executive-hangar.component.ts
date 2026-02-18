@@ -33,7 +33,8 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   readonly openDuration = 3900338;
   readonly closeDuration = 7200623;
   readonly cycleDuration = this.openDuration + this.closeDuration;
-  initialOpenTime = new Date(this.defaultInitialOpenIso);
+  // From backend: this is the next time the hangar goes ONLINE (anchor for all cycles).
+  nextOnlineAt = new Date(this.defaultInitialOpenIso);
 
   status: HangarStatus = 'OFFLINE';
   countdown = '00:00';
@@ -89,8 +90,8 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
 
   openTimingModal(): void {
     if (!this.canManageTiming) return;
-    const nextOnline = this.computeNextOnlineTime(new Date());
-    this.timingInput = this.toDateTimeLocal(nextOnline);
+    const nextOnlineAt = this.computeNextOnlineAt(new Date());
+    this.timingInput = this.toDateTimeLocal(nextOnlineAt);
     this.timingError = '';
     this.showTimingModal = true;
   }
@@ -119,7 +120,7 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
       next: (response) => {
         const apiInitialOpenTime = response?.data?.initialOpenTime;
         if (apiInitialOpenTime) {
-          this.initialOpenTime = new Date(apiInitialOpenTime);
+          this.nextOnlineAt = new Date(apiInitialOpenTime);
           this.refreshState();
           this.scheduleRows = this.buildScheduleRows();
         }
@@ -136,7 +137,7 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     this.executiveHangarApiService.resetConfig().subscribe({
       next: (response) => {
         const apiInitialOpenTime = response?.data?.initialOpenTime;
-        this.initialOpenTime = new Date(apiInitialOpenTime ?? this.defaultInitialOpenIso);
+        this.nextOnlineAt = new Date(apiInitialOpenTime ?? this.defaultInitialOpenIso);
         this.refreshState();
         this.scheduleRows = this.buildScheduleRows();
         this.closeTimingModal();
@@ -171,12 +172,12 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     this.executiveHangarApiService.getConfig().subscribe({
       next: (response) => {
         const apiInitialOpenTime = response?.data?.initialOpenTime;
-        this.initialOpenTime = new Date(apiInitialOpenTime ?? this.defaultInitialOpenIso);
+        this.nextOnlineAt = new Date(apiInitialOpenTime ?? this.defaultInitialOpenIso);
         this.bootstrapTicker();
       },
       error: () => {
         this.configError = 'Configuration backend indisponible, fallback local actif.';
-        this.initialOpenTime = new Date(this.defaultInitialOpenIso);
+        this.nextOnlineAt = new Date(this.defaultInitialOpenIso);
         this.bootstrapTicker();
       }
     });
@@ -195,18 +196,34 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     this.status = current.status;
     this.nextChangeAt = current.nextChangeAt;
     this.countdown = this.formatCountdown(Math.max(0, this.nextChangeAt.getTime() - now.getTime()));
-    this.circles = this.getCircleColors(current.timeInCycle);
+    this.circles = current.waitingForNextOnline ? ['empty', 'empty', 'empty', 'empty', 'empty'] : this.getCircleColors(current.timeInCycle);
   }
 
-  private getCurrentState(currentTime: Date): { status: HangarStatus; nextChangeAt: Date; timeInCycle: number } {
-    const elapsed = currentTime.getTime() - this.initialOpenTime.getTime();
+  private getCurrentState(currentTime: Date): {
+    status: HangarStatus;
+    nextChangeAt: Date;
+    timeInCycle: number;
+    waitingForNextOnline: boolean;
+  } {
+    // Before the configured next-online anchor, keep OFFLINE and count down to it.
+    if (currentTime.getTime() < this.nextOnlineAt.getTime()) {
+      return {
+        status: 'OFFLINE',
+        nextChangeAt: this.nextOnlineAt,
+        timeInCycle: 0,
+        waitingForNextOnline: true
+      };
+    }
+
+    const elapsed = currentTime.getTime() - this.nextOnlineAt.getTime();
     const timeInCycle = this.toPositiveModulo(elapsed, this.cycleDuration);
 
     if (timeInCycle < this.openDuration) {
       return {
         status: 'ONLINE',
         nextChangeAt: new Date(currentTime.getTime() + (this.openDuration - timeInCycle)),
-        timeInCycle
+        timeInCycle,
+        waitingForNextOnline: false
       };
     }
 
@@ -214,7 +231,8 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     return {
       status: 'OFFLINE',
       nextChangeAt: new Date(currentTime.getTime() + (this.closeDuration - closeProgress)),
-      timeInCycle
+      timeInCycle,
+      waitingForNextOnline: false
     };
   }
 
@@ -245,10 +263,13 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     return rows;
   }
 
-  private computeNextOnlineTime(now: Date): Date {
-    const elapsed = now.getTime() - this.initialOpenTime.getTime();
-    const timeInCycle = this.toPositiveModulo(elapsed, this.cycleDuration);
-    return new Date(now.getTime() + (this.cycleDuration - timeInCycle));
+  private computeNextOnlineAt(now: Date): Date {
+    if (now.getTime() < this.nextOnlineAt.getTime()) {
+      return this.nextOnlineAt;
+    }
+    const elapsed = now.getTime() - this.nextOnlineAt.getTime();
+    const cyclesCompleted = Math.floor(elapsed / this.cycleDuration);
+    return new Date(this.nextOnlineAt.getTime() + (cyclesCompleted + 1) * this.cycleDuration);
   }
 
   private toDateTimeLocal(date: Date): string {
