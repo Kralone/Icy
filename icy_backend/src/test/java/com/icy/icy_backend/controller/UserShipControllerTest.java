@@ -53,11 +53,11 @@ class UserShipControllerTest {
     @Test
     void userShipEndpointsReturnOk() throws Exception {
         when(userShipService.getShipsByUserId(any(UUID.class))).thenReturn(okResponse(List.of(new UserShip())));
-        when(userShipService.addShipToUser(any(UUID.class), eq(1L), eq(true), eq(false))).thenReturn(okResponse(new UserShip()));
+        when(userShipService.addShipToUser(any(UUID.class), eq(1L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
         when(userShipService.deleteShipFromUser(any(UUID.class), eq(1L))).thenReturn(okResponse(null));
         when(userShipService.getShipsByUserId(eq(123L))).thenReturn(okResponse(List.of(new UserShip())));
         when(userService.resolveUser(eq("123"))).thenReturn(new User());
-        when(userShipService.addShipToUser(any(UUID.class), eq(2L), eq(true), eq(false))).thenReturn(okResponse(new UserShip()));
+        when(userShipService.addShipToUser(any(UUID.class), eq(2L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
         when(userShipService.deleteShipFromUser(eq(123L), eq(2L))).thenReturn(okResponse(null));
         when(userShipService.getFleetSummary()).thenReturn(okResponse(List.of(
                 new FleetSummaryResponse("name", "image", "focus", "brand")
@@ -70,7 +70,7 @@ class UserShipControllerTest {
         mockMvc.perform(post("/api/user-ships")
                         .with(TestAuth.user(userId, "USER"))
                         .contentType("application/json")
-                        .content("{\"shipId\":1,\"inGamePurchase\":true,\"loaner\":false}"))
+                        .content("{\"shipId\":1,\"inGamePurchase\":true,\"rewardInGame\":false,\"loaner\":false}"))
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/user-ships")
                         .with(TestAuth.user(userId, "USER"))
@@ -82,7 +82,7 @@ class UserShipControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/user-ships/bot")
                         .contentType("application/json")
-                        .content("{\"discordId\":\"123\",\"shipId\":2,\"inGame\":true,\"loaner\":false}"))
+                        .content("{\"discordId\":\"123\",\"shipId\":2,\"inGame\":true,\"rewardInGame\":false,\"loaner\":false}"))
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/user-ships/bot")
                         .param("discordId", "123")

@@ -7,5 +7,6 @@ export interface ShipListDTO {
   focus: string;
   crew: string;
   inGamePurchase: boolean;
+  rewardInGame: boolean;
   loaner: boolean;
 }

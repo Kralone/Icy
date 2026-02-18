@@ -9,6 +9,7 @@ public class AddUserShip {
     private String discordId;
     private Long shipId;
     private boolean isInGame;
+    private boolean isRewardInGame;
     private boolean isLoaner;
 }
 

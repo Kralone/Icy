@@ -97,12 +97,13 @@
         <div
           class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border bg-white/10 border-white/20 backdrop-blur-md shadow-sm"
           [ngClass]="{
-            'text-blue-400 border-blue-400': !ship.inGamePurchase && !ship.loaner,
+            'text-blue-400 border-blue-400': !ship.inGamePurchase && !ship.rewardInGame && !ship.loaner,
             'text-green-400 border-green-400': ship.inGamePurchase,
+            'text-purple-300 border-purple-300': ship.rewardInGame,
             'text-yellow-400 border-yellow-400': ship.loaner
           }"
         >
-          {{ ship.loaner ? 'Loaner' : ship.inGamePurchase ? 'In Game' : 'RSI' }}
+          {{ ship.loaner ? 'Loaner' : ship.rewardInGame ? 'Récompense In Game' : ship.inGamePurchase ? 'Achat In Game' : 'RSI' }}
         </div>
       </div>
     </div>

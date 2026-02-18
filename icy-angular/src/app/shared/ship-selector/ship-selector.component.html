@@ -132,6 +132,16 @@
         <label
           class="cursor-pointer px-4 py-2 rounded-xl border border-white/20 bg-[#1b263b]/60 hover:bg-[#1b263b]/80 transition duration-200 shadow-sm text-sm font-medium"
           [ngClass]="{
+            'ring-2 ring-cyan-400 bg-cyan-500/10 border-cyan-400': acquisitionType === 'reward_ingame'
+          }"
+        >
+          <input type="radio" name="acquisition" value="reward_ingame" [(ngModel)]="acquisitionType" class="sr-only" />
+          Récompense in-game
+        </label>
+
+        <label
+          class="cursor-pointer px-4 py-2 rounded-xl border border-white/20 bg-[#1b263b]/60 hover:bg-[#1b263b]/80 transition duration-200 shadow-sm text-sm font-medium"
+          [ngClass]="{
             'ring-2 ring-cyan-400 bg-cyan-500/10 border-cyan-400': acquisitionType === 'loaner'
           }"
         >

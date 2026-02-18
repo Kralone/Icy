@@ -45,7 +45,13 @@ public class UserShipController {
         UUID userId = AuthUtils.getCurrentUserId();
         logger.debug("USER : ajout d'un vaisseau pour userId : {}, shipId : {}", userId, addShipDTO.getShipId());
 
-        return userShipService.addShipToUser(userId, addShipDTO.getShipId(), addShipDTO.isInGame(), addShipDTO.isLoaner());
+        return userShipService.addShipToUser(
+                userId,
+                addShipDTO.getShipId(),
+                addShipDTO.isInGame(),
+                addShipDTO.isRewardInGame(),
+                addShipDTO.isLoaner()
+        );
     }
 
     @DeleteMapping
@@ -68,7 +74,13 @@ public class UserShipController {
         logger.debug("BOT : ajout d'un vaisseau pour discordId : {}, shipId : {}",
                 addUserShipDto.getDiscordId(), addUserShipDto.getShipId());
 
-        return userShipService.addShipToUser(userService.resolveUser(addUserShipDto.getDiscordId()).getId(), addUserShipDto.getShipId(), addUserShipDto.isInGame(), addUserShipDto.isLoaner());
+        return userShipService.addShipToUser(
+                userService.resolveUser(addUserShipDto.getDiscordId()).getId(),
+                addUserShipDto.getShipId(),
+                addUserShipDto.isInGame(),
+                addUserShipDto.isRewardInGame(),
+                addUserShipDto.isLoaner()
+        );
     }
 
     @DeleteMapping("/bot")

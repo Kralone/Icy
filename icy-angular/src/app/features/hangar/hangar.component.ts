@@ -165,6 +165,7 @@ export class HangarComponent {
     const requestPayload = {
       shipId: payload.ship.id,
       inGamePurchase: acquisitionType === 'ingame',
+      rewardInGame: acquisitionType === 'reward_ingame',
       loaner: acquisitionType === 'loaner'
     };
 

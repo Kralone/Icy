@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { Ship } from '../../model/ship.model';
 
-export type AcquisitionType = 'rsi' | 'ingame' | 'loaner';
+export type AcquisitionType = 'rsi' | 'ingame' | 'reward_ingame' | 'loaner';
 
 @Component({
   selector: 'app-ship-selector',

@@ -9,6 +9,7 @@ export interface Ship {
   focus: string;
   crew: string;
   inGamePurchase?: boolean;
+  rewardInGame?: boolean;
   loaner?: boolean;
 }
 

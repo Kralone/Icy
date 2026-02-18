@@ -15,10 +15,11 @@ public class UserShipDTO {
     private String focus;
     private String crew;
     private boolean inGamePurchase;
+    private boolean rewardInGame;
     private boolean loaner;
 
     public UserShipDTO(Long shipId, String name, String brand, String imageUrl, String focus, String crew,
-                       boolean inGamePurchase, boolean loaner) {
+                       boolean inGamePurchase, boolean rewardInGame, boolean loaner) {
         this.shipId = shipId;
         this.name = name;
         this.brand = brand;
@@ -26,6 +27,7 @@ public class UserShipDTO {
         this.focus = focus;
         this.crew = crew;
         this.inGamePurchase = inGamePurchase;
+        this.rewardInGame = rewardInGame;
         this.loaner = loaner;
     }
 
@@ -39,6 +41,7 @@ public class UserShipDTO {
         this.focus = ship.getFocus();
         this.crew = ship.getCrew();
         this.inGamePurchase = userShip.getInGamePurchase();
+        this.rewardInGame = userShip.getRewardInGame();
         this.loaner = userShip.getLoaner();
     }
 
@@ -52,6 +55,7 @@ public class UserShipDTO {
                 ship.getFocus(),
                 ship.getCrew(),
                 userShip.getInGamePurchase(),
+                userShip.getRewardInGame(),
                 userShip.getLoaner()
         );
     }

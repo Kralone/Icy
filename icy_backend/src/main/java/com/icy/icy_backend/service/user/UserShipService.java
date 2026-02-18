@@ -58,7 +58,7 @@ public class UserShipService {
         return messageService.buildResponse("user.found", userShips);
     }
 
-    public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId, boolean isInGame, boolean isLoaner) {
+    public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId, boolean isInGame, boolean isRewardInGame, boolean isLoaner) {
 
 
         Ship ship = shipService.findShipById(shipId);
@@ -77,6 +77,7 @@ public class UserShipService {
         userShip.setShip(ship);
         userShip.setId(new UserShipId(user.getId(), ship.getId()));
         userShip.setInGamePurchase(isInGame);
+        userShip.setRewardInGame(isRewardInGame);
         userShip.setLoaner(isLoaner);
         if (userShip.getCreatedAt() == null) {
             userShip.setCreatedAt(java.time.LocalDateTime.now());
@@ -131,9 +132,14 @@ public class UserShipService {
         userShipRepository.deleteByUserIdAndShipId(userId, shipId);
 
         logger.info("Vaisseau ID: {} supprimé pour l'utilisateur ID: {}", shipId, userId);
-        userWebSocketService.sendUserShipDeletion(
-                new UserShip(null, user, shipService.findShipById(shipId), false, false, java.time.LocalDateTime.now())
-        );
+        UserShip deletedShip = new UserShip();
+        deletedShip.setUser(user);
+        deletedShip.setShip(shipService.findShipById(shipId));
+        deletedShip.setInGamePurchase(false);
+        deletedShip.setRewardInGame(false);
+        deletedShip.setLoaner(false);
+        deletedShip.setCreatedAt(java.time.LocalDateTime.now());
+        userWebSocketService.sendUserShipDeletion(deletedShip);
         shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
         return messageService.buildResponse("user.ship.delete.success", null, "Vaisseau supprimé avec succès.");
     }

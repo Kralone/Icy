@@ -33,6 +33,9 @@ public class UserShip {
     @Column(name = "in_game_purchase", nullable = false)
     private Boolean inGamePurchase = false;
 
+    @Column(name = "reward_in_game", nullable = false)
+    private Boolean rewardInGame = false;
+
     @Column(name = "loaner", nullable = false)
     private Boolean loaner = false;
 

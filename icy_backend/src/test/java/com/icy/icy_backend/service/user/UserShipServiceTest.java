@@ -78,7 +78,7 @@ class UserShipServiceTest {
         ResponseEntity<MessageResponse<UserShip>> response = okResponse(new UserShip());
         Mockito.doReturn(response).when(messageService).buildResponse(eq("user.ship.add.success"), any());
 
-        ResponseEntity<MessageResponse<UserShip>> actual = service.addShipToUser(userId, 1L, true, false);
+        ResponseEntity<MessageResponse<UserShip>> actual = service.addShipToUser(userId, 1L, true, false, false);
         assertThat(actual).isEqualTo(response);
         verify(userWebSocketService).sendUserShipUpdate(any());
         verify(shipFleetWebSocketService).sendShipFleetUpdate(any());

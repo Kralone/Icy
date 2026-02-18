@@ -51,7 +51,7 @@ export class ShipService {
   /**
    * Ajoute un vaisseau à la flotte d'un utilisateur.
    */
-  addShipToUser(payload: { shipId: number; inGamePurchase: boolean; loaner: boolean }): Observable<any> {
+  addShipToUser(payload: { shipId: number; inGamePurchase: boolean; rewardInGame: boolean; loaner: boolean }): Observable<any> {
     return this.http.post('/api/user-ships', payload);
   }
 
