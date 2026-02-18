@@ -75,6 +75,7 @@ public class GoalService {
         }
 
         goalRepository.save(goal);
+        syncAncestorsCompletion(goal.getParent());
         log.info("Objectif créé : {}", goal.getName());
         goalWebSocketService.sendGoalUpdate(goal.getId(), "CREATE");
         notificationPushService.sendBroadcast(
@@ -89,6 +90,7 @@ public class GoalService {
     public void updateGoal(Long id, CreateGoalDTO dto) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
+        Goal previousParent = goal.getParent();
         boolean wasCompleted = goal.isCompleted();
         boolean wasPinned = goal.isPinned();
 
@@ -161,6 +163,10 @@ public class GoalService {
         goal.setCompleted(goal.getCurrent() >= goal.getTarget());
 
         goalRepository.save(goal);
+        syncAncestorsCompletion(previousParent);
+        if (goal.getParent() == null || previousParent == null || !goal.getParent().getId().equals(previousParent.getId())) {
+            syncAncestorsCompletion(goal.getParent());
+        }
         log.info("Objectif mis à jour : {}", goal.getName());
         goalWebSocketService.sendGoalUpdate(goal.getId(), "UPDATE");
 
@@ -212,7 +218,9 @@ public class GoalService {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
         Long deletedGoalId = goal.getId();
+        Goal parent = goal.getParent();
         goalRepository.delete(goal);
+        syncAncestorsCompletion(parent);
         log.info("Objectif supprimé : {}", goal.getName());
         goalWebSocketService.sendGoalUpdate(deletedGoalId, "DELETE");
     }
@@ -258,12 +266,54 @@ public class GoalService {
         goal.setCompleted(goal.getCurrent() >= goal.getTarget());
 
         goalRepository.save(goal);
+        syncAncestorsCompletion(goal.getParent());
         saveParticipation(goal, delta);
         log.info("Objectif {} modifié de {}", goal.getName(), delta);
         goalWebSocketService.sendGoalUpdate(goal.getId(), "INCREMENT");
 
         if (!wasCompleted && goal.isCompleted()) {
             notifyGoalCompleted(goal);
+        }
+    }
+
+    /**
+     * Si tous les sous-objectifs directs d'un parent sont terminés,
+     * on force le parent à terminé en synchronisant current sur target.
+     */
+    private void syncAncestorsCompletion(Goal startParent) {
+        Goal cursor = startParent;
+
+        while (cursor != null) {
+            boolean wasCompleted = cursor.isCompleted();
+            int previousCurrent = cursor.getCurrent();
+
+            List<Goal> directChildren = goalRepository.findByParent(cursor);
+            if (!directChildren.isEmpty()) {
+                boolean allChildrenCompleted = directChildren.stream()
+                        .allMatch(c -> c.isCompleted() || c.getCurrent() >= c.getTarget());
+
+                if (allChildrenCompleted) {
+                    cursor.setCurrent(cursor.getTarget());
+                    cursor.setCompleted(true);
+                } else {
+                    if (cursor.getCurrent() >= cursor.getTarget()) {
+                        cursor.setCurrent(Math.max(0, cursor.getTarget() - 1));
+                    }
+                    cursor.setCompleted(false);
+                }
+            } else {
+                cursor.setCompleted(cursor.getCurrent() >= cursor.getTarget());
+            }
+
+            if (previousCurrent != cursor.getCurrent() || wasCompleted != cursor.isCompleted()) {
+                goalRepository.save(cursor);
+                goalWebSocketService.sendGoalUpdate(cursor.getId(), "UPDATE");
+                if (!wasCompleted && cursor.isCompleted()) {
+                    notifyGoalCompleted(cursor);
+                }
+            }
+
+            cursor = cursor.getParent();
         }
     }
 

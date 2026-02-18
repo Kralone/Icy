@@ -30,6 +30,8 @@ export class GoalManagementComponent implements OnInit {
 
   // Roots only
   rootGoals: Goal[] = [];
+  activeRootGoals: Goal[] = [];
+  completedMainRootGoals: Goal[] = [];
   paginatedRoots: Goal[] = [];
 
   // Templates
@@ -42,6 +44,7 @@ export class GoalManagementComponent implements OnInit {
 
   // Fold: only one root open at a time
   openedRootId: number | null = null;
+  completedMainSectionOpen = false;
 
   // Pagination
   currentPage = 1;
@@ -84,7 +87,11 @@ export class GoalManagementComponent implements OnInit {
   }
 
   isDone(goal: any): boolean {
-    return (goal.current ?? 0) >= (goal.target ?? 0);
+    const doneByValue = (goal?.current ?? 0) >= (goal?.target ?? 0);
+    const doneByFlag = !!goal?.completed;
+    const children = goal?.subGoals ?? [];
+    const doneByChildren = children.length > 0 && children.every((child: Goal) => this.isDone(child));
+    return doneByValue || doneByFlag || doneByChildren;
   }
 
   getInitial(value?: string | null): string {
@@ -106,6 +113,8 @@ export class GoalManagementComponent implements OnInit {
       this.rootGoals = this.sortGoalsAlphaDoneLast(
         this.goals.filter((g) => g.parentId === null)
       );
+      this.activeRootGoals = this.rootGoals.filter((g) => !this.isDone(g));
+      this.completedMainRootGoals = this.rootGoals.filter((g) => this.isDone(g));
 
       // clamp page (au cas où la liste a changé)
       this.currentPage = Math.min(Math.max(prevPage, 1), this.totalPages);
@@ -115,7 +124,9 @@ export class GoalManagementComponent implements OnInit {
 
       // restore opened root if still visible on current page
       if (prevOpenedRootId != null) {
-        const stillVisible = this.paginatedRoots.some((r) => r.id === prevOpenedRootId);
+        const stillVisible =
+          this.paginatedRoots.some((r) => r.id === prevOpenedRootId) ||
+          this.completedMainRootGoals.some((r) => r.id === prevOpenedRootId);
         this.openedRootId = stillVisible ? prevOpenedRootId : null;
       } else if (!preserve) {
         this.openedRootId = null;
@@ -149,7 +160,7 @@ export class GoalManagementComponent implements OnInit {
 
   // ----------------- Pagination (roots only) -----------------
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.rootGoals.length / this.itemsPerPage));
+    return Math.max(1, Math.ceil(this.activeRootGoals.length / this.itemsPerPage));
   }
 
   updatePagination(opts?: { preserveOpened?: boolean }): void {
@@ -157,7 +168,7 @@ export class GoalManagementComponent implements OnInit {
 
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-    this.paginatedRoots = this.rootGoals.slice(start, end);
+    this.paginatedRoots = this.activeRootGoals.slice(start, end);
 
     // Important : ne pas forcer fold ici, sinon ça replie à chaque refresh
     if (!preserveOpened) {
@@ -191,6 +202,10 @@ export class GoalManagementComponent implements OnInit {
 
   isRootOpen(root: Goal): boolean {
     return this.openedRootId === root.id;
+  }
+
+  toggleCompletedMainSection(): void {
+    this.completedMainSectionOpen = !this.completedMainSectionOpen;
   }
 
   // ----------------- Hierarchy rendering -----------------

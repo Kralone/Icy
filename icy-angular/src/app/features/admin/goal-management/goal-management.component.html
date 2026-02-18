@@ -137,6 +137,9 @@
 
   <!-- ===================== LIST ===================== -->
   <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+    <div class="px-4 py-3 border-b border-white/10 text-sm text-cyan-100/90">
+      Objectifs principaux en cours
+    </div>
 
     <div *ngFor="let root of paginatedRoots" class="border-b border-white/10">
 
@@ -258,6 +261,149 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Completed main goals (separate folded section) -->
+    <div class="border-t border-white/20">
+      <button
+        type="button"
+        class="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition"
+        (click)="toggleCompletedMainSection()"
+      >
+        <span class="text-sm text-white/80">
+          Objectifs principaux terminés ({{ completedMainRootGoals.length }})
+        </span>
+        <svg
+          class="w-4 h-4 text-cyan-300 transition-transform"
+          [ngClass]="{ 'rotate-180': completedMainSectionOpen }"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+        </svg>
+      </button>
+
+      <div *ngIf="completedMainSectionOpen">
+        <div *ngFor="let root of completedMainRootGoals" class="border-t border-white/10">
+          <div
+            class="flex items-center justify-between px-4 py-3 cursor-pointer
+                   transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+            (click)="toggleRoot(root)"
+          >
+            <div class="flex items-center gap-3 opacity-50">
+              <ng-container *ngIf="!isRootOpen(root); else openDoneIcon">
+                <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
+                </svg>
+              </ng-container>
+              <ng-template #openDoneIcon>
+                <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+                </svg>
+              </ng-template>
+
+              <span class="font-semibold tracking-wide">{{ root.name }}</span>
+
+              <span *ngIf="root.pinned"
+                    class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
+                📌
+              </span>
+
+              <span *ngIf="root.username"
+                    class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                  <img *ngIf="root.avatarUrl; else doneRootAvatarInitial"
+                       [src]="root.avatarUrl"
+                       [alt]="root.username || 'Avatar'"
+                       class="w-full h-full object-cover" />
+                  <ng-template #doneRootAvatarInitial>{{ getInitial(root.username) }}</ng-template>
+                </span>
+                <span class="truncate max-w-[140px]">{{ root.username }}</span>
+              </span>
+
+              <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
+                Terminé
+              </span>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                (click)="editGoal(root); $event.stopPropagation()"
+                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                       hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                title="Éditer"
+              >
+                ✏️
+              </button>
+
+              <button
+                (click)="deleteGoal(root.id, root.name); $event.stopPropagation()"
+                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                       hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                title="Supprimer"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="isRootOpen(root)" class="bg-white/5 border-t border-white/10">
+            <div
+              *ngFor="let node of getVisibleTree(root)"
+              class="flex items-center justify-between px-4 py-2 border-t border-white/10
+                     transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+              [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
+            >
+              <div class="flex items-center gap-2 opacity-50">
+                <span class="text-white/35">↳</span>
+                <span class="text-white/85">{{ node.goal.name }}</span>
+
+                <span *ngIf="node.goal.pinned"
+                      class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
+
+                <span *ngIf="node.goal.username"
+                      class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                  <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                    <img *ngIf="node.goal.avatarUrl; else doneNodeAvatarInitial"
+                         [src]="node.goal.avatarUrl"
+                         [alt]="node.goal.username || 'Avatar'"
+                         class="w-full h-full object-cover" />
+                    <ng-template #doneNodeAvatarInitial>{{ getInitial(node.goal.username) }}</ng-template>
+                  </span>
+                  <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
+                </span>
+
+                <span *ngIf="isDone(node.goal)"
+                      class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  (click)="editGoal(node.goal); $event.stopPropagation()"
+                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                         hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                  title="Éditer"
+                >
+                  ✏️
+                </button>
+                <button
+                  (click)="deleteGoal(node.goal.id, node.goal.name); $event.stopPropagation()"
+                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                         hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="completedMainRootGoals.length === 0" class="px-4 py-4 text-sm text-white/50 border-t border-white/10">
+          Aucun objectif principal terminé.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -416,6 +562,7 @@
         {{ editingTemplateTreeRootId !== null ? 'Mettre à jour le template' : '+ Enregistrer le template' }}
       </button>
     </div>
+
   </div>
 
   <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
