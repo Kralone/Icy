@@ -169,6 +169,7 @@
 	</dependencies>
 
 	<build>
+		<testSourceDirectory>src/test/test</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
