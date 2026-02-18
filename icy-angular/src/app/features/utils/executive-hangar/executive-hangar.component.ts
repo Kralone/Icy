@@ -279,7 +279,8 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     const day = pad(date.getDate());
     const hours = pad(date.getHours());
     const minutes = pad(date.getMinutes());
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    const seconds = pad(date.getSeconds());
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   private parseDateTimeLocal(value: string): Date | null {

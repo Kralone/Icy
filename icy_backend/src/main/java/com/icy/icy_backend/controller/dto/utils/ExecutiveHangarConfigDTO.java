@@ -3,9 +3,7 @@ package com.icy.icy_backend.controller.dto.utils;
 import com.icy.icy_backend.db.entity.utils.ExecutiveHangarConfig;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -22,9 +20,8 @@ public class ExecutiveHangarConfigDTO {
         this.updatedByUserId = config.getUpdatedByUserId();
     }
 
-    private static String toIsoOffset(LocalDateTime value) {
+    private static String toIsoOffset(OffsetDateTime value) {
         if (value == null) return null;
-        OffsetDateTime withOffset = value.atZone(ZoneId.systemDefault()).toOffsetDateTime();
-        return withOffset.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        return value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }

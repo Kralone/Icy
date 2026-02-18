@@ -14,16 +14,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class ExecutiveHangarService {
     private static final short SINGLE_CONFIG_ID = 1;
-    // Reference shared publicly (originally -05:00); store as an instant, then project to server zone.
+    // Reference shared publicly (originally -05:00). Store as an instant.
     private static final OffsetDateTime DEFAULT_NEXT_ONLINE = OffsetDateTime.parse("2026-02-01T17:09:54.775-05:00");
 
     private final ExecutiveHangarConfigRepository configRepository;
@@ -59,11 +58,8 @@ public class ExecutiveHangarService {
             return messageService.buildResponse("exec.hangar.invalid", null, "La date doit etre dans le futur.");
         }
 
-        // Persist the requested "next online" instant, projected to the server zone.
-        LocalDateTime targetLocal = LocalDateTime.ofInstant(nextOnlineAt.toInstant(), ZoneId.systemDefault());
-
         ExecutiveHangarConfig config = getOrCreateConfig();
-        config.setInitialOpenTime(targetLocal);
+        config.setInitialOpenTime(nextOnlineAt.withOffsetSameInstant(ZoneOffset.UTC));
         config.setUpdatedByUserId(actorId);
         ExecutiveHangarConfig saved = configRepository.save(config);
         return messageService.buildResponse("exec.hangar.config.updated", new ExecutiveHangarConfigDTO(saved));
@@ -72,7 +68,7 @@ public class ExecutiveHangarService {
     @Transactional
     public ResponseEntity<MessageResponse<ExecutiveHangarConfigDTO>> resetConfig(UUID actorId) {
         ExecutiveHangarConfig config = getOrCreateConfig();
-        config.setInitialOpenTime(LocalDateTime.ofInstant(DEFAULT_NEXT_ONLINE.toInstant(), ZoneId.systemDefault()));
+        config.setInitialOpenTime(DEFAULT_NEXT_ONLINE.withOffsetSameInstant(ZoneOffset.UTC));
         config.setUpdatedByUserId(actorId);
         ExecutiveHangarConfig saved = configRepository.save(config);
         return messageService.buildResponse("exec.hangar.config.reset", new ExecutiveHangarConfigDTO(saved));
@@ -94,7 +90,7 @@ public class ExecutiveHangarService {
 
         if (!hasExecShip) {
             playerStatusRepository.deleteById(userId);
-            ExecutiveHangarPlayerStatus removed = new ExecutiveHangarPlayerStatus(userId, false, LocalDateTime.now(), actorId);
+            ExecutiveHangarPlayerStatus removed = new ExecutiveHangarPlayerStatus(userId, false, OffsetDateTime.now(ZoneOffset.UTC), actorId);
             return messageService.buildResponse("exec.hangar.player.updated", new ExecutiveHangarPlayerStatusDTO(removed));
         }
 
@@ -110,7 +106,7 @@ public class ExecutiveHangarService {
         return configRepository.findById(SINGLE_CONFIG_ID)
                 .orElseGet(() -> configRepository.save(new ExecutiveHangarConfig(
                         SINGLE_CONFIG_ID,
-                        LocalDateTime.ofInstant(DEFAULT_NEXT_ONLINE.toInstant(), ZoneId.systemDefault()),
+                        DEFAULT_NEXT_ONLINE.withOffsetSameInstant(ZoneOffset.UTC),
                         null,
                         null,
                         null
