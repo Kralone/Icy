@@ -196,25 +196,14 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     this.status = current.status;
     this.nextChangeAt = current.nextChangeAt;
     this.countdown = this.formatCountdown(Math.max(0, this.nextChangeAt.getTime() - now.getTime()));
-    this.circles = current.waitingForNextOnline ? ['empty', 'empty', 'empty', 'empty', 'empty'] : this.getCircleColors(current.timeInCycle);
+    this.circles = this.getCircleColors(current.timeInCycle);
   }
 
   private getCurrentState(currentTime: Date): {
     status: HangarStatus;
     nextChangeAt: Date;
     timeInCycle: number;
-    waitingForNextOnline: boolean;
   } {
-    // Before the configured next-online anchor, keep OFFLINE and count down to it.
-    if (currentTime.getTime() < this.nextOnlineAt.getTime()) {
-      return {
-        status: 'OFFLINE',
-        nextChangeAt: this.nextOnlineAt,
-        timeInCycle: 0,
-        waitingForNextOnline: true
-      };
-    }
-
     const elapsed = currentTime.getTime() - this.nextOnlineAt.getTime();
     const timeInCycle = this.toPositiveModulo(elapsed, this.cycleDuration);
 
@@ -222,8 +211,7 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
       return {
         status: 'ONLINE',
         nextChangeAt: new Date(currentTime.getTime() + (this.openDuration - timeInCycle)),
-        timeInCycle,
-        waitingForNextOnline: false
+        timeInCycle
       };
     }
 
@@ -231,8 +219,7 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     return {
       status: 'OFFLINE',
       nextChangeAt: new Date(currentTime.getTime() + (this.closeDuration - closeProgress)),
-      timeInCycle,
-      waitingForNextOnline: false
+      timeInCycle
     };
   }
 
