@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.player-row {
+  will-change: transform;
+}
+
+.exec-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  padding: 0.3rem 0.7rem;
+  font-weight: 700;
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease,
+    transform 160ms ease;
+  position: relative;
+  overflow: visible;
+}
+
+.exec-switch:hover {
+  transform: translateY(-1px);
+}
+
+.exec-switch--on {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(74, 222, 128, 0.7);
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.2), 0 0 18px rgba(74, 222, 128, 0.18);
+}
+
+.exec-switch--off {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(248, 113, 113, 0.6);
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.18), 0 0 16px rgba(248, 113, 113, 0.15);
+}
+
+.exec-switch--to-on {
+  animation: switchColorToOn 260ms ease;
+}
+
+.exec-switch--to-off {
+  animation: switchColorToOff 260ms ease;
+}
+
+.exec-switch__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.exec-switch__dot--on {
+  background: #86efac;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+}
+
+@keyframes switchColorToOn {
+  0% {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(248, 113, 113, 0.65);
+  }
+  100% {
+    background: rgba(34, 197, 94, 0.22);
+    border-color: rgba(74, 222, 128, 0.7);
+  }
+}
+
+@keyframes switchColorToOff {
+  0% {
+    background: rgba(34, 197, 94, 0.22);
+    border-color: rgba(74, 222, 128, 0.7);
+  }
+  100% {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(248, 113, 113, 0.6);
+  }
+}
+
+.exec-switch-burst-layer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.exec-switch-burst__particle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px currentColor;
+}

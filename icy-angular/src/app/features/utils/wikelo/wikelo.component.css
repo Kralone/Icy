@@ -1,0 +1,8 @@
+.wikelo-table th,
+.wikelo-table td {
+  vertical-align: top;
+}
+
+.wikelo-table td {
+  line-height: 1.4;
+}

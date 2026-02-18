@@ -47,3 +47,8 @@
   flex-grow: 1;
   overflow-y: auto;
 }
+
+.route-anim-container {
+  position: relative;
+  min-height: 100%;
+}

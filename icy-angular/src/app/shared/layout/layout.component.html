@@ -31,7 +31,9 @@
     <div
       class="main-content flex-1 overflow-y-auto overflow-x-hidden box-border"
     >
-      <router-outlet></router-outlet>
+      <div [@utilitySlide]="prepareRoute(outlet)" class="route-anim-container">
+        <router-outlet #outlet="outlet"></router-outlet>
+      </div>
     </div>
   </div>
 

@@ -51,6 +51,39 @@ export const routes: Routes = [
         path: 'collection',
         loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
       },
+      {
+        path: 'utilitaires',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/utils/menu/utils-menu.component').then(m => m.UtilsMenuComponent)
+          },
+          {
+            path: 'collection',
+            loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
+          },
+          {
+            path: 'executive-hangar',
+            data: { animation: 'ExecHangarPage' },
+            loadComponent: () => import('./features/utils/executive-hangar/executive-hangar.component').then(m => m.ExecutiveHangarComponent)
+          },
+          {
+            path: 'executive-hangar-players',
+            data: { animation: 'ExecPlayersPage' },
+            loadComponent: () => import('./features/utils/executive-hangar-players/executive-hangar-players.component').then(m => m.ExecutiveHangarPlayersComponent)
+          },
+          {
+            path: 'executive-hangar-maps',
+            data: { animation: 'ExecMapsPage' },
+            loadComponent: () => import('./features/utils/executive-hangar-maps/executive-hangar-maps.component').then(m => m.ExecutiveHangarMapsComponent)
+          },
+          {
+            path: 'wikelo',
+            data: { animation: 'WikeloPage' },
+            loadComponent: () => import('./features/utils/wikelo/wikelo.component').then(m => m.WikeloComponent)
+          }
+        ]
+      },
 
       // SECTION ADMIN
       {

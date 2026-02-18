@@ -1,0 +1,65 @@
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-10">
+  <div class="max-w-6xl mx-auto space-y-8">
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Cartographie</p>
+          <h1 class="text-3xl font-semibold text-cyan-200">Maps des zones contestees</h1>
+        </div>
+        <a
+          [routerLink]="['/icy/utilitaires/executive-hangar']"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-cyan-200/85
+                 bg-cyan-300/25 text-cyan-50 font-bold tracking-wide
+                 shadow-[0_0_30px_rgba(34,211,238,0.45)] hover:bg-cyan-200/35 hover:scale-[1.03]
+                 transition"
+        >
+          ← Retour au statut
+        </a>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <article
+        *ngFor="let map of maps"
+        class="rounded-2xl border border-white/10 bg-[#0b1324]/65 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
+      >
+        <button
+          type="button"
+          class="w-full h-[320px] bg-[#050b17] block hover:brightness-110 transition cursor-zoom-in"
+          (click)="openMap(map)"
+        >
+          <img [src]="map.imageUrl" [alt]="map.title + ' map'" class="w-full h-full object-contain" loading="lazy" />
+        </button>
+        <div class="px-4 py-3 border-t border-white/10">
+          <h2 class="text-sm uppercase tracking-[0.2em] text-cyan-200">{{ map.title }}</h2>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
+
+<div
+  *ngIf="selectedMap"
+  class="map-modal fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm p-4 flex items-center justify-center"
+  [class.map-modal--closing]="isClosingModal"
+  (click)="closeMap()"
+>
+  <div
+    class="map-modal-panel relative w-full max-w-6xl max-h-[92vh] rounded-2xl border border-white/20 bg-[#050b17] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+    [class.map-modal-panel--closing]="isClosingModal"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="absolute top-3 right-3 z-10 px-3 py-1 rounded-full bg-black/60 border border-white/25 text-white hover:bg-black/80 transition"
+      (click)="closeMap()"
+    >
+      Fermer
+    </button>
+    <img
+      [src]="selectedMap.imageUrl"
+      [alt]="selectedMap.title + ' map agrandie'"
+      class="w-full h-[92vh] object-contain cursor-zoom-out"
+    />
+  </div>
+</div>

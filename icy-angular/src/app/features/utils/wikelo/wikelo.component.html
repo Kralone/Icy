@@ -1,0 +1,66 @@
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-10">
+  <div class="max-w-7xl mx-auto space-y-8">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <a
+        [routerLink]="['/icy/utilitaires']"
+        class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
+      >
+        <span class="text-lg">←</span> Retour aux utilitaires
+      </a>
+
+      <button
+        *ngIf="canRescrape"
+        type="button"
+        (click)="triggerRescrape()"
+        [disabled]="isRescraping"
+        class="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-cyan-200/85
+               bg-cyan-300/25 text-cyan-50 font-semibold tracking-wide
+               hover:bg-cyan-200/35 disabled:opacity-60 disabled:cursor-not-allowed transition"
+      >
+        {{ isRescraping ? 'Rescrape en cours...' : 'Rescraper Wikelo' }}
+      </button>
+    </div>
+
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Utilitaire</p>
+          <h1 class="text-3xl font-semibold text-cyan-200">Wikelo - Vaisseaux</h1>
+          <p class="mt-2 text-slate-300">Donnees scrappees depuis Google Sheets et stockees en base.</p>
+        </div>
+        <div class="text-sm text-slate-300">
+          <div>Total vaisseaux: <span class="text-cyan-200 font-semibold">{{ ships.length }}</span></div>
+          <div *ngIf="lastScrapedAt">Dernier scrape: <span class="text-cyan-100">{{ lastScrapedAt | date:'medium' }}</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
+      <p *ngIf="isLoading" class="text-slate-300">Chargement des donnees Wikelo...</p>
+      <p *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</p>
+
+      <div *ngIf="!isLoading && !errorMessage" class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="wikelo-table min-w-full text-sm divide-y divide-white/10">
+          <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.18em]">
+          <tr>
+            <th class="px-4 py-3 text-left">Vaisseau</th>
+            <th class="px-4 py-3 text-left">Mission / Details</th>
+            <th class="px-4 py-3 text-left">Cout</th>
+            <th class="px-4 py-3 text-left">Reputation</th>
+            <th class="px-4 py-3 text-left">Composants</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let ship of ships" class="border-b border-white/10 text-slate-200">
+            <td class="px-4 py-3 font-semibold text-cyan-100">{{ ship.shipName }}</td>
+            <td class="px-4 py-3">{{ ship.missionText || '-' }}</td>
+            <td class="px-4 py-3">{{ ship.costText || '-' }}</td>
+            <td class="px-4 py-3">{{ ship.reputationText || '-' }}</td>
+            <td class="px-4 py-3">{{ ship.componentsText || '-' }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
