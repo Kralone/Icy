@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { ScwePlayerService } from '../../core/services/scworldevent/scwe-player.service';
+import { UserService } from '../../core/services/user/user.service';
 
 type SidebarItem = {
   icon: string;
@@ -39,13 +40,17 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private userService: UserService,
     private scwe: ScwePlayerService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.authService.isAdmin().subscribe({
-      next: (v) => (this.isAdmin = !!v),
+    this.userService.getMyProfile().subscribe({
+      next: (response) => {
+        const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').trim().toUpperCase());
+        this.isAdmin = roles.includes('ADMIN') || roles.includes('OFFICIER');
+      },
       error: () => (this.isAdmin = false),
     });
 
