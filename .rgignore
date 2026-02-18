@@ -1,0 +1,11 @@
+# Fast search exclusions for Codex/ripgrep
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.nuxt/**
+**/coverage/**
+**/out/**
+**/.angular/**
+**/.cache/**
+**/target/**
