@@ -43,13 +43,32 @@
       ✕
     </button>
     <button
-      *ngIf="block.isCustom"
+      *ngIf="!block.isSystem"
       (click)="openEdit(block, $event)"
       class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-cyan-500/60 text-white
              text-[10px] flex items-center justify-center shadow-md
              hover:bg-cyan-400 hover:scale-110 transition-all"
     >
       ✎
+    </button>
+    <button
+      *ngIf="block.isSystem && (
+        block.name.toLowerCase() === 'activité'
+        || block.name.toLowerCase() === 'activités'
+        || block.name.toLowerCase() === 'nouveaux membres'
+        || block.name.toLowerCase() === 'nouveaux'
+      )"
+      (click)="
+        (block.name.toLowerCase() === 'activité' || block.name.toLowerCase() === 'activités')
+          ? openActivityConfig(block, $event)
+          : openMembersConfig(block, $event)
+      "
+      class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-cyan-500/60 text-white
+             text-[10px] flex items-center justify-center shadow-md
+             hover:bg-cyan-400 hover:scale-110 transition-all"
+      title="Configurer le bloc"
+    >
+      ⚙
     </button>
 
     <!-- En-tête bloc -->
@@ -88,9 +107,7 @@
       ✖
     </button>
 
-    <h3 class="text-xl font-semibold text-cyan-300">
-      ✏️ Éditer le bloc custom
-    </h3>
+    <h3 class="text-xl font-semibold text-cyan-300">✏️ Éditer le bloc</h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
@@ -153,6 +170,251 @@
              hover:from-cyan-400 hover:to-blue-500 shadow-md transition transform hover:scale-105"
       >
         Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="activityConfigBlock"
+  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-gradient-to-b from-[#1b263b]/95 to-[#0d1b2a]/95 backdrop-blur-2xl border border-white/20
+           rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.2)] w-full max-w-2xl p-6 text-white relative
+           flex flex-col space-y-4 max-h-[85vh]"
+  >
+    <button
+      (click)="cancelActivityConfig()"
+      class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none transition"
+    >
+      ✖
+    </button>
+
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-cyan-300">⚙️ Configurer les activités</h3>
+        <p class="text-xs text-gray-400 mt-1">
+          Liste des événements des 2 prochaines semaines
+        </p>
+      </div>
+      <div class="text-right text-xs text-cyan-200 bg-cyan-500/10 border border-cyan-300/20 rounded-lg px-3 py-2">
+        {{ selectedActivityCount }} / {{ activityEvents.length }} sélectionnées
+      </div>
+    </div>
+
+    <div class="flex gap-2 flex-wrap">
+      <button
+        type="button"
+        (click)="toggleAllActivities(true)"
+        class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-xs hover:bg-white/20 transition"
+      >
+        Tout cocher
+      </button>
+      <button
+        type="button"
+        (click)="toggleAllActivities(false)"
+        class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-xs hover:bg-white/20 transition"
+      >
+        Tout décocher
+      </button>
+    </div>
+
+    <div
+      class="bg-black/30 border border-white/10 rounded-lg p-3 overflow-y-auto flex-1 min-h-[280px]"
+    >
+      <div *ngIf="isActivityLoading" class="text-gray-300 text-sm">
+        Chargement des activités...
+      </div>
+
+      <div *ngIf="!isActivityLoading && activityLoadError" class="text-red-300 text-sm">
+        {{ activityLoadError }}
+      </div>
+
+      <div *ngIf="!isActivityLoading && !activityLoadError && activityEvents.length === 0" class="text-gray-400 text-sm italic">
+        Aucune activité sur les 2 prochaines semaines.
+      </div>
+
+      <label
+        *ngFor="let event of activityEvents; let i = index"
+        class="group grid grid-cols-[1fr_auto] gap-3 px-3 py-3 rounded-xl border border-white/10 bg-white/[0.03]
+               hover:bg-white/[0.06] hover:border-cyan-300/30 cursor-pointer transition"
+      >
+        <div class="min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <span class="font-semibold text-white text-sm">{{ event.title }}</span>
+            <span class="text-[11px] text-cyan-100 bg-cyan-500/15 border border-cyan-300/30 rounded-full px-2 py-0.5">
+              {{ formatEventDate(event.startDateTime) }}
+            </span>
+            <span
+              *ngIf="event.typeName"
+              class="text-[11px] text-gray-200 bg-white/10 border border-white/15 rounded-full px-2 py-0.5"
+            >
+              {{ event.typeName }}
+            </span>
+          </div>
+          <p class="text-xs text-gray-300 mt-2 leading-relaxed line-clamp-2">
+            {{ event.description || '_Pas de description disponible._' }}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 pl-2 relative">
+          <button
+            *ngIf="event.selected"
+            type="button"
+            (click)="toggleActivityEmojiPicker(i, $event)"
+            class="h-7 min-w-7 px-1 rounded-md border border-cyan-300/30 bg-cyan-500/10 hover:bg-cyan-500/20 transition"
+            title="Choisir un emoji"
+          >
+            {{ event.emoji || '📌' }}
+          </button>
+          <input
+            type="checkbox"
+            [(ngModel)]="event.selected"
+            (ngModelChange)="onActivitySelectionChange(i, $event)"
+            [id]="'activity-event-' + i"
+            class="sr-only"
+          />
+          <span
+            class="h-5 w-5 rounded-md border flex items-center justify-center text-[11px] font-bold
+                   transition-all duration-200"
+            [ngClass]="event.selected
+              ? 'bg-cyan-400 text-slate-900 border-cyan-200 shadow-[0_0_10px_rgba(34,211,238,0.45)]'
+              : 'bg-white/5 text-transparent border-white/30 group-hover:border-cyan-300/50'"
+          >
+            ✓
+          </span>
+          <div
+            *ngIf="activityEmojiPickerIndex === i && event.selected"
+            class="absolute right-0 top-9 z-30"
+          >
+            <div class="emoji-picker-shell">
+              <emoji-picker (emoji-click)="onActivityEmojiPick($event, i)"></emoji-picker>
+            </div>
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2">
+      <button
+        (click)="cancelActivityConfig()"
+        class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300 hover:text-white
+               hover:bg-white/20 transition-all duration-200 font-medium"
+      >
+        Annuler
+      </button>
+      <button
+        (click)="saveActivityConfig()"
+        class="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold
+               hover:from-cyan-400 hover:to-blue-500 shadow-md transition transform hover:scale-105"
+      >
+        Appliquer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="membersConfigBlock"
+  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-gradient-to-b from-[#1b263b]/95 to-[#0d1b2a]/95 backdrop-blur-2xl border border-white/20
+           rounded-2xl shadow-[0_0_25px_rgba(56,189,248,0.2)] w-full max-w-2xl p-6 text-white relative
+           flex flex-col space-y-4 max-h-[85vh]"
+  >
+    <button
+      (click)="cancelMembersConfig()"
+      class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none transition"
+    >
+      ✖
+    </button>
+
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-cyan-300">⚙️ Configurer les nouveaux membres</h3>
+        <p class="text-xs text-gray-400 mt-1">
+          Sélection des membres à inclure dans le rapport
+        </p>
+      </div>
+      <div class="text-right text-xs text-cyan-200 bg-cyan-500/10 border border-cyan-300/20 rounded-lg px-3 py-2">
+        {{ selectedMembersCount }} / {{ memberOptions.length }} sélectionnés
+      </div>
+    </div>
+
+    <div class="flex gap-2 flex-wrap">
+      <button
+        type="button"
+        (click)="toggleAllMembers(true)"
+        class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-xs hover:bg-white/20 transition"
+      >
+        Tout cocher
+      </button>
+      <button
+        type="button"
+        (click)="toggleAllMembers(false)"
+        class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-xs hover:bg-white/20 transition"
+      >
+        Tout décocher
+      </button>
+    </div>
+
+    <div
+      class="bg-black/30 border border-white/10 rounded-lg p-3 overflow-y-auto flex-1 min-h-[280px]"
+    >
+      <div *ngIf="memberOptions.length === 0" class="text-gray-400 text-sm italic">
+        Aucun nouveau membre disponible.
+      </div>
+
+      <label
+        *ngFor="let member of memberOptions; let i = index"
+        class="group grid grid-cols-[1fr_auto] gap-3 px-3 py-3 rounded-xl border border-white/10 bg-white/[0.03]
+               hover:bg-white/[0.06] hover:border-cyan-300/30 cursor-pointer transition"
+      >
+        <div class="min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <span class="font-semibold text-white text-sm">{{ member.username }}</span>
+            <span class="text-[11px] text-cyan-100 bg-cyan-500/15 border border-cyan-300/30 rounded-full px-2 py-0.5">
+              Arrivé le {{ member.joinedAt }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center pl-2">
+          <input
+            type="checkbox"
+            [(ngModel)]="member.selected"
+            [id]="'new-member-' + i"
+            class="sr-only"
+          />
+          <span
+            class="h-5 w-5 rounded-md border flex items-center justify-center text-[11px] font-bold
+                   transition-all duration-200"
+            [ngClass]="member.selected
+              ? 'bg-cyan-400 text-slate-900 border-cyan-200 shadow-[0_0_10px_rgba(34,211,238,0.45)]'
+              : 'bg-white/5 text-transparent border-white/30 group-hover:border-cyan-300/50'"
+          >
+            ✓
+          </span>
+        </div>
+      </label>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2">
+      <button
+        (click)="cancelMembersConfig()"
+        class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-gray-300 hover:text-white
+               hover:bg-white/20 transition-all duration-200 font-medium"
+      >
+        Annuler
+      </button>
+      <button
+        (click)="saveMembersConfig()"
+        class="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold
+               hover:from-cyan-400 hover:to-blue-500 shadow-md transition transform hover:scale-105"
+      >
+        Appliquer
       </button>
     </div>
   </div>

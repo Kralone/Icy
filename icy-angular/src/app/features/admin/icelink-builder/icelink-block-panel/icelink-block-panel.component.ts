@@ -63,6 +63,7 @@ export class IceLinkBlockPanelComponent implements OnInit {
       const normalized = blocks.map((block) => ({
         ...block,
         isSystem: this.isSystemBlock(block),
+        isCustom: !this.isSystemBlock(block),
       }));
       const merged = this.mergeSystemBlocks(normalized);
       this.availableBlocks = [this.customTemplate, ...merged];

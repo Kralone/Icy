@@ -12,6 +12,9 @@ export interface IceLinkBlock {
   isCustom?: boolean;
   template?: boolean;
   isSystem?: boolean;
+  selectedEventIds?: string[];
+  selectedEventEmojis?: Record<string, string>;
+  selectedMemberNames?: string[];
 }
 
 export const ICELINK_DEFAULT_BLOCKS: IceLinkBlock[] = [
