@@ -4,6 +4,7 @@ import discord
 from discord import ui, ButtonStyle
 from utils.html_to_discord import html_to_discord
 import logging
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger("icy.event_handler")
 
@@ -33,6 +34,8 @@ class EventHandler:
         self.bot = bot
         self.rabbit = rabbit
         self.channel_id = int(os.getenv("DISCORD_EVENTS_CHANNEL_ID", "0"))
+        self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
+        self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
 
     async def handle(self, routing_key: str, payload: dict):
         """Redirige les sous-événements event.* vers les bonnes fonctions."""
@@ -207,8 +210,75 @@ class EventHandler:
 
         # ❌ Retrait des boutons
         await message.edit(embed=embed, view=None)
+        await self.cleanup_event_notifications(payload)
 
         logger.info(f"🏁 Événement terminé et mis à jour sur Discord (eventId={event_id})")
+
+    async def cleanup_event_notifications(self, payload: dict):
+        """Supprime les rappels liés à un événement terminé.
+        - reminderOneHour: suppression du message dédié
+        - dailyPing: suppression de la ligne de l'événement, puis suppression du message si vide
+        """
+        event_id_raw = payload.get("id") or payload.get("eventId")
+        event_id = str(event_id_raw) if event_id_raw is not None else None
+        if not event_id:
+            logger.warning("⚠️ cleanup_event_notifications: event_id manquant.")
+            return
+
+        channel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            logger.error("⚠️ Salon Discord introuvable pour cleanup event notifications")
+            return
+
+        # 1) Supprimer les messages reminderOneHour de cet event
+        reminder_refs = self._reminder_one_hour_messages.pop(event_id, [])
+        for channel_id, message_id in reminder_refs:
+            try:
+                target_channel = self.bot.get_channel(int(channel_id))
+                if not target_channel:
+                    continue
+                message = await target_channel.fetch_message(int(message_id))
+                await message.delete()
+                logger.info(f"🧹 Reminder 1h supprimé (eventId={event_id}, messageId={message_id})")
+            except discord.NotFound:
+                continue
+            except Exception as e:
+                logger.warning(f"⚠️ Impossible de supprimer reminder 1h ({message_id}) : {e}")
+
+        # 2) Mettre à jour les dailyPing qui contiennent cet event
+        for message_id, metadata in list(self._daily_ping_messages.items()):
+            events = metadata.get("events", [])
+            if not isinstance(events, list):
+                continue
+
+            filtered_events = [e for e in events if str(e.get("id")) != event_id]
+            if len(filtered_events) == len(events):
+                continue
+
+            channel_id = metadata.get("channel_id")
+            date = str(metadata.get("date", ""))
+
+            try:
+                target_channel = self.bot.get_channel(int(channel_id))
+                if not target_channel:
+                    continue
+                message = await target_channel.fetch_message(int(message_id))
+
+                if not filtered_events:
+                    await message.delete()
+                    self._daily_ping_messages.pop(message_id, None)
+                    logger.info(f"🧹 Daily ping supprimé (plus d'event) (messageId={message_id})")
+                    continue
+
+                updated_content = self._build_daily_ping_content(filtered_events, date)
+                await message.edit(content=updated_content)
+                metadata["events"] = filtered_events
+                self._daily_ping_messages[message_id] = metadata
+                logger.info(f"🧹 Daily ping mis à jour (event retiré) (messageId={message_id})")
+            except discord.NotFound:
+                self._daily_ping_messages.pop(message_id, None)
+            except Exception as e:
+                logger.warning(f"⚠️ Impossible de mettre à jour le daily ping ({message_id}) : {e}")
 
 
     async def cleanup_daily_ping(self):
@@ -265,9 +335,19 @@ class EventHandler:
 
         events = payload.get("events", [])
         date = format_date(payload.get("date"))
-        titles = "\n".join([f"• {e['title']}" for e in events])
-        msg = f"<@&1325528040322896025> \n 🔔 **{len(events)} événement(s)** prévu(s) aujourd’hui ({date}) :\n{titles}\n\nPensez à confirmer votre participation !"
-        await channel.send(msg)
+        msg = self._build_daily_ping_content(events, date)
+        sent = await channel.send(msg)
+
+        normalized_events = [
+            {"id": str(e.get("id")), "title": e.get("title", "Sans titre")}
+            for e in events
+            if e.get("id") is not None
+        ]
+        self._daily_ping_messages[sent.id] = {
+            "channel_id": sent.channel.id,
+            "date": date,
+            "events": normalized_events,
+        }
         logger.info("📢 Daily ping envoyé.")
 
     async def handle_reminder_one_hour(self, payload: dict):
@@ -305,8 +385,23 @@ class EventHandler:
             f"❔ **Indécis** : {maybe_mentions}"
         )
 
-        await channel.send(msg)
+        sent = await channel.send(msg)
+
+        event_id = payload.get("eventId")
+        if event_id is not None:
+            event_key = str(event_id)
+            self._reminder_one_hour_messages.setdefault(event_key, []).append((sent.channel.id, sent.id))
+
         logger.info(f"⏰ Rappel 1h avant envoyé pour {title} ({len(confirmed)} confirmés, {len(maybe)} indécis).")
+
+    def _build_daily_ping_content(self, events: List[dict], date: str) -> str:
+        titles = "\n".join([f"• {e.get('title', 'Sans titre')}" for e in events])
+        return (
+            f"<@&1325528040322896025> \n"
+            f" 🔔 **{len(events)} événement(s)** prévu(s) aujourd’hui ({date}) :\n"
+            f"{titles}\n\n"
+            f"Pensez à confirmer votre participation !"
+        )
 
 
 
