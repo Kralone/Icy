@@ -154,6 +154,11 @@
 
 .wikelo-row-details td {
   background: rgba(15, 23, 42, 0.95);
+  overflow: hidden;
+}
+
+.wikelo-detail-panel {
+  overflow: hidden;
 }
 
 .wikelo-detail-grid {

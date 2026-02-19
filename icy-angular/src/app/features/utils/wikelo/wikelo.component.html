@@ -99,21 +99,23 @@
 
             <tr *ngIf="isExpanded(ship.shipName)" class="wikelo-row-details border-b border-white/10">
               <td colspan="3" class="px-4 py-4">
-                <div class="wikelo-detail-grid">
-                  <section>
-                    <h4>Cout</h4>
-                    <ul>
-                      <li *ngFor="let part of toCommaParts(ship.costText)">{{ part }}</li>
-                    </ul>
-                    <p *ngIf="!toCommaParts(ship.costText).length" class="wikelo-empty">Non renseigne.</p>
-                  </section>
-                  <section>
-                    <h4>Composants</h4>
-                    <ul>
-                      <li *ngFor="let part of toParts(ship.componentsText)">{{ part }}</li>
-                    </ul>
-                    <p *ngIf="!toParts(ship.componentsText).length" class="wikelo-empty">Aucun composant detaille.</p>
-                  </section>
+                <div class="wikelo-detail-panel" @detailsExpand>
+                  <div class="wikelo-detail-grid">
+                    <section>
+                      <h4>Cout</h4>
+                      <ul>
+                        <li *ngFor="let part of toCommaParts(ship.costText)">{{ part }}</li>
+                      </ul>
+                      <p *ngIf="!toCommaParts(ship.costText).length" class="wikelo-empty">Non renseigne.</p>
+                    </section>
+                    <section>
+                      <h4>Composants</h4>
+                      <ul>
+                        <li *ngFor="let part of toParts(ship.componentsText)">{{ part }}</li>
+                      </ul>
+                      <p *ngIf="!toParts(ship.componentsText).length" class="wikelo-empty">Aucun composant detaille.</p>
+                    </section>
+                  </div>
                 </div>
               </td>
             </tr>

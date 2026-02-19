@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
@@ -17,7 +18,19 @@ import { Goal } from '../../../model/goal.model';
   selector: 'app-wikelo',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './wikelo.component.html',
-  styleUrl: './wikelo.component.css'
+  styleUrl: './wikelo.component.css',
+  animations: [
+    trigger('detailsExpand', [
+      transition(':enter', [
+        style({ height: '0px', opacity: 0, transform: 'translateY(-6px)' }),
+        animate('280ms cubic-bezier(0.22, 1, 0.36, 1)', style({ height: '*', opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        style({ height: '*', opacity: 1, transform: 'translateY(0)' }),
+        animate('220ms cubic-bezier(0.4, 0, 1, 1)', style({ height: '0px', opacity: 0, transform: 'translateY(-4px)' }))
+      ])
+    ])
+  ]
 })
 export class WikeloComponent implements OnInit {
   ships: WikeloShip[] = [];
