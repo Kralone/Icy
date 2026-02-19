@@ -8,7 +8,8 @@ class ScweHandler:
     def __init__(self, bot, rabbit=None):
         self.bot = bot
         self.rabbit = rabbit
-        self.channel_id = int(os.getenv("DISCORD_DISCUSSION_CHANNEL_ID", "0"))
+
+        self.channel_id = int((os.getenv("DISCORD_NOTIFICATIONS_CHANNEL_ID") or "").strip())
 
     async def handle(self, routing_key: str, payload: dict):
         if routing_key == "scwe.tier_passed":
