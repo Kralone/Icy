@@ -1,13 +1,13 @@
 :host {
   display: block;
-  height: 100%;
+  min-height: 100%;
 }
 
 .utils-menu {
   position: relative;
   overflow: hidden;
-  height: 100%;
-  min-height: 100%;
+  min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px);
 }
 
 .utils-rank-orbit {
