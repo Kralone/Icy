@@ -1,3 +1,34 @@
+.wikelo-page {
+  position: relative;
+  overflow: hidden;
+  background-color: #0a111c;
+  background-image: linear-gradient(to bottom, #0a111c 0%, #0f172a 45%, #111827 100%);
+  isolation: isolate;
+}
+
+.wikelo-page::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: min(62vw, 760px);
+  background-image: url('https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp');
+  background-size: 100% auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.75;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wikelo-page-content {
+  position: relative;
+  z-index: 2;
+}
+
 .wikelo-table th,
 .wikelo-table td {
   vertical-align: top;
