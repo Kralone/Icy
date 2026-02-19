@@ -57,6 +57,7 @@ export class EventsComponent implements AfterViewInit {
     plugins: [dayGridPlugin],
     locale: 'fr',
     firstDay: 1,
+    fixedWeekCount: false,
     initialView: 'dayGridWeek',
     height: '100%',
     expandRows: true,
@@ -78,8 +79,13 @@ export class EventsComponent implements AfterViewInit {
       threeDay: '3 jours'
     },
     views: {
+      dayGridWeek: {
+        type: 'dayGrid',
+        duration: { days: 7 },
+        buttonText: 'Semaine'
+      },
       threeDay: {
-        type: 'dayGridWeek',
+        type: 'dayGrid',
         duration: { days: 3 },
         buttonText: '3 jours'
       }
@@ -130,6 +136,10 @@ export class EventsComponent implements AfterViewInit {
     if (!calendarApi) return;
 
     const isMobile = window.innerWidth < 640;
+    if (isMobile) {
+      // Mobile is intentionally locked to the 3-day view.
+      this.mobilePreferredView = 'threeDay';
+    }
     if (!force && this.lastIsMobile === isMobile) {
       calendarApi.updateSize();
       return;
@@ -141,7 +151,7 @@ export class EventsComponent implements AfterViewInit {
       ? { left: 'prev,next', center: 'title', right: 'today' }
       : { left: 'prev,next today', center: 'title', right: 'threeDay,dayGridWeek,dayGridMonth' });
     calendarApi.setOption('footerToolbar', isMobile
-      ? { left: 'threeDay,dayGridWeek,dayGridMonth', center: '', right: '' }
+      ? { left: 'threeDay', center: '', right: '' }
       : false);
 
     if (calendarApi.view.type !== targetView) {
@@ -154,6 +164,12 @@ export class EventsComponent implements AfterViewInit {
 
   private onDatesSet(arg: DatesSetArg): void {
     const type = arg.view.type as ViewApi['type'];
+    if (window.innerWidth < 640 && type !== 'threeDay') {
+      this.mobilePreferredView = 'threeDay';
+      this.calendarComponent?.getApi().changeView('threeDay');
+      return;
+    }
+
     if (type === 'threeDay') {
       this.mobilePreferredView = type;
       return;

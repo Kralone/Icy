@@ -28,6 +28,37 @@ def format_date(date_str: str) -> str:
         return date_str
 
 
+def format_day(date_str: str) -> str:
+    """Convertit une date ISO en format français sans afficher d'heure."""
+    if not date_str:
+        return "Date inconnue"
+
+    jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    mois = [
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+    ]
+
+    try:
+        dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        jour_nom = jours[dt.weekday()]
+        mois_nom = mois[dt.month - 1]
+        return f"{jour_nom} {dt.day} {mois_nom} {dt.year}"
+    except Exception:
+        return date_str
+
+
+def format_time(date_str: str) -> str:
+    """Convertit une date ISO en heure lisible (HHhMM)."""
+    if not date_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        return f"{dt.hour:02d}h{dt.minute:02d}"
+    except Exception:
+        return ""
+
+
 
 class EventHandler:
     def __init__(self, bot, rabbit):
@@ -289,20 +320,24 @@ class EventHandler:
             return
 
         from datetime import datetime
-        today = datetime.now().strftime("%Y-%m-%d")
+        today_iso = datetime.now().strftime("%Y-%m-%d")
+        today_label = format_day(today_iso)
 
         async for message in channel.history(limit=30):
             if message.author != self.bot.user:
                 continue
-            if today in message.content and "événement(s)" in message.content:
+            if (
+                "événement(s)" in message.content
+                and (today_iso in message.content or today_label in message.content)
+            ):
                 try:
                     await message.delete()
-                    logger.info(f"🧹 Message dailyPing du {today} supprimé.")
+                    logger.info(f"🧹 Message dailyPing du {today_iso} supprimé.")
                 except Exception as e:
                     logger.error(f"❌ Erreur lors du nettoyage dailyPing : {e}")
                 return
 
-        logger.warning(f"⚠️ Aucun message dailyPing trouvé pour {today}.")
+        logger.warning(f"⚠️ Aucun message dailyPing trouvé pour {today_iso}.")
 
 
     async def handle_event_deleted(self, payload: dict):
@@ -334,12 +369,16 @@ class EventHandler:
             return
 
         events = payload.get("events", [])
-        date = format_date(payload.get("date"))
+        date = format_day(payload.get("date"))
         msg = self._build_daily_ping_content(events, date)
         sent = await channel.send(msg)
 
         normalized_events = [
-            {"id": str(e.get("id")), "title": e.get("title", "Sans titre")}
+            {
+                "id": str(e.get("id")),
+                "title": e.get("title", "Sans titre"),
+                "date": e.get("date"),
+            }
             for e in events
             if e.get("id") is not None
         ]
@@ -395,7 +434,16 @@ class EventHandler:
         logger.info(f"⏰ Rappel 1h avant envoyé pour {title} ({len(confirmed)} confirmés, {len(maybe)} indécis).")
 
     def _build_daily_ping_content(self, events: List[dict], date: str) -> str:
-        titles = "\n".join([f"• {e.get('title', 'Sans titre')}" for e in events])
+        lines = []
+        for event in events:
+            title = event.get("title", "Sans titre")
+            time_label = format_time(event.get("date"))
+            if time_label:
+                lines.append(f"• {time_label} - {title}")
+            else:
+                lines.append(f"• {title}")
+
+        titles = "\n".join(lines)
         return (
             f"<@&1325528040322896025> \n"
             f" 🔔 **{len(events)} événement(s)** prévu(s) aujourd’hui ({date}) :\n"

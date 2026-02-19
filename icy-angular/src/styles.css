@@ -498,6 +498,21 @@ emoji-picker {
   gap: 12px;
 }
 
+/* Vue mois: force des cases uniformes */
+.fc .fc-dayGridMonth-view .fc-daygrid-body,
+.fc .fc-dayGridMonth-view .fc-scrollgrid-sync-table {
+  height: 100% !important;
+}
+
+.fc .fc-dayGridMonth-view tbody tr {
+  height: calc(100% / 6) !important;
+}
+
+.fc .fc-dayGridMonth-view .fc-daygrid-day-frame {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
 /* ✅ Carte unifiée + clean (plus d’overlay/degradé) */
 .fc .icy-event-host {
   background: rgba(255,255,255,0.08);

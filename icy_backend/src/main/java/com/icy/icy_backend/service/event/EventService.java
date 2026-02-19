@@ -296,7 +296,13 @@ public class EventService {
         Map<String, Object> payload = new HashMap<>();
         payload.put("date", today.toString());
         payload.put("events", todaysEvents.stream()
-                .map(e -> Map.of("id", e.getId(), "title", e.getTitle()))
+                .map(e -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", e.getId());
+                    map.put("title", e.getTitle());
+                    map.put("date", e.getStartDateTime() != null ? e.getStartDateTime().toString() : null);
+                    return map;
+                })
                 .collect(Collectors.toList()));
 
         eventPublisher.sendGeneric("events.dailyPing", payload);
