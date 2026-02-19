@@ -48,6 +48,10 @@ icy:
   image:
     path: /app/uploads/images
     base-url: ${IMAGE_BASE_URL:http://localhost:8081/images/}
+  wikelo:
+    spreadsheet-id: ${WIKELO_SPREADSHEET_ID:1ji0q_pp6iW35RG1YyFEsv-lsmZOaCStJXGdIEdLLwhM}
+    ships-gid: ${WIKELO_SHIPS_GID:481073732}
+    ships-sheet-name: ${WIKELO_SHIPS_SHEET_NAME:Ships 4.5}
 
 
 security:

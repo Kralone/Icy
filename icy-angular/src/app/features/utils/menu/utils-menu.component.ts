@@ -59,7 +59,7 @@ export class UtilsMenuComponent {
     },
     {
       label: 'Wikelo',
-      imageUrl: 'https://media.starcitizen.tools/8/84/Banu_Merchantman_-_In_Concept.jpg',
+      imageUrl: 'https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp',
       route: '/icy/utilitaires/wikelo',
     }
   ];

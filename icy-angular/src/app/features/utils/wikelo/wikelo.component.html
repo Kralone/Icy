@@ -26,7 +26,6 @@
         <div>
           <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Utilitaire</p>
           <h1 class="text-3xl font-semibold text-cyan-200">Wikelo - Vaisseaux</h1>
-          <p class="mt-2 text-slate-300">Donnees scrappees depuis Google Sheets et stockees en base.</p>
         </div>
         <div class="text-sm text-slate-300">
           <div>Total vaisseaux: <span class="text-cyan-200 font-semibold">{{ ships.length }}</span></div>
@@ -38,29 +37,149 @@
     <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
       <p *ngIf="isLoading" class="text-slate-300">Chargement des donnees Wikelo...</p>
       <p *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</p>
+      <p *ngIf="goalCreateStatus" class="text-emerald-300">{{ goalCreateStatus }}</p>
 
       <div *ngIf="!isLoading && !errorMessage" class="overflow-x-auto rounded-xl border border-white/10">
         <table class="wikelo-table min-w-full text-sm divide-y divide-white/10">
-          <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.18em]">
+          <thead class="wikelo-head bg-[#0b1324] text-cyan-200 uppercase tracking-[0.16em]">
           <tr>
+            <th class="px-4 py-3 text-left">Image</th>
             <th class="px-4 py-3 text-left">Vaisseau</th>
-            <th class="px-4 py-3 text-left">Mission / Details</th>
-            <th class="px-4 py-3 text-left">Cout</th>
-            <th class="px-4 py-3 text-left">Reputation</th>
-            <th class="px-4 py-3 text-left">Composants</th>
+            <th class="px-4 py-3 text-left">Apercu</th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let ship of ships" class="border-b border-white/10 text-slate-200">
-            <td class="px-4 py-3 font-semibold text-cyan-100">{{ ship.shipName }}</td>
-            <td class="px-4 py-3">{{ ship.missionText || '-' }}</td>
-            <td class="px-4 py-3">{{ ship.costText || '-' }}</td>
-            <td class="px-4 py-3">{{ ship.reputationText || '-' }}</td>
-            <td class="px-4 py-3">{{ ship.componentsText || '-' }}</td>
-          </tr>
+          <ng-container *ngFor="let ship of ships; let i = index">
+            <tr class="wikelo-row border-b border-white/10 text-slate-200" [class.wikelo-row-alt]="i % 2 === 1">
+              <td class="px-4 py-3">
+                <img
+                  *ngIf="getShipImage(ship.shipName) as imageUrl; else noImage"
+                  [src]="imageUrl"
+                  [alt]="ship.shipName"
+                  class="wikelo-table-image"
+                  loading="lazy"
+                />
+                <ng-template #noImage>
+                  <div class="wikelo-table-image-fallback">N/A</div>
+                </ng-template>
+              </td>
+              <td class="px-4 py-3">
+                <div class="wikelo-ship-head">
+                  <div class="font-semibold text-cyan-100 text-base">{{ ship.shipName }}</div>
+                  <span class="wikelo-rep-tag">Wikelo Réputation Tier {{ getReputationTier(ship.reputationText) }}</span>
+                </div>
+                <button
+                  type="button"
+                  (click)="toggleDetails(ship.shipName)"
+                  class="wikelo-toggle mt-2"
+                >
+                  {{ isExpanded(ship.shipName) ? 'Masquer les details' : 'Voir plus' }}
+                </button>
+                <button
+                  *ngIf="canRescrape"
+                  type="button"
+                  (click)="openGoalModal(ship)"
+                  class="wikelo-toggle wikelo-toggle--goal mt-2"
+                >
+                  Ajouter objectif
+                </button>
+              </td>
+              <td class="px-4 py-3 wikelo-cell-main">
+                <ul class="wikelo-preview-list">
+                  <li *ngFor="let component of getPreviewComponents(ship.componentsText)">
+                    {{ component }}
+                  </li>
+                </ul>
+                <p *ngIf="!getPreviewComponents(ship.componentsText).length" class="wikelo-empty">Aucun composant.</p>
+                <p *ngIf="getRemainingComponentCount(ship.componentsText) > 0" class="wikelo-more">
+                  + {{ getRemainingComponentCount(ship.componentsText) }} autre(s) composant(s)
+                </p>
+              </td>
+            </tr>
+
+            <tr *ngIf="isExpanded(ship.shipName)" class="wikelo-row-details border-b border-white/10">
+              <td colspan="3" class="px-4 py-4">
+                <div class="wikelo-detail-grid">
+                  <section>
+                    <h4>Cout</h4>
+                    <ul>
+                      <li *ngFor="let part of toCommaParts(ship.costText)">{{ part }}</li>
+                    </ul>
+                    <p *ngIf="!toCommaParts(ship.costText).length" class="wikelo-empty">Non renseigne.</p>
+                  </section>
+                  <section>
+                    <h4>Composants</h4>
+                    <ul>
+                      <li *ngFor="let part of toParts(ship.componentsText)">{{ part }}</li>
+                    </ul>
+                    <p *ngIf="!toParts(ship.componentsText).length" class="wikelo-empty">Aucun composant detaille.</p>
+                  </section>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
           </tbody>
         </table>
       </div>
     </section>
+  </div>
+</div>
+
+<div
+  *ngIf="isGoalModalOpen && selectedGoalShip"
+  class="wikelo-modal-backdrop"
+  (click)="closeGoalModal()"
+>
+  <div class="wikelo-modal" (click)="$event.stopPropagation()">
+    <h3 class="wikelo-modal-title">Confirmer l ajout d objectif</h3>
+    <p class="wikelo-modal-subtitle">Objectif parent: <strong>Wikelo - {{ selectedGoalShip.shipName }}</strong></p>
+
+    <label class="wikelo-label">Attribuer a un joueur (optionnel)</label>
+    <input
+      [(ngModel)]="goalAssignUserInput"
+      (input)="onGoalUserInputChange()"
+      list="wikelo-goal-users"
+      placeholder="Pseudo joueur"
+      class="wikelo-input"
+    />
+    <datalist id="wikelo-goal-users">
+      <option *ngFor="let user of users" [value]="user.username"></option>
+    </datalist>
+
+    <div class="wikelo-modal-preview">
+      <div class="wikelo-modal-ship-preview">
+        <img
+          *ngIf="getShipImage(selectedGoalShip.shipName) as modalImageUrl; else modalNoImage"
+          [src]="modalImageUrl"
+          [alt]="selectedGoalShip.shipName"
+          class="wikelo-modal-image"
+          loading="lazy"
+        />
+        <ng-template #modalNoImage>
+          <div class="wikelo-modal-image-fallback">N/A</div>
+        </ng-template>
+        <div class="wikelo-modal-ship-name">{{ selectedGoalShip.shipName }}</div>
+      </div>
+
+      <h4>Sous-objectifs (ingredients)</h4>
+      <ul>
+        <li *ngFor="let ingredient of getGoalPreviewIngredients()">
+          {{ ingredient.name }} <span>x{{ ingredient.target }}</span>
+        </li>
+      </ul>
+      <p *ngIf="!getGoalPreviewIngredients().length" class="wikelo-empty">Aucun ingredient detecte.</p>
+    </div>
+
+    <div class="wikelo-modal-actions">
+      <button type="button" class="wikelo-btn wikelo-btn-cancel" (click)="closeGoalModal()">Annuler</button>
+      <button
+        type="button"
+        class="wikelo-btn wikelo-btn-confirm"
+        [disabled]="isCreatingGoal"
+        (click)="confirmCreateGoal()"
+      >
+        {{ isCreatingGoal ? 'Creation...' : 'Confirmer et creer' }}
+      </button>
+    </div>
   </div>
 </div>
