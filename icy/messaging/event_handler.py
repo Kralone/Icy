@@ -64,9 +64,21 @@ class EventHandler:
     def __init__(self, bot, rabbit):
         self.bot = bot
         self.rabbit = rabbit
-        self.channel_id = int(os.getenv("DISCORD_EVENTS_CHANNEL_ID", "0"))
+        self.channel_id = self._read_channel_id("DISCORD_EVENTS_CHANNEL_ID")
         self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
         self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
+
+    @staticmethod
+    def _read_channel_id(env_var: str) -> int:
+        raw = (os.getenv(env_var) or "").strip()
+        if not raw:
+            logger.warning(f"⚠️ Variable {env_var} vide ou absente. Le handler restera inactif.")
+            return 0
+        try:
+            return int(raw)
+        except ValueError:
+            logger.error(f"❌ Variable {env_var} invalide: '{raw}'. Valeur attendue: entier Discord ID.")
+            return 0
 
     async def handle(self, routing_key: str, payload: dict):
         """Redirige les sous-événements event.* vers les bonnes fonctions."""

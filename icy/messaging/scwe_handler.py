@@ -9,7 +9,19 @@ class ScweHandler:
         self.bot = bot
         self.rabbit = rabbit
 
-        self.channel_id = int((os.getenv("DISCORD_NOTIFICATIONS_CHANNEL_ID") or "").strip())
+        self.channel_id = self._read_channel_id("DISCORD_NOTIFICATIONS_CHANNEL_ID")
+
+    @staticmethod
+    def _read_channel_id(env_var: str) -> int:
+        raw = (os.getenv(env_var) or "").strip()
+        if not raw:
+            logger.warning(f"⚠️ Variable {env_var} vide ou absente. Le handler restera inactif.")
+            return 0
+        try:
+            return int(raw)
+        except ValueError:
+            logger.error(f"❌ Variable {env_var} invalide: '{raw}'. Valeur attendue: entier Discord ID.")
+            return 0
 
     async def handle(self, routing_key: str, payload: dict):
         if routing_key == "scwe.tier_passed":

@@ -91,8 +91,11 @@ async def on_ready():
     # Connexion à RabbitMQ
     await wait_for_rabbitmq(host=rabbit_host, port=int(rabbit_port))
     rabbit = RabbitManager(rabbit_url, bot)
-    await rabbit.connect()
-    logger.info("🐇 RabbitMQ connecté et en écoute.")
+    connected = await rabbit.connect()
+    if connected:
+        logger.info("🐇 RabbitMQ connecté et en écoute.")
+    else:
+        logger.error("❌ RabbitMQ non opérationnel: consommation désactivée.")
 
     # Synchronisation des commandes slash
     try:

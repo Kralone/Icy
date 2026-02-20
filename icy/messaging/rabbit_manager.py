@@ -47,7 +47,12 @@ class RabbitManager:
                 self.exchange_name, aio_pika.ExchangeType.TOPIC, durable=True
             )
 
-            # Déclaration et binding des deux queues
+            # Publisher/handler initialisés avant la consommation pour éviter
+            # une course où un message arrive avant que self.handler soit prêt.
+            self.publisher = MessagePublisher(self.connection)
+            self.handler = MessageHandler(self.bot, self.publisher)
+
+            # Déclaration et binding des queues
             for key, queue_name in self.queues.items():
                 queue = await self.channel.declare_queue(queue_name, durable=True)
                 routing_pattern = f"{key}.*"
@@ -55,16 +60,12 @@ class RabbitManager:
                 await queue.consume(self.on_message)
                 logger.info(f"🎧 Écoute activée sur {queue_name} (clé: {routing_pattern})")
 
-            # Publisher pour les envois sortants
-            self.publisher = MessagePublisher(self.connection)
-
-            # Handler pour les messages entrants
-            self.handler = MessageHandler(self.bot, self.publisher)
-
             logger.info("✅ RabbitMQ connecté et en écoute sur toutes les files.")
+            return True
 
         except Exception as e:
             logger.exception(f"❌ Erreur lors de la connexion à RabbitMQ : {e}")
+            return False
 
     async def on_message(self, message: aio_pika.IncomingMessage):
         """Callback exécuté à chaque message reçu sur les queues."""
