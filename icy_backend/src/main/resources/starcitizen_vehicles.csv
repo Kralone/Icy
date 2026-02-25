@@ -1,0 +1,568 @@
+Nom,Fabricant,Production State,Image,Role,Taille,Equipage,Cargo,Lien
+100i,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/5/5a/100i_Microtech.jpg/400px-100i_Microtech.jpg.webp,"Starter, Touring","Small
+(S1/XXS
+)",1,2 SCU,https://starcitizen.tools/100i
+125a,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/1/1e/125a_-_Shooting_-_Fly_though_debris.png/400px-125a_-_Shooting_-_Fly_though_debris.png.webp,"Starter, Light Fighter","Small
+(S1/XXS
+)",1,2 SCU,https://starcitizen.tools/125a
+135c,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/c/c6/Orig-135c-3.11-space-flight.jpg/400px-Orig-135c-3.11-space-flight.jpg.webp,"Starter, Light Freight","Small
+(S1/XXS
+)",1,6 SCU,https://starcitizen.tools/135c
+300i,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/4/48/300i_-_Flying_over_cloudtops.jpg/400px-300i_-_Flying_over_cloudtops.jpg.webp,"Touring, Luxury","Small
+(S2/XS
+)",1,8 SCU,https://starcitizen.tools/300i
+315p,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/b/ba/315p_-_Flying_high_over_clouds.jpg/400px-315p_-_Flying_high_over_clouds.jpg.webp,Pathfinder,"Small
+(S2/XS
+)",1,12 SCU,https://starcitizen.tools/315p
+325a,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/7/71/325a_-_Flying_fast_over_clouded_mountains.jpg/400px-325a_-_Flying_fast_over_clouded_mountains.jpg.webp,"Light Fighter, Interdiction","Small
+(S2/XS
+)",1,4 SCU,https://starcitizen.tools/325a
+350r,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/5/5f/350r_-_Flying_over_Daymar_x2.jpg/400px-350r_-_Flying_over_Daymar_x2.jpg.webp,Racing,"Small
+(S2/XS
+)",1,4 SCU,https://starcitizen.tools/350r
+400i,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/7/78/400i_cruising_through_Area18_3.15.png/400px-400i_cruising_through_Area18_3.15.png.webp,Touring,"Large
+(S4/M
+)",1 – 3,42 SCU,https://starcitizen.tools/400i
+600i Executive Edition,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/f/fe/600i_-_Legatus_Navium_Edition.jpg/400px-600i_-_Legatus_Navium_Edition.jpg.webp,Exploration,"Large
+(S5/L
+)",2 – 5,44 SCU,https://starcitizen.tools/600i_Executive_Edition
+600i Explorer,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/a/ac/600i_Flying_over_Microtech_-_cropped.png/400px-600i_Flying_over_Microtech_-_cropped.png.webp,Expedition,"Large
+(S5/L
+)",2 – 5,44 SCU,https://starcitizen.tools/600i_Explorer
+600i Touring,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/8/80/600i_Landed_on_luxury_Island_-_Isometric.jpg/400px-600i_Landed_on_luxury_Island_-_Isometric.jpg.webp,Touring,"Large
+(S5/L
+)",3 – 5,20 SCU,https://starcitizen.tools/600i_Touring
+85X,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/4/48/IAE2951-day6-origin-85x.jpg/400px-IAE2951-day6-origin-85x.jpg.webp,Touring,"Snub
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/85X
+890 Jump,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/7/76/890_Jump_Leaving_Hurston_3.6.png/400px-890_Jump_Leaving_Hurston_3.6.png.webp,Luxury Touring,"Capital
+(S6/XL
+)",3 – 8,388 SCU,https://starcitizen.tools/890_Jump
+A1 Spirit,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/6/66/A1_x2_bombing_ground_vehicle_attackers_-_Cut.jpg/400px-A1_x2_bombing_ground_vehicle_attackers_-_Cut.jpg.webp,Bomber,"Medium
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/A1_Spirit
+A2 Hercules Starlifter,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/9/9b/Hercules_A2_-_Flying_and_firing_over_bombed_Area_18.jpg/400px-Hercules_A2_-_Flying_and_firing_over_bombed_Area_18.jpg.webp,Heavy Bomber,"Large
+(S5/L
+)",1 – 8,216 SCU,https://starcitizen.tools/A2_Hercules_Starlifter
+Apollo Medivac,Roberts Space Industries,Active production,https://media.starcitizen.tools/thumb/8/89/Medivac_-_Under_attack_above_world_while_rescuing_with_drone_-_Rear_Starboard.jpg/400px-Medivac_-_Under_attack_above_world_while_rescuing_with_drone_-_Rear_Starboard.jpg.webp,Medical,Medium,1 – 2,28 SCU,https://starcitizen.tools/Apollo_Medivac
+Apollo Triage,Roberts Space Industries,Long term production,https://media.starcitizen.tools/thumb/1/18/Apollos_InFlight_Concept.jpg/400px-Apollos_InFlight_Concept.jpg.webp,Medical,Medium,1 – 2,28 SCU,https://starcitizen.tools/Apollo_Triage
+Ares Star Fighter Inferno,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/b/ba/Ares_Inferno_-_Flying_by_asteroids_firing_gun.jpg/400px-Ares_Inferno_-_Flying_by_asteroids_firing_gun.jpg.webp,Heavy Fighter,"Small
+(S3/S
+)",1,0 SCU,https://starcitizen.tools/Ares_Star_Fighter_Inferno
+Ares Star Fighter Ion,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/9/93/Ares_Ion_-_Flying_by_asteroids_firing_gun.jpg/400px-Ares_Ion_-_Flying_by_asteroids_firing_gun.jpg.webp,Heavy Fighter,"Small
+(S3/S
+)",1,0 SCU,https://starcitizen.tools/Ares_Star_Fighter_Ion
+Arrastra,Roberts Space Industries,In concept,https://media.starcitizen.tools/thumb/2/25/Arrastra_flying_through_columns_-_Cut.png/400px-Arrastra_flying_through_columns_-_Cut.png.webp,Mining & Refining,Large,2 – 5,576 SCU,https://starcitizen.tools/Arrastra
+Arrow,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/4/47/Arrow_over_Celiin_3.9.1.png/400px-Arrow_over_Celiin_3.9.1.png.webp,Light Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Arrow
+ATLS,Argo Astronautics,Flight ready,,,,,,https://starcitizen.tools/ATLS
+Aurora CL,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/3/37/Aurora_CL_flying_over_mountains_-_Crop.png/400px-Aurora_CL_flying_over_mountains_-_Crop.png.webp,Light Freight,"Small
+(S2/XS
+)",1,6 SCU,https://starcitizen.tools/Aurora_CL
+Aurora ES,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/6/6e/Aurora_ES_flying_over_clouds_-_Crop.jpg/400px-Aurora_ES_flying_over_clouds_-_Crop.jpg.webp,"Starter, Pathfinder","Small
+(S2/XS
+)",1,3 SCU,https://starcitizen.tools/Aurora_ES
+Aurora LN,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/d/da/Aurora_LN_-_Flying_over_world.jpg/400px-Aurora_LN_-_Flying_over_world.jpg.webp,Light Fighter,"Small
+(S2/XS
+)",1,3 SCU,https://starcitizen.tools/Aurora_LN
+Aurora LX,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/5/51/Aurora_LX_flying_over_clouds_-_Crop.png/400px-Aurora_LX_flying_over_clouds_-_Crop.png.webp,Pathfinder,"Small
+(S2/XS
+)",1,3 SCU,https://starcitizen.tools/Aurora_LX
+Aurora MR,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/d/d4/Aurora_MR_flying_above_world_-_Crop.png/400px-Aurora_MR_flying_above_world_-_Crop.png.webp,Light Fighter,"Small
+(S2/XS
+)",1,3 SCU,https://starcitizen.tools/Aurora_MR
+Avenger Stalker,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/3/34/Avenger_Stalker_-_In_flight_promo_shot.jpg/400px-Avenger_Stalker_-_In_flight_promo_shot.jpg.webp,Interdiction,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Avenger_Stalker
+Avenger Titan,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/4/4b/Avenger_Titan_3.2_sale_Titan_01-Squashed.jpg/400px-Avenger_Titan_3.2_sale_Titan_01-Squashed.jpg.webp,Light Freight,"Small
+(S2/XS
+)",1,8 SCU,https://starcitizen.tools/Avenger_Titan
+Avenger Titan Renegade,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/5/50/Avenger_Titan_Renegade_3.2_sale_Renegade_01_-_cropped_and_adjusted.jpg/400px-Avenger_Titan_Renegade_3.2_sale_Renegade_01_-_cropped_and_adjusted.jpg.webp,Light Freight,"Small
+(S2/XS
+)",1,8 SCU,https://starcitizen.tools/Avenger_Titan_Renegade
+Avenger Warlock,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/4/44/Avenger_Warlock_3.2_sale_Warlock_10-Squashed.jpg/400px-Avenger_Warlock_3.2_sale_Warlock_10-Squashed.jpg.webp,Interdiction,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Avenger_Warlock
+Ballista,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/c/cb/Ballista_on_glassland_firing_weapons_-_cropped.jpg/400px-Ballista_on_glassland_firing_weapons_-_cropped.jpg.webp,Military,"Vehicle
+(S4/M
+)",1 – 2,0 SCU,https://starcitizen.tools/Ballista
+Ballista Dunestalker,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/c/c6/Ballista_Dunestalker_on_Hurston_with_weapons_pointing_upwards.jpg/400px-Ballista_Dunestalker_on_Hurston_with_weapons_pointing_upwards.jpg.webp,Military,"Vehicle
+(S4/M
+)",1 – 2,0 SCU,https://starcitizen.tools/Ballista_Dunestalker
+Ballista Snowblind,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/1/16/Ballista_Snowblind_firing_its_torpedo_-_Cropped_2.png/400px-Ballista_Snowblind_firing_its_torpedo_-_Cropped_2.png.webp,Military,"Vehicle
+(S4/M
+)",1 – 2,0 SCU,https://starcitizen.tools/Ballista_Snowblind
+Blade,Esperia,Flight ready,https://media.starcitizen.tools/thumb/4/4c/Blade-top-isc-2020-06-18.jpg/400px-Blade-top-isc-2020-06-18.jpg.webp,Light Fighter,Small,1,0 SCU,https://starcitizen.tools/Blade
+Buccaneer,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/a/ac/Buccaneer_-_3.10_-_Flying_over_Microtech.jpg/400px-Buccaneer_-_3.10_-_Flying_over_Microtech.jpg.webp,Interdiction,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Buccaneer
+C1 Spirit,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/9/95/Crusader_C1_Spirit_at_Winners_Circle.png/400px-Crusader_C1_Spirit_at_Winners_Circle.png.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 2,64 SCU,https://starcitizen.tools/C1_Spirit
+C2 Hercules Starlifter,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/c/cc/C2_Feature_Style_clouds.jpg/400px-C2_Feature_Style_clouds.jpg.webp,Heavy Freight,"Large
+(S5/L
+)",1 – 2,696 SCU,https://starcitizen.tools/C2_Hercules_Starlifter
+C8R Pisces Rescue,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/3/3f/Anvil_C8R_Pisces_loading.jpg/400px-Anvil_C8R_Pisces_loading.jpg.webp,Medical,"Small
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/C8R_Pisces_Rescue
+C8X Pisces Expedition,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/d/d5/Pisces_C8X_flying_over_mountainous_volcanic_world.jpg/400px-Pisces_C8X_flying_over_mountainous_volcanic_world.jpg.webp,Expedition,"Small
+(S1/XXS
+)",1 – 3,4 SCU,https://starcitizen.tools/C8X_Pisces_Expedition
+Carrack,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/9/92/Carrack_over_microTech_3.8.png/400px-Carrack_over_microTech_3.8.png.webp,Expedition,"Large
+(S5/L
+)",4 – 6,456 SCU,https://starcitizen.tools/Carrack
+Caterpillar,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/8/8b/Caterpillar_firing_guns_-_Front_Port.jpg/400px-Caterpillar_firing_guns_-_Front_Port.jpg.webp,Heavy Freight,"Large
+(S5/L
+)",2 – 4,576 SCU,https://starcitizen.tools/Caterpillar
+Caterpillar Best In Show Edition,Drake Interplanetary,Flight ready,,,,,,https://starcitizen.tools/Caterpillar_Best_In_Show_Edition
+Caterpillar Pirate Edition,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/7/7b/Caterpillar_Pirate_-_Landed_in_station_hangar.jpg/400px-Caterpillar_Pirate_-_Landed_in_station_hangar.jpg.webp,Heavy Freight,"Large
+(S5/L
+)",2 – 4,576 SCU,https://starcitizen.tools/Caterpillar_Pirate_Edition
+Centurion,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/b/b0/Centurion_-_In_battle_with_all_guns_firing.png/400px-Centurion_-_In_battle_with_all_guns_firing.png.webp,Combat,"Vehicle
+(S4/M
+)",1 – 2,0 SCU,https://starcitizen.tools/Centurion
+Constellation Andromeda,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/d/d7/Andromeda_flying_from_Station_-_Front_Starboard.jpg/400px-Andromeda_flying_from_Station_-_Front_Starboard.jpg.webp,"Medium Freight, Gunship","Large
+(S4/M
+)",3 – 4,96 SCU,https://starcitizen.tools/Constellation_Andromeda
+Constellation Aquila,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/7/7e/Aquila_-_QT_-_Rear_Port.jpg/400px-Aquila_-_QT_-_Rear_Port.jpg.webp,Expedition,"Large
+(S4/M
+)",3 – 4,96 SCU,https://starcitizen.tools/Constellation_Aquila
+Constellation Phoenix,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/1/17/Constellation-phoenix-flyby-01.jpg/400px-Constellation-phoenix-flyby-01.jpg.webp,Luxury Touring,"Large
+(S4/M
+)",3 – 4,80 SCU,https://starcitizen.tools/Constellation_Phoenix
+Constellation Phoenix Emerald,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/9/90/Constellation_Phoenix_Emerald_-_3.14_Update_-_cropped_and_adjusted.png/400px-Constellation_Phoenix_Emerald_-_3.14_Update_-_cropped_and_adjusted.png.webp,Touring,"Large
+(S4/M
+)",3 – 4,80 SCU,https://starcitizen.tools/Constellation_Phoenix_Emerald
+Constellation Taurus,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/9/9d/Constellation_Taurus_-_Flying_through_clouds.jpg/400px-Constellation_Taurus_-_Flying_through_clouds.jpg.webp,Medium Freight,"Large
+(S4/M
+)",3 – 4,168 SCU,https://starcitizen.tools/Constellation_Taurus
+Corsair,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/0/0e/SC-3.17_20221116_Corsair_Concept_Art_Recreation.png/400px-SC-3.17_20221116_Corsair_Concept_Art_Recreation.png.webp,Expedition,"Large
+(S4/M
+)",1 – 4,72 SCU,https://starcitizen.tools/Corsair
+Crucible,Anvil Aerospace,In concept,https://media.starcitizen.tools/thumb/4/40/Crucible_Repairs.jpg/400px-Crucible_Repairs.jpg.webp,Heavy Repair,Large,3 – 8,230 SCU,https://starcitizen.tools/Crucible
+CSV-SM,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/8/89/CSV-SM_driving_through_snowy_outpost_-_cropped.png/400px-CSV-SM_driving_through_snowy_outpost_-_cropped.png.webp,Ground transportation,"Vehicle
+(S1/XXS
+)",1,4 SCU,https://starcitizen.tools/CSV-SM
+Cutlass Black,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/8/87/CutlassBlack_TouchingDown.png/400px-CutlassBlack_TouchingDown.png.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 3,46 SCU,https://starcitizen.tools/Cutlass_Black
+Cutlass Black Best In Show Edition,Drake Interplanetary,Flight ready,,,,,,https://starcitizen.tools/Cutlass_Black_Best_In_Show_Edition
+Cutlass Blue,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/d/d4/SKU_Cutlass_Blue.jpg/400px-SKU_Cutlass_Blue.jpg.webp,Interdiction,"Medium
+(S3/S
+)",1 – 3,12 SCU,https://starcitizen.tools/Cutlass_Blue
+Cutlass Red,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/a/ac/Cutlass_Red_Squad_Concept.jpg/400px-Cutlass_Red_Squad_Concept.jpg.webp,Medical,"Medium
+(S3/S
+)",2,12 SCU,https://starcitizen.tools/Cutlass_Red
+Cutlass Steel,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/7/72/Drake_cutlass_steel_weapon.jpg/400px-Drake_cutlass_steel_weapon.jpg.webp,Dropship,"Medium
+(S3/S
+)",1 – 3,0 SCU,https://starcitizen.tools/Cutlass_Steel
+Cutter,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/4/4a/Cutter_flying_over_clouds_-_Cut.jpg/400px-Cutter_flying_over_clouds_-_Cut.jpg.webp,"Starter, Light Freight","Small
+(S2/XS
+)",1,4 SCU,https://starcitizen.tools/Cutter
+Cutter Rambler,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/0/03/Cutter_Rambler_flying_over_valley_-_Cut.png/400px-Cutter_Rambler_flying_over_valley_-_Cut.png.webp,"Starter, Expedition","Small
+(S2/XS
+)",1,2 SCU,https://starcitizen.tools/Cutter_Rambler
+Cutter Scout,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/a/a8/Cutter_Scout_flying_above_the_clouds_-_Cut.jpg/400px-Cutter_Scout_flying_above_the_clouds_-_Cut.jpg.webp,"Reconnaissance, Intelligence","Small
+(S2/XS
+)",1,2 SCU,https://starcitizen.tools/Cutter_Scout
+Cyclone,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/d/d0/Cyclone_in_RandY_-_Front_Starboard.jpg/400px-Cyclone_in_RandY_-_Front_Starboard.jpg.webp,"Exploration, Recon","Vehicle
+(S1/XXS
+)",1 – 2,1 SCU,https://starcitizen.tools/Cyclone
+Cyclone AA,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/4/4b/Cyclone_AA_in_2948_Expo_-_Front.jpg/400px-Cyclone_AA_in_2948_Expo_-_Front.jpg.webp,Anti-aircraft,"Vehicle
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/Cyclone_AA
+Cyclone MT,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/e/ee/Cyclone-MT_Concept_Driving.jpg/400px-Cyclone-MT_Concept_Driving.jpg.webp,Assault,"Vehicle
+(S1/XXS
+)",1 – 3,0 SCU,https://starcitizen.tools/Cyclone_MT
+Cyclone RC,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/3/3b/Cyclone_RC_in_RandY_-_Front_Starboard.jpg/400px-Cyclone_RC_in_RandY_-_Front_Starboard.jpg.webp,Racing,"Vehicle
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/Cyclone_RC
+Cyclone RN,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/4/4f/Cyclone_RN_in_RandY_-_Front_Starboard.png/400px-Cyclone_RN_in_RandY_-_Front_Starboard.png.webp,Recon,"Vehicle
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/Cyclone_RN
+Cyclone TR,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/7/7d/Cyclone_TR_on_Aberdeen_-_Front_Starboard_1_-_Cut.png/400px-Cyclone_TR_on_Aberdeen_-_Front_Starboard_1_-_Cut.png.webp,Combat,"Vehicle
+(S1/XXS
+)",1 – 3,0 SCU,https://starcitizen.tools/Cyclone_TR
+Defender,Banu Souli,Flight ready,https://media.starcitizen.tools/thumb/1/17/Defender_-_Firing_over_Delemar.jpg/400px-Defender_-_Firing_over_Delemar.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Defender
+Dragonfly,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/c/c7/Dragonfly_x2_flying_away_from_explosion.jpg/400px-Dragonfly_x2_flying_away_from_explosion.jpg.webp,Racing,"Snub
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/Dragonfly
+Dragonfly Yellowjacket,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/4/46/Dragonfly_YJ_flying_over_ground_shooting_back.png/400px-Dragonfly_YJ_flying_over_ground_shooting_back.png.webp,Racing,"Snub
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/Dragonfly_Yellowjacket
+E1 Spirit,Crusader Industries,Active production,https://media.starcitizen.tools/thumb/d/d4/Spirit_E1_flying_fast_over_Orison_-_cropped.jpg/400px-Spirit_E1_flying_fast_over_Orison_-_cropped.jpg.webp,Passenger,Medium,1 – 2,0 SCU,https://starcitizen.tools/E1_Spirit
+Eclipse,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/b/bd/Aegis_Eclipse_over_Magda.png/400px-Aegis_Eclipse_over_Magda.png.webp,Stealth Bomber,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Eclipse
+Endeavor,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/d/d6/Endeavor.jpg/400px-Endeavor.jpg.webp,Heavy Science,Capital,3 – 5,500 SCU,https://starcitizen.tools/Endeavor
+Expanse,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/2/2b/Expanse_-_x2_flying_through_debris_field_-_Front.png/400px-Expanse_-_x2_flying_through_debris_field_-_Front.png.webp,Refinery,Medium,1,64 SCU,https://starcitizen.tools/Expanse
+F7C Hornet Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/b/b6/F7C_-_Landed_in_Area18_hangar_-_Front_Port.jpg/400px-F7C_-_Landed_in_Area18_hangar_-_Front_Port.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,2 SCU,https://starcitizen.tools/F7C_Hornet_Mk_I
+F7C Hornet Mk II,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/9/95/F7C_mkII_flying_over_outpost_firing_weapons_-_Colour_and_contrast_adjusted_-_Cropped.png/400px-F7C_mkII_flying_over_outpost_firing_weapons_-_Colour_and_contrast_adjusted_-_Cropped.png.webp,Medium Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/F7C_Hornet_Mk_II
+F7C Hornet Wildfire Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/8/89/F7C_Wildfire_-_Flying_through_debris_field_firing_guns_-_cropped_and_adjusted.jpg/400px-F7C_Wildfire_-_Flying_through_debris_field_firing_guns_-_cropped_and_adjusted.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,2 SCU,https://starcitizen.tools/F7C_Hornet_Wildfire_Mk_I
+F7C-M Super Hornet Heartseeker Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/3/34/Heartseeker_Hornet_Isometric.jpg/400px-Heartseeker_Hornet_Isometric.jpg.webp,Combat,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/F7C-M_Super_Hornet_Heartseeker_Mk_I
+F7C-M Super Hornet Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/d/d6/Super_Hornet_over_Cellin_3.9.1.png/400px-Super_Hornet_over_Cellin_3.9.1.png.webp,Medium Fighter,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/F7C-M_Super_Hornet_Mk_I
+F7C-R Hornet Tracker Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/6/6b/F7C-R_Tracker_flying_over_mountains.jpg/400px-F7C-R_Tracker_flying_over_mountains.jpg.webp,Pathfinder,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/F7C-R_Hornet_Tracker_Mk_I
+F7C-R Hornet Tracker Mk II,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/b/b2/F7C-R_Tracker_MkII_scanning_ground_vehicles_-_cropped_and_adjusted.jpg/400px-F7C-R_Tracker_MkII_scanning_ground_vehicles_-_cropped_and_adjusted.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/F7C-R_Hornet_Tracker_Mk_II
+F7C-S Hornet Ghost Mk I,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/3/36/F7C-S_Hornet_Ghost_in_debris_field_-_Front_Port_-_cropped_and_adjusted.png/400px-F7C-S_Hornet_Ghost_in_debris_field_-_Front_Port_-_cropped_and_adjusted.png.webp,Stealth Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/F7C-S_Hornet_Ghost_Mk_I
+F7C-S Hornet Ghost Mk II,Anvil Aerospace,Flight ready,,,,,,https://starcitizen.tools/F7C-S_Hornet_Ghost_Mk_II
+F8C Lightning,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/2/2f/F8C_flying_over_river_through_forest_-_Cropped.png/400px-F8C_flying_over_river_through_forest_-_Cropped.png.webp,Heavy fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/F8C_Lightning
+Fortune,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/7/73/Fortune_salvaging_crash_site_-_cropped.jpg/400px-Fortune_salvaging_crash_site_-_cropped.jpg.webp,Salvage,Small,1,12 SCU,https://starcitizen.tools/Fortune
+Freelancer,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/9/9f/Freelancer.jpg/400px-Freelancer.jpg.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 4,66 SCU,https://starcitizen.tools/Freelancer
+Freelancer DUR,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/9/98/MISC-freelancer-dur-side-3.4.1.jpg/400px-MISC-freelancer-dur-side-3.4.1.jpg.webp,Expedition,"Medium
+(S3/S
+)",1 – 4,36 SCU,https://starcitizen.tools/Freelancer_DUR
+Freelancer MAX,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/9/96/Freelancer_MAX_-_flying_above_grey_clouds.jpg/400px-Freelancer_MAX_-_flying_above_grey_clouds.jpg.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 4,120 SCU,https://starcitizen.tools/Freelancer_MAX
+Freelancer MIS,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/0/06/Freelancer_MIS_landed_at_frozen_outpost.jpg/400px-Freelancer_MIS_landed_at_frozen_outpost.jpg.webp,Gunship,"Medium
+(S3/S
+)",1 – 4,36 SCU,https://starcitizen.tools/Freelancer_MIS
+Fury,Mirai,Flight ready,https://media.starcitizen.tools/thumb/9/9f/Fury_Landed_in_Port_Tressler_-_Blurred_BG.jpg/400px-Fury_Landed_in_Port_Tressler_-_Blurred_BG.jpg.webp,Snub Fighter,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Fury
+Fury LX,Mirai,Flight ready,https://media.starcitizen.tools/thumb/c/c2/Fury_LX_x2_flying_low_and_fast_by_a_crashed_M50_-_Cut.jpg/400px-Fury_LX_x2_flying_low_and_fast_by_a_crashed_M50_-_Cut.jpg.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Fury_LX
+Fury MX,Mirai,Flight ready,https://media.starcitizen.tools/thumb/8/86/Fury_Miru_Concept_Art.png/400px-Fury_Miru_Concept_Art.png.webp,Snub Fighter,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Fury_MX
+G12,Origin Jumpworks,Long term production,https://media.starcitizen.tools/thumb/2/28/G12_in_garage_-_Cut.png/400px-G12_in_garage_-_Cut.png.webp,Touring,Vehicle,1 – 2,2 SCU,https://starcitizen.tools/G12
+G12a,Origin Jumpworks,Long term production,https://media.starcitizen.tools/thumb/4/4c/Origin_Rover_Armour_Promo_A_GC_01B-1-Min.jpg/400px-Origin_Rover_Armour_Promo_A_GC_01B-1-Min.jpg.webp,Military,Vehicle,1 – 2,0 SCU,https://starcitizen.tools/G12a
+G12r,Origin Jumpworks,Long term production,https://media.starcitizen.tools/thumb/4/4b/ORIG_Rover_Promo_Racing_Forrest_PJ03-Min.jpg/400px-ORIG_Rover_Promo_Racing_Forrest_PJ03-Min.jpg.webp,Racing,Vehicle,1 – 2,0 SCU,https://starcitizen.tools/G12r
+Galaxy,Roberts Space Industries,In concept,https://media.starcitizen.tools/thumb/1/1b/RSI_Galaxy_concept_-_front_quarter_-_Cut.jpg/400px-RSI_Galaxy_concept_-_front_quarter_-_Cut.jpg.webp,Modular,Large,6,64 SCU,https://starcitizen.tools/Galaxy
+Genesis Starliner,Crusader Industries,In concept,https://media.starcitizen.tools/thumb/f/f0/Genesis_Starliner_-_Flying_away_from_Terra_Prime.jpg/400px-Genesis_Starliner_-_Flying_away_from_Terra_Prime.jpg.webp,Passenger,Large,2 – 8,300 SCU,https://starcitizen.tools/Genesis_Starliner
+Gladiator,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/f/f0/Gladator_flying_over_world.png/400px-Gladator_flying_over_world.png.webp,Bomber,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Gladiator
+Gladius,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/0/0c/Gladius_-_Flying_away_from_world_through_debris.jpg/400px-Gladius_-_Flying_away_from_world_through_debris.jpg.webp,Light Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Gladius
+Gladius Pirate,Aegis Dynamics,Flight ready,,,,,,https://starcitizen.tools/Gladius_Pirate
+Gladius Valiant,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/7/76/Gladius_Valiants_x2_flying_in_formation.jpg/400px-Gladius_Valiants_x2_flying_in_formation.jpg.webp,Light Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Gladius_Valiant
+Glaive,Esperia,Flight ready,,,,,,https://starcitizen.tools/Glaive
+Guardian,Mirai,Flight ready,https://media.starcitizen.tools/thumb/0/02/Guardian_landed_in_ArcCorp_with_pilot_walking_towards_it_-_cropped_and_adjusted.jpg/400px-Guardian_landed_in_ArcCorp_with_pilot_walking_towards_it_-_cropped_and_adjusted.jpg.webp,Heavy fighter,Small,1,0 SCU,https://starcitizen.tools/Guardian
+Guardian QI,Mirai,Flight ready,https://media.starcitizen.tools/thumb/2/22/Guardian_QI_over_world_firing_weapons_-_cropped_and_adjusted.jpg/400px-Guardian_QI_over_world_firing_weapons_-_cropped_and_adjusted.jpg.webp,Heavy Fighter,Small,1,0 SCU,https://starcitizen.tools/Guardian_QI
+Hammerhead,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/c/c8/Ext_03_03-Min.png/400px-Ext_03_03-Min.png.webp,Heavy Gun Ship,"Large
+(S5/L
+)",3 – 9,40 SCU,https://starcitizen.tools/Hammerhead
+Hammerhead Best In Show Edition,Aegis Dynamics,Flight ready,,,,,,https://starcitizen.tools/Hammerhead_Best_In_Show_Edition
+Hawk,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/6/6a/Star_Citizen-_Low_Flying_Hawk.png/400px-Star_Citizen-_Low_Flying_Hawk.png.webp,Light Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Hawk
+Herald,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/3/3e/Herald_landed_on_microTech_3.9.png/400px-Herald_landed_on_microTech_3.9.png.webp,Medium Data,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Herald
+HoverQuad,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/3/32/HoverQuad_%28x2%29_flying_through_narrow_Canyon.png/400px-HoverQuad_%28x2%29_flying_through_narrow_Canyon.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/HoverQuad
+Hull A,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/9/9f/Hull-A_taking_off_from_Aberdeen_outpost.jpg/400px-Hull-A_taking_off_from_Aberdeen_outpost.jpg.webp,Medium Freight,"Small
+(S2/XS
+)",1,64 SCU,https://starcitizen.tools/Hull_A
+Hull B,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/a/af/HullBLoaded.jpg/400px-HullBLoaded.jpg.webp,Heavy Freight,Medium,1 – 2,384 SCU,https://starcitizen.tools/Hull_B
+Hull C,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/c/ca/Fully_Loaded_Hull_C.png/400px-Fully_Loaded_Hull_C.png.webp,Heavy Freight,"Large
+(S5/L
+)",2 – 4,"4,608 SCU",https://starcitizen.tools/Hull_C
+Hull D,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/8/8d/Hull_D_-_Docked_at_large_station.jpg/400px-Hull_D_-_Docked_at_large_station.jpg.webp,Heavy Freight,Capital,1 – 5,"20,736 SCU",https://starcitizen.tools/Hull_D
+Hull E,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/0/06/HullEFront.jpg/400px-HullEFront.jpg.webp,Heavy Freight,Capital,1 – 5,"98,304 SCU",https://starcitizen.tools/Hull_E
+Hurricane,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/8/80/Hurricane_3.2_flyable_sale_Action_02-Squashed.jpg/400px-Hurricane_3.2_flyable_sale_Action_02-Squashed.jpg.webp,Heavy Fighter,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Hurricane
+Idris-K,Aegis Dynamics,In concept,https://media.starcitizen.tools/thumb/2/25/Ares_x5_flying_towards_Idris_K.jpg/400px-Ares_x5_flying_towards_Idris_K.jpg.webp,Frigate,Capital,8 – 28,995 SCU,https://starcitizen.tools/Idris-K
+Idris-M,Aegis Dynamics,Active for Squadron 42,https://media.starcitizen.tools/thumb/8/8a/UEES_Stanton_-_Isometric.jpg/400px-UEES_Stanton_-_Isometric.jpg.webp,Frigate,"Capital
+(S6/XL
+)",8 – 28,831 SCU,https://starcitizen.tools/Idris-M
+Idris-P,Aegis Dynamics,Active for Squadron 42,https://media.starcitizen.tools/thumb/d/d9/Idris-P_Concept_Clouds_-_Cropped.jpg/400px-Idris-P_Concept_Clouds_-_Cropped.jpg.webp,Frigate,Capital,8 – 28,995 SCU,https://starcitizen.tools/Idris-P
+Intrepid,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/9/9a/Intrepid_on_Crusader_landing_pad_-_cropped.jpg/400px-Intrepid_on_Crusader_landing_pad_-_cropped.jpg.webp,Starter/Light Freight,"Small
+(S2/XS
+)",1,8 SCU,https://starcitizen.tools/Intrepid
+Ironclad,Drake Interplanetary,Active production,https://media.starcitizen.tools/thumb/d/d9/Ironclad_x2_floating_over_sandy_world_-_Cropped.jpg/400px-Ironclad_x2_floating_over_sandy_world_-_Cropped.jpg.webp,Armored Freight,Large,1 – 6,"1,536 SCU",https://starcitizen.tools/Ironclad
+Ironclad Assault,Drake Interplanetary,In concept,https://media.starcitizen.tools/thumb/2/21/Ironclad_Assault_flying_low_over_world_firing_weapons_-_Cropped.jpg/400px-Ironclad_Assault_flying_low_over_world_firing_weapons_-_Cropped.jpg.webp,Combined Arms Platform,Large,1 – 6,"1,152 SCU",https://starcitizen.tools/Ironclad_Assault
+Javelin,Aegis Dynamics,Active for Squadron 42,https://media.starcitizen.tools/thumb/8/86/Javelin-fireworks-invictus-2950.jpg/400px-Javelin-fireworks-invictus-2950.jpg.webp,Destroyer,"Capital
+(S6/XL
+)",12 – 80,"5,400 SCU",https://starcitizen.tools/Javelin
+Khartu-al,Aopoa,Flight ready,https://media.starcitizen.tools/thumb/a/ad/Khartu-Al_x2_firing_weapons_flying_over_mountains.jpg/400px-Khartu-Al_x2_firing_weapons_flying_over_mountains.jpg.webp,Light Fighter,"Small
+(S3/S
+)",1,0 SCU,https://starcitizen.tools/Khartu-al
+Kraken,Drake Interplanetary,In production,https://media.starcitizen.tools/thumb/0/03/Kraken_AboveShipMisty_Concept.jpg/400px-Kraken_AboveShipMisty_Concept.jpg.webp,"Multi-Role, Light Carrier",Capital,10,"3,792 SCU",https://starcitizen.tools/Kraken
+Kraken Privateer,Drake Interplanetary,In concept,https://media.starcitizen.tools/thumb/9/99/Privateer_-_Landed_Rear_Port.jpg/400px-Privateer_-_Landed_Rear_Port.jpg.webp,"Multi-Role, Light Carrier",Capital,1 – 10,768 SCU,https://starcitizen.tools/Kraken_Privateer
+Legionnaire,Anvil Aerospace,Active production,https://media.starcitizen.tools/thumb/f/f1/Legionnaire_flying_formation.jpg/400px-Legionnaire_flying_formation.jpg.webp,Boarding,Small,1 – 2,0 SCU,https://starcitizen.tools/Legionnaire
+Liberator,Anvil Aerospace,In concept,https://media.starcitizen.tools/thumb/d/d3/Anvil-liberator-promo-05.png/400px-Anvil-liberator-promo-05.png.webp,Light Carrier,Large,1 – 2,400 SCU,https://starcitizen.tools/Liberator
+Lynx,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/1/17/Lynx_on_platform_in_nightime_Lorville_-_Cut.jpg/400px-Lynx_on_platform_in_nightime_Lorville_-_Cut.jpg.webp,"Luxury Transport, Explorer","Vehicle
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/Lynx
+M2 Hercules Starlifter,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/8/8e/M2_Gallery_Fly_Front.jpg/400px-M2_Gallery_Fly_Front.jpg.webp,Military Transport,"Large
+(S5/L
+)",1 – 3,522 SCU,https://starcitizen.tools/M2_Hercules_Starlifter
+M50,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/6/62/M50_Hangar.jpg/400px-M50_Hangar.jpg.webp,Racing,"Small
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/M50
+Mantis,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/8/82/RSI_Mantis_Hasgaha_3.7_2019-11-06.png/400px-RSI_Mantis_Hasgaha_3.7_2019-11-06.png.webp,Interdictor,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Mantis
+Merchantman,Banu Souli,In concept,https://media.starcitizen.tools/thumb/8/8c/Merchantman_Concept_-_Citizen_Con_2021.png/400px-Merchantman_Concept_-_Citizen_Con_2021.png.webp,Heavy Freight,Large,4 – 8,"2,880 SCU",https://starcitizen.tools/Merchantman
+Mercury Star Runner,Crusader Industries,Flight ready,https://media.starcitizen.tools/thumb/b/b8/Mercury_Star_Runner_over_Hurston.png/400px-Mercury_Star_Runner_over_Hurston.png.webp,"Medium Data, Medium Cargo","Large
+(S4/M
+)",2 – 3,"Medium Data, Medium Cargo",https://starcitizen.tools/Mercury_Star_Runner
+MOLE,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/f/f0/Mole_flying_through_space_-_Isometric.jpg/400px-Mole_flying_through_space_-_Isometric.jpg.webp,"Mining, Prospecting","Medium
+(S3/S
+)",2 – 4,96 SCU,https://starcitizen.tools/MOLE
+MOLE Carbon,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/0/01/MOLE_Carbon_-_Flying_front_starboard_-_cropped_and_adjusted.jpg/400px-MOLE_Carbon_-_Flying_front_starboard_-_cropped_and_adjusted.jpg.webp,"Mining, Prospecting","Medium
+(S3/S
+)",2 – 4,96 SCU,https://starcitizen.tools/MOLE_Carbon
+MOLE Talus,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/1/18/MOLE_Talus_-_Flying_front_starboard_-_cropped_and_adjusted.jpg/400px-MOLE_Talus_-_Flying_front_starboard_-_cropped_and_adjusted.jpg.webp,"Mining, Prospecting","Medium
+(S3/S
+)",2 – 4,96 SCU,https://starcitizen.tools/MOLE_Talus
+MPUV Cargo,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/6/66/SC-3.22_20240405_MPUV-Cargo-over-water.png/400px-SC-3.22_20240405_MPUV-Cargo-over-water.png.webp,Light Freight,"Snub
+(S1/XXS
+)",1,2 SCU,https://starcitizen.tools/MPUV_Cargo
+MPUV Personnel,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/4/43/Mpuv-1p-flight.jpg/400px-Mpuv-1p-flight.jpg.webp,Passenger,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/MPUV_Personnel
+MPUV Tractor,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/2/21/MPUV-1T_flying_through_Orison_cargo_platform_-_Cropped.png/400px-MPUV-1T_flying_through_Orison_cargo_platform_-_Cropped.png.webp,Cargo Loader,"Snub
+(S1/XXS
+)",1,Cargo Loader,https://starcitizen.tools/MPUV_Tractor
+Mule,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/b/b7/Mule_front_%27claw%27_holding_a_cargo_box_-_Cropped.jpg/400px-Mule_front_%27claw%27_holding_a_cargo_box_-_Cropped.jpg.webp,Transport,"Vehicle
+(S1/XXS
+)",1,1 SCU,https://starcitizen.tools/Mule
+Mustang Alpha,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/5/52/Mustang_Alpha_flying_over_Lorville.jpg/400px-Mustang_Alpha_flying_over_Lorville.jpg.webp,Cargo,"Small
+(S2/XS
+)",1,Cargo,https://starcitizen.tools/Mustang_Alpha
+Mustang Alpha Vindicator,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/2/2a/Mustang_Alpha_%27Vindicator%27_flying_above_world_with_other_variants.jpg/400px-Mustang_Alpha_%27Vindicator%27_flying_above_world_with_other_variants.jpg.webp,"Starter, Light Freight","Small
+(S2/XS
+)",1,4 SCU,https://starcitizen.tools/Mustang_Alpha_Vindicator
+Mustang Beta,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/e/ea/Mustang_Beta_-_Flying_past_distant_world.jpg/400px-Mustang_Beta_-_Flying_past_distant_world.jpg.webp,Pathfinder,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Mustang_Beta
+Mustang Delta,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/5/5b/Mustang_Delta_Invictus_2950_promo_shot_-_cropped_contrast_adjusted.png/400px-Mustang_Delta_Invictus_2950_promo_shot_-_cropped_contrast_adjusted.png.webp,Light Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Mustang_Delta
+Mustang Gamma,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/9/96/Mustang_Gamma_flying_over_forest.jpg/400px-Mustang_Gamma_flying_over_forest.jpg.webp,Racing,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Mustang_Gamma
+Mustang Omega,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/a/a7/Mustang_Omega_in_hangar.png/400px-Mustang_Omega_in_hangar.png.webp,Racing,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Mustang_Omega
+Nautilus,Aegis Dynamics,In concept,https://media.starcitizen.tools/thumb/7/7c/Nautilus_-_Deploying_mines_-_Front_Starboard.png/400px-Nautilus_-_Deploying_mines_-_Front_Starboard.png.webp,Minelayer,Large,4 – 8,64 SCU,https://starcitizen.tools/Nautilus
+Nomad,Consolidated Outland,Flight ready,https://media.starcitizen.tools/thumb/1/1f/Nomad_flying_above_Crusader_clouds_-_Crop.jpg/400px-Nomad_flying_above_Crusader_clouds_-_Crop.jpg.webp,Starter,"Small
+(S2/XS
+)",1,24 SCU,https://starcitizen.tools/Nomad
+Nova,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/7/79/Nova_x2_on_battlefield_-_Cropped.png/400px-Nova_x2_on_battlefield_-_Cropped.png.webp,Combat,"Vehicle
+(S4/M
+)",1 – 3,0 SCU,https://starcitizen.tools/Nova
+Nox,Aopoa,Flight ready,https://media.starcitizen.tools/thumb/5/52/Nox_x2_flying_fast_close_to_Daymar_hills.jpg/400px-Nox_x2_flying_fast_close_to_Daymar_hills.jpg.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Nox
+Nox Kue,Aopoa,Flight ready,https://media.starcitizen.tools/thumb/a/ad/Nox_Kue_in_RandY_-_Port.png/400px-Nox_Kue_in_RandY_-_Port.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Nox_Kue
+Odyssey,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/8/82/MISC_Odyssey_Promo_flying_away_from_planet.jpg/400px-MISC_Odyssey_Promo_flying_away_from_planet.jpg.webp,Expedition,Capital,4 – 6,252 SCU,https://starcitizen.tools/Odyssey
+Orion,Roberts Space Industries,In concept,https://media.starcitizen.tools/thumb/2/20/The_Shipyard_-_Careers_and_Roles_-_Resources2.jpg/400px-The_Shipyard_-_Careers_and_Roles_-_Resources2.jpg.webp,Heavy Mining,Capital,4 – 7,384 SCU,https://starcitizen.tools/Orion
+P-52 Merlin,Kruger Intergalactic,Flight ready,https://media.starcitizen.tools/thumb/a/a6/P-52_-_Undocking_from_Constellation_over_world.jpg/400px-P-52_-_Undocking_from_Constellation_over_world.jpg.webp,Snub Fighter,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/P-52_Merlin
+P-72 Archimedes,Kruger Intergalactic,Flight ready,https://media.starcitizen.tools/thumb/d/d8/Archimedes_-_Landed_on_pad_-_Above_Port.jpg/400px-Archimedes_-_Landed_on_pad_-_Above_Port.jpg.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/P-72_Archimedes
+P-72 Archimedes Emerald,Kruger Intergalactic,Flight ready,https://media.starcitizen.tools/thumb/4/49/P-72_Archimedes_Emerald_flying_fast_over_Microtech_mountains.png/400px-P-72_Archimedes_Emerald_flying_fast_over_Microtech_mountains.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/P-72_Archimedes_Emerald
+Paladin,Anvil Aerospace,In concept,https://media.starcitizen.tools/thumb/7/70/Paladin_x2_flying_fast_over_structure_-_cropped_and_adjusted.png/400px-Paladin_x2_flying_fast_over_structure_-_cropped_and_adjusted.png.webp,Gunship,Medium,1 – 4,0 SCU,https://starcitizen.tools/Paladin
+Perseus,Roberts Space Industries,Active production,https://media.starcitizen.tools/thumb/3/3b/RSI-Perseus-promo_01.jpg/400px-RSI-Perseus-promo_01.jpg.webp,Heavy Gunship,Large,1 – 6,50 SCU,https://starcitizen.tools/Perseus
+Pioneer,Consolidated Outland,Active production,https://media.starcitizen.tools/thumb/9/9b/Pioneer_at_mountainous_outpost_-_cropped.png/400px-Pioneer_at_mountainous_outpost_-_cropped.png.webp,Heavy Construction,Capital,4 – 8,"1,000 SCU",https://starcitizen.tools/Pioneer
+Polaris,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/d/d2/Polaris_flying_through_asteroid_field_firing_torpedoes_and_missiles_-_cropped.png/400px-Polaris_flying_through_asteroid_field_firing_torpedoes_and_missiles_-_cropped.png.webp,Corvette (Militia / Patrol),"Capital
+(S6/XL
+)",6 – 12,576 SCU,https://starcitizen.tools/Polaris
+Prospector,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/d/dd/Prospector_-_Hovering_mining_on_cliffside_1.jpg/400px-Prospector_-_Hovering_mining_on_cliffside_1.jpg.webp,"Mining, Prospecting","Small
+(S2/XS
+)",1,32 SCU,https://starcitizen.tools/Prospector
+Prowler,Esperia,Flight ready,https://media.starcitizen.tools/thumb/a/a4/Prowler_-_Hovering_over_landscape.jpg/400px-Prowler_-_Hovering_over_landscape.jpg.webp,Dropship,"Medium
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/Prowler
+PTV,Greycat Industrial,Flight ready,https://media.starcitizen.tools/thumb/e/e0/PTV_-_Updated_3D_concept.png/400px-PTV_-_Updated_3D_concept.png.webp,Touring,"Vehicle
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/PTV
+Pulse,Mirai,Flight ready,https://media.starcitizen.tools/thumb/8/8e/Pulse_x2_fly_fast_through_dusty_world_firing_guns.png/400px-Pulse_x2_fly_fast_through_dusty_world_firing_guns.png.webp,Combat,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Pulse
+Pulse LX,Mirai,Flight ready,https://media.starcitizen.tools/thumb/6/6f/Pulse_LX_flying_through_city_cropped.png/400px-Pulse_LX_flying_through_city_cropped.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Pulse_LX
+RAFT,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/c/c1/RAFT_-_Flying_over_Lorville.jpg/400px-RAFT_-_Flying_over_Lorville.jpg.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 2,96 SCU,https://starcitizen.tools/RAFT
+Railen,Gatac Manufacture,Long term production,https://media.starcitizen.tools/thumb/7/72/Railen_flying_through_clouds_-_Cut_and_contrast_adjusted.jpg/400px-Railen_flying_through_clouds_-_Cut_and_contrast_adjusted.jpg.webp,Medium Freight,Large,1 – 4,320 SCU,https://starcitizen.tools/Railen
+Ranger CV,Tumbril Land Systems,In concept,https://media.starcitizen.tools/thumb/0/0b/Ranger_Concept_Racing.jpg/400px-Ranger_Concept_Racing.jpg.webp,Touring,Vehicle,1,0.375 SCU,https://starcitizen.tools/Ranger_CV
+Ranger RC,Tumbril Land Systems,In concept,https://media.starcitizen.tools/thumb/2/25/Ranger_RC_with_NPC_in_front_of_signs.jpg/400px-Ranger_RC_with_NPC_in_front_of_signs.jpg.webp,Racing,Vehicle,1,0 SCU,https://starcitizen.tools/Ranger_RC
+Ranger TR,Tumbril Land Systems,In concept,https://media.starcitizen.tools/thumb/7/7f/Ranger_TR_moving_fast_in_dark_firing_guns.jpg/400px-Ranger_TR_moving_fast_in_dark_firing_guns.jpg.webp,Combat,Vehicle,1,0 SCU,https://starcitizen.tools/Ranger_TR
+Razor,Mirai,Flight ready,https://media.starcitizen.tools/thumb/6/64/Mirai_Razor_landed_in_hangar_-_cropped.png/400px-Mirai_Razor_landed_in_hangar_-_cropped.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Razor
+Razor EX,Mirai,Flight ready,https://media.starcitizen.tools/thumb/0/04/Razor_EX_-_Flying_low_over_grassland.jpg/400px-Razor_EX_-_Flying_low_over_grassland.jpg.webp,Stealth,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Razor_EX
+Razor LX,Mirai,Flight ready,https://media.starcitizen.tools/thumb/1/19/Razor_LX_moving_fast_against_blurred_Microtech_background.png/400px-Razor_LX_moving_fast_against_blurred_Microtech_background.png.webp,Luxury,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Razor_LX
+Reclaimer,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/f/f5/Reclaimer_-_Near_world_lookings_at_wreckage.jpg/400px-Reclaimer_-_Near_world_lookings_at_wreckage.jpg.webp,Heavy Salvage,"Capital
+(S6/XL
+)",4 – 5,180 SCU,https://starcitizen.tools/Reclaimer
+Reclaimer Best In Show Edition,Aegis Dynamics,Flight ready,,,,,,https://starcitizen.tools/Reclaimer_Best_In_Show_Edition
+Redeemer,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/c/cb/Redeemer_-_Flying_x2_though_canyon_attacking_Cutlass%27s.jpg/400px-Redeemer_-_Flying_x2_though_canyon_attacking_Cutlass%27s.jpg.webp,Gunship,"Large
+(S4/M
+)",3 – 4,2 SCU,https://starcitizen.tools/Redeemer
+Reliant Kore,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/b/ba/Reliant_Kore_Landing_in_New_Babbage_Alpha_3.9.jpg/400px-Reliant_Kore_Landing_in_New_Babbage_Alpha_3.9.jpg.webp,"Starter, Light Freight","Medium
+(S3/S
+)",1 – 2,6 SCU,https://starcitizen.tools/Reliant_Kore
+Reliant Mako,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/9/9f/MISC_Reliant_Mako_Landing_at_Area11.png/400px-MISC_Reliant_Mako_Landing_at_Area11.png.webp,Reporting,"Medium
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/Reliant_Mako
+Reliant Sen,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/2/2f/Reliant_Sen_Formation_Alpha_3.9.jpg/400px-Reliant_Sen_Formation_Alpha_3.9.jpg.webp,Light Science,"Medium
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/Reliant_Sen
+Reliant Tana,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/b/b7/Reliant_Tana_Formation_Alpha_3.9.jpg/400px-Reliant_Tana_Formation_Alpha_3.9.jpg.webp,Light Fighter,"Medium
+(S3/S
+)",1 – 2,1 SCU,https://starcitizen.tools/Reliant_Tana
+Retaliator,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/4/4a/Retaliator_x2_flying_over_cloud_firing_torpedoes_-_cropped_and_adjusted.png/400px-Retaliator_x2_flying_over_cloud_firing_torpedoes_-_cropped_and_adjusted.png.webp,Modular Gunship,"Large
+(S4/M
+)",4 – 7,0 SCU,https://starcitizen.tools/Retaliator
+ROC,Greycat Industrial,Flight ready,https://media.starcitizen.tools/thumb/6/63/Grin_ROC_Gallery_Surface_CaveMining.jpg/400px-Grin_ROC_Gallery_Surface_CaveMining.jpg.webp,Mining,"Vehicle
+(S1/XXS
+)",1,0.8 SCU,https://starcitizen.tools/ROC
+ROC-DS,Greycat Industrial,Playable,https://media.starcitizen.tools/thumb/6/62/GRIN_ROC_DS_TopBanner_-_Crop.png/400px-GRIN_ROC_DS_TopBanner_-_Crop.png.webp,Mining,"Vehicle
+(S1/XXS
+)",1 – 2,3.5 SCU,https://starcitizen.tools/ROC-DS
+Sabre,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/c/c7/Sabre_-_Flying_with_all_guns_firing.jpg/400px-Sabre_-_Flying_with_all_guns_firing.jpg.webp,Stealth Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Sabre
+Sabre Comet,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/f/fd/Sabre_Comet_-_Flying_away_from_world_through_debris_field.jpg/400px-Sabre_Comet_-_Flying_away_from_world_through_debris_field.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Sabre_Comet
+Sabre Firebird,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/6/61/Sabre_Firebird_flying_through_clouds_with_sun_behind_-_Cropped.jpg/400px-Sabre_Firebird_flying_through_clouds_with_sun_behind_-_Cropped.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Sabre_Firebird
+Sabre Peregrine,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/1/12/Sabre_Peregrine_flying_fast_over_Teasa_Spaceport_-_Rear_Port.jpg/400px-Sabre_Peregrine_flying_fast_over_Teasa_Spaceport_-_Rear_Port.jpg.webp,Racing,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Sabre_Peregrine
+San'tok.yāi,Aopoa,Flight ready,https://media.starcitizen.tools/thumb/c/cb/San%27Tok.Yai_in_battle_over_world_firing_weapons_-_Cut.jpg/400px-San%27Tok.Yai_in_battle_over_world_firing_weapons_-_Cut.jpg.webp,Medium Fighter,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/San%27tok.y%C4%81i
+Scorpius,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/3/30/RSI_Scorpius_on_ArcCorp.png/400px-RSI_Scorpius_on_ArcCorp.png.webp,Heavy Fighter,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Scorpius
+Scorpius Antares,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/5/57/Scorpius_Antares_Concept_Roadmap.png/400px-Scorpius_Antares_Concept_Roadmap.png.webp,Heavy Fighter,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Scorpius_Antares
+Scythe,Esperia,Flight ready,,,,,,https://starcitizen.tools/Scythe
+Scythe,Vanduul Clans,Active for Squadron 42,,,,,,https://starcitizen.tools/Scythe
+Spartan,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/f/ff/Spartan_Concept_Attack_-_cropped_and_adjusted.png/400px-Spartan_Concept_Attack_-_cropped_and_adjusted.png.webp,Transport,"Vehicle
+(S4/M
+)",1,0 SCU,https://starcitizen.tools/Spartan
+SRV,Argo Astronautics,Flight ready,https://media.starcitizen.tools/thumb/5/5a/SRV_towing_cargo_container_into_hangar_-_Cut.png/400px-SRV_towing_cargo_container_into_hangar_-_Cut.png.webp,Recovery,"Small
+(S3/S
+)",1,12 SCU,https://starcitizen.tools/SRV
+Starfarer,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/f/fc/Starfarer_-_Flying_over_Lorville_with_traffic.jpg/400px-Starfarer_-_Flying_over_Lorville_with_traffic.jpg.webp,Heavy Refuelling,"Large
+(S5/L
+)",1 – 7,291 SCU,https://starcitizen.tools/Starfarer
+Starfarer Gemini,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/a/af/Starfarer_Gemini_-_Flying_with_blue_sky_and_clouds.jpg/400px-Starfarer_Gemini_-_Flying_with_blue_sky_and_clouds.jpg.webp,Heavy Refuelling,"Large
+(S5/L
+)",1 – 7,291 SCU,https://starcitizen.tools/Starfarer_Gemini
+Starlancer MAX,Musashi Industrial and Starflight Concern,Flight ready,https://media.starcitizen.tools/thumb/1/10/SC-3.24_20241115_110052_StarlancerMax-Clouds_f.png/400px-SC-3.24_20241115_110052_StarlancerMax-Clouds_f.png.webp,Medium freight,"Large
+(S5/L
+)",1 – 4,224 SCU,https://starcitizen.tools/Starlancer_MAX
+Starlancer TAC,Musashi Industrial and Starflight Concern,In concept,https://media.starcitizen.tools/thumb/1/1e/Starlancer_TAC_Flying_over_red_world_firing_guns_-_cropped.jpg/400px-Starlancer_TAC_Flying_over_red_world_firing_guns_-_cropped.jpg.webp,Patrol,Large,1 – 7,96 SCU,https://starcitizen.tools/Starlancer_TAC
+Storm,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/0/07/Storm_closeup_firing_weapons.jpg/400px-Storm_closeup_firing_weapons.jpg.webp,Combat Support,"Vehicle
+(S4/M
+)",1,0 SCU,https://starcitizen.tools/Storm
+Storm AA,Tumbril Land Systems,Flight ready,https://media.starcitizen.tools/thumb/0/01/Storm_AA_in_forest_firing_weapons_-_Cut_-_Contrast_change.jpg/400px-Storm_AA_in_forest_firing_weapons_-_Cut_-_Contrast_change.jpg.webp,Combat Support,"Vehicle
+(S4/M
+)",1,0 SCU,https://starcitizen.tools/Storm_AA
+STV,Greycat Industrial,Flight ready,https://media.starcitizen.tools/thumb/5/57/GRIN-STV-3.17.3-magda.jpg/400px-GRIN-STV-3.17.3-magda.jpg.webp,Transport,"Vehicle
+(S1/XXS
+)",1 – 2,0 SCU,https://starcitizen.tools/STV
+Syulen,Gatac Manufacture,Flight ready,https://media.starcitizen.tools/thumb/0/01/Syulen_leaving_microTech.png/400px-Syulen_leaving_microTech.png.webp,Starter,"Small
+(S3/S
+)",1,6 SCU,https://starcitizen.tools/Syulen
+Talon,Esperia,Flight ready,https://media.starcitizen.tools/thumb/f/f5/Talon_-_Diving_blurred_background.jpg/400px-Talon_-_Diving_blurred_background.jpg.webp,Light Fighter,"Small
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Talon
+Talon Shrike,Esperia,Flight ready,https://media.starcitizen.tools/thumb/7/74/Talon_Diving_Concept.jpg/400px-Talon_Diving_Concept.jpg.webp,Light Fighter,"Small
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/Talon_Shrike
+Terrapin,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/e/ed/Terrapin_-_x2_in_formation_over_worlds_-_cropped.jpg/400px-Terrapin_-_x2_in_formation_over_worlds_-_cropped.jpg.webp,Pathfinder,"Small
+(S2/XS
+)",1 – 2,0 SCU,https://starcitizen.tools/Terrapin
+Terrapin Medic,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/4/48/SC-3.24_20241206_133812_Terrapin-Medic-over-Hurston.png/400px-SC-3.24_20241206_133812_Terrapin-Medic-over-Hurston.png.webp,Medical support,"Small
+(S2/XS
+)",1,0 SCU,https://starcitizen.tools/Terrapin_Medic
+Ursa,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/1/15/Ursa_3.1.4_01.png/400px-Ursa_3.1.4_01.png.webp,Exploration,"Vehicle
+(S3/S
+)",1 – 2,2 SCU,https://starcitizen.tools/Ursa
+Ursa Fortuna,Roberts Space Industries,Playable,https://media.starcitizen.tools/thumb/e/e6/Ursa_Fortuna_on_barren_world_-_Leftside_-_cropped.jpg/400px-Ursa_Fortuna_on_barren_world_-_Leftside_-_cropped.jpg.webp,Exploration,"Vehicle
+(S3/S
+)",1 – 2,2 SCU,https://starcitizen.tools/Ursa_Fortuna
+Ursa Medivac,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/0/06/Ursa_Medivac_driving_by_Cutlass_crash_site_-_Cropped.jpg/400px-Ursa_Medivac_driving_by_Cutlass_crash_site_-_Cropped.jpg.webp,Ambulance,"Vehicle
+(S3/S
+)",3 – 1,0 SCU,https://starcitizen.tools/Ursa_Medivac
+Valkyrie,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/0/07/Valkyrie_flying_through_debris_shooting_back_at_ships_-_cut.jpg/400px-Valkyrie_flying_through_debris_shooting_back_at_ships_-_cut.jpg.webp,Dropship,"Large
+(S4/M
+)",1 – 5,30 SCU,https://starcitizen.tools/Valkyrie
+Valkyrie Liberator,Anvil Aerospace,Flight ready,https://media.starcitizen.tools/thumb/b/b4/Valkyrie_%27Liberator%27_flying_fast_-_Above.png/400px-Valkyrie_%27Liberator%27_flying_fast_-_Above.png.webp,Dropship,"Large
+(S4/M
+)",1 – 5,30 SCU,https://starcitizen.tools/Valkyrie_Liberator
+Vanguard Harbinger,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/7/73/Harbinger_-_Main_gun_firing_close_-_Front.jpg/400px-Harbinger_-_Main_gun_firing_close_-_Front.jpg.webp,Bomber,"Medium
+(S3/S
+)",2,0 SCU,https://starcitizen.tools/Vanguard_Harbinger
+Vanguard Hoplite,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/f/f4/HopLite_-_Flying_over_ArcCorp_-_Crop.jpg/400px-HopLite_-_Flying_over_ArcCorp_-_Crop.jpg.webp,Dropship,"Medium
+(S3/S
+)",1 – 2,0 SCU,https://starcitizen.tools/Vanguard_Hoplite
+Vanguard Sentinel,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/c/cd/Sentinel_-_Flying_through_debris_field_firing_guns.jpg/400px-Sentinel_-_Flying_through_debris_field_firing_guns.jpg.webp,Interdiction,"Medium
+(S3/S
+)",2,0 SCU,https://starcitizen.tools/Vanguard_Sentinel
+Vanguard Warden,Aegis Dynamics,Flight ready,https://media.starcitizen.tools/thumb/4/41/Warden_-_3.6.0_-_Landed_in_hangar_-_Front_Port.jpg/400px-Warden_-_3.6.0_-_Landed_in_hangar_-_Front_Port.jpg.webp,Heavy Fighter,"Medium
+(S3/S
+)",2,0 SCU,https://starcitizen.tools/Vanguard_Warden
+Vulcan,Aegis Dynamics,In concept,https://media.starcitizen.tools/thumb/c/c3/Vulcan_-_Flying_repairing_Eclipse_with_drones.jpg/400px-Vulcan_-_Flying_repairing_Eclipse_with_drones.jpg.webp,"Medium Repair, Medium Refuel",Medium,1 – 3,12 SCU,https://starcitizen.tools/Vulcan
+Vulture,Drake Interplanetary,Flight ready,https://media.starcitizen.tools/thumb/b/b8/Vulture_flying_through_debris_field.jpg/400px-Vulture_flying_through_debris_field.jpg.webp,Light Salvage,"Small
+(S2/XS
+)",1,12 SCU,https://starcitizen.tools/Vulture
+X1,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/9/9f/X1_firing_weapon_moving_fast_against_blurred_BG_-_Cut.png/400px-X1_firing_weapon_moving_fast_against_blurred_BG_-_Cut.png.webp,Touring,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/X1
+X1 Force,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/f/fa/X1_Force_firing_weapon_moving_fast_against_blurred_BG_-_Cut.png/400px-X1_Force_firing_weapon_moving_fast_against_blurred_BG_-_Cut.png.webp,Combat,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/X1_Force
+X1 Velocity,Origin Jumpworks,Flight ready,https://media.starcitizen.tools/thumb/d/d7/X1_Velocity_profile_streak.png/400px-X1_Velocity_profile_streak.png.webp,Racing,"Snub
+(S1/XXS
+)",1,0 SCU,https://starcitizen.tools/X1_Velocity
+Zeus Mk II CL,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/d/d6/Zeus_mkII_CL_landed_loading_cargo_-_cropped.png/400px-Zeus_mkII_CL_landed_loading_cargo_-_cropped.png.webp,Medium Freight,"Medium
+(S3/S
+)",1 – 3,128 SCU,https://starcitizen.tools/Zeus_Mk_II_CL
+Zeus Mk II ES,Roberts Space Industries,Flight ready,https://media.starcitizen.tools/thumb/9/9e/SC-3.24_20241025_204114_Zeus-ES-Good-Doctor_f.png/400px-SC-3.24_20241025_204114_Zeus-ES-Good-Doctor_f.png.webp,Explorer,"Medium
+(S3/S
+)",1 – 3,32 SCU,https://starcitizen.tools/Zeus_Mk_II_ES
+Zeus Mk II MR,Roberts Space Industries,Active production,https://media.starcitizen.tools/thumb/b/b0/RSI_ZeusMkII_MR_-_Cut.png/400px-RSI_ZeusMkII_MR_-_Cut.png.webp,Bounty Hunter,Medium,1 – 3,16 SCU,https://starcitizen.tools/Zeus_Mk_II_MR

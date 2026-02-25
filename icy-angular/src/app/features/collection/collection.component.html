@@ -1,0 +1,70 @@
+<div class="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8">
+  <!-- Halo lumineux -->
+  <div class="absolute inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-40 -left-40 w-[400px] sm:w-[520px] h-[400px] sm:h-[520px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[520px] sm:w-[640px] h-[520px] sm:h-[640px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
+
+  <div class="relative z-10">
+    <app-collection-hero [showAdmin]="isAdmin"></app-collection-hero>
+
+    <section class="mt-8 sm:mt-10">
+      <app-collection-stats
+        [totalCollections]="totalCollections"
+        [completionPercent]="completionPercent">
+      </app-collection-stats>
+    </section>
+
+    <section class="mt-8 sm:mt-10">
+      <app-collection-templates
+        [isLoading]="isLoading"
+        [error]="error"
+        [templates]="pagedTemplates"
+        [totalTemplates]="filteredTemplates.length"
+        [loadingTemplateId]="loadingTemplateId"
+        [templateSearchTerm]="templateSearchTerm"
+        [templatePageIndex]="templatePageIndex"
+        [templateTotalPages]="templateTotalPages"
+        (templateSearchTermChange)="onTemplateSearchChange($event)"
+        (prevPage)="prevTemplatePage()"
+        (nextPage)="nextTemplatePage()"
+        (createFromTemplate)="createFromTemplate($event)">
+      </app-collection-templates>
+    </section>
+
+    <section class="mt-8 sm:mt-10">
+      <app-collection-list
+        [isLoading]="isLoadingUser"
+        [error]="errorUser"
+        [collections]="filteredCollections"
+        [templateArchetypes]="templateArchetypes"
+        [searchTerm]="searchTerm"
+        [filterArchetype]="filterArchetype"
+        [filterProgress]="filterProgress"
+        [templateNameById]="templateNameById"
+        [templateById]="templateById"
+        [getProgressPercent]="getProgressPercentFn"
+        [formatDate]="formatDateFn"
+        (searchTermChange)="searchTerm = $event"
+        (filterArchetypeChange)="filterArchetype = $event"
+        (filterProgressChange)="filterProgress = $event"
+        (reload)="reloadCollections()"
+        (openDrawer)="openCollectionDrawer($event)"
+        (removeCollection)="deleteCollection($event)">
+      </app-collection-list>
+    </section>
+  </div>
+
+  <app-collection-drawer
+    [isOpen]="drawerOpen"
+    [selectedCollectionId]="selectedCollectionId"
+    [selectedLabel]="selectedCollectionId ? getCollectionLabel(selectedCollectionId) : ''"
+    [selectedTemplateName]="selectedCollectionId ? getCollectionTemplateName(selectedCollectionId) : ''"
+    [rowLoading]="rowLoading"
+    [rowError]="rowError"
+    [progressPercent]="selectedProgressPercent"
+    [detail]="selectedCollectionDetail"
+    (close)="closeCollectionDrawer()"
+    (toggleCell)="toggleLocal($event.detail, $event.x, $event.y)">
+  </app-collection-drawer>
+</div>

@@ -1,0 +1,695 @@
+/* You can add global styles to this file, and also import other style files */
+@import "@ngxpert/hot-toast/styles.css";
+@import "tailwindcss";
+
+:root {
+  --front-ink: #0b1220;
+  --front-surface: #0f172a;
+  --front-ice: #7dd3fc;
+  --front-cyan: #22d3ee;
+  --front-glow: rgba(34, 211, 238, 0.35);
+  --front-muted: #94a3b8;
+  --front-contrast: #e2e8f0;
+}
+
+.front-shell {
+  font-family: "Space Grotesk", "Sora", "Noto Sans", sans-serif;
+  background: var(--front-ink);
+  color: var(--front-contrast);
+}
+
+.front-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.front-section {
+  position: relative;
+  padding: 5rem 0;
+}
+
+
+.fc {
+  --fc-border-color: #d1d5db;        /* gray-300 */
+  --fc-page-bg-color: #ffffff;       /* white */
+  --fc-neutral-bg-color: #f3f4f6;    /* gray-100 */
+  --fc-today-bg-color: #dbeafe;      /* blue-100 */
+  --fc-event-bg-color: #1e3a8a;      /* blue-900 */
+  --fc-event-border-color: #1e3a8a;
+  --fc-event-text-color: white;
+}
+
+.dark .fc {
+  --fc-border-color: #4b5563;        /* gray-600 */
+  --fc-page-bg-color: #364153;       /* gray-800 */
+  --fc-neutral-bg-color: #374151;    /* gray-700 */
+  --fc-today-bg-color: #1e40af;      /* blue-800 */
+  --fc-event-bg-color: #60a5fa;      /* blue-400 */
+  --fc-event-border-color: #3b82f6;
+  --fc-event-text-color: white;
+}
+
+@layer utilities {
+  .animate-spin-custom {
+    animation: spin-custom 1s linear infinite;
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .animate-fadeOut {
+    animation: fadeOut 0.5s ease-in-out;
+  }
+}
+
+@layer base {
+  /* Scrollbar personnalisée, claire par défaut et sombre avec .dark */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #3b82f6 #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #3b82f6;
+    border-radius: 6px;
+    border: 2px solid #f3f4f6;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #2563eb;
+  }
+
+  /* Mode sombre */
+  .dark .scrollbar-custom {
+    scrollbar-color: #2563eb #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #2563eb;
+    border: 2px solid #1f2937;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #3b82f6;
+  }
+
+  .rotate-90 {
+    transform: rotate(90deg);
+  }
+}
+
+/* Global scrollbar, subtle + icy accent */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.55) rgba(15, 23, 42, 0.6);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.6), rgba(56, 189, 248, 0.35));
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.25);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.85), rgba(56, 189, 248, 0.55));
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.35);
+}
+
+
+@layer base {
+  .markdown-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0.6rem 0 0.4rem;
+  }
+
+  .markdown-content p {
+    margin: 0.4rem 0;
+  }
+
+  .markdown-content strong {
+    font-weight: 700;
+  }
+
+  .markdown-content em {
+    font-style: italic;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .markdown-content li {
+    margin: 0.2rem 0;
+  }
+
+  .markdown-content a {
+    color: #67e8f9;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .markdown-content blockquote {
+    margin: 0.6rem 0;
+    padding: 0.5rem 0.8rem;
+    border-left: 3px solid rgba(103, 232, 249, 0.6);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .markdown-content code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.95em;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+  }
+
+  .markdown-content pre {
+    margin: 0.6rem 0;
+    padding: 0.8rem;
+    overflow: auto;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 0.5rem;
+  }
+
+  .markdown-content pre code {
+    background: transparent;
+    padding: 0;
+  }
+}
+
+@keyframes spin-custom {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes goal-holo {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes goal-green-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+.goal-progress--parent {
+  background-image: linear-gradient(120deg, rgba(14, 165, 233, 0.9), rgba(56, 189, 248, 0.8));
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.32);
+  position: relative;
+  overflow: hidden;
+}
+
+.goal-progress--parent::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0) 0%, rgba(74, 222, 128, 1) 45%, rgba(74, 222, 128, 1) 55%, rgba(74, 222, 128, 0) 100%);
+  animation: goal-green-sweep 3.6s linear infinite;
+  mix-blend-mode: normal;
+}
+
+/* === Hauteur & flex corrects === */
+.fc {
+  height: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* === Le calendrier prend toute la place === */
+.fc-view-harness {
+  flex: 1 !important;
+  height: 100% !important;
+}
+
+/* === Empêche les débordements horizontaux === */
+.fc-scroller {
+  overflow-x: hidden !important;
+}
+
+/* === Toolbar responsive === */
+.fc-header-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem 0 !important;
+}
+
+.fc-footer-toolbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem 0 !important;
+}
+
+/* === Titre & boutons plus petits sur mobile === */
+@media (max-width: 640px) {
+  .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .fc-button {
+    font-size: 0.8rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  .fc-toolbar-chunk {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+
+  .fc-footer-toolbar {
+    margin-top: 0.35rem !important;
+  }
+}
+
+
+/* ========== ICY THEME for Angular Editor ========== */
+
+/* Toolbar */
+.angular-editor-toolbar {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 1rem !important;
+  color: #e0f2ff !important;
+}
+
+.angular-editor-toolbar select,
+.angular-editor-toolbar input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e0f2ff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0.4rem !important;
+}
+
+.angular-editor-toolbar select option {
+  background-color: #1b263b !important;
+  color: #e0f2ff !important;
+}
+
+/* Textarea / Content zone */
+.angular-editor-textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8faff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 0.8rem !important;
+  padding: 1rem !important;
+}
+
+/* Scrollbars and dropdown fix */
+.angular-editor-toolbar select:focus {
+  background-color: rgba(0, 200, 255, 0.15) !important;
+  border-color: rgba(0, 200, 255, 0.5) !important;
+}
+
+
+/* Empêche le "saut" visuel et le scroll horizontal pendant le drag */
+.cdk-drag-placeholder {
+  width: 220px !important;
+  height: 110px !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+/* Harmonise le look du bloc flottant pendant le drag */
+.cdk-drag-preview {
+  width: 220px !important;
+  height: 110px !important;
+  border-radius: 0.5rem; /* arrondi identique */
+  padding: 0.75rem !important; /* ✅ équivalent Tailwind p-3 */
+  box-sizing: border-box;       /* ✅ prend en compte le padding dans la taille totale */
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 25px rgba(34, 211, 238, 0.4);
+  transform: scale(1.02);
+  transition: none !important;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+  transition: none !important;
+}
+
+.cdk-drop-list-dragging {
+  overflow: hidden !important; /* ✅ empêche la scrollbar pendant le drag */
+}
+
+.cdk-drag-preview button {
+  display: none !important;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+emoji-picker {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 12px;
+  --background: rgba(13, 27, 42, 0.96);
+  --border-color: rgba(255, 255, 255, 0.18);
+  --input-border-color: rgba(255, 255, 255, 0.22);
+  --input-background: rgba(255, 255, 255, 0.08);
+  --input-font-color: #e2e8f0;
+  --category-button-color: #94a3b8;
+  --category-button-active-color: #e2f7ff;
+  --category-button-active-background: rgba(34, 211, 238, 0.2);
+  --hover-background: rgba(255, 255, 255, 0.08);
+  --focus-indicator-color: rgba(34, 211, 238, 0.55);
+  --emoji-size: 20px;
+  --num-columns: 8;
+  --font-family: "Space Grotesk", "Sora", "Noto Sans", sans-serif;
+}
+
+.emoji-picker-shell {
+  display: inline-block;
+}
+
+.dashboard-widget {
+  max-height: 1400px;
+  transition: max-height 900ms ease, opacity 500ms ease;
+  will-change: max-height, opacity;
+}
+
+.dashboard-widget[data-loading="true"] {
+  max-height: 260px;
+  opacity: 0.85;
+}
+
+.loading-reveal {
+  transition: opacity 520ms ease, transform 620ms ease;
+  will-change: opacity, transform;
+}
+
+.loading-reveal[data-loading="true"] {
+  opacity: 0.6;
+  transform: translateY(6px);
+}
+
+.loading-reveal[data-loading="false"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================
+   ICY EVENTS (clean unified)
+   ========================= */
+
+/* Neutralise le look FC par défaut des events */
+.fc .fc-daygrid-event,
+.fc .fc-daygrid-event-harness {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* ✅ Plus de grosse selection blanche/bleue */
+.fc .fc-day-today,
+.fc .fc-daygrid-day.fc-day-today,
+.fc .fc-timegrid-col.fc-day-today {
+  background: transparent !important;
+}
+
+/* ✅ Aujourd’hui discret */
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
+  position: relative;
+  background: rgba(56,189,248,0.05) !important;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,0.10);
+}
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 10px;
+  box-shadow: 0 0 26px rgba(56,189,248,0.10);
+  pointer-events: none;
+}
+
+.fc .fc-highlight {
+  background: rgba(56,189,248,0.08) !important;
+}
+
+/* ✅ spacing cellule */
+.fc .fc-daygrid-day-events {
+  margin: 10px 8px 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Vue mois: force des cases uniformes */
+.fc .fc-dayGridMonth-view .fc-daygrid-body,
+.fc .fc-dayGridMonth-view .fc-scrollgrid-sync-table {
+  height: 100% !important;
+}
+
+.fc .fc-dayGridMonth-view tbody tr {
+  height: calc(100% / 6) !important;
+}
+
+.fc .fc-dayGridMonth-view .fc-daygrid-day-frame {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* ✅ Carte unifiée + clean (plus d’overlay/degradé) */
+.fc .icy-event-host {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 18px !important;
+  overflow: hidden;
+  min-height: 112px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.25),
+    inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* on neutralise toute tentative d’after/overlay */
+.fc .icy-event-host::before,
+.fc .icy-event-host::after {
+  content: none !important;
+}
+
+/* finished */
+.fc .icy-event-host.icy-event-host--finished {
+  opacity: 0.5;
+  filter: grayscale(0.65) saturate(0.35);
+}
+
+.fc .icy-event.icy-event--finished .icy-event-host {
+  opacity: 0.5;
+  filter: grayscale(0.65) saturate(0.35);
+}
+
+.fc .icy-event.icy-event--finished .icy-event__spacer {
+  filter: grayscale(0.8);
+}
+
+/* === ICY : image en haut, texte en bas === */
+.fc .icy-event__inner{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  padding: 12px !important;
+}
+
+/* ✅ Zone image (simple, clean) */
+.fc .icy-event__spacer {
+  height: 72px;
+  width: 100%;
+  border-radius: 14px;
+
+  background-color: rgba(255,255,255,0.06);
+  background-image: var(--icy-bg);
+  background-size: cover;
+  background-position: center;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.12),
+    0 6px 18px rgba(0,0,0,0.25);
+}
+
+
+/* ✅ BADGE couleur (heure + titre) */
+.fc .icy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--icy-pill-bg, rgba(14,165,233,0.55));
+  border: 1px solid var(--icy-pill-border, rgba(14,165,233,0.55));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  backdrop-filter: blur(10px);
+  max-width: 100%;
+}
+
+/* heure style mono */
+.fc .icy-pill__time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.fc .icy-pill__sep {
+  opacity: 0.85;
+  font-weight: 900;
+}
+
+/* ✅ titre */
+.fc .icy-pill__title {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* hover clean */
+.fc .icy-event-host:hover {
+  box-shadow:
+    0 0 28px rgba(56,189,248,0.25),
+    0 10px 30px rgba(0,0,0,0.25),
+    inset 0 0 0 1px rgba(56,189,248,0.18);
+  transform: translateY(-1px);
+  transition: box-shadow 140ms ease, transform 140ms ease;
+}
+
+.fc .icy-event.icy-event--finished .icy-event-host:hover {
+  transform: none;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.2),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.fc .icy-event--enter .icy-event-host {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.fc .icy-event--enter.icy-event--enter-visible .icy-event-host {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 420ms ease, transform 520ms ease;
+}
+
+
+/* Type au-dessus de l'image */
+.fc .icy-event__type{
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.22);
+  text-shadow: 0 1px 10px rgba(0,0,0,0.35);
+  margin-bottom: 8px;
+}
+
+/* Layout: type -> image -> pill */
+.fc .icy-event__inner{
+  display:flex;
+  flex-direction:column;
+}
+
+/* Image block (stable + joli) */
+.fc .icy-event__spacer{
+  height: 72px;
+  width: 100%;
+  border-radius: 14px;
+  background-color: rgba(255,255,255,0.06);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.12),
+    0 6px 18px rgba(0,0,0,0.25);
+}
+
+
+/* mobile */
+@media (max-width: 640px) {
+  .fc .fc-daygrid-day-events {
+    margin: 8px 6px 0 !important;
+    gap: 10px;
+  }
+  .fc .icy-event-host { min-height: 104px; }
+  .fc .icy-event__inner { padding: 10px !important; }
+  .fc .icy-event__spacer { height: 68px; }
+  .fc .icy-pill { padding: 8px 11px; }
+  .fc .icy-pill__title { font-size: 12.5px; -webkit-line-clamp: 2; }
+  .fc .icy-pill__time { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc .icy-event--enter .icy-event-host {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

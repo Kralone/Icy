@@ -1,0 +1,44 @@
+.station-form {
+  backdrop-filter: blur(10px);
+}
+
+.station-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(207, 250, 254, 0.72);
+  margin-bottom: 0.25rem;
+}
+
+.station-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(103, 232, 249, 0.2);
+  background: rgba(6, 22, 38, 0.68);
+  color: #dff7ff;
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.station-input:focus {
+  border-color: rgba(34, 211, 238, 0.65);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22);
+}
+
+.station-input--textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.station-locked-value {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  background: rgba(6, 22, 38, 0.5);
+  color: rgba(223, 247, 255, 0.85);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}

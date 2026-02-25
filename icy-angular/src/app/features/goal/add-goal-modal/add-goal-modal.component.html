@@ -1,0 +1,85 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 animate-fadeIn p-4">
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 animate-scaleIn">
+    <h2 class="text-xl sm:text-2xl font-bold mb-4 text-cyan-200">➕ Ajouter un objectif</h2>
+
+    <div class="space-y-3">
+      <!-- Nom -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Nom</label>
+        <input [(ngModel)]="goal.name" type="text"
+               class="w-full p-2 rounded border border-white/20 bg-white/10 text-white placeholder-gray-400
+                      focus:ring-2 focus:ring-cyan-400 outline-none"
+               placeholder="Nom de l'objectif" />
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+        <textarea [(ngModel)]="goal.description"
+                  class="w-full p-2 rounded border border-white/20 bg-white/10 text-white placeholder-gray-400
+                         focus:ring-2 focus:ring-cyan-400 outline-none"
+                  placeholder="Description courte"></textarea>
+      </div>
+
+      <!-- Cible -->
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Cible</label>
+        <input [(ngModel)]="goal.target" type="number"
+               class="w-full p-2 rounded border border-white/20 bg-white/10 text-white
+                      focus:ring-2 focus:ring-cyan-400 outline-none" />
+      </div>
+
+      <!-- Objectif parent -->
+      <div *ngIf="flatGoals.length > 0">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Objectif parent (optionnel)</label>
+        <div class="relative">
+          <select
+            [(ngModel)]="selectedParentId"
+            class="w-full p-2 rounded border border-white/20 bg-[#1b263b]/70 text-cyan-100 appearance-none
+                   focus:ring-2 focus:ring-cyan-400 outline-none pr-8 cursor-pointer transition-all">
+            <option [ngValue]="null">— Aucun —</option>
+            <option *ngFor="let g of getRootGoals()" [ngValue]="g.id">{{ g.name }}</option>
+          </select>
+          <span class="absolute right-2 top-2.5 text-cyan-300 pointer-events-none">
+            ▼
+          </span>
+        </div>
+      </div>
+
+      <!-- Sous-parent -->
+      <div *ngIf="selectedParentId">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Sous-objectif parent</label>
+        <div class="relative">
+          <select
+            [(ngModel)]="selectedSubParentId"
+            class="w-full p-2 rounded border border-white/20 bg-[#1b263b]/70 text-cyan-100 appearance-none
+                   focus:ring-2 focus:ring-cyan-400 outline-none pr-8 cursor-pointer transition-all">
+            <option [ngValue]="null">— Aucun —</option>
+            <option *ngFor="let g of getFilteredSubGoals()" [ngValue]="g.id">{{ g.name }}</option>
+          </select>
+          <span class="absolute right-2 top-2.5 text-cyan-300 pointer-events-none">
+            ▼
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+      <button
+        (click)="submit()"
+        [disabled]="!isFormValid"
+        class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-700 text-white
+               rounded-lg hover:scale-[1.03] transition disabled:opacity-50">
+        Valider
+      </button>
+
+      <button
+        (click)="closeModal()"
+        class="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 text-gray-300
+               rounded-lg hover:bg-white/20 transition">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>

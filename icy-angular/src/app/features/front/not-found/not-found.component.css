@@ -1,0 +1,52 @@
+.not-found-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at top, rgba(34, 211, 238, 0.2), transparent 55%), #0d1b2a;
+  color: #f8fafc;
+  padding: 1rem;
+}
+
+.not-found-card {
+  width: min(560px, 100%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.not-found-code {
+  font-size: 4rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #22d3ee;
+  margin-bottom: 0.5rem;
+}
+
+.not-found-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.not-found-btn {
+  border: 1px solid rgba(34, 211, 238, 0.6);
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.not-found-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(34, 211, 238, 0.2);
+}
+
+.not-found-btn--alt {
+  border-color: rgba(148, 163, 184, 0.6);
+}

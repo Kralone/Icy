@@ -1,0 +1,424 @@
+.resource-state {
+  margin-top: 0.82rem;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 12px;
+  background: rgba(3, 12, 24, 0.82);
+  color: #cceeff;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.92rem;
+}
+
+.resource-state--error {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.mining-search-wrap {
+  margin-top: 0.9rem;
+}
+
+.mining-search-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mining-search-input {
+  flex: 1 1 auto;
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  background: rgba(5, 18, 34, 0.74);
+  color: #e6f7ff;
+  padding: 0.5rem 0.8rem;
+  outline: none;
+}
+
+.mining-search-reset {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  background: rgba(8, 24, 42, 0.76);
+  color: #dff4ff;
+  padding: 0.48rem 0.74rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ore-suggestion-list {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.45rem;
+}
+
+.ore-suggestion-item {
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 10px;
+  background: rgba(7, 23, 40, 0.76);
+  color: #d8f3ff;
+  padding: 0.45rem 0.52rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.ore-suggestion-item:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(9, 31, 53, 0.86);
+  transform: translateY(-1px);
+}
+
+.ore-suggestion-item__name {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.ore-suggestion-item__count {
+  font-size: 0.7rem;
+  color: rgba(186, 230, 253, 0.88);
+}
+
+.ore-ranking-panel {
+  margin-top: 0.62rem;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(7, 24, 43, 0.88), rgba(3, 14, 28, 0.94));
+  overflow: hidden;
+}
+
+.ore-ranking-panel__head {
+  padding: 0.54rem 0.68rem;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ore-ranking-panel__head h3 {
+  margin: 0;
+  font-size: 0.96rem;
+  color: #e6f7ff;
+}
+
+.ore-ranking-panel__head span {
+  font-size: 0.75rem;
+  color: rgba(186, 230, 253, 0.9);
+}
+
+.ore-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.52rem;
+}
+
+.ore-ranking-item {
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 11px;
+  background: rgba(4, 17, 32, 0.8);
+  color: #dcf5ff;
+  padding: 0.44rem 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(150px, 220px) minmax(100px, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.ore-ranking-item:hover {
+  border-color: rgba(56, 189, 248, 0.58);
+  background: rgba(8, 29, 52, 0.84);
+  transform: translateY(-1px);
+}
+
+.ore-ranking-item__rank {
+  font-size: 0.74rem;
+  font-weight: 900;
+  color: #7dd3fc;
+  letter-spacing: 0.04em;
+}
+
+.ore-ranking-item__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+
+.ore-ranking-item__location {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #e6f7ff;
+}
+
+.ore-ranking-item__planet {
+  font-size: 0.72rem;
+  color: rgba(186, 230, 253, 0.88);
+}
+
+.ore-ranking-item__bar {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(14, 39, 65, 0.88);
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  overflow: hidden;
+}
+
+.ore-ranking-item__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.72), rgba(34, 211, 238, 0.82));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.42);
+}
+
+.ore-ranking-item__pct {
+  min-width: 50px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #cff4ff;
+}
+
+.planet-card-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.72rem;
+}
+
+.planet-card {
+  position: relative;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 12px;
+  background: rgba(8, 25, 44, 0.78);
+  min-height: 128px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.planet-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.42);
+  box-shadow: 0 8px 20px rgba(2, 12, 24, 0.4);
+}
+
+.planet-card--active {
+  border-color: rgba(56, 189, 248, 0.64);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.24), 0 10px 24px rgba(2, 12, 24, 0.5);
+}
+
+.planet-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.planet-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 18, 34, 0.12) 0%, rgba(5, 18, 34, 0.86) 78%, rgba(5, 18, 34, 0.95) 100%);
+}
+
+.planet-card__name {
+  position: absolute;
+  left: 0.65rem;
+  right: 0.65rem;
+  bottom: 0.55rem;
+  z-index: 1;
+  color: #e8f8ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.planet-card-pager {
+  margin-top: 0.56rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.44rem;
+  font-size: 0.78rem;
+  color: rgba(186, 230, 253, 0.9);
+}
+
+.planet-card-pager button {
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  background: rgba(8, 24, 42, 0.7);
+  color: #dff4ff;
+  border-radius: 8px;
+  padding: 0.28rem 0.48rem;
+}
+
+.planet-card-pager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mining-bubble {
+  margin-top: 0.72rem;
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(8, 26, 48, 0.9), rgba(5, 16, 32, 0.94));
+  overflow: hidden;
+  animation: mining-bubble-fade-in 220ms ease;
+}
+
+.mining-table-panel__head {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+}
+
+.mining-table-panel__head h3 {
+  margin: 0;
+  color: #e6f8ff;
+  font-size: 0.98rem;
+}
+
+.mining-detail-split {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  min-height: 360px;
+}
+
+.mining-location-menu {
+  border-right: 1px solid rgba(125, 211, 252, 0.2);
+  padding: 0.5rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mining-location-menu__item {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  background: rgba(5, 17, 31, 0.62);
+  color: #dff4ff;
+  border-radius: 9px;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.45rem 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mining-location-menu__item--active {
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+  background: rgba(8, 30, 54, 0.78);
+}
+
+.mining-location-menu__label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.mining-location-menu__type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(186, 230, 253, 0.9);
+}
+
+.mining-location-menu__empty {
+  color: rgba(186, 230, 253, 0.84);
+  font-size: 0.82rem;
+  padding: 0.55rem;
+}
+
+.mining-location-content {
+  transition: opacity 180ms ease, transform 180ms ease;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.mining-location-content--animating {
+  opacity: 0.25;
+  transform: translateX(8px);
+}
+
+.mining-card__table-wrap {
+  overflow: auto;
+  max-height: 470px;
+}
+
+.mining-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mining-table th,
+.mining-table td {
+  padding: 0.48rem 0.56rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.82rem;
+}
+
+.mining-table th {
+  background: rgba(4, 17, 31, 0.95);
+  color: #bfe9ff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.mining-table__ores {
+  color: #d6f0ff;
+  font-weight: 700;
+}
+
+@keyframes mining-bubble-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .mining-detail-split {
+    grid-template-columns: 1fr;
+  }
+
+  .ore-ranking-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  .ore-ranking-item__meta {
+    grid-column: 2;
+  }
+
+  .ore-ranking-item__bar {
+    grid-column: 1 / 3;
+  }
+
+  .ore-ranking-item__pct {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .mining-location-menu {
+    border-right: 0;
+    border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+    max-height: 220px;
+  }
+}

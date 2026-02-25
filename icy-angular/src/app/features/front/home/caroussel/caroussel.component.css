@@ -1,0 +1,137 @@
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.carousel-section {
+  background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
+}
+
+.carousel-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.carousel-title {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #e2f5ff;
+}
+
+.carousel-subtitle {
+  margin-top: 0.5rem;
+  color: #94a3b8;
+}
+
+.carousel-band {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 0 3rem;
+}
+
+.carousel-band::before,
+.carousel-band::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 15%;
+  z-index: 1;
+}
+
+.carousel-band::before {
+  left: 0;
+  background: linear-gradient(90deg, #0b1220, transparent);
+}
+
+.carousel-band::after {
+  right: 0;
+  background: linear-gradient(270deg, #0b1220, transparent);
+}
+
+.carousel-track {
+  display: flex;
+  gap: 2rem;
+  width: max-content;
+  animation: scroll 45s linear infinite;
+}
+
+.carousel-track img {
+  height: 160px;
+  width: auto;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+}
+
+.networks-panel {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.networks-title {
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  color: #e2f5ff;
+}
+
+.networks-grid {
+  margin-top: 1.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.5rem;
+}
+
+.network-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1.3rem 1rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e2f5ff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.network-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(34, 211, 238, 0.5);
+}
+
+.network-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+}
+
+.network-card__icon--discord {
+  background: #5865f2;
+}
+
+.network-card__icon--twitch {
+  background: #9146ff;
+}
+
+.network-card__icon--x {
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+@media (max-width: 768px) {
+  .carousel-track img {
+    height: 120px;
+  }
+}

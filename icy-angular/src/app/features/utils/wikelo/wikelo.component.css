@@ -1,0 +1,351 @@
+.wikelo-page {
+  position: relative;
+  overflow: hidden;
+  background-color: #0a111c;
+  background-image: linear-gradient(to bottom, #0a111c 0%, #0f172a 45%, #111827 100%);
+  isolation: isolate;
+}
+
+.wikelo-page::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: min(62vw, 760px);
+  background-image: url('https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp');
+  background-size: 100% auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.75;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wikelo-page-content {
+  position: relative;
+  z-index: 2;
+}
+
+.wikelo-table th,
+.wikelo-table td {
+  vertical-align: top;
+}
+
+.wikelo-table {
+  font-size: 0.92rem;
+}
+
+.wikelo-table td {
+  line-height: 1.55;
+  color: #e5e7eb;
+}
+
+.wikelo-head th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.wikelo-row {
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.wikelo-row-alt {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.wikelo-row:hover {
+  background: rgba(30, 41, 59, 0.82);
+}
+
+.wikelo-table-image {
+  width: 120px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.wikelo-table-image-fallback {
+  width: 120px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #93c5fd;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  border: 1px dashed rgba(147, 197, 253, 0.45);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+}
+
+.wikelo-cell-main {
+  max-width: 360px;
+}
+
+.wikelo-ship-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wikelo-rep-tag {
+  white-space: nowrap;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.28rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  color: #fde68a;
+  background: rgba(202, 138, 4, 0.2);
+}
+
+.wikelo-toggle {
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  color: #bae6fd;
+  background: rgba(14, 116, 144, 0.15);
+  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  transition: all 160ms ease;
+}
+
+.wikelo-toggle:hover {
+  background: rgba(14, 116, 144, 0.3);
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.wikelo-toggle--goal {
+  margin-left: 0.35rem;
+  border-color: rgba(110, 231, 183, 0.5);
+  color: #a7f3d0;
+  background: rgba(4, 120, 87, 0.18);
+}
+
+.wikelo-toggle--goal:hover {
+  background: rgba(4, 120, 87, 0.32);
+  border-color: rgba(110, 231, 183, 0.75);
+}
+
+.wikelo-preview-list {
+  margin: 0;
+  padding-left: 1rem;
+  color: #dbeafe;
+}
+
+.wikelo-preview-list li {
+  margin-bottom: 0.2rem;
+}
+
+.wikelo-more {
+  margin-top: 0.35rem;
+  color: #93c5fd;
+  font-size: 0.8rem;
+}
+
+.wikelo-row-details td {
+  background: rgba(15, 23, 42, 0.95);
+  overflow: hidden;
+}
+
+.wikelo-detail-panel {
+  overflow: hidden;
+}
+
+.wikelo-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.wikelo-detail-grid h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #67e8f9;
+  margin-bottom: 0.4rem;
+}
+
+.wikelo-detail-grid ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #cbd5e1;
+}
+
+.wikelo-detail-grid li {
+  margin-bottom: 0.32rem;
+  line-height: 1.5;
+}
+
+.wikelo-empty {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1024px) {
+  .wikelo-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wikelo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.wikelo-modal {
+  width: min(680px, 100%);
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(160deg, #0f172a, #111827);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: 1rem 1rem 1.2rem;
+  color: #e2e8f0;
+}
+
+.wikelo-modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #67e8f9;
+}
+
+.wikelo-modal-subtitle {
+  margin: 0.4rem 0 0.8rem;
+  color: #cbd5e1;
+}
+
+.wikelo-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.wikelo-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  outline: none;
+}
+
+.wikelo-input:focus {
+  border-color: rgba(103, 232, 249, 0.65);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+
+.wikelo-modal-preview {
+  margin-top: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.55);
+  padding: 0.8rem;
+}
+
+.wikelo-modal-ship-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+
+.wikelo-modal-image {
+  width: 140px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.wikelo-modal-image-fallback {
+  width: 140px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #93c5fd;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.55rem;
+  border: 1px dashed rgba(147, 197, 253, 0.45);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+}
+
+.wikelo-modal-ship-name {
+  color: #e0f2fe;
+  font-weight: 700;
+}
+
+.wikelo-modal-preview h4 {
+  margin: 0 0 0.5rem;
+  color: #22d3ee;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.wikelo-modal-preview ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.wikelo-modal-preview li {
+  margin-bottom: 0.25rem;
+}
+
+.wikelo-modal-preview li span {
+  color: #67e8f9;
+  font-weight: 700;
+}
+
+.wikelo-modal-actions {
+  margin-top: 0.95rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.wikelo-btn {
+  min-height: 40px;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.wikelo-btn-cancel {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.7);
+  color: #e2e8f0;
+}
+
+.wikelo-btn-confirm {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(5, 150, 105, 0.3);
+  color: #d1fae5;
+}
+
+.wikelo-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

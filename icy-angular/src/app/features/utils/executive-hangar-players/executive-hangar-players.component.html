@@ -1,0 +1,86 @@
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-10">
+  <div class="max-w-6xl mx-auto space-y-8">
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Suivi PYAM</p>
+          <h1 class="text-3xl font-semibold text-cyan-200">Joueurs et hangar executif</h1>
+        </div>
+        <a
+          [routerLink]="['/icy/utilitaires/executive-hangar']"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-cyan-200/85
+                 bg-cyan-300/25 text-cyan-50 font-bold tracking-wide
+                 shadow-[0_0_30px_rgba(34,211,238,0.45)] hover:bg-cyan-200/35 hover:scale-[1.03]
+                 transition"
+        >
+          Retour au statut →
+        </a>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
+      <div *ngIf="isLoading" class="text-slate-300">Chargement des joueurs...</div>
+      <div *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</div>
+
+      <div *ngIf="!isLoading && !errorMessage" class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="min-w-full text-sm divide-y divide-white/10">
+          <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em]">
+            <tr>
+              <th class="px-4 py-3 text-left">Joueur</th>
+              <th class="px-4 py-3 text-left">Role(s)</th>
+              <th class="px-4 py-3 text-right">Vaisseau exec</th>
+            </tr>
+          </thead>
+          <tbody #rowsBody>
+            <tr
+              *ngFor="let row of paginatedRows; trackBy: trackByRowId"
+              class="player-row border-b border-white/10 text-slate-200"
+              [attr.data-row-id]="row.id"
+            >
+              <td class="px-4 py-3 font-semibold">{{ row.username }}</td>
+              <td class="px-4 py-3">{{ row.roles.join(', ') || 'Aucun' }}</td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  (click)="onToggleExecShip(row, $event)"
+                  [disabled]="!canManageExecShips"
+                  [attr.title]="canManageExecShips ? null : 'Reserve aux Admin/Officier'"
+                  class="exec-switch"
+                  [class.exec-switch--on]="row.hasExecShip"
+                  [class.exec-switch--off]="!row.hasExecShip"
+                  [class.exec-switch--to-on]="isSwitchToOn(row.id)"
+                  [class.exec-switch--to-off]="isSwitchToOff(row.id)"
+                >
+                  <span class="exec-switch__dot" [class.exec-switch__dot--on]="row.hasExecShip"></span>
+                  <span class="text-xs uppercase tracking-wide">
+                    {{ row.hasExecShip ? 'Oui' : 'Non' }}
+                  </span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage" class="mt-5 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="currentPage === 1"
+          class="px-3 py-1 rounded-full border border-white/20 disabled:opacity-40 hover:border-cyan-300/50 transition"
+        >
+          ← Precedent
+        </button>
+        <span class="text-sm text-slate-300">Page {{ currentPage }} / {{ totalPages }}</span>
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="currentPage === totalPages"
+          class="px-3 py-1 rounded-full border border-white/20 disabled:opacity-40 hover:border-cyan-300/50 transition"
+        >
+          Suivant →
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

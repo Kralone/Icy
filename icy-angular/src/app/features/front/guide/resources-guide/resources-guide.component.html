@@ -1,0 +1,65 @@
+<section class="resources-page" aria-label="Ressources guides">
+  <div class="resources-page__bg"></div>
+
+  <div class="resources-layout">
+    <div class="resources-head-wrap">
+      <header class="resources-head">
+        <front-guide-topbar [compact]="true"></front-guide-topbar>
+      </header>
+    </div>
+
+    <div class="resources-stage" [class.resources-stage--focused]="!!selectedLineId">
+      <div class="resources-lines">
+        @for (line of lines; track trackLine($index, line)) {
+          <button
+            type="button"
+            class="resource-line"
+            [id]="'resource-line-' + line.id"
+            [style.--band-height.px]="line.bandHeight || 176"
+            [style.--line-order]="$index"
+            [class.resource-line--active]="selectedLineId === line.id"
+            [class.resource-line--hidden]="!!selectedLineId && selectedLineId !== line.id"
+            (click)="selectLine(line)"
+          >
+            <img
+              class="resource-line__image"
+              [src]="line.imageUrl"
+              [style.object-position]="line.imagePosition || 'center 22%'"
+              [alt]="line.title"
+              loading="eager"
+              [attr.fetchpriority]="line.id === 'planning' ? 'high' : 'auto'"
+              decoding="async"
+            />
+            <span class="resource-line__fade" aria-hidden="true"></span>
+            <span class="resource-line__label">{{ line.ribbon }}</span>
+          </button>
+        }
+      </div>
+
+      @if (selectedLine) {
+        <section class="resource-content" [class.resource-content--visible]="contentVisible">
+          <div class="resource-content__head">
+            <h2>{{ selectedLine.title }}</h2>
+          </div>
+          <p>{{ selectedLine.description }}</p>
+
+          @if (selectedLine.id === 'planning') {
+            <front-resources-sales-panel></front-resources-sales-panel>
+          }
+
+          @if (selectedLine.id === 'refining') {
+            <front-resources-refining-panel></front-resources-refining-panel>
+          }
+
+          @if (selectedLine.id === 'locations') {
+            <front-resources-mining-panel></front-resources-mining-panel>
+          }
+
+          @if (selectedLine.id === 'fit') {
+            <front-resources-fit-panel></front-resources-fit-panel>
+          }
+        </section>
+      }
+    </div>
+  </div>
+</section>

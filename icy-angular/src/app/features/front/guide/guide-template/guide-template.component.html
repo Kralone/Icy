@@ -1,0 +1,217 @@
+<section class="guide-page">
+  <div class="guide-page__bg"></div>
+
+  <div class="guide-layout">
+    <header class="guide-hero">
+      <front-guide-topbar
+        [title]="guide.title"
+        [subtitle]="guide.subtitle"
+        [statusLabel]="guide.status.label"
+        [statusTone]="guide.status.tone"
+        [updatedAt]="guide.updatedAt"
+        [readTime]="guide.readTime"
+        [difficulty]="guide.difficulty"
+        [tags]="guide.tags"
+      ></front-guide-topbar>
+    </header>
+
+    <div class="guide-wiki">
+      <aside class="guide-toc">
+        <h2>Sommaire</h2>
+        <nav>
+          <ul>
+            @for (section of guide.sections; track trackSection($index, section)) {
+              <li>
+                <a
+                  class="guide-toc__link"
+                  [class.guide-toc__link--active]="section.id === activeSectionId"
+                  [href]="'#' + section.id"
+                  (click)="scrollToSection($event, section.id)"
+                >
+                  <span class="guide-toc__index">{{ formatStep($index + 1) }}</span>
+                  <span>{{ formatSectionLabel(section.title) }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="guide-content">
+        @for (section of guide.sections; track trackSection($index, section)) {
+          <article
+            class="guide-card"
+            [class.guide-card--has-hero]="!!section.imageUrl"
+            [id]="section.id"
+          >
+            <header class="guide-card__head">
+              <h2 class="guide-card__title-row">
+                <span>{{ formatSectionTitle($index, section.title) }}</span>
+                <button
+                  type="button"
+                  class="guide-card__copy-link-btn"
+                  [attr.aria-label]="'Copier le lien du chapitre ' + formatSectionLabel(section.title)"
+                  title="Copier le lien de ce chapitre"
+                  (click)="copySectionLink(section.id)"
+                >
+                  <svg viewBox="0 0 256 256" aria-hidden="true">
+                    <path
+                      d="M114.9,180.3l-32.2,32.1c-10.8,10.8-28.4,10.8-39.2,0l0,0c-10.8-10.8-10.8-28.4,0-39.2L97,119.8c10.8-10.8,28.3-10.7,39.2,0.1l0,0c1.8,1.8,5.1,5.1,5.4,4.7c4.8,2.6,11,1.9,15.1-2.2c4-4,4.8-10.2,2.3-15c0,0,0,0,0,0c-0.1-0.1-0.1-0.2-0.2-0.3c-0.6-1-1.3-1.9-2.1-2.7c-0.3-0.3-0.6-0.6-0.9-0.8c-0.5-0.6-1.1-1.2-1.6-1.7c-20.8-20.8-54.5-20.8-75.3,0l-53.3,53.3c-20.7,20.7-20.7,54.5,0,75.2c20.8,20.8,54.5,20.8,75.3,0l49.7-49.7C139.2,185.9,126.1,185.8,114.9,180.3z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M230.4,25.6c-20.8-20.8-54.5-20.8-75.3,0l-49.7,49.7c11.2-5.2,24.4-5,35.5,0.5l32.2-32.2c10.8-10.8,28.4-10.8,39.2,0l0,0c10.8,10.8,10.8,28.4,0,39.2L159,136.2c-10.8,10.8-28.3,10.7-39.1-0.1l0,0c-1.8-1.8-5.1-5.1-5.4-4.7c-4.8-2.6-11-1.9-15.1,2.2c-4,4-4.8,10.2-2.3,15c0,0,0,0,0,0c0.1,0.1,0.1,0.2,0.2,0.3c0.6,1,1.3,1.9,2.1,2.7c0.3,0.3,0.6,0.6,0.9,0.8c0.5,0.6,1.1,1.2,1.6,1.7c20.8,20.8,54.5,20.8,75.3,0l53.3-53.3C251.2,80.1,251.2,46.3,230.4,25.6z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  @if (copiedSectionId === section.id) {
+                    <span class="guide-card__copy-toast" role="status" aria-live="polite">Lien copie</span>
+                  }
+                </button>
+              </h2>
+              @if (section.summary) {
+                <p class="guide-card__summary" [innerHTML]="formatInline(section.summary, section)"></p>
+              }
+            </header>
+
+            @if (section.imageUrl) {
+              <div
+                class="guide-card__hero-bg"
+                [style.background-image]="'url(' + section.imageUrl + ')'"
+                aria-hidden="true"
+              ></div>
+            }
+
+            @if (section.blocks?.length) {
+              <div class="guide-card__flow">
+                @for (block of section.blocks; track trackBlock($index, block)) {
+                  @switch (block.type) {
+                    @case ('paragraph') {
+                      <div class="guide-card__text">
+                        <p [innerHTML]="formatInline(block.text, section)"></p>
+                      </div>
+                    }
+                    @case ('list') {
+                      <ul class="guide-card__list">
+                        @for (item of block.items; track item) {
+                          <li [innerHTML]="formatInline(item, section)"></li>
+                        }
+                      </ul>
+                    }
+                    @case ('image') {
+                      <div class="guide-card__image-frame">
+                        <img [src]="block.imageUrl" [alt]="block.alt || section.title" loading="lazy" decoding="async" />
+                      </div>
+                    }
+                    @case ('callout') {
+                      <aside class="guide-callout" [class]="'guide-callout guide-callout--' + block.callout.tone">
+                        <h3>{{ block.callout.title }}</h3>
+                        <p [innerHTML]="formatInline(block.callout.text, section)"></p>
+                      </aside>
+                    }
+                  }
+                }
+              </div>
+            }
+
+            @if (section.paragraphs?.length) {
+              <div class="guide-card__text">
+                @for (paragraph of section.paragraphs; track paragraph) {
+                  <p [innerHTML]="formatInline(paragraph, section)"></p>
+                }
+              </div>
+            }
+
+            @if (section.bullets?.length) {
+              <ul class="guide-card__list">
+                @for (bullet of section.bullets; track bullet) {
+                  <li [innerHTML]="formatInline(bullet, section)"></li>
+                }
+              </ul>
+            }
+
+            @if (section.subsections?.length) {
+              <div class="guide-card__subsections">
+                @for (subsection of section.subsections; track subsection.title) {
+                  <section class="guide-subsection">
+                    <h3>{{ subsection.title }}</h3>
+                    @if (subsection.paragraphs?.length) {
+                      <div class="guide-card__text">
+                        @for (paragraph of subsection.paragraphs; track paragraph) {
+                          <p [innerHTML]="formatInline(paragraph, section)"></p>
+                        }
+                      </div>
+                    }
+                    @if (subsection.bullets?.length) {
+                      <ul class="guide-card__list">
+                        @for (bullet of subsection.bullets; track bullet) {
+                          <li [innerHTML]="formatInline(bullet, section)"></li>
+                        }
+                      </ul>
+                    }
+                    @if (subsection.blocks?.length) {
+                      <div class="guide-card__flow">
+                        @for (block of subsection.blocks; track trackBlock($index, block)) {
+                          @switch (block.type) {
+                            @case ('paragraph') {
+                              <div class="guide-card__text">
+                                <p [innerHTML]="formatInline(block.text, section)"></p>
+                              </div>
+                            }
+                            @case ('list') {
+                              <ul class="guide-card__list">
+                                @for (item of block.items; track item) {
+                                  <li [innerHTML]="formatInline(item, section)"></li>
+                                }
+                              </ul>
+                            }
+                            @case ('image') {
+                              <div class="guide-card__image-frame">
+                                <img [src]="block.imageUrl" [alt]="block.alt || subsection.title" loading="lazy" decoding="async" />
+                              </div>
+                            }
+                            @case ('callout') {
+                              <aside class="guide-callout" [class]="'guide-callout guide-callout--' + block.callout.tone">
+                                <h3>{{ block.callout.title }}</h3>
+                                <p [innerHTML]="formatInline(block.callout.text, section)"></p>
+                              </aside>
+                            }
+                          }
+                        }
+                      </div>
+                    }
+                    @if (subsection.callouts?.length) {
+                      @for (callout of subsection.callouts; track callout.title + '-' + $index) {
+                        <aside class="guide-callout" [class]="'guide-callout guide-callout--' + callout.tone">
+                          <h3>{{ callout.title }}</h3>
+                          <p [innerHTML]="formatInline(callout.text, section)"></p>
+                        </aside>
+                      }
+                    }
+                  </section>
+                }
+              </div>
+            }
+
+            @if (section.callout) {
+              <aside class="guide-callout" [class]="'guide-callout guide-callout--' + section.callout.tone">
+                <h3>{{ section.callout.title }}</h3>
+                <p [innerHTML]="formatInline(section.callout.text, section)"></p>
+              </aside>
+            }
+
+            @if (section.callouts?.length) {
+              @for (callout of section.callouts; track callout.title + '-' + $index) {
+                <aside class="guide-callout" [class]="'guide-callout guide-callout--' + callout.tone">
+                  <h3>{{ callout.title }}</h3>
+                  <p [innerHTML]="formatInline(callout.text, section)"></p>
+                </aside>
+              }
+            }
+
+          </article>
+        }
+      </main>
+    </div>
+  </div>
+</section>

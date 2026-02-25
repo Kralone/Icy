@@ -1,0 +1,55 @@
+<section class="front-section carousel-section">
+  <div class="front-container">
+    <div class="carousel-header">
+      <h2 class="carousel-title">{{strings.join}}</h2>
+      <p class="carousel-subtitle">Un flux d'escouades, de vaisseaux et d'expeditions en mouvement.</p>
+    </div>
+  </div>
+
+  <div class="carousel-band">
+    <div class="carousel-track">
+      <ng-container *ngFor="let image of carouselImages">
+        <img [src]="image" alt="carousel image" loading="lazy" decoding="async" />
+      </ng-container>
+      <ng-container *ngFor="let image of carouselImages">
+        <img [src]="image" alt="carousel image duplicate" loading="lazy" decoding="async" />
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="front-container networks-panel">
+    <h2 class="networks-title">{{strings.networks}}</h2>
+
+    <div class="networks-grid">
+      <a href="https://discord.gg/remlok" target="_blank" rel="noopener" class="network-card">
+        <div class="network-card__icon network-card__icon--discord">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M20.317 4.369a19.791 19.791 0 00-4.885-1.515.07.07 0 00-.073.035c-.21.375-.444.864-.608 1.249a18.27 18.27 0 00-5.486 0 12.76 12.76 0 00-.617-1.25.07.07 0 00-.073-.034A19.736 19.736 0 003.68 4.37a.063.063 0 00-.03.027C.533 9.045-.32 13.579.099 18.057a.08.08 0 00.031.056 19.888 19.888 0 005.993 3.038.07.07 0 00.078-.027c.462-.63.873-1.295 1.226-1.994a.07.07 0 00-.038-.098 13.166 13.166 0 01-1.872-.894.07.07 0 01-.007-.118c.126-.094.252-.192.372-.291a.07.07 0 01.073-.01c3.927 1.796 8.18 1.796 12.061 0a.07.07 0 01.074.009c.12.099.246.197.373.291a.07.07 0 01-.006.118 12.506 12.506 0 01-1.873.893.07.07 0 00-.037.099c.36.698.772 1.362 1.227 1.993a.07.07 0 00.078.028 19.876 19.876 0 006.001-3.038.077.077 0 00.03-.055c.5-5.177-.838-9.672-3.548-13.662a.062.062 0 00-.03-.028zM8.02 15.331c-1.183 0-2.156-1.085-2.156-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.174 1.094 2.156 2.419 0 1.334-.955 2.419-2.157 2.419zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.173 1.094 2.156 2.419 0 1.334-.946 2.419-2.156 2.419z" />
+          </svg>
+        </div>
+        <span>Discord</span>
+      </a>
+
+      <a href="https://www.twitch.tv/kralone" target="_blank" rel="noopener" class="network-card">
+        <div class="network-card__icon network-card__icon--twitch">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="w-8 h-8" viewBox="0 0 16 16">
+            <path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/>
+            <path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/>
+          </svg>
+        </div>
+        <span>Twitch</span>
+      </a>
+
+      <a href="https://x.com/IceforgeSC" target="_blank" rel="noopener" class="network-card">
+        <div class="network-card__icon network-card__icon--x">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="w-8 h-8" viewBox="0 0 16 16">
+            <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/>
+          </svg>
+        </div>
+        <span>X</span>
+      </a>
+    </div>
+  </div>
+</section>
+

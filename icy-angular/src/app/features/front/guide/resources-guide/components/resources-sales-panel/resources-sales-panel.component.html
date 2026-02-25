@@ -1,0 +1,44 @@
+<div class="resource-sales-controls" *ngIf="!salesLoading && !salesError && salesMaterials.length > 0">
+  <label for="cargo-scu-input">SCU</label>
+  <input
+    id="cargo-scu-input"
+    type="number"
+    min="1"
+    step="1"
+    [value]="cargoScu"
+    (input)="updateCargoScu(($any($event.target)).value)"
+  />
+</div>
+
+<div *ngIf="salesLoading" class="resource-sales-state">Chargement des prix depuis le backend...</div>
+<div *ngIf="!salesLoading && salesError" class="resource-sales-state resource-sales-state--error">{{ salesError }}</div>
+<div *ngIf="!salesLoading && !salesError && salesMaterials.length === 0" class="resource-sales-state">Aucune donnee de prix disponible pour le moment.</div>
+
+<div *ngIf="!salesLoading && !salesError && salesMaterials.length > 0" class="resource-sales-table-wrap" aria-label="Tableau des prix de vente">
+  <table class="resource-sales-table">
+    <thead>
+    <tr>
+      <th>Materiau</th>
+      <th>Meilleure vente</th>
+      <th>Revenu</th>
+      <th>Terminal</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let material of salesMaterials; trackBy: trackMaterial">
+      <td><div class="resource-sales-table__name">{{ material.displayName }}</div></td>
+      <td>
+        <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(material.bestSell)">
+          {{ formatUecWithUnit(material.bestSell) }}
+        </span>
+      </td>
+      <td>
+        <span class="resource-sales-table__revenue" [ngStyle]="revenueStyle(material.bestSell)">
+          {{ formatUecWithUnit(computeRevenue(material.bestSell)) }}
+        </span>
+      </td>
+      <td>{{ material.bestSellTerminal || '-' }}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>

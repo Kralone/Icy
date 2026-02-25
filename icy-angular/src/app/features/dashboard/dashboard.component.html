@@ -1,0 +1,244 @@
+<main
+  class="flex flex-col xl:flex-row flex-1 min-h-screen p-4 sm:p-6
+         bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77]
+         text-white overflow-y-auto overflow-x-hidden"
+>
+  <!-- Contenu principal -->
+  <div class="flex-1 xl:mr-6 mb-6 xl:mb-0">
+    <!-- Header avec bouton -->
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <h1
+        class="text-2xl sm:text-3xl font-bold text-cyan-300 drop-shadow-md text-center xl:text-left flex-1"
+      >
+        ❄️ Bienvenue sur le Dashboard
+      </h1>
+
+      <!-- Bouton d’installation PWA -->
+      <button
+        (click)="installApp()"
+        class="px-4 py-2 rounded-xl bg-white/10 border border-cyan-400 text-cyan-300
+               backdrop-blur-md hover:bg-cyan-500/20 hover:text-white transition
+               shadow-lg hover:shadow-cyan-500/30 whitespace-nowrap"
+      >
+        ⚡ Installer Iceforge
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      <app-dashboard-goal></app-dashboard-goal>
+      <app-news></app-news>
+    </div>
+  </div>
+
+  <!-- Panneau latéral -->
+  <aside class="w-full xl:w-80 flex flex-col h-full gap-6 shrink-0">
+    <app-scwe-widget></app-scwe-widget>
+
+    <!-- Événements -->
+    <div
+      class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg overflow-hidden"
+      [ngClass]="hasUpcomingEvents ? 'hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]' : ''"
+      [attr.data-loading]="isEventsLoading"
+    >
+      <app-loading-overlay
+        [isLoading]="isEventsLoading"
+        [minDurationMs]="500"
+        [fadeOutMs]="500"
+        [softFade]="true"
+      ></app-loading-overlay>
+      <div *ngIf="hasUpcomingEvents" class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
+      <div *ngIf="hasUpcomingEvents" class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
+
+      <h2 class="relative text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
+        📅 Événements
+      </h2>
+
+      <div class="relative overflow-y-auto scrollbar-custom pr-1 max-h-[30vh]">
+        <ng-container *ngIf="events && events.length > 0; else noEvents">
+          <div class="space-y-3">
+            <button
+              *ngFor="let event of events"
+              type="button"
+              (click)="openEvent(event)"
+              class="group relative w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0 text-left
+                     hover:border-cyan-400/40 hover:shadow-[0_0_18px_rgba(34,211,238,0.2)] transition
+                     cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+            >
+              <div
+                *ngIf="event.typeImageUrl"
+                class="absolute inset-0 bg-center bg-cover opacity-60"
+                [style.backgroundImage]="'url(' + event.typeImageUrl + ')'"
+              ></div>
+              <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
+
+              <div class="relative p-3 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span
+                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
+                    [style.background]="event.typeBackgroundColor || 'rgba(15,23,42,0.6)'"
+                    [style.borderColor]="event.typeBackgroundColor || 'rgba(255,255,255,0.2)'"
+                    [style.color]="event.typeTextColor || '#67e8f9'"
+                  >
+                    {{ event.type }}
+                  </span>
+                  <span class="text-[10px] text-cyan-200/70 inline-flex items-center gap-1">
+                    Ouvrir
+                    <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/10">
+                    <img
+                      *ngIf="event.typeImageUrl"
+                      [src]="event.typeImageUrl"
+                      alt="Event"
+                      class="h-full w-full object-cover"
+                    />
+                    <div *ngIf="!event.typeImageUrl"
+                         class="h-full w-full flex items-center justify-center text-cyan-200 text-lg">
+                      ✦
+                    </div>
+                  </div>
+
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
+                       [style.color]="event.typeTextColor || '#ffffff'">
+                      {{ event.name }}
+                    </p>
+                    <p class="text-xs text-gray-300 mt-1">
+                      {{ capitalizeFirst(event.date | date:"EEEE d MMMM y 'à' HH'h'mm":undefined:'fr-FR') }}
+                    </p>
+                  </div>
+                  <div class="self-center text-cyan-200/70 group-hover:text-cyan-100 transition">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #noEvents>
+          <p class="text-gray-400 text-sm italic text-center">Aucun événement prévu.</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Membres en ligne -->
+    <div
+      class="relative dashboard-widget p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+             hover:shadow-cyan-500/20 transition"
+      [attr.data-loading]="isOnlineLoading"
+    >
+      <app-loading-overlay
+        [isLoading]="isOnlineLoading"
+        [minDurationMs]="500"
+        [fadeOutMs]="500"
+        [softFade]="true"
+      ></app-loading-overlay>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-cyan-300 drop-shadow-md">
+          🟢 En ligne
+        </h2>
+        <span class="text-xs text-cyan-100/60">
+          {{ onlineUsers.length }} actifs
+        </span>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngIf="onlineUsers.length === 0" class="text-xs text-cyan-100/60 text-center py-4">
+          Aucun membre en ligne.
+        </div>
+        <div
+          *ngFor="let member of paginatedOnlineUsers"
+          class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+        >
+          <div class="h-9 w-9 rounded-full overflow-hidden border border-white/10 bg-white/10 flex items-center justify-center">
+            <img *ngIf="member.avatarUrl" [src]="member.avatarUrl" [alt]="member.username" class="h-full w-full object-cover" />
+            <span *ngIf="!member.avatarUrl" class="text-sm font-bold text-cyan-200">
+              {{ member.username.charAt(0) }}
+            </span>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-white">{{ member.username }}</p>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="statusStyles[member.status].badgeClass">
+            {{ statusStyles[member.status].label }}
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="totalPages > 1" class="mt-4 flex items-center justify-between text-xs text-cyan-100/70">
+        <button
+          type="button"
+          (click)="changePage(-1)"
+          [disabled]="currentPage === 1"
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Prec
+        </button>
+        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <button
+          type="button"
+          (click)="changePage(1)"
+          [disabled]="currentPage === totalPages"
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Suiv
+        </button>
+      </div>
+    </div>
+
+    <!-- Résumé de la flotte -->
+    <div
+      class="relative dashboard-widget flex-[3] p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
+             hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+      [attr.data-loading]="isLoading"
+    >
+      <app-loading-overlay
+        [isLoading]="isLoading"
+        [minDurationMs]="500"
+        [fadeOutMs]="500"
+        [softFade]="true"
+      ></app-loading-overlay>
+      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
+        🛸 Résumé de la flotte
+      </h2>
+
+      <div class="overflow-y-auto scrollbar-custom pr-1 max-h-[55vh]">
+        <ng-container *ngIf="fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
+          <div *ngFor="let focus of objectKeys(fleetSummary)" class="mb-4">
+            <h3 class="text-sm font-bold text-cyan-200 uppercase tracking-wide mb-1">
+              {{ focus }}
+            </h3>
+            <ul class="list-none pl-0 text-gray-200 text-sm space-y-1 overflow-hidden">
+              <li
+                *ngFor="let ship of fleetSummary[focus]"
+                class="relative flex items-center justify-start h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition"
+              >
+                <div *ngIf="ship.imageUrl" class="absolute inset-0">
+                  <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-70" />
+                  <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
+                </div>
+                <span class="relative z-10 pl-2 truncate">{{ ship.name }}</span>
+              </li>
+            </ul>
+          </div>
+        </ng-container>
+
+        <ng-template #noFleet>
+          <p class="text-gray-400 text-sm italic">Aucun vaisseau dans la flotte.</p>
+        </ng-template>
+      </div>
+    </div>
+
+  </aside>
+</main>
+

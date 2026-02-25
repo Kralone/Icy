@@ -1,0 +1,109 @@
+<div
+  class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white login-screen"
+>
+
+  <!-- Effets lumineux d'arrière-plan -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/20 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
+
+  <!-- Superposition hexagonale (ton fond d'origine stylisé) -->
+  <div class="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay">
+    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <mask id="hex-mask">
+          <rect width="100%" height="100%" fill="white"/>
+          <pattern id="a" width="29" height="50.115" patternUnits="userSpaceOnUse">
+            <path stroke-width="4" fill="none" stroke="black" d="
+              M14.498 16.858 0 8.488.002-8.257l14.5-8.374L29-8.26l-.002 16.745zm0 50.06
+              L0 58.548l.002-16.745 14.5-8.373L29 41.8l-.002 16.744zM28.996 41.8
+              l-14.498-8.37.002-16.744L29 8.312l14.498 8.37-.002 16.745zm-29 0
+              -14.498-8.37.002-16.744L0 8.312l14.498 8.37-.002 16.745z"/>
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#a)"/>
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" fill="#5B5B5B" mask="url(#hex-mask)"/>
+    </svg>
+  </div>
+
+  <!-- Carte de connexion -->
+  <div class="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20 w-[420px]">
+
+    <!-- Logo -->
+    <div class="flex flex-col items-center mb-6">
+      <img src="assets/images/home/iceforgeLogo.png" alt="Logo ICY" class="w-40 h-40 drop-shadow-lg mb-3" />
+      <h1 class="text-3xl font-bold tracking-wide text-cyan-200">IceForge Industries</h1>
+      <p class="text-sm text-gray-300 mt-1 text-center">
+        Forgerons du futur. Glace, acier et précision.
+      </p>
+    </div>
+
+    <!-- Formulaire -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+      <label class="text-gray-300 text-sm">Nom d'utilisateur</label>
+      <input type="text" formControlName="username"
+             class="w-full p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+             placeholder="Nom d’utilisateur ou identifiant" />
+
+      <label class="text-gray-300 text-sm">Mot de passe</label>
+      <input type="password" formControlName="password"
+             class="w-full p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+             placeholder="Mot de passe" />
+
+      <button type="submit"
+              [disabled]="loginForm.invalid"
+              class="relative mt-2 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
+        Se connecter
+      </button>
+
+      <p *ngIf="errorMessage" class="text-red-400 text-center mt-3">
+        {{ errorMessage }}
+      </p>
+    </form>
+
+    <div class="flex justify-between items-center mt-6 text-sm text-gray-400">
+      <button
+        type="button"
+        class="hover:text-cyan-300 hover:underline transition"
+        (click)="onBack()">
+        ← Retour
+      </button>
+
+      <a routerLink="/recrutement"
+         class="hover:text-cyan-300 hover:underline transition">
+        ❄ Rejoindre IceForge Industries
+      </a>
+    </div>
+  </div>
+
+  <!-- Modal de réinitialisation -->
+  <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-xl w-[400px] border border-white/20">
+      <h2 class="text-xl font-bold text-cyan-300 mb-4 text-center">🔐 Réinitialisation requise</h2>
+      <p class="text-gray-300 mb-6 text-center">Tu dois changer ton mot de passe temporaire avant d'accéder à l'application.</p>
+
+      <form [formGroup]="passwordForm" class="flex flex-col space-y-4">
+        <input type="password"
+               placeholder="Nouveau mot de passe"
+               formControlName="newPassword"
+               class="w-full p-2 border border-white/30 bg-white/10 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" />
+
+        <input type="password"
+               placeholder="Confirmer le mot de passe"
+               formControlName="confirmPassword"
+               class="w-full p-2 border border-white/30 bg-white/10 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" />
+
+        <button class="bg-gradient-to-r from-cyan-600 to-blue-700 text-white py-2 rounded hover:scale-[1.02] transition"
+                (click)="onResetPassword()">
+          Changer le mot de passe
+        </button>
+
+        <p *ngIf="errorMessage" class="text-red-400 text-center mt-2">
+          {{ errorMessage }}
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

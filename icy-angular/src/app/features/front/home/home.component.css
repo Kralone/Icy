@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.front-shell {
+  position: relative;
+}
+
+.front-shell > * {
+  position: relative;
+  z-index: 0;
+}
+
+front-online-members#guides {
+  display: block;
+  scroll-margin-top: calc(var(--public-topbar-offset, 0px) + 0.75rem);
+}

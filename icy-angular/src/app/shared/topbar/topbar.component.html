@@ -1,0 +1,165 @@
+<header
+  class="topbar flex items-center justify-between px-4 sm:px-6 py-3
+         bg-gradient-to-r from-[#0d1b2a]/90 via-[#1b263b]/80 to-[#415a77]/90
+         backdrop-blur-xl border-b border-white/10 shadow-md sticky top-0 z-30"
+>
+  <!-- ✅ Burger menu (mobile only) -->
+  <button
+    class="text-2xl text-cyan-300 transition-transform duration-200 hover:scale-110 xl:hidden"
+    (click)="onToggleSidebar()"
+  >
+    ☰
+  </button>
+
+  <!-- ✅ Logo centré -->
+  <div
+    class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2 group select-none"
+  >
+    <img
+      src="assets/images/home/iceforgeLogo.png"
+      alt="IceForge Logo"
+      class="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(56,189,248,0.4)]"
+    />
+  </div>
+
+  <!-- ✅ Zone droite -->
+  <div class="flex items-center gap-4 ml-auto relative">
+    <!-- Notifications -->
+    <button
+      type="button"
+      class="relative h-10 w-10 rounded-full border border-cyan-400/40 bg-cyan-500/10 text-xl text-cyan-200
+             shadow-[0_0_12px_rgba(34,211,238,0.18)] hover:bg-cyan-500/20 hover:scale-105 transition"
+      [ngClass]="{ 'bell-glow': unreadCount > 0 }"
+      (click)="toggleNotifications($event)"
+      aria-label="Notifications"
+    >
+      🔔
+      <span
+        *ngIf="unreadCount > 0"
+        class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+      ></span>
+    </button>
+
+    <div
+      *ngIf="showNotifications"
+      class="absolute right-0 top-full mt-3 w-80 rounded-2xl border border-white/15 bg-[#0f1a2a]/95
+             backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.2)] p-4 z-50"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-sm font-semibold text-cyan-200">Notifications</div>
+        <button
+          type="button"
+          class="text-xs text-cyan-200 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:text-white/40"
+          (click)="markAllRead()"
+          [disabled]="notifications.length === 0"
+        >
+          Tout marquer lu
+        </button>
+      </div>
+
+      <div class="space-y-2 max-h-72 overflow-y-auto scrollbar-custom pr-1">
+        <div *ngIf="notifications.length === 0" class="text-xs text-white/50 text-center py-4">
+          Aucune notification pour l'instant.
+        </div>
+        <div
+          *ngFor="let notification of notifications"
+          class="notif-item relative rounded-xl border border-white/10 bg-white/5 p-3 pr-14 cursor-pointer hover:bg-white/10 transition"
+          [class.opacity-70]="notification.read"
+          [class.notif-unread]="!notification.read"
+          [class.notif-priority-high]="notification.priority === 3"
+          (click)="openNotification(notification)"
+        >
+          <span
+            class="notif-chevron-right"
+            [class.notif-chevron-right--static]="notification.read"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 32 32" class="notif-chevron-right__icon">
+              <path d="M8 6l10 10-10 10" />
+              <path d="M14 6l10 10-10 10" />
+            </svg>
+          </span>
+          <span class="notif-aurora" aria-hidden="true"></span>
+          <span class="notif-unread-glow" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="notif-delete-btn"
+            (click)="deleteNotification($event, notification)"
+            aria-label="Supprimer la notification"
+          >
+            Supprimer
+          </button>
+          <div class="notif-content">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <div class="text-xs text-cyan-200/80 underline decoration-cyan-300/40 underline-offset-2">
+                {{ notification.title }}
+              </div>
+            </div>
+            <div class="text-xs text-white/70">{{ notification.body }}</div>
+            <div class="text-[10px] text-white/40 mt-2">{{ notification.createdAt | date:'short' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profil -->
+    <div class="relative group flex items-center gap-2">
+      <span class="hidden sm:inline text-sm text-gray-200">{{ name }}</span>
+      <div class="relative h-10 w-10 flex items-center justify-center">
+        <div class="profile-orbit" aria-hidden="true">
+          <app-rank-orbit [rank]="activeRankKey" [animateOrbits]="true" [glow]="true"></app-rank-orbit>
+        </div>
+        <a
+          [routerLink]="['/icy/profile']"
+          class="relative z-10 rounded-full bg-cyan-500/30 w-8 h-8 border border-cyan-400/40
+                 hover:bg-cyan-400/30 transition flex items-center justify-center text-xs font-bold text-cyan-100"
+          aria-label="Acceder au profil"
+        >
+          <img
+            *ngIf="avatarUrl"
+            [src]="avatarUrl"
+            (error)="handleAvatarLoadError()"
+            alt="Avatar"
+            class="h-full w-full rounded-full object-cover"
+          />
+          <span *ngIf="!avatarUrl">{{ avatarInitial }}</span>
+          <span
+            class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-[#0f1a2a]"
+            [ngClass]="statusBadgeClass"
+          ></span>
+        </a>
+      </div>
+
+      <div
+        class="absolute right-0 top-full z-50 opacity-0 pointer-events-none transition
+               group-hover:opacity-100 group-hover:pointer-events-auto"
+      >
+        <div class="h-3"></div>
+        <div
+          class="relative w-56 rounded-2xl border border-white/15 bg-[#0f1a2a]/95
+                 backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.2)] p-3"
+        >
+          <span
+            class="absolute right-5 -top-1.5 h-3 w-3 rotate-45 bg-[#0f1a2a]/95"
+          ></span>
+          <div class="text-xs text-cyan-200/70 uppercase tracking-[0.3em] mb-3">Statut</div>
+          <div class="space-y-2">
+          <button
+            *ngFor="let option of statusOptions"
+            type="button"
+            (click)="setStatus(option.key)"
+            class="w-full flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs
+                   hover:border-cyan-400/40 transition"
+            [ngClass]="{ 'shadow-[0_0_12px_rgba(34,211,238,0.3)]': currentStatus === option.key }"
+          >
+            <span class="text-white">{{ option.label }}</span>
+            <span class="px-2 py-0.5 rounded-full border text-[10px]" [ngClass]="option.badgeClass">
+              {{ option.label }}
+            </span>
+          </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

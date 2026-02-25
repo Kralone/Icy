@@ -1,0 +1,31 @@
+.planet-form {
+  backdrop-filter: blur(10px);
+}
+
+.planet-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(103, 232, 249, 0.2);
+  background: rgba(6, 22, 38, 0.68);
+  color: #dff7ff;
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.planet-input:focus {
+  border-color: rgba(34, 211, 238, 0.65);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22);
+}
+
+.moon-indent {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 1.2rem;
+}
+
+.moon-link-mark {
+  display: inline-block;
+  margin-right: 0.45rem;
+  color: rgba(147, 197, 253, 0.9);
+}

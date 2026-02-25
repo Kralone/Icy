@@ -1,0 +1,415 @@
+<!-- ================== ADMIN NEWS - STYLE ICY ================== -->
+<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-10">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between">
+    <a
+      routerLink="/icy/admin"
+      class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
+    >
+      <span class="text-lg">←</span> Retour au tableau de bord
+    </a>
+
+    <button
+      (click)="openForm()"
+      class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+             text-slate-900 font-semibold px-6 py-2 rounded-full shadow-[0_18px_40px_rgba(0,255,255,0.2)]
+             transition transform hover:scale-[1.02]"
+    >
+      + Nouvelle actualité
+    </button>
+  </div>
+
+  <!-- ========================== SECTION ACTUALITÉS ========================== -->
+  <section class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Actualites</p>
+      <h1 class="text-2xl font-semibold text-cyan-200">Actualites</h1>
+    </div>
+
+    <!-- Loader -->
+    <div *ngIf="isLoading" class="text-center text-slate-400 py-6">
+      <span class="animate-pulse">Chargement des actualités...</span>
+    </div>
+
+    <!-- Empty -->
+    <div
+      *ngIf="!isLoading && news.length === 0"
+      class="text-center italic text-slate-400 py-6"
+    >
+      Aucune actualité pour le moment.
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!isLoading && news.length > 0" class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
+      <table
+        class="min-w-full text-sm text-gray-200 divide-y divide-white/10"
+      >
+        <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
+        <tr>
+          <th class="px-4 py-3 text-left">Titre</th>
+          <th class="px-4 py-3 text-left">Type</th>
+          <th class="px-4 py-3 text-left">Auteur</th>
+          <th class="px-4 py-3 text-left">Date</th>
+          <th class="px-4 py-3 text-right w-40">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr
+          *ngFor="let n of news"
+          class="hover:bg-white/5 border-b border-white/10 transition"
+        >
+          <td class="px-4 py-3 font-semibold">{{ n.title }}</td>
+          <td class="px-4 py-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-block w-4 h-4 rounded-full border border-white/30"
+                [style.backgroundColor]="n.type?.color"
+              ></span>
+              <span>{{ n.type?.name }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">{{ n.author }}</td>
+          <td class="px-4 py-3">{{ n.createdAt | date: 'medium' }}</td>
+          <td class="px-4 py-3 text-right space-x-3">
+            <button
+              (click)="openForm(n)"
+              class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition"
+            >
+              Modifier
+            </button>
+            <button
+              (click)="deleteNews(n.id)"
+              class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition"
+            >
+              Supprimer
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      *ngIf="totalPages > 1"
+      class="flex justify-center items-center gap-3 text-slate-300"
+    >
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage === 0"
+        class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
+      >
+        ← Précédent
+      </button>
+      <span>Page {{ currentPage + 1 }} / {{ totalPages }}</span>
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages - 1"
+        class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
+      >
+        Suivant →
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================== SECTION TYPES D’ACTUALITÉS ========================== -->
+  <section class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Configuration</p>
+      <h2 class="text-2xl font-semibold text-cyan-200">Types d’actualites</h2>
+    </div>
+
+    <!-- Ajout d’un type -->
+    <!-- Ajout d’un type -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+
+      <!-- Nom -->
+      <input
+        [(ngModel)]="newType.name"
+        placeholder="Nom du type"
+        class="px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
+           placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
+      />
+
+      <!-- Couleur + aperçu -->
+      <div class="relative flex items-center">
+    <span
+      class="absolute left-3 w-4 h-4 rounded-full border border-white/30"
+      [style.backgroundColor]="newType.color || 'transparent'"
+    ></span>
+        <input
+          [(ngModel)]="newType.color"
+          placeholder="Couleur (#00ffff)"
+          class="pl-10 pr-3 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
+             placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none w-full"
+        />
+      </div>
+
+      <!-- Image -->
+      <input
+        [(ngModel)]="newType.imageUrl"
+        placeholder="Image (URL)"
+        class="px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
+           placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
+      />
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        (click)="createType()"
+        [disabled]="isTypeSubmitting"
+        class="mt-4 bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+           text-slate-900 font-semibold px-6 py-2 rounded-full shadow-md transition transform hover:scale-[1.02] disabled:opacity-60"
+      >
+        ➕ Ajouter le type
+      </button>
+    </div>
+
+
+    <!-- Tableau des types -->
+    <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
+      <table
+        *ngIf="types.length > 0; else noTypes"
+        class="min-w-full text-sm text-gray-200 divide-y divide-white/10"
+      >
+        <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
+        <tr>
+          <th class="px-4 py-3 text-left">Nom</th>
+          <th class="px-4 py-3 text-left">Couleur</th>
+          <th class="px-4 py-3 text-left">Image</th>
+          <th class="px-4 py-3 text-right w-40">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr
+          *ngFor="let type of types"
+          class="hover:bg-white/5 border-b border-white/10 transition"
+        >
+          <td class="px-4 py-3 font-medium">{{ type.name }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center h-full gap-2">
+              <span
+                class="block w-5 h-5 rounded-full border border-white/30"
+                [style.backgroundColor]="type.color"
+              ></span>
+              {{ type.color }}
+            </div>
+          </td>
+
+          <td class="px-4 py-3">
+            <img
+              *ngIf="type.imageUrl; else noImage"
+              [src]="type.imageUrl"
+              alt="aperçu"
+              class="w-32 h-16 object-cover rounded-lg border border-white/20"
+            />
+            <ng-template #noImage>
+              <span class="text-gray-400">–</span>
+            </ng-template>
+          </td>
+          <td class="px-4 py-3 text-right space-x-3">
+            <button
+              (click)="editType(type)"
+              class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition"
+            >
+              Modifier
+            </button>
+            <button
+              (click)="deleteType(type.id)"
+              class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition"
+            >
+              Supprimer
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noTypes>
+        <p class="text-center py-6 text-slate-400 italic">
+          Aucun type d’actualité enregistré.
+        </p>
+      </ng-template>
+    </div>
+  </section>
+
+  <!-- ========================== MODAL TYPE ========================== -->
+  <div
+    *ngIf="editingType"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    (click)="cancelEdit()"
+  >
+    <div
+      class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-md p-8 relative text-white"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        (click)="cancelEdit()"
+        class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
+      >
+        ✖
+      </button>
+
+      <h2 class="text-2xl font-semibold mb-6 text-cyan-200">
+        Modifier le type d’actualité
+      </h2>
+
+      <div class="space-y-4">
+        <input
+          [(ngModel)]="editingType.name"
+          readonly
+          class="w-full px-4 py-2 bg-[#101a2f] border border-white/10 rounded-xl text-gray-400 cursor-not-allowed"
+        />
+
+        <input
+          [(ngModel)]="editingType.color"
+          placeholder="Couleur (#00ffff)"
+          class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
+        />
+
+        <input
+          [(ngModel)]="editingType.imageUrl"
+          placeholder="Image (URL)"
+          class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
+        />
+      </div>
+
+      <div class="flex justify-end gap-4 pt-6">
+        <button
+          type="button"
+          class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
+          (click)="cancelEdit()"
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          (click)="updateType()"
+          [disabled]="isTypeUpdating"
+          class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition"
+        >
+          {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================== MODAL NOUVELLE ACTUALITÉ ========================== -->
+<div
+  *ngIf="showForm"
+  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-4xl p-8 relative text-white
+           max-h-[85vh] overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Bouton fermeture -->
+    <button
+      (click)="closeForm()"
+      class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
+    >
+      ✖
+    </button>
+
+    <h2 class="text-2xl font-semibold mb-6 text-cyan-200">
+      {{ editingNews ? 'Modifier une actualité' : 'Nouvelle actualité' }}
+    </h2>
+
+    <!-- Champ titre -->
+    <div class="mb-4">
+      <label class="block text-sm mb-1 text-slate-300">Titre</label>
+      <input
+        [(ngModel)]="newsForm.title"
+        type="text"
+        class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
+               placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
+        placeholder="Titre de l’actualité..."
+      />
+    </div>
+
+    <!-- Sélecteur de type -->
+    <div class="flex flex-col gap-2 mb-4">
+      <label class="text-slate-300 text-sm">Type d’actualité</label>
+      <select
+        [(ngModel)]="newsForm.type"
+        name="type"
+        class="w-full p-2 rounded-xl border border-white/10 bg-[#0b1324] text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      >
+        <option [ngValue]="null" disabled>— Sélectionner un type —</option>
+        <option
+          *ngFor="let t of types"
+          [ngValue]="t"
+          [style.backgroundColor]="t.color"
+          class="text-black"
+        >
+          {{ t.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Editeur riche -->
+    <div class="mb-6">
+      <label class="block text-sm mb-1 text-slate-300">Contenu</label>
+      <angular-editor
+        [(ngModel)]="newsForm.content"
+        [config]="editorConfig"
+        class="rounded-xl bg-[#0b1324] border border-white/10 text-white"
+      ></angular-editor>
+    </div>
+
+    <!-- Aperçu -->
+    <div class="mt-6 border-t border-white/10 pt-4">
+      <h3 class="text-lg font-semibold text-cyan-200 mb-4">Aperçu</h3>
+
+      <div
+        *ngIf="selectedType"
+        class="flex items-start gap-4 bg-[#0b1324] border border-white/10 rounded-2xl p-4"
+      >
+        <img
+          [src]="selectedType.imageUrl"
+          alt="aperçu type"
+          class="w-32 h-20 object-cover rounded-lg border border-white/20"
+        />
+        <div class="flex-1">
+          <h4 class="text-xl font-semibold text-white mb-1">
+            {{ newsForm.title || 'Nouvelle actualité' }}
+          </h4>
+          <p class="text-sm text-slate-400 mb-3">Type : {{ selectedType.name }}</p>
+          <div
+            class="prose prose-invert max-w-none text-gray-200"
+            [innerHTML]="newsForm.content"
+          ></div>
+        </div>
+      </div>
+
+      <div *ngIf="!selectedType" class="text-slate-400 italic">
+        Sélectionnez un type pour voir l’aperçu...
+      </div>
+    </div>
+
+    <!-- Boutons -->
+    <div class="flex justify-end gap-4 mt-6">
+      <div class="mr-auto text-xs text-slate-400 self-center" *ngIf="draftSavedAt">
+        Brouillon local sauvegardé à {{ draftSavedAt | date:'shortTime' }}
+      </div>
+      <button
+        (click)="closeForm()"
+        class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
+      >
+        Annuler
+      </button>
+
+      <button
+        (click)="saveNews()"
+        class="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
+               text-slate-900 font-semibold shadow-md transition"
+      >
+        💾 Sauvegarder
+      </button>
+    </div>
+  </div>
+</div>

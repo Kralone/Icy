@@ -1,0 +1,115 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.utils-menu {
+  position: relative;
+  overflow: hidden;
+}
+
+.utils-menu--private {
+  min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px);
+}
+
+.utils-menu--public {
+  min-height: calc(100vh - var(--public-topbar-offset, 0px));
+  min-height: calc(100dvh - var(--public-topbar-offset, 0px));
+}
+
+.utils-rank-orbit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1500px;
+  height: 1500px;
+  opacity: 0.3;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+  will-change: transform;
+}
+
+.utils-content {
+  position: relative;
+  z-index: 20;
+  padding-top: 3.5rem;
+}
+
+.utils-rank-label {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  z-index: 60;
+}
+
+.utils-rank-label::after {
+  content: '';
+  position: absolute;
+  inset: -80px -120px -80px -120px;
+  background: radial-gradient(
+    circle at top right,
+    rgba(34, 211, 238, 0.5) 0%,
+    rgba(34, 211, 238, 0.22) 35%,
+    rgba(34, 211, 238, 0.08) 60%,
+    rgba(34, 211, 238, 0.0) 78%
+  );
+  opacity: 0.65;
+  filter: blur(24px);
+  animation: utilsRankGlow 6s ease-in-out infinite;
+  z-index: -1;
+}
+
+.utils-menu-card {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  filter: blur(6px);
+  transition:
+    opacity 420ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 420ms ease;
+  transition-delay: var(--card-delay, 0ms);
+}
+
+.utils-menu-card--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+@keyframes utilsRankGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(6px, -6px) scale(0.95);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(0, 0) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .utils-menu-card,
+  .utils-menu-card--visible {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .utils-rank-label {
+    top: 1rem;
+    right: 1rem;
+    font-size: 38px;
+  }
+}

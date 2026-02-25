@@ -1,0 +1,128 @@
+/* ✅ Élément actif (sobre, pro, tech) */
+.sidebar a.active {
+  background-color: rgba(59, 130, 246, 0.2); /* bg-blue-500/20 */
+  border-left: 4px solid #3b82f6; /* border-blue-500 */
+  color: #ffffff;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+/* 🌟 Animation de réduction de la sidebar */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  transition: width 0.3s ease-in-out;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: gap 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+
+.sidebar.collapsed a {
+  gap: 0;
+  transform: scale(1.1);  /* Légère mise en avant des icônes */
+}
+
+/* 📌 Mode replié */
+.sidebar.collapsed {
+  width: 80px; /* Réduit la largeur */
+}
+
+/* 🏠 Gestion des textes pour le mode réduit */
+.sidebar.collapsed .menu-text {
+  display: none; /* Cache les labels des liens */
+}
+
+/* 📌 Centrage des icônes quand la sidebar est repliée */
+.sidebar.collapsed a {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+/* 🎭 Animation du menu burger */
+.burger-btn {
+  cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* 🌟 Effet d'agrandissement au hover */
+.burger-btn:hover {
+  transform: scale(1.1);
+}
+
+/* 📌 Position du burger menu */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+/* 📌 Quand la sidebar est repliée, le menu burger passe en dessous du logo */
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar.collapsed .burger-btn {
+  margin-top: 10px; /* Espacement sous le logo */
+}
+
+/* 🌟 Fixer le bouton Logout en bas */
+.logout-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  text-align: center;
+  padding: 10px;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-radius: 5px;
+  background: rgba(255, 0, 0, 0.7); /* Rouge semi-transparent */
+  transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+/* 🌟 Effet hover */
+.logout-btn:hover {
+  background: rgba(255, 0, 0, 1);
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* 📌 Quand la sidebar est repliée, le logout reste aligné et visible */
+.sidebar.collapsed .logout-btn {
+  width: 60%;
+  font-size: 0.8rem;
+  padding: 8px;
+}
+
+.menu-text {
+  display: inline-block;  /* Permet de gérer la largeur */
+  opacity: 1;
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.3s ease-in-out, max-width 0.3s ease-in-out;
+}
+
+.sidebar.collapsed .menu-text {
+  opacity: 0;
+  max-width: 0;
+  visibility: hidden;  /* Empêche d'occuper de l'espace après la transition */
+  transition: opacity 0.2s ease-in-out, max-width 0.2s ease-in-out 0.1s, visibility 0s 0.2s;
+  transform: scale(1.2);
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+}
+

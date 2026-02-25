@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS events (
+    id UUID PRIMARY KEY,
+    type VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_date_time TIMESTAMP NOT NULL,
+    end_date_time TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finished BOOLEAN NOT NULL DEFAULT FALSE
+);

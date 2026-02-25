@@ -1,0 +1,101 @@
+.resource-sales-controls {
+  margin-top: 0.78rem;
+  width: fit-content;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  border-radius: 999px;
+  background: rgba(6, 24, 43, 0.66);
+  padding: 0.3rem 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.44rem;
+  color: #d2f4ff;
+  font-size: 0.76rem;
+  opacity: 0.88;
+}
+
+.resource-sales-controls label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.68rem;
+  color: #a7e6ff;
+}
+
+.resource-sales-controls input {
+  width: 72px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  background: rgba(4, 15, 31, 0.7);
+  color: #ecfeff;
+  padding: 0.24rem 0.5rem;
+  outline: none;
+  font-size: 0.76rem;
+}
+
+.resource-sales-table-wrap {
+  margin-top: 0.9rem;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 12px;
+  background: rgba(3, 12, 24, 0.82);
+  overflow: auto;
+}
+
+.resource-sales-state {
+  margin-top: 0.82rem;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 12px;
+  background: rgba(3, 12, 24, 0.82);
+  color: #cceeff;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.92rem;
+}
+
+.resource-sales-state--error {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.resource-sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.resource-sales-table th,
+.resource-sales-table td {
+  padding: 0.56rem 0.7rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.resource-sales-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(8, 26, 48, 0.98), rgba(6, 21, 39, 0.96));
+  color: #bfe9ff;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.76rem;
+}
+
+.resource-sales-table__name {
+  font-weight: 700;
+  color: #ecfeff;
+}
+
+.resource-sales-table__price {
+  display: inline-block;
+  min-width: 122px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, rgba(249, 115, 22, 0.2) 50%, rgba(34, 197, 94, 0.2) 100%);
+  font-weight: 800;
+}
+
+.resource-sales-table__revenue {
+  font-weight: 900;
+}

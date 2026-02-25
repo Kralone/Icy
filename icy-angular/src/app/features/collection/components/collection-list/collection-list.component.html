@@ -1,0 +1,115 @@
+<section
+  class="relative loading-reveal bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6 transition hover:shadow-cyan-500/10"
+  [attr.data-loading]="isLoading"
+>
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-xl sm:text-2xl font-bold text-cyan-200">Mes collections</h2>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <input
+      class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      placeholder="Rechercher une collection..."
+      [ngModel]="searchTerm"
+      (ngModelChange)="searchTermChange.emit($event)"
+    />
+    <select
+      class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      [ngModel]="filterArchetype"
+      (ngModelChange)="filterArchetypeChange.emit($event)">
+      <option value="all">Tous les archetypes</option>
+      <option *ngFor="let archetype of templateArchetypes" [value]="archetype">{{ archetype }}</option>
+    </select>
+    <select
+      class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      [ngModel]="filterProgress"
+      (ngModelChange)="filterProgressChange.emit($event)">
+      <option value="all">Toutes les progressions</option>
+      <option value="empty">0%</option>
+      <option value="inprogress">En cours</option>
+      <option value="complete">100%</option>
+    </select>
+    <button
+      type="button"
+      class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/10 transition"
+      (click)="reload.emit()">
+      Rafraichir
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && error"
+       class="mt-6 rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+    ❌ Erreur lors du chargement des collections.
+  </div>
+
+  <div *ngIf="!isLoading && !error">
+    <div *ngIf="collections.length === 0" class="mt-6 text-sm text-slate-300 text-center">
+      Aucune collection ne correspond a ces filtres.
+    </div>
+
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div *ngFor="let c of collections; trackBy: trackById"
+           class="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg transition hover:-translate-y-1 hover:shadow-cyan-500/20">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-white">{{ c.name }}</h3>
+            <p class="text-xs text-slate-300 mt-1">
+              {{ templateNameById.get(c.templateId) || ('#' + c.templateId) }}
+            </p>
+          </div>
+          <span class="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+            {{ templateById.get(c.templateId)?.archetype || '—' }}
+          </span>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs text-slate-300">
+            <span>Progression</span>
+            <span *ngIf="getProgressPercent(c.id) !== null; else progressLoading">
+              {{ getProgressPercent(c.id) }}%
+            </span>
+            <ng-template #progressLoading>
+              <span>—</span>
+            </ng-template>
+          </div>
+          <div class="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all"
+              [style.width.%]="getProgressPercent(c.id) ?? 0">
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
+          <span>Maj: {{ formatDate(c.updatedAt) }}</span>
+          <span>#{{ c.id }}</span>
+        </div>
+
+        <div class="mt-5 flex items-center justify-between">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md bg-cyan-600/90 hover:bg-cyan-500 transition"
+            (click)="openDrawer.emit(c.id)">
+            Ouvrir la grille
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-400/50 text-red-300 hover:bg-red-400/10 transition"
+            (click)="removeCollection.emit(c.id)">
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+

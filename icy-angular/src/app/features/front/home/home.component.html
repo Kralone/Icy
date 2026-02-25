@@ -1,0 +1,38 @@
+<div class="front-shell flex flex-col min-h-screen overflow-x-hidden">
+  <front-header></front-header>
+
+  <front-public-utils></front-public-utils>
+
+  <front-online-members id="guides"></front-online-members>
+
+  @defer (on viewport) {
+    <front-story></front-story>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
+  @defer (on viewport) {
+    <front-activities></front-activities>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
+  @defer (on viewport) {
+    <front-carousel></front-carousel>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
+  <!-- Footer Placeholder -->
+  <footer class="relative bg-slate-950 text-gray-400 text-sm py-10">
+    <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.15),transparent_55%)]"></div>
+    <div class="relative max-w-6xl mx-auto px-4 flex flex-col gap-2 text-center">
+      <p class="text-slate-100 font-semibold text-base tracking-wide">{{strings.footerCopyright}}</p>
+      <p class="text-slate-400" [innerHTML]="strings.footerDisclaimer">
+      </p>
+    </div>
+  </footer>
+
+
+
+</div>

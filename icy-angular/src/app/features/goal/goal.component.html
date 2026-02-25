@@ -1,0 +1,177 @@
+<div class="relative min-h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8">
+
+  <!-- Arrière-plan lumineux -->
+  <div class="absolute inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-40 -left-40 w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-blue-500/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
+  </div>
+
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
+
+  <!-- Contenu -->
+  <div
+    [class.pointer-events-none]="isLoading"
+    class="loading-reveal transition duration-300 flex flex-col flex-1 gap-4"
+    [attr.data-loading]="isLoading"
+  >
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold text-cyan-200 tracking-wide">🎯 Objectifs</h1>
+        <span class="text-xs sm:text-sm text-white/60">
+          {{ goals.length }} total
+        </span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 sm:p-4 shadow-[0_0_25px_rgba(56,189,248,0.12)]">
+      <div class="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
+
+        <!-- Recherche -->
+        <div class="flex-1">
+          <label class="block text-xs text-white/60 mb-1">Recherche</label>
+          <input
+            [(ngModel)]="search"
+            (ngModelChange)="recomputeDisplay()"
+            type="text"
+            placeholder="Nom ou description…"
+            class="w-full min-h-[44px] px-3 py-2.5 rounded-xl
+                   border border-white/20
+                   bg-[#1b263b]/70 text-cyan-100 placeholder:text-white/40
+                   focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400/40
+                   outline-none transition"
+          />
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2 items-end">
+
+          <!-- Toggle terminés -->
+          <label class="cursor-pointer select-none">
+            <input
+              type="checkbox"
+              [(ngModel)]="showCompleted"
+              (change)="onShowCompletedToggle()"
+              class="sr-only"
+            />
+            <span
+              class="inline-flex min-h-[44px] items-center px-4 rounded-xl border text-sm font-medium transition hover:bg-white/10"
+              [ngClass]="{
+                'bg-cyan-500/15 border-cyan-400/30 text-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]': showCompleted,
+                'bg-white/5 border-white/20 text-white/60': !showCompleted
+              }"
+            >
+              Afficher terminés
+            </span>
+          </label>
+
+          <!-- Déplier tout -->
+          <button
+            (click)="expandAll()"
+            title="Déplier tous les objectifs"
+            class="min-h-[44px] w-[44px] flex items-center justify-center
+                   rounded-xl border border-white/20
+                   bg-white/5 text-cyan-200
+                   hover:bg-white/10 transition"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 7l5 5 5-5M7 13l5 5 5-5" />
+            </svg>
+          </button>
+
+          <!-- Replier tout -->
+          <button
+            (click)="collapseAll()"
+            title="Replier tous les objectifs"
+            class="min-h-[44px] w-[44px] flex items-center justify-center
+                   rounded-xl border border-white/20
+                   bg-white/5 text-white/70
+                   hover:bg-white/10 transition"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 17l-5-5-5 5M17 11l-5-5-5 5" />
+            </svg>
+          </button>
+
+          <!-- Reset -->
+          <button
+            (click)="clearSearch()"
+            class="min-h-[44px] px-4 rounded-xl border border-white/20
+                   bg-white/5 text-sm text-white/80
+                   hover:bg-white/10 transition"
+          >
+            Réinitialiser
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- États -->
+    <div *ngIf="!isLoading && displayGoals.length === 0 && (!showCompleted || historyGoals.length === 0)" class="text-gray-400 text-center py-8">
+      Aucun objectif.
+    </div>
+
+    <!-- Liste -->
+    <div class="flex-1 overflow-y-auto space-y-4 pb-8">
+      <div *ngFor="let goal of displayGoals; trackBy: trackByGoalId" class="animate-fadeInUp">
+        <app-goal-sub
+          [goal]="goal"
+          [depth]="0"
+          [isAdmin]="isAdmin"
+          [showChildren]="false"
+          [disableAnimation]="suppressAnimations"
+          (refresh)="reloadGoals()"
+          (progressChange)="onProgressChange($event)"
+          (expandedChange)="onExpandedChange($event)"
+        ></app-goal-sub>
+      </div>
+
+      <!-- Historique -->
+      <div *ngIf="showCompleted && historyGoals.length" class="mt-6">
+        <button
+          (click)="toggleHistory()"
+          class="w-full flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
+        >
+          <span>Historique</span>
+          <span class="text-xs text-white/50">
+            {{ showHistory ? 'Masquer' : 'Afficher' }} · {{ historyGoals.length }}
+          </span>
+        </button>
+
+        <div
+          class="mt-3 space-y-4 overflow-hidden transition-all duration-300 ease-out"
+          [style.maxHeight]="showHistory ? '2000px' : '0px'"
+          [style.opacity]="showHistory ? '1' : '0'"
+        >
+          <div *ngFor="let goal of historyGoals; trackBy: trackByGoalId">
+            <app-goal-sub
+              [goal]="goal"
+              [depth]="0"
+              [isAdmin]="isAdmin"
+              [showChildren]="false"
+              [disableAnimation]="true"
+              (refresh)="reloadGoals()"
+              (progressChange)="onProgressChange($event)"
+              (expandedChange)="onExpandedChange($event)"
+            ></app-goal-sub>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+

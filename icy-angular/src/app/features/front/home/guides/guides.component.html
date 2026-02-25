@@ -1,0 +1,48 @@
+<div class="guides-shell">
+  <header class="guides-header">
+    <p class="guides-header__kicker">Guides</p>
+    <h2>Guides en preparation</h2>
+    <p>Des guides de qualité pour des aventures épiques.</p>
+  </header>
+
+  <div class="guides-grid">
+    @for (card of cards; track card.id) {
+      @if (card.route && card.type !== 'soon') {
+        <a class="guide-card guide-card--live guide-card--clickable" [routerLink]="card.route">
+          <div class="guide-card__media guide-card__media--live" aria-hidden="true">
+            <img class="guide-card__image" [src]="card.imageUrl" [alt]="card.title" loading="lazy" decoding="async" />
+            <div class="guide-card__hover-glow"></div>
+            <span class="guide-card__status">{{ card.type === 'écriture' ? 'Ecriture' : 'Disponible' }}</span>
+          </div>
+          <div class="guide-card__content">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.summary }}</p>
+            <div class="guide-card__meta">
+              <span>{{ card.category }}</span>
+            </div>
+          </div>
+        </a>
+      } @else {
+        <article class="guide-card guide-card--coming">
+          <div class="guide-card__media guide-card__media--soon" aria-hidden="true">
+            @if (card.imageUrl) {
+              <img class="guide-card__image" [src]="card.imageUrl" [alt]="card.title" loading="lazy" decoding="async" />
+              <div class="guide-card__hover-glow"></div>
+            } @else {
+              <div class="guide-card__loading-shimmer"></div>
+              <div class="guide-card__loading-ring"></div>
+            }
+            <span class="guide-card__status">Coming soon</span>
+          </div>
+          <div class="guide-card__content">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.summary }}</p>
+            <div class="guide-card__meta">
+              <span>{{ card.category }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    }
+  </div>
+</div>

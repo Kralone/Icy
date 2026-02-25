@@ -1,0 +1,71 @@
+/* Intentionally minimal; layout handled with utility classes. */
+.rank-orbit {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1500px;
+  height: 1500px;
+  opacity: 0;
+  transform: translate(70%, -70%) scale(0.2);
+  transform-origin: 100% 0%;
+  will-change: transform, opacity;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.rank-orbit.is-ready {
+  animation: orbit-deploy 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.rank-label {
+  opacity: 0;
+  animation: rank-label-fade 500ms ease-out forwards;
+  animation-delay: 160ms;
+}
+
+@keyframes orbit-deploy {
+  0% {
+    opacity: 0;
+    transform: translate(70%, -70%) scale(0.2);
+  }
+  60% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 0.3;
+    transform: translate(50%, -50%) scale(1);
+  }
+}
+
+@keyframes rank-label-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-orbit.is-ready {
+    animation: none;
+    opacity: 0.3;
+    transform: translate(50%, -50%) scale(1);
+  }
+  .rank-label {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.rank-foreground {
+  position: relative;
+  z-index: 30;
+}
+
+.rank-orbit-small {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  opacity: 0.6;
+}

@@ -1,0 +1,121 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl px-4"
+  (click)="requestClose.emit()"
+>
+  <div
+    class="relative w-full max-w-sm sm:max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20
+           shadow-[0_0_25px_rgba(56,189,248,0.4)] rounded-2xl p-6 sm:p-8 text-white animate-fade-in overflow-y-auto max-h-[90vh]"
+    (click)="$event.stopPropagation()"
+  >
+    <button (click)="requestClose.emit()" class="absolute top-4 right-4 text-gray-300 hover:text-white text-lg sm:text-xl">✖</button>
+
+    <div *ngIf="selectedEvent?.type?.imageUrl" class="-mt-6 -mx-6 mb-6">
+      <img [src]="selectedEvent.type.imageUrl" alt="Illustration du type d'événement"
+           class="w-full h-40 sm:h-48 object-cover rounded-t-2xl border-b border-white/20" />
+    </div>
+
+    <h2 class="text-xl sm:text-2xl font-bold mb-4 text-cyan-300 break-words">{{ selectedEvent?.title }}</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <p><strong>Type :</strong> {{ selectedEvent?.type?.name }}</p>
+      <p><strong>Status :</strong>
+        <span [ngClass]="{ 'text-green-400': !selectedEvent?.finished, 'text-gray-400 italic': selectedEvent?.finished }">
+          {{ selectedEvent?.finished ? 'Terminé' : 'À venir' }}
+        </span>
+      </p>
+      <p><strong>Début :</strong> {{ selectedEvent?.startDateTime | date:'short' }}</p>
+      <p><strong>Fin :</strong> {{ selectedEvent?.endDateTime | date:'short' }}</p>
+    </div>
+
+    <div class="mt-4 text-sm">
+      <p><strong>Description :</strong></p>
+      <p class="mt-1 text-gray-300 break-words" [innerHTML]="descriptionHtml"></p>
+    </div>
+
+    <!-- Participation -->
+    <div class="mt-6 border-t border-white/10 pt-4">
+      <h3 class="text-base sm:text-lg font-semibold mb-3 text-cyan-200">Participation</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 text-sm mb-4 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/20">
+        <div class="py-3 sm:py-0">
+          <p class="font-semibold text-green-400 mb-2">✔ Confirmés</p>
+          <ul *ngIf="participationsByStatus.confirmed.length > 0; else noConfirmed" class="space-y-1">
+            <li *ngFor="let p of participationsByStatus.confirmed">{{ p.user.username }}</li>
+          </ul>
+          <ng-template #noConfirmed><p class="italic text-gray-400">Aucun</p></ng-template>
+        </div>
+
+        <div class="py-3 sm:py-0">
+          <p class="font-semibold text-yellow-400 mb-2">❔ Indécis</p>
+          <ul *ngIf="participationsByStatus.maybe.length > 0; else noMaybe" class="space-y-1">
+            <li *ngFor="let p of participationsByStatus.maybe">{{ p.user.username }}</li>
+          </ul>
+          <ng-template #noMaybe><p class="italic text-gray-400">Aucun</p></ng-template>
+        </div>
+
+        <div class="py-3 sm:py-0">
+          <p class="font-semibold text-red-400 mb-2">❌ Refusés</p>
+          <ul *ngIf="participationsByStatus.refused.length > 0; else noRefused" class="space-y-1">
+            <li *ngFor="let p of participationsByStatus.refused">{{ p.user.username }}</li>
+          </ul>
+          <ng-template #noRefused><p class="italic text-gray-400">Aucun</p></ng-template>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+        <button
+          (click)="participationChange.emit(1)"
+          [disabled]="selectedEvent?.finished"
+          class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
+          Confirmer
+        </button>
+
+        <button
+          (click)="participationChange.emit(0)"
+          [disabled]="selectedEvent?.finished"
+          class="bg-yellow-500 hover:bg-yellow-400 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
+          Peut-être
+        </button>
+
+        <button
+          (click)="participationChange.emit(-1)"
+          [disabled]="selectedEvent?.finished"
+          class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
+          Refuser
+        </button>
+      </div>
+    </div>
+
+    <!-- Flottes des confirmes -->
+    <div class="mt-6 border-t border-white/10 pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-base sm:text-lg font-semibold text-cyan-200">Vaisseaux des confirmés</h3>
+        <button
+          (click)="toggleFleets.emit()"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.2em]
+                 border border-cyan-400/30 text-cyan-200 bg-white/5 hover:bg-cyan-500/20 transition">
+          {{ showConfirmedFleets ? 'Masquer' : 'Afficher' }}
+        </button>
+      </div>
+
+      <div *ngIf="showConfirmedFleets" class="mt-4 space-y-4">
+        <div *ngIf="isFleetLoading" class="text-sm text-slate-400 italic">
+          Chargement des flottes...
+        </div>
+
+        <div *ngIf="!isFleetLoading && fleetBrandKeys.length === 0" class="text-sm text-slate-400 italic">
+          Aucun vaisseau trouvé pour les confirmés.
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+          <ng-container *ngFor="let brand of fleetBrandKeys">
+            <app-fleet-mini-card
+              *ngFor="let ship of fleetByBrand[brand]"
+              [ship]="ship"
+            ></app-fleet-mini-card>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

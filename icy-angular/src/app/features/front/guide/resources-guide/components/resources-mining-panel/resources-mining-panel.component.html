@@ -1,0 +1,143 @@
+<div *ngIf="miningLoading" class="resource-state">Chargement des ore locations depuis le backend...</div>
+<div *ngIf="!miningLoading && miningError" class="resource-state resource-state--error">{{ miningError }}</div>
+<div *ngIf="!miningLoading && !miningError && !sortedPlanetGroups.length" class="resource-state">Aucune donnee exploitable.</div>
+
+<ng-container *ngIf="!miningLoading && !miningError && sortedPlanetGroups.length">
+  <div class="mining-search-wrap">
+    <div class="mining-search-row">
+      <input
+        type="text"
+        class="mining-search-input"
+        placeholder="Rechercher une planete, un Lx ou un minerai..."
+        [value]="miningSearch"
+        (input)="updateMiningSearch(($any($event.target)).value)"
+      />
+      <button
+        type="button"
+        class="mining-search-reset"
+        *ngIf="miningSearch"
+        (click)="clearSelectedOre()"
+      >
+        Effacer
+      </button>
+    </div>
+
+    <div class="ore-suggestion-list" *ngIf="oreSuggestions.length">
+      <button
+        type="button"
+        class="ore-suggestion-item"
+        *ngFor="let oreCode of oreSuggestions"
+        (click)="selectOreSuggestion(oreCode)"
+      >
+        <span class="ore-suggestion-item__name">{{ oreCode }}</span>
+        <span class="ore-suggestion-item__count">{{ oreResultCount(oreCode) }} locations</span>
+      </button>
+    </div>
+  </div>
+
+  <section class="ore-ranking-panel" *ngIf="activeOreCode as oreCode">
+    <div class="ore-ranking-panel__head">
+      <h3>{{ oreCode }}</h3>
+      <span>{{ activeOreResults.length }} locations</span>
+    </div>
+
+    <div class="ore-ranking-list" *ngIf="activeOreResults.length; else noOreLocationsTemplate">
+      <button
+        type="button"
+        class="ore-ranking-item"
+        *ngFor="let result of activeOreResults; let idx = index; trackBy: trackOreResult"
+        (click)="focusOreResult(result)"
+      >
+        <span class="ore-ranking-item__rank">#{{ idx + 1 }}</span>
+        <div class="ore-ranking-item__meta">
+          <span class="ore-ranking-item__location">{{ result.displayLabel }}</span>
+          <span class="ore-ranking-item__planet">{{ result.groupPlanet }} · {{ result.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Planete' }}</span>
+        </div>
+        <div class="ore-ranking-item__bar">
+          <span class="ore-ranking-item__fill" [style.width]="probabilityBarWidth(result.probability)"></span>
+        </div>
+        <span class="ore-ranking-item__pct">{{ formatPercent(result.probability) }}</span>
+      </button>
+    </div>
+    <ng-template #noOreLocationsTemplate>
+      <div class="resource-state">Aucune location trouvee pour ce minerai.</div>
+    </ng-template>
+  </section>
+
+  <div *ngIf="!filteredPlanetGroups.length" class="resource-state">Aucun resultat pour cette recherche.</div>
+
+  <ng-container *ngIf="filteredPlanetGroups.length">
+    <div class="planet-card-grid">
+      <button
+        type="button"
+        *ngFor="let group of pagedPlanetGroups; trackBy: trackPlanetGroup"
+        class="planet-card"
+        [class.planet-card--active]="selectedPlanetGroup?.key === group.key"
+        (click)="selectPlanet(group.key)"
+      >
+        <img *ngIf="group.imageUrl" class="planet-card__image" [src]="group.imageUrl" [alt]="group.planetName" loading="lazy" decoding="async" />
+        <span class="planet-card__overlay"></span>
+        <span class="planet-card__name">{{ group.planetName }}</span>
+      </button>
+    </div>
+
+    <div class="planet-card-pager">
+      <button type="button" (click)="previousPlanetPage()" [disabled]="currentPlanetPage <= 1">Precedent</button>
+      <span>{{ currentPlanetPage }} / {{ totalPlanetPages }}</span>
+      <button type="button" (click)="nextPlanetPage()" [disabled]="currentPlanetPage >= totalPlanetPages">Suivant</button>
+    </div>
+
+    <section class="mining-bubble" *ngIf="selectedPlanetGroup as selectedGroup">
+      <div class="mining-table-panel__head">
+        <h3>{{ selectedGroup.planetName }}</h3>
+      </div>
+
+      <div class="mining-detail-split">
+        <aside class="mining-location-menu">
+          <button
+            type="button"
+            class="mining-location-menu__item"
+            *ngFor="let location of selectedGroup.locations; trackBy: trackLocation"
+            [class.mining-location-menu__item--active]="selectedLocation?.id === location.id"
+            (click)="selectLocation(location.id)"
+          >
+            <span class="mining-location-menu__label">{{ location.displayLabel }}</span>
+            <span class="mining-location-menu__type">{{ location.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Planete' }}</span>
+          </button>
+          <div *ngIf="!selectedGroup.locations.length" class="mining-location-menu__empty">
+            Aucune location visible.
+          </div>
+        </aside>
+
+        <div class="mining-location-content" [class.mining-location-content--animating]="isLocationDetailAnimating">
+          <div class="mining-card__table-wrap" *ngIf="selectedLocation as location; else noLocationTemplate">
+            <table class="mining-table">
+              <thead>
+              <tr>
+                <th>Location</th>
+                <th>Ore</th>
+                <th>%</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngIf="!selectedLocationOres.length">
+                <td>{{ location.displayLabel }}</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr *ngFor="let ore of selectedLocationOres; let idx = index">
+                <td>{{ idx === 0 ? location.displayLabel : '' }}</td>
+                <td class="mining-table__ores">{{ ore.oreCode }}</td>
+                <td>{{ formatPercent(ore.probability) }}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #noLocationTemplate>
+            <div class="resource-state">Aucune location visible pour cette planete.</div>
+          </ng-template>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</ng-container>

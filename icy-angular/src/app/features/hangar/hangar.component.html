@@ -1,0 +1,130 @@
+<!-- ================== PAGE VAISSEAUX (STYLE ICY corrigé) ================== -->
+<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+  <app-loading-overlay
+    [isLoading]="isLoading"
+    [minDurationMs]="0"
+    [fadeOutMs]="500"
+    [softFade]="true"
+  ></app-loading-overlay>
+
+  <div
+    [class.blur-sm]="isLoading"
+    [class.pointer-events-none]="isLoading"
+    class="loading-reveal transition duration-300"
+    [attr.data-loading]="isLoading"
+  >
+    <!-- Header filtres + Ajouter -->
+    <div class="flex flex-wrap justify-between items-center px-6 pt-6 pb-4 gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <input
+          [(ngModel)]="shipFilter"
+          (ngModelChange)="onFilterChange()"
+          type="text"
+          placeholder="Rechercher un vaisseau…"
+          class="w-64 px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 backdrop-blur-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+        />
+
+        <div class="relative" appClickOutside (appClickOutside)="showBrandDropdown = false">
+          <button
+            type="button"
+            (click)="showBrandDropdown = !showBrandDropdown"
+            class="px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 transition backdrop-blur-lg"
+          >
+            Marques
+          </button>
+
+          <div
+            *ngIf="showBrandDropdown"
+            class="absolute left-0 mt-2 w-56 bg-[#0d1b2a]/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg z-20 p-3 max-h-64 overflow-y-auto"
+          >
+            <label
+              *ngFor="let brand of brands"
+              class="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white/20 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                [checked]="selectedBrands.includes(brand.name)"
+                (change)="toggleBrand(brand.name)"
+                class="text-cyan-400 accent-cyan-400"
+              />
+              {{ brand.name }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button
+        (click)="openModal()"
+        class="px-4 py-2 text-sm rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold
+               shadow-[0_0_12px_rgba(56,189,248,0.35)] hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] transform hover:scale-105 transition"
+      >
+        + Ajouter
+      </button>
+    </div>
+
+    <!-- Grille -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+      <div
+        *ngFor="let ship of filteredShips"
+        class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg overflow-hidden transition transform hover:scale-105 hover:border-cyan-400"
+      >
+        <button
+          (click)="deleteShip(ship.shipId)"
+          class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
+          title="Supprimer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <img
+          *ngIf="getBrandLogo(ship.brand)"
+          [src]="getBrandLogo(ship.brand)"
+          alt="Logo marque"
+          class="absolute top-3 right-3 w-12 h-12 object-contain bg-white/20 rounded-full p-2 shadow-md"
+        />
+
+        <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
+
+        <div class="p-4 space-y-1">
+          <h2 class="text-lg font-semibold text-white">{{ ship.name }}</h2>
+          <p class="text-sm text-gray-300">Fabricant : {{ ship.brand }}</p>
+          <p class="text-sm text-gray-300">Rôle : {{ ship.focus }}</p>
+          <p class="text-sm text-gray-300">Équipage : {{ ship.crew }}</p>
+        </div>
+
+        <div
+          class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border bg-white/10 border-white/20 backdrop-blur-md shadow-sm"
+          [ngClass]="{
+            'text-blue-400 border-blue-400': !ship.inGamePurchase && !ship.rewardInGame && !ship.loaner,
+            'text-green-400 border-green-400': ship.inGamePurchase,
+            'text-purple-300 border-purple-300': ship.rewardInGame,
+            'text-yellow-400 border-yellow-400': ship.loaner
+          }"
+        >
+          {{ ship.loaner ? 'Loaner' : ship.rewardInGame ? 'Récompense In Game' : ship.inGamePurchase ? 'Achat In Game' : 'RSI' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Aucun vaisseau -->
+    <div *ngIf="!isLoading && ships.length === 0" class="flex flex-col items-center justify-center h-96 text-gray-300">
+      <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 21V7a2 2 0 0 0-2-2h-4.586a1 1 0 0 1-.707-.293l-1.414-1.414a1 1 0 0 0-.707-.293H6a2 2 0 0 0-2 2v16" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6m-6-4h6m-6-4h6" />
+      </svg>
+      Aucun vaisseau enregistré pour le moment.
+    </div>
+  </div>
+</div>
+
+<app-ship-selector
+  [isOpen]="isModalOpen"
+  [showAcquisition]="true"
+  confirmLabel="Ajouter"
+  (close)="closeModal()"
+  (confirmSelection)="onShipSelected($event)"
+></app-ship-selector>
+
+

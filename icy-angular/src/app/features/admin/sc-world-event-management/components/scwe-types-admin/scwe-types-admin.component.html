@@ -1,0 +1,128 @@
+<div class="space-y-8">
+
+  <!-- Form -->
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="text-lg font-semibold text-cyan-200">
+        {{ editingType ? '✏️ Édition Type' : '➕ Création Type' }}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          *ngIf="editingType"
+          (click)="reset()"
+          class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition active:scale-95"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="text-sm text-gray-300">Nom</label>
+        <input
+          [(ngModel)]="typeForm.name"
+          [disabled]="!!editingType"
+          placeholder="Alliance Aid"
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 placeholder:text-white/40
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition disabled:opacity-50"
+        />
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-300">Text color</label>
+
+        <div class="relative">
+          <!-- preview -->
+          <div
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border border-white/25"
+            [style.background]="typeForm.textColor || 'transparent'"
+            [style.boxShadow]="typeForm.textColor ? '0 0 10px rgba(103,232,249,0.25)' : 'none'"
+            title="Preview"
+          ></div>
+
+          <input
+            [(ngModel)]="typeForm.textColor"
+            placeholder="#67e8f9"
+            class="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   placeholder:text-white/40
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+        </div>
+
+        <div class="text-xs text-white/50 mt-1">
+          Formats acceptés : #RRGGBB, rgb(...), rgba(...), hsl(...)
+        </div>
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-300">Image URL</label>
+        <input
+          [(ngModel)]="typeForm.imageUrl"
+          placeholder="https://... ou /img/sc/..."
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 placeholder:text-white/40
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+        />
+      </div>
+    </div>
+
+    <!-- Builder -->
+    <app-scwe-schema-builder
+      [model]="schemaModel"
+      [initialJson]="typeForm.scoreSchema"
+      (modelChange)="onSchemaModelChange($event)"
+      (jsonChange)="onSchemaJsonChange($event)"
+      (errorChange)="onSchemaErrorChange($event)"
+    ></app-scwe-schema-builder>
+
+    <div class="flex justify-end">
+      <button
+        (click)="saveType()"
+        class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
+               transition font-semibold active:scale-95"
+      >
+        {{ editingType ? 'Mettre à jour' : '+ Ajouter' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+    <div *ngFor="let t of types" class="border-b border-white/10">
+      <div class="flex items-center justify-between px-4 py-3 hover:bg-white/10 transition">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/15 overflow-hidden flex items-center justify-center">
+            <img *ngIf="t.imageUrl" [src]="t.imageUrl" class="w-full h-full object-cover" />
+            <span *ngIf="!t.imageUrl" class="text-white/40">IMG</span>
+          </div>
+
+          <div>
+            <div class="font-semibold tracking-wide">{{ t.name }}</div>
+            <div class="text-xs text-white/60">
+              <span class="mr-2">textColor:</span>
+              <span class="font-mono" [style.color]="t.textColor || '#67e8f9'">{{ t.textColor || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button
+            (click)="editType(t)"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+            title="Éditer"
+          >✏️</button>
+
+          <button
+            (click)="deleteType(t)"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+            title="Supprimer"
+          >🗑️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

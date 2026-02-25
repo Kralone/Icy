@@ -1,0 +1,43 @@
+<section class="front-section activities-section">
+  <div class="front-container">
+    <div class="activities-header">
+      <h2 class="activities-title">Activites</h2>
+      <p class="activities-subtitle">Des operations coordonnees, de l'extraction a la securite.</p>
+    </div>
+
+    <div class="activities-grid">
+      <article appScrollAnimation [startScroll]="0" [endScroll]="200" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/mining.jpg" alt="Extraction" loading="lazy" decoding="async" />
+          <div class="activity-card__shade"></div>
+        </div>
+        <div class="activity-card__body">
+          <span class="activity-card__index">01</span>
+          <p [innerHTML]="strings.quote1"></p>
+        </div>
+      </article>
+
+      <article appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="10" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/cargo.jpg" alt="Logistique" loading="lazy" decoding="async" />
+          <div class="activity-card__shade"></div>
+        </div>
+        <div class="activity-card__body">
+          <span class="activity-card__index">02</span>
+          <p [innerHTML]="strings.quote2"></p>
+        </div>
+      </article>
+
+      <article appScrollAnimation [startScroll]="50" [endScroll]="250" [offsetX]="-10" class="activity-card">
+        <div class="activity-card__media">
+          <img src="assets/images/home/activities/space-combat.jpg" alt="Sécurité" loading="lazy" decoding="async" />
+          <div class="activity-card__shade"></div>
+        </div>
+        <div class="activity-card__body">
+          <span class="activity-card__index">03</span>
+          <p [innerHTML]="strings.quote3"></p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

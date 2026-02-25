@@ -1,2 +1,129 @@
-# Icy
-Gestion du groupe de joueur Iceforge
+# IceForge
+
+Plateforme communautaire avec front Angular, backend Spring Boot et bot Discord.
+Ce README documente l'application et son architecture sans entrer dans des sujets hors
+priorite.
+
+## Vue d'ensemble
+
+IceForge centralise des pages publiques, un espace membre et un back-office
+pour gerer des contenus (actus, evenements, objectifs, collections, recrutement,
+images, etc.). Le backend expose des API REST et du WebSocket, persiste les donnees
+dans PostgreSQL, et orchestre des notifications via RabbitMQ. Le bot Discord
+ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
+
+## Architecture (macro)
+
+```
+Browser (Angular)
+  |  REST + WebSocket
+  v
+Spring Boot API  <----->  RabbitMQ  <----->  Bot Discord (Python)
+  |                                   |
+  v                                   |
+PostgreSQL                             |
+  ^                                   |
+  |                                   v
+Images (volume partage via nginx)   Discord
+```
+
+## Composants
+
+### Frontend (Angular)
+
+- Base: Angular 19, Tailwind CSS, service worker.
+- Couches: `auth`, `core` (services/interceptors), `features` (pages),
+  `shared` (layout, composants partages).
+- Consommation API REST, WebSocket (notifications, temps reel).
+
+### Backend (Spring Boot)
+
+- Java 21, Spring Boot 3.4.x.
+- REST + WebSocket.
+- Security (JWT + refresh), CORS, CSRF.
+- Data JPA + Flyway (migrations).
+- RabbitMQ (publication/consommation d'evenements).
+- Gestion d'upload d'images vers un volume partage.
+
+### Bot Discord (Python)
+
+- Discord.py, FastAPI (API HTTP), RabbitMQ via aio-pika.
+- Ecoute des messages RabbitMQ (news, events, users, scwe).
+- Publie des evenements vers RabbitMQ si necessaire.
+
+### Infra
+
+- PostgreSQL pour la persistence.
+- RabbitMQ pour la messagerie asynchrone.
+- Nginx pour servir le front et les images.
+
+## Structure du repo
+
+```
+icy-angular/    # Frontend Angular
+icy_backend/    # Backend Spring Boot
+icy/            # Bot Discord (Python)
+images/         # Assets et images (selon usage)
+scripts/        # Scripts de deploy/outillage
+docker-compose.yml
+```
+
+## Donnees et migrations
+
+- Les migrations SQL sont dans `icy_backend/src/main/resources/db/migration`.
+- Le backend applique Flyway au demarrage.
+
+## Configuration (valeurs sensibles via variables d'environnement)
+
+Backend (exemples de variables):
+- `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+- `JWT_SECRET`, `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
+- `IMAGE_BASE_URL`, `ICY_IMAGE_PATH`
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- `BOT_URL`
+
+Bot:
+- `DISCORD_TOKEN`, `GUILD_ID`
+- `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PSWD`
+
+Ne stockez jamais de secrets en dur dans le code ou le repo.
+
+## Lancer en local (dev)
+
+### Backend
+
+```
+cd icy_backend
+./mvnw spring-boot:run
+```
+
+### Frontend
+
+```
+cd icy-angular
+npm install
+npm run start
+```
+
+### Bot
+
+```
+cd icy
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirement.txt
+python bot.py
+```
+
+## Deploiement (Docker Compose)
+
+Le fichier `docker-compose.yml` declare:
+- `db` (PostgreSQL)
+- `backend` (Spring Boot)
+- `frontend` (Nginx + build Angular)
+- `bot` (Discord)
+- `icy-images` (Nginx pour servir les images)
+- `rabbitmq`
+
+Adaptez les chemins de build (`./app`, `./frontend`, `./bot`) selon votre
+arborescence locale si besoin.

@@ -1,0 +1,61 @@
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(6, 10, 20, 0.55);
+  backdrop-filter: blur(12px);
+  opacity: 1;
+  transition: opacity var(--fade-duration, 300ms) ease,
+    background-color var(--fade-duration, 300ms) ease,
+    backdrop-filter var(--fade-duration, 300ms) ease;
+}
+
+.loading-overlay.is-fading {
+  opacity: 0;
+  background-color: rgba(6, 10, 20, 0);
+  backdrop-filter: blur(0);
+  pointer-events: none;
+}
+
+.loading-overlay.is-fading .loading-overlay__spinner {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity var(--fade-duration, 300ms) ease,
+    transform var(--fade-duration, 300ms) ease;
+}
+
+.loading-overlay__spinner {
+  transition: opacity var(--fade-duration, 300ms) ease,
+    transform var(--fade-duration, 300ms) ease;
+}
+
+.loading-overlay__spinner--soft {
+  animation: spinner-softfade 1.2s ease-in-out infinite;
+}
+
+@keyframes spinner-softfade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay {
+    transition: none;
+    opacity: 1;
+  }
+  .loading-overlay__spinner {
+    transition: none;
+    transform: none;
+  }
+  .loading-overlay__spinner--soft {
+    animation: none;
+  }
+}

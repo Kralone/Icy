@@ -1,0 +1,40 @@
+<div
+  class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl flex flex-col h-full
+         transition-all duration-300 hover:shadow-[0_0_25px_rgba(56,189,248,0.2)]"
+>
+  <h2 class="text-xl font-semibold mb-4 text-cyan-300 flex items-center gap-2">
+    👀 Aperçu
+  </h2>
+
+  <div
+    class="flex-1 overflow-y-auto custom-scrollbar bg-black/40 border border-white/10 rounded-xl p-5
+           text-gray-100 leading-relaxed font-mono text-sm shadow-inner whitespace-pre-wrap"
+  >
+    <!-- ✅ Si des blocs existent -->
+    <ng-container *ngIf="blocks.length > 0; else noContent">
+      <!-- En-tête IceLink -->
+      <div class="mb-4 text-white">
+        <div class="text-[13px] text-gray-400 mb-1">&lt;&#64;&amp;1325528040322896025&gt;</div>
+        <div class="text-lg font-semibold"># 🏔️ IceLink - {{ currentDate }}</div>
+        <div class="border-t border-white/10 my-3"></div>
+      </div>
+
+      <!-- 🧊 Liste des blocs -->
+      <div *ngFor="let block of blocks; let last = last" class="mb-6">
+        <div class="text-cyan-300 font-semibold">{{ block.headline }}</div>
+        <div class="text-gray-300 whitespace-pre-line">{{ block.content }}</div>
+
+        <!-- Séparateur entre blocs -->
+        <div *ngIf="!last" class="my-5 border-t border-white/10 opacity-50"></div>
+      </div>
+    </ng-container>
+
+    <!-- 🩶 Aucun contenu -->
+    <ng-template #noContent>
+      <div class="text-gray-500 italic text-center py-10">
+        Aucun contenu généré pour le moment 🧊
+        <br />Ajoutez des blocs pour commencer à construire votre IceLink.
+      </div>
+    </ng-template>
+  </div>
+</div>
