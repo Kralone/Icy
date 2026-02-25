@@ -2,24 +2,10 @@
   <div class="front-hero-logo__bg"></div>
   <div class="front-hero-logo__mist"></div>
 
-  <div class="front-hero-logo__nav">
-    <div class="front-hero-logo__brand">
-      <img src="assets/images/home/iceforgeLogo.png" alt="Logo IceForge" class="front-hero-logo__logo" />
-      <span class="front-hero-logo__brand-text">ICEFORGE</span>
-    </div>
-    <a [routerLink]="['/login']" class="front-hero-logo__login">
-      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-      <span>{{strings.memberSpace}}</span>
-    </a>
-  </div>
-
   <div class="front-hero-logo__center">
     <div class="front-hero-logo__badge">CORPORATION</div>
     <div class="front-hero-logo__mark">
-      <img src="assets/images/home/iceforgeLogo.png" alt="Logo IceForge" />
+      <img src="assets/images/home/iceforgeLogo.png" alt="Logo IceForge" loading="eager" decoding="async" fetchpriority="high" />
     </div>
     <h1 class="front-hero-logo__title">{{strings.title}}</h1>
     <p class="front-hero-logo__subtitle whitespace-pre-line">{{strings.subtitle}}</p>
@@ -27,7 +13,17 @@
       <button class="front-hero-logo__cta" (click)="goToRecruitment()">
         {{strings.joinButton}}
       </button>
+      <a [routerLink]="['/utilitaires']" class="front-hero-logo__cta front-hero-logo__cta--alt">
+        Acces utilitaires
+      </a>
     </div>
+    <a class="front-hero-logo__scroll-cue" href="#public-utils" aria-label="Descendre vers les utilitaires">
+      <span>Voir plus</span>
+      <svg viewBox="0 0 24 28" fill="none" aria-hidden="true">
+        <path class="front-hero-logo__chevron front-hero-logo__chevron--first" d="M6 9L12 15L18 9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <path class="front-hero-logo__chevron front-hero-logo__chevron--second" d="M6 15L12 21L18 15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
   </div>
 
 </header>

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import {FadeInOnScrollDirective} from "../../../../directives/fade-in-on-scroll.directive";
-import {CommonModule, NgForOf} from "@angular/common";
+import {CommonModule} from "@angular/common";
 import strings from '../../../../../assets/i18n/front.json';
 
 @Component({
@@ -13,24 +13,16 @@ import strings from '../../../../../assets/i18n/front.json';
   styleUrl: './story.component.css'
 })
 export class StoryComponent {
-  isDesktop = window.innerWidth >= 1024;
   staggeredImages: string[] = [];
   strings = strings.story;
 
   ngOnInit(): void {
     this.loadStagger();
-    window.addEventListener('resize', () => {
-      this.isDesktop = window.innerWidth >= 1024;
-    });
   }
 
   private loadStagger() {
     const basePath = 'assets/images/home/stagger/';
     const count = 4; // nombre d’images dans le dossier
     this.staggeredImages = Array.from({ length: count }, (_, i) => `${basePath}img${i + 1}.webp`);
-  }
-
-  getTopOffset(i: number): number {
-    return window.innerWidth < 640 ? i * 100 : i * 160;
   }
 }

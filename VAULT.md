@@ -13,6 +13,23 @@ Ce setup ajoute un Vault persistant en conteneur, avec le meme mode d'acces pour
   - prod backend: `secret/data/iceforge/prod/backend`
   - prod bot: `secret/data/iceforge/prod/bot`
 
+## Cle UEX (backend)
+
+- Cle attendue par le backend: `UEX_API_KEY`
+- Emplacement dev: `secret/data/iceforge/dev/backend`
+- Emplacement prod: `secret/data/iceforge/prod/backend`
+
+Exemples:
+```powershell
+vault kv patch secret/iceforge/dev/backend UEX_API_KEY="TON_API_KEY_UEX"
+vault kv patch secret/iceforge/prod/backend UEX_API_KEY="TON_API_KEY_UEX"
+```
+
+Optionnel (override URL API):
+```powershell
+vault kv patch secret/iceforge/dev/backend UEX_API_BASE_URL="https://api.uexcorp.uk/2.0"
+```
+
 ## Variables runtime (backend/bot)
 
 - `VAULT_ENABLED=true`

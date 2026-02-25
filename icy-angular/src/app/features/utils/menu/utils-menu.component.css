@@ -6,8 +6,16 @@
 .utils-menu {
   position: relative;
   overflow: hidden;
+}
+
+.utils-menu--private {
   min-height: calc(100vh - 60px);
   min-height: calc(100dvh - 60px);
+}
+
+.utils-menu--public {
+  min-height: calc(100vh - var(--public-topbar-offset, 0px));
+  min-height: calc(100dvh - var(--public-topbar-offset, 0px));
 }
 
 .utils-rank-orbit {

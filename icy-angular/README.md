@@ -36,6 +36,37 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## SSR Production Deployment
+
+This project includes a dedicated SSR deployment stack:
+
+- `Dockerfile.ssr`: builds and runs the Angular SSR server (`server.mjs`).
+- `docker-compose.ssr.yml`: runs `frontend_ssr` (Node) behind `frontend_proxy` (Nginx TLS reverse proxy).
+- `nginx/conf.d/default.ssr.conf`: forwards web traffic to SSR and keeps `/api` and `/ws` on backend.
+
+Run:
+
+```bash
+docker compose -f docker-compose.ssr.yml up -d --build
+```
+
+Notes:
+
+- Expected external Docker networks: `iceforge_internal` and `iceforge_external`.
+- Expected external volume: `icy_images_data`.
+
+## Targeted Prerender
+
+Prerender is enabled and intentionally limited to public marketing routes:
+
+- `/`
+- `/recrutement`
+
+The route strategy is defined in `src/app/app.routes.server.ts`:
+
+- public landing routes use `RenderMode.Prerender`
+- all other routes use `RenderMode.Server`
+
 ## Running unit tests
 
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:

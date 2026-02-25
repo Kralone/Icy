@@ -62,7 +62,7 @@ export class AdminMenuComponent {
   menuItems = [
     {
       label: 'Membres',
-      imageUrl: 'https://www.kakuchopurei.com/wp-content/uploads/2021/11/Star-Citizen-November-2021.jpg',
+      imageUrl: 'https://swissstarships.org/forums/uploads/monthly_2025_05/dr-fischer-invictus-idris-crew.webp.536e4b2ee37db43cd793445d1b79e763.webp',
       route: '/icy/admin/members',
     },
     {
@@ -76,9 +76,9 @@ export class AdminMenuComponent {
       route: '/icy/admin/collections',
     },
     {
-      label: 'Vaisseaux',
-      imageUrl: 'https://media.starcitizen.tools/thumb/e/e2/SC_MultiShip_Roles.jpg/800px-SC_MultiShip_Roles.jpg.webp',
-      route: '/icy/admin/ships',
+      label: 'Data',
+      imageUrl: 'https://haus-enten.de/wordpress/wp-content/uploads/2019/08/news-header-crimestat-console.jpg',
+      route: '/icy/admin/data',
     },
     {
       label: 'Objectifs',
@@ -104,11 +104,6 @@ export class AdminMenuComponent {
       label: 'IceLink Builder',
       imageUrl: 'https://media.starcitizen.tools/9/9c/Microtech-new-babbage-cityscape-01.jpg',
       route: '/icy/admin/icelinkBuilder',
-    },
-    {
-      label: 'Images',
-      imageUrl: 'https://www.fredzone.org/wp-content/uploads/2017/12/starcitizen-proc%C3%A8s.jpg',
-      route: '/icy/admin/images',
     },
     {
       label: 'Orbit Spinner Maker',

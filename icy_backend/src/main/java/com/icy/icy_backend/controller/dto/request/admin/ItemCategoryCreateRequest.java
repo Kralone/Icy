@@ -1,0 +1,6 @@
+package com.icy.icy_backend.controller.dto.request.admin;
+
+public record ItemCategoryCreateRequest(
+        String name
+) {
+}

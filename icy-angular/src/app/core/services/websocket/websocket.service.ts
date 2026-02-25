@@ -8,6 +8,7 @@ import { Observable, Subject } from 'rxjs';
 })
 export class WebSocketService {
   private stompClient: Client;
+  private shouldReconnectAfterPageShow = false;
   private pendingConnectCallbacks: Array<() => void> = [];
   private shipUpdatesSubject = new Subject<string>();
   private fleetUpdatesSubject = new Subject<any>();
@@ -39,6 +40,26 @@ export class WebSocketService {
     this.stompClient.onStompError = frame => {
       console.error('❌ STOMP error:', frame.headers['message'], frame.body);
     };
+
+    this.registerPageLifecycleHooks();
+  }
+
+  private registerPageLifecycleHooks(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.addEventListener('pagehide', () => {
+      this.shouldReconnectAfterPageShow = this.stompClient.active || this.stompClient.connected;
+      this.disconnect();
+    });
+
+    window.addEventListener('pageshow', () => {
+      if (this.shouldReconnectAfterPageShow && !this.stompClient.active) {
+        this.stompClient.activate();
+      }
+      this.shouldReconnectAfterPageShow = false;
+    });
   }
 
   private ensureConnected(callback: () => void): void {

@@ -52,6 +52,9 @@ icy:
     spreadsheet-id: ${WIKELO_SPREADSHEET_ID:1ji0q_pp6iW35RG1YyFEsv-lsmZOaCStJXGdIEdLLwhM}
     ships-gid: ${WIKELO_SHIPS_GID:481073732}
     ships-sheet-name: ${WIKELO_SHIPS_SHEET_NAME:Ships 4.5}
+  uex:
+    base-url: ${UEX_API_BASE_URL:https://api.uexcorp.uk/2.0}
+    api-key: ${UEX_API_KEY:}
 
 
 security:

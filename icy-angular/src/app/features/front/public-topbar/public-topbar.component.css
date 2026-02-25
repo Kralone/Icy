@@ -1,0 +1,80 @@
+:host {
+  display: block;
+}
+
+.public-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
+  backdrop-filter: blur(10px);
+  background: rgba(2, 6, 23, 0.86);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.public-topbar__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.public-topbar__brand {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #e2e8f0;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.public-topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.public-topbar__nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.public-topbar__nav a.is-active {
+  color: #67e8f9;
+}
+
+.public-topbar__login {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #cbd5f5;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.public-topbar__login:hover {
+  color: #f8fafc;
+  border-color: rgba(34, 211, 238, 0.6);
+}
+
+.public-topbar__login-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 920px) {
+  .public-topbar__nav {
+    display: none;
+  }
+}

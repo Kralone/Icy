@@ -118,6 +118,7 @@
           <img
             *ngIf="avatarUrl"
             [src]="avatarUrl"
+            (error)="handleAvatarLoadError()"
             alt="Avatar"
             class="h-full w-full rounded-full object-cover"
           />

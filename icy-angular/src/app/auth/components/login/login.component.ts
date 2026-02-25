@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Router, RouterLink} from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import {firstValueFrom} from 'rxjs';
-import {NgIf} from '@angular/common';
+import {isPlatformBrowser, NgIf} from '@angular/common';
 
 @Component({
   selector: 'app-login',
@@ -21,10 +21,14 @@ export class LoginComponent implements OnInit {
   errorMessage: string = '';
   showResetModal: boolean = false;
   private tempUser: any = null;
+  private returnUrl = '/icy/dashboard';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private route: ActivatedRoute,
     private router: Router
   ) {
     this.loginForm = this.fb.group({
@@ -38,9 +42,12 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!this.isBrowser) return;
+    const rawReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/icy/dashboard';
+    this.returnUrl = rawReturnUrl.startsWith('/') ? rawReturnUrl : '/icy/dashboard';
     this.authService.verifyToken().subscribe(valid => {
       if (valid) {
-        this.router.navigate(['/icy/dashboard']);
+        this.router.navigateByUrl(this.returnUrl);
       }
     });
   }
@@ -66,7 +73,7 @@ export class LoginComponent implements OnInit {
       }
 
       // ✅ Login normal
-      await this.router.navigateByUrl('/icy/dashboard');
+      await this.router.navigateByUrl(this.returnUrl);
 
     } catch (error) {
       console.error('Erreur de login', error);
@@ -103,12 +110,14 @@ async onResetPassword(): Promise<void> {
 
   try {
     const response = await firstValueFrom(this.authService.resetPassword(resetPayload));
-    localStorage.setItem('token', response.tokens.accessToken);
-    localStorage.setItem('refreshToken', response.tokens.refreshToken);
-    localStorage.setItem('user', JSON.stringify(response.user.username));
+    if (this.isBrowser) {
+      localStorage.setItem('token', response.tokens.accessToken);
+      localStorage.setItem('refreshToken', response.tokens.refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.user.username));
+    }
 
     this.showResetModal = false;
-    await this.router.navigateByUrl('/icy/dashboard');
+    await this.router.navigateByUrl(this.returnUrl);
   } catch (err) {
     this.errorMessage = "Erreur lors de la réinitialisation.";
   }

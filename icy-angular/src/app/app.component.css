@@ -2,4 +2,12 @@
   position: relative;
   min-height: 100vh;
   background-color: #0d1b2a;
+  --public-topbar-offset: 0px;
+}
+
+.route-shell--with-topbar {
+  padding-top: 61px;
+  min-height: calc(100vh - 61px);
+  min-height: calc(100dvh - 61px);
+  --public-topbar-offset: 61px;
 }

@@ -9,6 +9,28 @@
   }
 }
 
+@keyframes scrollCuePulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes scrollCueLoop {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
 :host {
   display: block;
   color: #e2e8f0;
@@ -180,13 +202,46 @@
   box-shadow: 0 16px 30px rgba(14, 116, 144, 0.4);
 }
 
+.front-hero-logo__cta--alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.78);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: none;
+}
+
+.front-hero-logo__cta--alt:hover {
+  border-color: rgba(34, 211, 238, 0.65);
+  color: #f8fafc;
+}
+
+.front-hero-logo__scroll-cue {
+  margin-top: 0.7rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: rgba(226, 245, 255, 0.86);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.67rem;
+  line-height: 1;
+  animation: scrollCuePulse 1.8s ease-in-out infinite;
+}
+
+.front-hero-logo__scroll-cue svg {
+  width: 1.9rem;
+  height: 2.2rem;
+  overflow: visible;
+  animation: scrollCueLoop 1.2s ease-in-out infinite;
+}
+
 @media (max-width: 768px) {
   .front-hero-logo {
     padding-top: 2rem;
-  }
-
-  .front-hero-logo__nav {
-    top: 1.5rem;
   }
 
   .front-hero-logo__center {

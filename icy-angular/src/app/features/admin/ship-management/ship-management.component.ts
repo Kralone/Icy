@@ -3,7 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShipService } from '../../../core/services/ship/ship.service';
-import {ShipCreateDTO} from '../../../model/ship.model';
+import {ShipCreateDTO, ShipSalePoint} from '../../../model/ship.model';
+
+interface ShipSalePointFormValue {
+  location: string;
+  price: number | null;
+}
 
 @Component({
   selector: 'app-ship-management',
@@ -19,10 +24,12 @@ export class ShipManagementComponent implements OnInit {
     brandName: '',
     imageUrl: '',
     focus: '',
+    notes: '',
     scu: null as number | null,
     size: '',
     crew: '',
     flightReady: false,
+    salePoints: [this.createEmptySalePoint()] as ShipSalePointFormValue[],
   };
 
   isSubmittingShip = false;
@@ -77,6 +84,7 @@ export class ShipManagementComponent implements OnInit {
       flightReady: this.newShip.flightReady,
 
       focus: this.newShip.focus?.trim() || undefined,
+      notes: this.newShip.notes?.trim() || undefined,
       size: this.newShip.size?.trim() || undefined,
       crew: this.newShip.crew?.trim() || undefined,
       scu:
@@ -84,6 +92,10 @@ export class ShipManagementComponent implements OnInit {
           ? undefined
           : Number(this.newShip.scu),
     };
+    const salePoints = this.mapSalePointsForPayload();
+    if (salePoints.length > 0) {
+      shipPayload.salePoints = salePoints;
+    }
 
 
 
@@ -113,11 +125,15 @@ export class ShipManagementComponent implements OnInit {
       name: ship.name ?? '',
       brandName: ship.brand?.name ?? '',
       focus: ship.focus ?? '',
+      notes: ship.notes ?? '',
       scu: ship.scu ?? null,
       size: ship.size ?? '',
       crew: ship.crew ?? '',
       flightReady: !!ship.flightReady,
       imageUrl: ship.imageUrl ?? '',
+      salePoints: Array.isArray(ship.salePoints) && ship.salePoints.length > 0
+        ? ship.salePoints.map((salePoint: any) => this.toSalePointFormValue(salePoint))
+        : [this.createEmptySalePoint()],
     };
   }
 
@@ -135,12 +151,62 @@ export class ShipManagementComponent implements OnInit {
       name: '',
       brandName: '',
       focus: '',
+      notes: '',
       scu: null,
       size: '',
       crew: '',
       flightReady: false,
       imageUrl: '',
+      salePoints: [this.createEmptySalePoint()],
     };
+  }
+
+  addSalePoint() {
+    this.newShip.salePoints.push(this.createEmptySalePoint());
+  }
+
+  removeSalePoint(index: number) {
+    if (this.newShip.salePoints.length <= 1) {
+      this.newShip.salePoints[0] = this.createEmptySalePoint();
+      return;
+    }
+    this.newShip.salePoints.splice(index, 1);
+  }
+
+  private createEmptySalePoint(): ShipSalePointFormValue {
+    return {
+      location: '',
+      price: null,
+    };
+  }
+
+  private toSalePointFormValue(salePoint: any): ShipSalePointFormValue {
+    const parsedPrice = Number(salePoint?.price);
+    return {
+      location: salePoint?.location ?? '',
+      price: Number.isFinite(parsedPrice) ? parsedPrice : null,
+    };
+  }
+
+  private mapSalePointsForPayload(): ShipSalePoint[] {
+    return this.newShip.salePoints
+      .map((salePoint) => {
+        const location = salePoint.location?.trim();
+        if (!location || salePoint.price === null || salePoint.price === undefined) {
+          return null;
+        }
+
+        const parsedPrice = Number(salePoint.price);
+        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+          return null;
+        }
+
+        return {
+          location,
+          price: parsedPrice,
+        };
+      })
+      .filter((salePoint): salePoint is ShipSalePoint => salePoint !== null);
   }
 
   // 🏷 Brands

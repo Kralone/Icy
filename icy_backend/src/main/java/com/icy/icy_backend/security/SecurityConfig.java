@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -46,7 +47,16 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/reset-password",
                                 "/api/recruitment",
+                                "/api/front/**",
+                                "/api/wikelo/ships",
+                                "/api/utils/executive-hangar/config",
                                 "/ws/**"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/ships",
+                                "/api/ships/shipsByBrand",
+                                "/api/ships/brands",
+                                "/api/ships/brands/images"
                         ).permitAll()
                         // toutes les autres requêtes nécessitent un token valide
                         .anyRequest().authenticated()

@@ -7,6 +7,8 @@ import {HeaderComponent} from './header/header.component';
 import {StoryComponent} from './story/story.component';
 import {ActivitiesComponent} from './activities/activities.component';
 import {CarousselComponent} from './caroussel/caroussel.component';
+import {OnlineMembersComponent} from './online-members/online-members.component';
+import { PublicUtilsComponent } from './public-utils/public-utils.component';
 import strings from '../../../../assets/i18n/front.json';
 
 
@@ -15,7 +17,7 @@ import strings from '../../../../assets/i18n/front.json';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
   standalone: true,
-  imports: [CommonModule, HeaderComponent, StoryComponent, ActivitiesComponent, CarousselComponent]
+  imports: [CommonModule, HeaderComponent, OnlineMembersComponent, StoryComponent, ActivitiesComponent, CarousselComponent, PublicUtilsComponent]
 })
 export class HomeComponent {
   strings = strings.home;

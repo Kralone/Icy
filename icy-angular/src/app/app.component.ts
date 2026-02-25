@@ -1,15 +1,20 @@
-import { Component, OnInit, inject, ViewChild, TemplateRef } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit, inject, ViewChild, TemplateRef, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgIf, ViewportScroller } from '@angular/common';
+import { Router, RouterOutlet } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import {VersionService} from './core/services/config/version.service';
 import { UserActivityService } from './core/services/user/user-activity.service';
+import { SeoService } from './core/services/seo/seo.service';
+import { PublicTopbarComponent } from './features/front/public-topbar/public-topbar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   templateUrl: './app.component.html',
   imports: [
-    RouterOutlet
+    NgIf,
+    RouterOutlet,
+    PublicTopbarComponent
   ],
   styleUrl: './app.component.css',
   animations: []
@@ -22,10 +27,18 @@ export class AppComponent implements OnInit {
   private versionService = inject(VersionService);
   private toast = inject(HotToastService);
   private userActivity = inject(UserActivityService);
+  private seo = inject(SeoService);
+  private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
+  private viewportScroller = inject(ViewportScroller);
 
   ngOnInit() {
-    this.versionService.initVersionCheck();
-    this.userActivity.start();
+    this.seo.init();
+    if (isPlatformBrowser(this.platformId)) {
+      this.viewportScroller.setOffset([0, 72]);
+      this.versionService.initVersionCheck();
+      this.userActivity.start();
+    }
 
     this.versionService.updateDetected$.subscribe(() => {
       this.showUpdateToast();
@@ -64,5 +77,10 @@ export class AppComponent implements OnInit {
 
   reloadPage() {
     window.location.reload();
+  }
+
+  get showPublicTopbar(): boolean {
+    const url = this.router.url || '';
+    return !url.startsWith('/icy');
   }
 }

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {Observable, map, tap, of, catchError} from 'rxjs';
 import {User} from '../../../model/userDto.model';
@@ -8,6 +9,8 @@ import {User} from '../../../model/userDto.model';
 })
 export class AuthService {
   private apiUrl = '/api/auth';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   constructor(private http: HttpClient) {}
 
@@ -22,18 +25,18 @@ export class AuthService {
       tap(response => {
         // 🧊 Ne rien stocker si c’est un mot de passe temporaire
         if (response.tokens.accessToken !== 'resetPwd' && response.tokens.refreshToken !== 'resetPwd') {
-          localStorage.setItem('token', response.tokens.accessToken);
-          localStorage.setItem('refreshToken', response.tokens.refreshToken);
-          localStorage.setItem('user', JSON.stringify(response.user.username));
+          this.setStorage('token', response.tokens.accessToken);
+          this.setStorage('refreshToken', response.tokens.refreshToken);
+          this.setStorage('user', JSON.stringify(response.user.username));
         }
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    this.removeStorage('user');
+    this.removeStorage('token');
+    this.removeStorage('refreshToken');
   }
 
   resetPassword(payload: { id: string, newPassword: string }): Observable<{ tokens: { accessToken: string, refreshToken: string }, user: User }> {
@@ -43,18 +46,18 @@ export class AuthService {
 
 
   refreshToken(): Observable<{accessToken: string, refreshToken: string }> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = this.getStorage('refreshToken');
     return this.http.post<{accessToken: string, refreshToken: string }>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
       map(response => response)
     );
   }
 
   hasToken(): boolean {
-    return !!localStorage.getItem('token');
+    return !!this.getStorage('token');
   }
 
   getToken(): string {
-    const token = localStorage.getItem('token');
+    const token = this.getStorage('token');
     if (!token) {
       throw new Error('Aucun token JWT trouvé dans le stockage local.');
     }
@@ -62,7 +65,7 @@ export class AuthService {
   }
 
   verifyToken(): Observable<boolean> {
-    const token = localStorage.getItem('token');
+    const token = this.getStorage('token');
     if (!token) return of(false);
 
     return this.http.get<{ valid: boolean }>(
@@ -84,7 +87,7 @@ export class AuthService {
   }
 
   getCurrentUser(): any {
-    const userJson = localStorage.getItem('user');
+    const userJson = this.getStorage('user');
     if (!userJson) return null;
     return userJson;
   }
@@ -127,6 +130,20 @@ export class AuthService {
     }
   }
 
+  private getStorage(key: string): string | null {
+    if (!this.isBrowser) return null;
+    return localStorage.getItem(key);
+  }
+
+  private setStorage(key: string, value: string): void {
+    if (!this.isBrowser) return;
+    localStorage.setItem(key, value);
+  }
+
+  private removeStorage(key: string): void {
+    if (!this.isBrowser) return;
+    localStorage.removeItem(key);
+  }
 
 
 }

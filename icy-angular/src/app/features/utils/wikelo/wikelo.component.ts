@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
 import { WikeloService } from '../../../core/services/wikelo/wikelo.service';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
@@ -12,6 +12,7 @@ import { Ship } from '../../../model/ship.model';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { User } from '../../../model/user.model';
 import { Goal } from '../../../model/goal.model';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 @Component({
   standalone: true,
@@ -52,13 +53,14 @@ export class WikeloComponent implements OnInit {
     private wikeloService: WikeloService,
     private userService: UserService,
     private shipService: ShipService,
-    private goalService: GoalService
+    private goalService: GoalService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.resolveCanRescrape();
     this.loadCatalogShips();
-    this.loadUsers();
     this.loadShips();
   }
 
@@ -66,6 +68,10 @@ export class WikeloComponent implements OnInit {
     if (!this.ships.length) return null;
     const sorted = [...this.ships].sort((a, b) => new Date(b.scrapedAt).getTime() - new Date(a.scrapedAt).getTime());
     return sorted[0]?.scrapedAt ?? null;
+  }
+
+  get backToMenuLink(): string {
+    return this.router.url.startsWith('/utilitaires') ? '/utilitaires' : '/icy/utilitaires';
   }
 
   getShipImage(shipName: string): string | null {
@@ -245,10 +251,18 @@ export class WikeloComponent implements OnInit {
   }
 
   private resolveCanRescrape(): void {
+    if (!this.authService.hasToken()) {
+      this.canRescrape = false;
+      return;
+    }
+
     this.userService.getMyProfile().subscribe({
       next: (response) => {
         const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').toUpperCase());
         this.canRescrape = roles.includes('ADMIN') || roles.includes('OFFICIER');
+        if (this.canRescrape) {
+          this.loadUsers();
+        }
       },
       error: () => {
         this.canRescrape = false;

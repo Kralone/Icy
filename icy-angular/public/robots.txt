@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /icy/
+Disallow: /login
+Disallow: /admin/
+
+Sitemap: https://iceforge.fr/sitemap.xml

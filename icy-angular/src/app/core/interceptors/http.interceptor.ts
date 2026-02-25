@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import {
   HttpInterceptor,
   HttpRequest,
@@ -10,9 +10,12 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
 import { Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable()
 export class HttpAuthInterceptor implements HttpInterceptor {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -31,7 +34,7 @@ export class HttpAuthInterceptor implements HttpInterceptor {
       return next.handle(request);
     }
 
-    const token = localStorage.getItem('token');
+    const token = this.isBrowser ? localStorage.getItem('token') : null;
 
     const authReq = token
       ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
@@ -42,9 +45,10 @@ export class HttpAuthInterceptor implements HttpInterceptor {
         if (error.status === 401 || error.status === 403) {
           return this.authService.refreshToken().pipe(
             switchMap(res => {
-              localStorage.setItem('token', res.accessToken);
-              localStorage.setItem('refreshToken', res.refreshToken);
-
+              if (this.isBrowser) {
+                localStorage.setItem('token', res.accessToken);
+                localStorage.setItem('refreshToken', res.refreshToken);
+              }
               const retryReq = request.clone({
                 setHeaders: { Authorization: `Bearer ${res.accessToken}` }
               });

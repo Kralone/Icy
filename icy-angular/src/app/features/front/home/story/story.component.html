@@ -1,6 +1,6 @@
-<section id="story" class="front-section story-intro">
-  <div class="front-container">
-    <div class="story-grid">
+<section id="story" class="front-section story-merged">
+  <div class="story-merged-grid">
+    <article class="story-panel story-panel--intro">
       <div class="story-copy">
         <h2 class="story-title">
           {{strings.mainTitle}}
@@ -14,42 +14,43 @@
           <img
             src="assets/images/home/space-journey.webp"
             alt="Histoire de la Corpo"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div class="story-media__mini" *ngIf="staggeredImages.length > 0">
+          <img
+            [src]="staggeredImages[0]"
+            alt="Vue complementaire"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </article>
 
-<section class="front-section story-foundation">
-  <div class="front-container foundation-grid">
-    <div class="foundation-card">
-      <h2 class="foundation-title">
-        {{strings.sectionTitle}}
-      </h2>
-      <p class="foundation-text" [innerHTML]="strings.sectionParagraph"></p>
-      <p class="foundation-text" [innerHTML]="strings.sectionParagraph2"></p>
-    </div>
+    <article class="story-panel story-panel--foundation">
+      <div class="foundation-card">
+        <h2 class="foundation-title">
+          {{strings.sectionTitle}}
+        </h2>
+        <p class="foundation-text" [innerHTML]="strings.sectionParagraph"></p>
+        <p class="foundation-text" [innerHTML]="strings.sectionParagraph2"></p>
+      </div>
 
-    <div
-      class="foundation-stack"
-      [ngStyle]="{ height: isDesktop ? (staggeredImages.length * 160 + 'px') : null }"
-    >
-      <ng-container *ngFor="let image of staggeredImages; let i = index">
-        <img
-          [src]="image"
-          alt="image"
-          class="foundation-stack__image"
-          [ngClass]="{
-            'foundation-stack__image--left': i % 2 === 0,
-            'foundation-stack__image--right': i % 2 !== 0,
-            'foundation-stack__image--shift': i > 0
-          }"
-          [style.zIndex]="10 - i"
-          [style.top.px]="isDesktop ? i * 160 : null"
-        />
-      </ng-container>
-    </div>
+      <div class="foundation-stack">
+        <ng-container *ngFor="let image of staggeredImages.slice(1); let i = index">
+          <img
+            [src]="image"
+            alt="image"
+            class="foundation-stack__image"
+            loading="lazy"
+            decoding="async"
+            [style.animationDelay.ms]="i * 70"
+          />
+        </ng-container>
+      </div>
+    </article>
   </div>
 </section>
 

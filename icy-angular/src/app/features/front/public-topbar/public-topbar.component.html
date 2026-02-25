@@ -1,0 +1,19 @@
+<header class="public-topbar">
+  <div class="public-topbar__inner">
+    <a [routerLink]="['/']" class="public-topbar__brand">IceForge</a>
+
+    <nav class="public-topbar__nav">
+      <a [routerLink]="['/utilitaires']" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Utilitaires</a>
+      <a [routerLink]="['/']" fragment="guides">Guide</a>
+      <a [routerLink]="['/recrutement']" routerLinkActive="is-active">Recrutement</a>
+    </nav>
+
+    <a [routerLink]="[memberSpaceLink]" class="public-topbar__login">
+      <svg class="public-topbar__login-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span>Espace membre</span>
+    </a>
+  </div>
+</header>

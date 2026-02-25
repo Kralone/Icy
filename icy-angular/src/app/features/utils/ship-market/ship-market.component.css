@@ -1,0 +1,383 @@
+.ship-market-page {
+  position: relative;
+  overflow: hidden;
+  background-color: #0a111c;
+}
+
+.ship-market-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ship-market-bg--layer {
+  opacity: 0;
+  transition: opacity 900ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.ship-market-bg--active {
+  opacity: 1;
+}
+
+.ship-market-bg--layer {
+  filter: saturate(0.82) brightness(0.94);
+}
+
+.ship-market-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.24), rgba(2, 6, 23, 0.34));
+  transition: opacity 900ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.ship-market-content {
+  position: relative;
+  z-index: 2;
+}
+
+.ship-market-hero {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(17, 24, 39, 0.55));
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.32);
+}
+
+.ship-market-search-wrap {
+  margin-bottom: 1rem;
+}
+
+.ship-market-search {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(125, 211, 252, 0.36);
+  background: rgba(2, 6, 23, 0.45);
+  color: #e2e8f0;
+  padding: 0.5rem 0.8rem;
+  outline: none;
+  transition: all 160ms ease;
+}
+
+.ship-market-search:focus {
+  border-color: rgba(103, 232, 249, 0.75);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+.location-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.65rem;
+}
+
+.location-card {
+  min-height: 104px;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background-size: cover;
+  background-position: center;
+  padding: 0.55rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  position: relative;
+  color: #f8fafc;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.location-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.7);
+  box-shadow: 0 10px 18px rgba(2, 6, 23, 0.4);
+}
+
+.location-card--active {
+  border-color: rgba(103, 232, 249, 0.95);
+  box-shadow: 0 0 0 2px rgba(103, 232, 249, 0.28), 0 12px 22px rgba(2, 6, 23, 0.48);
+}
+
+.location-card-title {
+  font-size: 0.98rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.location-card-tail {
+  font-size: 0.76rem;
+  color: #bae6fd;
+}
+
+.location-card-system {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #fde68a;
+}
+
+.location-card-count {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgba(8, 47, 73, 0.8);
+  border: 1px solid rgba(125, 211, 252, 0.62);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.location-card-promo {
+  position: absolute;
+  left: 0.45rem;
+  top: 0.45rem;
+  min-height: 24px;
+  padding: 0.08rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(251, 146, 60, 0.9);
+  background: rgba(154, 52, 18, 0.92);
+  color: #ffedd5;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.55);
+  animation: promoPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes promoPulse {
+  0%, 100% {
+    opacity: 0.92;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.45);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.75);
+  }
+}
+
+.ship-market-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.ship-market-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: linear-gradient(155deg, rgba(15, 23, 42, 0.86), rgba(17, 24, 39, 0.66));
+  box-shadow: 0 20px 34px rgba(0, 0, 0, 0.32);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.ship-market-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.6);
+}
+
+.ship-market-card-main {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem;
+}
+
+.ship-market-image-wrap {
+  position: relative;
+  width: 240px;
+  min-width: 240px;
+}
+
+.ship-market-image {
+  width: 100%;
+  height: 136px;
+  border-radius: 0.8rem;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.ship-market-brand {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(2, 6, 23, 0.55);
+  padding: 0.35rem;
+}
+
+.ship-market-zoom-btn {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  height: 28px;
+  padding: 0 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(125, 211, 252, 0.72);
+  background: rgba(2, 6, 23, 0.74);
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.ship-market-zoom-btn:hover {
+  border-color: rgba(103, 232, 249, 0.98);
+  background: rgba(8, 47, 73, 0.86);
+  transform: translateY(-1px);
+}
+
+.ship-market-main-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.22rem;
+  color: #cbd5e1;
+}
+
+.ship-market-main-info p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ship-market-main-info span {
+  color: #e2e8f0;
+}
+
+.ship-market-ship-name {
+  margin: 0 0 0.2rem;
+  font-size: 1.14rem;
+  line-height: 1.2;
+  color: #ecfeff;
+}
+
+.ship-market-side {
+  padding: 0.85rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, rgba(8, 47, 73, 0.42), rgba(17, 24, 39, 0.56));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.ship-market-price {
+  font-size: 1.14rem;
+  font-weight: 800;
+  color: #fde68a;
+}
+
+.ship-market-location {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.ship-market-stats p {
+  margin: 0.2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #e2e8f0;
+  font-size: 0.86rem;
+}
+
+.ship-market-stats p span {
+  color: #94a3b8;
+}
+
+.ship-market-zoom-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ship-market-zoom-panel {
+  position: relative;
+  width: min(1024px, 100%);
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  background: rgba(2, 6, 23, 0.94);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.56);
+  padding: 0.8rem 0.8rem 0.65rem;
+}
+
+.ship-market-zoom-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ship-market-zoom-image {
+  width: 100%;
+  max-height: 76vh;
+  object-fit: contain;
+  border-radius: 0.7rem;
+}
+
+.ship-market-zoom-caption {
+  margin-top: 0.5rem;
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .ship-market-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ship-market-side {
+    border-left: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+  }
+}
+
+@media (max-width: 640px) {
+  .ship-market-card-main {
+    flex-direction: column;
+  }
+
+  .ship-market-image-wrap {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .ship-market-image {
+    height: 164px;
+  }
+}

@@ -6,6 +6,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { User } from '../../../model/user.model';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
 import { forkJoin } from 'rxjs';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 type PlayerRow = {
   id: string;
@@ -43,7 +44,8 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private executiveHangarApiService: ExecutiveHangarApiService
+    private executiveHangarApiService: ExecutiveHangarApiService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -146,6 +148,11 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
   }
 
   private loadPermissions(): void {
+    if (!this.authService.hasToken()) {
+      this.canManageExecShips = false;
+      return;
+    }
+
     this.userService.getMyProfile().subscribe({
       next: (response) => {
         const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').toUpperCase());

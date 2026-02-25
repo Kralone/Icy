@@ -1,0 +1,29 @@
+<section id="public-utils" class="front-utils">
+  <div class="front-utils__bg" aria-hidden="true"></div>
+
+  <div class="front-utils__container">
+    <div class="front-utils__heading">
+      <h2 class="front-utils__title">Utilitaires</h2>
+      <p class="front-utils__subtitle">
+        Des outils pour rendre plus simple votre expérience dans le verse.
+      </p>
+    </div>
+
+    <div class="front-utils__grid">
+      <a
+        *ngFor="let item of externalItems"
+        [routerLink]="[item.route]"
+        class="front-utils__card"
+      >
+        <div class="front-utils__media">
+          <img [src]="item.imageUrl" [alt]="item.label" loading="lazy" decoding="async" />
+        </div>
+        <div class="front-utils__content">
+          <h3>{{ item.label }}</h3>
+          <p>{{ item.description }}</p>
+          <span class="front-utils__cta">Ouvrir</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

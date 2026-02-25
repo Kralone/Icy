@@ -17,7 +17,7 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "src/polyfills.ts"
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -35,23 +35,38 @@
             "styles": [
               "src/styles.css"
             ],
+            "allowedCommonJsDependencies": [
+              "sockjs-client"
+            ],
             "scripts": [],
             "serviceWorker": "ngsw-config.json",
-            "optimization": true,
-            "sourceMap": false
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
+              },
+              "fonts": true
+            },
+            "sourceMap": false,
+            "server": "src/main.server.ts",
+            "prerender": true,
+            "ssr": {
+              "entry": "src/server.ts"
+            }
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "1200kB",
                   "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kB",
+                  "maximumError": "14kB"
                 }
               ],
               "outputHashing": "all"
@@ -67,7 +82,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "proxyConfig": "src/proxy.conf.json"
+            "proxyConfig": "src/proxy.conf.json",
+            "hmr": false
           },
           "configurations": {
             "production": {
@@ -75,6 +91,11 @@
             },
             "development": {
               "buildTarget": "icy-angular:build:development"
+            },
+            "audit": {
+              "buildTarget": "icy-angular:build:production",
+              "hmr": false,
+              "liveReload": false
             }
           },
           "defaultConfiguration": "development"

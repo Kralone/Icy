@@ -1,0 +1,150 @@
+<section class="fit-tabs">
+  <button
+    type="button"
+    class="fit-tab-card"
+    *ngFor="let tab of fitTabs; trackBy: trackTab"
+    [class.fit-tab-card--active]="activeTab === tab.id"
+    (click)="setActiveTab(tab.id)"
+  >
+    <img class="fit-tab-card__image" [src]="tab.imageUrl" [alt]="tab.title" loading="lazy" decoding="async" />
+    <span class="fit-tab-card__veil"></span>
+    <span class="fit-tab-card__text">
+      <strong>{{ tab.title }}</strong>
+      <small>{{ tab.subtitle }}</small>
+    </span>
+  </button>
+</section>
+
+<section class="fit-panel" *ngIf="activeTab === 'ships'">
+  <div *ngIf="shipsLoading" class="fit-state">Chargement des vaisseaux de minage...</div>
+  <div *ngIf="!shipsLoading && shipsError" class="fit-state fit-state--error">{{ shipsError }}</div>
+  <div *ngIf="!shipsLoading && !shipsError && !miningShips.length" class="fit-state">Aucun vaisseau de minage flight ready trouve.</div>
+
+  <div class="ship-grid" *ngIf="!shipsLoading && !shipsError && miningShips.length">
+    <article class="ship-card" *ngFor="let ship of miningShips; trackBy: trackShip">
+      <div class="ship-card__visual">
+        <img class="ship-card__image" [src]="ship.imageUrl" [alt]="ship.name" loading="lazy" decoding="async" />
+      </div>
+      <div class="ship-card__body">
+        <h3>{{ ship.name }}</h3>
+        <p>{{ brandName(ship) }} · {{ ship.focus || 'Focus non renseigne' }}</p>
+        <dl class="ship-card__stats">
+          <div>
+            <dt>Taille</dt>
+            <dd>{{ ship.size || '-' }}</dd>
+          </div>
+          <div>
+            <dt>Equipage</dt>
+            <dd>{{ ship.crew || '-' }}</dd>
+          </div>
+          <div>
+            <dt>SCU</dt>
+            <dd>{{ formatScu(ship.scu) }}</dd>
+          </div>
+        </dl>
+        <section class="ship-card__notes">
+          <h4>Notes fit</h4>
+          <p>{{ ship.notes || 'Espace reserve pour recommandations de fit, modules equipes et role operationnel.' }}</p>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="fit-panel" *ngIf="activeTab === 'modules'">
+  <div class="module-filter-row" *ngIf="!modulesLoading && !modulesError && miningModuleItems.length">
+    <button
+      type="button"
+      class="module-filter-chip"
+      *ngFor="let filter of moduleFilters; trackBy: trackModuleFilter"
+      [class.module-filter-chip--active]="activeModuleFilter === filter.id"
+      (click)="setActiveModuleFilter(filter.id)"
+    >
+      {{ filter.label }}
+    </button>
+  </div>
+  <div *ngIf="modulesLoading" class="fit-state">Chargement des modules de minage...</div>
+  <div *ngIf="!modulesLoading && modulesError" class="fit-state fit-state--error">{{ modulesError }}</div>
+  <div *ngIf="!modulesLoading && !modulesError && !filteredMiningModuleItems().length" class="fit-state">Aucun module pour ce filtre.</div>
+
+  <div class="module-grid" *ngIf="!modulesLoading && !modulesError && filteredMiningModuleItems().length">
+    <article class="module-card module-card--clickable" *ngFor="let item of filteredMiningModuleItems(); trackBy: trackName" (click)="openGadgetDetails(item)">
+      <div class="module-card__visual module-card__visual--image">
+        <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" loading="lazy" decoding="async" />
+        <div class="module-card__placeholder" *ngIf="!item.imageUrl">Image a venir</div>
+        <span class="module-card__tag">{{ item.category?.name || 'Mining Laser' }}</span>
+      </div>
+      <div class="module-card__body">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
+        <section class="module-card__notes">
+          <h4>Description</h4>
+          <p>{{ item.description || 'Description non renseignee.' }}</p>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="fit-panel" *ngIf="activeTab === 'tools'">
+  <div *ngIf="toolsLoading" class="fit-state">Chargement des outils de minage...</div>
+  <div *ngIf="!toolsLoading && toolsError" class="fit-state fit-state--error">{{ toolsError }}</div>
+  <div *ngIf="!toolsLoading && !toolsError && !miningGadgetItems.length" class="fit-state">Aucun gadget de minage trouve.</div>
+
+  <div class="module-grid" *ngIf="!toolsLoading && !toolsError && miningGadgetItems.length">
+    <article class="module-card module-card--clickable" *ngFor="let item of miningGadgetItems; trackBy: trackName" (click)="openGadgetDetails(item)">
+      <div class="module-card__visual module-card__visual--image">
+        <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" loading="lazy" decoding="async" />
+        <div class="module-card__placeholder" *ngIf="!item.imageUrl">Image a venir</div>
+        <span class="module-card__tag">{{ item.category?.name || 'Gadget (Mining)' }}</span>
+      </div>
+      <div class="module-card__body">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
+        <section class="module-card__notes">
+          <h4>Description</h4>
+          <p>{{ item.description || 'Description non renseignee.' }}</p>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>
+
+<dialog #gadgetDialog class="module-modal" (close)="onGadgetDialogClosed()" (click)="onGadgetDialogClick($event)">
+  <article class="module-modal__dialog" *ngIf="selectedGadget" (click)="$event.stopPropagation()">
+    <header class="module-modal__header">
+      <div>
+        <span class="module-modal__eyebrow">Fiche gadget</span>
+        <h3>{{ selectedGadget.name }}</h3>
+        <p class="module-modal__manufacturer">
+          Manufacturer: <strong>{{ selectedGadget.manufacturer || 'Manufacturer non renseigne' }}</strong>
+        </p>
+        <div class="module-modal__meta-row">
+          <span class="module-modal__meta-pill">{{ selectedGadget.category?.name || 'Gadget (Mining)' }}</span>
+        </div>
+      </div>
+      <button type="button" class="module-modal__close" (click)="closeGadgetDetails()">Fermer</button>
+    </header>
+    <div class="module-modal__content">
+      <section class="module-modal__image-block">
+        <img *ngIf="selectedGadget.imageUrl" [src]="selectedGadget.imageUrl" [alt]="selectedGadget.name" loading="lazy" decoding="async" />
+        <div class="module-modal__image-placeholder" *ngIf="!selectedGadget.imageUrl">Image a venir</div>
+      </section>
+      <section>
+        <h4>Description</h4>
+        <p>{{ selectedGadget.description || 'Description non renseignee.' }}</p>
+      </section>
+      <section>
+        <h4>Stats</h4>
+        <div class="module-modal__stats" *ngIf="selectedGadget.stats; else noGadgetStats">
+          <p class="module-modal__stat-line" *ngFor="let statLine of formatStatLines(selectedGadget.stats)">
+            <strong>{{ statLine.label }}</strong><span *ngIf="statLine.value">: {{ statLine.value }}</span>
+          </p>
+        </div>
+        <ng-template #noGadgetStats>
+          <p>Stats non renseignees.</p>
+        </ng-template>
+      </section>
+    </div>
+  </article>
+</dialog>

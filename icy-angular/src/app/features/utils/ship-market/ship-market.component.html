@@ -1,0 +1,158 @@
+<div class="ship-market-page min-h-screen w-full text-white px-6 py-10">
+  <div
+    class="ship-market-bg ship-market-bg--layer"
+    [class.ship-market-bg--active]="isPrimaryLayerVisible"
+    [style.background]="primaryBackground"
+  ></div>
+  <div
+    class="ship-market-bg ship-market-bg--layer"
+    [class.ship-market-bg--active]="!isPrimaryLayerVisible"
+    [style.background]="secondaryBackground"
+  ></div>
+  <div class="ship-market-content max-w-7xl mx-auto space-y-8">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <a
+        [routerLink]="[backToMenuLink]"
+        class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
+      >
+        <span class="text-lg">←</span> Retour aux utilitaires
+      </a>
+    </div>
+
+    <section class="ship-market-hero rounded-2xl border border-white/10 p-6">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.28em] text-slate-300">Utilitaire</p>
+          <h1 class="text-3xl font-semibold text-cyan-100">Acheter Un Vaisseau</h1>
+          <span class="text-xs">Votre prochain vaisseau de rêve vous attend...</span>
+        </div>
+        <div class="text-sm text-slate-200 space-y-1">
+          <div>Locations: <span class="text-cyan-100 font-semibold">{{ locations.length }}</span></div>
+          <div>Offres listées: <span class="text-cyan-100 font-semibold">{{ totalSalePoints }}</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-5">
+      <p *ngIf="isLoading" class="text-slate-300">Chargement du catalogue des ventes...</p>
+      <p *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</p>
+
+      <ng-container *ngIf="!isLoading && !errorMessage">
+        <div class="ship-market-search-wrap">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchTermChange()"
+            placeholder="Rechercher un vaisseau, fabricant, role..."
+            class="ship-market-search"
+          />
+        </div>
+
+        <div class="location-card-grid">
+          <button
+            type="button"
+            *ngFor="let card of filteredLocationCards; trackBy: trackByLocation"
+            (click)="selectLocation(card.location)"
+            [class.location-card--active]="card.location === selectedLocation"
+            class="location-card"
+            @locationCardItem
+            [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.7), rgba(15, 23, 42, 0.35)), url(' + card.imageUrl + ')'"
+          >
+            <span class="location-card-title">{{ card.titleLine }}</span>
+            <span class="location-card-tail">{{ card.bodyLine1 }}</span>
+            <span class="location-card-system">{{ card.bodyLine2 }}</span>
+            <span *ngIf="card.promoLabel" class="location-card-promo">{{ card.promoLabel }}</span>
+            <span class="location-card-count">{{ card.count }}</span>
+          </button>
+        </div>
+
+        <div
+          *ngIf="listVisible && selectedLocationShips.length; else noShipsTemplate"
+          class="ship-market-grid mt-6"
+          @listFade
+          @itemDeploy
+        >
+          <article
+            *ngFor="let item of selectedLocationShips; trackBy: trackByShip"
+            class="ship-market-card"
+            @shipCardItem
+          >
+            <div class="ship-market-card-main">
+              <div class="ship-market-image-wrap">
+                <img
+                  [src]="item.ship.imageUrl"
+                  [alt]="item.ship.name"
+                  class="ship-market-image"
+                  loading="lazy"
+                />
+                <button
+                  type="button"
+                  class="ship-market-zoom-btn"
+                  (click)="openShipZoom(item.ship)"
+                  aria-label="Zoom image vaisseau"
+                >
+                  Zoom
+                </button>
+                <img
+                  *ngIf="getBrandLogo(item.ship.brand.name) as brandLogo"
+                  [src]="brandLogo"
+                  [alt]="item.ship.brand.name"
+                  class="ship-market-brand"
+                  loading="lazy"
+                />
+              </div>
+
+              <div class="ship-market-main-info">
+                <h2 class="ship-market-ship-name">{{ item.ship.name }}</h2>
+                <p>Fabricant: <span>{{ item.ship.brand.name || '-' }}</span></p>
+                <p>Role: <span>{{ item.ship.focus || '-' }}</span></p>
+                <p>Equipage: <span>{{ item.ship.crew || '-' }}</span></p>
+              </div>
+            </div>
+
+            <aside class="ship-market-side">
+              <div class="ship-market-price">{{ item.price | number:'1.0-2' }} aUEC</div>
+              <div class="ship-market-stats">
+                <p><span>Taille</span><strong>{{ item.ship.size || '-' }}</strong></p>
+                <p><span>SCU</span><strong>{{ item.ship.scu ?? '-' }}</strong></p>
+                <p><span>Flight Ready</span><strong>{{ item.ship.flightReady ? 'Oui' : 'Non' }}</strong></p>
+              </div>
+            </aside>
+          </article>
+        </div>
+      </ng-container>
+
+      <ng-template #noShipsTemplate>
+        <div
+          *ngIf="!isSwitchingLocation"
+          class="text-slate-300 mt-6"
+        >
+          Aucun vaisseau ne correspond a la recherche pour cette location.
+        </div>
+      </ng-template>
+    </section>
+  </div>
+
+  <div
+    *ngIf="zoomedShip as ship"
+    class="ship-market-zoom-backdrop"
+    (click)="closeShipZoom()"
+  >
+    <div class="ship-market-zoom-panel" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="ship-market-zoom-close"
+        (click)="closeShipZoom()"
+        aria-label="Fermer le zoom"
+      >
+        ×
+      </button>
+      <img
+        [src]="ship.imageUrl"
+        [alt]="ship.name"
+        class="ship-market-zoom-image"
+      />
+      <div class="ship-market-zoom-caption">{{ ship.name }}</div>
+    </div>
+  </div>
+</div>

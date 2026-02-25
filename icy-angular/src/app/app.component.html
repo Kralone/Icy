@@ -1,4 +1,5 @@
-<div class="route-shell">
+<div class="route-shell" [class.route-shell--with-topbar]="showPublicTopbar">
+  <front-public-topbar *ngIf="showPublicTopbar"></front-public-topbar>
   <router-outlet></router-outlet>
 </div>
 

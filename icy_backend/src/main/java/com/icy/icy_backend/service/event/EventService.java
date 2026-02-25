@@ -122,6 +122,7 @@ public class EventService {
         // --- Détecter changement de date AVANT d'écrire les nouvelles valeurs
         LocalDateTime oldStart = event.getStartDateTime();
         LocalDateTime oldEnd = event.getEndDateTime();
+        boolean wasFinished = event.isFinished();
 
         boolean dateChanged = !Objects.equals(oldStart, start) || !Objects.equals(oldEnd, end);
 
@@ -147,6 +148,9 @@ public class EventService {
         // --- Realtime + Rabbit
         eventWebSocketService.sendEventUpdate(saved, "UPDATE");
         eventPublisher.publishEventUpdated(saved);
+        if (!wasFinished && finished) {
+            eventPublisher.publishEventEnded(saved);
+        }
         if (dateChanged) {
             notificationPushService.sendBroadcast(
                     "Evenement : mis a jour",
@@ -233,6 +237,13 @@ public class EventService {
         return messageService.buildResponse("event.upcoming", eventRepository.findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now()));
     }
 
+    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getRecentFinishedEvents() {
+        List<EventResponseDTO> events = eventRepository.findTop3ByFinishedTrueOrderByEndDateTimeDesc().stream()
+                .map(EventResponseDTO::new)
+                .toList();
+        return messageService.buildResponse("event.list", events);
+    }
+
 
     public List<Event> getEventsBetween(LocalDate start, LocalDate end) {
         LocalDateTime startDateTime = start.atStartOfDay();
@@ -246,24 +257,29 @@ public class EventService {
 
 
     @Transactional
-    @Scheduled(cron = "0 1 0 * * *", zone = "Europe/Paris")
-    public void markPastDayEventsAsFinished() {
+    @Scheduled(cron = "0 */5 * * * *", zone = "Europe/Paris")
+    public void markExpiredEventsAsFinished() {
         ZoneId parisZone = ZoneId.of("Europe/Paris");
-        LocalDate yesterday = LocalDate.now(parisZone).minusDays(1);
-        LocalDateTime startOfYesterday = yesterday.atStartOfDay();
-        LocalDateTime endOfYesterday = yesterday.atTime(LocalTime.MAX);
+        LocalDateTime nowInParis = LocalDateTime.now(parisZone);
 
         List<Event> eventsToFinish = eventRepository
-                .findByEndDateTimeBetweenAndFinishedFalse(startOfYesterday, endOfYesterday);
+                .findByEndDateTimeBeforeAndFinishedFalse(nowInParis);
 
         if (eventsToFinish.isEmpty()) {
-            logger.info("Aucun événement à terminer pour {}", yesterday);
+            logger.info("Aucun événement à terminer avant {}", nowInParis);
             return;
         }
 
         for (Event event : eventsToFinish) {
             event.setFinished(true);
+            event.setUpdatedAt(LocalDateTime.now());
             logger.info("Événement terminé automatiquement : {}", event.getId());
+        }
+
+        Iterable<Event> savedEvents = eventRepository.saveAll(eventsToFinish);
+        int updatedCount = 0;
+        for (Event event : savedEvents) {
+            updatedCount++;
             eventWebSocketService.sendEventUpdate(event, "UPDATE");
 
             try {
@@ -274,8 +290,7 @@ public class EventService {
             }
         }
 
-        eventRepository.saveAll(eventsToFinish);
-        logger.info("{} événements marqués comme terminés pour {}", eventsToFinish.size(), yesterday);
+        logger.info("{} événements marqués comme terminés avant {}", updatedCount, nowInParis);
     }
 
     @Scheduled(cron = "0 0 12 * * *", zone = "Europe/Paris")
@@ -481,7 +496,7 @@ public class EventService {
         log.info("🚀 [Startup] Exécution initiale des tâches planifiées...");
 
         try {
-            markPastDayEventsAsFinished();
+            markExpiredEventsAsFinished();
             sendOneHourReminder();
 
             log.info("✅ [Startup] Tâches planifiées exécutées avec succès au démarrage.");

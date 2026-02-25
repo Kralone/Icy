@@ -1,18 +1,23 @@
-import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+const redirectToLogin = (router: Router, stateUrl: string) =>
+  router.createUrlTree(['/login'], { queryParams: { returnUrl: stateUrl || '/icy/dashboard' } });
 
-  canActivate(): boolean {
-    if (this.authService.hasToken()) {
-      return true;
-    }
-    this.router.navigate(['/login']);
-    return false;
+export const authGuard: CanActivateFn & CanActivateChildFn = (_route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const targetUrl = state?.url || '/icy/dashboard';
+
+  if (!authService.hasToken()) {
+    return redirectToLogin(router, targetUrl);
   }
-}
+
+  return authService.verifyToken().pipe(
+    map((valid) => (valid ? true : redirectToLogin(router, targetUrl))),
+    catchError(() => of(redirectToLogin(router, targetUrl)))
+  );
+};

@@ -94,6 +94,10 @@ async def on_ready():
     connected = await rabbit.connect()
     if connected:
         logger.info("🐇 RabbitMQ connecté et en écoute.")
+        try:
+            await rabbit.handler.event_handler.restore_event_views()
+        except Exception as e:
+            logger.exception(f"❌ Erreur pendant la restauration des boutons d'events: {e}")
     else:
         logger.error("❌ RabbitMQ non opérationnel: consommation désactivée.")
 

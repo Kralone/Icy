@@ -13,7 +13,9 @@ public interface EventRepository extends CrudRepository<Event, UUID> {
 
     List<Event> findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime now);
     List<Event> findByEndDateTimeBetweenAndFinishedFalse(LocalDateTime start, LocalDateTime end);
+    List<Event> findByEndDateTimeBeforeAndFinishedFalse(LocalDateTime dateTime);
     List<Event> findByStartDateTimeBetweenOrderByStartDateTimeAsc(LocalDateTime start, LocalDateTime end);
+    List<Event> findTop3ByFinishedTrueOrderByEndDateTimeDesc();
 
     @Query("SELECT e FROM Event e WHERE e.startDateTime BETWEEN :start AND :end")
     List<Event> findAllBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);

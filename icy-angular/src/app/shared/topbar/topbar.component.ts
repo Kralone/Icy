@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, Renderer2 } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -68,7 +68,8 @@ export class TopbarComponent {
     private notificationService: NotificationService,
     private pushNotifications: PushNotificationService,
     private websocketService: WebSocketService,
-    private toast: HotToastService
+    private toast: HotToastService,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -95,39 +96,44 @@ export class TopbarComponent {
       this.unreadCount = items.filter((item) => !item.read).length;
     });
 
-    try {
-      const userId = this.authService.getUserIdFromToken();
-      this.websocketService.connectNotifications(userId);
-    } catch {
-      this.websocketService.connectNotifications();
-    }
-    this.websocketService.listenForNotifications().subscribe((raw) => {
+    this.zone.runOutsideAngular(() => {
       try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (!parsed) return;
-        const rawPriority = parsed.priority ?? parsed?.data?.priority ?? 2;
-        const priority = Number.isFinite(Number(rawPriority)) ? Number(rawPriority) : 2;
-        if (priority >= 2) {
-          this.pushNotifications.playInAppSound();
-        }
-        if (priority >= 3) {
-          const title = parsed.title ?? 'Notification';
-          const body = parsed.body ?? '';
-          const message = body ? `${title} — ${body}` : title;
-          this.toast.show(message, { duration: 5000 });
-        }
-        this.notificationService.add({
-          id: crypto.randomUUID(),
-          title: parsed.title ?? 'Notification',
-          body: parsed.body ?? '',
-          createdAt: new Date(),
-          read: false,
-          priority,
-          link: parsed.url ?? undefined,
-        });
+        const userId = this.authService.getUserIdFromToken();
+        this.websocketService.connectNotifications(userId);
       } catch {
-        // ignore malformed notifications
+        this.websocketService.connectNotifications();
       }
+
+      this.websocketService.listenForNotifications().subscribe((raw) => {
+        this.zone.run(() => {
+          try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (!parsed) return;
+            const rawPriority = parsed.priority ?? parsed?.data?.priority ?? 2;
+            const priority = Number.isFinite(Number(rawPriority)) ? Number(rawPriority) : 2;
+            if (priority >= 2) {
+              this.pushNotifications.playInAppSound();
+            }
+            if (priority >= 3) {
+              const title = parsed.title ?? 'Notification';
+              const body = parsed.body ?? '';
+              const message = body ? `${title} — ${body}` : title;
+              this.toast.show(message, { duration: 5000 });
+            }
+            this.notificationService.add({
+              id: crypto.randomUUID(),
+              title: parsed.title ?? 'Notification',
+              body: parsed.body ?? '',
+              createdAt: new Date(),
+              read: false,
+              priority,
+              link: parsed.url ?? undefined,
+            });
+          } catch {
+            // ignore malformed notifications
+          }
+        });
+      });
     });
 
     this.refreshPushState();
@@ -259,6 +265,10 @@ export class TopbarComponent {
   get avatarInitial(): string {
     const raw = this.name.replace(/^CMDR\s+/i, '').trim();
     return raw ? raw.charAt(0).toUpperCase() : 'P';
+  }
+
+  handleAvatarLoadError(): void {
+    this.avatarUrl = null;
   }
 
   private normalizeRank(role?: string | null): string {

@@ -1,13 +1,13 @@
-import { ApplicationConfig, importProvidersFrom, isDevMode, LOCALE_ID } from '@angular/core';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { ApplicationConfig, isDevMode, LOCALE_ID } from '@angular/core';
+import { provideHttpClient, withFetch, withInterceptorsFromDi } from '@angular/common/http';
+import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpAuthInterceptor } from './core/interceptors/http.interceptor';
-import { FullCalendarModule } from '@fullcalendar/angular';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 const enableServiceWorker = () => {
   if (!isDevMode()) return true;
@@ -16,8 +16,15 @@ const enableServiceWorker = () => {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideRouter(
+      routes,
+      withViewTransitions(),
+      withInMemoryScrolling({
+        anchorScrolling: 'enabled',
+        scrollPositionRestoration: 'top'
+      })
+    ),
+    provideHttpClient(withFetch(), withInterceptorsFromDi()),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpAuthInterceptor,
@@ -27,11 +34,10 @@ export const appConfig: ApplicationConfig = {
       provide: LOCALE_ID,
       useValue: 'fr-FR'
     },
-    importProvidersFrom(FullCalendarModule),
     provideAnimations(),
     provideServiceWorker('ngsw-worker.js', {
       enabled: enableServiceWorker(),
       registrationStrategy: 'registerWhenStable:30000'
-    })
+    }), provideClientHydration(withEventReplay())
   ]
 };

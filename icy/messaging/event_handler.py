@@ -4,9 +4,11 @@ import discord
 from discord import ui, ButtonStyle
 from utils.html_to_discord import html_to_discord
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
+import re
 
 logger = logging.getLogger("icy.event_handler")
+EVENT_BUTTON_CUSTOM_ID_RE = re.compile(r"^event:([0-9a-fA-F-]{36}):(-?1|0|1)$")
 
 def format_date(date_str: str) -> str:
     """Convertit une date ISO (ex: 2025-11-03T12:30:00) en format lisible français, sans dépendre de la locale système."""
@@ -67,6 +69,7 @@ class EventHandler:
         self.channel_id = self._read_channel_id("DISCORD_EVENTS_CHANNEL_ID")
         self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
         self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
+        self._registered_message_views = set()
 
     @staticmethod
     def _read_channel_id(env_var: str) -> int:
@@ -445,6 +448,57 @@ class EventHandler:
 
         logger.info(f"⏰ Rappel 1h avant envoyé pour {title} ({len(confirmed)} confirmés, {len(maybe)} indécis).")
 
+    async def restore_event_views(self, history_limit: int = 200):
+        """Ré-enregistre les vues persistantes des messages d'events après redémarrage bot/backend."""
+        if not self.rabbit:
+            logger.warning("⚠️ Rabbit indisponible: impossible de restaurer les vues d'events.")
+            return
+
+        channel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            try:
+                channel = await self.bot.fetch_channel(self.channel_id)
+            except Exception as e:
+                logger.error(f"❌ Impossible de récupérer le salon d'events ({self.channel_id}): {e}")
+                return
+
+        restored = 0
+        skipped = 0
+
+        async for message in channel.history(limit=history_limit):
+            if not message.components:
+                continue
+            if message.author != self.bot.user:
+                continue
+            if message.id in self._registered_message_views:
+                continue
+
+            if message.embeds and message.embeds[0].title and message.embeds[0].title.startswith("🧊 [TERMINÉ]"):
+                continue
+
+            event_id = self._extract_event_id_from_message_components(message)
+            if not event_id:
+                skipped += 1
+                continue
+
+            self.bot.add_view(EventParticipationView(self.rabbit, event_id), message_id=message.id)
+            self._registered_message_views.add(message.id)
+            restored += 1
+
+        logger.info(f"🔁 Vues d'events restaurées: {restored} (ignorées: {skipped})")
+
+    @staticmethod
+    def _extract_event_id_from_message_components(message) -> Optional[str]:
+        for row in message.components:
+            for child in getattr(row, "children", []):
+                custom_id = getattr(child, "custom_id", None)
+                if not custom_id:
+                    continue
+                match = EVENT_BUTTON_CUSTOM_ID_RE.match(custom_id)
+                if match:
+                    return match.group(1)
+        return None
+
     def _build_daily_ping_content(self, events: List[dict], date: str) -> str:
         lines = []
         for event in events:
@@ -470,19 +524,24 @@ class EventParticipationView(ui.View):
     def __init__(self, rabbit, event_id):
         super().__init__(timeout=None)
         self.rabbit = rabbit
-        self.event_id = event_id
+        self.event_id = str(event_id)
 
-    @ui.button(label="Participer ✅", style=ButtonStyle.success, custom_id="event_confirm")
-    async def confirm(self, interaction: discord.Interaction, button: ui.Button):
-        await self._send_participation(interaction, 1)
+        self.add_item(self._build_button("Participer ✅", ButtonStyle.success, 1))
+        self.add_item(self._build_button("Peut-être ❔", ButtonStyle.secondary, 0))
+        self.add_item(self._build_button("Refuser ❌", ButtonStyle.danger, -1))
 
-    @ui.button(label="Peut-être ❔", style=ButtonStyle.secondary, custom_id="event_maybe")
-    async def maybe(self, interaction: discord.Interaction, button: ui.Button):
-        await self._send_participation(interaction, 0)
+    def _build_button(self, label: str, style: ButtonStyle, status: int) -> ui.Button:
+        button = ui.Button(
+            label=label,
+            style=style,
+            custom_id=f"event:{self.event_id}:{status}"
+        )
 
-    @ui.button(label="Refuser ❌", style=ButtonStyle.danger, custom_id="event_decline")
-    async def decline(self, interaction: discord.Interaction, button: ui.Button):
-        await self._send_participation(interaction, -1)
+        async def _callback(interaction: discord.Interaction):
+            await self._send_participation(interaction, status)
+
+        button.callback = _callback
+        return button
 
     async def _send_participation(self, interaction: discord.Interaction, status: int):
         await interaction.response.defer(ephemeral=True)

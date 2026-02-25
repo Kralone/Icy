@@ -54,6 +54,7 @@ public class ShipService {
                 .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + ship.getBrand().getName()));
 
         ship.setBrand(brand);
+        ship.setSalePoints(ship.getSalePoints());
         Ship savedShip = shipRepository.save(ship);
         notificationPushService.sendBroadcast(
                 "Catalogue : nouveau vaisseau",

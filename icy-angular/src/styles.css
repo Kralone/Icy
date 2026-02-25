@@ -1,9 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 @import "@ngxpert/hot-toast/styles.css";
 @import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --front-ink: #0b1220;

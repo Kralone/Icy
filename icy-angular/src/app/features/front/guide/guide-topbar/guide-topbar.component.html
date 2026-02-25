@@ -1,0 +1,54 @@
+<header class="guide-topbar" [class.guide-topbar--compact]="compact">
+  <p class="guide-topbar__kicker">Wiki Operationnel</p>
+
+  <nav class="guide-switcher" aria-label="Navigation guides">
+    @for (tab of tabs; track tab.id) {
+      <a
+        class="guide-switcher__tab"
+        [class.guide-switcher__tab--active]="isTabActive(tab.route)"
+        [class.guide-switcher__tab--attention]="tab.id === 'ressources' && !isTabActive(tab.route)"
+        [class.guide-switcher__tab--shiny]="tab.id === 'ressources' && isTabActive(tab.route)"
+        [routerLink]="tab.route"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <div class="guide-topbar__details">
+    <div class="guide-topbar__details-inner">
+      @if (title) {
+        <div class="guide-topbar__title-row">
+          <h1>{{ title }}</h1>
+          @if (statusLabel) {
+            <span class="guide-badge" [class]="'guide-badge guide-badge--' + statusTone">{{ statusLabel }}</span>
+          }
+        </div>
+      }
+      @if (subtitle) {
+        <p class="guide-topbar__subtitle">{{ subtitle }}</p>
+      }
+      @if (hasMeta) {
+        <div class="guide-topbar__meta">
+          @if (updatedAt) {
+            <span>Mise a jour: {{ updatedAt }}</span>
+          }
+          @if (readTime) {
+            <span>Lecture: {{ readTime }}</span>
+          }
+          @if (difficulty) {
+            <span>Niveau: {{ difficulty }}</span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="guide-topbar__tags-wrap" [class.guide-topbar__tags-wrap--empty]="!hasTags">
+    <div class="guide-topbar__tags">
+      @for (tag of tags; track tag) {
+        <span class="guide-tag">{{ tag }}</span>
+      }
+    </div>
+  </div>
+</header>

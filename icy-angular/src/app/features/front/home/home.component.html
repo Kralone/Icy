@@ -1,8 +1,28 @@
 <div class="front-shell flex flex-col min-h-screen overflow-x-hidden">
   <front-header></front-header>
-  <front-story></front-story>
-  <front-activities></front-activities>
-  <front-carousel></front-carousel>
+
+  <front-public-utils></front-public-utils>
+
+  <front-online-members id="guides"></front-online-members>
+
+  @defer (on viewport) {
+    <front-story></front-story>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
+  @defer (on viewport) {
+    <front-activities></front-activities>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
+  @defer (on viewport) {
+    <front-carousel></front-carousel>
+  } @placeholder {
+    <section class="front-section" aria-hidden="true"></section>
+  }
+
   <!-- Footer Placeholder -->
   <footer class="relative bg-slate-950 text-gray-400 text-sm py-10">
     <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.15),transparent_55%)]"></div>

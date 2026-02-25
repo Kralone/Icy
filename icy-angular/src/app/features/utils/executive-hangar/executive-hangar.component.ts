@@ -1,9 +1,10 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 type HangarStatus = 'ONLINE' | 'OFFLINE';
 type CircleColor = 'green' | 'red' | 'empty';
@@ -29,6 +30,8 @@ type ScheduleRow = {
 })
 export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   private readonly defaultInitialOpenIso = '2026-02-01T17:09:54.775-05:00';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   readonly openDuration = 3900338;
   readonly closeDuration = 7200623;
@@ -65,7 +68,9 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
-    private executiveHangarApiService: ExecutiveHangarApiService
+    private executiveHangarApiService: ExecutiveHangarApiService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -86,6 +91,22 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
 
   get statusLabelFr(): string {
     return this.isOnline ? 'EN LIGNE' : 'HORS LIGNE';
+  }
+
+  get isAuthenticated(): boolean {
+    return this.authService.hasToken();
+  }
+
+  get isPublicArea(): boolean {
+    return this.router.url.startsWith('/utilitaires');
+  }
+
+  get backToMenuLink(): string {
+    return this.isPublicArea ? '/utilitaires' : '/icy/utilitaires';
+  }
+
+  get mapsLink(): string {
+    return this.isPublicArea ? '/utilitaires/executive-hangar-maps' : '/icy/utilitaires/executive-hangar-maps';
   }
 
   openTimingModal(): void {
@@ -157,6 +178,11 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   }
 
   private loadPermissions(): void {
+    if (!this.authService.hasToken()) {
+      this.canManageTiming = false;
+      return;
+    }
+
     this.userService.getMyProfile().subscribe({
       next: (response) => {
         const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').toUpperCase());
@@ -169,6 +195,13 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   }
 
   private loadConfigAndStart(): void {
+    if (!this.isBrowser) {
+      this.nextOnlineAt = new Date(this.defaultInitialOpenIso);
+      this.refreshState();
+      this.scheduleRows = this.buildScheduleRows();
+      return;
+    }
+
     this.executiveHangarApiService.getConfig().subscribe({
       next: (response) => {
         const apiInitialOpenTime = response?.data?.initialOpenTime;
@@ -186,7 +219,9 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   private bootstrapTicker(): void {
     this.refreshState();
     this.scheduleRows = this.buildScheduleRows();
-    this.tickTimer = setInterval(() => this.onTick(), 1000);
+    if (this.isBrowser) {
+      this.tickTimer = setInterval(() => this.onTick(), 1000);
+    }
   }
 
   private refreshState(): void {

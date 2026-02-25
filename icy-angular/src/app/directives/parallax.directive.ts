@@ -4,8 +4,11 @@ import {
   Input,
   Renderer2,
   AfterViewInit,
-  OnDestroy
+  OnDestroy,
+  inject,
+  PLATFORM_ID
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Directive({
   selector: '[appParallax]',
@@ -16,10 +19,13 @@ export class ParallaxDirective implements AfterViewInit, OnDestroy {
 
   private animationFrameId: number = 0;
   private sectionEl: HTMLElement | null = null;
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   constructor(private el: ElementRef, private renderer: Renderer2) {}
 
   ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
     // On cherche la première section parente
     this.sectionEl = this.el.nativeElement.closest('section');
 
@@ -27,6 +33,7 @@ export class ParallaxDirective implements AfterViewInit, OnDestroy {
   }
 
   animate = () => {
+    if (!this.isBrowser) return;
     if (!this.sectionEl) return;
 
     const scrollY = window.scrollY;
@@ -53,6 +60,8 @@ export class ParallaxDirective implements AfterViewInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.animationFrameId);
+    if (this.isBrowser) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
   }
 }

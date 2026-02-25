@@ -1,4 +1,5 @@
-import { Directive, ElementRef, Input, AfterViewInit, HostListener } from '@angular/core';
+import { Directive, ElementRef, Input, AfterViewInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Directive({
   selector: '[appScrollAnimation]',
@@ -11,16 +12,20 @@ export class ScrollAnimationDirective implements AfterViewInit {
   @Input() reverse: boolean = false;
 
   private isMobile: boolean = false;
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   constructor(private el: ElementRef) {}
 
   ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
     this.isMobile = window.innerWidth < 768; // mobile < 768px
     this.onScroll(); // appliquer dès le chargement
   }
 
   @HostListener('window:scroll', [])
   onScroll(): void {
+    if (!this.isBrowser) return;
     const scrollY = window.scrollY;
     const element = this.el.nativeElement;
     const elementTop = element.getBoundingClientRect().top + window.scrollY;
