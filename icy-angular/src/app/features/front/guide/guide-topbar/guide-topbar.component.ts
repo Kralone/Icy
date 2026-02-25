@@ -28,9 +28,9 @@ export class GuideTopbarComponent {
   @Input() tags: readonly string[] = [];
 
   readonly tabs: readonly GuideTopbarTab[] = [
-    { id: 'debutant', label: 'Guide debutant', route: '/guide/minage' },
-    { id: 'avance', label: 'Guide avance', route: '/guide/avance' },
-    { id: 'ressources', label: 'Ressources', route: '/guide/ressources' }
+    { id: 'debutant', label: 'Guide debutant', route: '/guides/minage' },
+    { id: 'avance', label: 'Guide avance', route: '/guides/minage/confirmed' },
+    { id: 'ressources', label: 'Ressources', route: '/guides/minage/ressources' }
   ];
 
   constructor(private readonly router: Router) {}

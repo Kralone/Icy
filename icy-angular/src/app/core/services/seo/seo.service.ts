@@ -8,6 +8,7 @@ interface SeoRouteData {
   title?: string;
   description?: string;
   robots?: string;
+  image?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -16,7 +17,8 @@ export class SeoService {
   private readonly defaultSeo: Required<SeoRouteData> = {
     title: 'IceForge Industries | Corporation Star Citizen FR',
     description: 'IceForge Industries est une corporation Star Citizen FR.',
-    robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+    robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
+    image: 'https://iceforge.fr/assets/icons/icon-512x512.png'
   };
 
   constructor(
@@ -39,9 +41,11 @@ export class SeoService {
         this.meta.updateTag({ name: 'robots', content: seo.robots });
         this.meta.updateTag({ property: 'og:title', content: seo.title });
         this.meta.updateTag({ property: 'og:description', content: seo.description });
+        this.meta.updateTag({ property: 'og:image', content: seo.image });
         this.meta.updateTag({ property: 'og:url', content: currentUrl });
         this.meta.updateTag({ name: 'twitter:title', content: seo.title });
         this.meta.updateTag({ name: 'twitter:description', content: seo.description });
+        this.meta.updateTag({ name: 'twitter:image', content: seo.image });
         this.meta.updateTag({ name: 'twitter:url', content: currentUrl });
         this.updateCanonical(currentUrl);
       });
@@ -62,7 +66,8 @@ export class SeoService {
     return {
       title: merged.title || this.defaultSeo.title,
       description: merged.description || this.defaultSeo.description,
-      robots: merged.robots || this.defaultSeo.robots
+      robots: merged.robots || this.defaultSeo.robots,
+      image: merged.image || this.defaultSeo.image
     };
   }
 

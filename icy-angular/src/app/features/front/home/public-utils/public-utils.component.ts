@@ -19,6 +19,12 @@ type PublicUtilityItem = {
 export class PublicUtilsComponent {
   externalItems: PublicUtilityItem[] = [
     {
+      label: 'Outils et Ressources de Minage',
+      description: 'Toutes les ressources dont vous avez besoin pour miner.',
+      imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
+      route: '/guides/minage/ressources'
+    },
+    {
       label: 'Hangars exécutifs',
       description: 'Etat de disponibilité des hangars et équipages.',
       imageUrl: 'https://media.starcitizen.tools/b/b8/Cutter_Approaching_Checkmate_Station.png',

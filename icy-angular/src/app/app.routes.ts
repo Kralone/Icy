@@ -11,59 +11,65 @@ export const routes: Routes = [
       animation: 'HomePage',
       seo: {
         title: 'IceForge Industries | Corporation Star Citizen FR',
-        description: 'IceForge Industries est une corporation Star Citizen FR orientee industrie, minage, logistique, transport et securite dans le systeme Stanton.',
+        description: 'Corporation Star Citizen FR orientee industrie, minage, logistique, transport et securite dans le systeme Stanton. Guides, recrutement et utilitaires publics.',
         robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
       }
     }
   },
   {
-    path: 'guide/minage',
+    path: 'guides/minage',
     loadComponent: () => import('./features/front/guide/mining-guide/mining-guide.component').then(m => m.MiningGuideComponent),
     data: {
       animation: 'MiningGuidePage',
       seo: {
-        title: 'Guide Minage | IceForge Industries',
-        description: 'Guide operationnel du minage: preparation, scan, fracture, extraction et vente.',
+        title: 'Guide Minage Star Citizen | IceForge Industries',
+        description: 'Guide minage Star Citizen: preparation du vaisseau, scan, fracture, extraction, raffinerie et vente rentable.',
         robots: 'index,follow'
       }
     }
   },
   {
-    path: 'guide/salvage',
+    path: 'guides/salvage',
     loadComponent: () => import('./features/front/guide/salvage-guide/salvage-guide.component').then(m => m.SalvageGuideComponent),
     data: {
       animation: 'SalvageGuidePage',
       seo: {
-        title: 'Guide Salvage | IceForge Industries',
-        description: 'Guide salvage IceForge: tri, extraction, securite et rentabilite.',
+        title: 'Guide Salvage Star Citizen | IceForge Industries',
+        description: 'Guide salvage Star Citizen: tri des coques, extraction de materiaux, securite d equipage et optimisation de la rentabilite.',
         robots: 'index,follow'
       }
     }
   },
   {
-    path: 'guide/avance',
+    path: 'guides/minage/confirmed',
     loadComponent: () => import('./features/front/guide/advanced-guide/advanced-guide.component').then(m => m.AdvancedGuideComponent),
     data: {
       animation: 'AdvancedGuidePage',
       seo: {
-        title: 'Guide Avance | IceForge Industries',
-        description: 'Section guide avancee IceForge.',
+        title: 'Guide Minage Avance | IceForge Industries',
+        description: 'Guide minage avance: gestion de fenetre verte, choix des modules, gestion des risques et pipeline de production.',
         robots: 'index,follow'
       }
     }
   },
   {
-    path: 'guide/ressources',
+    path: 'guides/minage/ressources',
     loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent),
     data: {
       animation: 'ResourcesGuidePage',
       seo: {
-        title: 'Ressources | IceForge Industries',
-        description: 'Ressources utiles pour les operations IceForge.',
+        title: 'Ressources Minage | IceForge Industries',
+        description: 'Ressources minage et industrie: checklists, outils, references de routes et bonnes pratiques operationnelles.',
         robots: 'index,follow'
       }
     }
   },
+  { path: 'guides', redirectTo: 'guides/minage', pathMatch: 'full' },
+  { path: 'guide', redirectTo: 'guides/minage', pathMatch: 'full' },
+  { path: 'guide/minage', redirectTo: 'guides/minage', pathMatch: 'full' },
+  { path: 'guide/salvage', redirectTo: 'guides/salvage', pathMatch: 'full' },
+  { path: 'guide/avance', redirectTo: 'guides/minage/confirmed', pathMatch: 'full' },
+  { path: 'guide/ressources', redirectTo: 'guides/minage/ressources', pathMatch: 'full' },
   {
     path: 'login',
     loadComponent: () => import('./auth/components/login/login.component').then(m => m.LoginComponent),
@@ -82,8 +88,8 @@ export const routes: Routes = [
     data: {
       animation: 'RecruitmentPage',
       seo: {
-        title: 'Recrutement | IceForge Industries',
-        description: 'Rejoignez IceForge Industries, corporation Star Citizen FR.',
+        title: 'Recrutement Star Citizen FR | IceForge Industries',
+        description: 'Rejoignez IceForge Industries, corporation Star Citizen FR specialisee industrie, minage, logistique et operations de flotte.',
         robots: 'index,follow'
       }
     }
@@ -93,30 +99,72 @@ export const routes: Routes = [
     loadComponent: () => import('./features/front/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
     canActivate: [publicAreaGuard],
     canActivateChild: [publicAreaGuard],
+    data: {
+      seo: {
+        title: 'Utilitaires Star Citizen | IceForge Industries',
+        description: 'Acces aux utilitaires publics IceForge: hangars executifs, cartes, Wikelo et outils de consultation vaisseaux.',
+        robots: 'index,follow'
+      }
+    },
     children: [
       {
         path: '',
-        data: { utilityScope: 'public' },
+        data: {
+          utilityScope: 'public',
+          seo: {
+            title: 'Utilitaires Star Citizen | IceForge Industries',
+            description: 'Selection d utilitaires publics Star Citizen pour consulter hangars, donnees et informations operationnelles.',
+            robots: 'index,follow'
+          }
+        },
         loadComponent: () => import('./features/utils/menu/utils-menu.component').then(m => m.UtilsMenuComponent)
       },
       {
         path: 'executive-hangar',
-        data: { animation: 'ExecHangarPage' },
+        data: {
+          animation: 'ExecHangarPage',
+          seo: {
+            title: 'Hangars Executifs | IceForge Industries',
+            description: 'Etat de disponibilite des hangars executifs et suivi des equipages pour les operations Star Citizen.',
+            robots: 'index,follow'
+          }
+        },
         loadComponent: () => import('./features/utils/executive-hangar/executive-hangar.component').then(m => m.ExecutiveHangarComponent)
       },
       {
         path: 'executive-hangar-maps',
-        data: { animation: 'ExecMapsPage' },
+        data: {
+          animation: 'ExecMapsPage',
+          seo: {
+            title: 'Cartes Hangars Executifs | IceForge Industries',
+            description: 'Cartes et reperes des hangars executifs pour faciliter l organisation des operations et de la logistique.',
+            robots: 'index,follow'
+          }
+        },
         loadComponent: () => import('./features/utils/executive-hangar-maps/executive-hangar-maps.component').then(m => m.ExecutiveHangarMapsComponent)
       },
       {
         path: 'wikelo',
-        data: { animation: 'WikeloPage' },
+        data: {
+          animation: 'WikeloPage',
+          seo: {
+            title: 'Wikelo Star Citizen | IceForge Industries',
+            description: 'Consultation de donnees et references vaisseaux avec Wikelo pour la preparation des missions.',
+            robots: 'index,follow'
+          }
+        },
         loadComponent: () => import('./features/utils/wikelo/wikelo.component').then(m => m.WikeloComponent)
       },
       {
         path: 'achat-vaisseaux',
-        data: { animation: 'ShipMarketPage' },
+        data: {
+          animation: 'ShipMarketPage',
+          seo: {
+            title: 'Achat Vaisseaux Star Citizen | IceForge Industries',
+            description: 'Comparez et consultez les vaisseaux disponibles pour planifier vos achats selon role, budget et usage.',
+            robots: 'index,follow'
+          }
+        },
         loadComponent: () => import('./features/utils/ship-market/ship-market.component').then(m => m.ShipMarketComponent)
       }
     ]

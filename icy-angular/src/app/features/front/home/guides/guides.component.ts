@@ -24,7 +24,7 @@ export class GuidesComponent {
       title: 'Guide Minage Avance',
       summary: 'Optimisation des veines, fenetre verte et pipeline complet de vente.',
       category: 'Industrie',
-      route: '/guide/minage',
+      route: '/guides/minage',
       imageUrl: 'assets/images/home/activities/mining.jpg',
       type: 'écriture'
     },
@@ -33,7 +33,7 @@ export class GuidesComponent {
       title: 'Guide Salvage',
       summary: 'Boucle salvage, tri des coques et workflow rentable en equipe.',
       category: 'Recuperation',
-      route: '/guide/salvage',
+      route: '/guides/salvage',
       imageUrl: 'assets/images/home/activities/cargo.jpg',
       type: 'soon'
     },
