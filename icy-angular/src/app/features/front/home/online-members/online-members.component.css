@@ -6,10 +6,11 @@
 }
 
 .front-online .front-container {
-  width: calc(100vw - 0.8rem);
+  width: min(1820px, calc(100% - 0.8rem));
   max-width: none;
-  padding-left: 0.4rem;
-  padding-right: 0.4rem;
+  padding-left: clamp(0.35rem, 1.2vw, 0.7rem);
+  padding-right: clamp(0.35rem, 1.2vw, 0.7rem);
+  box-sizing: border-box;
 }
 
 .front-online__panel {
@@ -312,8 +313,19 @@
 }
 
 @media (max-width: 768px) {
+  .front-online {
+    padding: 0.75rem 0;
+  }
+
   .front-online .front-container {
-    width: calc(100vw - 0.5rem);
+    width: calc(100% - 0.5rem);
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+
+  .front-online__panel {
+    border-radius: 16px;
+    padding: 0.6rem;
   }
 
   .front-online__layout {
@@ -328,6 +340,16 @@
     overflow: visible;
   }
 
+  .front-online__events,
+  .front-online__members {
+    padding: 0.56rem;
+  }
+
+  .front-online__events-list {
+    grid-template-rows: none;
+    gap: 0.38rem;
+  }
+
   .front-online__list {
     grid-template-columns: 1fr;
     grid-template-rows: repeat(6, minmax(0, 1fr));
@@ -339,7 +361,45 @@
   }
 
   .front-online__pagination {
+    flex-wrap: wrap;
     justify-content: flex-start;
+  }
+
+  .front-online__item {
+    padding: 0.34rem 0.45rem;
+  }
+
+  .front-online__name {
+    font-size: 0.72rem;
+  }
+
+  .front-online__badge {
+    font-size: 0.58rem;
+    padding: 0.16rem 0.38rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .front-online__header {
+    gap: 0.4rem;
+  }
+
+  .front-online__stats {
+    justify-content: flex-start;
+    font-size: 0.62rem;
+  }
+
+  .front-online__event-title {
+    font-size: 0.68rem;
+  }
+
+  .front-online__event-date {
+    font-size: 0.56rem;
+  }
+
+  .front-online__page-btn,
+  .front-online__page-info {
+    font-size: 0.58rem;
   }
 }
 

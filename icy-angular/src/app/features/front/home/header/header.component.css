@@ -192,6 +192,9 @@
 }
 
 .front-hero-logo__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.9rem 2.2rem;
   border-radius: 999px;
   background: linear-gradient(120deg, #67e8f9, #22d3ee);
@@ -250,5 +253,47 @@
 
   .front-hero-logo__subtitle {
     text-transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .front-hero-logo {
+    padding: 1.4rem 1rem 3rem;
+  }
+
+  .front-hero-logo__center {
+    margin-top: 3.2rem;
+    gap: 0.75rem;
+  }
+
+  .front-hero-logo__badge {
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+  }
+
+  .front-hero-logo__mark {
+    width: 140px;
+    height: 140px;
+    padding: 0.75rem;
+  }
+
+  .front-hero-logo__title {
+    letter-spacing: 0.04em;
+  }
+
+  .front-hero-logo__subtitle {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+  }
+
+  .front-hero-logo__actions {
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  .front-hero-logo__cta {
+    width: 100%;
+    padding: 0.75rem 1rem;
   }
 }

@@ -61,6 +61,7 @@
 
 .refining-table-wrap {
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .refining-search {
@@ -347,5 +348,70 @@
 
   .yield-meter {
     width: 132px;
+  }
+}
+
+@media (max-width: 700px) {
+  .refining-block__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .refining-search {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+    padding: 0.48rem 0.52rem;
+  }
+
+  .refining-search__icon {
+    display: none;
+  }
+
+  .refining-search__meta {
+    grid-column: auto;
+    justify-self: start;
+  }
+
+  .refining-search__input {
+    font-size: 0.76rem;
+    padding: 0.34rem 0.58rem;
+  }
+
+  .refining-table {
+    min-width: 380px;
+  }
+
+  .refining-table th,
+  .refining-table td {
+    padding: 0.48rem 0.56rem;
+    font-size: 0.76rem;
+  }
+
+  .refining-table--nested {
+    min-width: 360px;
+  }
+
+  .refining-table__image {
+    width: 86px;
+  }
+
+  .refining-station strong {
+    font-size: 0.8rem;
+  }
+
+  .refinery-thumb {
+    width: 74px;
+    height: 46px;
+    border-radius: 8px;
+  }
+
+  .yield-meter {
+    width: 124px;
+    height: 18px;
+  }
+
+  .yield-meter__label {
+    font-size: 0.66rem;
   }
 }

@@ -351,6 +351,7 @@
 .mining-card__table-wrap {
   overflow: auto;
   max-height: 470px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mining-table {
@@ -420,5 +421,81 @@
     border-right: 0;
     border-bottom: 1px solid rgba(125, 211, 252, 0.2);
     max-height: 220px;
+  }
+}
+
+@media (max-width: 700px) {
+  .mining-search-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .mining-search-reset {
+    width: 100%;
+    text-align: center;
+  }
+
+  .ore-suggestion-list {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .ore-ranking-panel__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ore-ranking-item {
+    gap: 0.42rem;
+    padding: 0.38rem 0.45rem;
+  }
+
+  .planet-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.55rem;
+  }
+
+  .planet-card {
+    min-height: 110px;
+  }
+
+  .planet-card__name {
+    left: 0.52rem;
+    right: 0.52rem;
+    font-size: 0.82rem;
+  }
+
+  .planet-card-pager {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .mining-detail-split {
+    min-height: 0;
+  }
+
+  .mining-location-menu {
+    max-height: 180px;
+  }
+
+  .mining-table-panel__head {
+    padding: 0.46rem 0.56rem;
+  }
+
+  .mining-table-panel__head h3 {
+    font-size: 0.86rem;
+  }
+
+  .mining-card__table-wrap {
+    max-height: 360px;
+  }
+
+  .mining-table {
+    min-width: 420px;
+  }
+
+  .mining-table th,
+  .mining-table td {
+    padding: 0.42rem 0.48rem;
+    font-size: 0.74rem;
   }
 }
