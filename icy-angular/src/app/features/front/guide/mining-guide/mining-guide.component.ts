@@ -11,13 +11,13 @@ import { GuideDocument } from '../guide-template/guide-template.types';
 export class MiningGuideComponent {
   readonly guide: GuideDocument = {
     slug: 'minage',
-    title: 'Le Guide Ultime du Minage',
-    subtitle: 'De la roche brute à la vente : maîtriser l\'extraction, le raffinage et la logistique.',
+    title: 'Guide Minage Star Citizen',
+    subtitle: 'Guide complet du minage Star Citizen : de la roche brute a la vente, avec extraction, raffinage et logistique.',
     updatedAt: '22 fév. 2026',
     readTime: '15-20 min',
     difficulty: 'Débutant à Confirmé',
     status: { label: 'Écriture', tone: 'writing' },
-    tags: ['minage', 'fps', 'véhicule', 'vaisseau', 'crédits', 'raffinage'],
+    tags: ['minage', 'star citizen', 'fps', 'vehicule', 'vaisseau', 'credits', 'raffinage'],
     glossary: [
       {
         term: 'FPS',
@@ -88,7 +88,7 @@ export class MiningGuideComponent {
       {
         id: 'fondations',
         title: 'Les Fondations : Le minage, c\'est quoi ?',
-        summary: 'Comprendre les mécaniques de base, les différentes échelles de la profession et le cycle complet de l\'extraction au raffinage.',
+        summary: 'Comprendre les mecaniques de base du minage Star Citizen, les differentes echelles de la profession et le cycle complet de l extraction au raffinage.',
         subsections: [
           {
             title: 'Le cycle de base',

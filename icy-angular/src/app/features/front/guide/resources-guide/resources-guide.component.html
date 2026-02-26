@@ -56,7 +56,10 @@
           }
 
           @if (selectedLine.id === 'fit') {
-            <front-resources-fit-panel></front-resources-fit-panel>
+            <front-resources-fit-panel
+              [requestedTab]="fitRequestedTab"
+              [requestedModuleFilter]="fitRequestedModuleFilter"
+            ></front-resources-fit-panel>
           }
         </section>
       }

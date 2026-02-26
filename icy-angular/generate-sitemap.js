@@ -9,7 +9,7 @@ const routes = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/recrutement', changefreq: 'weekly', priority: '0.9' },
 
-  { path: '/guides/minage', changefreq: 'weekly', priority: '0.9' },
+  { path: '/guides/minage-star-citizen', changefreq: 'weekly', priority: '0.9' },
   { path: '/guides/salvage', changefreq: 'weekly', priority: '0.8' },
   { path: '/guides/minage/confirmed', changefreq: 'monthly', priority: '0.6' },
   { path: '/guides/minage/ressources', changefreq: 'weekly', priority: '0.8' },

@@ -28,7 +28,7 @@ export class GuideTopbarComponent {
   @Input() tags: readonly string[] = [];
 
   readonly tabs: readonly GuideTopbarTab[] = [
-    { id: 'debutant', label: 'Guide debutant', route: '/guides/minage' },
+    { id: 'debutant', label: 'Guide debutant', route: '/guides/minage-star-citizen' },
     { id: 'avance', label: 'Guide avance', route: '/guides/minage/confirmed' },
     { id: 'ressources', label: 'Ressources', route: '/guides/minage/ressources' }
   ];

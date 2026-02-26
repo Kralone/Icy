@@ -47,9 +47,11 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   formatInline(text: string, _section?: GuideSection, applyGlossary = true): string {
-    const formatted = this.escapeHtml(text)
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>');
+    const formatted = this.formatMarkdownLinks(
+      this.escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    );
 
     if (!applyGlossary) {
       return formatted;
@@ -335,5 +337,35 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  private formatMarkdownLinks(html: string): string {
+    return html.replace(/\[([^[\]]+?)\]\(([^()\s]+)\)/g, (_match, label: string, href: string) => {
+      const safeHref = this.normalizeInlineHref(href);
+      if (!safeHref) {
+        return label;
+      }
+      const isResourcesLink = safeHref.startsWith('/guides/minage/ressources');
+      const linkClass = isResourcesLink ? 'guide-inline-link guide-inline-link--resource' : 'guide-inline-link';
+      const hint = isResourcesLink ? '<span class="guide-inline-link__hint">Ressource</span>' : '';
+      return `<a class="${linkClass}" href="${safeHref}">${label}${hint}</a>`;
+    });
+  }
+
+  private normalizeInlineHref(rawHref: string): string | null {
+    const href = rawHref.trim();
+    if (!href) {
+      return null;
+    }
+    if (href.startsWith('/')) {
+      return href;
+    }
+    if (/^https?:\/\//i.test(href)) {
+      return href;
+    }
+    if (/^mailto:/i.test(href) || /^tel:/i.test(href)) {
+      return href;
+    }
+    return null;
   }
 }

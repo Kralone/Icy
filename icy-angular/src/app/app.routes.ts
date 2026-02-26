@@ -17,17 +17,18 @@ export const routes: Routes = [
     }
   },
   {
-    path: 'guides/minage',
+    path: 'guides/minage-star-citizen',
     loadComponent: () => import('./features/front/guide/mining-guide/mining-guide.component').then(m => m.MiningGuideComponent),
     data: {
       animation: 'MiningGuidePage',
       seo: {
-        title: 'Guide Minage Star Citizen | IceForge Industries',
-        description: 'Guide minage Star Citizen: preparation du vaisseau, scan, fracture, extraction, raffinerie et vente rentable.',
+        title: 'Guide Minage Star Citizen 2026 | IceForge Industries',
+        description: 'Guide minage Star Citizen complet: equipement, scan, fracture, extraction, raffinage et vente pour progresser vite.',
         robots: 'index,follow'
       }
     }
   },
+  { path: 'guides/minage', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   {
     path: 'guides/salvage',
     loadComponent: () => import('./features/front/guide/salvage-guide/salvage-guide.component').then(m => m.SalvageGuideComponent),
@@ -42,7 +43,7 @@ export const routes: Routes = [
   },
   {
     path: 'guides/minage/confirmed',
-    loadComponent: () => import('./features/front/guide/advanced-guide/advanced-guide.component').then(m => m.AdvancedGuideComponent),
+    loadComponent: () => import('./features/front/guide/advanced-guide/advanced-guide.component').then(m => m.AdvancedMiningGuideComponent),
     data: {
       animation: 'AdvancedGuidePage',
       seo: {
@@ -64,9 +65,10 @@ export const routes: Routes = [
       }
     }
   },
-  { path: 'guides', redirectTo: 'guides/minage', pathMatch: 'full' },
-  { path: 'guide', redirectTo: 'guides/minage', pathMatch: 'full' },
-  { path: 'guide/minage', redirectTo: 'guides/minage', pathMatch: 'full' },
+  { path: 'guides', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
+  { path: 'guide', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
+  { path: 'guide/minage', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
+  { path: 'guide-minage-star-citizen', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   { path: 'guide/salvage', redirectTo: 'guides/salvage', pathMatch: 'full' },
   { path: 'guide/avance', redirectTo: 'guides/minage/confirmed', pathMatch: 'full' },
   { path: 'guide/ressources', redirectTo: 'guides/minage/ressources', pathMatch: 'full' },

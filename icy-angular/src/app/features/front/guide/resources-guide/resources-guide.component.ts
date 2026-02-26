@@ -1,13 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { GuideTopbarComponent } from '../guide-topbar/guide-topbar.component';
 import { ResourcesMiningPanelComponent } from './components/resources-mining-panel/resources-mining-panel.component';
 import { ResourcesRefiningPanelComponent } from './components/resources-refining-panel/resources-refining-panel.component';
 import { ResourcesSalesPanelComponent } from './components/resources-sales-panel/resources-sales-panel.component';
 import { ResourcesFitPanelComponent } from './components/resources-fit-panel/resources-fit-panel.component';
+import {
+  FitTabId,
+  ModuleFilterId,
+  ResourceLineId,
+  normalizeFitTabId,
+  normalizeModuleFilterId,
+  normalizeResourceLineId
+} from './resources-guide-link.utils';
 
 interface ResourceLine {
-  id: string;
+  id: ResourceLineId;
   ribbon: string;
   title: string;
   description: string;
@@ -63,13 +73,23 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
     }
   ];
 
-  selectedLineId = '';
+  selectedLineId: ResourceLineId | '' = '';
   contentVisible = false;
+  fitRequestedTab: FitTabId | null = null;
+  fitRequestedModuleFilter: ModuleFilterId | null = null;
+
   private revealTimer?: ReturnType<typeof setTimeout>;
   private preloadedImages: HTMLImageElement[] = [];
+  private routeQuerySubscription?: Subscription;
+
+  constructor(private readonly route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.preloadLineImages();
+    this.applyRouteQueryState(this.route.snapshot.queryParamMap);
+    this.routeQuerySubscription = this.route.queryParamMap.subscribe((queryMap) => {
+      this.applyRouteQueryState(queryMap);
+    });
   }
 
   ngOnDestroy(): void {
@@ -78,6 +98,10 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       this.revealTimer = undefined;
     }
     this.preloadedImages = [];
+    if (this.routeQuerySubscription) {
+      this.routeQuerySubscription.unsubscribe();
+      this.routeQuerySubscription = undefined;
+    }
   }
 
   trackLine(_: number, line: ResourceLine): string {
@@ -140,6 +164,37 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       img.src = line.imageUrl;
       this.preloadedImages.push(img);
     }
+  }
+
+  private applyRouteQueryState(queryMap: ParamMap): void {
+    const requestedTab = normalizeFitTabId(queryMap.get('fitTab'));
+    const requestedFilter = normalizeModuleFilterId(queryMap.get('fitFilter'));
+    const explicitLine = normalizeResourceLineId(queryMap.get('line'));
+    const inferredLine: ResourceLineId | null = requestedTab || requestedFilter ? 'fit' : null;
+    const targetLine = explicitLine ?? inferredLine;
+
+    this.fitRequestedTab = requestedTab;
+    this.fitRequestedModuleFilter = requestedFilter;
+
+    if (targetLine) {
+      this.openLineFromDeepLink(targetLine);
+    }
+  }
+
+  private openLineFromDeepLink(lineId: ResourceLineId): void {
+    const targetLine = this.lines.find((line) => line.id === lineId);
+    if (!targetLine) {
+      return;
+    }
+
+    if (this.revealTimer) {
+      clearTimeout(this.revealTimer);
+      this.revealTimer = undefined;
+    }
+
+    this.scrollToTopOfPage();
+    this.selectedLineId = targetLine.id;
+    this.contentVisible = true;
   }
 
 }

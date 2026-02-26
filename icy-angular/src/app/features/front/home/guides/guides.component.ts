@@ -21,10 +21,10 @@ export class GuidesComponent {
   readonly cards: FrontGuideCard[] = [
     {
       id: 1,
-      title: 'Guide Minage Avance',
-      summary: 'Optimisation des veines, fenetre verte et pipeline complet de vente.',
+      title: 'Guide Minage Star Citizen',
+      summary: 'Guide minage Star Citizen complet: scan, fracture, extraction, raffinage et vente.',
       category: 'Industrie',
-      route: '/guides/minage',
+      route: '/guides/minage-star-citizen',
       imageUrl: 'assets/images/home/activities/mining.jpg',
       type: 'écriture'
     },

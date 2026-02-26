@@ -1,12 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ItemCatalogItem, ItemCatalogService } from '../../../../../../core/services/item/item-catalog.service';
 import { ShipService } from '../../../../../../core/services/ship/ship.service';
 import { Ship } from '../../../../../../model/ship.model';
-
-type FitTabId = 'ships' | 'modules' | 'tools';
-type ModuleFilterId = 'all' | 'mining_laser' | 'cargo_pod';
+import {
+  FitTabId,
+  ModuleFilterId,
+  normalizeFitTabId,
+  normalizeModuleFilterId
+} from '../../resources-guide-link.utils';
 
 interface FitTabOption {
   id: FitTabId;
@@ -38,8 +42,10 @@ interface ModuleFilterOption {
   templateUrl: './resources-fit-panel.component.html',
   styleUrl: './resources-fit-panel.component.css'
 })
-export class ResourcesFitPanelComponent implements OnInit, OnDestroy {
+export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('gadgetDialog') gadgetDialog?: ElementRef<HTMLDialogElement>;
+  @Input() requestedTab: string | null = null;
+  @Input() requestedModuleFilter: string | null = null;
 
   activeTab: FitTabId = 'ships';
   readonly fitTabs: FitTabOption[] = [
@@ -82,6 +88,7 @@ export class ResourcesFitPanelComponent implements OnInit, OnDestroy {
   miningGadgetItems: ItemCatalogItem[] = [];
   selectedGadget: ItemCatalogItem | null = null;
   private toolsSubscription?: Subscription;
+  private routeQuerySubscription?: Subscription;
 
   readonly toolRows: MockToolRow[] = [
     { name: 'Multitool + OreBit', role: 'Minage FPS', note: 'Essentiel pour extraction grottes et avant-postes' },
@@ -92,12 +99,17 @@ export class ResourcesFitPanelComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly shipService: ShipService,
-    private readonly itemCatalogService: ItemCatalogService
+    private readonly itemCatalogService: ItemCatalogService,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.loadMiningShips();
     this.loadMiningTools();
+    this.applyRequestedState();
+    this.routeQuerySubscription = this.route.queryParamMap.subscribe((queryMap) => {
+      this.applyRequestedState(queryMap);
+    });
   }
 
   ngOnDestroy(): void {
@@ -109,7 +121,17 @@ export class ResourcesFitPanelComponent implements OnInit, OnDestroy {
       this.toolsSubscription.unsubscribe();
       this.toolsSubscription = undefined;
     }
+    if (this.routeQuerySubscription) {
+      this.routeQuerySubscription.unsubscribe();
+      this.routeQuerySubscription = undefined;
+    }
     this.setPageScrollLocked(false);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['requestedTab'] || changes['requestedModuleFilter']) {
+      this.applyRequestedState();
+    }
   }
 
   setActiveTab(tab: FitTabId): void {
@@ -284,5 +306,23 @@ export class ResourcesFitPanelComponent implements OnInit, OnDestroy {
       return;
     }
     document.body.style.overflow = locked ? 'hidden' : '';
+  }
+
+  private applyRequestedState(queryMap?: ParamMap): void {
+    const routeQueryMap = queryMap ?? this.route.snapshot.queryParamMap;
+    const requestedFilter = normalizeModuleFilterId(this.requestedModuleFilter)
+      ?? normalizeModuleFilterId(routeQueryMap.get('fitFilter'));
+    const requestedTab = normalizeFitTabId(this.requestedTab)
+      ?? normalizeFitTabId(routeQueryMap.get('fitTab'));
+
+    if (requestedFilter) {
+      this.activeModuleFilter = requestedFilter;
+      this.activeTab = 'modules';
+      return;
+    }
+
+    if (requestedTab) {
+      this.activeTab = requestedTab;
+    }
   }
 }
