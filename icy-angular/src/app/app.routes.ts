@@ -55,15 +55,8 @@ export const routes: Routes = [
   },
   {
     path: 'guides/minage/ressources',
-    loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent),
-    data: {
-      animation: 'ResourcesGuidePage',
-      seo: {
-        title: 'Ressources Minage | IceForge Industries',
-        description: 'Ressources minage et industrie: checklists, outils, references de routes et bonnes pratiques operationnelles.',
-        robots: 'index,follow'
-      }
-    }
+    redirectTo: 'utilitaires/ressources-minage',
+    pathMatch: 'full'
   },
   {
     path: 'guides/hathor',
@@ -84,7 +77,7 @@ export const routes: Routes = [
   { path: 'guide/salvage', redirectTo: 'guides/salvage', pathMatch: 'full' },
   { path: 'guide/hathor', redirectTo: 'guides/hathor', pathMatch: 'full' },
   { path: 'guide/avance', redirectTo: 'guides/minage/confirmed', pathMatch: 'full' },
-  { path: 'guide/ressources', redirectTo: 'guides/minage/ressources', pathMatch: 'full' },
+  { path: 'guide/ressources', redirectTo: 'utilitaires/ressources-minage', pathMatch: 'full' },
   {
     path: 'login',
     loadComponent: () => import('./auth/components/login/login.component').then(m => m.LoginComponent),
@@ -181,6 +174,18 @@ export const routes: Routes = [
           }
         },
         loadComponent: () => import('./features/utils/ship-market/ship-market.component').then(m => m.ShipMarketComponent)
+      },
+      {
+        path: 'ressources-minage',
+        data: {
+          animation: 'ResourcesGuidePage',
+          seo: {
+            title: 'Ressources Minage | IceForge Industries',
+            description: 'Ressources minage et industrie: checklists, outils, references de routes et bonnes pratiques operationnelles.',
+            robots: 'index,follow'
+          }
+        },
+        loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
       }
     ]
   },
@@ -270,6 +275,11 @@ export const routes: Routes = [
             path: 'vaisseaux-par-location',
             data: { animation: 'ShipMarketPage' },
             loadComponent: () => import('./features/utils/ship-market/ship-market.component').then(m => m.ShipMarketComponent)
+          },
+          {
+            path: 'ressources-minage',
+            data: { animation: 'ResourcesGuidePage' },
+            loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
           }
         ]
       },

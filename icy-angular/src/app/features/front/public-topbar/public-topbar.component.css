@@ -7,7 +7,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 70;
+  z-index: 1200;
   backdrop-filter: blur(10px);
   background: rgba(2, 6, 23, 0.86);
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
@@ -38,15 +38,121 @@
 }
 
 .public-topbar__nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: #cbd5e1;
   text-decoration: none;
   font-size: 0.84rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.public-topbar__nav a:hover {
+  color: #e6f8ff;
+  background: rgba(14, 29, 56, 0.78);
 }
 
 .public-topbar__nav a.is-active {
   color: #67e8f9;
+  background: rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.2);
+}
+
+.public-topbar__dropdown {
+  position: relative;
+  display: inline-flex;
+  z-index: 0;
+}
+
+.public-topbar__dropdown::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 0.65rem;
+}
+
+.public-topbar__dropdown > a::after {
+  content: '';
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  display: inline-block;
+  margin-top: -0.16rem;
+  opacity: 0.78;
+  transform: rotate(45deg);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.public-topbar__dropdown:hover > a::after,
+.public-topbar__dropdown:focus-within > a::after {
+  transform: rotate(225deg);
+  opacity: 1;
+}
+
+.public-topbar__dropdown:hover,
+.public-topbar__dropdown:focus-within {
+  z-index: 1300;
+}
+
+.public-topbar__dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.24rem);
+  left: 0;
+  z-index: 1400;
+  min-width: 14rem;
+  padding: 0.42rem;
+  display: grid;
+  gap: 0.26rem;
+  border-radius: 0.88rem;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  background:
+    linear-gradient(135deg, rgba(20, 36, 69, 0.92), rgba(7, 20, 45, 0.94)) padding-box,
+    linear-gradient(135deg, rgba(103, 232, 249, 0.35), rgba(59, 130, 246, 0.2)) border-box;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 44px rgba(2, 6, 23, 0.62), 0 0 0 1px rgba(15, 23, 42, 0.55) inset;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top left;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+}
+
+.public-topbar__dropdown:hover .public-topbar__dropdown-menu,
+.public-topbar__dropdown:focus-within .public-topbar__dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.public-topbar__dropdown-menu a {
+  display: block;
+  padding: 0.56rem 0.7rem;
+  border-radius: 0.62rem;
+  border: 1px solid transparent;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #dbeafe;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.public-topbar__dropdown-menu a:hover,
+.public-topbar__dropdown-menu a:focus-visible {
+  color: #f0f9ff;
+  background: linear-gradient(120deg, rgba(34, 211, 238, 0.26), rgba(59, 130, 246, 0.2));
+  border-color: rgba(125, 211, 252, 0.45);
+  transform: translateX(2px);
+  outline: none;
 }
 
 .public-topbar__login {

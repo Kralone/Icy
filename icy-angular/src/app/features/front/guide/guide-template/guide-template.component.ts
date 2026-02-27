@@ -584,7 +584,7 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
       if (!safeHref) {
         return label;
       }
-      const isResourcesLink = safeHref.startsWith('/guides/minage/ressources');
+      const isResourcesLink = safeHref.startsWith('/utilitaires/ressources-minage') || safeHref.startsWith('/guides/minage/ressources');
       const linkClass = isResourcesLink ? 'guide-inline-link guide-inline-link--resource' : 'guide-inline-link';
       const targetAttr = isResourcesLink ? ' target="_blank" rel="noopener noreferrer"' : '';
       return `<a class="${linkClass}" href="${safeHref}"${targetAttr}>${label}</a>`;

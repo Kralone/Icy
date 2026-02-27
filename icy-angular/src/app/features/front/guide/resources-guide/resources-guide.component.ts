@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { GuideTopbarComponent } from '../guide-topbar/guide-topbar.component';
 import { ResourcesMiningPanelComponent } from './components/resources-mining-panel/resources-mining-panel.component';
 import { ResourcesRefiningPanelComponent } from './components/resources-refining-panel/resources-refining-panel.component';
 import { ResourcesSalesPanelComponent } from './components/resources-sales-panel/resources-sales-panel.component';
@@ -29,7 +28,7 @@ interface ResourceLine {
 @Component({
   selector: 'front-resources-guide',
   standalone: true,
-  imports: [CommonModule, GuideTopbarComponent, ResourcesSalesPanelComponent, ResourcesMiningPanelComponent, ResourcesRefiningPanelComponent, ResourcesFitPanelComponent],
+  imports: [CommonModule, ResourcesSalesPanelComponent, ResourcesMiningPanelComponent, ResourcesRefiningPanelComponent, ResourcesFitPanelComponent],
   templateUrl: './resources-guide.component.html',
   styleUrl: './resources-guide.component.css'
 })

@@ -6,8 +6,6 @@
         <a
           class="guide-switcher__tab"
           [class.guide-switcher__tab--active]="isTabActive(tab.route)"
-          [class.guide-switcher__tab--attention]="tab.id === 'ressources' && !isTabActive(tab.route)"
-          [class.guide-switcher__tab--shiny]="tab.id === 'ressources' && isTabActive(tab.route)"
           [routerLink]="tab.route"
         >
           {{ tab.label }}

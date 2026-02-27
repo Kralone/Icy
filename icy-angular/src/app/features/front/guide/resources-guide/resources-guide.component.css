@@ -44,6 +44,24 @@
 .resources-head {
   position: relative;
   z-index: 40;
+  border: 1px solid rgba(140, 212, 246, 0.24);
+  background: linear-gradient(140deg, rgba(6, 20, 38, 0.92), rgba(4, 12, 24, 0.9));
+  border-radius: 14px;
+  padding: 0.68rem 0.88rem 0.72rem;
+}
+
+.resources-head__title {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ebf8ff;
+}
+
+.resources-head__subtitle {
+  margin: 0.26rem 0 0;
+  color: #b9d4ea;
+  font-size: 0.86rem;
 }
 
 .resources-stage {
@@ -233,6 +251,15 @@
     height: auto;
     min-height: calc(100dvh - var(--public-topbar-offset, 0px));
     gap: 0.5rem;
+  }
+
+  .resources-head {
+    padding: 0.58rem 0.68rem 0.62rem;
+    border-radius: 12px;
+  }
+
+  .resources-head__subtitle {
+    font-size: 0.8rem;
   }
 
   .resources-stage {

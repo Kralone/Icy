@@ -12,7 +12,7 @@ const RESOURCE_LINE_IDS: readonly ResourceLineId[] = ['planning', 'refining', 'l
 const FIT_TAB_IDS: readonly FitTabId[] = ['ships', 'modules', 'tools'];
 const MODULE_FILTER_IDS: readonly ModuleFilterId[] = ['all', 'mining_laser', 'cargo_pod'];
 
-const RESOURCES_GUIDE_ROUTE = '/guides/minage/ressources';
+const RESOURCES_GUIDE_ROUTE = '/utilitaires/ressources-minage';
 
 export function normalizeResourceLineId(value: string | null | undefined): ResourceLineId | null {
   const normalized = sanitizeToken(value);

@@ -78,6 +78,13 @@ export class UtilsMenuComponent {
       scope: 'Interne' as UtilityScope,
     },
     {
+      label: 'Ressources minage',
+      imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
+      routePublic: '/utilitaires/ressources-minage',
+      routePrivate: '/icy/utilitaires/ressources-minage',
+      scope: 'Externe' as UtilityScope,
+    },
+    {
       label: 'Hangar executifs',
       imageUrl: 'https://media.starcitizen.tools/b/b8/Cutter_Approaching_Checkmate_Station.png',
       routePublic: '/utilitaires/executive-hangar',

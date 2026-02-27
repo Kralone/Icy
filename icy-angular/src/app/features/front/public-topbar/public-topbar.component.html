@@ -4,7 +4,18 @@
 
     <nav class="public-topbar__nav">
       <a [routerLink]="['/utilitaires']" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Utilitaires</a>
-      <a [routerLink]="['/']" fragment="guides">Guide</a>
+
+      <div class="public-topbar__dropdown">
+        <a [routerLink]="['/']" fragment="guides">Guides</a>
+        <div class="public-topbar__dropdown-menu" role="menu" aria-label="Liste des guides">
+          @for (item of guideItems; track item.label) {
+            <a [routerLink]="[item.route]" role="menuitem">{{ item.label }}</a>
+          }
+        </div>
+      </div>
+
+      <a [routerLink]="['/utilitaires/ressources-minage']" routerLinkActive="is-active">Ressources</a>
+
       <a [routerLink]="['/recrutement']" routerLinkActive="is-active">Recrutement</a>
     </nav>
 

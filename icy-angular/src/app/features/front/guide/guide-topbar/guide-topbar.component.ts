@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { GuideBadgeTone } from '../guide-template/guide-template.types';
 
 interface GuideTopbarTab {
-  id: 'debutant' | 'avance' | 'ressources';
+  id: 'debutant' | 'avance';
   label: string;
   route: string;
 }
@@ -30,8 +30,7 @@ export class GuideTopbarComponent {
 
   readonly tabs: readonly GuideTopbarTab[] = [
     { id: 'debutant', label: 'Guide debutant', route: '/guides/minage-star-citizen' },
-    { id: 'avance', label: 'Guide avance', route: '/guides/minage/confirmed' },
-    { id: 'ressources', label: 'Ressources', route: '/guides/minage/ressources' }
+    { id: 'avance', label: 'Guide avance', route: '/guides/minage/confirmed' }
   ];
 
   constructor(private readonly router: Router) {}

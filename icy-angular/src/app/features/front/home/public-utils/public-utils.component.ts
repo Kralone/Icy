@@ -22,7 +22,7 @@ export class PublicUtilsComponent {
       label: 'Outils et Ressources de Minage',
       description: 'Toutes les ressources dont vous avez besoin pour miner.',
       imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
-      route: '/guides/minage/ressources'
+      route: '/utilitaires/ressources-minage'
     },
     {
       label: 'Hangars exécutifs',

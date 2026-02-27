@@ -2,12 +2,6 @@
   <div class="resources-page__bg"></div>
 
   <div class="resources-layout">
-    <div class="resources-head-wrap">
-      <header class="resources-head">
-        <front-guide-topbar [compact]="true"></front-guide-topbar>
-      </header>
-    </div>
-
     <div class="resources-stage" [class.resources-stage--focused]="!!selectedLineId">
       <div class="resources-lines">
         @for (line of lines; track trackLine($index, line)) {

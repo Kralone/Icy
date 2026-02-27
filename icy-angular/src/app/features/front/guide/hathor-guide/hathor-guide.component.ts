@@ -17,7 +17,7 @@ export class HathorGuideComponent {
     updatedAt: '27 fév. 2026',
     readTime: '12-15 min',
     difficulty: 'Confirmé',
-    status: { label: 'Live', tone: 'live' },
+    status: { label: 'Disponible', tone: 'live' },
     tags: ['hathor', 'star citizen fr', 'pvp', 'carinite', 'olp'],
     glossary: [
       {
