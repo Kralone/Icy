@@ -1,19 +1,20 @@
 <header class="guide-topbar" [class.guide-topbar--compact]="compact">
-  <p class="guide-topbar__kicker">Wiki Operationnel</p>
 
-  <nav class="guide-switcher" aria-label="Navigation guides">
-    @for (tab of tabs; track tab.id) {
-      <a
-        class="guide-switcher__tab"
-        [class.guide-switcher__tab--active]="isTabActive(tab.route)"
-        [class.guide-switcher__tab--attention]="tab.id === 'ressources' && !isTabActive(tab.route)"
-        [class.guide-switcher__tab--shiny]="tab.id === 'ressources' && isTabActive(tab.route)"
-        [routerLink]="tab.route"
-      >
-        {{ tab.label }}
-      </a>
-    }
-  </nav>
+  @if (showTabs) {
+    <nav class="guide-switcher" aria-label="Navigation guides">
+      @for (tab of tabs; track tab.id) {
+        <a
+          class="guide-switcher__tab"
+          [class.guide-switcher__tab--active]="isTabActive(tab.route)"
+          [class.guide-switcher__tab--attention]="tab.id === 'ressources' && !isTabActive(tab.route)"
+          [class.guide-switcher__tab--shiny]="tab.id === 'ressources' && isTabActive(tab.route)"
+          [routerLink]="tab.route"
+        >
+          {{ tab.label }}
+        </a>
+      }
+    </nav>
+  }
 
   <div class="guide-topbar__details">
     <div class="guide-topbar__details-inner">

@@ -68,6 +68,7 @@ export interface GuideDocument {
   slug: string;
   title: string;
   subtitle: string;
+  showTopbarTabs?: boolean;
   updatedAt: string;
   readTime: string;
   difficulty: string;

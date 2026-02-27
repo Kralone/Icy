@@ -13,6 +13,7 @@ const routes = [
   { path: '/guides/salvage', changefreq: 'weekly', priority: '0.8' },
   { path: '/guides/minage/confirmed', changefreq: 'monthly', priority: '0.6' },
   { path: '/guides/minage/ressources', changefreq: 'weekly', priority: '0.8' },
+  { path: '/guides/hathor', changefreq: 'weekly', priority: '0.9' },
 
   { path: '/utilitaires', changefreq: 'weekly', priority: '0.7' },
   { path: '/utilitaires/executive-hangar', changefreq: 'weekly', priority: '0.7' },

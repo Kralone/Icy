@@ -1,6 +1,21 @@
 import { Component } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
+import { buildResourcesGuideLink } from '../resources-guide/resources-guide-link.utils';
+
+const MINING_HEADS_DATABASE_LINK = buildResourcesGuideLink({
+  line: 'fit',
+  fitTab: 'modules',
+  fitFilter: 'mining_laser'
+});
+const MINING_MODULES_DATABASE_LINK = buildResourcesGuideLink({
+  line: 'fit',
+  fitTab: 'modules'
+});
+const MINING_GADGET_DATABASE_LINK = buildResourcesGuideLink({
+  line: 'fit',
+  fitTab: 'tools'
+});
 
 @Component({
   selector: 'front-mining-guide',
@@ -16,7 +31,7 @@ export class MiningGuideComponent {
     updatedAt: '22 fév. 2026',
     readTime: '15-20 min',
     difficulty: 'Débutant à Confirmé',
-    status: { label: 'Écriture', tone: 'writing' },
+    status: { label: 'En pause', tone: 'writing' },
     tags: ['minage', 'star citizen', 'fps', 'vehicule', 'vaisseau', 'credits', 'raffinage'],
     glossary: [
       {
@@ -89,6 +104,16 @@ export class MiningGuideComponent {
         id: 'fondations',
         title: 'Les Fondations : Le minage, c\'est quoi ?',
         summary: 'Comprendre les mecaniques de base du minage Star Citizen, les differentes echelles de la profession et le cycle complet de l extraction au raffinage.',
+        blocks: [
+          {
+            type: 'callout',
+            callout: {
+              title: 'Guide en pause',
+              text: 'La 4.7 apportant des changements significatifs au minage, l\'écriture de ce guide reprendra lorsque celle ci sortira.',
+              tone: 'alert'
+            }
+          }
+        ],
         subsections: [
           {
             title: 'Le cycle de base',
@@ -110,8 +135,8 @@ export class MiningGuideComponent {
             ],
             bullets: [
               '**Le minage FPS :** Équipé d\'un outil multifonction, vous explorez les grottes à pied pour récolter des gemmes précieuses de petite taille comme l\'Hadanite ou la Janalite.',
-              '**Le minage terrestre :** À bord d\'un véhicule spécialisé comme le ROC, vous parcourez la surface des lunes pour extraire des minéraux denses inaccessibles à la main.',
-              '**Le minage spatial :** Aux commandes d\'un vaisseau dédié comme le Prospector ou le MOLE, vous attaquez d\'immenses astéroïdes pour extraire des volumes industriels nécessitant presque toujours un passage par la raffinerie.'
+              '**Le minage terrestre :** À bord d\'un véhicule spécialisé comme le [[db:ship:ROC|ROC]], vous parcourez la surface des lunes pour extraire des minéraux denses inaccessibles à la main.',
+              '**Le minage spatial :** Aux commandes d\'un vaisseau dédié comme le [[db:ship:Prospector|Prospector]] ou le [[db:ship:MOLE|MOLE]], vous attaquez d\'immenses astéroïdes pour extraire des volumes industriels nécessitant presque toujours un passage par la raffinerie.'
             ]
           },
           {
@@ -152,15 +177,15 @@ export class MiningGuideComponent {
           {
             title: 'L\'équipement manuel et terrestre',
             paragraphs: [
-              'Pour le minage à pied, la base absolue est le Multi-tool équipé de l\'attachement de minage OreBit. Complétez cela avec un plastron compatible avec un sac à dos lourd pour transporter un maximum de gemmes extraites.',
-              'Si vous optez pour le minage motorisé, le véhicule ROC est incontournable. Il se loue facilement et se transporte dans la soute d\'un vaisseau moyen. Il permet d\'extraire de grandes quantités de minéraux de surface sans épuiser l\'oxygène de votre combinaison.'
+              'Pour le minage à pied, la base absolue est le [[db:item:NaN|Multi-tool]] équipé de l\'attachement de minage [[db:item:OreBit|OreBit]]. Complétez cela avec un plastron compatible avec un sac à dos lourd pour transporter un maximum de gemmes extraites.',
+              'Si vous optez pour le minage motorisé, le véhicule [[db:ship:ROC|ROC]] est incontournable. Il se loue facilement et se transporte dans la soute d\'un vaisseau moyen. Il permet d\'extraire de grandes quantités de minéraux de surface sans épuiser l\'oxygène de votre combinaison.'
             ]
           },
           {
             title: 'L\'équipement des vaisseaux pour débuter',
             paragraphs: [
-              'Les vaisseaux miniers disposent d\'un laser principal appelé la tête de minage. Pour vos débuts, l\'équipement installé par défaut sur le Prospector ou le MOLE suffira amplement pour apprendre la profession.',
-              'Vous découvrirez plus tard qu\'il est possible de changer cette pièce ou d\'y greffer des modules complexes pour optimiser vos rendements. Pour le moment, économisez vos crédits et concentrez-vous sur la maîtrise de votre laser de base.'
+              `Les vaisseaux miniers disposent d'un laser principal appelé la [tête de minage](${MINING_HEADS_DATABASE_LINK}). Pour vos débuts, l'équipement installé par défaut sur le [[db:ship:Prospector|Prospector]] ou le [[db:ship:MOLE|MOLE]] suffira amplement pour apprendre la profession.`,
+              `Vous découvrirez plus tard qu'il est possible de changer cette pièce ou d'y greffer des [modules](${MINING_MODULES_DATABASE_LINK}) complexes pour optimiser vos rendements. Pour le moment, économisez vos crédits et concentrez-vous sur la maîtrise de votre laser de base.`
             ]
           }
         ],
@@ -238,9 +263,9 @@ export class MiningGuideComponent {
           {
             title: 'Contourner la résistance et l\'instabilité',
             paragraphs: [
-              'Certaines roches massives refuseront de chauffer avec un équipement basique. C\'est ici que les modules de vaisseau et les gadgets entrent en jeu. Un gadget judicieusement placé à la surface du rocher lors d\'une sortie spatiale réduira drastiquement sa résistance naturelle avant même le premier tir.',
-              'Face à une cible instable dont la température fait des bonds imprévisibles, l\'activation d\'un module de stabilisation lissera la courbe de chauffe pour vous garantir une fracture sereine et maîtrisée.',
-              'Nous reviendrons sur la liste de ces modules plus tard dans le guide.',
+              `Certaines roches massives refuseront de chauffer avec un équipement basique. C'est ici que les [modules de vaisseau](${MINING_MODULES_DATABASE_LINK}) et les [gadgets](${MINING_GADGET_DATABASE_LINK}) entrent en jeu. Un gadget judicieusement placé à la surface du rocher lors d'une sortie spatiale réduira drastiquement sa résistance naturelle avant même le premier tir.`,
+              `Face à une cible instable dont la température fait des bonds imprévisibles, l'activation d'un [module de stabilisation](${MINING_MODULES_DATABASE_LINK}) lissera la courbe de chauffe pour vous garantir une fracture sereine et maîtrisée.`,
+              `Nous reviendrons sur la liste de ces [modules](${MINING_MODULES_DATABASE_LINK}) plus tard dans le guide.`,
             ]
           },
           {

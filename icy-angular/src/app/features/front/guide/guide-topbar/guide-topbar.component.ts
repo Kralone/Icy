@@ -18,6 +18,7 @@ interface GuideTopbarTab {
 })
 export class GuideTopbarComponent {
   @Input() compact = false;
+  @Input() showTabs = true;
   @Input() title = '';
   @Input() subtitle = '';
   @Input() statusLabel = '';

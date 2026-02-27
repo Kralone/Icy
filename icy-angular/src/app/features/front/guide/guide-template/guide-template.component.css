@@ -33,7 +33,7 @@
 
 .guide-hero {
   position: relative;
-  z-index: 2;
+  z-index: 0;
 }
 
 .guide-hero__kicker {
@@ -449,8 +449,6 @@
 .guide-inline-link--resource {
   display: inline-flex;
   align-items: center;
-  gap: 0.34rem;
-  margin-left: 0.15rem;
   padding: 0.08rem 0.44rem;
   border-radius: 999px;
   border: 1px solid rgba(251, 191, 36, 0.52);
@@ -460,29 +458,13 @@
   text-decoration: none;
 }
 
-.guide-inline-link--resource::after {
-  content: none;
-}
-
 .guide-inline-link--resource:hover {
   color: #fff6df;
   border-color: rgba(252, 211, 77, 0.86);
   background: linear-gradient(145deg, rgba(97, 58, 14, 0.9), rgba(64, 38, 10, 0.86));
-  box-shadow: inset 0 0 0 1px rgba(253, 230, 138, 0.25), 0 10px 18px rgba(2, 9, 20, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(253, 230, 138, 0.25);
 }
 
-.guide-inline-link__hint {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(252, 211, 77, 0.5);
-  border-radius: 999px;
-  padding: 0.02rem 0.36rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff2cd;
-  background: rgba(120, 72, 16, 0.38);
-}
 
 .guide-card__list {
   margin: 0.58rem 0 0;
@@ -609,6 +591,14 @@
   text-decoration: none;
 }
 
+.guide-term--db {
+  border-radius: 999px;
+  padding: 0.02rem 0.38rem;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(180deg, rgba(8, 30, 54, 0.6), rgba(6, 22, 40, 0.72));
+  box-shadow: inset 0 -1px 0 rgba(125, 211, 252, 0.48);
+}
+
 .guide-term__tooltip {
   position: absolute;
   left: 50%;
@@ -628,6 +618,97 @@
   transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
   box-shadow: 0 14px 24px rgba(2, 8, 24, 0.5);
   z-index: 30;
+}
+
+.guide-term__tooltip--db {
+  width: min(360px, 84vw);
+  padding: 0.46rem 0.5rem;
+}
+
+.guide-db-card {
+  display: grid;
+  gap: 0.26rem;
+}
+
+.guide-db-card__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  border-radius: 999px;
+  padding: 0.02rem 0.34rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cdeeff;
+  background: rgba(10, 36, 62, 0.62);
+}
+
+.guide-db-card__title {
+  color: #ecfbff;
+  font-size: 0.84rem;
+}
+
+.guide-db-card__meta,
+.guide-db-card__stats {
+  color: rgba(214, 236, 251, 0.94);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.guide-db-card__stats {
+  display: grid;
+  gap: 0.28rem;
+  margin-top: 0.12rem;
+}
+
+.guide-db-card__stats-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 10px;
+  padding: 0.26rem 0.42rem;
+  background: linear-gradient(125deg, rgba(8, 28, 48, 0.84), rgba(7, 22, 40, 0.88));
+}
+
+.guide-db-card__stats-line::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7dd3fc, #38bdf8);
+  position: absolute;
+  left: 0.34rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.guide-db-card__stats-label {
+  padding-left: 0.5rem;
+  color: rgba(202, 236, 255, 0.94);
+  font-size: 0.71rem;
+}
+
+.guide-db-card__stats-value {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  border-radius: 999px;
+  padding: 0.08rem 0.4rem;
+  color: #ecfbff;
+  font-size: 0.69rem;
+  font-weight: 700;
+  background: linear-gradient(145deg, rgba(16, 52, 84, 0.72), rgba(9, 35, 58, 0.7));
+}
+
+.guide-db-card__image {
+  width: 100%;
+  max-height: 118px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 211, 252, 0.26);
 }
 
 .guide-term__tooltip::after {
@@ -762,12 +843,7 @@
 
   .guide-inline-link--resource {
     margin-top: 0.2rem;
-    margin-left: 0;
     max-width: 100%;
-  }
-
-  .guide-inline-link__hint {
-    font-size: 0.58rem;
   }
 
   .guide-term__tooltip {

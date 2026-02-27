@@ -76,11 +76,13 @@
 .guide-card__media--soon {
   height: 75%;
   min-height: 118px;
+  max-height: 190px;
 }
 
 .guide-card__media--live {
   height: 75%;
   min-height: 118px;
+  max-height: 190px;
 }
 
 .guide-card__image {

@@ -9,6 +9,10 @@ import {
   SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ItemCatalogItem, ItemCatalogService } from '../../../../core/services/item/item-catalog.service';
+import { ShipService } from '../../../../core/services/ship/ship.service';
+import { Ship } from '../../../../model/ship.model';
 import { GuideTopbarComponent } from '../guide-topbar/guide-topbar.component';
 import { GuideContentBlock, GuideDocument, GuideGlossaryItem, GuideSection } from './guide-template.types';
 
@@ -24,14 +28,29 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   @Input({ required: true }) guide!: GuideDocument;
   activeSectionId = '';
   copiedSectionId = '';
+  private readonly dbTokenPattern = /\[\[db:(ship|item):([^\]|]+?)(?:\|([^\]]+?))?\]\]/giu;
   private trackedSections: HTMLElement[] = [];
   private onScrollBound?: () => void;
   private onResizeBound?: () => void;
   private frameRequestId?: number;
   private copyResetTimer?: ReturnType<typeof setTimeout>;
   private readonly glossaryPatternCache = new Map<string, RegExp>();
+  private shipLookupLoaded = false;
+  private shipLookupLoading = false;
+  private shipLookupError = false;
+  private itemLookupLoaded = false;
+  private itemLookupLoading = false;
+  private itemLookupError = false;
+  private readonly shipLookupByKey = new Map<string, Ship>();
+  private readonly itemLookupByKey = new Map<string, ItemCatalogItem>();
+  private shipLookupSubscription?: Subscription;
+  private itemLookupSubscription?: Subscription;
 
-  constructor(private readonly hostRef: ElementRef<HTMLElement>) {}
+  constructor(
+    private readonly hostRef: ElementRef<HTMLElement>,
+    private readonly shipService: ShipService,
+    private readonly itemCatalogService: ItemCatalogService
+  ) {}
 
   formatStep(step: number): string {
     return step < 10 ? `0${step}` : `${step}`;
@@ -47,21 +66,22 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   formatInline(text: string, _section?: GuideSection, applyGlossary = true): string {
+    const dbTokens = this.extractDbTokens(text);
     const formatted = this.formatMarkdownLinks(
-      this.escapeHtml(text)
+      this.escapeHtml(dbTokens.textWithPlaceholders)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
     );
 
     if (!applyGlossary) {
-      return formatted;
+      return this.restoreDbTokens(formatted, dbTokens.replacements);
     }
 
     const glossary = this.resolveGlossary();
     if (!glossary.length) {
-      return formatted;
+      return this.restoreDbTokens(formatted, dbTokens.replacements);
     }
-    return this.applyGlossaryToHtml(formatted, glossary);
+    return this.restoreDbTokens(this.applyGlossaryToHtml(formatted, glossary), dbTokens.replacements);
   }
 
   scrollToSection(event: Event, sectionId: string): void {
@@ -116,6 +136,14 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
     if (this.copyResetTimer) {
       clearTimeout(this.copyResetTimer);
       this.copyResetTimer = undefined;
+    }
+    if (this.shipLookupSubscription) {
+      this.shipLookupSubscription.unsubscribe();
+      this.shipLookupSubscription = undefined;
+    }
+    if (this.itemLookupSubscription) {
+      this.itemLookupSubscription.unsubscribe();
+      this.itemLookupSubscription = undefined;
     }
   }
 
@@ -339,6 +367,217 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
       .replace(/>/g, '&gt;');
   }
 
+  private extractDbTokens(text: string): { textWithPlaceholders: string; replacements: Array<{ placeholder: string; html: string }> } {
+    this.dbTokenPattern.lastIndex = 0;
+    let textWithPlaceholders = '';
+    let cursor = 0;
+    let tokenIndex = 0;
+    const replacements: Array<{ placeholder: string; html: string }> = [];
+    let match = this.dbTokenPattern.exec(text);
+
+    while (match) {
+      const matchIndex = match.index;
+      textWithPlaceholders += text.slice(cursor, matchIndex);
+      const placeholder = `@@DBTOKEN_${tokenIndex}@@`;
+      replacements.push({
+        placeholder,
+        html: this.buildDbTermHtml(
+        match[1]?.toLowerCase() === 'ship' ? 'ship' : 'item',
+        (match[2] ?? '').trim(),
+        (match[3] ?? '').trim()
+        )
+      });
+      textWithPlaceholders += placeholder;
+      cursor = this.dbTokenPattern.lastIndex;
+      tokenIndex += 1;
+      match = this.dbTokenPattern.exec(text);
+    }
+
+    textWithPlaceholders += text.slice(cursor);
+    return { textWithPlaceholders, replacements };
+  }
+
+  private restoreDbTokens(html: string, replacements: Array<{ placeholder: string; html: string }>): string {
+    let restored = html;
+    for (const token of replacements) {
+      restored = restored.replace(token.placeholder, token.html);
+    }
+    return restored;
+  }
+
+  private buildDbTermHtml(entityType: 'ship' | 'item', lookupValue: string, customLabel: string): string {
+    const label = customLabel || lookupValue;
+    if (!lookupValue || !label) {
+      return this.escapeHtml(label || lookupValue);
+    }
+
+    const tooltipBody = entityType === 'ship'
+      ? this.renderShipTooltip(lookupValue)
+      : this.renderItemTooltip(lookupValue);
+
+    return `<span class="guide-term guide-term--inline guide-term--db" tabindex="0">${this.escapeHtml(label)}<span class="guide-term__tooltip guide-term__tooltip--db">${tooltipBody}</span></span>`;
+  }
+
+  private renderShipTooltip(lookupValue: string): string {
+    this.ensureShipLookupLoaded();
+    if (this.shipLookupLoading && !this.shipLookupLoaded) {
+      return 'Chargement du vaisseau...';
+    }
+    if (this.shipLookupError) {
+      return 'Impossible de charger les vaisseaux.';
+    }
+
+    const ship = this.shipLookupByKey.get(this.normalizeLookupKey(lookupValue));
+    if (!ship) {
+      return `Vaisseau introuvable: ${this.escapeHtml(lookupValue)}`;
+    }
+
+    const brand = ship.brand?.name ?? 'Marque inconnue';
+    const size = ship.size || '-';
+    const crew = ship.crew || '-';
+    const focus = ship.focus || '-';
+    const scu = ship.scu ?? null;
+    const statLines = [
+      { label: 'Focus', value: focus },
+      { label: 'Taille', value: size },
+      { label: 'Equipage', value: crew },
+      { label: 'SCU', value: scu === null ? '-' : new Intl.NumberFormat('fr-FR').format(scu) }
+    ];
+    const image = ship.imageUrl
+      ? `<img class="guide-db-card__image" src="${this.escapeHtml(ship.imageUrl)}" alt="${this.escapeHtml(ship.name)}" />`
+      : '';
+    const statsBlock = `<span class="guide-db-card__stats">${statLines.map((line) => this.renderStatLine(line)).join('')}</span>`;
+
+    return `<span class="guide-db-card"><span class="guide-db-card__eyebrow">Vaisseau</span><strong class="guide-db-card__title">${this.escapeHtml(ship.name)}</strong><span class="guide-db-card__meta">${this.escapeHtml(brand)}</span>${image}${statsBlock}</span>`;
+  }
+
+  private renderItemTooltip(lookupValue: string): string {
+    this.ensureItemLookupLoaded();
+    if (this.itemLookupLoading && !this.itemLookupLoaded) {
+      return 'Chargement de l item...';
+    }
+    if (this.itemLookupError) {
+      return 'Impossible de charger les items.';
+    }
+
+    const item = this.itemLookupByKey.get(this.normalizeLookupKey(lookupValue));
+    if (!item) {
+      return `Item introuvable: ${this.escapeHtml(lookupValue)}`;
+    }
+
+    const category = item.category?.name ?? 'Categorie inconnue';
+    const manufacturer = item.manufacturer ?? 'Fabricant inconnu';
+    const statLines = this.parseStatLines(item.stats);
+    const image = item.imageUrl
+      ? `<img class="guide-db-card__image" src="${this.escapeHtml(item.imageUrl)}" alt="${this.escapeHtml(item.name)}" />`
+      : '';
+    const statsBlock = statLines.length
+      ? `<span class="guide-db-card__stats">${statLines.map((line) => this.renderStatLine(line)).join('')}</span>`
+      : '';
+
+    return `<span class="guide-db-card"><span class="guide-db-card__eyebrow">Equipement</span><strong class="guide-db-card__title">${this.escapeHtml(item.name)}</strong><span class="guide-db-card__meta">${this.escapeHtml(manufacturer)} · ${this.escapeHtml(category)}</span>${image}${statsBlock}</span>`;
+  }
+
+  private ensureShipLookupLoaded(): void {
+    if (this.shipLookupLoaded || this.shipLookupLoading) {
+      return;
+    }
+
+    this.shipLookupLoading = true;
+    this.shipLookupError = false;
+    this.shipLookupSubscription = this.shipService.getAllShips().subscribe({
+      next: (response) => {
+        this.shipLookupByKey.clear();
+        for (const ship of response?.data ?? []) {
+          const shipNameKey = this.normalizeLookupKey(ship.name);
+          if (shipNameKey) {
+            this.shipLookupByKey.set(shipNameKey, ship);
+          }
+          const brandName = ship.brand?.name ?? '';
+          const brandedShipNameKey = this.normalizeLookupKey(`${brandName} ${ship.name}`);
+          if (brandedShipNameKey) {
+            this.shipLookupByKey.set(brandedShipNameKey, ship);
+          }
+        }
+        this.shipLookupLoaded = true;
+        this.shipLookupLoading = false;
+      },
+      error: () => {
+        this.shipLookupError = true;
+        this.shipLookupLoading = false;
+      }
+    });
+  }
+
+  private ensureItemLookupLoaded(): void {
+    if (this.itemLookupLoaded || this.itemLookupLoading) {
+      return;
+    }
+
+    this.itemLookupLoading = true;
+    this.itemLookupError = false;
+    this.itemLookupSubscription = this.itemCatalogService.listFrontItems().subscribe({
+      next: (response) => {
+        this.itemLookupByKey.clear();
+        for (const item of response?.data ?? []) {
+          const itemNameKey = this.normalizeLookupKey(item.name);
+          if (itemNameKey) {
+            this.itemLookupByKey.set(itemNameKey, item);
+          }
+          const manufacturer = item.manufacturer ?? '';
+          const brandedItemNameKey = this.normalizeLookupKey(`${manufacturer} ${item.name}`);
+          if (brandedItemNameKey) {
+            this.itemLookupByKey.set(brandedItemNameKey, item);
+          }
+        }
+        this.itemLookupLoaded = true;
+        this.itemLookupLoading = false;
+      },
+      error: () => {
+        this.itemLookupError = true;
+        this.itemLookupLoading = false;
+      }
+    });
+  }
+
+  private normalizeLookupKey(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  private parseStatLines(rawStats: string | null | undefined): Array<{ label: string; value: string | null }> {
+    if (!rawStats) {
+      return [];
+    }
+    return rawStats
+      .split('|')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+      .map((part) => {
+        const separatorIndex = part.indexOf(':');
+        if (separatorIndex === -1) {
+          return { label: part, value: null };
+        }
+        return {
+          label: part.slice(0, separatorIndex).trim(),
+          value: part.slice(separatorIndex + 1).trim() || null
+        };
+      });
+  }
+
+  private renderStatLine(stat: { label: string; value: string | null }): string {
+    const label = this.escapeHtml(stat.label);
+    const value = stat.value ? this.escapeHtml(stat.value) : null;
+    if (!value) {
+      return `<span class="guide-db-card__stats-line"><span class="guide-db-card__stats-label">${label}</span></span>`;
+    }
+    return `<span class="guide-db-card__stats-line"><span class="guide-db-card__stats-label">${label}</span><span class="guide-db-card__stats-value">${value}</span></span>`;
+  }
+
   private formatMarkdownLinks(html: string): string {
     return html.replace(/\[([^[\]]+?)\]\(([^()\s]+)\)/g, (_match, label: string, href: string) => {
       const safeHref = this.normalizeInlineHref(href);
@@ -347,8 +586,8 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
       }
       const isResourcesLink = safeHref.startsWith('/guides/minage/ressources');
       const linkClass = isResourcesLink ? 'guide-inline-link guide-inline-link--resource' : 'guide-inline-link';
-      const hint = isResourcesLink ? '<span class="guide-inline-link__hint">Ressource</span>' : '';
-      return `<a class="${linkClass}" href="${safeHref}">${label}${hint}</a>`;
+      const targetAttr = isResourcesLink ? ' target="_blank" rel="noopener noreferrer"' : '';
+      return `<a class="${linkClass}" href="${safeHref}"${targetAttr}>${label}</a>`;
     });
   }
 

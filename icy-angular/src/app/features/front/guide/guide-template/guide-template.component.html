@@ -6,6 +6,7 @@
       <front-guide-topbar
         [title]="guide.title"
         [subtitle]="guide.subtitle"
+        [showTabs]="guide.showTopbarTabs !== false"
         [statusLabel]="guide.status.label"
         [statusTone]="guide.status.tone"
         [updatedAt]="guide.updatedAt"

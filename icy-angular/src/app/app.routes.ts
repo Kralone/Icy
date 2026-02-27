@@ -65,11 +65,24 @@ export const routes: Routes = [
       }
     }
   },
+  {
+    path: 'guides/hathor',
+    loadComponent: () => import('./features/front/guide/hathor-guide/hathor-guide.component').then(m => m.HathorGuideComponent),
+    data: {
+      animation: 'HathorGuidePage',
+      seo: {
+        title: 'Hathor Guide Star Citizen FR | IceForge Industries',
+        description: 'Guide Hathor Star Citizen FR: preparation, PAF, OLP, extraction Carinite et securisation PvP, avec workflow operationnel complet.',
+        robots: 'index,follow'
+      }
+    }
+  },
   { path: 'guides', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   { path: 'guide', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   { path: 'guide/minage', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   { path: 'guide-minage-star-citizen', redirectTo: 'guides/minage-star-citizen', pathMatch: 'full' },
   { path: 'guide/salvage', redirectTo: 'guides/salvage', pathMatch: 'full' },
+  { path: 'guide/hathor', redirectTo: 'guides/hathor', pathMatch: 'full' },
   { path: 'guide/avance', redirectTo: 'guides/minage/confirmed', pathMatch: 'full' },
   { path: 'guide/ressources', redirectTo: 'guides/minage/ressources', pathMatch: 'full' },
   {

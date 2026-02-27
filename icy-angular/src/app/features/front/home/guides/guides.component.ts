@@ -30,12 +30,12 @@ export class GuidesComponent {
     },
     {
       id: 2,
-      title: 'Guide Salvage',
-      summary: 'Boucle salvage, tri des coques et workflow rentable en equipe.',
-      category: 'Recuperation',
-      route: '/guides/salvage',
-      imageUrl: 'assets/images/home/activities/cargo.jpg',
-      type: 'soon'
+      title: 'Guide Hathor',
+      summary: 'Structure du guide en place, contenu a venir.',
+      category: 'Exploration',
+      route: '/guides/hathor',
+      imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png',
+      type: 'écriture'
     },
     {
       id: 3,
