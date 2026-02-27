@@ -39,7 +39,10 @@ app.get(
   '**',
   express.static(browserDistFolder, {
     maxAge: '1y',
-    index: 'index.html'
+    index: 'index.html',
+    // Avoid implicit 301 "/route" -> "/route/" from static directories.
+    // Let Angular SSR answer app routes directly.
+    redirect: false
   }),
 );
 
