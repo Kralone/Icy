@@ -52,6 +52,8 @@
 }
 
 .admin-menu-card {
+  position: relative;
+  z-index: 3;
   opacity: 0;
   transform: translateY(18px) scale(0.985);
   filter: blur(6px);
@@ -60,6 +62,36 @@
     transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
     filter 420ms ease;
   transition-delay: var(--card-delay, 0ms);
+}
+
+.admin-menu-card-wrap {
+  position: relative;
+}
+
+.admin-menu-card-wrap--submenu {
+  padding-right: 24px;
+  padding-bottom: 24px;
+}
+
+.admin-submenu-sheet {
+  position: absolute;
+  inset: 0 24px 24px 0;
+  border-radius: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  background: linear-gradient(160deg, rgba(22, 35, 56, 0.96), rgba(16, 30, 50, 0.94));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.admin-submenu-sheet--1 {
+  transform: translate(11px, 11px);
+  opacity: 0.82;
+}
+
+.admin-submenu-sheet--2 {
+  transform: translate(20px, 20px);
+  opacity: 0.68;
 }
 
 .admin-menu-card--visible {

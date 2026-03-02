@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   ItemCatalogItem,
   ItemCatalogService,
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-item-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './item-management.component.html',
   styleUrl: './item-management.component.css'
 })

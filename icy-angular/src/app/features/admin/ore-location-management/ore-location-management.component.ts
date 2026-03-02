@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   OreLocation,
   OreLocationService,
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-ore-location-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './ore-location-management.component.html',
   styleUrl: './ore-location-management.component.css'
 })

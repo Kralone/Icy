@@ -18,6 +18,12 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender
   },
   {
+    // Private member area relies on browser storage for JWT.
+    // Rendering this area on the server causes auth mismatch/flicker on refresh.
+    path: 'icy/**',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Server
   }

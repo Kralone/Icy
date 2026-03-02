@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { UexDatasetDetail, UexDatasetService, UexDatasetSummary } from '../../../core/services/uex/uex-dataset.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-uex-cache-management',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './uex-cache-management.component.html'
 })
 export class UexCacheManagementComponent implements OnInit {

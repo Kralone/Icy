@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ImageMetadata } from '../../../model/image-metadata.model';
 import { ImageTag } from '../../../model/image-tag.model';
 import { ImageLibraryService } from '../../../core/services/image/image-library.service';
@@ -8,7 +9,7 @@ import { ImageLibraryService } from '../../../core/services/image/image-library.
 @Component({
   selector: 'app-image-library',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './image-library.component.html'
 })
 export class ImageLibraryComponent implements OnInit {

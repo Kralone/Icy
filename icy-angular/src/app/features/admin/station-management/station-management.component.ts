@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   OrbitalStation,
   OrbitalStationService,
@@ -12,7 +13,7 @@ import {
 @Component({
   selector: 'app-station-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './station-management.component.html',
   styleUrl: './station-management.component.css'
 })

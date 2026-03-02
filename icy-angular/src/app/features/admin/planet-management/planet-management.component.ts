@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   CelestialBody,
   CelestialBodyService,
@@ -10,7 +11,7 @@ import {
 @Component({
   selector: 'app-planet-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './planet-management.component.html',
   styleUrl: './planet-management.component.css'
 })
