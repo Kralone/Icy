@@ -1,0 +1,30 @@
+<section class="guides-menu min-h-full box-border w-full px-6 py-12 text-white">
+  <div class="mx-auto max-w-6xl">
+    <header class="mb-8">
+      <p class="guides-menu__kicker">Guides</p>
+      <h1 class="text-3xl font-bold uppercase tracking-wide">Guides</h1>
+      <p class="guides-menu__intro">Acces direct aux memes guides que sur la home.</p>
+    </header>
+
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <a
+        *ngFor="let item of menuItems"
+        [routerLink]="[item.route]"
+        class="guides-menu-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+      >
+        <div class="h-52 w-full overflow-hidden">
+          <img
+            [src]="item.imageUrl"
+            [alt]="item.label"
+            class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        </div>
+
+        <div class="guides-menu-card__body">
+          <h2 class="text-lg font-semibold uppercase tracking-wide">{{ item.label }}</h2>
+          <p class="mt-2 text-sm text-slate-300">{{ item.summary }}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

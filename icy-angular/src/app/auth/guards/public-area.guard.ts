@@ -18,5 +18,8 @@ export const publicAreaGuard: CanActivateFn & CanActivateChildFn = (_route, stat
   }
 
   const requestedUrl = state?.url || '/utilitaires';
+  if (requestedUrl === '/utilitaires' || requestedUrl.startsWith('/utilitaires/')) {
+    return true;
+  }
   return router.createUrlTree([toPrivateUrl(requestedUrl)]);
 };

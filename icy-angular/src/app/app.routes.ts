@@ -186,6 +186,17 @@ export const routes: Routes = [
           }
         },
         loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
+      },
+      {
+        path: 'guides',
+        data: {
+          seo: {
+            title: 'Guides Star Citizen | IceForge Industries',
+            description: 'Acces rapide aux guides Star Citizen publies par IceForge Industries.',
+            robots: 'index,follow'
+          }
+        },
+        loadComponent: () => import('./features/guides/menu/guides-menu.component').then(m => m.GuidesMenuComponent)
       }
     ]
   },
@@ -280,7 +291,11 @@ export const routes: Routes = [
             path: 'ressources-minage',
             data: { animation: 'ResourcesGuidePage' },
             loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
-          }
+          },
+          {
+            path: 'guides',
+            loadComponent: () => import('./features/guides/menu/guides-menu.component').then(m => m.GuidesMenuComponent)
+          },
         ]
       },
 

@@ -27,4 +27,12 @@ export class PublicTopbarComponent {
   get memberSpaceLink(): string {
     return this.authService.hasToken() ? '/icy/dashboard' : '/login';
   }
+
+  get isConnected(): boolean {
+    return this.authService.hasToken();
+  }
+
+  get memberSpaceLabel(): string {
+    return this.isConnected ? 'Retour espace interne' : 'Espace membre';
+  }
 }

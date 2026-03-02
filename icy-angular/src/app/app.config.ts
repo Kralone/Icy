@@ -10,8 +10,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 const enableServiceWorker = () => {
-  if (!isDevMode()) return true;
-  return typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  return !isDevMode();
 };
 
 export const appConfig: ApplicationConfig = {
