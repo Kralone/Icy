@@ -12,7 +12,8 @@ class NewsHandler:
     def __init__(self, bot, rabbit=None):
         self.bot = bot
         self.rabbit = rabbit
-        self.channel_id = self._read_channel_id("DISCORD_NEWS_CHANNEL_ID")
+        self.news_channel_id = self._read_channel_id("DISCORD_NEWS_CHANNEL_ID")
+        self.notifications_channel_id = self._read_channel_id("DISCORD_NOTIFICATIONS_CHANNEL_ID")
 
     @staticmethod
     def _read_channel_id(env_var: str) -> int:
@@ -60,9 +61,9 @@ class NewsHandler:
         if image_url:
             embed.set_image(url=image_url)
 
-        channel = self.bot.get_channel(self.channel_id)
+        channel = self._resolve_target_channel(payload)
         if not channel:
-            logger.error(f"⚠️ Salon introuvable (ID={self.channel_id})")
+            logger.error("⚠️ Salon cible introuvable pour publication de news")
             return
 
         message = await channel.send(embed=embed)
@@ -79,6 +80,23 @@ class NewsHandler:
                 },
             )
             logger.info(f"📨 Réponse RabbitMQ envoyée pour newsId={payload['id']}")
+
+    def _resolve_target_channel(self, payload: dict):
+        if self._is_cig_weekly_report(payload) and self.notifications_channel_id:
+            return self.bot.get_channel(self.notifications_channel_id)
+        return self.bot.get_channel(self.news_channel_id)
+
+    @staticmethod
+    def _is_cig_weekly_report(payload: dict) -> bool:
+        title = (payload.get("title") or "").strip().lower()
+        author = (payload.get("author") or "").strip().lower()
+        type_name = ((payload.get("type") or {}).get("name") or "").strip().lower()
+
+        return (
+            author == "icy-system"
+            and title == "rapport hebdomadaire star citizen"
+            and type_name == "actualités hebdo"
+        )
 
     # -----------------------------------------------------------------------
     # ✏️ NEWS.UPDATED

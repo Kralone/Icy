@@ -1,0 +1,173 @@
+<div class="min-h-screen w-full bg-gradient-to-b from-[#07101c] via-[#101a2d] to-[#0f172a] text-white p-8 space-y-8">
+  <div class="flex items-center">
+    <a
+      routerLink="/icy/admin/data"
+      class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
+    >
+      <span class="text-base leading-none">←</span>
+      <span>Retour Data</span>
+    </a>
+  </div>
+
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-[0.35em] text-cyan-300/70">Data Watch</p>
+      <h2 class="text-3xl font-semibold text-cyan-100">CIG Flux Brut</h2>
+      <p class="text-sm text-slate-300">Surveille des sources CIG et consulte les dernieres entrees brutes agregees.</p>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-red-200">
+    {{ error }}
+  </div>
+
+  <div *ngIf="success" class="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-emerald-200">
+    {{ success }}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+    <section class="xl:col-span-4 rounded-2xl border border-white/10 bg-[#0b1324]/80 p-5 space-y-5">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <h3 class="text-sm uppercase tracking-[0.22em] text-slate-300">Sources surveillees</h3>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-400">{{ sources.length }} source(s)</span>
+          <select
+            [ngModelOptions]="{ standalone: true }"
+            [(ngModel)]="sourceSort"
+            (ngModelChange)="onSourceSortChange()"
+            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400/60"
+          >
+            <option *ngFor="let option of sourceSortOptions" [ngValue]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div *ngIf="isLoadingSources" class="text-sm text-slate-400">Chargement des sources...</div>
+
+      <div class="space-y-3 max-h-[420px] overflow-auto pr-1">
+        <article
+          *ngFor="let source of sources; trackBy: trackSource"
+          class="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-semibold text-cyan-100">{{ source.label }}</p>
+              <p class="text-xs text-slate-300 uppercase tracking-[0.2em]">{{ source.sourceKind }}</p>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 break-all">{{ source.sourceUrl }}</p>
+          <p class="text-xs text-slate-500">Maj: {{ formatDate(source.updatedAt) }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="xl:col-span-8 rounded-2xl border border-white/10 bg-[#0b1324]/80 p-5 space-y-5">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 class="text-sm uppercase tracking-[0.22em] text-slate-300">Dernieres infos brutes</h3>
+          <p class="text-xs text-slate-400">
+            {{ feed?.itemCount ?? 0 }} item(s) | {{ feed?.errors?.length ?? 0 }} erreur(s) |
+            generation: {{ formatDate(feed?.generatedAt) }} |
+            prochain cycle: {{ formatDate(nextScheduledFetchAt) }} |
+            dans: {{ schedulerCountdownLabel }}
+          </p>
+        </div>
+        <div class="rounded-xl border border-cyan-300/30 bg-cyan-500/10 px-4 py-2 text-right">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-cyan-200/80">Prochain fetch</p>
+          <p class="text-2xl font-bold text-cyan-100 tabular-nums">{{ schedulerCountdownLabel }}</p>
+          <p class="text-[11px] text-cyan-200/80">{{ formatDate(nextScheduledFetchAt) }}</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <select
+            [ngModelOptions]="{ standalone: true }"
+            [(ngModel)]="entrySort"
+            (ngModelChange)="onEntrySortChange()"
+            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-xs text-white focus:outline-none focus:border-cyan-400/60"
+          >
+            <option *ngFor="let option of entrySortOptions" [ngValue]="option.value">{{ option.label }}</option>
+          </select>
+          <select
+            [ngModelOptions]="{ standalone: true }"
+            [(ngModel)]="entrySourceFilter"
+            (ngModelChange)="onEntrySourceFilterChange()"
+            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-xs text-white focus:outline-none focus:border-cyan-400/60"
+          >
+            <option *ngFor="let source of entrySourceFilterOptions" [ngValue]="source">
+              {{ source === 'ALL' ? 'Toutes sources' : source }}
+            </option>
+          </select>
+          <input
+            type="number"
+            min="1"
+            max="200"
+            [ngModelOptions]="{ standalone: true }"
+            [(ngModel)]="feedLimit"
+            class="w-20 rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/60"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-emerald-400/35 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30 transition"
+            (click)="forceRefresh()"
+            [disabled]="isForcingRefresh"
+          >
+            {{ isForcingRefresh ? 'Force...' : 'Force refresh' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="feed?.errors?.length" class="rounded-xl border border-amber-300/30 bg-amber-500/10 p-3">
+        <h4 class="text-xs uppercase tracking-[0.2em] text-amber-100 mb-2">Sources en erreur</h4>
+        <div class="space-y-2 text-xs text-amber-200">
+          <div *ngFor="let err of feed?.errors">
+            <span class="font-semibold">{{ err.sourceLabel }}</span> - {{ err.message }}
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="isLoadingFeed" class="text-sm text-slate-400">Recuperation des dernieres infos...</div>
+
+      <div *ngIf="!isLoadingFeed && entries.length === 0" class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+        Aucun item recupere. Relance le refresh du flux.
+      </div>
+      <div *ngIf="!isLoadingFeed && entries.length > 0 && displayedEntries.length === 0" class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+        Aucun item pour cette source. Change le filtre source.
+      </div>
+
+      <div class="space-y-4 max-h-[780px] overflow-auto pr-1">
+        <article
+          *ngFor="let entry of displayedEntries; trackBy: trackEntry"
+          class="rounded-2xl border border-white/10 bg-[#070f1f] p-4 space-y-3"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p class="text-sm uppercase tracking-[0.2em] text-slate-400">{{ entry.sourceLabel }}</p>
+              <h4 class="text-lg font-semibold text-cyan-100">{{ entry.title }}</h4>
+            </div>
+            <a
+              [href]="entry.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs rounded-full border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-cyan-100 hover:bg-cyan-400/20 transition"
+            >
+              Ouvrir
+            </a>
+          </div>
+
+          <div class="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
+            <span>Type: {{ entry.entryType || 'n/a' }}</span>
+            <span>Published: {{ formatDate(entry.publishedAt) }}</span>
+            <span>Rank: {{ entry.rankHint ?? 'n/a' }}</span>
+            <span>Fetch: {{ formatDate(entry.fetchedAt) }}</span>
+          </div>
+
+          <p *ngIf="entry.rawExcerpt" class="text-sm text-slate-200 leading-6">{{ entry.rawExcerpt }}</p>
+
+          <details class="rounded-xl border border-white/10 bg-black/20 p-3">
+            <summary class="cursor-pointer text-xs uppercase tracking-[0.18em] text-slate-300">Payload brut</summary>
+            <pre class="mt-3 text-xs leading-5 text-cyan-100 whitespace-pre-wrap break-words">{{ entry.rawPayload }}</pre>
+          </details>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>

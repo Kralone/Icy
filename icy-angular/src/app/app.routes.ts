@@ -272,7 +272,7 @@ export const routes: Routes = [
             loadComponent: () => import('./features/utils/wikelo/wikelo.component').then(m => m.WikeloComponent)
           },
           {
-            path: 'vaisseaux-par-location',
+            path: 'achat-vaisseaux',
             data: { animation: 'ShipMarketPage' },
             loadComponent: () => import('./features/utils/ship-market/ship-market.component').then(m => m.ShipMarketComponent)
           },
@@ -349,6 +349,10 @@ export const routes: Routes = [
           {
             path: 'uex-cache',
             loadComponent: () => import('./features/admin/uex-cache-management/uex-cache-management.component').then(m => m.UexCacheManagementComponent)
+          },
+          {
+            path: 'cig-watch',
+            loadComponent: () => import('./features/admin/cig-watch-management/cig-watch-management.component').then(m => m.CigWatchManagementComponent)
           },
           {
             path: 'ore-locations',

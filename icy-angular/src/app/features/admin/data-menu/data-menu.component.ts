@@ -24,7 +24,7 @@ export class DataMenuComponent {
     },
     {
       label: 'Items',
-      imageUrl: 'https://images4.alphacoders.com/116/1166378.jpg',
+      imageUrl: 'https://media.starcitizen.tools/6/6d/ItemBankRM.png',
       route: '/icy/admin/items'
     },
     {
@@ -48,8 +48,13 @@ export class DataMenuComponent {
       route: '/icy/admin/uex-cache'
     },
     {
+      label: 'CIG Watch',
+      imageUrl: 'https://static.actugaming.net/media/2018/03/StarCitizen-1024x575.jpg',
+      route: '/icy/admin/cig-watch'
+    },
+    {
       label: 'Ore Locations',
-      imageUrl: 'https://images6.alphacoders.com/136/1361711.jpeg',
+      imageUrl: 'https://static.wikia.nocookie.net/starcitizen/images/6/6d/Aphorite_vitrine.jpg/revision/latest/scale-to-width-down/300?cb=20210215061436',
       route: '/icy/admin/ore-locations'
     }
   ];
