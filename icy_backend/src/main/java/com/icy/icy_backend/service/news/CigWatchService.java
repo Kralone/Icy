@@ -230,28 +230,16 @@ public class CigWatchService {
                 continue;
             }
 
-            Optional<CigWatchEntry> existingOpt = cigWatchEntryRepository.findBySourceIdAndLink(dto.sourceId(), dto.link());
-            CigWatchEntry existing = existingOpt.orElse(null);
+            if (cigWatchEntryRepository.existsBySourceIdAndLink(dto.sourceId(), dto.link())) {
+                continue;
+            }
             String title = trimToLength(firstNonBlank(dto.title(), "Entree CIG"), 300);
             String rawExcerpt = dto.rawExcerpt();
             String rawPayload = dto.rawPayload();
-            boolean shouldTranslate = existing == null
-                    || !nullToEmpty(existing.getTitle()).equals(nullToEmpty(title))
-                    || !nullToEmpty(existing.getRawExcerpt()).equals(nullToEmpty(rawExcerpt))
-                    || !nullToEmpty(existing.getRawPayload()).equals(nullToEmpty(rawPayload))
-                    || existing.getTitleFr() == null
-                    || existing.getRawExcerptFr() == null
-                    || existing.getRawPayloadFr() == null;
+            CigWatchTranslationService.TranslationResult translated =
+                    cigWatchTranslationService.translateToFrench(title, rawExcerpt, rawPayload);
 
-            CigWatchTranslationService.TranslationResult translated = shouldTranslate
-                    ? cigWatchTranslationService.translateToFrench(title, rawExcerpt, rawPayload)
-                    : new CigWatchTranslationService.TranslationResult(
-                    firstNonBlank(existing.getTitleFr(), title),
-                    firstNonBlank(existing.getRawExcerptFr(), rawExcerpt),
-                    firstNonBlank(existing.getRawPayloadFr(), rawPayload)
-            );
-
-            cigWatchEntryRepository.upsertEntry(
+            cigWatchEntryRepository.insertIfAbsent(
                     dto.sourceId(),
                     trimToLength(firstNonBlank(dto.sourceLabel(), "source"), 150),
                     firstNonBlank(dto.sourceUrl(), ""),
@@ -267,7 +255,7 @@ public class CigWatchService {
                     rawPayload,
                     translated.payloadFr(),
                     dto.fetchedAt() == null ? now : dto.fetchedAt(),
-                    existing == null || existing.getCreatedAt() == null ? now : existing.getCreatedAt(),
+                    now,
                     now
             );
         }

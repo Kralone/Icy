@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Long> {
 
     Optional<CigWatchEntry> findBySourceIdAndLink(Long sourceId, String link);
+    boolean existsBySourceIdAndLink(Long sourceId, String link);
 
     Optional<CigWatchEntry> findFirstByOrderByFetchedAtDesc();
 
@@ -62,25 +63,11 @@ public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Lo
                         :createdAt,
                         :updatedAt
                     )
-                    ON CONFLICT (source_id, link) DO UPDATE SET
-                        source_label = EXCLUDED.source_label,
-                        source_url = EXCLUDED.source_url,
-                        external_id = EXCLUDED.external_id,
-                        title = EXCLUDED.title,
-                        title_fr = EXCLUDED.title_fr,
-                        entry_type = EXCLUDED.entry_type,
-                        published_at = EXCLUDED.published_at,
-                        rank_hint = EXCLUDED.rank_hint,
-                        raw_excerpt = EXCLUDED.raw_excerpt,
-                        raw_excerpt_fr = EXCLUDED.raw_excerpt_fr,
-                        raw_payload = EXCLUDED.raw_payload,
-                        raw_payload_fr = EXCLUDED.raw_payload_fr,
-                        fetched_at = EXCLUDED.fetched_at,
-                        updated_at = EXCLUDED.updated_at
+                    ON CONFLICT (source_id, link) DO NOTHING
                     """,
             nativeQuery = true
     )
-    void upsertEntry(
+    void insertIfAbsent(
             @Param("sourceId") Long sourceId,
             @Param("sourceLabel") String sourceLabel,
             @Param("sourceUrl") String sourceUrl,
