@@ -1,128 +1,161 @@
-<div class="wikelo-page min-h-screen w-full text-white px-6 py-10">
-  <div class="wikelo-page-content max-w-7xl mx-auto space-y-8">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <a
-        [routerLink]="[backToMenuLink]"
-        class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
-      >
-        <span class="text-lg">←</span> Retour aux utilitaires
-      </a>
+<div class="wikelo-shell">
+  <div class="wikelo-orb wikelo-orb--a"></div>
+  <div class="wikelo-orb wikelo-orb--b"></div>
+  <div class="wikelo-orb wikelo-orb--c"></div>
 
+  <div class="wikelo-frame">
+    <header class="wikelo-topbar">
+      <a [routerLink]="[backToMenuLink]" class="wikelo-back-link">
+        <span>←</span>
+        Retour aux utilitaires
+      </a>
       <button
         *ngIf="canRescrape"
         type="button"
         (click)="triggerRescrape()"
         [disabled]="isRescraping"
-        class="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-cyan-200/85
-               bg-cyan-300/25 text-cyan-50 font-semibold tracking-wide
-               hover:bg-cyan-200/35 disabled:opacity-60 disabled:cursor-not-allowed transition"
+        class="wikelo-rescrape-btn"
       >
         {{ isRescraping ? 'Rescrape en cours...' : 'Rescraper Wikelo' }}
       </button>
-    </div>
+    </header>
 
-    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Utilitaire</p>
-          <h1 class="text-3xl font-semibold text-cyan-200">Wikelo - Vaisseaux</h1>
-        </div>
-        <div class="text-sm text-slate-300">
-          <div>Total vaisseaux: <span class="text-cyan-200 font-semibold">{{ ships.length }}</span></div>
-          <div *ngIf="lastScrapedAt">Dernier scrape: <span class="text-cyan-100">{{ lastScrapedAt | date:'medium' }}</span></div>
-        </div>
+    <section class="wikelo-intro">
+      <div class="wikelo-intro-text">
+        <p class="wikelo-overline">Wikelo Utility</p>
+        <h1>Wikelo Fleet Atlas</h1>
+      </div>
+      <div class="wikelo-metrics">
+        <article>
+          <span>Vaisseaux</span>
+          <strong>{{ ships.length }}</strong>
+        </article>
       </div>
     </section>
 
-    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
-      <p *ngIf="isLoading" class="text-slate-300">Chargement des donnees Wikelo...</p>
-      <p *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</p>
-      <p *ngIf="goalCreateStatus" class="text-emerald-300">{{ goalCreateStatus }}</p>
-
-      <div *ngIf="!isLoading && !errorMessage" class="overflow-x-auto rounded-xl border border-white/10">
-        <table class="wikelo-table min-w-full text-sm divide-y divide-white/10">
-          <thead class="wikelo-head bg-[#0b1324] text-cyan-200 uppercase tracking-[0.16em]">
-          <tr>
-            <th class="px-4 py-3 text-left">Image</th>
-            <th class="px-4 py-3 text-left">Vaisseau</th>
-            <th class="px-4 py-3 text-left">Apercu</th>
-          </tr>
-          </thead>
-          <tbody>
-          <ng-container *ngFor="let ship of ships; let i = index">
-            <tr class="wikelo-row border-b border-white/10 text-slate-200" [class.wikelo-row-alt]="i % 2 === 1">
-              <td class="px-4 py-3">
-                <img
-                  *ngIf="getShipImage(ship.shipName) as imageUrl; else noImage"
-                  [src]="imageUrl"
-                  [alt]="ship.shipName"
-                  class="wikelo-table-image"
-                  loading="lazy"
-                />
-                <ng-template #noImage>
-                  <div class="wikelo-table-image-fallback">N/A</div>
-                </ng-template>
-              </td>
-              <td class="px-4 py-3">
-                <div class="wikelo-ship-head">
-                  <div class="font-semibold text-cyan-100 text-base">{{ ship.shipName }}</div>
-                  <span class="wikelo-rep-tag">Wikelo Réputation Tier {{ getReputationTier(ship.reputationText) }}</span>
-                </div>
-                <button
-                  type="button"
-                  (click)="toggleDetails(ship.shipName)"
-                  class="wikelo-toggle mt-2"
-                >
-                  {{ isExpanded(ship.shipName) ? 'Masquer les details' : 'Voir plus' }}
-                </button>
-                <button
-                  *ngIf="canRescrape"
-                  type="button"
-                  (click)="openGoalModal(ship)"
-                  class="wikelo-toggle wikelo-toggle--goal mt-2"
-                >
-                  Ajouter objectif
-                </button>
-              </td>
-              <td class="px-4 py-3 wikelo-cell-main">
-                <ul class="wikelo-preview-list">
-                  <li *ngFor="let component of getPreviewComponents(ship.componentsText)">
-                    {{ component }}
-                  </li>
-                </ul>
-                <p *ngIf="!getPreviewComponents(ship.componentsText).length" class="wikelo-empty">Aucun composant.</p>
-                <p *ngIf="getRemainingComponentCount(ship.componentsText) > 0" class="wikelo-more">
-                  + {{ getRemainingComponentCount(ship.componentsText) }} autre(s) composant(s)
-                </p>
-              </td>
-            </tr>
-
-            <tr *ngIf="isExpanded(ship.shipName)" class="wikelo-row-details border-b border-white/10">
-              <td colspan="3" class="px-4 py-4">
-                <div class="wikelo-detail-panel" @detailsExpand>
-                  <div class="wikelo-detail-grid">
-                    <section>
-                      <h4>Cout</h4>
-                      <ul>
-                        <li *ngFor="let part of toCommaParts(ship.costText)">{{ part }}</li>
-                      </ul>
-                      <p *ngIf="!toCommaParts(ship.costText).length" class="wikelo-empty">Non renseigne.</p>
-                    </section>
-                    <section>
-                      <h4>Composants</h4>
-                      <ul>
-                        <li *ngFor="let part of toParts(ship.componentsText)">{{ part }}</li>
-                      </ul>
-                      <p *ngIf="!toParts(ship.componentsText).length" class="wikelo-empty">Aucun composant detaille.</p>
-                    </section>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </ng-container>
-          </tbody>
-        </table>
+    <section class="wikelo-search-panel">
+      <label for="wikelo-search" class="wikelo-search-title">Recherche dynamique</label>
+      <div class="wikelo-search-input-wrap">
+        <input
+          id="wikelo-search"
+          type="text"
+          [ngModel]="searchTerm"
+          (ngModelChange)="setSearchTerm($event)"
+          placeholder="Nom du vaisseau, composant ou coût"
+          class="wikelo-search-input"
+          autocomplete="off"
+        />
+        <button *ngIf="searchTerm" type="button" class="wikelo-clear-btn" (click)="clearSearch()">
+          Effacer
+        </button>
       </div>
+      <div class="wikelo-search-list" *ngIf="searchTerm && searchSuggestions.length">
+        <button
+          type="button"
+          class="wikelo-search-item"
+          *ngFor="let suggestion of searchSuggestions"
+          (click)="setSearchTerm(suggestion)"
+        >
+          {{ suggestion }}
+        </button>
+      </div>
+    </section>
+
+    <section class="wikelo-status-stack">
+      <p *ngIf="isLoading" class="wikelo-status wikelo-status--info">Chargement des donnees Wikelo...</p>
+      <p *ngIf="errorMessage" class="wikelo-status wikelo-status--error">{{ errorMessage }}</p>
+      <p *ngIf="goalCreateStatus" class="wikelo-status wikelo-status--success">{{ goalCreateStatus }}</p>
+    </section>
+
+    <section *ngIf="!isLoading && !errorMessage" class="wikelo-grid-wrap">
+      <div class="wikelo-grid-head">
+        <h2>Resultats</h2>
+        <p>{{ filteredShips.length }} resultat(s)</p>
+      </div>
+
+      <div class="wikelo-grid">
+        <article class="wikelo-card" *ngFor="let ship of filteredShips">
+          <div class="wikelo-card-media">
+            <img
+              *ngIf="getShipImage(ship.shipName) as imageUrl; else noImage"
+              [src]="imageUrl"
+              [alt]="ship.shipName"
+              class="wikelo-table-image"
+              loading="lazy"
+            />
+            <ng-template #noImage>
+              <div class="wikelo-table-image-fallback">N/A</div>
+            </ng-template>
+          </div>
+
+          <div class="wikelo-card-body">
+            <div class="wikelo-ship-head">
+              <h3>{{ ship.shipName }}</h3>
+              <span class="wikelo-rep-tag">Tier {{ getReputationTier(ship.reputationText) }}</span>
+            </div>
+
+            <ul class="wikelo-preview-list">
+              <li *ngFor="let component of getPreviewComponents(ship.componentsText)">
+                {{ component }}
+              </li>
+            </ul>
+            <p *ngIf="!getPreviewComponents(ship.componentsText).length" class="wikelo-empty">Aucun composant.</p>
+            <p *ngIf="getRemainingComponentCount(ship.componentsText) > 0" class="wikelo-more">
+              + {{ getRemainingComponentCount(ship.componentsText) }} autre(s) composant(s)
+            </p>
+
+            <div class="wikelo-actions">
+              <button
+                type="button"
+                (click)="toggleDetails(ship.shipName)"
+                class="wikelo-toggle"
+              >
+                {{ isExpanded(ship.shipName) ? 'Masquer les details' : 'Voir plus' }}
+              </button>
+              <button
+                *ngIf="canRescrape"
+                type="button"
+                (click)="openGoalModal(ship)"
+                class="wikelo-toggle wikelo-toggle--goal"
+              >
+                Ajouter objectif
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="isExpanded(ship.shipName)" class="wikelo-row-details" @detailsExpand>
+            <div class="wikelo-detail-grid">
+              <section>
+                <h4>Cout</h4>
+                <ul>
+                  <li *ngFor="let part of toCommaParts(ship.costText)">{{ part }}</li>
+                </ul>
+                <p *ngIf="!toCommaParts(ship.costText).length" class="wikelo-empty">Non renseigne.</p>
+              </section>
+              <section>
+                <h4>Fiche base</h4>
+                <ng-container *ngIf="getCatalogShip(ship.shipName) as catalog; else noCatalogData">
+                  <ul>
+                    <li><strong>Nom base:</strong> {{ catalog.name }}</li>
+                    <li><strong>Fabricant:</strong> {{ catalog.brand?.name || 'Non renseigne' }}</li>
+                    <li><strong>Focus:</strong> {{ catalog.focus || 'Non renseigne' }}</li>
+                    <li><strong>Taille:</strong> {{ catalog.size || 'Non renseigne' }}</li>
+                    <li><strong>Crew:</strong> {{ catalog.crew || 'Non renseigne' }}</li>
+                    <li><strong>SCU:</strong> {{ catalog.scu ?? 'Non renseigne' }}</li>
+                  </ul>
+                </ng-container>
+                <ng-template #noCatalogData>
+                  <p class="wikelo-empty">Aucune donnee base disponible pour ce vaisseau.</p>
+                </ng-template>
+              </section>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <p class="wikelo-empty wikelo-empty--global" *ngIf="!filteredShips.length">
+        Aucun resultat pour cette recherche.
+      </p>
     </section>
   </div>
 </div>

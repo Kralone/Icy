@@ -1,145 +1,372 @@
-.wikelo-page {
+:host {
+  --bg-main: #090b12;
+  --bg-panel: rgba(15, 19, 31, 0.82);
+  --bg-panel-2: rgba(22, 30, 46, 0.85);
+  --line: rgba(255, 255, 255, 0.11);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --txt: #f7fbff;
+  --txt-dim: #b7c6d8;
+  --mint: #9cf7c6;
+  --amber: #f5cf6c;
+  --rose: #ff9f95;
+}
+
+.wikelo-shell {
   position: relative;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 2rem;
   overflow: hidden;
-  background-color: #0a111c;
-  background-image: linear-gradient(to bottom, #0a111c 0%, #0f172a 45%, #111827 100%);
-  isolation: isolate;
+  background:
+    radial-gradient(circle at 8% 14%, rgba(207, 79, 70, 0.24), transparent 28%),
+    radial-gradient(circle at 92% 8%, rgba(92, 134, 255, 0.22), transparent 33%),
+    linear-gradient(132deg, #0c101b 0%, #090b12 52%, #11162b 100%);
+  color: var(--txt);
 }
 
-.wikelo-page::before {
-  content: '';
+.wikelo-orb {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: min(62vw, 760px);
-  background-image: url('https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp');
-  background-size: 100% auto;
-  background-position: center top;
-  background-repeat: no-repeat;
-  opacity: 0.75;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  border-radius: 999px;
   pointer-events: none;
-  z-index: 1;
+  filter: blur(28px);
 }
 
-.wikelo-page-content {
+.wikelo-orb--a {
+  width: 18rem;
+  height: 18rem;
+  top: -7rem;
+  left: -4rem;
+  background: rgba(255, 154, 94, 0.24);
+}
+
+.wikelo-orb--b {
+  width: 20rem;
+  height: 20rem;
+  top: -8rem;
+  right: -4rem;
+  background: rgba(130, 150, 255, 0.2);
+}
+
+.wikelo-orb--c {
+  width: 24rem;
+  height: 24rem;
+  bottom: -12rem;
+  left: 44%;
+  background: rgba(156, 247, 198, 0.12);
+}
+
+.wikelo-frame {
   position: relative;
   z-index: 2;
+  max-width: 84rem;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  padding: 1rem;
+  backdrop-filter: blur(9px);
+  background: rgba(10, 13, 22, 0.6);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
 }
 
-.wikelo-table th,
-.wikelo-table td {
-  vertical-align: top;
+.wikelo-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
-.wikelo-table {
-  font-size: 0.92rem;
+.wikelo-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--txt-dim);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
 }
 
-.wikelo-table td {
-  line-height: 1.55;
-  color: #e5e7eb;
+.wikelo-back-link:hover {
+  color: #ffffff;
 }
 
-.wikelo-head th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+.wikelo-rescrape-btn {
+  min-height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg, rgba(255, 160, 134, 0.24), rgba(103, 126, 234, 0.22));
+  color: #f8fdff;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-.wikelo-row {
-  background: rgba(15, 23, 42, 0.62);
+.wikelo-rescrape-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.wikelo-row-alt {
-  background: rgba(2, 6, 23, 0.72);
+.wikelo-intro {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, rgba(51, 36, 58, 0.5), rgba(17, 23, 38, 0.7));
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
 }
 
-.wikelo-row:hover {
-  background: rgba(30, 41, 59, 0.82);
+.wikelo-overline {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f1b2a5;
+}
+
+.wikelo-intro-text h1 {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: 1.1;
+}
+
+.wikelo-intro-text p {
+  margin: 0.5rem 0 0;
+  color: var(--txt-dim);
+  max-width: 52ch;
+}
+
+.wikelo-metrics {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.wikelo-metrics article {
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: rgba(15, 21, 33, 0.82);
+  padding: 0.55rem 0.75rem;
+  min-width: 13rem;
+}
+
+.wikelo-metrics span {
+  display: block;
+  font-size: 0.67rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a9bacf;
+}
+
+.wikelo-metrics strong {
+  font-size: 0.84rem;
+  color: #ffffff;
+}
+
+.wikelo-search-panel {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--bg-panel);
+  padding: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+
+.wikelo-search-title {
+  display: block;
+  margin-bottom: 0.42rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a7c5df;
+}
+
+.wikelo-search-input-wrap {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.wikelo-search-input {
+  width: 100%;
+  min-height: 2.55rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(15, 19, 31, 0.95);
+  color: #f8fcff;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+
+.wikelo-search-input:focus {
+  border-color: rgba(156, 247, 198, 0.9);
+  box-shadow: 0 0 0 3px rgba(156, 247, 198, 0.16);
+}
+
+.wikelo-clear-btn {
+  min-height: 2.55rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(37, 44, 64, 0.9);
+  color: #f4f7ff;
+  padding: 0.4rem 0.75rem;
+  white-space: nowrap;
+}
+
+.wikelo-search-list {
+  margin-top: 0.58rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wikelo-search-item {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(45, 55, 80, 0.86);
+  color: #ecf6ff;
+  font-size: 0.76rem;
+  padding: 0.25rem 0.66rem;
+}
+
+.wikelo-search-item:hover {
+  border-color: rgba(156, 247, 198, 0.8);
+}
+
+.wikelo-status-stack {
+  display: grid;
+  gap: 0.52rem;
+  margin-bottom: 0.9rem;
+}
+
+.wikelo-status {
+  margin: 0;
+  border-radius: 0.72rem;
+  border: 1px solid transparent;
+  padding: 0.5rem 0.72rem;
+  font-size: 0.86rem;
+}
+
+.wikelo-status--info {
+  background: rgba(59, 78, 121, 0.34);
+  border-color: rgba(153, 178, 255, 0.4);
+  color: #d7e3ff;
+}
+
+.wikelo-status--error {
+  background: rgba(107, 34, 44, 0.35);
+  border-color: rgba(255, 159, 149, 0.5);
+  color: #ffd6d2;
+}
+
+.wikelo-status--success {
+  background: rgba(28, 80, 58, 0.35);
+  border-color: rgba(156, 247, 198, 0.45);
+  color: #d2ffe9;
+}
+
+.wikelo-grid-wrap {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--bg-panel-2);
+  padding: 0.85rem;
+}
+
+.wikelo-grid-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.wikelo-grid-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.wikelo-grid-head p {
+  margin: 0;
+  color: var(--txt-dim);
+  font-size: 0.84rem;
+}
+
+.wikelo-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.wikelo-card {
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
+  overflow: hidden;
+  background: rgba(14, 19, 32, 0.88);
+}
+
+.wikelo-card-media {
+  padding: 0.8rem 0.8rem 0;
+}
+
+.wikelo-table-image,
+.wikelo-table-image-fallback {
+  width: 100%;
+  max-width: 21rem;
+  height: 10.2rem;
+  border-radius: 0.8rem;
 }
 
 .wikelo-table-image {
-  width: 120px;
-  height: 68px;
   object-fit: cover;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .wikelo-table-image-fallback {
-  width: 120px;
-  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  color: #93c5fd;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 0.5rem;
-  border: 1px dashed rgba(147, 197, 253, 0.45);
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(33, 41, 63, 0.9);
+  color: #c6d5ea;
+  font-size: 0.76rem;
 }
 
-.wikelo-cell-main {
-  max-width: 360px;
+.wikelo-card-body {
+  padding: 0.75rem 0.8rem 0.85rem;
 }
 
 .wikelo-ship-head {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.55rem;
+}
+
+.wikelo-ship-head h3 {
+  margin: 0;
+  font-size: 1.03rem;
 }
 
 .wikelo-rep-tag {
-  white-space: nowrap;
-  font-size: 0.68rem;
-  line-height: 1.2;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 207, 108, 0.65);
+  color: var(--amber);
+  background: rgba(71, 55, 14, 0.42);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 0.28rem 0.5rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(250, 204, 21, 0.45);
-  color: #fde68a;
-  background: rgba(202, 138, 4, 0.2);
-}
-
-.wikelo-toggle {
-  border: 1px solid rgba(125, 211, 252, 0.5);
-  color: #bae6fd;
-  background: rgba(14, 116, 144, 0.15);
-  border-radius: 9999px;
-  padding: 0.25rem 0.65rem;
-  font-size: 0.78rem;
-  transition: all 160ms ease;
-}
-
-.wikelo-toggle:hover {
-  background: rgba(14, 116, 144, 0.3);
-  border-color: rgba(125, 211, 252, 0.75);
-}
-
-.wikelo-toggle--goal {
-  margin-left: 0.35rem;
-  border-color: rgba(110, 231, 183, 0.5);
-  color: #a7f3d0;
-  background: rgba(4, 120, 87, 0.18);
-}
-
-.wikelo-toggle--goal:hover {
-  background: rgba(4, 120, 87, 0.32);
-  border-color: rgba(110, 231, 183, 0.75);
+  white-space: nowrap;
 }
 
 .wikelo-preview-list {
   margin: 0;
   padding-left: 1rem;
-  color: #dbeafe;
+  color: #d6e5f9;
+  font-size: 0.86rem;
 }
 
 .wikelo-preview-list li {
@@ -147,161 +374,184 @@
 }
 
 .wikelo-more {
-  margin-top: 0.35rem;
-  color: #93c5fd;
-  font-size: 0.8rem;
+  margin: 0.35rem 0 0;
+  color: #a7c3e6;
+  font-size: 0.78rem;
 }
 
-.wikelo-row-details td {
-  background: rgba(15, 23, 42, 0.95);
-  overflow: hidden;
+.wikelo-actions {
+  margin-top: 0.62rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
-.wikelo-detail-panel {
-  overflow: hidden;
+.wikelo-toggle {
+  border: 1px solid rgba(157, 175, 220, 0.62);
+  border-radius: 999px;
+  background: rgba(42, 53, 84, 0.82);
+  color: #e4eeff;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.76rem;
+}
+
+.wikelo-toggle--goal {
+  border-color: rgba(156, 247, 198, 0.7);
+  background: rgba(28, 80, 58, 0.46);
+  color: var(--mint);
+}
+
+.wikelo-row-details {
+  border-top: 1px solid var(--line);
+  background: rgba(9, 13, 24, 0.85);
+  padding: 0.76rem 0.8rem 0.85rem;
 }
 
 .wikelo-detail-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.62rem;
+}
+
+.wikelo-detail-grid section {
+  border: 1px solid var(--line);
+  border-radius: 0.72rem;
+  background: rgba(18, 25, 41, 0.72);
+  padding: 0.58rem 0.65rem;
 }
 
 .wikelo-detail-grid h4 {
-  font-size: 0.8rem;
+  margin: 0 0 0.42rem;
+  font-size: 0.69rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #67e8f9;
-  margin-bottom: 0.4rem;
+  color: #c6d7f4;
 }
 
 .wikelo-detail-grid ul {
   margin: 0;
   padding-left: 1rem;
-  color: #cbd5e1;
+  font-size: 0.84rem;
+  color: #d6e3f9;
 }
 
 .wikelo-detail-grid li {
-  margin-bottom: 0.32rem;
-  line-height: 1.5;
+  margin-bottom: 0.24rem;
+}
+
+.wikelo-detail-grid strong {
+  color: #eef4ff;
+  font-weight: 700;
 }
 
 .wikelo-empty {
-  color: #94a3b8;
-  font-size: 0.85rem;
+  color: var(--txt-dim);
+  font-size: 0.83rem;
 }
 
-@media (max-width: 1024px) {
-  .wikelo-detail-grid {
-    grid-template-columns: 1fr;
-  }
+.wikelo-empty--global {
+  margin-top: 0.7rem;
 }
 
 .wikelo-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.8);
-  backdrop-filter: blur(2px);
   z-index: 90;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  background: rgba(7, 10, 18, 0.8);
+  backdrop-filter: blur(5px);
 }
 
 .wikelo-modal {
-  width: min(680px, 100%);
+  width: min(44rem, 100%);
+  border: 1px solid var(--line-strong);
   border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(160deg, #0f172a, #111827);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-  padding: 1rem 1rem 1.2rem;
-  color: #e2e8f0;
+  background: rgba(14, 20, 34, 0.95);
+  color: #eff7ff;
+  padding: 1rem;
 }
 
 .wikelo-modal-title {
   margin: 0;
-  font-size: 1.1rem;
-  color: #67e8f9;
+  font-size: 1.05rem;
 }
 
 .wikelo-modal-subtitle {
-  margin: 0.4rem 0 0.8rem;
-  color: #cbd5e1;
+  margin: 0.42rem 0 0.85rem;
+  color: #c6d4e7;
+  font-size: 0.9rem;
 }
 
 .wikelo-label {
   display: block;
   margin-bottom: 0.3rem;
-  color: #cbd5e1;
-  font-size: 0.85rem;
+  color: #bcd0e8;
+  font-size: 0.8rem;
 }
 
 .wikelo-input {
   width: 100%;
-  min-height: 40px;
-  padding: 0.45rem 0.7rem;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.85);
-  color: #f8fafc;
+  min-height: 2.5rem;
+  border-radius: 0.68rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(11, 16, 28, 0.95);
+  color: #f4f9ff;
+  padding: 0.44rem 0.7rem;
   outline: none;
 }
 
 .wikelo-input:focus {
-  border-color: rgba(103, 232, 249, 0.65);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  border-color: rgba(156, 247, 198, 0.85);
+  box-shadow: 0 0 0 3px rgba(156, 247, 198, 0.18);
 }
 
 .wikelo-modal-preview {
-  margin-top: 0.9rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  margin-top: 0.85rem;
+  border: 1px solid var(--line);
   border-radius: 0.8rem;
-  background: rgba(15, 23, 42, 0.55);
-  padding: 0.8rem;
+  background: rgba(18, 25, 41, 0.74);
+  padding: 0.75rem;
 }
 
 .wikelo-modal-ship-preview {
   display: flex;
+  gap: 0.65rem;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.72rem;
+}
+
+.wikelo-modal-image,
+.wikelo-modal-image-fallback {
+  width: 9rem;
+  height: 5rem;
+  border-radius: 0.56rem;
 }
 
 .wikelo-modal-image {
-  width: 140px;
-  height: 78px;
   object-fit: cover;
-  border-radius: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .wikelo-modal-image-fallback {
-  width: 140px;
-  height: 78px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #93c5fd;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 0.55rem;
-  border: 1px dashed rgba(147, 197, 253, 0.45);
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  color: #c8d8ef;
 }
 
 .wikelo-modal-ship-name {
-  color: #e0f2fe;
   font-weight: 700;
 }
 
 .wikelo-modal-preview h4 {
-  margin: 0 0 0.5rem;
-  color: #22d3ee;
-  font-size: 0.82rem;
+  margin: 0 0 0.44rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: #bfcff4;
 }
 
 .wikelo-modal-preview ul {
@@ -310,42 +560,78 @@
 }
 
 .wikelo-modal-preview li {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.24rem;
 }
 
 .wikelo-modal-preview li span {
-  color: #67e8f9;
+  color: #b8ffd8;
   font-weight: 700;
 }
 
 .wikelo-modal-actions {
-  margin-top: 0.95rem;
+  margin-top: 0.9rem;
   display: flex;
   justify-content: flex-end;
-  gap: 0.6rem;
+  gap: 0.55rem;
 }
 
 .wikelo-btn {
-  min-height: 40px;
-  border-radius: 0.7rem;
+  min-height: 2.45rem;
+  border-radius: 0.65rem;
   border: 1px solid transparent;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
+  padding: 0.45rem 0.86rem;
 }
 
 .wikelo-btn-cancel {
-  border-color: rgba(148, 163, 184, 0.4);
-  background: rgba(30, 41, 59, 0.7);
-  color: #e2e8f0;
+  border-color: var(--line-strong);
+  background: rgba(49, 59, 84, 0.65);
+  color: #ecf3ff;
 }
 
 .wikelo-btn-confirm {
-  border-color: rgba(16, 185, 129, 0.5);
-  background: rgba(5, 150, 105, 0.3);
-  color: #d1fae5;
+  border-color: rgba(156, 247, 198, 0.65);
+  background: rgba(28, 80, 58, 0.55);
+  color: #d2ffe9;
 }
 
 .wikelo-btn:disabled {
-  opacity: 0.55;
+  opacity: 0.58;
   cursor: not-allowed;
+}
+
+@media (min-width: 860px) {
+  .wikelo-frame {
+    padding: 1.2rem;
+  }
+
+  .wikelo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wikelo-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .wikelo-shell {
+    padding: 1rem 0.65rem 1.4rem;
+  }
+
+  .wikelo-frame {
+    padding: 0.72rem;
+  }
+
+  .wikelo-search-input-wrap {
+    flex-direction: column;
+  }
+
+  .wikelo-clear-btn {
+    width: 100%;
+  }
+
+  .wikelo-modal-ship-preview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

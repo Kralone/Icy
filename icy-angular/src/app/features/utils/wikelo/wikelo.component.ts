@@ -37,6 +37,7 @@ export class WikeloComponent implements OnInit {
   ships: WikeloShip[] = [];
   catalogShips: Ship[] = [];
   users: User[] = [];
+  searchTerm = '';
   expandedShipName: string | null = null;
   selectedGoalShip: WikeloShip | null = null;
   isGoalModalOpen = false;
@@ -74,16 +75,45 @@ export class WikeloComponent implements OnInit {
     return this.router.url.startsWith('/utilitaires') ? '/utilitaires' : '/icy/utilitaires';
   }
 
+  get filteredShips(): WikeloShip[] {
+    const normalizedSearch = this.normalizeName(this.searchTerm);
+    if (!normalizedSearch) return this.ships;
+
+    return this.ships.filter((ship) => {
+      const name = this.normalizeName(ship.shipName);
+      const components = this.normalizeName(ship.componentsText ?? '');
+      const cost = this.normalizeName(ship.costText ?? '');
+      return name.includes(normalizedSearch) || components.includes(normalizedSearch) || cost.includes(normalizedSearch);
+    });
+  }
+
+  get searchSuggestions(): string[] {
+    const normalizedSearch = this.normalizeName(this.searchTerm);
+    if (!normalizedSearch) {
+      return this.ships.slice(0, 8).map((ship) => ship.shipName);
+    }
+
+    return this.ships
+      .map((ship) => ship.shipName)
+      .filter((shipName) => this.normalizeName(shipName).includes(normalizedSearch))
+      .slice(0, 8);
+  }
+
   getShipImage(shipName: string): string | null {
+    return this.getCatalogShip(shipName)?.imageUrl ?? null;
+  }
+
+  getCatalogShip(shipName: string): Ship | null {
     const normalizedTarget = this.normalizeName(shipName);
+
     const exact = this.catalogShips.find((ship) => this.normalizeName(ship.name) === normalizedTarget);
-    if (exact?.imageUrl) return exact.imageUrl;
+    if (exact) return exact;
 
     const includes = this.catalogShips.find((ship) => {
       const current = this.normalizeName(ship.name);
       return current.includes(normalizedTarget) || normalizedTarget.includes(current);
     });
-    return includes?.imageUrl ?? null;
+    return includes ?? null;
   }
 
   toggleDetails(shipName: string): void {
@@ -133,6 +163,14 @@ export class WikeloComponent implements OnInit {
 
   getRemainingComponentCount(value: string | null | undefined, limit = 4): number {
     return Math.max(0, this.toParts(value).length - limit);
+  }
+
+  setSearchTerm(value: string): void {
+    this.searchTerm = value;
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
   }
 
   openGoalModal(ship: WikeloShip): void {
