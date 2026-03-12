@@ -1,0 +1,79 @@
+<div *ngIf="visible && sheet && form" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Parametres de la fiche</h2>
+        <p>{{ toDisplayDate(sheet.operationDate) }} • {{ sheet.refineryLocation }}<span *ngIf="sheet.saleLocation"> • Vente: {{ sheet.saleLocation }}</span></p>
+      </div>
+      <button type="button" class="btn btn-ghost" (click)="close.emit()">Fermer</button>
+    </div>
+
+    <section class="section-block">
+      <div class="section-head">
+        <h3>Gestion admin</h3>
+        <div class="section-head-actions">
+          <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'OPEN'" (click)="save.emit()">Enregistrer</button>
+          <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'OPEN'" (click)="lock.emit()">Verrouiller</button>
+          <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'LOCKED'" (click)="unlock.emit()">Deverrouiller</button>
+          <button type="button" class="btn btn-danger" [disabled]="saving || sheet.status !== 'LOCKED'" (click)="finalize.emit()">Finaliser</button>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Nom de fiche
+          <input type="text" [(ngModel)]="form.sheetName" [disabled]="sheet.status !== 'OPEN'" />
+        </label>
+        <label>
+          Date operation
+          <input type="date" [(ngModel)]="form.operationDate" [disabled]="sheet.status !== 'OPEN'" />
+        </label>
+        <label>
+          Lieu de raffinage
+          <input type="text" [(ngModel)]="form.refineryLocation" [disabled]="sheet.status !== 'OPEN'" />
+        </label>
+        <label>
+          Lieu de vente
+          <input
+            type="text"
+            [ngModel]="form.saleLocation"
+            (ngModelChange)="saleLocationSearchChange.emit($event)"
+            [disabled]="sheet.status !== 'OPEN'"
+            placeholder="Rechercher un terminal de vente"
+          />
+        </label>
+      </div>
+
+      <div class="member-search-list" *ngIf="sheet.status === 'OPEN' && saleLocationSuggestions.length">
+        <button type="button" *ngFor="let location of saleLocationSuggestions" (click)="saleLocationSelected.emit(location)">
+          {{ location }}
+        </button>
+      </div>
+
+      <div class="member-box">
+        <label>Membres autorises</label>
+        <input
+          type="text"
+          [(ngModel)]="form.memberSearch"
+          placeholder="Rechercher un membre"
+          [disabled]="sheet.status !== 'OPEN'"
+        />
+        <div class="member-search-list" *ngIf="sheet.status === 'OPEN' && memberSuggestions.length">
+          <button
+            type="button"
+            *ngFor="let user of memberSuggestions"
+            (click)="addMember.emit(user)"
+          >
+            {{ user.username }}
+          </button>
+        </div>
+        <div class="member-badges">
+          <span class="badge" *ngFor="let member of selectedMembers">
+            {{ member.username }}
+            <button type="button" [disabled]="sheet.status !== 'OPEN'" (click)="removeMember.emit(member.id)">×</button>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
