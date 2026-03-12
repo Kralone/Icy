@@ -1,6 +1,8 @@
 package com.icy.icy_backend.exception;
 
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.exception.definition.BadRequestException;
+import com.icy.icy_backend.exception.definition.ForbiddenException;
 import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
@@ -37,6 +39,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleInvalidCredentialsException(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequestException(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Bad Request", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbiddenException(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Forbidden", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Bad Request", "message", ex.getMessage()));
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
