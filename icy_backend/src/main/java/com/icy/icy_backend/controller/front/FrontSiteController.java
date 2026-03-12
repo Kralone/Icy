@@ -5,6 +5,9 @@ import com.icy.icy_backend.controller.dto.response.front.CelestialBodyDTO;
 import com.icy.icy_backend.controller.dto.response.front.OreLocationDTO;
 import com.icy.icy_backend.controller.dto.response.front.OrbitalStationDTO;
 import com.icy.icy_backend.controller.dto.response.front.UexRefineryDatasetsDTO;
+import com.icy.icy_backend.controller.dto.response.front.UexVehiclePurchaseDTO;
+import com.icy.icy_backend.controller.dto.response.front.UexVehicleRentalDTO;
+import com.icy.icy_backend.controller.dto.response.front.UexVehicleTerminalDTO;
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.front.UexResourceSaleDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
@@ -74,6 +77,21 @@ public class FrontSiteController {
     @GetMapping("/resources/refineries")
     public ResponseEntity<MessageResponse<UexRefineryDatasetsDTO>> getRefineryDatasets() {
         return uexDatasetService.getRefineryDatasets();
+    }
+
+    @GetMapping("/vehicles/purchases")
+    public ResponseEntity<MessageResponse<List<UexVehiclePurchaseDTO>>> listVehiclePurchases() {
+        return uexDatasetService.listVehiclePurchases();
+    }
+
+    @GetMapping("/vehicles/rentals")
+    public ResponseEntity<MessageResponse<List<UexVehicleRentalDTO>>> listVehicleRentals() {
+        return uexDatasetService.listVehicleRentals();
+    }
+
+    @GetMapping("/vehicles/terminals")
+    public ResponseEntity<MessageResponse<List<UexVehicleTerminalDTO>>> listVehicleTerminals() {
+        return uexDatasetService.listVehicleTerminals();
     }
 
     @GetMapping("/celestial-bodies")

@@ -1,5 +1,7 @@
 package com.icy.icy_backend.controller.dto.response.front;
 
+import java.util.List;
+
 public class UexResourceSaleDTO {
     private String displayName;
     private String canonicalName;
@@ -7,6 +9,7 @@ public class UexResourceSaleDTO {
     private Integer baseSell;
     private Integer bestSell;
     private String bestSellTerminal;
+    private List<SalePointDTO> salePoints;
 
     public UexResourceSaleDTO() {
     }
@@ -17,7 +20,8 @@ public class UexResourceSaleDTO {
             String kind,
             Integer baseSell,
             Integer bestSell,
-            String bestSellTerminal
+            String bestSellTerminal,
+            List<SalePointDTO> salePoints
     ) {
         this.displayName = displayName;
         this.canonicalName = canonicalName;
@@ -25,6 +29,7 @@ public class UexResourceSaleDTO {
         this.baseSell = baseSell;
         this.bestSell = bestSell;
         this.bestSellTerminal = bestSellTerminal;
+        this.salePoints = salePoints;
     }
 
     public String getDisplayName() {
@@ -73,5 +78,42 @@ public class UexResourceSaleDTO {
 
     public void setBestSellTerminal(String bestSellTerminal) {
         this.bestSellTerminal = bestSellTerminal;
+    }
+
+    public List<SalePointDTO> getSalePoints() {
+        return salePoints;
+    }
+
+    public void setSalePoints(List<SalePointDTO> salePoints) {
+        this.salePoints = salePoints;
+    }
+
+    public static class SalePointDTO {
+        private String terminalName;
+        private Integer sellPrice;
+
+        public SalePointDTO() {
+        }
+
+        public SalePointDTO(String terminalName, Integer sellPrice) {
+            this.terminalName = terminalName;
+            this.sellPrice = sellPrice;
+        }
+
+        public String getTerminalName() {
+            return terminalName;
+        }
+
+        public void setTerminalName(String terminalName) {
+            this.terminalName = terminalName;
+        }
+
+        public Integer getSellPrice() {
+            return sellPrice;
+        }
+
+        public void setSellPrice(Integer sellPrice) {
+            this.sellPrice = sellPrice;
+        }
     }
 }

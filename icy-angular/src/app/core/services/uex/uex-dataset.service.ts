@@ -24,6 +24,12 @@ export interface UexResourceSale {
   baseSell: number;
   bestSell: number | null;
   bestSellTerminal: string | null;
+  salePoints: UexResourceSalePoint[];
+}
+
+export interface UexResourceSalePoint {
+  terminalName: string;
+  sellPrice: number;
 }
 
 export interface UexRefineryDatasets {
@@ -35,6 +41,29 @@ export interface UexRefineryDatasets {
   capacitiesFetchedAt: string | null;
   yieldsFetchedAt: string | null;
   auditsFetchedAt: string | null;
+}
+
+export interface UexVehicleRental {
+  vehicleName: string;
+  terminalName: string;
+  rentPrice: number;
+}
+
+export interface UexVehiclePurchase {
+  vehicleName: string;
+  terminalName: string;
+  buyPrice: number;
+}
+
+export interface UexVehicleTerminal {
+  name: string | null;
+  nickname: string | null;
+  displayName: string | null;
+  code: string | null;
+  planetName: string | null;
+  cityName: string | null;
+  spaceStationName: string | null;
+  screenshot: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -66,5 +95,17 @@ export class UexDatasetService {
 
   listRefineryDatasets(): Observable<ApiResponse<UexRefineryDatasets>> {
     return this.http.get<ApiResponse<UexRefineryDatasets>>('/api/front/resources/refineries');
+  }
+
+  listVehicleRentals(): Observable<ApiResponse<UexVehicleRental[]>> {
+    return this.http.get<ApiResponse<UexVehicleRental[]>>('/api/front/vehicles/rentals');
+  }
+
+  listVehiclePurchases(): Observable<ApiResponse<UexVehiclePurchase[]>> {
+    return this.http.get<ApiResponse<UexVehiclePurchase[]>>('/api/front/vehicles/purchases');
+  }
+
+  listVehicleTerminals(): Observable<ApiResponse<UexVehicleTerminal[]>> {
+    return this.http.get<ApiResponse<UexVehicleTerminal[]>>('/api/front/vehicles/terminals');
   }
 }

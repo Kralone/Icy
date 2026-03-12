@@ -34,6 +34,16 @@
   font-size: 0.76rem;
 }
 
+.resource-sales-controls__reset {
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(8, 26, 48, 0.75);
+  color: #cceeff;
+  border-radius: 999px;
+  padding: 0.24rem 0.62rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
 .resource-sales-table-wrap {
   margin-top: 0.9rem;
   border: 1px solid rgba(147, 197, 253, 0.22);
@@ -61,7 +71,7 @@
 .resource-sales-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 680px;
+  min-width: 860px;
 }
 
 .resource-sales-table th,
@@ -71,6 +81,7 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   text-align: left;
   white-space: nowrap;
+  vertical-align: top;
 }
 
 .resource-sales-table th {
@@ -103,6 +114,71 @@
   font-weight: 900;
 }
 
+.resource-sales-table__subline {
+  margin-top: 0.22rem;
+  font-size: 0.74rem;
+  color: rgba(186, 230, 253, 0.8);
+}
+
+.resource-sales-table__location-header {
+  min-width: 280px;
+}
+
+.resource-sales-table__location-title {
+  margin-bottom: 0.35rem;
+  color: #d8f4ff;
+}
+
+.resource-sales-table__location-search {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.resource-sales-table__location-search input {
+  width: 100%;
+  min-width: 160px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(3, 12, 24, 0.9);
+  color: #ecfeff;
+  padding: 0.34rem 0.48rem;
+  font-size: 0.72rem;
+  text-transform: none;
+}
+
+.resource-sales-suggestions {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.resource-sales-suggestions__item,
+.resource-sales-shortcuts__item {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(8, 26, 48, 0.74);
+  color: #cceeff;
+  border-radius: 999px;
+  padding: 0.2rem 0.52rem;
+  font-size: 0.66rem;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.resource-sales-shortcuts {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.resource-sales-shortcuts__item--active {
+  border-color: rgba(34, 197, 94, 0.65);
+  color: #dcfce7;
+  background: rgba(22, 101, 52, 0.42);
+}
+
 @media (max-width: 760px) {
   .resource-sales-controls {
     width: 100%;
@@ -124,7 +200,7 @@
   }
 
   .resource-sales-table {
-    min-width: 560px;
+    min-width: 720px;
   }
 
   .resource-sales-table th,

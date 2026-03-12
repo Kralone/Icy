@@ -19,9 +19,50 @@
     <thead>
     <tr>
       <th>Materiau</th>
-      <th>Meilleure vente</th>
+      <th>Meilleurs prix de vente</th>
+      <th class="resource-sales-table__location-header">
+        <div class="resource-sales-table__location-title">Prix {{ selectedLocationLabel() }}</div>
+        <div class="resource-sales-table__location-search">
+          <input
+            id="sale-location-input"
+            type="text"
+            [value]="locationSearchTerm"
+            placeholder="Rechercher un terminal..."
+            autocomplete="off"
+            (input)="updateLocationSearch(($any($event.target)).value)"
+          />
+          <button
+            type="button"
+            class="resource-sales-controls__reset"
+            *ngIf="locationSearchTerm || selectedLocation"
+            (click)="resetLocation()"
+          >
+            Effacer
+          </button>
+        </div>
+        <div *ngIf="locationSuggestions.length > 0" class="resource-sales-suggestions">
+          <button
+            type="button"
+            class="resource-sales-suggestions__item"
+            *ngFor="let location of locationSuggestions"
+            (click)="selectLocation(location)"
+          >
+            {{ location }}
+          </button>
+        </div>
+        <div class="resource-sales-shortcuts">
+          <button
+            type="button"
+            class="resource-sales-shortcuts__item"
+            [class.resource-sales-shortcuts__item--active]="isSelectedLocationShortcut(location)"
+            *ngFor="let location of locationShortcuts"
+            (click)="selectLocationShortcut(location)"
+          >
+            {{ location }}
+          </button>
+        </div>
+      </th>
       <th>Revenu</th>
-      <th>Terminal</th>
     </tr>
     </thead>
     <tbody>
@@ -31,13 +72,21 @@
         <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(material.bestSell)">
           {{ formatUecWithUnit(material.bestSell) }}
         </span>
+        <div class="resource-sales-table__subline">{{ material.bestSellTerminal || '-' }}</div>
+      </td>
+      <td>
+        <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(selectedLocationSell(material))">
+          {{ formatUecWithUnit(selectedLocationSell(material)) }}
+        </span>
+        <div class="resource-sales-table__subline" *ngIf="selectedLocation">
+          Ecart: {{ formatUecWithUnit(selectedLocationDelta(material)) }}
+        </div>
       </td>
       <td>
         <span class="resource-sales-table__revenue" [ngStyle]="revenueStyle(material.bestSell)">
           {{ formatUecWithUnit(computeRevenue(material.bestSell)) }}
         </span>
       </td>
-      <td>{{ material.bestSellTerminal || '-' }}</td>
     </tr>
     </tbody>
   </table>

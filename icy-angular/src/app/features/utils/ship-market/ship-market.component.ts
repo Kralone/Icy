@@ -1,18 +1,19 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
-import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { CelestialBody, CelestialBodyService } from '../../../core/services/celestial/celestial-body.service';
 import { OrbitalStation, OrbitalStationService } from '../../../core/services/station/orbital-station.service';
 import { ShipService } from '../../../core/services/ship/ship.service';
-import { Ship, ShipSalePoint } from '../../../model/ship.model';
+import { UexDatasetService, UexVehiclePurchase, UexVehicleRental, UexVehicleTerminal } from '../../../core/services/uex/uex-dataset.service';
+import { Ship } from '../../../model/ship.model';
 
 type ShipByLocationCard = {
   ship: Ship;
   location: string;
   price: number;
+  offerType: 'ACHAT' | 'LOCATION';
 };
 
 type LocationCardView = {
@@ -23,6 +24,26 @@ type LocationCardView = {
   imageUrl: string;
   count: number;
   promoLabel: string;
+  stationName: string;
+  planetName: string;
+  majorKey: string;
+  majorLabel: string;
+  majorImageUrl: string;
+};
+
+type MajorLocationCardView = {
+  majorKey: string;
+  majorLabel: string;
+  majorImageUrl: string;
+  count: number;
+  cards: LocationCardView[];
+};
+
+type TerminalMapping = {
+  planetName: string | null;
+  cityName: string | null;
+  stationName: string | null;
+  screenshot: string | null;
 };
 
 @Component({
@@ -30,65 +51,42 @@ type LocationCardView = {
   selector: 'app-ship-market',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './ship-market.component.html',
-  styleUrl: './ship-market.component.css',
-  animations: [
-    trigger('listFade', [
-      transition(':leave', [
-        animate('220ms ease-out', style({ opacity: 0 }))
-      ])
-    ]),
-    trigger('itemDeploy', [
-      transition(':enter', [
-        query('.ship-market-card', [
-          style({ opacity: 0, transform: 'translateY(14px)' }),
-          stagger(55, [
-            animate('260ms cubic-bezier(0.22, 1, 0.36, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-          ])
-        ], { optional: true })
-      ])
-    ]),
-    trigger('locationCardItem', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(8px)' }),
-        animate('180ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-      ]),
-      transition(':leave', [
-        animate('130ms ease-in', style({ opacity: 0, transform: 'translateY(-6px)' }))
-      ])
-    ]),
-    trigger('shipCardItem', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('210ms cubic-bezier(0.22, 1, 0.36, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ]),
-      transition(':leave', [
-        animate('150ms ease-in', style({ opacity: 0, transform: 'translateY(-8px)' }))
-      ])
-    ])
-  ]
+  styleUrl: './ship-market.component.css'
 })
 export class ShipMarketComponent implements OnDestroy {
+  readonly offerModes: Array<'ACHAT' | 'LOCATION'> = ['ACHAT', 'LOCATION'];
   isLoading = true;
   errorMessage = '';
   searchTerm = '';
+  selectedOfferMode: 'ACHAT' | 'LOCATION' = 'ACHAT';
   listVisible = false;
   isSwitchingLocation = false;
+  isSwitchingMajor = false;
+  isSwitchingOfferMode = false;
   locations: string[] = [];
   selectedLocation = '';
   primaryBackground = '';
   secondaryBackground = '';
   isPrimaryLayerVisible = true;
   groupedShips: Record<string, ShipByLocationCard[]> = {};
+  groupedShipsByMode: Record<string, { ACHAT: ShipByLocationCard[]; LOCATION: ShipByLocationCard[] }> = {};
   brands: { name: string; imageUrl: string }[] = [];
   zoomedShip: Ship | null = null;
   filteredLocationCards: LocationCardView[] = [];
+  majorLocationCards: MajorLocationCardView[] = [];
+  subLocationCards: LocationCardView[] = [];
+  selectedMajorKey = '';
   selectedLocationShips: ShipByLocationCard[] = [];
   private locationSwitchTimer?: ReturnType<typeof setTimeout>;
+  private majorSwitchTimer?: ReturnType<typeof setTimeout>;
+  private offerModeSwitchTimer?: ReturnType<typeof setTimeout>;
 
   private planets: CelestialBody[] = [];
   private stations: OrbitalStation[] = [];
+  private terminals: UexVehicleTerminal[] = [];
   private planetImageByKey: Record<string, string> = {};
   private stationImageByKey: Record<string, string> = {};
+  private terminalsByLookupKey: Record<string, TerminalMapping> = {};
 
   private readonly planetAliases: Record<string, string> = {
     'area 18': 'ArcCorp',
@@ -106,10 +104,20 @@ export class ShipMarketComponent implements OnDestroy {
   private readonly placeAliases: Record<string, string> = {
     'area 18': 'Area 18',
     'area18': 'Area 18',
+    nbis: 'New Babbage',
     lorville: 'Lorville',
     crusader: 'Crusader',
     orison: 'Orison',
     'new babbage': 'New Babbage',
+    arcl1: 'ARC-L1',
+    arcl2: 'ARC-L2',
+    arcl4: 'ARC-L4',
+    crul1: 'CRU-L1',
+    hurl1: 'HUR-L1',
+    hurl2: 'HUR-L2',
+    micl1: 'MIC-L1',
+    micl2: 'MIC-L2',
+    micl5: 'MIC-L5',
     checkmate: 'Checkmate',
     orbituary: 'Orbituary',
     'ruin station': 'Ruin Station',
@@ -122,6 +130,16 @@ export class ShipMarketComponent implements OnDestroy {
   };
 
   private readonly stationAliases: Record<string, string> = {
+    nbis: 'New Babbage',
+    arcl1: 'ARC-L1',
+    arcl2: 'ARC-L2',
+    arcl4: 'ARC-L4',
+    crul1: 'CRU-L1',
+    hurl1: 'HUR-L1',
+    hurl2: 'HUR-L2',
+    micl1: 'MIC-L1',
+    micl2: 'MIC-L2',
+    micl5: 'MIC-L5',
     checkmate: 'Checkmate',
     orbituary: 'Orbituary',
     seraphim: 'Seraphim Station',
@@ -149,9 +167,16 @@ export class ShipMarketComponent implements OnDestroy {
   };
 
   private readonly defaultBackgroundPalette: [string, string, string] = ['#0a111c', '#0f172a', '#1b3145'];
+  private readonly rentalFallbackShipImageUrl = 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
+  private readonly fallbackLocationImageUrl = 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
+  private readonly rentalVehicleAliases: Record<string, string> = {
+    mole: 'Argo MOLE',
+    roc: 'Greycat ROC'
+  };
 
   constructor(
     private shipService: ShipService,
+    private uexDatasetService: UexDatasetService,
     private celestialBodyService: CelestialBodyService,
     private orbitalStationService: OrbitalStationService,
     private router: Router
@@ -171,6 +196,14 @@ export class ShipMarketComponent implements OnDestroy {
       clearTimeout(this.locationSwitchTimer);
       this.locationSwitchTimer = undefined;
     }
+    if (this.majorSwitchTimer) {
+      clearTimeout(this.majorSwitchTimer);
+      this.majorSwitchTimer = undefined;
+    }
+    if (this.offerModeSwitchTimer) {
+      clearTimeout(this.offerModeSwitchTimer);
+      this.offerModeSwitchTimer = undefined;
+    }
   }
 
   get backToMenuLink(): string {
@@ -186,14 +219,12 @@ export class ShipMarketComponent implements OnDestroy {
       return;
     }
     this.isSwitchingLocation = true;
-    this.listVisible = false;
     if (this.locationSwitchTimer) {
       clearTimeout(this.locationSwitchTimer);
     }
 
     this.locationSwitchTimer = setTimeout(() => {
       this.setSelectedLocation(location);
-      this.listVisible = true;
       this.isSwitchingLocation = false;
       this.locationSwitchTimer = undefined;
     }, 180);
@@ -201,11 +232,47 @@ export class ShipMarketComponent implements OnDestroy {
 
   onSearchTermChange(): void {
     this.refreshFilteredViews();
-    const visibleLocations = this.filteredLocationCards.map((card) => card.location);
+    const visibleLocations = this.subLocationCards.map((card) => card.location);
     if (!visibleLocations.includes(this.selectedLocation)) {
       this.setSelectedLocation(visibleLocations[0] ?? '');
     }
     this.updateBackgroundForSelection();
+  }
+
+  setSelectedMajorLocation(majorKey: string): void {
+    if (majorKey === this.selectedMajorKey) {
+      return;
+    }
+    this.isSwitchingMajor = true;
+    this.isSwitchingLocation = true;
+    if (this.majorSwitchTimer) {
+      clearTimeout(this.majorSwitchTimer);
+    }
+    this.majorSwitchTimer = setTimeout(() => {
+      this.selectedMajorKey = majorKey;
+      this.refreshMajorAndSubLocations();
+      const nextLocation = this.subLocationCards[0]?.location ?? '';
+      this.setSelectedLocation(nextLocation);
+      this.isSwitchingMajor = false;
+      this.isSwitchingLocation = false;
+      this.majorSwitchTimer = undefined;
+    }, 170);
+  }
+
+  setOfferMode(mode: 'ACHAT' | 'LOCATION'): void {
+    if (this.selectedOfferMode === mode) {
+      return;
+    }
+    this.isSwitchingOfferMode = true;
+    this.selectedOfferMode = mode;
+    this.onSearchTermChange();
+    if (this.offerModeSwitchTimer) {
+      clearTimeout(this.offerModeSwitchTimer);
+    }
+    this.offerModeSwitchTimer = setTimeout(() => {
+      this.isSwitchingOfferMode = false;
+      this.offerModeSwitchTimer = undefined;
+    }, 120);
   }
 
   getBrandLogo(brandName?: string): string {
@@ -214,11 +281,15 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   trackByShip(_: number, item: ShipByLocationCard): string {
-    return `${item.location}-${item.ship.id}`;
+    return `${item.location}-${item.ship.id}-${item.offerType}`;
   }
 
   trackByLocation(_: number, item: LocationCardView): string {
     return item.location;
+  }
+
+  trackByMajorLocation(_: number, item: MajorLocationCardView): string {
+    return item.majorKey;
   }
 
   openShipZoom(ship: Ship): void {
@@ -276,12 +347,31 @@ export class ShipMarketComponent implements OnDestroy {
     this.errorMessage = '';
     this.isLoading = true;
 
-    this.shipService.getAllShips()
+    forkJoin({
+      ships: this.shipService.getAllShips().pipe(
+        map((response) => response?.data ?? []),
+        catchError(() => of([] as Ship[]))
+      ),
+      purchases: this.uexDatasetService.listVehiclePurchases().pipe(
+        map((response) => response?.data ?? []),
+        catchError(() => of([] as UexVehiclePurchase[]))
+      ),
+      rentals: this.uexDatasetService.listVehicleRentals().pipe(
+        map((response) => response?.data ?? []),
+        catchError(() => of([] as UexVehicleRental[]))
+      ),
+      terminals: this.uexDatasetService.listVehicleTerminals().pipe(
+        map((response) => response?.data ?? []),
+        catchError(() => of([] as UexVehicleTerminal[]))
+      )
+    })
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: (response) => {
-          const ships = response?.data ?? [];
-          this.groupedShips = this.groupShipsByLocation(ships);
+        next: ({ ships, purchases, rentals, terminals }) => {
+          this.terminals = terminals;
+          this.buildTerminalsLookup();
+          this.groupedShips = this.groupShipsByLocation(ships, purchases, rentals);
+          this.groupedShipsByMode = this.buildGroupedShipsByMode(this.groupedShips);
           this.locations = Object.keys(this.groupedShips).sort((left, right) => left.localeCompare(right));
           this.selectedLocation = this.locations[0] ?? '';
           this.refreshFilteredViews();
@@ -291,6 +381,7 @@ export class ShipMarketComponent implements OnDestroy {
         },
         error: () => {
           this.groupedShips = {};
+          this.groupedShipsByMode = {};
           this.locations = [];
           this.selectedLocation = '';
           this.listVisible = false;
@@ -298,63 +389,240 @@ export class ShipMarketComponent implements OnDestroy {
           this.primaryBackground = fallbackBackground;
           this.secondaryBackground = fallbackBackground;
           this.isPrimaryLayerVisible = true;
-          this.errorMessage = 'Impossible de charger les points de vente des vaisseaux.';
+          this.errorMessage = 'Impossible de charger les offres vaisseaux (achat/location).';
         }
       });
   }
 
-  private groupShipsByLocation(ships: Ship[]): Record<string, ShipByLocationCard[]> {
+  private groupShipsByLocation(
+    ships: Ship[],
+    purchases: UexVehiclePurchase[],
+    rentals: UexVehicleRental[]
+  ): Record<string, ShipByLocationCard[]> {
     const grouped: Record<string, ShipByLocationCard[]> = {};
+    const shipsByNormalizedName = this.buildShipNameIndex(ships);
 
-    for (const ship of ships) {
-      const salePoints = ship.salePoints ?? [];
-      for (const salePoint of salePoints) {
-        const location = this.normalizeLocation(salePoint);
-        const price = this.normalizePrice(salePoint);
-        if (!location || price === null) continue;
-
-        if (!grouped[location]) {
-          grouped[location] = [];
-        }
-
-        grouped[location].push({ ship, location, price });
+    for (const purchase of purchases) {
+      const location = (purchase?.terminalName ?? '').trim();
+      const price = Number(purchase?.buyPrice);
+      if (!location || !Number.isFinite(price) || price <= 0) {
+        continue;
       }
+
+      const ship = this.resolveShipForVehicleName(purchase?.vehicleName, purchase?.terminalName, 'Achat', shipsByNormalizedName);
+      if (!grouped[location]) {
+        grouped[location] = [];
+      }
+      grouped[location].push({ ship, location, price, offerType: 'ACHAT' });
+    }
+
+    for (const rental of rentals) {
+      const location = (rental?.terminalName ?? '').trim();
+      const price = Number(rental?.rentPrice);
+      if (!location || !Number.isFinite(price) || price <= 0) {
+        continue;
+      }
+
+      const ship = this.resolveShipForVehicleName(rental?.vehicleName, rental?.terminalName, 'Location', shipsByNormalizedName);
+      if (!grouped[location]) {
+        grouped[location] = [];
+      }
+      grouped[location].push({ ship, location, price, offerType: 'LOCATION' });
     }
 
     for (const location of Object.keys(grouped)) {
-      grouped[location] = grouped[location].sort((left, right) => left.ship.name.localeCompare(right.ship.name));
+      grouped[location] = grouped[location].sort((left, right) => {
+        const nameComparison = left.ship.name.localeCompare(right.ship.name);
+        if (nameComparison !== 0) {
+          return nameComparison;
+        }
+        return left.offerType.localeCompare(right.offerType);
+      });
     }
 
     return grouped;
   }
 
+  private buildShipNameIndex(ships: Ship[]): Record<string, Ship> {
+    const index: Record<string, Ship> = {};
+    for (const ship of ships) {
+      const key = this.normalizeVehicleName(ship.name);
+      if (key) {
+        index[key] = ship;
+      }
+    }
+    return index;
+  }
+
+  private buildGroupedShipsByMode(
+    grouped: Record<string, ShipByLocationCard[]>
+  ): Record<string, { ACHAT: ShipByLocationCard[]; LOCATION: ShipByLocationCard[] }> {
+    const index: Record<string, { ACHAT: ShipByLocationCard[]; LOCATION: ShipByLocationCard[] }> = {};
+    for (const location of Object.keys(grouped)) {
+      const rows = grouped[location] ?? [];
+      index[location] = {
+        ACHAT: rows.filter((row) => row.offerType === 'ACHAT'),
+        LOCATION: rows.filter((row) => row.offerType === 'LOCATION')
+      };
+    }
+    return index;
+  }
+
+  private resolveShipForVehicleName(
+    vehicleName: string | null | undefined,
+    terminalName: string | null | undefined,
+    fallbackFocus: string,
+    shipsByName: Record<string, Ship>
+  ): Ship {
+    const rawName = (vehicleName ?? '').trim();
+    const normalized = this.normalizeVehicleName(rawName);
+    const found = normalized ? shipsByName[normalized] : undefined;
+    if (found) {
+      return found;
+    }
+
+    return {
+      id: -Math.abs(this.stableHash(`${rawName}-${terminalName ?? ''}`)),
+      name: rawName || 'Vaisseau inconnu',
+      brand: { name: 'UEX' },
+      imageUrl: this.rentalFallbackShipImageUrl,
+      focus: fallbackFocus,
+      crew: '-',
+      size: '-',
+      scu: undefined,
+      flightReady: true
+    };
+  }
+
+  private normalizeVehicleName(name: string): string {
+    const base = this.normalizeText(name);
+    if (!base) {
+      return '';
+    }
+    return this.rentalVehicleAliases[base] ? this.normalizeText(this.rentalVehicleAliases[base]) : base;
+  }
+
+  private stableHash(text: string): number {
+    let hash = 0;
+    for (let index = 0; index < text.length; index++) {
+      hash = (hash << 5) - hash + text.charCodeAt(index);
+      hash |= 0;
+    }
+    return hash;
+  }
+
   private buildLocationCard(location: string): LocationCardView {
     const parsed = this.parseLocationLabel(location);
+    const terminal = this.resolveTerminalMapping(location);
     const placeKey = this.normalizeText(parsed.place);
     const promoLabel = placeKey.includes('lorville') ? '-15%' : '';
+    const stationName = terminal?.stationName || parsed.station || null;
+    const cityName = terminal?.cityName || (!stationName ? parsed.place : null);
+    const planetName = terminal?.planetName || parsed.planet || parsed.tailPrimary;
+    const gatewayMajorLabel = this.resolveGatewayMajorLabel(location, stationName, cityName, parsed.place);
+    const majorLabel = gatewayMajorLabel || planetName || stationName || cityName || 'Autres';
+    const majorKey = this.normalizeText(majorLabel) || 'autres';
+    const majorImageUrl = gatewayMajorLabel
+      ? (this.resolveStationImage(gatewayMajorLabel) || this.resolvePlaceImage(stationName, cityName, planetName))
+      : (this.resolvePlanetImage(majorLabel) || this.fallbackLocationImageUrl);
+    const imageUrl = this.resolvePlaceImage(stationName, cityName, planetName);
     return {
       location,
       titleLine: `${parsed.shop} - ${parsed.place}`,
       bodyLine1: parsed.tailPrimary,
       bodyLine2: parsed.tailSecondary,
-      imageUrl: this.resolveLocationImage(parsed),
+      imageUrl,
       count: this.getFilteredShipsForLocation(location).length,
-      promoLabel
+      promoLabel,
+      stationName: stationName || cityName || parsed.place,
+      planetName,
+      majorKey,
+      majorLabel,
+      majorImageUrl
     };
+  }
+
+  private resolveGatewayMajorLabel(
+    location: string,
+    stationName: string | null,
+    cityName: string | null,
+    parsedPlace: string
+  ): string | null {
+    const candidates = [stationName, cityName, parsedPlace, location].filter((value): value is string => !!value && !!value.trim());
+    for (const candidate of candidates) {
+      const candidateKey = this.normalizeText(candidate);
+      if (!candidateKey.includes('gateway')) {
+        continue;
+      }
+
+      const stationMatch = this.stations.find((station) => {
+        const stationKey = this.normalizeText(station.name);
+        return stationKey.includes('gateway') && (candidateKey.includes(stationKey) || stationKey.includes(candidateKey));
+      });
+      if (stationMatch) {
+        return stationMatch.name;
+      }
+
+      const inlineGateway = candidate.match(/([a-z0-9' -]*gateway\s*\([^)]+\))/i);
+      if (inlineGateway?.[1]) {
+        return inlineGateway[1].trim().replace(/\s+/g, ' ');
+      }
+    }
+    return null;
   }
 
   private refreshFilteredViews(): void {
     this.filteredLocationCards = this.locations
       .map((location) => this.buildLocationCard(location))
       .filter((card) => card.count > 0);
+    this.refreshMajorAndSubLocations();
 
     this.selectedLocationShips = this.selectedLocation
       ? this.getFilteredShipsForLocation(this.selectedLocation)
       : [];
   }
 
+  private refreshMajorAndSubLocations(): void {
+    const byMajor: Record<string, MajorLocationCardView> = {};
+    for (const card of this.filteredLocationCards) {
+      if (!byMajor[card.majorKey]) {
+        byMajor[card.majorKey] = {
+          majorKey: card.majorKey,
+          majorLabel: card.majorLabel,
+          majorImageUrl: card.majorImageUrl,
+          count: 0,
+          cards: []
+        };
+      }
+      if (this.isFallbackLocationImage(byMajor[card.majorKey].majorImageUrl) && !this.isFallbackLocationImage(card.imageUrl)) {
+        byMajor[card.majorKey].majorImageUrl = card.imageUrl;
+      }
+      byMajor[card.majorKey].cards.push(card);
+      byMajor[card.majorKey].count += card.count;
+    }
+
+    this.majorLocationCards = Object.values(byMajor)
+      .map((major) => ({
+        ...major,
+        cards: major.cards.sort((left, right) => left.titleLine.localeCompare(right.titleLine))
+      }))
+      .sort((left, right) => left.majorLabel.localeCompare(right.majorLabel));
+
+    const availableMajorKeys = this.majorLocationCards.map((major) => major.majorKey);
+    if (!availableMajorKeys.includes(this.selectedMajorKey)) {
+      this.selectedMajorKey = availableMajorKeys[0] ?? '';
+    }
+
+    const selectedMajor = this.majorLocationCards.find((major) => major.majorKey === this.selectedMajorKey);
+    this.subLocationCards = selectedMajor?.cards ?? [];
+
+    if (!this.subLocationCards.some((card) => card.location === this.selectedLocation)) {
+      this.selectedLocation = this.subLocationCards[0]?.location ?? '';
+    }
+  }
+
   private getFilteredShipsForLocation(location: string): ShipByLocationCard[] {
-    const rows = this.groupedShips[location] ?? [];
+    const rows = this.groupedShipsByMode[location]?.[this.selectedOfferMode] ?? [];
     const query = this.normalizeText(this.searchTerm);
     if (!query) return rows;
 
@@ -526,10 +794,19 @@ export class ShipMarketComponent implements OnDestroy {
     const key = this.normalizeText(locationText);
     for (const aliasKey of Object.keys(this.stationAliases)) {
       if (key.includes(aliasKey)) {
-        return this.stationAliases[aliasKey];
+        const aliased = this.stationAliases[aliasKey];
+        const aliasedKey = this.normalizeText(aliased);
+        const fromDb = this.stations.find((station) => {
+          const stationKey = this.normalizeText(station.name);
+          return stationKey.includes(aliasedKey) || aliasedKey.includes(stationKey);
+        });
+        return fromDb?.name ?? aliased;
       }
     }
-    const matched = this.stations.find((station) => key.includes(this.normalizeText(station.name)));
+    const matched = this.stations.find((station) => {
+      const stationKey = this.normalizeText(station.name);
+      return key.includes(stationKey) || stationKey.includes(key);
+    });
     return matched?.name ?? null;
   }
 
@@ -567,15 +844,118 @@ export class ShipMarketComponent implements OnDestroy {
     return 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
   }
 
-  private normalizeLocation(salePoint: ShipSalePoint): string | null {
-    const location = (salePoint?.location ?? '').trim();
-    return location.length ? location : null;
+  private resolvePlaceImage(stationName: string | null, cityName: string | null, planetName: string): string {
+    const stationImage = stationName ? this.resolveStationImage(stationName) : null;
+    if (stationImage) {
+      return stationImage;
+    }
+    const cityImage = cityName ? this.resolveStationImage(cityName) : null;
+    if (cityImage) {
+      return cityImage;
+    }
+    return this.resolvePlanetImage(planetName) || this.fallbackLocationImageUrl;
   }
 
-  private normalizePrice(salePoint: ShipSalePoint): number | null {
-    const price = Number(salePoint?.price);
-    if (!Number.isFinite(price) || price < 0) return null;
-    return price;
+  private resolveStationImage(stationName: string): string | null {
+    const direct = this.stationImageByKey[this.normalizeText(stationName)];
+    if (direct) {
+      return direct;
+    }
+    const target = this.normalizeText(stationName);
+    const fuzzy = this.stations.find((station) => {
+      const key = this.normalizeText(station.name);
+      return key.includes(target) || target.includes(key);
+    });
+    return fuzzy?.imageUrl || null;
+  }
+
+  private resolvePlanetImage(planetName: string): string | null {
+    const direct = this.planetImageByKey[this.normalizeText(planetName)];
+    if (direct) {
+      return direct;
+    }
+    const target = this.normalizeText(planetName);
+    const fuzzy = this.planets.find((planet) => {
+      const key = this.normalizeText(planet.name);
+      return key.includes(target) || target.includes(key);
+    });
+    return fuzzy?.imageUrl || null;
+  }
+
+  private isFallbackLocationImage(url: string | null | undefined): boolean {
+    return !url || url === this.fallbackLocationImageUrl;
+  }
+
+  private buildTerminalsLookup(): void {
+    this.terminalsByLookupKey = {};
+    for (const terminal of this.terminals) {
+      const mapping: TerminalMapping = {
+        planetName: terminal.planetName ?? null,
+        cityName: terminal.cityName ?? null,
+        stationName: terminal.spaceStationName ?? null,
+        screenshot: terminal.screenshot ?? null
+      };
+
+      const candidates = [
+        terminal.name,
+        terminal.nickname,
+        terminal.displayName,
+        terminal.code,
+        terminal.spaceStationName,
+        terminal.cityName
+      ];
+
+      for (const candidate of candidates) {
+        const key = this.normalizeLookupText(candidate ?? '');
+        if (!key) {
+          continue;
+        }
+        const existing = this.terminalsByLookupKey[key];
+        this.terminalsByLookupKey[key] = existing ? this.mergeTerminalMappings(existing, mapping) : mapping;
+      }
+    }
+  }
+
+  private resolveTerminalMapping(location: string): TerminalMapping | null {
+    const key = this.normalizeLookupText(location);
+    if (!key) {
+      return null;
+    }
+    const direct = this.terminalsByLookupKey[key];
+    if (direct?.screenshot) {
+      return direct;
+    }
+
+    let best: { score: number; mapping: TerminalMapping } | null = null;
+    for (const lookupKey of Object.keys(this.terminalsByLookupKey)) {
+      if (lookupKey.length < 4) {
+        continue;
+      }
+      if (key.includes(lookupKey) || lookupKey.includes(key)) {
+        const score = lookupKey.length;
+        if (!best || score > best.score) {
+          best = { score, mapping: this.terminalsByLookupKey[lookupKey] };
+        }
+      }
+    }
+    const fuzzy = best?.mapping ?? null;
+    if (direct && fuzzy) {
+      return this.mergeTerminalMappings(direct, fuzzy);
+    }
+    return direct ?? fuzzy;
+  }
+
+  private mergeTerminalMappings(primary: TerminalMapping, secondary: TerminalMapping): TerminalMapping {
+    return {
+      planetName: primary.planetName || secondary.planetName || null,
+      cityName: primary.cityName || secondary.cityName || null,
+      stationName: primary.stationName || secondary.stationName || null,
+      screenshot: primary.screenshot || secondary.screenshot || null
+    };
+  }
+
+  private normalizeLookupText(value: string): string {
+    return this.normalizeText(value).replace(/[^a-z0-9]/g, '');
   }
 
   private normalizeText(value: string): string {
