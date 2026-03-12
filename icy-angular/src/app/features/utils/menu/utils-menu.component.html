@@ -1,7 +1,5 @@
 <div
   class="utils-menu loading-reveal min-h-full box-border w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12"
-  [class.utils-menu--public]="menuMode === 'public'"
-  [class.utils-menu--private]="menuMode === 'private'"
   [attr.data-loading]="isLoading"
 >
   <app-loading-overlay
@@ -22,8 +20,8 @@
   <div class="utils-content max-w-7xl mx-auto space-y-8">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <div
-        *ngFor="let item of displayedItems; let i = index"
-        [routerLink]="[resolveRoute(item)]"
+        *ngFor="let item of publicItems; let i = index"
+        [routerLink]="[item.route]"
         class="utils-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
                shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
                hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
@@ -45,5 +43,35 @@
         </div>
       </div>
     </div>
+
+    <div *ngIf="isMember" class="utils-divider" aria-hidden="true"></div>
+
+    <section *ngIf="isMember" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          *ngFor="let item of internalItems; let i = index"
+          [routerLink]="[item.route]"
+          class="utils-menu-card group relative flex flex-col rounded-2xl border border-cyan-300/20 bg-cyan-500/5
+                 shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
+                 hover:-translate-y-1 hover:border-cyan-300/55 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
+                 cursor-pointer overflow-hidden"
+          [class.utils-menu-card--visible]="cardsVisible"
+          [style.--card-delay.ms]="(publicItems.length + i) * 45"
+        >
+          <div class="relative h-48 w-full overflow-hidden">
+            <img
+              [src]="item.imageUrl"
+              alt="{{ item.label }}"
+              class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-500"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
+          </div>
+
+          <div class="flex items-center justify-center px-5 py-4 bg-[#0b1324]/80 border-t border-white/10">
+            <span class="text-lg font-semibold text-white uppercase">{{ item.label }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </div>

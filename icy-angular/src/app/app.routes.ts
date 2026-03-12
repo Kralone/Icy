@@ -118,7 +118,6 @@ export const routes: Routes = [
       {
         path: '',
         data: {
-          utilityScope: 'public',
           seo: {
             title: 'Utilitaires Star Citizen | IceForge Industries',
             description: 'Selection d utilitaires publics Star Citizen pour consulter hangars, donnees et informations operationnelles.',
@@ -126,6 +125,11 @@ export const routes: Routes = [
           }
         },
         loadComponent: () => import('./features/utils/menu/utils-menu.component').then(m => m.UtilsMenuComponent)
+      },
+      {
+        path: 'collection',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
       },
       {
         path: 'executive-hangar',
@@ -138,6 +142,19 @@ export const routes: Routes = [
           }
         },
         loadComponent: () => import('./features/utils/executive-hangar/executive-hangar.component').then(m => m.ExecutiveHangarComponent)
+      },
+      {
+        path: 'executive-hangar-players',
+        canActivate: [authGuard],
+        data: {
+          animation: 'ExecPlayersPage',
+          seo: {
+            title: 'Joueurs Hangar Executif | IceForge Industries',
+            description: 'Suivi des joueurs autorises au hangar executif.',
+            robots: 'noindex,nofollow'
+          }
+        },
+        loadComponent: () => import('./features/utils/executive-hangar-players/executive-hangar-players.component').then(m => m.ExecutiveHangarPlayersComponent)
       },
       {
         path: 'executive-hangar-maps',
@@ -186,6 +203,19 @@ export const routes: Routes = [
           }
         },
         loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
+      },
+      {
+        path: 'fiches-minage',
+        canActivate: [authGuard],
+        data: {
+          animation: 'MiningSheetsPage',
+          seo: {
+            title: 'Fiches Minage | IceForge Industries',
+            description: 'Suivi interne des operations de minage, raffinage et repartition des couts.',
+            robots: 'noindex,nofollow'
+          }
+        },
+        loadComponent: () => import('./features/utils/mining-sheets/mining-sheets.component').then(m => m.MiningSheetsComponent)
       },
       {
         path: 'guides',
@@ -250,55 +280,6 @@ export const routes: Routes = [
         path: 'collection',
         loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
       },
-      {
-        path: 'utilitaires',
-        children: [
-          {
-            path: '',
-            data: { utilityScope: 'private' },
-            loadComponent: () => import('./features/utils/menu/utils-menu.component').then(m => m.UtilsMenuComponent)
-          },
-          {
-            path: 'collection',
-            loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
-          },
-          {
-            path: 'executive-hangar',
-            data: { animation: 'ExecHangarPage' },
-            loadComponent: () => import('./features/utils/executive-hangar/executive-hangar.component').then(m => m.ExecutiveHangarComponent)
-          },
-          {
-            path: 'executive-hangar-players',
-            data: { animation: 'ExecPlayersPage' },
-            loadComponent: () => import('./features/utils/executive-hangar-players/executive-hangar-players.component').then(m => m.ExecutiveHangarPlayersComponent)
-          },
-          {
-            path: 'executive-hangar-maps',
-            data: { animation: 'ExecMapsPage' },
-            loadComponent: () => import('./features/utils/executive-hangar-maps/executive-hangar-maps.component').then(m => m.ExecutiveHangarMapsComponent)
-          },
-          {
-            path: 'wikelo',
-            data: { animation: 'WikeloPage' },
-            loadComponent: () => import('./features/utils/wikelo/wikelo.component').then(m => m.WikeloComponent)
-          },
-          {
-            path: 'achat-vaisseaux',
-            data: { animation: 'ShipMarketPage' },
-            loadComponent: () => import('./features/utils/ship-market/ship-market.component').then(m => m.ShipMarketComponent)
-          },
-          {
-            path: 'ressources-minage',
-            data: { animation: 'ResourcesGuidePage' },
-            loadComponent: () => import('./features/front/guide/resources-guide/resources-guide.component').then(m => m.ResourcesGuideComponent)
-          },
-          {
-            path: 'guides',
-            loadComponent: () => import('./features/guides/menu/guides-menu.component').then(m => m.GuidesMenuComponent)
-          },
-        ]
-      },
-
       // SECTION ADMIN
       {
         path: 'admin',

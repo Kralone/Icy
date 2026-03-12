@@ -137,7 +137,7 @@
                 <ng-container *ngIf="getCatalogShip(ship.shipName) as catalog; else noCatalogData">
                   <ul>
                     <li><strong>Nom base:</strong> {{ catalog.name }}</li>
-                    <li><strong>Fabricant:</strong> {{ catalog.brand?.name || 'Non renseigne' }}</li>
+                    <li><strong>Fabricant:</strong> {{ catalog.brand.name || 'Non renseigne' }}</li>
                     <li><strong>Focus:</strong> {{ catalog.focus || 'Non renseigne' }}</li>
                     <li><strong>Taille:</strong> {{ catalog.size || 'Non renseigne' }}</li>
                     <li><strong>Crew:</strong> {{ catalog.crew || 'Non renseigne' }}</li>

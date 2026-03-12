@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 type MapItem = {
   title: string;
@@ -28,12 +28,8 @@ export class ExecutiveHangarMapsComponent {
   selectedMap: MapItem | null = null;
   isClosingModal = false;
 
-  constructor(private router: Router) {}
-
   get backToStatusLink(): string {
-    return this.router.url.startsWith('/utilitaires')
-      ? '/utilitaires/executive-hangar'
-      : '/icy/utilitaires/executive-hangar';
+    return '/utilitaires/executive-hangar';
   }
 
   openMap(map: MapItem): void {

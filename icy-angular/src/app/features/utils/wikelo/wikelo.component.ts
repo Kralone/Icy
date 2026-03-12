@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
 import { WikeloService } from '../../../core/services/wikelo/wikelo.service';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
@@ -55,8 +55,7 @@ export class WikeloComponent implements OnInit {
     private userService: UserService,
     private shipService: ShipService,
     private goalService: GoalService,
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -72,7 +71,7 @@ export class WikeloComponent implements OnInit {
   }
 
   get backToMenuLink(): string {
-    return this.router.url.startsWith('/utilitaires') ? '/utilitaires' : '/icy/utilitaires';
+    return '/utilitaires';
   }
 
   get filteredShips(): WikeloShip[] {

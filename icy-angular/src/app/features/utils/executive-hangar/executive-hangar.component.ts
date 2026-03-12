@@ -1,7 +1,7 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -69,8 +69,7 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   constructor(
     private userService: UserService,
     private executiveHangarApiService: ExecutiveHangarApiService,
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -97,16 +96,12 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
     return this.authService.hasToken();
   }
 
-  get isPublicArea(): boolean {
-    return this.router.url.startsWith('/utilitaires');
-  }
-
   get backToMenuLink(): string {
-    return this.isPublicArea ? '/utilitaires' : '/icy/utilitaires';
+    return '/utilitaires';
   }
 
   get mapsLink(): string {
-    return this.isPublicArea ? '/utilitaires/executive-hangar-maps' : '/icy/utilitaires/executive-hangar-maps';
+    return '/utilitaires/executive-hangar-maps';
   }
 
   openTimingModal(): void {
