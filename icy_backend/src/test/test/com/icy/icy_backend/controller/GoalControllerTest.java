@@ -99,10 +99,12 @@ class GoalControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/goals/1"))
                 .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/goals/1/pin"))
+                .andExpect(status().isNoContent());
         mockMvc.perform(post("/api/goals/pin")
                         .contentType("application/json")
                         .content("1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
         mockMvc.perform(post("/api/goals/1/increment")
                         .param("delta", "1"))
                 .andExpect(status().isOk());

@@ -47,9 +47,17 @@ public class GoalController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/pin")
+    public ResponseEntity<Void> pinGoalByPath(@PathVariable Long id) {
+        goalService.pinGoal(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Legacy endpoint kept for backward compatibility. */
     @PostMapping("/pin")
-    public void pinGoal(@RequestBody Long goalId) {
+    public ResponseEntity<Void> pinGoal(@RequestBody Long goalId) {
         goalService.pinGoal(goalId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/increment")

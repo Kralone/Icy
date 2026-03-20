@@ -32,7 +32,9 @@ export class GoalService {
     return this.http.post<void>(`${this.apiUrl}/${id}/pin`, null).pipe(
       // Backward compatibility for environments still exposing POST /api/goals/pin with id in body.
       catchError((error) => {
-        if (error?.status === 404 || error?.status === 405) {
+        const rawError = `${error?.message ?? ''} ${error?.error?.message ?? ''}`.toLowerCase();
+        const routeLooksMissing = rawError.includes('no static resource') && rawError.includes('/api/goals/') && rawError.includes('/pin');
+        if (error?.status === 404 || error?.status === 405 || (error?.status === 500 && routeLooksMissing)) {
           return this.http.post<void>(`${this.apiUrl}/pin`, id);
         }
         return throwError(() => error);
