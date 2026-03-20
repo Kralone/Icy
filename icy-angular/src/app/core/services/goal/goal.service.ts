@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { Goal } from '../../../model/goal.model';
 import { GoalTemplate } from '../../../model/goal-template.model';
 import { GoalParticipation } from '../../../model/goal-participation.model';
@@ -29,7 +29,15 @@ export class GoalService {
   }
 
   togglePinned(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/pin`, null);
+    return this.http.post<void>(`${this.apiUrl}/${id}/pin`, null).pipe(
+      // Backward compatibility for environments still exposing POST /api/goals/pin with id in body.
+      catchError((error) => {
+        if (error?.status === 404 || error?.status === 405) {
+          return this.http.post<void>(`${this.apiUrl}/pin`, id);
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   addGoal(goal: any): Observable<any> {

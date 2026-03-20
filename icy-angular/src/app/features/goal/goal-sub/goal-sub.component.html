@@ -121,13 +121,20 @@
       </div>
 
       <!-- Barre de progression -->
-      <div class="w-full">
+      <div
+        class="w-full"
+        [ngClass]="{
+          'pb-5': depth === 0,
+          'pb-4': depth === 1,
+          'pb-3': depth >= 2
+        }"
+      >
           <div
             class="goal-progress-shell relative w-full rounded-md border border-white/10 bg-white/10 overflow-visible"
             [ngClass]="{
-              'h-4 mb-3': depth === 0,
-              'h-1.5 mb-2': depth === 1,
-              'h-1 mb-2': depth >= 2
+              'h-4': depth === 0,
+              'h-1.5': depth === 1,
+              'h-1': depth >= 2
             }"
           >
           <div class="absolute inset-0 rounded-md overflow-visible">
@@ -177,7 +184,7 @@
             </ng-template>
           </div>
             <div
-              class="absolute top-[calc(100%+2px)] whitespace-nowrap font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)] transition-all duration-700 ease-out"
+              class="absolute top-[calc(100%+2px)] whitespace-nowrap leading-none font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)] transition-all duration-700 ease-out"
               [ngClass]="{
                 'text-sm': depth === 0,
                 'text-xs': depth === 1,
@@ -278,7 +285,7 @@
             </button>
           </div>
 
-        <div class="ml-auto flex items-center gap-2">
+        <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
           <button
             *ngIf="isLeaf(goal)"
             (click)="toggleParticipations()"
@@ -326,7 +333,6 @@
           <!-- Boutons admin -->
           <div *ngIf="isAdmin" class="flex gap-2">
             <button
-              *ngIf="goal.parentId === null"
               (click)="togglePinned()"
               [disabled]="goal.pinned"
               [ngClass]="{
