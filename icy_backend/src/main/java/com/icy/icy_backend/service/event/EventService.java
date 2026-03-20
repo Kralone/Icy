@@ -180,6 +180,7 @@ public class EventService {
     }
 
 
+    @Transactional
     public ResponseEntity<MessageResponse<Void>> deleteEvent(UUID id) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
         List<EventParticipation> participations = participationRepository.findAllByEvent(event).orElse(List.of());
@@ -189,6 +190,7 @@ public class EventService {
                 .map(User::getId)
                 .distinct()
                 .toList();
+        participationRepository.deleteAllByEvent(event);
         eventRepository.delete(event);
         eventWebSocketService.sendEventUpdate(event, "DELETE");
         eventPublisher.publishEventDeleted(event);

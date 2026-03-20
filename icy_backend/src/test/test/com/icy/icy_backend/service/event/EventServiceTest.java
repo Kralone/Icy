@@ -17,6 +17,7 @@ import com.icy.icy_backend.service.notification.NotificationPushService;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.websocket.EventWebSocketService;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
@@ -157,6 +158,49 @@ class EventServiceTest {
         assertThat(actual).isEqualTo(response);
         verify(eventPublisher).publishEventUpdated(event);
         verify(eventPublisher).publishEventEnded(event);
+    }
+
+    @Test
+    void deleteEventRemovesParticipationsBeforeDeletingEvent() {
+        EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
+        EventTypeRepository eventTypeRepository = Mockito.mock(EventTypeRepository.class);
+        EventParticipationRepository participationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserService userService = Mockito.mock(UserService.class);
+        AuthService authService = Mockito.mock(AuthService.class);
+        EventPublisher eventPublisher = Mockito.mock(EventPublisher.class);
+        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+
+        EventService service = new EventService(eventRepository, messageService, eventWebSocketService,
+                eventTypeRepository, participationRepository, userService, authService, eventPublisher, notificationPushService);
+
+        UUID eventId = UUID.randomUUID();
+        Event event = new Event();
+        event.setId(eventId);
+        event.setTitle("Raid");
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        User participantUser = new User();
+        participantUser.setId(UUID.randomUUID());
+        EventParticipation participation = new EventParticipation();
+        participation.setEvent(event);
+        participation.setUser(participantUser);
+        when(participationRepository.findAllByEvent(event)).thenReturn(Optional.of(List.of(participation)));
+
+        ResponseEntity<MessageResponse<Void>> response = okResponse(null);
+        Mockito.doReturn(response).when(messageService).buildResponse(eq("event.deleted"), eq(null));
+
+        ResponseEntity<MessageResponse<Void>> actual = service.deleteEvent(eventId);
+
+        assertThat(actual).isEqualTo(response);
+        InOrder inOrder = Mockito.inOrder(participationRepository, eventRepository);
+        inOrder.verify(participationRepository).deleteAllByEvent(event);
+        inOrder.verify(eventRepository).delete(event);
+        verify(eventWebSocketService).sendEventUpdate(event, "DELETE");
+        verify(eventPublisher).publishEventDeleted(event);
+        verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
+        verify(notificationPushService).sendToUsers(eq(List.of(participantUser.getId())), any(), any(), any(), any());
     }
 
     @Test
