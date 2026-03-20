@@ -4,6 +4,12 @@ export interface ShipSalePoint {
   price: number;
 }
 
+export interface ShipCargoGrid {
+  sizeX: number;
+  sizeY: number;
+  sizeZ: number;
+}
+
 export interface Ship {
   id: number;
   name: string;
@@ -21,6 +27,7 @@ export interface Ship {
   rewardInGame?: boolean;
   loaner?: boolean;
   salePoints?: ShipSalePoint[];
+  cargoGrids?: ShipCargoGrid[];
 }
 
 export interface ShipCreateDTO {
@@ -36,5 +43,6 @@ export interface ShipCreateDTO {
 
   flightReady: boolean;
   salePoints?: ShipSalePoint[];
+  cargoGrids?: ShipCargoGrid[];
 }
 

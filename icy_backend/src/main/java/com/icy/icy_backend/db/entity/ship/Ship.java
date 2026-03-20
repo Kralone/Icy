@@ -52,6 +52,10 @@ public class Ship {
     @OrderBy("id ASC")
     private List<ShipSalePoint> salePoints = new ArrayList<>();
 
+    @OneToMany(mappedBy = "ship", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("id ASC")
+    private List<ShipCargoGrid> cargoGrids = new ArrayList<>();
+
     public void setSalePoints(List<ShipSalePoint> salePoints) {
         List<ShipSalePoint> nextSalePoints = salePoints == null ? List.of() : new ArrayList<>(salePoints);
         this.salePoints.clear();
@@ -61,6 +65,18 @@ public class Ship {
             }
             salePoint.setShip(this);
             this.salePoints.add(salePoint);
+        }
+    }
+
+    public void setCargoGrids(List<ShipCargoGrid> cargoGrids) {
+        List<ShipCargoGrid> nextCargoGrids = cargoGrids == null ? List.of() : new ArrayList<>(cargoGrids);
+        this.cargoGrids.clear();
+        for (ShipCargoGrid cargoGrid : nextCargoGrids) {
+            if (cargoGrid == null) {
+                continue;
+            }
+            cargoGrid.setShip(this);
+            this.cargoGrids.add(cargoGrid);
         }
     }
 }

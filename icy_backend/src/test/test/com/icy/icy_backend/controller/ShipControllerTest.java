@@ -57,6 +57,8 @@ class ShipControllerTest {
         when(shipService.getAllShips()).thenReturn(okResponse(List.of()));
         when(shipService.getShipsByBrand(eq("RSI"))).thenReturn(okResponse(List.of()));
         when(shipService.createShip(any(Ship.class))).thenReturn(okResponse(new Ship()));
+        when(shipService.updateShip(eq(1L), any(Ship.class))).thenReturn(okResponse(new Ship()));
+        when(shipService.deleteShip(eq(1L))).thenReturn(okResponse("ok"));
         when(brandService.getAllBrands()).thenReturn(okResponse(List.of()));
         when(brandService.getAllBrandsWithImages()).thenReturn(okResponse(List.of()));
         when(brandService.createBrand(any(Brand.class))).thenReturn(okResponse(new Brand()));
@@ -71,6 +73,14 @@ class ShipControllerTest {
         mockMvc.perform(post("/api/ships/create")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(new Ship())))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/ships/update")
+                        .param("id", "1")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(new Ship())))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/ships")
+                        .param("id", "1"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/ships/brands"))

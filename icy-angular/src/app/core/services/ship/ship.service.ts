@@ -92,14 +92,14 @@ export class ShipService {
   /**
    * Met à jour un vaisseau existant.
    */
-  updateShip(id: string, ship: ShipCreateDTO): Observable<any> {
+  updateShip(id: number, ship: ShipCreateDTO): Observable<any> {
     return this.http.put(`/api/ships/update?id=${id}`, ship);
   }
 
   /**
    * Supprime un vaisseau (admin).
    */
-  deleteShipAdmin(id: string): Observable<any> {
+  deleteShipAdmin(id: number): Observable<any> {
     return this.http.delete(`/api/ships?id=${id}`);
   }
 

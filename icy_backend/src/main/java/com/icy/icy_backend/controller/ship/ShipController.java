@@ -38,6 +38,19 @@ public class ShipController {
         return shipService.createShip(ship);
     }
 
+    @PutMapping("/update")
+    public ResponseEntity<MessageResponse<Ship>> updateShip(
+            @RequestParam Long id,
+            @RequestBody Ship ship
+    ) {
+        return shipService.updateShip(id, ship);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<MessageResponse<String>> deleteShip(@RequestParam Long id) {
+        return shipService.deleteShip(id);
+    }
+
 
     // === BRANDS ===
     @GetMapping("/brands")

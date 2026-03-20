@@ -55,6 +55,7 @@ public class ShipService {
 
         ship.setBrand(brand);
         ship.setSalePoints(ship.getSalePoints());
+        ship.setCargoGrids(ship.getCargoGrids());
         Ship savedShip = shipRepository.save(ship);
         notificationPushService.sendBroadcast(
                 "Catalogue : nouveau vaisseau",
@@ -64,6 +65,36 @@ public class ShipService {
         );
 
         return messageService.buildResponse("ship.created", savedShip, savedShip.getName());
+    }
+
+    public ResponseEntity<MessageResponse<Ship>> updateShip(Long shipId, Ship payload) {
+        logger.info("Mise à jour du vaisseau avec ID {}", shipId);
+
+        Ship existing = findShipById(shipId);
+        Brand brand = brandRepository.findByName(payload.getBrand().getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + payload.getBrand().getName()));
+
+        existing.setName(payload.getName());
+        existing.setBrand(brand);
+        existing.setImageUrl(payload.getImageUrl());
+        existing.setFocus(payload.getFocus());
+        existing.setScu(payload.getScu());
+        existing.setSize(payload.getSize());
+        existing.setCrew(payload.getCrew());
+        existing.setNotes(payload.getNotes());
+        existing.setFlightReady(Boolean.TRUE.equals(payload.getFlightReady()));
+        existing.setSalePoints(payload.getSalePoints());
+        existing.setCargoGrids(payload.getCargoGrids());
+
+        Ship updated = shipRepository.save(existing);
+        return messageService.buildResponse("ship.updated", updated, updated.getName());
+    }
+
+    public ResponseEntity<MessageResponse<String>> deleteShip(Long shipId) {
+        Ship existing = findShipById(shipId);
+        logger.info("Suppression du vaisseau {}", existing.getName());
+        shipRepository.delete(existing);
+        return messageService.buildResponse("ship.deleted", existing.getName(), existing.getName());
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getShipsByBrand(String brandName) {
