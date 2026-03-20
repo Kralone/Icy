@@ -10,6 +10,9 @@ public record MiningSheetSummaryDTO(
         long totalEstimatedAuec,
         long totalCostsAuec,
         long netEstimatedAuec,
-        List<MiningSheetSettlementDTO> settlements
+        List<MiningSheetSettlementDTO> settlements,
+        long totalDeclaredSalesAuec,
+        List<MiningSheetSettlementDTO> saleSettlements,
+        List<MiningSheetSaleTransferDTO> saleTransfers
 ) {
 }

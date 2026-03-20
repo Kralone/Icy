@@ -36,6 +36,35 @@ export interface MiningSheetJob {
   timerEditableByCurrentUser: boolean;
 }
 
+export interface MiningSheetShipCargoGrid {
+  sizeX: number;
+  sizeY: number;
+  sizeZ: number;
+  slotCount: number;
+}
+
+export interface MiningSheetShip {
+  id: string;
+  shipId: number | null;
+  shipName: string;
+  shipImageUrl: string | null;
+  shipBrandName: string | null;
+  shipFocus: string | null;
+  shipSize: string | null;
+  shipScu: number | null;
+  addedBy: MiningSheetUser;
+  addedAt: string;
+  cargoGrids: MiningSheetShipCargoGrid[];
+  removableByCurrentUser: boolean;
+}
+
+export interface MiningSheetSale {
+  id: string;
+  declaredBy: MiningSheetUser;
+  creditAuec: number;
+  declaredAt: string;
+}
+
 export interface MiningSheetSummaryOre {
   oreName: string;
   totalCscu: number;
@@ -68,6 +97,14 @@ export interface MiningSheetSettlement {
   payoutAuec: number;
 }
 
+export interface MiningSheetSaleTransfer {
+  fromUserId: string;
+  fromUsername: string;
+  toUserId: string;
+  toUsername: string;
+  amountAuec: number;
+}
+
 export interface MiningSheetSummary {
   ores: MiningSheetSummaryOre[];
   keptOres: MiningSheetSummaryOre[];
@@ -77,6 +114,9 @@ export interface MiningSheetSummary {
   totalCostsAuec: number;
   netEstimatedAuec: number;
   settlements: MiningSheetSettlement[];
+  totalDeclaredSalesAuec: number;
+  saleSettlements: MiningSheetSettlement[];
+  saleTransfers: MiningSheetSaleTransfer[];
 }
 
 export interface MiningSheet {
@@ -91,6 +131,8 @@ export interface MiningSheet {
   createdBy: MiningSheetUser;
   members: MiningSheetUser[];
   jobs: MiningSheetJob[];
+  sheetShips: MiningSheetShip[];
+  sales: MiningSheetSale[];
   summary: MiningSheetSummary;
   editableByCurrentUser: boolean;
   adminView: boolean;
@@ -161,6 +203,18 @@ export class MiningSheetService {
 
   deleteJob(sheetId: string, jobId: string): Observable<MiningSheet> {
     return this.http.delete<MiningSheet>(`${this.baseUrl}/${sheetId}/jobs/${jobId}`);
+  }
+
+  addSheetShip(sheetId: string, shipId: number): Observable<MiningSheet> {
+    return this.http.post<MiningSheet>(`${this.baseUrl}/${sheetId}/ships`, { shipId });
+  }
+
+  removeSheetShip(sheetId: string, sheetShipId: string): Observable<MiningSheet> {
+    return this.http.delete<MiningSheet>(`${this.baseUrl}/${sheetId}/ships/${sheetShipId}`);
+  }
+
+  declareSale(sheetId: string, creditAuec: number): Observable<MiningSheet> {
+    return this.http.post<MiningSheet>(`${this.baseUrl}/${sheetId}/sales`, { creditAuec });
   }
 
   suggestSaleLocations(query: string): Observable<string[]> {

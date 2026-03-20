@@ -255,6 +255,59 @@
   gap: 12px;
 }
 
+.detail-tabs-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.detail-tabs-caption {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(148, 163, 184, 0.86);
+}
+
+.detail-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.34);
+  padding: 0 6px;
+}
+
+.detail-tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  padding: 9px 14px;
+  background: rgba(15, 23, 42, 0.44);
+  color: rgba(191, 219, 254, 0.82);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  position: relative;
+  top: 1px;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.detail-tab:hover {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.62);
+}
+
+.detail-tab.is-active {
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(56, 189, 248, 0.58);
+  box-shadow: 0 -8px 20px rgba(2, 132, 199, 0.2);
+}
+
+.detail-tab-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .section-head-actions {
   display: flex;
   flex-wrap: wrap;

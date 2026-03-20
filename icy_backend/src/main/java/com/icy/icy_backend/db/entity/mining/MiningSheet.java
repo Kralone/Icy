@@ -56,6 +56,14 @@ public class MiningSheet {
     @OrderBy("createdAt DESC")
     private Set<MiningSheetJob> jobs = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    private Set<MiningSheetShip> sheetShips = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    private Set<MiningSheetSale> sales = new LinkedHashSet<>();
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();

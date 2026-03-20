@@ -89,170 +89,124 @@
 
       <div *ngIf="actionError" class="state-card state-card--error">{{ actionError }}</div>
 
-      <section class="section-block">
-        <div class="section-head">
-          <h3>Jobs</h3>
-          <div class="section-head-actions">
-            <button
-              type="button"
-              class="btn btn-job-cta btn-job-cta--refinery"
-              [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
-              (click)="startNewJob('REFINERY')"
-            >
-              + Raffinage
-            </button>
-            <button
-              type="button"
-              class="btn btn-job-cta btn-job-cta--fuel"
-              [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
-              (click)="startNewJob('FUEL')"
-            >
-              + Carburant
-            </button>
-            <button
-              type="button"
-              class="btn btn-job-cta btn-job-cta--repair"
-              [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
-              (click)="startNewJob('REPAIR')"
-            >
-              + Réparation
-            </button>
-            <button
-              type="button"
-              class="btn btn-job-cta btn-job-cta--material"
-              [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
-              (click)="startNewJob('MATERIAL')"
-            >
-              + Matériel
-            </button>
-          </div>
+      <div class="detail-tabs-wrap">
+        <p class="detail-tabs-caption">Onglets de la fiche</p>
+        <div class="detail-tabs" role="tablist" aria-label="Onglets de la fiche">
+          <button
+            id="sheet-tab-jobs"
+            type="button"
+            role="tab"
+            class="detail-tab"
+            [class.is-active]="activeDetailTab === 'JOBS'"
+            [attr.aria-controls]="'sheet-panel-jobs'"
+            [attr.aria-selected]="activeDetailTab === 'JOBS'"
+            [attr.tabindex]="activeDetailTab === 'JOBS' ? 0 : -1"
+            (click)="setDetailTab('JOBS')"
+          >
+            Opérations
+          </button>
+          <button
+            id="sheet-tab-logistics"
+            type="button"
+            role="tab"
+            class="detail-tab"
+            [class.is-active]="activeDetailTab === 'LOGISTICS'"
+            [attr.aria-controls]="'sheet-panel-logistics'"
+            [attr.aria-selected]="activeDetailTab === 'LOGISTICS'"
+            [attr.tabindex]="activeDetailTab === 'LOGISTICS' ? 0 : -1"
+            (click)="setDetailTab('LOGISTICS')"
+          >
+            Logistique
+          </button>
+          <button
+            id="sheet-tab-sales"
+            type="button"
+            role="tab"
+            class="detail-tab"
+            [class.is-active]="activeDetailTab === 'SALES'"
+            [attr.aria-controls]="'sheet-panel-sales'"
+            [attr.aria-selected]="activeDetailTab === 'SALES'"
+            [attr.tabindex]="activeDetailTab === 'SALES' ? 0 : -1"
+            (click)="setDetailTab('SALES')"
+          >
+            Vente
+          </button>
         </div>
+      </div>
 
-        <div class="jobs-toolbar">
-          <div class="job-type-filters" aria-label="Filtrer par type">
-            <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'ALL'" (click)="setJobTypeFilter('ALL')">Tous</button>
-            <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REFINERY'" (click)="setJobTypeFilter('REFINERY')">Raffinage</button>
-            <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'FUEL'" (click)="setJobTypeFilter('FUEL')">Carburant</button>
-            <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REPAIR'" (click)="setJobTypeFilter('REPAIR')">Réparation</button>
-            <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'MATERIAL'" (click)="setJobTypeFilter('MATERIAL')">Matériel</button>
+      <div
+        *ngIf="activeDetailTab === 'JOBS'"
+        id="sheet-panel-jobs"
+        role="tabpanel"
+        [attr.aria-labelledby]="'sheet-tab-jobs'"
+        class="detail-tab-panel"
+      >
+        <section class="section-block">
+          <div class="section-head">
+            <h3>Jobs</h3>
+            <div class="section-head-actions">
+              <button
+                type="button"
+                class="btn btn-job-cta btn-job-cta--refinery"
+                [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
+                (click)="startNewJob('REFINERY')"
+              >
+                + Raffinage
+              </button>
+              <button
+                type="button"
+                class="btn btn-job-cta btn-job-cta--fuel"
+                [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
+                (click)="startNewJob('FUEL')"
+              >
+                + Carburant
+              </button>
+              <button
+                type="button"
+                class="btn btn-job-cta btn-job-cta--repair"
+                [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
+                (click)="startNewJob('REPAIR')"
+              >
+                + Réparation
+              </button>
+              <button
+                type="button"
+                class="btn btn-job-cta btn-job-cta--material"
+                [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
+                (click)="startNewJob('MATERIAL')"
+              >
+                + Matériel
+              </button>
+            </div>
           </div>
-          <label class="job-owner-filter">
-            Utilisateur
-            <select [ngModel]="jobOwnerFilterUserId" (ngModelChange)="setJobOwnerFilter($event)">
-              <option value="">Tous</option>
-              <option *ngFor="let owner of usersForJobFilter(sheet)" [value]="owner.id">{{ owner.username }}</option>
-            </select>
-          </label>
-        </div>
-
-        <article *ngIf="newJobDraft as draft" class="job-card job-card--new">
-          <div class="job-card__head">
-            <strong>Nouveau job {{ jobTypeLabel(draft.type) }}</strong>
-            <button type="button" class="btn btn-ghost" (click)="cancelNewJob()">Fermer</button>
-          </div>
-
-          <div class="job-form-grid">
-            <label>
-              Propriétaire
-              <input type="text" [value]="currentUserId ? memberName(currentUserId) : 'Utilisateur connecté'" disabled />
-            </label>
-            <label>
-              Cout (aUEC)
-              <input
-                type="text"
-                inputmode="numeric"
-                [ngModel]="draft.costText"
-                (ngModelChange)="onCostInputChange(draft, $event)"
-              />
-            </label>
-            <label *ngIf="draft.type === 'REFINERY'">
-              Méthode
-              <select [(ngModel)]="draft.refineryMethod">
-                <option *ngFor="let method of refiningMethods" [ngValue]="method">{{ method }}</option>
+  
+          <div class="jobs-toolbar">
+            <div class="job-type-filters" aria-label="Filtrer par type">
+              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'ALL'" (click)="setJobTypeFilter('ALL')">Tous</button>
+              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REFINERY'" (click)="setJobTypeFilter('REFINERY')">Raffinage</button>
+              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'FUEL'" (click)="setJobTypeFilter('FUEL')">Carburant</button>
+              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REPAIR'" (click)="setJobTypeFilter('REPAIR')">Réparation</button>
+              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'MATERIAL'" (click)="setJobTypeFilter('MATERIAL')">Matériel</button>
+            </div>
+            <label class="job-owner-filter">
+              Utilisateur
+              <select [ngModel]="jobOwnerFilterUserId" (ngModelChange)="setJobOwnerFilter($event)">
+                <option value="">Tous</option>
+                <option *ngFor="let owner of usersForJobFilter(sheet)" [value]="owner.id">{{ owner.username }}</option>
               </select>
             </label>
-            <label *ngIf="draft.type === 'REFINERY'">
-              Durée (HHhmm)
-              <input
-                #newDurationInput
-                type="text"
-                inputmode="numeric"
-                maxlength="5"
-                placeholder="0130"
-                [ngModel]="draft.durationText"
-                (focus)="onDurationFocus(draft, newDurationInput)"
-                (keydown)="onDurationKeydown(draft, $event, newDurationInput)"
-              />
-            </label>
           </div>
 
-          <div *ngIf="draft.type === 'REFINERY'" class="ore-list">
-            <div class="ore-list__head">
-              <strong>Minerais</strong>
-              <button type="button" class="btn btn-ghost" (click)="addOreRow(draft)">+ Minerai</button>
+          <article *ngIf="newJobDraft as draft" class="job-card job-card--new">
+            <div class="job-card__head">
+              <strong>Nouveau job {{ jobTypeLabel(draft.type) }}</strong>
+              <button type="button" class="btn btn-ghost" (click)="cancelNewJob()">Fermer</button>
             </div>
-            <datalist id="ore-options-list">
-              <option *ngFor="let oreName of availableOreNames(sheet)" [value]="oreName"></option>
-            </datalist>
-              <div class="ore-row" *ngFor="let ore of draft.ores; let i = index">
-                <input type="search" list="ore-options-list" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" />
-                <div class="cscu-field">
-                  <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" placeholder="cSCU" />
-                  <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
-                  <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
-                </div>
-                <button
-                  type="button"
-                  class="sale-switch"
-                  [attr.data-mode]="ore.includeInSale ? 'sale' : 'keep'"
-                  (click)="ore.includeInSale = !ore.includeInSale"
-                >
-                  {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
-                </button>
-                <button type="button" class="btn btn-ghost" (click)="removeOreRow(draft, i)">Supprimer</button>
-              </div>
-          </div>
 
-          <div class="job-actions">
-            <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveNewJob()">Publier le job</button>
-          </div>
-        </article>
-
-        <div *ngIf="!sheet.jobs.length" class="empty">Aucun job pour cette fiche.</div>
-        <div *ngIf="sheet.jobs.length && !filteredJobCount(sheet)" class="empty">Aucun job avec ces filtres.</div>
-
-        <article *ngFor="let job of paginatedJobs(sheet); trackBy: trackJob" class="job-card">
-          <button type="button" class="job-card__toggle" (click)="toggleJob(job)">
-            <div class="job-card__title">
-              <strong>{{ job.owner.username }}</strong>
-              <span>{{ jobTypeLabel(job.type) }}</span>
-            </div>
-            <div class="job-card__summary">
-              <div class="job-summary-metrics">
-                <ng-container *ngIf="job.type === 'REFINERY'">
-                  <span
-                    *ngFor="let ore of job.ores"
-                    class="job-chip"
-                    [attr.data-keep]="ore.includeInSale ? 'sale' : 'keep'"
-                  >
-                    {{ ore.oreName }} • {{ formatNumber(ore.quantityScu) }} SCU • {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
-                  </span>
-                </ng-container>
-                <span *ngIf="job.type !== 'REFINERY'" class="job-chip">{{ formatNumber(job.costAuec) }} aUEC</span>
-                <span class="job-timer">{{ job.finishAt ? formatDuration(jobRemainingSeconds(job)) : '-' }}</span>
-              </div>
-            </div>
-          </button>
-
-          <div *ngIf="isJobExpanded(job.id) && draftForJob(job.id) as draft" class="job-card__body">
             <div class="job-form-grid">
               <label>
-              Propriétaire
-                <select [(ngModel)]="draft.ownerUserId" [disabled]="!isAdmin || !job.editableByCurrentUser">
-                  <option *ngFor="let owner of usersForSheetOwners(sheet); trackBy: trackUser" [ngValue]="owner.id">
-                    {{ owner.username }}
-                  </option>
-                </select>
+                Propriétaire
+                <input type="text" [value]="currentUserId ? memberName(currentUserId) : 'Utilisateur connecté'" disabled />
               </label>
               <label>
                 Cout (aUEC)
@@ -261,27 +215,25 @@
                   inputmode="numeric"
                   [ngModel]="draft.costText"
                   (ngModelChange)="onCostInputChange(draft, $event)"
-                  [disabled]="!job.editableByCurrentUser"
                 />
               </label>
               <label *ngIf="draft.type === 'REFINERY'">
                 Méthode
-                <select [(ngModel)]="draft.refineryMethod" [disabled]="!job.editableByCurrentUser">
+                <select [(ngModel)]="draft.refineryMethod">
                   <option *ngFor="let method of refiningMethods" [ngValue]="method">{{ method }}</option>
                 </select>
               </label>
               <label *ngIf="draft.type === 'REFINERY'">
                 Durée (HHhmm)
                 <input
-                  #editDurationInput
+                  #newDurationInput
                   type="text"
                   inputmode="numeric"
                   maxlength="5"
                   placeholder="0130"
                   [ngModel]="draft.durationText"
-                  (focus)="onDurationFocus(draft, editDurationInput)"
-                  (keydown)="onDurationKeydown(draft, $event, editDurationInput)"
-                  [disabled]="!job.timerEditableByCurrentUser"
+                  (focus)="onDurationFocus(draft, newDurationInput)"
+                  (keydown)="onDurationKeydown(draft, $event, newDurationInput)"
                 />
               </label>
             </div>
@@ -289,50 +241,186 @@
             <div *ngIf="draft.type === 'REFINERY'" class="ore-list">
               <div class="ore-list__head">
                 <strong>Minerais</strong>
-                <button type="button" class="btn btn-ghost" [disabled]="!job.editableByCurrentUser" (click)="addOreRow(draft)">+ Minerai</button>
+                <button type="button" class="btn btn-ghost" (click)="addOreRow(draft)">+ Minerai</button>
               </div>
-              <datalist id="ore-options-list-edit">
+              <datalist id="ore-options-list">
                 <option *ngFor="let oreName of availableOreNames(sheet)" [value]="oreName"></option>
               </datalist>
-              <div class="ore-row" *ngFor="let ore of draft.ores; let i = index">
-                <input type="search" list="ore-options-list-edit" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" [disabled]="!job.editableByCurrentUser" />
-                <div class="cscu-field">
-                  <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" [disabled]="!job.editableByCurrentUser" />
-                  <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
-                  <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
+                <div class="ore-row" *ngFor="let ore of draft.ores; let i = index">
+                  <input type="search" list="ore-options-list" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" />
+                  <div class="cscu-field">
+                    <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" placeholder="cSCU" />
+                    <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
+                    <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="sale-switch"
+                    [attr.data-mode]="ore.includeInSale ? 'sale' : 'keep'"
+                    (click)="ore.includeInSale = !ore.includeInSale"
+                  >
+                    {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" (click)="removeOreRow(draft, i)">Supprimer</button>
                 </div>
-                <button
-                  type="button"
-                  class="sale-switch"
-                  [attr.data-mode]="ore.includeInSale ? 'sale' : 'keep'"
-                  [disabled]="!job.editableByCurrentUser"
-                  (click)="ore.includeInSale = !ore.includeInSale"
-                >
-                  {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
-                </button>
-                <button type="button" class="btn btn-ghost" [disabled]="!job.editableByCurrentUser" (click)="removeOreRow(draft, i)">Supprimer</button>
-              </div>
             </div>
 
             <div class="job-actions">
-              <button type="button" class="btn btn-ghost" [disabled]="saving" (click)="resetJobDraft(job)">Annuler</button>
-              <button type="button" class="btn btn-primary" [disabled]="saving || !job.editableByCurrentUser" (click)="saveJob(job)">Enregistrer</button>
-              <button type="button" class="btn btn-danger" [disabled]="saving || !job.editableByCurrentUser" (click)="deleteJob(job)">Supprimer</button>
+              <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveNewJob()">Publier le job</button>
+            </div>
+          </article>
+
+          <div *ngIf="!sheet.jobs.length" class="empty">Aucun job pour cette fiche.</div>
+          <div *ngIf="sheet.jobs.length && !filteredJobCount(sheet)" class="empty">Aucun job avec ces filtres.</div>
+
+          <article *ngFor="let job of paginatedJobs(sheet); trackBy: trackJob" class="job-card">
+            <button type="button" class="job-card__toggle" (click)="toggleJob(job)">
+              <div class="job-card__title">
+                <strong>{{ job.owner.username }}</strong>
+                <span>{{ jobTypeLabel(job.type) }}</span>
+              </div>
+              <div class="job-card__summary">
+                <div class="job-summary-metrics">
+                  <ng-container *ngIf="job.type === 'REFINERY'">
+                    <span
+                      *ngFor="let ore of job.ores"
+                      class="job-chip"
+                      [attr.data-keep]="ore.includeInSale ? 'sale' : 'keep'"
+                    >
+                      {{ ore.oreName }} • {{ formatNumber(ore.quantityScu) }} SCU • {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
+                    </span>
+                  </ng-container>
+                  <span *ngIf="job.type !== 'REFINERY'" class="job-chip">{{ formatNumber(job.costAuec) }} aUEC</span>
+                  <span class="job-timer">{{ job.finishAt ? formatDuration(jobRemainingSeconds(job)) : '-' }}</span>
+                </div>
+              </div>
+            </button>
+
+            <div *ngIf="isJobExpanded(job.id) && draftForJob(job.id) as draft" class="job-card__body">
+              <div class="job-form-grid">
+                <label>
+                Propriétaire
+                  <select [(ngModel)]="draft.ownerUserId" [disabled]="!isAdmin || !job.editableByCurrentUser">
+                    <option *ngFor="let owner of usersForSheetOwners(sheet); trackBy: trackUser" [ngValue]="owner.id">
+                      {{ owner.username }}
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Cout (aUEC)
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    [ngModel]="draft.costText"
+                    (ngModelChange)="onCostInputChange(draft, $event)"
+                    [disabled]="!job.editableByCurrentUser"
+                  />
+                </label>
+                <label *ngIf="draft.type === 'REFINERY'">
+                  Méthode
+                  <select [(ngModel)]="draft.refineryMethod" [disabled]="!job.editableByCurrentUser">
+                    <option *ngFor="let method of refiningMethods" [ngValue]="method">{{ method }}</option>
+                  </select>
+                </label>
+                <label *ngIf="draft.type === 'REFINERY'">
+                  Durée (HHhmm)
+                  <input
+                    #editDurationInput
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="0130"
+                    [ngModel]="draft.durationText"
+                    (focus)="onDurationFocus(draft, editDurationInput)"
+                    (keydown)="onDurationKeydown(draft, $event, editDurationInput)"
+                    [disabled]="!job.timerEditableByCurrentUser"
+                  />
+                </label>
+              </div>
+
+              <div *ngIf="draft.type === 'REFINERY'" class="ore-list">
+                <div class="ore-list__head">
+                  <strong>Minerais</strong>
+                  <button type="button" class="btn btn-ghost" [disabled]="!job.editableByCurrentUser" (click)="addOreRow(draft)">+ Minerai</button>
+                </div>
+                <datalist id="ore-options-list-edit">
+                  <option *ngFor="let oreName of availableOreNames(sheet)" [value]="oreName"></option>
+                </datalist>
+                <div class="ore-row" *ngFor="let ore of draft.ores; let i = index">
+                  <input type="search" list="ore-options-list-edit" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" [disabled]="!job.editableByCurrentUser" />
+                  <div class="cscu-field">
+                    <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" [disabled]="!job.editableByCurrentUser" />
+                    <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
+                    <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="sale-switch"
+                    [attr.data-mode]="ore.includeInSale ? 'sale' : 'keep'"
+                    [disabled]="!job.editableByCurrentUser"
+                    (click)="ore.includeInSale = !ore.includeInSale"
+                  >
+                    {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" [disabled]="!job.editableByCurrentUser" (click)="removeOreRow(draft, i)">Supprimer</button>
+                </div>
+              </div>
+
+              <div class="job-actions">
+                <button type="button" class="btn btn-ghost" [disabled]="saving" (click)="resetJobDraft(job)">Annuler</button>
+                <button type="button" class="btn btn-primary" [disabled]="saving || !job.editableByCurrentUser" (click)="saveJob(job)">Enregistrer</button>
+                <button type="button" class="btn btn-danger" [disabled]="saving || !job.editableByCurrentUser" (click)="deleteJob(job)">Supprimer</button>
+              </div>
+            </div>
+          </article>
+
+          <div *ngIf="filteredJobCount(sheet)" class="jobs-pagination">
+            <span>Affichage {{ displayedJobCount(sheet) }} / {{ filteredJobCount(sheet) }}</span>
+            <div class="jobs-pagination-actions">
+              <button type="button" class="btn btn-ghost" [disabled]="currentJobPageFor(sheet) <= 1" (click)="goToPreviousJobPage(sheet)">Précédent</button>
+              <span>Page {{ currentJobPageFor(sheet) }} / {{ totalJobPages(sheet) }}</span>
+              <button type="button" class="btn btn-ghost" [disabled]="currentJobPageFor(sheet) >= totalJobPages(sheet)" (click)="goToNextJobPage(sheet)">Suivant</button>
             </div>
           </div>
-        </article>
+        </section>
 
-        <div *ngIf="filteredJobCount(sheet)" class="jobs-pagination">
-          <span>Affichage {{ displayedJobCount(sheet) }} / {{ filteredJobCount(sheet) }}</span>
-          <div class="jobs-pagination-actions">
-            <button type="button" class="btn btn-ghost" [disabled]="currentJobPageFor(sheet) <= 1" (click)="goToPreviousJobPage(sheet)">Précédent</button>
-            <span>Page {{ currentJobPageFor(sheet) }} / {{ totalJobPages(sheet) }}</span>
-            <button type="button" class="btn btn-ghost" [disabled]="currentJobPageFor(sheet) >= totalJobPages(sheet)" (click)="goToNextJobPage(sheet)">Suivant</button>
-          </div>
-        </div>
-      </section>
+        <app-mining-sheets-summary [sheet]="sheet"></app-mining-sheets-summary>
+      </div>
 
-      <app-mining-sheets-summary [sheet]="sheet"></app-mining-sheets-summary>
+      <div
+        *ngIf="activeDetailTab === 'LOGISTICS'"
+        id="sheet-panel-logistics"
+        role="tabpanel"
+        [attr.aria-labelledby]="'sheet-tab-logistics'"
+        class="detail-tab-panel"
+      >
+        <app-mining-sheets-logistics
+          [sheet]="sheet"
+          [saving]="saving"
+          [canEdit]="sheet.editableByCurrentUser || isAdmin"
+          (addShip)="addShipToSelectedSheet($event)"
+          (removeShip)="removeShipFromSelectedSheet($event)"
+        ></app-mining-sheets-logistics>
+      </div>
+
+      <div
+        *ngIf="activeDetailTab === 'SALES'"
+        id="sheet-panel-sales"
+        role="tabpanel"
+        [attr.aria-labelledby]="'sheet-tab-sales'"
+        class="detail-tab-panel"
+      >
+        <app-mining-sheets-sales
+          [sheet]="sheet"
+          [saving]="saving"
+          [saleSheets]="batchSaleSheets"
+          [selectedSheetId]="sheet.id"
+          [currentUserId]="currentUserId"
+          [currentUsername]="currentUsername"
+          [declarationVersion]="salesDeclarationVersion"
+          (declareSales)="declareSales($event)"
+        ></app-mining-sheets-sales>
+      </div>
   </section>
 </ng-template>
 

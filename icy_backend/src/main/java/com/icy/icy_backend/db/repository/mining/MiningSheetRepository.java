@@ -17,7 +17,14 @@ public interface MiningSheetRepository extends JpaRepository<MiningSheet, UUID> 
             "members.user",
             "jobs",
             "jobs.ownerUser",
-            "jobs.ores"
+            "jobs.ores",
+            "sheetShips",
+            "sheetShips.ship",
+            "sheetShips.ship.brand",
+            "sheetShips.ship.cargoGrids",
+            "sheetShips.addedByUser",
+            "sales",
+            "sales.declaredByUser"
     })
     @Query("select distinct s from MiningSheet s order by s.operationDate desc, s.createdAt desc")
     List<MiningSheet> findAllWithDetails();
@@ -28,7 +35,14 @@ public interface MiningSheetRepository extends JpaRepository<MiningSheet, UUID> 
             "members.user",
             "jobs",
             "jobs.ownerUser",
-            "jobs.ores"
+            "jobs.ores",
+            "sheetShips",
+            "sheetShips.ship",
+            "sheetShips.ship.brand",
+            "sheetShips.ship.cargoGrids",
+            "sheetShips.addedByUser",
+            "sales",
+            "sales.declaredByUser"
     })
     @Query("select s from MiningSheet s where s.id = :id")
     Optional<MiningSheet> findByIdWithDetails(@Param("id") UUID id);

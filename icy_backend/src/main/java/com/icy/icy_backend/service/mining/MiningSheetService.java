@@ -8,9 +8,12 @@ import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.front.UexResourceSaleDTO;
 import com.icy.icy_backend.controller.dto.response.mining.*;
 import com.icy.icy_backend.db.entity.mining.*;
+import com.icy.icy_backend.db.entity.ship.Ship;
+import com.icy.icy_backend.db.entity.ship.ShipCargoGrid;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserRole;
 import com.icy.icy_backend.db.repository.mining.MiningSheetRepository;
+import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ForbiddenException;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,17 +37,20 @@ import java.util.*;
 public class MiningSheetService {
     private static final DateTimeFormatter SHEET_NAME_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM HH:mm");
     private final MiningSheetRepository miningSheetRepository;
+    private final ShipRepository shipRepository;
     private final UserRepository userRepository;
     private final UexDatasetService uexDatasetService;
     private final MiningSheetWebSocketService miningSheetWebSocketService;
 
     public MiningSheetService(
             MiningSheetRepository miningSheetRepository,
+            ShipRepository shipRepository,
             UserRepository userRepository,
             UexDatasetService uexDatasetService,
             MiningSheetWebSocketService miningSheetWebSocketService
     ) {
         this.miningSheetRepository = miningSheetRepository;
+        this.shipRepository = shipRepository;
         this.userRepository = userRepository;
         this.uexDatasetService = uexDatasetService;
         this.miningSheetWebSocketService = miningSheetWebSocketService;
@@ -225,6 +232,86 @@ public class MiningSheetService {
         return dto;
     }
 
+    public MiningSheetDTO addShip(UUID sheetId, Long shipId) {
+        if (shipId == null) {
+            throw new BadRequestException("Le vaisseau est obligatoire.");
+        }
+
+        UUID currentUserId = AuthUtils.getCurrentUserId();
+        boolean admin = AuthUtils.isAdmin();
+
+        MiningSheet sheet = loadSheet(sheetId);
+        ensureCanEditSheet(sheet, currentUserId, admin);
+
+        boolean alreadyAssigned = sheet.getSheetShips().stream().anyMatch(sheetShip ->
+                sheetShip.getShip() != null
+                        && Objects.equals(sheetShip.getShip().getId(), shipId)
+                        && sheetShip.getAddedByUser() != null
+                        && Objects.equals(sheetShip.getAddedByUser().getId(), currentUserId)
+        );
+        if (alreadyAssigned) {
+            throw new BadRequestException("Ce vaisseau est deja ajoute par vous sur cette fiche.");
+        }
+
+        Ship ship = findShip(shipId);
+        User currentUser = findUser(currentUserId);
+
+        MiningSheetShip sheetShip = new MiningSheetShip();
+        sheetShip.setSheet(sheet);
+        sheetShip.setShip(ship);
+        sheetShip.setAddedByUser(currentUser);
+        sheet.getSheetShips().add(sheetShip);
+
+        MiningSheet saved = miningSheetRepository.save(sheet);
+        MiningSheetDTO dto = toDto(loadSheet(saved.getId()), currentUserId, admin);
+        miningSheetWebSocketService.broadcast("SHEET_SHIP_ADDED", saved.getId());
+        return dto;
+    }
+
+    public MiningSheetDTO removeShip(UUID sheetId, UUID sheetShipId) {
+        UUID currentUserId = AuthUtils.getCurrentUserId();
+        boolean admin = AuthUtils.isAdmin();
+
+        MiningSheet sheet = loadSheet(sheetId);
+        ensureCanEditSheet(sheet, currentUserId, admin);
+
+        MiningSheetShip sheetShip = sheet.getSheetShips().stream()
+                .filter(existing -> Objects.equals(existing.getId(), sheetShipId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Vaisseau de fiche introuvable."));
+
+        UUID addedById = sheetShip.getAddedByUser() == null ? null : sheetShip.getAddedByUser().getId();
+        if (!admin && !Objects.equals(addedById, currentUserId)) {
+            throw new ForbiddenException("Vous ne pouvez supprimer que les vaisseaux que vous avez ajoutes.");
+        }
+
+        sheet.getSheetShips().removeIf(existing -> Objects.equals(existing.getId(), sheetShipId));
+        MiningSheet saved = miningSheetRepository.save(sheet);
+        MiningSheetDTO dto = toDto(loadSheet(saved.getId()), currentUserId, admin);
+        miningSheetWebSocketService.broadcast("SHEET_SHIP_REMOVED", saved.getId());
+        return dto;
+    }
+
+    public MiningSheetDTO declareSale(UUID sheetId, Long creditAuec) {
+        long parsedCredit = parseSaleCredit(creditAuec);
+        UUID currentUserId = AuthUtils.getCurrentUserId();
+        boolean admin = AuthUtils.isAdmin();
+
+        MiningSheet sheet = loadSheet(sheetId);
+        ensureCanDeclareSale(sheet, currentUserId, admin);
+
+        MiningSheetSale sale = new MiningSheetSale();
+        sale.setSheet(sheet);
+        sale.setDeclaredByUser(findUser(currentUserId));
+        sale.setCreditAuec(parsedCredit);
+        sheet.getSales().add(sale);
+
+        MiningSheet saved = miningSheetRepository.save(sheet);
+        MiningSheetDTO dto = toDto(loadSheet(saved.getId()), currentUserId, admin);
+        miningSheetWebSocketService.broadcast("SHEET_SALE_DECLARED", saved.getId());
+        return dto;
+    }
+
     private void validateSheetRequest(java.time.LocalDate operationDate, String refineryLocation, List<UUID> memberIds) {
         if (operationDate == null) {
             throw new BadRequestException("La date de l'operation est obligatoire.");
@@ -264,10 +351,35 @@ public class MiningSheetService {
         }
     }
 
+    private void ensureCanDeclareSale(MiningSheet sheet, UUID currentUserId, boolean admin) {
+        if (sheet.getStatus() == MiningSheetStatus.FINALIZED) {
+            throw new BadRequestException("Une fiche finalisee ne peut plus recevoir de vente.");
+        }
+        if (admin) {
+            return;
+        }
+        boolean isMember = sheet.getMembers().stream()
+                .map(MiningSheetMember::getUser)
+                .filter(Objects::nonNull)
+                .map(User::getId)
+                .anyMatch(currentUserId::equals);
+        if (!isMember) {
+            throw new ForbiddenException("Cette fiche est reservee aux membres assignes.");
+        }
+    }
+
     private void ensureSheetIsOpen(MiningSheet sheet) {
         if (sheet.getStatus() != MiningSheetStatus.OPEN) {
             throw new BadRequestException("La fiche est verrouillee ou finalisee.");
         }
+    }
+
+    private long parseSaleCredit(Long rawCreditAuec) {
+        long parsed = safePositiveLong(rawCreditAuec);
+        if (parsed <= 0L) {
+            throw new BadRequestException("Le credit de vente doit etre superieur a zero.");
+        }
+        return parsed;
     }
 
     private UUID resolveOwnerUserId(MiningSheet sheet, UUID requestedOwnerUserId, UUID currentUserId, boolean admin) {
@@ -459,6 +571,16 @@ public class MiningSheetService {
                 .map(job -> toJobDto(job, currentUserId, admin, userIsMember, sheetIsOpen))
                 .toList();
 
+        List<MiningSheetShipDTO> sheetShips = sheet.getSheetShips().stream()
+                .sorted(Comparator.comparing(MiningSheetShip::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(sheetShip -> toSheetShipDto(sheetShip, currentUserId, admin, userIsMember, sheetIsOpen))
+                .toList();
+
+        List<MiningSheetSaleDTO> sales = sheet.getSales().stream()
+                .sorted(Comparator.comparing(MiningSheetSale::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toSaleDto)
+                .toList();
+
         return new MiningSheetDTO(
                 sheet.getId(),
                 sheet.getSheetName(),
@@ -471,6 +593,8 @@ public class MiningSheetService {
                 toUserDto(sheet.getCreatedBy()),
                 members,
                 jobs,
+                sheetShips,
+                sales,
                 buildSummary(sheet),
                 sheetIsOpen && userIsMember,
                 admin
@@ -512,6 +636,101 @@ public class MiningSheetService {
                 editableByCurrentUser,
                 timerEditableByCurrentUser
         );
+    }
+
+    private MiningSheetShipDTO toSheetShipDto(
+            MiningSheetShip sheetShip,
+            UUID currentUserId,
+            boolean admin,
+            boolean userIsMember,
+            boolean sheetIsOpen
+    ) {
+        Ship ship = sheetShip.getShip();
+        User addedBy = sheetShip.getAddedByUser();
+
+        Long shipId = ship == null ? null : ship.getId();
+        String shipName = ship == null ? "-" : ship.getName();
+        String shipImageUrl = ship == null ? null : ship.getImageUrl();
+        String shipBrandName = ship == null || ship.getBrand() == null ? null : ship.getBrand().getName();
+        String shipFocus = ship == null ? null : ship.getFocus();
+        String shipSize = ship == null ? null : ship.getSize();
+        Integer shipScu = ship == null ? null : ship.getScu();
+
+        List<MiningSheetShipCargoGridDTO> cargoGrids = ship == null
+                ? List.of()
+                : distinctCargoGrids(ship.getCargoGrids()).stream()
+                .map(this::toCargoGridDto)
+                .sorted(Comparator.comparingLong(MiningSheetShipCargoGridDTO::slotCount).reversed())
+                .toList();
+
+        boolean removableByCurrentUser = sheetIsOpen
+                && (admin || (userIsMember && addedBy != null && Objects.equals(addedBy.getId(), currentUserId)));
+
+        return new MiningSheetShipDTO(
+                sheetShip.getId(),
+                shipId,
+                shipName,
+                shipImageUrl,
+                shipBrandName,
+                shipFocus,
+                shipSize,
+                shipScu,
+                toUserDto(addedBy),
+                sheetShip.getCreatedAt(),
+                cargoGrids,
+                removableByCurrentUser
+        );
+    }
+
+    private MiningSheetShipCargoGridDTO toCargoGridDto(ShipCargoGrid cargoGrid) {
+        int sizeX = safePositiveDimension(cargoGrid == null ? null : cargoGrid.getSizeX());
+        int sizeY = safePositiveDimension(cargoGrid == null ? null : cargoGrid.getSizeY());
+        int sizeZ = safePositiveDimension(cargoGrid == null ? null : cargoGrid.getSizeZ());
+        long slotCount = (long) sizeX * (long) sizeY * (long) sizeZ;
+
+        return new MiningSheetShipCargoGridDTO(
+                sizeX,
+                sizeY,
+                sizeZ,
+                slotCount
+        );
+    }
+
+    private MiningSheetSaleDTO toSaleDto(MiningSheetSale sale) {
+        return new MiningSheetSaleDTO(
+                sale.getId(),
+                toUserDto(sale.getDeclaredByUser()),
+                safePositiveLong(sale.getCreditAuec()),
+                sale.getCreatedAt()
+        );
+    }
+
+    private List<ShipCargoGrid> distinctCargoGrids(List<ShipCargoGrid> cargoGrids) {
+        if (cargoGrids == null || cargoGrids.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, ShipCargoGrid> byId = new LinkedHashMap<>();
+        List<ShipCargoGrid> withoutId = new ArrayList<>();
+        for (ShipCargoGrid cargoGrid : cargoGrids) {
+            if (cargoGrid == null) {
+                continue;
+            }
+            Long cargoGridId = cargoGrid.getId();
+            if (cargoGridId == null) {
+                withoutId.add(cargoGrid);
+                continue;
+            }
+            byId.putIfAbsent(cargoGridId, cargoGrid);
+        }
+
+        if (withoutId.isEmpty()) {
+            return new ArrayList<>(byId.values());
+        }
+
+        List<ShipCargoGrid> distinct = new ArrayList<>(byId.values());
+        distinct.addAll(withoutId);
+        return distinct;
     }
 
     private MiningSheetSummaryDTO buildSummary(MiningSheet sheet) {
@@ -685,6 +904,10 @@ public class MiningSheetService {
 
         userMaterialRows.sort(Comparator.comparingLong(MiningSheetUserMaterialDTO::totalScu).reversed());
 
+        long totalDeclaredSales = sheet.getSales().stream()
+                .mapToLong(sale -> safePositiveLong(sale.getCreditAuec()))
+                .sum();
+
         List<User> settlementUsers = participantIds.stream()
                 .map(participantUsers::get)
                 .filter(Objects::nonNull)
@@ -699,6 +922,19 @@ public class MiningSheetService {
                 totalEstimated
         );
 
+        List<MiningSheetSettlementDTO> saleSettlements = buildSettlements(
+                settlementUsers,
+                grossByUser,
+                paidCostsByUser,
+                totalCosts,
+                totalDeclaredSales
+        );
+        List<MiningSheetSaleTransferDTO> saleTransfers = buildSaleTransfers(
+                saleSettlements,
+                sheet.getSales(),
+                participantUsers
+        );
+
         long netEstimated = totalEstimated - totalCosts;
 
         return new MiningSheetSummaryDTO(
@@ -709,7 +945,10 @@ public class MiningSheetService {
                 totalEstimated,
                 totalCosts,
                 netEstimated,
-                settlements
+                settlements,
+                totalDeclaredSales,
+                saleSettlements,
+                saleTransfers
         );
     }
 
@@ -718,7 +957,7 @@ public class MiningSheetService {
             Map<UUID, Long> grossByUser,
             Map<UUID, Long> paidCostsByUser,
             long totalCosts,
-            long totalEstimated
+            long payoutPoolAuec
     ) {
         if (users.isEmpty()) {
             return List.of();
@@ -726,19 +965,16 @@ public class MiningSheetService {
 
         long baseShare = totalCosts / users.size();
         long remainder = totalCosts % users.size();
-        long netEstimated = totalEstimated - totalCosts;
-        long basePayout = netEstimated / users.size();
-        long payoutRemainder = Math.abs(netEstimated % users.size());
-        int payoutSign = netEstimated < 0 ? -1 : 1;
+        Map<UUID, Long> saleShareByUser = allocateSaleShareByUser(users, grossByUser, payoutPoolAuec);
 
         List<MiningSheetSettlementDTO> rows = new ArrayList<>();
         for (int index = 0; index < users.size(); index++) {
             User user = users.get(index);
             long share = baseShare + (index < remainder ? 1L : 0L);
-            long gross = grossByUser.getOrDefault(user.getId(), 0L);
-            long paid = paidCostsByUser.getOrDefault(user.getId(), 0L);
+            long gross = Math.max(0L, grossByUser.getOrDefault(user.getId(), 0L));
+            long paid = Math.max(0L, paidCostsByUser.getOrDefault(user.getId(), 0L));
             long compensation = paid - share;
-            long payout = basePayout + (index < payoutRemainder ? payoutSign : 0L);
+            long payout = saleShareByUser.getOrDefault(user.getId(), 0L) + compensation;
 
             rows.add(new MiningSheetSettlementDTO(
                     user.getId(),
@@ -751,6 +987,178 @@ public class MiningSheetService {
             ));
         }
         return rows;
+    }
+
+    private Map<UUID, Long> allocateSaleShareByUser(
+            List<User> users,
+            Map<UUID, Long> grossByUser,
+            long payoutPoolAuec
+    ) {
+        Map<UUID, Long> allocations = new LinkedHashMap<>();
+        if (users.isEmpty()) {
+            return allocations;
+        }
+
+        long safePool = Math.max(0L, payoutPoolAuec);
+        long totalGross = users.stream()
+                .map(User::getId)
+                .mapToLong(userId -> Math.max(0L, grossByUser.getOrDefault(userId, 0L)))
+                .sum();
+
+        if (totalGross <= 0L) {
+            long base = safePool / users.size();
+            long remainder = safePool % users.size();
+            for (int index = 0; index < users.size(); index++) {
+                UUID userId = users.get(index).getId();
+                allocations.put(userId, base + (index < remainder ? 1L : 0L));
+            }
+            return allocations;
+        }
+
+        BigInteger pool = BigInteger.valueOf(safePool);
+        BigInteger grossTotal = BigInteger.valueOf(totalGross);
+        List<PayoutRemainderAccumulator> remainders = new ArrayList<>();
+        long assigned = 0L;
+
+        for (User user : users) {
+            long gross = Math.max(0L, grossByUser.getOrDefault(user.getId(), 0L));
+            BigInteger weightedGross = BigInteger.valueOf(gross).multiply(pool);
+            BigInteger[] quotientAndRemainder = weightedGross.divideAndRemainder(grossTotal);
+            long baseShare = quotientAndRemainder[0].longValue();
+            allocations.put(user.getId(), baseShare);
+            assigned += baseShare;
+            remainders.add(new PayoutRemainderAccumulator(
+                    user.getId(),
+                    user.getUsername(),
+                    quotientAndRemainder[1]
+            ));
+        }
+
+        long remainingUnits = safePool - assigned;
+        remainders.sort((left, right) -> {
+            int remainderCompare = right.remainder.compareTo(left.remainder);
+            if (remainderCompare != 0) {
+                return remainderCompare;
+            }
+            return left.username.compareToIgnoreCase(right.username);
+        });
+
+        for (int index = 0; index < remainingUnits && index < remainders.size(); index++) {
+            PayoutRemainderAccumulator accumulator = remainders.get(index);
+            allocations.merge(accumulator.userId, 1L, Long::sum);
+        }
+
+        return allocations;
+    }
+
+    private List<MiningSheetSaleTransferDTO> buildSaleTransfers(
+            List<MiningSheetSettlementDTO> saleSettlements,
+            Set<MiningSheetSale> sales,
+            Map<UUID, User> participantUsers
+    ) {
+        Map<UUID, Long> payoutsByUser = new LinkedHashMap<>();
+        Map<UUID, Long> declaredByUser = new LinkedHashMap<>();
+        Map<UUID, String> usernamesByUserId = new LinkedHashMap<>();
+
+        for (MiningSheetSettlementDTO settlement : saleSettlements) {
+            if (settlement == null || settlement.userId() == null) {
+                continue;
+            }
+            payoutsByUser.put(settlement.userId(), settlement.payoutAuec());
+            usernamesByUserId.putIfAbsent(settlement.userId(), normalizeText(settlement.username()));
+        }
+
+        Set<MiningSheetSale> safeSales = sales == null ? Set.of() : sales;
+        for (MiningSheetSale sale : safeSales) {
+            if (sale == null || sale.getDeclaredByUser() == null || sale.getDeclaredByUser().getId() == null) {
+                continue;
+            }
+            UUID sellerId = sale.getDeclaredByUser().getId();
+            long credit = safePositiveLong(sale.getCreditAuec());
+            declaredByUser.merge(sellerId, credit, Long::sum);
+            usernamesByUserId.putIfAbsent(sellerId, normalizeText(sale.getDeclaredByUser().getUsername()));
+        }
+
+        Map<UUID, User> safeParticipantUsers = participantUsers == null ? Map.of() : participantUsers;
+        for (Map.Entry<UUID, User> entry : safeParticipantUsers.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            usernamesByUserId.putIfAbsent(entry.getKey(), normalizeText(entry.getValue().getUsername()));
+        }
+
+        Set<UUID> allUserIds = new LinkedHashSet<>();
+        allUserIds.addAll(payoutsByUser.keySet());
+        allUserIds.addAll(declaredByUser.keySet());
+
+        List<TransferBalanceAccumulator> payers = new ArrayList<>();
+        List<TransferBalanceAccumulator> receivers = new ArrayList<>();
+
+        for (UUID userId : allUserIds) {
+            long declared = declaredByUser.getOrDefault(userId, 0L);
+            long payout = payoutsByUser.getOrDefault(userId, 0L);
+            long balance = declared - payout;
+            String username = resolveTransferUsername(usernamesByUserId, userId);
+            if (balance > 0L) {
+                payers.add(new TransferBalanceAccumulator(userId, username, balance));
+            } else if (balance < 0L) {
+                receivers.add(new TransferBalanceAccumulator(userId, username, Math.abs(balance)));
+            }
+        }
+
+        payers.sort((left, right) -> {
+            int usernameOrder = left.username.compareToIgnoreCase(right.username);
+            if (usernameOrder != 0) {
+                return usernameOrder;
+            }
+            return left.userId.toString().compareTo(right.userId.toString());
+        });
+        receivers.sort((left, right) -> {
+            int usernameOrder = left.username.compareToIgnoreCase(right.username);
+            if (usernameOrder != 0) {
+                return usernameOrder;
+            }
+            return left.userId.toString().compareTo(right.userId.toString());
+        });
+
+        List<MiningSheetSaleTransferDTO> transfers = new ArrayList<>();
+        int receiverIndex = 0;
+        for (TransferBalanceAccumulator payer : payers) {
+            long remainingToPay = payer.amount;
+            while (remainingToPay > 0L && receiverIndex < receivers.size()) {
+                TransferBalanceAccumulator receiver = receivers.get(receiverIndex);
+                if (receiver.amount <= 0L) {
+                    receiverIndex += 1;
+                    continue;
+                }
+
+                long transferAmount = Math.min(remainingToPay, receiver.amount);
+                if (transferAmount > 0L) {
+                    transfers.add(new MiningSheetSaleTransferDTO(
+                            payer.userId,
+                            payer.username,
+                            receiver.userId,
+                            receiver.username,
+                            transferAmount
+                    ));
+                }
+                remainingToPay -= transferAmount;
+                receiver.amount -= transferAmount;
+                if (receiver.amount == 0L) {
+                    receiverIndex += 1;
+                }
+            }
+        }
+
+        return transfers;
+    }
+
+    private String resolveTransferUsername(Map<UUID, String> usernamesByUserId, UUID userId) {
+        String username = usernamesByUserId.get(userId);
+        if (username == null || username.isBlank()) {
+            return "-";
+        }
+        return username;
     }
 
     private Map<String, UexResourceSaleDTO> resolveSalesByOreName(Set<String> oreNames, String saleLocation) {
@@ -805,6 +1213,11 @@ public class MiningSheetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable."));
     }
 
+    private Ship findShip(Long shipId) {
+        return shipRepository.findById(shipId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vaisseau introuvable."));
+    }
+
     private String normalizeText(String value) {
         return value == null ? "" : value.trim();
     }
@@ -835,6 +1248,20 @@ public class MiningSheetService {
     private int safePositiveInt(Integer value) {
         if (value == null || value < 0) {
             return 0;
+        }
+        return value;
+    }
+
+    private long safePositiveLong(Long value) {
+        if (value == null || value < 0L) {
+            return 0L;
+        }
+        return value;
+    }
+
+    private int safePositiveDimension(Integer value) {
+        if (value == null || value < 1) {
+            return 1;
         }
         return value;
     }
@@ -899,6 +1326,30 @@ public class MiningSheetService {
 
         private UserMaterialAccumulator(User user) {
             this.user = user;
+        }
+    }
+
+    private static final class PayoutRemainderAccumulator {
+        private final UUID userId;
+        private final String username;
+        private final BigInteger remainder;
+
+        private PayoutRemainderAccumulator(UUID userId, String username, BigInteger remainder) {
+            this.userId = userId;
+            this.username = username == null ? "" : username;
+            this.remainder = remainder == null ? BigInteger.ZERO : remainder;
+        }
+    }
+
+    private static final class TransferBalanceAccumulator {
+        private final UUID userId;
+        private final String username;
+        private long amount;
+
+        private TransferBalanceAccumulator(UUID userId, String username, long amount) {
+            this.userId = userId;
+            this.username = username == null || username.isBlank() ? "-" : username;
+            this.amount = Math.max(0L, amount);
         }
     }
 }

@@ -17,6 +17,8 @@ public record MiningSheetDTO(
         MiningSheetUserDTO createdBy,
         List<MiningSheetUserDTO> members,
         List<MiningSheetJobDTO> jobs,
+        List<MiningSheetShipDTO> sheetShips,
+        List<MiningSheetSaleDTO> sales,
         MiningSheetSummaryDTO summary,
         boolean editableByCurrentUser,
         boolean adminView

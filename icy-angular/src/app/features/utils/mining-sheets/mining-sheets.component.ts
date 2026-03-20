@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import {
   MiningJobType,
   MiningSheet,
@@ -19,6 +19,8 @@ import { MiningSheetsHistoryPanelComponent } from './components/mining-sheets-hi
 import { MiningSheetsCreateModalComponent } from './components/mining-sheets-create-modal.component';
 import { MiningSheetsAdminModalComponent } from './components/mining-sheets-admin-modal.component';
 import { MiningSheetsSummaryComponent } from './components/mining-sheets-summary.component';
+import { MiningSheetsLogisticsComponent } from './components/mining-sheets-logistics.component';
+import { MiningSheetsSalesComponent } from './components/mining-sheets-sales.component';
 
 interface SheetFormState {
   sheetName: string;
@@ -54,7 +56,9 @@ interface JobDraft {
     MiningSheetsHistoryPanelComponent,
     MiningSheetsCreateModalComponent,
     MiningSheetsAdminModalComponent,
-    MiningSheetsSummaryComponent
+    MiningSheetsSummaryComponent,
+    MiningSheetsLogisticsComponent,
+    MiningSheetsSalesComponent
   ],
   templateUrl: './mining-sheets.component.html',
   styleUrl: './mining-sheets.component.css'
@@ -118,9 +122,11 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
 
   showCreateModal = false;
   showAdminSettingsModal = false;
+  activeDetailTab: 'JOBS' | 'LOGISTICS' | 'SALES' = 'JOBS';
   createForm: SheetFormState = this.createEmptySheetForm();
   sheetEditForm: SheetFormState | null = null;
   saleLocationSuggestions: string[] = [];
+  salesDeclarationVersion = 0;
   private saleLocationSearchHandle?: ReturnType<typeof setTimeout>;
 
   expandedJobIds = new Set<string>();
@@ -183,6 +189,19 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
     return this.selectedSheet?.id ?? '';
   }
 
+  get currentUsername(): string {
+    if (!this.currentUserId) {
+      return '';
+    }
+    return this.users.find((user) => user.id === this.currentUserId)?.username ?? '';
+  }
+
+  get batchSaleSheets(): MiningSheet[] {
+    return this.activeSheets
+      .filter((sheet) => this.canDeclareSale(sheet))
+      .sort((left, right) => Date.parse(right.operationDate) - Date.parse(left.operationDate));
+  }
+
   trackSheet(_: number, sheet: MiningSheet): string {
     return sheet.id;
   }
@@ -236,6 +255,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   openSheet(sheet: MiningSheet): void {
     this.actionError = '';
     this.selectedSheet = sheet;
+    this.activeDetailTab = 'JOBS';
     this.sheetEditForm = this.toSheetForm(sheet);
     this.expandedJobIds.clear();
     this.jobDraftById.clear();
@@ -260,6 +280,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
     this.selectedSheet = null;
     this.sheetEditForm = null;
     this.showAdminSettingsModal = false;
+    this.activeDetailTab = 'JOBS';
     this.expandedJobIds.clear();
     this.jobDraftById.clear();
     this.newJobDraft = null;
@@ -527,6 +548,101 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   selectSaleLocation(form: SheetFormState, location: string): void {
     form.saleLocation = location;
     this.saleLocationSuggestions = [];
+  }
+
+  setDetailTab(tab: 'JOBS' | 'LOGISTICS' | 'SALES'): void {
+    this.activeDetailTab = tab;
+  }
+
+  canDeclareSale(sheet: MiningSheet): boolean {
+    if (sheet.status === 'FINALIZED') {
+      return false;
+    }
+    if (this.isAdmin) {
+      return true;
+    }
+    if (!this.currentUserId) {
+      return false;
+    }
+    return (sheet.members ?? []).some((member) => member.id === this.currentUserId);
+  }
+
+  declareSales(entries: { sheetId: string; creditAuec: number }[]): void {
+    if (this.saving) {
+      return;
+    }
+
+    const allowedSheetIds = new Set(this.batchSaleSheets.map((sheet) => sheet.id));
+    const groupedBySheetId = new Map<string, number>();
+    for (const entry of entries ?? []) {
+      if (!entry || !allowedSheetIds.has(entry.sheetId)) {
+        continue;
+      }
+      const parsedAmount = Math.floor(Number(entry.creditAuec));
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        continue;
+      }
+      groupedBySheetId.set(entry.sheetId, (groupedBySheetId.get(entry.sheetId) ?? 0) + parsedAmount);
+    }
+
+    const safeEntries = [...groupedBySheetId.entries()].map(([sheetId, creditAuec]) => ({ sheetId, creditAuec }));
+    if (!safeEntries.length) {
+      this.actionError = 'Renseigne au moins un gain valide pour déclarer une vente.';
+      return;
+    }
+
+    this.saving = true;
+    this.actionError = '';
+    const requests = safeEntries.map((entry) => this.miningSheetService.declareSale(entry.sheetId, entry.creditAuec));
+    forkJoin(requests).subscribe({
+      next: (updatedSheets) => {
+        for (const updated of updatedSheets) {
+          this.applySheetUpdate(updated);
+        }
+        this.salesDeclarationVersion += 1;
+        this.saving = false;
+      },
+      error: (error) => {
+        this.actionError = this.extractError(error, 'Déclaration de vente impossible.');
+        this.saving = false;
+      }
+    });
+  }
+
+  addShipToSelectedSheet(shipId: number): void {
+    if (!this.selectedSheet || this.saving) {
+      return;
+    }
+    this.saving = true;
+    this.actionError = '';
+    this.miningSheetService.addSheetShip(this.selectedSheet.id, shipId).subscribe({
+      next: (updated) => {
+        this.applySheetUpdate(updated);
+        this.saving = false;
+      },
+      error: (error) => {
+        this.actionError = this.extractError(error, 'Ajout du vaisseau impossible.');
+        this.saving = false;
+      }
+    });
+  }
+
+  removeShipFromSelectedSheet(sheetShipId: string): void {
+    if (!this.selectedSheet || this.saving) {
+      return;
+    }
+    this.saving = true;
+    this.actionError = '';
+    this.miningSheetService.removeSheetShip(this.selectedSheet.id, sheetShipId).subscribe({
+      next: (updated) => {
+        this.applySheetUpdate(updated);
+        this.saving = false;
+      },
+      error: (error) => {
+        this.actionError = this.extractError(error, 'Suppression du vaisseau impossible.');
+        this.saving = false;
+      }
+    });
   }
 
   addOreRow(target: JobDraft): void {

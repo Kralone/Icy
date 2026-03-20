@@ -2,6 +2,8 @@ package com.icy.icy_backend.controller.mining;
 
 import com.icy.icy_backend.controller.dto.mining.MiningSheetCreateRequest;
 import com.icy.icy_backend.controller.dto.mining.MiningSheetJobUpsertRequest;
+import com.icy.icy_backend.controller.dto.mining.MiningSheetSaleDeclareRequest;
+import com.icy.icy_backend.controller.dto.mining.MiningSheetShipAddRequest;
 import com.icy.icy_backend.controller.dto.mining.MiningSheetUpdateRequest;
 import com.icy.icy_backend.controller.dto.response.mining.MiningSheetDTO;
 import com.icy.icy_backend.service.mining.MiningSheetService;
@@ -90,5 +92,31 @@ public class MiningSheetController {
             @PathVariable UUID jobId
     ) {
         return ResponseEntity.ok(miningSheetService.deleteJob(sheetId, jobId));
+    }
+
+    @PostMapping("/{sheetId}/ships")
+    public ResponseEntity<MiningSheetDTO> addShipToSheet(
+            @PathVariable UUID sheetId,
+            @RequestBody MiningSheetShipAddRequest request
+    ) {
+        Long shipId = request == null ? null : request.shipId();
+        return ResponseEntity.ok(miningSheetService.addShip(sheetId, shipId));
+    }
+
+    @DeleteMapping("/{sheetId}/ships/{sheetShipId}")
+    public ResponseEntity<MiningSheetDTO> removeShipFromSheet(
+            @PathVariable UUID sheetId,
+            @PathVariable UUID sheetShipId
+    ) {
+        return ResponseEntity.ok(miningSheetService.removeShip(sheetId, sheetShipId));
+    }
+
+    @PostMapping("/{sheetId}/sales")
+    public ResponseEntity<MiningSheetDTO> declareSale(
+            @PathVariable UUID sheetId,
+            @RequestBody MiningSheetSaleDeclareRequest request
+    ) {
+        Long creditAuec = request == null ? null : request.creditAuec();
+        return ResponseEntity.ok(miningSheetService.declareSale(sheetId, creditAuec));
     }
 }
