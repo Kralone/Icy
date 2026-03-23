@@ -1,8 +1,8 @@
 <main
   class="relative min-h-screen p-4 sm:p-6 bg-gradient-to-br from-[#0b1423] via-[#14223a] to-[#22324d]
-         text-white overflow-y-auto overflow-x-hidden"
+         text-white overflow-x-hidden"
 >
-  <div class="pointer-events-none absolute inset-0 overflow-visible">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_60%)]"></div>
     <div class="rank-orbit is-ready" *ngIf="profileLoaded">
       <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true" [deploy]="profileLoaded"></app-rank-orbit>

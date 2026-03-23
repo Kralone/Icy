@@ -35,8 +35,8 @@ svg {
 }
 
 .orbit-spin {
-  transform-origin: center;
-  transform-box: fill-box;
+  transform-origin: 100px 100px;
+  transform-box: view-box;
 }
 
 .orbit-1 {
