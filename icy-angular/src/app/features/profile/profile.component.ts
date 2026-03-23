@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { ShipSelectorComponent } from '../../shared/ship-selector/ship-selector.component';
 import { RankOrbitComponent } from '../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
@@ -23,6 +22,23 @@ interface RankOption {
   key: string;
   label: string;
 }
+type ProfileTabId = 'profile' | 'ranks' | 'settings';
+
+interface ProfileTabOption {
+  id: ProfileTabId;
+  label: string;
+  subtitle: string;
+}
+
+interface RankGuideEntry {
+  level: number;
+  key: string;
+  label: string;
+  currentHolder?: string;
+  description: string;
+  privileges: string[];
+  howToUnlock: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -32,6 +48,13 @@ interface RankOption {
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
+  profileTabs: ProfileTabOption[] = [
+    { id: 'profile', label: 'Profil', subtitle: 'Identite et stats' },
+    { id: 'ranks', label: 'Guide des rangs', subtitle: 'Hierarchie IceForge' },
+    { id: 'settings', label: 'Parametres', subtitle: 'Notifications et options' }
+  ];
+  activeTab: ProfileTabId = 'profile';
+
   statusOptions: StatusOption[] = [
     { key: 'connecte', label: 'Connecté', badgeClass: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' },
     { key: 'enjeu', label: 'En jeu', badgeClass: 'border-violet-400/30 bg-violet-400/10 text-violet-200' },
@@ -65,6 +88,93 @@ export class ProfileComponent implements OnInit {
     MEMBRE: 'JUNIOR',
     RECRUE: 'JUNIOR'
   };
+  rankGuide: RankGuideEntry[] = [
+    {
+      level: 1,
+      key: 'JUNIOR',
+      label: 'Junior',
+      description:
+        "Nouveau membre de l'organisation. Tu commences ton aventure dans IceForge en participant aux operations et en apprenant les fondamentaux de la corpo.",
+      privileges: ['Acces aux missions de base', 'Canaux Discord generaux', 'Flotte partagee en soutien'],
+      howToUnlock: "Attribue automatiquement a l'arrivée dans la corpo."
+    },
+    {
+      level: 2,
+      key: 'ASSOCIE',
+      label: 'Associe',
+      currentHolder: 'HollowMike',
+      description:
+        "Membre actif qui a deja fait ses preuves. Tu participes a des missions plus complexes et commences a prendre des initiatives operationnelles.",
+      privileges: [
+        'Missions intermediaires',
+        'Canaux strategiques Discord',
+        'Invitation a des ops privees',
+        'Droit de vote sur les decisions non critiques'
+      ],
+      howToUnlock: "Sur recommandation d'un Officier ou apres 10 operations completees."
+    },
+    {
+      level: 3,
+      key: 'INGENIEUR',
+      label: 'Ingenieur',
+      description:
+        'Specialiste technique de la corpo. Tu maitrises les systemes de vaisseaux, la logistique ou le combat et tu aides les profils plus juniors.',
+      privileges: [
+        'Toutes les missions standards',
+        'Acces a la flotte avancee',
+        'Role de soutien technique en operation',
+        'Channel ingenierie Discord'
+      ],
+      howToUnlock: "Sur evaluation des competences techniques par un Officier."
+    },
+    {
+      level: 4,
+      key: 'SPECIALISTE',
+      label: 'Specialiste',
+      description:
+        "Expert reconnu dans son domaine. Tu encadres regulierement des membres moins experimentes et prends des responsabilites tactiques.",
+      privileges: [
+        'Toutes les missions',
+        "Role de chef d'escouade",
+        'Briefings pre-op',
+        'Channel Specialistes Discord',
+        'Participation aux votes strategiques'
+      ],
+      howToUnlock: "Sur nomination d'un Officier, apres validation de l'expertise."
+    },
+    {
+      level: 5,
+      key: 'OFFICIER',
+      label: 'Officier',
+      currentHolder: 'Draknyr, Professeur Zero',
+      description:
+        "Pilier de l'organisation. Tu planifies les grandes operations, pilotes le recrutement et representes la corpo a l'extérieur.",
+      privileges: [
+        'Tous les acces',
+        "Commandement d'opérations",
+        'Recrutement et evaluation des membres',
+        'Channel Officiers (confidentiel)',
+        'Co-decision sur les alliances'
+      ],
+      howToUnlock: 'Nomination directe par le Directeur.'
+    },
+    {
+      level: 6,
+      key: 'ADMIN',
+      label: 'Directeur',
+      currentHolder: 'Kralone (Fondateur)',
+      description:
+        "Fondateur et commandant supreme d'IceForge. Le Directeur definit la vision strategique, les alliances, les regles et l'identité de la corporation.",
+      privileges: [
+        'Acces total et illimite',
+        'Controle de toutes les ressources',
+        'Decision finale sur tous les sujets',
+        'Administration du site et des outils',
+        'Relations diplomatiques inter-orgs'
+      ],
+      howToUnlock: 'Rang fondateur, unique.'
+    }
+  ];
 
   profile = {
     username: 'Pilote',
@@ -205,6 +315,15 @@ export class ProfileComponent implements OnInit {
   get activeRankLabel(): string {
     const matched = this.rankOptions.find((rank) => rank.key === this.activeRankKey);
     return matched?.label ?? 'Junior';
+  }
+
+  get activeGuideRank(): RankGuideEntry | null {
+    const matched = this.rankGuide.find((rank) => rank.key === this.activeRankKey);
+    return matched ?? null;
+  }
+
+  setActiveTab(tab: ProfileTabId): void {
+    this.activeTab = tab;
   }
 
   onAvatarChange(event: Event): void {
