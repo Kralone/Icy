@@ -13,6 +13,7 @@ import com.icy.icy_backend.service.user.UserShipService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,6 +60,13 @@ public class UserShipController {
         UUID userId = AuthUtils.getCurrentUserId();
         logger.debug("USER : suppression du vaisseau shipId : {} pour userId : {}", shipId, userId);
         return userShipService.deleteShipFromUser(userId, shipId);
+    }
+
+    @DeleteMapping("/admin/in-game-acquisitions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse<Integer>> deleteAllInGameAcquisitions() {
+        logger.warn("ADMIN : suppression de toutes les acquisitions et récompenses en jeu");
+        return userShipService.deleteAllInGameAcquisitions();
     }
 
     // ===== BOT ENDPOINTS =====
