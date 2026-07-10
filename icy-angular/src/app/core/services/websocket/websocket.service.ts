@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
@@ -24,7 +24,7 @@ export class WebSocketService {
   private userNotificationsSubscription: StompSubscription | null = null;
   private lastNotificationsUserId: string | null = null;
 
-  constructor() {
+  constructor(private readonly ngZone: NgZone) {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
@@ -138,21 +138,21 @@ export class WebSocketService {
   private subscribeToShipUpdates(userId: string): void {
     this.stompClient.subscribe(`/topic/user/${userId}/ships`, (message: IMessage) => {
       console.debug('📡 Nouvelle mise à jour SHIPS:', Array(message.body).length);
-      this.shipUpdatesSubject.next(message.body);
+      this.ngZone.run(() => this.shipUpdatesSubject.next(message.body));
     });
   }
 
   private subscribeToFleetUpdate(): void {
     this.stompClient.subscribe('/topic/fleet/update', (message: IMessage) => {
       console.debug('📡 Nouvelle mise à jour FLEET:', Array(message.body).length);
-      this.fleetUpdatesSubject.next(message.body);
+      this.ngZone.run(() => this.fleetUpdatesSubject.next(message.body));
     });
   }
 
   private subscribeToEvent(): void {
     this.stompClient.subscribe('/topic/events', (message: IMessage) => {
       console.debug('📡 Nouvelle mise à jour EVENT:', Array(message.body).length);
-      this.eventSubject.next(message.body);
+      this.ngZone.run(() => this.eventSubject.next(message.body));
     });
   }
 
@@ -162,7 +162,7 @@ export class WebSocketService {
     }
 
     this.goalsSubscription = this.stompClient.subscribe('/topic/goals', (message: IMessage) => {
-      this.goalSubject.next(message.body);
+      this.ngZone.run(() => this.goalSubject.next(message.body));
     });
   }
 
@@ -172,14 +172,14 @@ export class WebSocketService {
     }
 
     this.miningSheetsSubscription = this.stompClient.subscribe('/topic/mining-sheets', (message: IMessage) => {
-      this.miningSheetsSubject.next(message.body);
+      this.ngZone.run(() => this.miningSheetsSubject.next(message.body));
     });
   }
 
   private subscribeToNotifications(userId?: string): void {
     if (!this.notificationsSubscription) {
       this.notificationsSubscription = this.stompClient.subscribe('/topic/notifications', (message: IMessage) => {
-        this.notificationSubject.next(message.body);
+        this.ngZone.run(() => this.notificationSubject.next(message.body));
       });
     }
 
@@ -191,7 +191,7 @@ export class WebSocketService {
       this.userNotificationsSubscription = this.stompClient.subscribe(
         `/topic/user/${userId}/notifications`,
         (message: IMessage) => {
-          this.notificationSubject.next(message.body);
+          this.ngZone.run(() => this.notificationSubject.next(message.body));
         }
       );
       this.lastNotificationsUserId = userId;
