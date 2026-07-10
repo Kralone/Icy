@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -42,6 +42,10 @@ export class ShipManagementComponent implements OnInit {
 
   isSubmittingShip = false;
   editingShip: any | null = null;
+  showInGameDeletionDialog = false;
+  isDeletingInGameAcquisitions = false;
+  inGameDeletionError = '';
+  inGameDeletionResult = '';
 
   // === Brands ===
   brands: any[] = [];
@@ -158,6 +162,45 @@ export class ShipManagementComponent implements OnInit {
       next: () => this.loadShips(),
       error: (err) => console.error('Erreur suppression vaisseau', err),
     });
+  }
+
+  openInGameDeletionDialog() {
+    this.inGameDeletionError = '';
+    this.inGameDeletionResult = '';
+    this.showInGameDeletionDialog = true;
+  }
+
+  closeInGameDeletionDialog() {
+    if (this.isDeletingInGameAcquisitions) return;
+    this.showInGameDeletionDialog = false;
+    this.inGameDeletionError = '';
+  }
+
+  confirmInGameDeletion() {
+    if (this.isDeletingInGameAcquisitions) return;
+
+    this.isDeletingInGameAcquisitions = true;
+    this.inGameDeletionError = '';
+    this.shipService.deleteAllInGameAcquisitions().subscribe({
+      next: (response) => {
+        const deletedCount = Number(response?.data ?? 0);
+        this.isDeletingInGameAcquisitions = false;
+        this.showInGameDeletionDialog = false;
+        this.inGameDeletionResult = `${deletedCount} acquisition(s) ou récompense(s) en jeu supprimée(s).`;
+      },
+      error: (err) => {
+        console.error('Erreur suppression des acquisitions en jeu', err);
+        this.isDeletingInGameAcquisitions = false;
+        this.inGameDeletionError = 'La suppression a échoué. Aucune nouvelle tentative automatique ne sera effectuée.';
+      },
+    });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.showInGameDeletionDialog) {
+      this.closeInGameDeletionDialog();
+    }
   }
 
   resetShipForm() {

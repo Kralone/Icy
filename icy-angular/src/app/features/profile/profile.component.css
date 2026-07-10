@@ -56,6 +56,9 @@
     animation: none;
     opacity: 1;
   }
+  .rank-guide-active-pill {
+    animation: none;
+  }
 }
 
 .rank-foreground {
@@ -68,4 +71,149 @@
   width: 120px;
   height: 120px;
   opacity: 0.6;
+}
+
+.rank-guide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.rank-guide-card,
+.rank-guide-current {
+  --rank-rgb: 126, 166, 198;
+}
+
+.rank-guide-card {
+  border: 1px solid rgba(var(--rank-rgb), 0.7);
+  background:
+    radial-gradient(circle at 80% 10%, rgba(var(--rank-rgb), 0.14), transparent 42%),
+    linear-gradient(160deg, rgba(7, 21, 40, 0.9), rgba(10, 26, 46, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(var(--rank-rgb), 0.15);
+}
+
+.rank-guide-card--active {
+  border-color: rgba(var(--rank-rgb), 0.9);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--rank-rgb), 0.62),
+    0 0 0 1px rgba(var(--rank-rgb), 0.45),
+    0 0 34px rgba(var(--rank-rgb), 0.42);
+}
+
+.rank-guide-current {
+  border: 1px solid rgba(var(--rank-rgb), 0.5);
+  background:
+    radial-gradient(circle at 85% 15%, rgba(var(--rank-rgb), 0.2), transparent 50%),
+    linear-gradient(160deg, rgba(9, 25, 45, 0.9), rgba(9, 20, 36, 0.85));
+  box-shadow: inset 0 0 0 1px rgba(var(--rank-rgb), 0.18);
+}
+
+.rank-guide-current--active {
+  border-color: rgba(var(--rank-rgb), 0.88);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--rank-rgb), 0.42),
+    0 0 26px rgba(var(--rank-rgb), 0.35);
+}
+
+.rank-guide-title {
+  color: rgba(var(--rank-rgb), 0.95);
+}
+
+.rank-guide-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--rank-rgb), 0.58);
+  background: rgba(var(--rank-rgb), 0.25);
+  color: rgba(var(--rank-rgb), 0.98);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 16px rgba(var(--rank-rgb), 0.28);
+}
+
+.rank-guide-active-pill {
+  border: 1px solid rgba(var(--rank-rgb), 0.56);
+  background: rgba(var(--rank-rgb), 0.36);
+  color: rgba(var(--rank-rgb), 1);
+  box-shadow: 0 0 18px rgba(var(--rank-rgb), 0.4);
+  animation: rank-active-pulse 1.8s ease-in-out infinite;
+}
+
+.rank-guide-spinner-wrap {
+  margin-top: 0.55rem;
+  display: grid;
+  place-items: center;
+}
+
+.rank-guide-spinner {
+  width: 110px;
+  height: 110px;
+  --orbit-rgb: var(--rank-rgb);
+  filter: drop-shadow(0 0 12px rgba(var(--rank-rgb), 0.28));
+}
+
+.rank-guide-holder {
+  border: 1px solid rgba(var(--rank-rgb), 0.3);
+  background: rgba(var(--rank-rgb), 0.09);
+}
+
+.rank-guide-dot {
+  background: rgba(var(--rank-rgb), 0.9);
+  box-shadow: 0 0 10px rgba(var(--rank-rgb), 0.5);
+}
+
+.rank-guide-unlock {
+  border: 1px solid rgba(var(--rank-rgb), 0.3);
+  background: rgba(var(--rank-rgb), 0.12);
+}
+
+.rank-guide-card[data-rank='JUNIOR'],
+.rank-guide-current[data-rank='JUNIOR'] {
+  --rank-rgb: 126, 166, 198;
+}
+
+.rank-guide-card[data-rank='ASSOCIE'],
+.rank-guide-current[data-rank='ASSOCIE'] {
+  --rank-rgb: 56, 214, 255;
+}
+
+.rank-guide-card[data-rank='INGENIEUR'],
+.rank-guide-current[data-rank='INGENIEUR'] {
+  --rank-rgb: 47, 214, 152;
+}
+
+.rank-guide-card[data-rank='SPECIALISTE'],
+.rank-guide-current[data-rank='SPECIALISTE'] {
+  --rank-rgb: 148, 141, 255;
+}
+
+.rank-guide-card[data-rank='OFFICIER'],
+.rank-guide-current[data-rank='OFFICIER'] {
+  --rank-rgb: 255, 194, 59;
+}
+
+.rank-guide-card[data-rank='ADMIN'],
+.rank-guide-current[data-rank='ADMIN'] {
+  --rank-rgb: 255, 112, 52;
+}
+
+@keyframes rank-active-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(var(--rank-rgb), 0.28);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(var(--rank-rgb), 0.5);
+  }
+}
+
+@media (min-width: 1280px) {
+  .rank-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

@@ -110,6 +110,7 @@ public class UserShipService {
                     ship.getName(),
                     ship.getImageUrl(),
                     ship.getFocus(),
+                    ship.getBrand() != null ? ship.getBrand().getName() : null,
                     ship.getBrand() != null ? ship.getBrand().getImageUrl() : null
             ));
         }
@@ -120,6 +121,28 @@ public class UserShipService {
     public ResponseEntity<MessageResponse<List<FleetSummaryResponse>>> getFleetSummary() {
         List<FleetSummaryResponse> summary = getFleetSummaryAsList();
         return messageService.buildResponse("ship.fleet.summary", summary);
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Integer>> deleteAllInGameAcquisitions() {
+        List<UserShip> inGameAcquisitions = userShipRepository.findAllInGameAcquisitions();
+        int deletedCount = inGameAcquisitions.size();
+
+        if (inGameAcquisitions.isEmpty()) {
+            return messageService.buildResponse("user.ship.admin.delete-in-game.success", 0, 0);
+        }
+
+        logger.warn("Suppression administrative de {} acquisition(s) en jeu", deletedCount);
+        userShipRepository.deleteAllInBatch(inGameAcquisitions);
+
+        inGameAcquisitions.forEach(userWebSocketService::sendUserShipDeletion);
+        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
+
+        return messageService.buildResponse(
+                "user.ship.admin.delete-in-game.success",
+                deletedCount,
+                deletedCount
+        );
     }
 
     @Transactional

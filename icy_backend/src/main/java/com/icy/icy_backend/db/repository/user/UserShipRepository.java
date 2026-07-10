@@ -47,6 +47,15 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
 """)
     List<UserShip> findRecentWithShipAndUser(@Param("since") LocalDateTime since);
 
+    @Query("""
+    SELECT us FROM UserShip us
+    JOIN FETCH us.ship s
+    JOIN FETCH s.brand
+    JOIN FETCH us.user
+    WHERE us.inGamePurchase = true OR us.rewardInGame = true
+""")
+    List<UserShip> findAllInGameAcquisitions();
+
 
     boolean existsByUserIdAndShipId(UUID userId, Long shipId);
 

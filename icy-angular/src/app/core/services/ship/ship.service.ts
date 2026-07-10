@@ -10,6 +10,10 @@ export interface Brand {
   imageUrl: string;
 }
 
+export interface AdminInGameShipDeletionResponse {
+  data: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -101,6 +105,13 @@ export class ShipService {
    */
   deleteShipAdmin(id: number): Observable<any> {
     return this.http.delete(`/api/ships?id=${id}`);
+  }
+
+  /**
+   * Supprime toutes les affectations obtenues par achat ou récompense en jeu.
+   */
+  deleteAllInGameAcquisitions(): Observable<AdminInGameShipDeletionResponse> {
+    return this.http.delete<AdminInGameShipDeletionResponse>('/api/user-ships/admin/in-game-acquisitions');
   }
 
   // ======================================================

@@ -55,6 +55,7 @@ class UserShipControllerTest {
         when(userShipService.getShipsByUserId(any(UUID.class))).thenReturn(okResponse(List.of(new UserShip())));
         when(userShipService.addShipToUser(any(UUID.class), eq(1L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
         when(userShipService.deleteShipFromUser(any(UUID.class), eq(1L))).thenReturn(okResponse(null));
+        when(userShipService.deleteAllInGameAcquisitions()).thenReturn(okResponse(2));
         when(userShipService.getShipsByUserId(eq(123L))).thenReturn(okResponse(List.of(new UserShip())));
         when(userService.resolveUser(eq("123"))).thenReturn(new User());
         when(userShipService.addShipToUser(any(UUID.class), eq(2L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
@@ -75,6 +76,9 @@ class UserShipControllerTest {
         mockMvc.perform(delete("/api/user-ships")
                         .with(TestAuth.user(userId, "USER"))
                         .param("shipId", "1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/user-ships/admin/in-game-acquisitions")
+                        .with(TestAuth.user(userId, "ADMIN")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/user-ships/bot")
