@@ -1,5 +1,6 @@
 import {Component, HostListener} from '@angular/core';
 import {CommonModule} from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
@@ -25,7 +26,19 @@ interface IcyEvent {
 
 interface ShipSummary {
   name: string;
-  imageUrl: string;
+  displayName: string;
+  imageUrl: string | null;
+  focus: string;
+  brandName: string;
+  count: number;
+}
+
+interface FleetSummaryEntry {
+  name: string;
+  imageUrl: string | null;
+  focus: string | null;
+  brandName?: string | null;
+  brandImageUrl?: string | null;
 }
 
 type OnlineStatus = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
@@ -40,6 +53,7 @@ interface StatusStyle {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     GoalComponent,
     NewsComponent,
     ScweWidgetComponent,
@@ -54,6 +68,9 @@ export class DashboardComponent {
   isOnlineLoading = true;
 
   fleetSummary: { [focus: string]: ShipSummary[] } = {};
+  fleetCategoryFilter = '';
+  fleetBrandFilter = '';
+  fleetSearchFilter = '';
   events: IcyEvent[] = [];
   onlineUsers: UserOnline[] = [];
   currentPage = 1;
@@ -94,43 +111,138 @@ export class DashboardComponent {
 
   loadFleetSummary() {
     this.shipService.getFleetSummary().subscribe(response => {
-      console.log(response);
-      const rawFleet = JSON.parse(response).fleet;
-      console.log(rawFleet);
+      const payload = typeof response === 'string' ? JSON.parse(response) : response;
+      const rawFleet = (payload?.fleet ?? []) as FleetSummaryEntry[];
       this.fleetSummary = this.groupShipsByFocus(rawFleet);
-      console.log('📦 Fleet update');
       this.isLoading = false;
     }, () => {
       this.isLoading = false;
     });
   }
 
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string }[]): { [focus: string]: { name: string; imageUrl: string }[] } {
-    const result: { [focus: string]: { name: string; imageUrl: string; count: number }[] } = {};
+  get fleetCategories(): string[] {
+    return this.objectKeys(this.fleetSummary)
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }
 
-    for (const ship of fleet) {
+  get fleetBrands(): string[] {
+    const brands = new Set<string>();
+    for (const ships of Object.values(this.fleetSummary)) {
+      for (const ship of ships) {
+        if (ship.brandName) {
+          brands.add(ship.brandName);
+        }
+      }
+    }
+
+    return [...brands]
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }
+
+  get filteredFleetSummary(): { [focus: string]: ShipSummary[] } {
+    const categoryFilter = this.normalize(this.fleetCategoryFilter);
+    const brandFilter = this.normalize(this.fleetBrandFilter);
+    const searchFilter = this.normalize(this.fleetSearchFilter);
+    const filtered: { [focus: string]: ShipSummary[] } = {};
+
+    for (const focus of this.objectKeys(this.fleetSummary)) {
+      if (categoryFilter && this.normalize(focus) !== categoryFilter) {
+        continue;
+      }
+
+      const ships = this.fleetSummary[focus].filter((ship) => {
+        if (brandFilter && this.normalize(ship.brandName) !== brandFilter) {
+          return false;
+        }
+        if (!searchFilter) {
+          return true;
+        }
+
+        const searchableFields = [
+          ship.name,
+          ship.displayName,
+          ship.brandName,
+          ship.focus
+        ].map(value => this.normalize(value));
+
+        return searchableFields.some(value => value.includes(searchFilter));
+      });
+
+      if (ships.length > 0) {
+        filtered[focus] = ships;
+      }
+    }
+
+    return filtered;
+  }
+
+  get hasFleetSummary(): boolean {
+    return this.objectKeys(this.fleetSummary).length > 0;
+  }
+
+  get hasActiveFleetFilters(): boolean {
+    return !!(this.fleetCategoryFilter || this.fleetBrandFilter || this.fleetSearchFilter.trim());
+  }
+
+  resetFleetFilters(): void {
+    this.fleetCategoryFilter = '';
+    this.fleetBrandFilter = '';
+    this.fleetSearchFilter = '';
+  }
+
+  private groupShipsByFocus(fleet: FleetSummaryEntry[]): { [focus: string]: ShipSummary[] } {
+    const shipsByKey = new Map<string, ShipSummary>();
+
+    for (const ship of fleet ?? []) {
+      const focus = this.safeLabel(ship.focus, 'Sans catégorie');
+      const name = this.safeLabel(ship.name, 'Vaisseau inconnu');
+      const brandName = this.safeLabel(ship.brandName, 'Marque inconnue');
+      const key = `${focus}::${brandName}::${name}`;
+
+      const existing = shipsByKey.get(key);
+      if (existing) {
+        existing.count++;
+        continue;
+      }
+
+      shipsByKey.set(key, {
+        name,
+        displayName: name,
+        imageUrl: ship.imageUrl ?? null,
+        focus,
+        brandName,
+        count: 1
+      });
+    }
+
+    const result: { [focus: string]: ShipSummary[] } = {};
+    for (const ship of shipsByKey.values()) {
+      ship.displayName = ship.count > 1 ? `${ship.name} (${ship.count})` : ship.name;
       if (!result[ship.focus]) {
         result[ship.focus] = [];
       }
-
-      const existing = result[ship.focus].find(s => s.name === ship.name);
-      if (existing) {
-        existing.count++;
-      } else {
-        result[ship.focus].push({ name: ship.name, imageUrl: ship.imageUrl, count: 1 });
-      }
+      result[ship.focus].push(ship);
     }
 
-    // Nettoyage du format final
-    const finalResult: { [focus: string]: { name: string; imageUrl: string }[] } = {};
-    for (const focus of Object.keys(result)) {
-      finalResult[focus] = result[focus].map(s => ({
-        name: s.count > 1 ? `${s.name} (${s.count})` : s.name,
-        imageUrl: s.imageUrl
-      }));
+    for (const focus of this.objectKeys(result)) {
+      result[focus] = result[focus]
+        .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
     }
 
-    return finalResult;
+    return result;
+  }
+
+  private safeLabel(value: string | null | undefined, fallback: string): string {
+    const trimmed = (value ?? '').trim();
+    return trimmed || fallback;
+  }
+
+  private normalize(value: string | null | undefined): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
 

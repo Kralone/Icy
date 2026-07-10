@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
@@ -10,12 +10,13 @@ import {WebSocketService} from '../../core/services/websocket/websocket.service'
   templateUrl: './fleet.component.html',
   imports: [CommonModule, LoadingOverlayComponent]
 })
-export class FleetComponent implements OnInit {
+export class FleetComponent implements OnInit, OnDestroy {
   private shipService: ShipService;
   private wsService: WebSocketService;
 
   isLoading = true;
   fleetSummary: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } = {};
+  private loadingFallback?: ReturnType<typeof setTimeout>;
 
   objectKeys = Object.keys;
 
@@ -26,15 +27,44 @@ export class FleetComponent implements OnInit {
 
   ngOnInit(): void {
     this.wsService.connectFleetUpdate();
+    this.loadingFallback = setTimeout(() => {
+      this.isLoading = false;
+    }, 5000);
     this.loadFleetSummary();
   }
 
+  ngOnDestroy(): void {
+    if (this.loadingFallback) {
+      clearTimeout(this.loadingFallback);
+    }
+  }
+
   private loadFleetSummary() {
-    this.shipService.getFleetSummary().subscribe(response => {
-      const rawFleet = JSON.parse(response).fleet;
-      this.fleetSummary = this.groupShipsByFocus(rawFleet);
-      this.isLoading = false;
+    this.shipService.getFleetSummary().subscribe({
+      next: (response) => {
+        try {
+          const rawFleet = JSON.parse(response)?.fleet;
+          this.fleetSummary = this.groupShipsByFocus(Array.isArray(rawFleet) ? rawFleet : []);
+        } catch (error) {
+          console.error('Erreur de lecture du résumé de flotte', error);
+          this.fleetSummary = {};
+        } finally {
+          this.finishLoading();
+        }
+      },
+      error: (error) => {
+        console.error('Erreur de chargement du résumé de flotte', error);
+        this.finishLoading();
+      },
     });
+  }
+
+  private finishLoading(): void {
+    if (this.loadingFallback) {
+      clearTimeout(this.loadingFallback);
+      this.loadingFallback = undefined;
+    }
+    this.isLoading = false;
   }
 
   private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } {
