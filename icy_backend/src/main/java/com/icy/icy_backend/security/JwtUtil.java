@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,12 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
+    private static final String TOKEN_TYPE_CLAIM = "tokenType";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+    private static final String PASSWORD_RESET_TOKEN_TYPE = "password_reset";
+    private static final long PASSWORD_RESET_EXPIRATION = 5 * 60 * 1000L;
+
     private final SecretKey secretKey;
     private final long accessExpiration;
     private final long refreshExpiration;
@@ -23,7 +30,7 @@ public class JwtUtil {
     public JwtUtil(@Value("${jwt.secret}") String secret,
                    @Value("${jwt.access-expiration}") long accessExpiration,
                    @Value("${jwt.refresh-expiration}") long refreshExpiration) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessExpiration = accessExpiration;
         this.refreshExpiration = refreshExpiration;
     }
@@ -39,6 +46,7 @@ public class JwtUtil {
                         .map(GrantedAuthority::getAuthority)
                         .toList())
                 .claim("userId", userId)
+                .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration))
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -48,8 +56,20 @@ public class JwtUtil {
     public String generateRefreshToken(String username) {
         return Jwts.builder()
                 .subject(username)
+                .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    public String generatePasswordResetToken(String username, UUID userId) {
+        return Jwts.builder()
+                .subject(username)
+                .claim("userId", userId)
+                .claim(TOKEN_TYPE_CLAIM, PASSWORD_RESET_TOKEN_TYPE)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + PASSWORD_RESET_EXPIRATION))
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
@@ -59,33 +79,37 @@ public class JwtUtil {
     // ==============================================================
 
     public boolean validateToken(String token) {
+        return validateTokenType(token, ACCESS_TOKEN_TYPE);
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateTokenType(token, REFRESH_TOKEN_TYPE);
+    }
+
+    public boolean validatePasswordResetToken(String token) {
+        return validateTokenType(token, PASSWORD_RESET_TOKEN_TYPE);
+    }
+
+    private boolean validateTokenType(String token, String expectedType) {
         try {
-            Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
+            Claims claims = parseClaims(token);
+            return expectedType.equals(claims.get(TOKEN_TYPE_CLAIM, String.class));
         } catch (Exception e) {
             return false;
         }
     }
 
     public String getSubjectFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return claims.getSubject();
+        return parseClaims(token).getSubject();
+    }
+
+    public UUID getUserIdFromToken(String token) {
+        return UUID.fromString(parseClaims(token).get("userId", String.class));
     }
 
     public List<String> extractRoles(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            Claims claims = parseClaims(token);
 
             Object rolesClaim = claims.get("roles");
 
@@ -112,9 +136,16 @@ public class JwtUtil {
                 return List.of(rolesClaim.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return List.of();
         }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
 }

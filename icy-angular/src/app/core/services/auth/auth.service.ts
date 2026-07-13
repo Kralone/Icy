@@ -16,9 +16,10 @@ export class AuthService {
 
   login(username: string, password: string): Observable<{
     tokens: { accessToken: string, refreshToken: string },
-    user: User
+    user: User,
+    passwordResetToken?: string
   }> {
-    return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User }>(
+    return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User, passwordResetToken?: string }>(
       `${this.apiUrl}/login`,
       { username, password }
     ).pipe(
@@ -39,7 +40,7 @@ export class AuthService {
     this.removeStorage('refreshToken');
   }
 
-  resetPassword(payload: { id: string, newPassword: string }): Observable<{ tokens: { accessToken: string, refreshToken: string }, user: User }> {
+  resetPassword(payload: { resetToken: string, newPassword: string }): Observable<{ tokens: { accessToken: string, refreshToken: string }, user: User }> {
     return this.http.post<{ tokens: { accessToken: string, refreshToken: string }, user: User }>(
       `${this.apiUrl}/reset-password`, payload);
   }

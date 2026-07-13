@@ -10,6 +10,7 @@ import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
 import com.icy.icy_backend.service.event.EventService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,16 +25,19 @@ public class EventController {
         this.eventService = eventService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<EventResponseDTO>> create(@RequestBody CreateEventRequest req) {
         return eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<EventResponseDTO>> update(@RequestBody UpdateEventRequest req) {
         return eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping
     public ResponseEntity<MessageResponse<Void>> delete(@RequestParam UUID id) {
         return eventService.deleteEvent(id);
@@ -49,6 +53,7 @@ public class EventController {
         return eventService.getAllEventsTypes();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/types")
     public ResponseEntity<MessageResponse<EventType>> createType(@RequestBody EventType type) {
         return eventService.createEventType(
@@ -59,6 +64,7 @@ public class EventController {
         );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/types/{name}")
     public ResponseEntity<MessageResponse<Void>> deleteType(@PathVariable String name) {
         return eventService.deleteEventType(name);
@@ -79,6 +85,7 @@ public class EventController {
         return eventService.getUpcomingEvents();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/types/{name}")
     public ResponseEntity<MessageResponse<EventType>> updateType(@PathVariable String name, @RequestBody EventType updatedType) {
         return eventService.updateEventType(name, updatedType);

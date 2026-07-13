@@ -241,6 +241,30 @@ export class EventsComponent implements AfterViewInit {
       .replaceAll("'", '&#039;');
   }
 
+  private safeCssColor(value: string | null | undefined, fallback: string): string {
+    const normalized = value?.trim() ?? '';
+    return /^(#[0-9a-f]{3}|#[0-9a-f]{6}|#[0-9a-f]{8})$/i.test(normalized)
+      ? normalized
+      : fallback;
+  }
+
+  private safeImageUrl(value: string | null | undefined): string | null {
+    const normalized = value?.trim();
+    if (!normalized) return null;
+
+    try {
+      const url = new URL(normalized, 'https://iceforge.fr');
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+      return url.href
+        .replaceAll("'", '%27')
+        .replaceAll('"', '%22')
+        .replaceAll('(', '%28')
+        .replaceAll(')', '%29');
+    } catch {
+      return null;
+    }
+  }
+
   formatEventDescription(description?: string | null): SafeHtml {
     if (!description) {
       return '';
@@ -255,11 +279,11 @@ export class EventsComponent implements AfterViewInit {
   renderIcyEvent(arg: any): { html: string } {
     const type = arg.event.extendedProps?.type as EventType | undefined;
 
-    const img = type?.imageUrl?.trim();
+    const img = this.safeImageUrl(type?.imageUrl);
     const hasImg = !!img;
 
-    const pillBg = type?.backgroundColor?.trim() || '#0ea5e9';
-    const pillText = type?.textColor?.trim() || '#e0f2ff';
+    const pillBg = this.safeCssColor(type?.backgroundColor, '#0ea5e9');
+    const pillText = this.safeCssColor(type?.textColor, '#e0f2ff');
 
     const finished = this.isEventFinished({
       finished: arg.event.extendedProps?.finished,

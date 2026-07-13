@@ -74,10 +74,12 @@ class AuthServiceTest {
         user.setUsername("alice");
         user.setPwdReset(true);
         when(userService.getByUsername("alice")).thenReturn(user);
+        when(jwtUtil.generatePasswordResetToken("alice", user.getId())).thenReturn("reset-token");
 
         LoginResponseDTO response = authService.authenticate("alice", "pwd");
         assertThat(response.getTokens().get("accessToken")).isEqualTo("resetPwd");
         assertThat(response.getTokens().get("refreshToken")).isEqualTo("resetPwd");
+        assertThat(response.getPasswordResetToken()).isEqualTo("reset-token");
     }
 
     @Test
@@ -108,7 +110,7 @@ class AuthServiceTest {
         UserService userService = Mockito.mock(UserService.class);
         AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
 
-        when(jwtUtil.validateToken("refresh")).thenReturn(true);
+        when(jwtUtil.validateRefreshToken("refresh")).thenReturn(true);
         when(jwtUtil.getSubjectFromToken("refresh")).thenReturn("alice");
 
         UserDetails details = org.springframework.security.core.userdetails.User
@@ -129,5 +131,52 @@ class AuthServiceTest {
         Map<String, String> tokens = authService.refreshAccessToken("refresh");
         assertThat(tokens.get("accessToken")).isEqualTo("new-access");
         assertThat(tokens.get("refreshToken")).isEqualTo("new-refresh");
+    }
+
+    @Test
+    void completePasswordResetRequiresAValidSingleUseResetToken() {
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
+        CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        UserService userService = Mockito.mock(UserService.class);
+        AuthService authService = Mockito.spy(new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService));
+
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        user.setUsername("alice");
+        user.setPwdReset(true);
+
+        when(jwtUtil.validatePasswordResetToken("reset-token")).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken("reset-token")).thenReturn(userId);
+        when(userService.findUserById(userId)).thenReturn(user);
+        when(userService.updatePasswordAndUnlock(userId, "new-password")).thenReturn("alice");
+        Mockito.doReturn(new LoginResponseDTO("access", "refresh", null))
+                .when(authService).authenticate("alice", "new-password");
+
+        LoginResponseDTO response = authService.completePasswordReset("reset-token", "new-password");
+
+        assertThat(response.getTokens().get("accessToken")).isEqualTo("access");
+    }
+
+    @Test
+    void completePasswordResetRejectsReplayedToken() {
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
+        CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        UserService userService = Mockito.mock(UserService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
+
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        user.setPwdReset(false);
+
+        when(jwtUtil.validatePasswordResetToken("reset-token")).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken("reset-token")).thenReturn(userId);
+        when(userService.findUserById(userId)).thenReturn(user);
+
+        assertThatThrownBy(() -> authService.completePasswordReset("reset-token", "new-password"))
+                .isInstanceOf(InvalidCredentialsException.class);
     }
 }

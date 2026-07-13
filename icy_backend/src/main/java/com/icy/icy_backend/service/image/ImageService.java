@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,13 @@ import java.util.stream.Collectors;
 public class ImageService {
 
     private static final String DEFAULT_TAG_COLOR = "#22d3ee";
+    private static final Map<String, Set<String>> ALLOWED_IMAGE_EXTENSIONS = Map.of(
+            "image/png", Set.of(".png"),
+            "image/jpeg", Set.of(".jpg", ".jpeg"),
+            "image/gif", Set.of(".gif"),
+            "image/webp", Set.of(".webp"),
+            "image/avif", Set.of(".avif")
+    );
 
     private final Path root;
     private final ImageMetadataRepository repo;
@@ -74,14 +82,18 @@ public class ImageService {
         if (originalFilename == null || originalFilename.isBlank()) {
             throw new IllegalArgumentException("Nom de fichier invalide.");
         }
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Fichier vide.");
+        }
 
         // 🔧 Nettoyage basique du nom (remplace espaces et caractères spéciaux)
         String safeName = originalFilename
                 .replaceAll("\\s+", "_")      // espaces → underscores
                 .replaceAll("[^a-zA-Z0-9._-]", ""); // supprime caractères interdits
+        validateImageType(file.getContentType(), safeName);
 
         // 📁 Enregistre le fichier
-        Path destination = root.resolve(safeName);
+        Path destination = resolveFile(safeName);
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         log.info("📸 Image uploadée sur disque : {}", destination);
 
@@ -248,7 +260,7 @@ public class ImageService {
 
     public Resource getImage(String filename) {
         try {
-            Path file = root.resolve(filename);
+            Path file = resolveFile(filename);
             Resource resource = new UrlResource(file.toUri());
             if (!resource.exists() || !resource.isReadable()) {
                 throw new ResourceNotFoundException("Image non trouvée : " + filename);
@@ -263,7 +275,7 @@ public class ImageService {
         ImageMetadata meta = repo.findByName(filename)
                 .orElseThrow(() -> new ResourceNotFoundException("Image non trouvée : " + filename));
 
-        Path file = root.resolve(filename);
+        Path file = resolveFile(filename);
         if (Files.exists(file)) {
             Files.delete(file);
             log.info("🗑️ Fichier supprimé : {}", filename);
@@ -294,6 +306,25 @@ public class ImageService {
         meta.setTags(safeTags);
 
         return repo.save(meta);
+    }
+
+    private void validateImageType(String contentType, String filename) {
+        Set<String> allowedExtensions = ALLOWED_IMAGE_EXTENSIONS.get(contentType);
+        String lowerName = filename.toLowerCase();
+        if (allowedExtensions == null || allowedExtensions.stream().noneMatch(lowerName::endsWith)) {
+            throw new IllegalArgumentException("Format d'image non supporté ou extension incohérente.");
+        }
+    }
+
+    private Path resolveFile(String filename) {
+        if (filename == null || filename.isBlank()) {
+            throw new IllegalArgumentException("Nom de fichier invalide.");
+        }
+        Path resolved = root.resolve(filename).normalize();
+        if (resolved.equals(root) || !resolved.startsWith(root)) {
+            throw new IllegalArgumentException("Chemin de fichier invalide.");
+        }
+        return resolved;
     }
 }
 

@@ -65,8 +65,8 @@ class AuthControllerTest {
     void authEndpointsReturnOk() throws Exception {
         when(authService.authenticate(eq("user"), eq("pass")))
                 .thenReturn(new LoginResponseDTO("access", "refresh", null));
-        when(userService.updatePasswordAndUnlock(any(UUID.class), eq("new")))
-                .thenReturn("user");
+        when(authService.completePasswordReset(eq("reset-token"), eq("new-password")))
+                .thenReturn(new LoginResponseDTO("access", "refresh", null));
         when(authService.refreshAccessToken(eq("refresh")))
                 .thenReturn(Map.of("accessToken", "new"));
         when(jwtUtil.validateToken(eq("token"))).thenReturn(true);
@@ -78,8 +78,8 @@ class AuthControllerTest {
         loginRequest.setPassword("pass");
 
         ResetPasswordRequest resetRequest = new ResetPasswordRequest();
-        resetRequest.setId(UUID.randomUUID());
-        resetRequest.setNewPassword("new");
+        resetRequest.setResetToken("reset-token");
+        resetRequest.setNewPassword("new-password");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")

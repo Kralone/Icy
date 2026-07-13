@@ -20,7 +20,7 @@ export class LoginComponent implements OnInit {
   passwordForm: FormGroup;
   errorMessage: string = '';
   showResetModal: boolean = false;
-  private tempUser: any = null;
+  private passwordResetToken: string | null = null;
   private returnUrl = '/icy/dashboard';
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
@@ -66,8 +66,11 @@ export class LoginComponent implements OnInit {
       const response = await firstValueFrom(this.authService.login(username, password));
 
       // 🔍 Cas spécial : utilisateur en reset password
-      if (response.tokens.accessToken === 'resetPwd' && response.tokens.refreshToken === 'resetPwd') {
-        this.tempUser = response.user; // stockage temporaire en mémoire
+      if (response.tokens.accessToken === 'resetPwd') {
+        if (!response.passwordResetToken) {
+          throw new Error('Jeton de réinitialisation manquant.');
+        }
+        this.passwordResetToken = response.passwordResetToken;
         this.showResetModal = true;
         return;
       }
@@ -103,8 +106,13 @@ async onResetPassword(): Promise<void> {
     return;
   }
 
+  if (!this.passwordResetToken) {
+    this.errorMessage = 'La session de réinitialisation a expiré. Veuillez vous reconnecter.';
+    return;
+  }
+
   const resetPayload = {
-    id: this.tempUser.id,
+    resetToken: this.passwordResetToken,
     newPassword
   };
 
@@ -117,6 +125,7 @@ async onResetPassword(): Promise<void> {
     }
 
     this.showResetModal = false;
+    this.passwordResetToken = null;
     await this.router.navigateByUrl(this.returnUrl);
   } catch (err) {
     this.errorMessage = "Erreur lors de la réinitialisation.";

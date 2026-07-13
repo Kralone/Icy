@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -49,11 +50,10 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<LoginResponseDTO> resetPassword(@RequestBody ResetPasswordRequest request) {
-        String username = userService.updatePasswordAndUnlock(request.getId(), request.getNewPassword());
-        LoginResponseDTO loginResponse = authService.authenticate(username, request.getNewPassword());
-        return ResponseEntity.ok(loginResponse);
+        return ResponseEntity.ok(authService.completePasswordReset(request.getResetToken(), request.getNewPassword()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/admin/force-reset-password")
     public ResponseEntity<MessageResponse<Void>> forceResetPassword(@RequestParam UUID id) {
         userService.forceResetPassword(id);

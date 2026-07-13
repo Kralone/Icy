@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.response.auth.LoginResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.security.JwtUtil;
 import com.icy.icy_backend.security.CustomUserDetailsService;
 import com.icy.icy_backend.service.user.UserService;
@@ -54,7 +55,8 @@ public class AuthService {
 
             // Si l'utilisateur doit réinitialiser son mot de passe
             if (user.getPwdReset()) {
-                return new LoginResponseDTO("resetPwd", "resetPwd", userDto);
+                String passwordResetToken = jwtUtil.generatePasswordResetToken(username, user.getId());
+                return new LoginResponseDTO("resetPwd", "resetPwd", userDto, passwordResetToken);
             }
 
             // ✅ Génération du JWT avec les rôles
@@ -83,7 +85,7 @@ public class AuthService {
     public Map<String, String> refreshAccessToken(String oldRefreshToken) {
         logger.info("Tentative de rafraîchissement du token");
 
-        if (!jwtUtil.validateToken(oldRefreshToken)) {
+        if (!jwtUtil.validateRefreshToken(oldRefreshToken)) {
             logger.warn("Tentative de rafraîchissement avec un token invalide");
             throw new InvalidCredentialsException("Refresh token invalide !");
         }
@@ -110,6 +112,23 @@ public class AuthService {
                 "accessToken", newAccessToken,
                 "refreshToken", newRefreshToken
         );
+    }
+
+    public LoginResponseDTO completePasswordReset(String resetToken, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new BadRequestException("Le mot de passe doit contenir au moins 6 caractères.");
+        }
+        if (resetToken == null || !jwtUtil.validatePasswordResetToken(resetToken)) {
+            throw new InvalidCredentialsException("Jeton de réinitialisation invalide ou expiré !");
+        }
+
+        User user = userService.findUserById(jwtUtil.getUserIdFromToken(resetToken));
+        if (!Boolean.TRUE.equals(user.getPwdReset())) {
+            throw new InvalidCredentialsException("Cette réinitialisation a déjà été utilisée.");
+        }
+
+        String username = userService.updatePasswordAndUnlock(user.getId(), newPassword);
+        return authenticate(username, newPassword);
     }
 
 

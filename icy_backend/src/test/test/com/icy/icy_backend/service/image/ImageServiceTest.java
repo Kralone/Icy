@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -72,5 +73,36 @@ class ImageServiceTest {
 
         assertThat(service.listSubcategories(" ")).isEmpty();
         assertThat(service.listSubcategories(null)).isEmpty();
+    }
+
+    @Test
+    void uploadRejectsNonImageExtensions() throws Exception {
+        ImageService service = new ImageService(
+                Mockito.mock(ImageMetadataRepository.class),
+                Mockito.mock(ImageTagRepository.class),
+                Mockito.mock(ImageCategoryRepository.class),
+                Mockito.mock(ImageSubcategoryRepository.class),
+                tempDir.toString()
+        );
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "payload.html", "image/png", "<script>alert(1)</script>".getBytes()
+        );
+
+        assertThatThrownBy(() -> service.upload(file, UUID.randomUUID(), "alice", List.of(), null, null, null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void imageLookupRejectsPathTraversal() throws Exception {
+        ImageService service = new ImageService(
+                Mockito.mock(ImageMetadataRepository.class),
+                Mockito.mock(ImageTagRepository.class),
+                Mockito.mock(ImageCategoryRepository.class),
+                Mockito.mock(ImageSubcategoryRepository.class),
+                tempDir.toString()
+        );
+
+        assertThatThrownBy(() -> service.getImage("../outside.png"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

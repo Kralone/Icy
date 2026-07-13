@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,22 +41,26 @@ public class UserController {
         return userService.getUserByDiscordId(discordId);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<User>>createUser(@RequestBody CreateUserRequest createUserRequest) {
         return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<User>> updateUser(@RequestBody UpdateUserRequest request) {
         return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole());
     }
 
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/by-id")
     public ResponseEntity<MessageResponse<Void>> deleteUserById(@RequestParam UUID id) {
         return userService.deactivateUser(userService.resolveUser(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/by-discord")
     public ResponseEntity<MessageResponse<Void>> deleteUserByDiscordId(@RequestParam Long discordId) {
         return userService.deactivateUser(userService.resolveUser(discordId));

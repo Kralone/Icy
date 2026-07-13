@@ -8,6 +8,7 @@ import com.icy.icy_backend.service.news.NewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class NewsController {
         return service.getAll(PageRequest.of(page, size));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping
     public News create(@RequestBody NewsRequest req) {
         News news = new News();
@@ -34,6 +36,7 @@ public class NewsController {
         return service.create(news, req.getTypeId());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/{id}")
     public NewsDTO update(@PathVariable Long id, @RequestBody NewsRequest req) {
         News updated = new News();
@@ -45,6 +48,7 @@ public class NewsController {
         return service.update(id, updated);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
@@ -56,16 +60,19 @@ public class NewsController {
         return service.getAllTypes();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/types")
     public NewsType createType(@RequestBody NewsType type) {
         return service.createType(type);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/types/{id}")
     public NewsType updateType(@PathVariable Long id, @RequestBody NewsType type) {
         return service.updateType(id, type);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/types/{id}")
     public void deleteType(@PathVariable Long id) {
         service.deleteType(id);
