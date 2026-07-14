@@ -43,7 +43,7 @@ rabbit_user = os.getenv("RABBITMQ_USER", "icy")
 rabbit_pass = os.getenv("RABBITMQ_PSWD", "icy123")
 
 rabbit_url = f"amqp://{rabbit_user}:{rabbit_pass}@{rabbit_host}:{rabbit_port}/"
-logger.info(f"🔌 RabbitMQ URL générée : {rabbit_url}")
+logger.info("🔌 Configuration RabbitMQ chargée : %s:%s (utilisateur: %s)", rabbit_host, rabbit_port, rabbit_user)
 
 
 # Vérifications préliminaires

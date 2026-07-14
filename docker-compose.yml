@@ -71,7 +71,7 @@ services:
       - external
 
   bot:
-    build: ./bot
+    build: ./icy
     container_name: iceforge_bot
     restart: always
     environment:

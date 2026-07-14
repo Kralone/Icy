@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,12 +48,19 @@ public class UserAvatarService {
     }
 
     public String storeAvatar(User user, MultipartFile file) throws IOException {
-        String contentType = file.getContentType();
+        String contentType = file.getContentType() == null
+                ? ""
+                : file.getContentType().toLowerCase(Locale.ROOT);
         Set<String> extensions = ALLOWED_EXTENSIONS.get(contentType);
         if (extensions == null) {
             throw new IllegalArgumentException("Format d'image non supporte.");
         }
-        String extension = extensions.iterator().next();
+        String extension = switch (contentType) {
+            case "image/jpeg", "image/jpg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> throw new IllegalArgumentException("Format d'image non supporte.");
+        };
         String validationName = user.getId() + extension;
         ImageContentValidator.validate(file, validationName, ALLOWED_EXTENSIONS, MAX_FILE_SIZE);
 

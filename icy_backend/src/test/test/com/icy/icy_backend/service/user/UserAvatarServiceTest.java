@@ -44,4 +44,18 @@ class UserAvatarServiceTest {
         String url = service.storeAvatar(user, file);
         assertThat(url).contains("/avatars/");
     }
+
+    @Test
+    void storeJpegAvatarUsesStableJpgExtension() throws Exception {
+        ImageService imageService = Mockito.mock(ImageService.class);
+        UserAvatarService service = new UserAvatarService(tempDir.toString(), "http://localhost/images/", imageService);
+        User user = new User();
+        user.setId(UUID.randomUUID());
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.jpeg", "IMAGE/JPEG", new byte[]{(byte) 0xff, (byte) 0xd8, (byte) 0xff}
+        );
+
+        assertThat(service.storeAvatar(user, file)).endsWith(".jpg");
+    }
 }
