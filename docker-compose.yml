@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-iceforge}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
-      POSTGRES_DB: ${POSTGRES_DB:-iceforge_db}
+      POSTGRES_DB: ${POSTGRES_DB:-iceforgedb}
     ports:
       - "5432:5432"
     volumes:
@@ -16,20 +16,22 @@ services:
       - external
 
   backend:
-    build: ./app
+    build: ./icy_backend
     container_name: iceforge_backend
     restart: always
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/iceforge_db}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/iceforgedb}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-iceforge}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change_me}
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://iceforge.fr/images/}
-      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_WITH_32_CHARS_MIN}
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_JWT_SECRET_32_CHARS_MINIMUM}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       BOT_API_KEY: ${BOT_API_KEY:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iceforge.fr}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USERNAME: ${RABBITMQ_USER:-icy}
       RABBITMQ_PASSWORD: ${RABBITMQ_PSWD:-change_me}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
