@@ -7,7 +7,7 @@ import {
   HttpErrorResponse
 } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, finalize, shareReplay, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
@@ -16,6 +16,7 @@ import { isPlatformBrowser } from '@angular/common';
 export class HttpAuthInterceptor implements HttpInterceptor {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private refreshInFlight$?: Observable<{ accessToken: string, refreshToken: string }>;
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -24,6 +25,7 @@ export class HttpAuthInterceptor implements HttpInterceptor {
     const excludedPaths = [
       '/api/auth/login',
       '/api/auth/refresh',
+      '/api/auth/logout',
       '/api/auth/reset-password'
     ];
 
@@ -43,7 +45,7 @@ export class HttpAuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401 || error.status === 403) {
-          return this.authService.refreshToken().pipe(
+          return this.refreshTokensOnce().pipe(
             switchMap(res => {
               if (this.isBrowser) {
                 localStorage.setItem('token', res.accessToken);
@@ -66,5 +68,15 @@ export class HttpAuthInterceptor implements HttpInterceptor {
         return throwError(() => error);
       })
     );
+  }
+
+  private refreshTokensOnce(): Observable<{ accessToken: string, refreshToken: string }> {
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.authService.refreshToken().pipe(
+        finalize(() => this.refreshInFlight$ = undefined),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.refreshInFlight$;
   }
 }
