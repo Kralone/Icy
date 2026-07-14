@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 public class ImageService {
 
     private static final String DEFAULT_TAG_COLOR = "#22d3ee";
+    private static final long MAX_IMAGE_SIZE = 20_000_000;
     private static final Map<String, Set<String>> ALLOWED_IMAGE_EXTENSIONS = Map.of(
             "image/png", Set.of(".png"),
             "image/jpeg", Set.of(".jpg", ".jpeg"),
@@ -82,15 +83,11 @@ public class ImageService {
         if (originalFilename == null || originalFilename.isBlank()) {
             throw new IllegalArgumentException("Nom de fichier invalide.");
         }
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Fichier vide.");
-        }
-
         // 🔧 Nettoyage basique du nom (remplace espaces et caractères spéciaux)
         String safeName = originalFilename
                 .replaceAll("\\s+", "_")      // espaces → underscores
                 .replaceAll("[^a-zA-Z0-9._-]", ""); // supprime caractères interdits
-        validateImageType(file.getContentType(), safeName);
+        ImageContentValidator.validate(file, safeName, ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_SIZE);
 
         // 📁 Enregistre le fichier
         Path destination = resolveFile(safeName);
@@ -306,14 +303,6 @@ public class ImageService {
         meta.setTags(safeTags);
 
         return repo.save(meta);
-    }
-
-    private void validateImageType(String contentType, String filename) {
-        Set<String> allowedExtensions = ALLOWED_IMAGE_EXTENSIONS.get(contentType);
-        String lowerName = filename.toLowerCase();
-        if (allowedExtensions == null || allowedExtensions.stream().noneMatch(lowerName::endsWith)) {
-            throw new IllegalArgumentException("Format d'image non supporté ou extension incohérente.");
-        }
     }
 
     private Path resolveFile(String filename) {

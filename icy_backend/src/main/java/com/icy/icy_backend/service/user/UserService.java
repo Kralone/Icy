@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.stream.StreamSupport;
@@ -43,6 +44,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserService {
+    private static final String TEMP_PASSWORD_ALPHABET =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private static final String DEFAULT_ROLE_NAME = "JUNIOR";
     private static final Duration ACTIVITY_TOUCH_INTERVAL = Duration.ofSeconds(30);
@@ -112,7 +116,7 @@ public class UserService {
         User user = new User();
         user.setUsername(username);
         user.setDiscordId(discordId);
-        String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+        String tempPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
 
@@ -376,7 +380,7 @@ public class UserService {
 
     public void forceResetPassword(UUID userId) {
         User user = findUserById(userId);
-        String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+        String tempPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
         userRepository.save(user);
@@ -390,6 +394,16 @@ public class UserService {
                 "/login",
                 3
         );
+    }
+
+    private String generateTemporaryPassword() {
+        StringBuilder password = new StringBuilder(20);
+        for (int i = 0; i < 20; i++) {
+            password.append(TEMP_PASSWORD_ALPHABET.charAt(
+                    SECURE_RANDOM.nextInt(TEMP_PASSWORD_ALPHABET.length())
+            ));
+        }
+        return password.toString();
     }
 
 

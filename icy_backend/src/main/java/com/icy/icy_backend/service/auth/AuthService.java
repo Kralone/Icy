@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class AuthService {
@@ -115,8 +116,11 @@ public class AuthService {
     }
 
     public LoginResponseDTO completePasswordReset(String resetToken, String newPassword) {
-        if (newPassword == null || newPassword.length() < 6) {
-            throw new BadRequestException("Le mot de passe doit contenir au moins 6 caractères.");
+        if (newPassword == null || newPassword.length() < 12) {
+            throw new BadRequestException("Le mot de passe doit contenir au moins 12 caractères.");
+        }
+        if (newPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new BadRequestException("Le mot de passe ne doit pas dépasser 72 octets.");
         }
         if (resetToken == null || !jwtUtil.validatePasswordResetToken(resetToken)) {
             throw new InvalidCredentialsException("Jeton de réinitialisation invalide ou expiré !");

@@ -44,7 +44,7 @@ class ImageServiceTest {
                 "file",
                 "test.png",
                 "image/png",
-                "data".getBytes()
+                new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
         );
 
         ImageMetadata saved = service.upload(
@@ -90,6 +90,24 @@ class ImageServiceTest {
 
         assertThatThrownBy(() -> service.upload(file, UUID.randomUUID(), "alice", List.of(), null, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void uploadRejectsSpoofedImageContent() throws Exception {
+        ImageService service = new ImageService(
+                Mockito.mock(ImageMetadataRepository.class),
+                Mockito.mock(ImageTagRepository.class),
+                Mockito.mock(ImageCategoryRepository.class),
+                Mockito.mock(ImageSubcategoryRepository.class),
+                tempDir.toString()
+        );
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "payload.png", "image/png", "<script>alert(1)</script>".getBytes()
+        );
+
+        assertThatThrownBy(() -> service.upload(file, UUID.randomUUID(), "alice", List.of(), null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("contenu");
     }
 
     @Test

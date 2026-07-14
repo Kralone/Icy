@@ -22,7 +22,7 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate:
             ddl-auto: validate
-        show-sql: true
+        show-sql: ${HIBERNATE_SHOW_SQL:false}
 
     flyway:
         enabled: true
@@ -35,8 +35,8 @@ spring:
 
     servlet:
       multipart:
-        max-file-size: 50MB       # limite pour chaque fichier
-        max-request-size: 100MB   # limite totale pour la requête
+        max-file-size: 25MB
+        max-request-size: 25MB
 
 jwt:
     secret: ${JWT_SECRET}
@@ -57,25 +57,16 @@ icy:
     api-key: ${UEX_API_KEY:}
 
 
-security:
-    csrf:
-        enabled: true  # Protection CSRF activée
-    cors:
-        allowed-origins: "https://iceforge.fr,http://localhost:3000"  # Seul ton frontend est autorisé
-        allowed-methods: "GET,POST,PUT,DELETE"
-        allowed-headers: "Authorization,Content-Type,X-XSRF-TOKEN"
-        allow-credentials: true  # Autoriser les cookies (refreshToken)
-
 server:
     port: 8080
 
 logging:
     level:
         root: INFO  # Niveau par défaut pour éviter trop de logs inutiles
-        com.icy.icy_backend.controller: DEBUG  # Logs détaillés pour les contrôleurs
-        com.icy.icy_backend.service: DEBUG  # Logs détaillés pour les services
+        com.icy.icy_backend.controller: INFO
+        com.icy.icy_backend.service: INFO
         org.springframework: WARN  # Réduire le bruit des logs Spring
-        org.hibernate.SQL: INFO  # Afficher les requêtes SQL exécutées
+        org.hibernate.SQL: WARN
         org.springframework.security: INFO
         org.springframework.web.cors: INFO
 

@@ -38,7 +38,8 @@ class UserAvatarServiceTest {
         User user = new User();
         user.setId(UUID.randomUUID());
 
-        MockMultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png", "data".getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png",
+                new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a});
 
         String url = service.storeAvatar(user, file);
         assertThat(url).contains("/avatars/");

@@ -2,6 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +25,10 @@ export class WebSocketService {
   private userNotificationsSubscription: StompSubscription | null = null;
   private lastNotificationsUserId: string | null = null;
 
-  constructor(private readonly ngZone: NgZone) {
+  constructor(
+    private readonly ngZone: NgZone,
+    private readonly authService: AuthService
+  ) {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
@@ -32,6 +36,11 @@ export class WebSocketService {
       heartbeatOutgoing: 10000,
       debug: (msg: string) => console.log(`[STOMP] ${msg}`),
     });
+    this.stompClient.beforeConnect = () => {
+      this.stompClient.connectHeaders = {
+        Authorization: `Bearer ${this.authService.getToken()}`,
+      };
+    };
 
     this.stompClient.onConnect = () => {
       console.log('✅ WebSocket connecté');

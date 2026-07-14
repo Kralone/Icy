@@ -96,8 +96,13 @@ async onResetPassword(): Promise<void> {
   const newPassword = this.passwordForm.value.newPassword;
   const confirmPassword = this.passwordForm.value.confirmPassword;
 
-  if (newPassword.length < 6) {
-    this.errorMessage = 'Le mot de passe doit contenir au moins 6 caractères.';
+  if (newPassword.length < 12) {
+    this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères.';
+    return;
+  }
+
+  if (new TextEncoder().encode(newPassword).length > 72) {
+    this.errorMessage = 'Le mot de passe ne doit pas dépasser 72 octets.';
     return;
   }
 

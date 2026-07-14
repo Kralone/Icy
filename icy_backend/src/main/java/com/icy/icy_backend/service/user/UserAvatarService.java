@@ -2,6 +2,7 @@ package com.icy.icy_backend.service.user;
 
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.service.image.ImageService;
+import com.icy.icy_backend.service.image.ImageContentValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,16 +14,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
 public class UserAvatarService {
     private static final long MAX_FILE_SIZE = 2_000_000;
-    private static final Map<String, String> EXTENSIONS = Map.of(
-            "image/jpeg", ".jpg",
-            "image/jpg", ".jpg",
-            "image/png", ".png",
-            "image/webp", ".webp"
+    private static final Map<String, Set<String>> ALLOWED_EXTENSIONS = Map.of(
+            "image/jpeg", Set.of(".jpg", ".jpeg"),
+            "image/jpg", Set.of(".jpg", ".jpeg"),
+            "image/png", Set.of(".png"),
+            "image/webp", Set.of(".webp")
     );
 
     private final Path avatarRoot;
@@ -45,20 +47,16 @@ public class UserAvatarService {
     }
 
     public String storeAvatar(User user, MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Fichier vide.");
-        }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Fichier trop lourd (max 2 Mo).");
-        }
-
         String contentType = file.getContentType();
-        String extension = EXTENSIONS.get(contentType);
-        if (extension == null) {
+        Set<String> extensions = ALLOWED_EXTENSIONS.get(contentType);
+        if (extensions == null) {
             throw new IllegalArgumentException("Format d'image non supporte.");
         }
+        String extension = extensions.iterator().next();
+        String validationName = user.getId() + extension;
+        ImageContentValidator.validate(file, validationName, ALLOWED_EXTENSIONS, MAX_FILE_SIZE);
 
-        String filename = user.getId() + extension;
+        String filename = validationName;
         Path destination = avatarRoot.resolve(filename);
 
         deletePreviousAvatar(user, filename);
