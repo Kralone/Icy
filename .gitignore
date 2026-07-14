@@ -1,4 +1,5 @@
 /icy/.env
+/.env
 /.idea/
 /.idea/db-forest-config.xml
 /.idea/data_source_mapping.xml
