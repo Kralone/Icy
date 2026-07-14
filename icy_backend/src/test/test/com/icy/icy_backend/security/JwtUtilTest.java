@@ -40,10 +40,11 @@ class JwtUtilTest {
         );
         UUID userId = UUID.randomUUID();
 
-        String refreshToken = jwtUtil.generateRefreshToken("alice");
+        String refreshToken = jwtUtil.generateRefreshToken("alice", userId);
         String resetToken = jwtUtil.generatePasswordResetToken("alice", userId);
 
         assertThat(jwtUtil.validateRefreshToken(refreshToken)).isTrue();
+        assertThat(jwtUtil.getUserIdFromToken(refreshToken)).isEqualTo(userId);
         assertThat(jwtUtil.validateToken(refreshToken)).isFalse();
         assertThat(jwtUtil.validatePasswordResetToken(resetToken)).isTrue();
         assertThat(jwtUtil.validateToken(resetToken)).isFalse();

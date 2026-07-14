@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/refresh",
+                                "/api/auth/logout",
                                 "/api/auth/reset-password",
                                 "/api/front/**",
                                 "/api/wikelo/ships",

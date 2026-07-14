@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 class AuthServiceTest {
 
@@ -28,7 +29,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
 
         UserDetails details = org.springframework.security.core.userdetails.User
                 .withUsername("alice")
@@ -46,7 +48,7 @@ class AuthServiceTest {
 
         when(jwtUtil.generateAccessToken(Mockito.eq("alice"), Mockito.any(), Mockito.eq(user.getId())))
                 .thenReturn("access");
-        when(jwtUtil.generateRefreshToken("alice")).thenReturn("refresh");
+        when(refreshTokenService.issue(user)).thenReturn("refresh");
 
         LoginResponseDTO response = authService.authenticate("alice", "pwd");
         assertThat(response.getTokens().get("accessToken")).isEqualTo("access");
@@ -59,7 +61,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
 
         UserDetails details = org.springframework.security.core.userdetails.User
                 .withUsername("alice")
@@ -88,7 +91,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
 
         UserDetails details = org.springframework.security.core.userdetails.User
                 .withUsername("alice")
@@ -108,10 +112,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
-
-        when(jwtUtil.validateRefreshToken("refresh")).thenReturn(true);
-        when(jwtUtil.getSubjectFromToken("refresh")).thenReturn("alice");
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
 
         UserDetails details = org.springframework.security.core.userdetails.User
                 .withUsername("alice")
@@ -122,12 +124,12 @@ class AuthServiceTest {
 
         User user = new User();
         user.setId(UUID.randomUUID());
-        when(userService.getByUsername("alice")).thenReturn(user);
+        user.setUsername("alice");
+        when(refreshTokenService.rotate("refresh"))
+                .thenReturn(new RefreshTokenService.Rotation(user, "new-refresh"));
 
         when(jwtUtil.generateAccessToken(Mockito.eq("alice"), Mockito.any(), Mockito.eq(user.getId())))
                 .thenReturn("new-access");
-        when(jwtUtil.generateRefreshToken("alice")).thenReturn("new-refresh");
-
         Map<String, String> tokens = authService.refreshAccessToken("refresh");
         assertThat(tokens.get("accessToken")).isEqualTo("new-access");
         assertThat(tokens.get("refreshToken")).isEqualTo("new-refresh");
@@ -139,7 +141,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = Mockito.spy(new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService));
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = Mockito.spy(new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService));
 
         UUID userId = UUID.randomUUID();
         User user = new User();
@@ -157,6 +160,7 @@ class AuthServiceTest {
         LoginResponseDTO response = authService.completePasswordReset("reset-token", "new-password");
 
         assertThat(response.getTokens().get("accessToken")).isEqualTo("access");
+        verify(refreshTokenService).revokeAllForUser(user);
     }
 
     @Test
@@ -165,7 +169,8 @@ class AuthServiceTest {
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
         PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
 
         UUID userId = UUID.randomUUID();
         User user = new User();
@@ -178,5 +183,24 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.completePasswordReset("reset-token", "new-password"))
                 .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
+    void forcePasswordResetRevokesExistingSessions() {
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
+        CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        UserService userService = Mockito.mock(UserService.class);
+        RefreshTokenService refreshTokenService = Mockito.mock(RefreshTokenService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService, refreshTokenService);
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        when(userService.findUserById(userId)).thenReturn(user);
+
+        authService.forcePasswordReset(userId);
+
+        verify(userService).forceResetPassword(userId);
+        verify(refreshTokenService).revokeAllForUser(user);
     }
 }

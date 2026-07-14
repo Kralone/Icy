@@ -8,6 +8,7 @@ import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.security.JwtUtil;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.service.auth.AuthService;
+import com.icy.icy_backend.service.auth.RefreshTokenService;
 import com.icy.icy_backend.service.common.MessageService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,12 +33,15 @@ public class AuthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(AuthService authService, UserService userService, JwtUtil jwtUtil, MessageService messageService) {
+    public AuthController(AuthService authService, UserService userService, JwtUtil jwtUtil,
+                          MessageService messageService, RefreshTokenService refreshTokenService) {
         this.authService = authService;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
         this.messageService = messageService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -56,7 +60,7 @@ public class AuthController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/admin/force-reset-password")
     public ResponseEntity<MessageResponse<Void>> forceResetPassword(@RequestParam UUID id) {
-        userService.forceResetPassword(id);
+        authService.forcePasswordReset(id);
         return messageService.buildResponse("user.password.reset", null);
     }
 
@@ -70,6 +74,12 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(authService.refreshAccessToken(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody Map<String, String> body) {
+        refreshTokenService.revoke(body.get("refreshToken"));
+        return ResponseEntity.noContent().build();
     }
 
 

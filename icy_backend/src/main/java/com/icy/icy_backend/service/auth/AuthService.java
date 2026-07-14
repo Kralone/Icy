@@ -15,9 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -27,12 +29,15 @@ public class AuthService {
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder, UserService userService) {
+    public AuthService(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
+                       UserService userService, RefreshTokenService refreshTokenService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public LoginResponseDTO authenticate(String username, String password) {
@@ -67,7 +72,7 @@ public class AuthService {
                     user.getId()
             );
 
-            String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
+            String refreshToken = refreshTokenService.issue(user);
 
             logger.info("Tokens générés avec succès pour l'utilisateur: {}", username);
 
@@ -86,18 +91,13 @@ public class AuthService {
     public Map<String, String> refreshAccessToken(String oldRefreshToken) {
         logger.info("Tentative de rafraîchissement du token");
 
-        if (!jwtUtil.validateRefreshToken(oldRefreshToken)) {
-            logger.warn("Tentative de rafraîchissement avec un token invalide");
-            throw new InvalidCredentialsException("Refresh token invalide !");
-        }
-
-        String username = jwtUtil.getSubjectFromToken(oldRefreshToken);
+        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(oldRefreshToken);
+        User user = rotation.user();
+        String username = user.getUsername();
         logger.info("Rafraîchissement réussi pour l'utilisateur: {}", username);
 
         // ⚙️ Récupérer les rôles depuis la BDD (source fiable)
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        User user = userService.getByUsername(username);
-
         // 🔁 Générer les nouveaux tokens
         String newAccessToken = jwtUtil.generateAccessToken(
                 username,
@@ -105,16 +105,15 @@ public class AuthService {
                 user.getId()
         );
 
-        String newRefreshToken = jwtUtil.generateRefreshToken(username);
-
         logger.info("Nouveaux tokens générés avec succès pour l'utilisateur: {}", username);
 
         return Map.of(
                 "accessToken", newAccessToken,
-                "refreshToken", newRefreshToken
+                "refreshToken", rotation.refreshToken()
         );
     }
 
+    @Transactional
     public LoginResponseDTO completePasswordReset(String resetToken, String newPassword) {
         if (newPassword == null || newPassword.length() < 12) {
             throw new BadRequestException("Le mot de passe doit contenir au moins 12 caractères.");
@@ -132,7 +131,14 @@ public class AuthService {
         }
 
         String username = userService.updatePasswordAndUnlock(user.getId(), newPassword);
+        refreshTokenService.revokeAllForUser(user);
         return authenticate(username, newPassword);
+    }
+
+    @Transactional
+    public void forcePasswordReset(UUID userId) {
+        userService.forceResetPassword(userId);
+        refreshTokenService.revokeAllForUser(userService.findUserById(userId));
     }
 
 

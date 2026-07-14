@@ -35,6 +35,12 @@ export class AuthService {
   }
 
   logout(): void {
+    const refreshToken = this.getStorage('refreshToken');
+    if (refreshToken) {
+      this.http.post<void>(`${this.apiUrl}/logout`, { refreshToken }).subscribe({
+        error: () => undefined
+      });
+    }
     this.removeStorage('user');
     this.removeStorage('token');
     this.removeStorage('refreshToken');

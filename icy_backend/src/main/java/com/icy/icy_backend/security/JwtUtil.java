@@ -53,9 +53,11 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String username, UUID userId) {
         return Jwts.builder()
                 .subject(username)
+                .id(UUID.randomUUID().toString())
+                .claim("userId", userId)
                 .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
@@ -105,6 +107,10 @@ public class JwtUtil {
 
     public UUID getUserIdFromToken(String token) {
         return UUID.fromString(parseClaims(token).get("userId", String.class));
+    }
+
+    public Date getExpirationFromToken(String token) {
+        return parseClaims(token).getExpiration();
     }
 
     public List<String> extractRoles(String token) {

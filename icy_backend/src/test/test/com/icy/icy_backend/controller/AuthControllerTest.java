@@ -10,6 +10,7 @@ import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.JwtUtil;
 import com.icy.icy_backend.security.SecurityConfig;
 import com.icy.icy_backend.service.auth.AuthService;
+import com.icy.icy_backend.service.auth.RefreshTokenService;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
@@ -61,6 +62,9 @@ class AuthControllerTest {
     @MockBean
     private MessageService messageService;
 
+    @MockBean
+    private RefreshTokenService refreshTokenService;
+
     @Test
     void authEndpointsReturnOk() throws Exception {
         when(authService.authenticate(eq("user"), eq("pass")))
@@ -99,6 +103,11 @@ class AuthControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(Map.of("refreshToken", "refresh"))))
                 .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(Map.of("refreshToken", "refresh"))))
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/auth/verify-token")
                         .header("Authorization", "Bearer token"))
