@@ -1,8 +1,8 @@
 CREATE TABLE core.refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    token_hash CHAR(64) NOT NULL,
-    replaced_by_token_hash CHAR(64),
+    token_hash VARCHAR(64) NOT NULL,
+    replaced_by_token_hash VARCHAR(64),
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     revoked_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
