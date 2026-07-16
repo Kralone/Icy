@@ -25,24 +25,26 @@ SQL. Une correction ultérieure prend une nouvelle version et avance le schéma.
 7. Après chaque livraison en production, ajouter au manifeste de checksums les
    migrations nouvellement livrées et avancer `LOCKED_THROUGH_VERSION` dans le test.
 
-## Anomalies historiques conservées
+## Consolidation après V20
 
-Certaines versions antérieures à la mise en place de ce contrôle ne sont pas idéales,
-mais les réécrire casserait les checksums Flyway des bases qui les ont déjà exécutées :
+V1 à V20 constituent la partie historique conservée et immuable. L'ancienne série
+V21 à V44 a été ramenée à huit migrations cohérentes :
 
-- V23 ajoute `goals.goal_templates.user_id`, puis V24 le supprime. C'est un aller-retour
-  historique, désormais sans effet sur le schéma final.
-- V31 et V37 contiennent exactement le même SQL. V37 est inutile sur une base neuve,
-  mais doit rester présente pour préserver l'historique déjà appliqué.
-- V41 crée `fleet.ship_cargo_grids.grid_name`, puis V42 supprime la colonne. Cette
-  correction reste séparée parce que les deux versions sont déjà dans l'historique.
+- V21 : identité, profils, rôles et notifications ;
+- V22 : flotte, catalogue d'objets et points de vente ;
+- V23 : modèles et participations aux objectifs ;
+- V24 : fonctionnalités utilitaires, Wikelo, Executive Hangar et cache UEX ;
+- V25 : catalogue des corps, stations et lieux de minage Star Citizen ;
+- V26 : veille CIG et traductions ;
+- V27 : opérations de minage ;
+- V28 : refresh tokens.
 
-Des branches anciennes ont également utilisé les numéros V41 à V43 pour des tables de
-guides et d'alias avant qu'une autre série V41 à V43 ne soit fusionnée. Ces tables ne
-font pas partie du schéma requis par le code actuel : une base neuve démarre sans elles.
-Elles ne doivent toutefois pas être supprimées automatiquement d'une base existante,
-car certaines installations peuvent encore contenir des données à conserver.
+Cette consolidation supprime le doublon V31/V37 et les allers-retours V23/V24 et
+V41/V42. Elle ne doit être réparée sur une base existante que si cette base possède
+déjà l'ancien historique complet jusqu'à V44. Avant tout `repair`, effectuer une
+sauvegarde et vérifier que les 44 entrées sont réussies. Une base arrêtée entre V21 et
+V43 ne doit pas être réparée avec le nouvel historique.
 
-Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V43.
-V44 reste modifiable tant qu'elle n'a pas été livrée en production ; après livraison,
-elle devra être ajoutée au manifeste et la borne du test devra passer à 44.
+Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V20.
+Après validation et réparation des environnements existants, V21 à V28 devront être
+ajoutées au manifeste et `LOCKED_THROUGH_VERSION` devra passer à 28.

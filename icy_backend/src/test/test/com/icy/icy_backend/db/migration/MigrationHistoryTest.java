@@ -15,7 +15,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -27,8 +26,7 @@ class MigrationHistoryTest {
     private static final Path MIGRATIONS = Path.of("src/main/resources/db/migration");
     private static final Path CHECKSUMS = Path.of("src/test/resources/db/migration-history.sha256");
     private static final Pattern FILE_NAME = Pattern.compile("^V(\\d+)__([a-z0-9_]+)\\.sql$");
-    private static final int LOCKED_THROUGH_VERSION = 43;
-    private static final Set<Integer> KNOWN_HISTORICAL_DUPLICATE = Set.of(31, 37);
+    private static final int LOCKED_THROUGH_VERSION = 20;
 
     @Test
     void versionsAreUniqueContiguousAndNamedConsistently() throws IOException {
@@ -68,14 +66,14 @@ class MigrationHistoryTest {
                     .add(migration.version());
         }
 
-        List<Set<Integer>> duplicates = versionsBySql.values().stream()
+        List<List<Integer>> duplicates = versionsBySql.values().stream()
                 .filter(versions -> versions.size() > 1)
-                .map(Set::copyOf)
+                .map(List::copyOf)
                 .toList();
 
         assertThat(duplicates)
-                .as("Seul le doublon historique V31/V37 est toléré")
-                .containsExactly(KNOWN_HISTORICAL_DUPLICATE);
+                .as("Deux migrations ne doivent jamais contenir le même SQL")
+                .isEmpty();
     }
 
     private static List<Migration> migrations() throws IOException {
