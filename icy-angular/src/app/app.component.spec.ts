@@ -25,6 +25,6 @@ describe('AppComponent', () => {
 
   it('should show the public topbar outside member routes', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    expect(fixture.componentInstance.showPublicTopbar).toBeTrue();
+    expect(fixture.componentInstance.showPublicTopbar).toBe(true);
   });
 });

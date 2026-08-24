@@ -8,10 +8,11 @@
     },
     "outDir": "./out-tsc/spec",
     "types": [
-      "jasmine"
+      "vitest/globals"
     ]
   },
   "include": [
+    "src/polyfills.ts",
     "src/test-polyfills.ts",
     "src/**/*.spec.ts",
     "src/**/*.d.ts"
