@@ -22,6 +22,7 @@ ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 - [Plan de modernisation technique](docs/UPGRADE-PLAN.md)
 - [Exploitation Docker et rollback](docs/DOCKER.md)
 - [Migration PostgreSQL 15 vers 18](docs/POSTGRESQL-18-MIGRATION.md)
+- [Maintenance technique et CI](docs/MAINTENANCE.md)
 
 ## Architecture (macro)
 

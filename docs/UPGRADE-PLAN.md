@@ -387,11 +387,15 @@ absorbé dans une mise à jour Docker générale.
 
 ### 13 — `codex/infra-upgrade-finalize`
 
-- Épingler tous les digests réellement validés.
-- Ajouter scans d'images, SBOM, politique de mise à jour et alertes de fin de
-  support.
-- Documenter déploiement, sauvegarde, restauration et rollback.
-- Lancer le test de bout en bout frontend → backend → PostgreSQL/RabbitMQ → bot.
+La partie vérifiable hors production est portée par
+`codex/infra-upgrade-automation` : CI des trois applications, smoke test Compose,
+Dependabot, Trivy, CodeQL et politique de maintenance. Les actions sont épinglées
+par SHA et les services avec état restent soumis à une branche et un go/no-go
+manuels.
+
+La finalisation de production reste distincte : épingler les digests réellement
+déployés, confirmer les sauvegardes/restaurations et exécuter le test de bout en
+bout avec l'architecture observée sur le serveur.
 
 ## Audit de la production
 

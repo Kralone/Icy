@@ -12,6 +12,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
 - [Exploitation Docker et rollback](DOCKER.md) — profils local/production, validation isolée, données persistantes et retour arrière.
 - [Migration PostgreSQL 15 vers 18](POSTGRESQL-18-MIGRATION.md) — répétition dump/restore, contrôles de bascule et rollback de production.
+- [Maintenance technique](MAINTENANCE.md) — CI, Dependabot, scans, cadence de mise à jour et fins de support.
 
 ## Photo rapide du projet
 
