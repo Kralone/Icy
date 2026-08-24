@@ -67,12 +67,13 @@ app.get('**', (req, res, next) => {
 
 /**
  * Start the server if this module is the main entry point.
- * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
+ * The server listens on the host and port defined by `HOST` and `PORT`.
  */
 if (isMainModule(import.meta.url)) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, () => {
-    console.log(`Node Express server listening on http://localhost:${port}`);
+  const host = process.env['HOST'] || '127.0.0.1';
+  const port = Number.parseInt(process.env['PORT'] || '4000', 10);
+  app.listen(port, host, () => {
+    console.log(`Node Express server listening on http://${host}:${port}`);
   });
 }
 

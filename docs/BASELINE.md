@@ -12,13 +12,12 @@ production ni un test des intégrations réelles Discord, PostgreSQL et RabbitMQ
 |---|---:|---|
 | Java | 21 | `.java-version`, Maven Enforcer et Docker backend |
 | Maven | 3.9.9 | Maven Wrapper |
-| Node.js | 20.20.1 | `.nvmrc` et famille Docker Node 20 |
-| npm | 10.8.2 | `packageManager` du frontend |
+| Node.js | 24.19.0 LTS | `.nvmrc`, `engines.node` et image Docker épinglée |
+| npm | 11.17.0 | `packageManager`, `engines.npm` et image Docker du frontend |
 | Python | 3.11.16 | `.python-version` et famille Docker Python 3.11 |
 
-Les Dockerfiles utilisent encore des tags de famille flottants. Leur épinglage
-est volontairement réservé à `codex/infra-compose-foundation`, puis Node et
-Python seront modernisés dans leurs branches dédiées.
+Les images Docker du socle utilisent des tags exacts et des digests immuables.
+Les montées de version des runtimes restent isolées dans leurs branches dédiées.
 
 ## Contrat de validation
 

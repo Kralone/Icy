@@ -14,10 +14,10 @@
     "serve:ssr:icy-angular": "node dist/icy-angular/server/server.mjs"
   },
   "engines": {
-    "node": "^20.19.0 || ^22.12.0 || ^24.0.0",
-    "npm": ">=10"
+    "node": ">=24.0.0 <25",
+    "npm": ">=11.0.0 <12"
   },
-  "packageManager": "npm@10.8.2",
+  "packageManager": "npm@11.17.0",
   "private": true,
   "dependencies": {
     "@angular/animations": "^20.3.29",

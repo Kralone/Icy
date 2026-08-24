@@ -25,7 +25,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 
 | Composant | Dépôt actuellement | Cible recommandée | Priorité | Décision |
 |---|---:|---:|---|---|
-| Node.js | `20-alpine` | Node 24 LTS | Haute | Node 20 est EOL ; ne pas cibler Node 26 avant son passage LTS |
+| Node.js | `24.19.0-alpine3.24` | Node 24 LTS | Terminée | Runtime, npm, `.nvmrc` et images SPA/SSR épinglés |
 | Angular | 20.3.x | 21.x puis 22.1.x | Haute | Deux migrations successives avec `ng update`, jamais un saut direct |
 | TypeScript | 5.9.x | version imposée par Angular | Haute | Angular 22.1 exige TypeScript `>=6.0 <6.1`, pas TypeScript 7 |
 | Java | 21 | Temurin 25 LTS | Moyenne | Java 21 reste supporté ; migration isolée à faible urgence |
@@ -136,6 +136,10 @@ Acceptation : `docker compose config` valide, démarrage à froid réussi, donn�
 persistantes après recréation et rollback par anciens digests.
 
 ### 02 — `codex/upgrade-node-24`
+
+État : **validée localement le 24 août 2026** avec Node 24.19.0 LTS et npm
+11.17.0. Les 47 tests, les builds SPA/SSR, le smoke SSR et l'audit de production
+sont au vert.
 
 - Passer les Dockerfiles frontend de Node 20 EOL à Node 24 LTS.
 - Ajouter `engines.node` et une version de gestionnaire de paquets.
