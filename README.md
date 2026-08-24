@@ -48,7 +48,7 @@ Images (volume partage via nginx)   Discord
 
 ### Backend (Spring Boot)
 
-- Java 21, Spring Boot 3.5.16.
+- Java 25 LTS, Spring Boot 3.5.16.
 - REST + WebSocket.
 - Security (JWT + refresh), CORS, CSRF.
 - Data JPA + Flyway (migrations).

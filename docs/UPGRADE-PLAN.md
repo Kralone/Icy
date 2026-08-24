@@ -28,7 +28,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Node.js | `24.19.0-alpine3.24` | Node 24 LTS | Terminée | Runtime, npm, `.nvmrc` et images SPA/SSR épinglés |
 | Angular | 22.1.3 (CLI/SSR 22.1.5) | 22.1.x | Terminée | Migrations 20→21 puis 21→22 validées sur deux branches isolées |
 | TypeScript | 6.0.3 | 6.0.x imposée par Angular | Terminée | Alias de tests migré sans masquer la dépréciation de `baseUrl` |
-| Java | 21 | Temurin 25 LTS | Moyenne | Java 21 reste supporté ; migration isolée à faible urgence |
+| Java | Temurin 25.0.4 LTS | Temurin 25 LTS | Terminée | 108 tests, JaCoCo, Flyway, AMQP et smoke REST validés |
 | Spring Boot | 3.5.16 | dernière stable 4.1.x | Moyenne | 3.5.16 est encore stable ; migration majeure séparée vers Spring Framework 7 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
 | Python | `3.14.7-slim-bookworm` | Python 3.14.x | Terminée | Image immuable, wheels Linux et exécution non-root validées |
@@ -213,6 +213,15 @@ sans réutiliser de secret dans les tests locaux.
 - Exécuter tests, JaCoCo, démarrage, Flyway validate et smoke REST/WebSocket.
 
 Cette branche isole les éventuelles incompatibilités JDK de celles de Spring.
+
+Résultat : Spring Boot reste en 3.5.16 et les dépendances fonctionnelles sont
+inchangées. L'annotation processor Lombok utilise désormais la version 1.18.46
+gérée par le parent, et JaCoCo 0.8.15 remplace 0.8.11 pour supporter le bytecode
+Java 25. Le build Temurin 25.0.4 a compilé 294 sources, exécuté 108 tests et
+analysé 204 classes. Le smoke test isolé a appliqué et validé 28 migrations sur
+PostgreSQL 15.19, établi la connexion RabbitMQ, servi un endpoint REST en HTTP
+200, confirmé le transport SockJS avec WebSocket activé et fermé proprement le
+pool Hikari à l'arrêt.
 
 ### 07 — `codex/upgrade-backend-dependencies`
 

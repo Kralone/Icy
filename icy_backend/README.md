@@ -6,7 +6,7 @@ RabbitMQ. Ce README se concentre uniquement sur le backend.
 
 ## Stack
 
-- Java 21
+- Java 25.0.4 LTS
 - Spring Boot 3.5.16
 - Spring Web / WebSocket / Security
 - Spring Data JPA + Flyway
@@ -105,6 +105,10 @@ Toutes les valeurs sensibles doivent venir des variables d'environnement.
 ```
 ./mvnw clean verify
 ```
+
+Le build impose Java 25 et Maven 3.9.9 ou plus récent. JaCoCo 0.8.15 assure la
+couverture du bytecode Java 25 ; l'annotation processor Lombok suit la version
+gérée par Spring Boot afin d'éviter un décalage avec la dépendance compilée.
 
 ## Build
 

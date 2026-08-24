@@ -10,7 +10,7 @@ production ni un test des intégrations réelles Discord, PostgreSQL et RabbitMQ
 
 | Composant | Version de référence | Source |
 |---|---:|---|
-| Java | 21 | `.java-version`, Maven Enforcer et Docker backend |
+| Java | 25 LTS | `.java-version`, Maven Enforcer et images Temurin épinglées |
 | Maven | 3.9.9 | Maven Wrapper |
 | Node.js | 24.19.0 LTS | `.nvmrc`, `engines.node` et image Docker épinglée |
 | npm | 11.17.0 | `packageManager`, `engines.npm` et image Docker du frontend |
@@ -28,7 +28,7 @@ cd icy_backend
 .\mvnw.cmd clean verify
 ```
 
-Le build impose Java 21 et Maven 3.9.9, exécute les tests et produit un SBOM
+Le build impose Java 25 et Maven 3.9.9, exécute les tests et produit un SBOM
 CycloneDX JSON sous `target/classes/META-INF/sbom/application.cdx.json`.
 
 ### Frontend
