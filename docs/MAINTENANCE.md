@@ -24,9 +24,11 @@ les outils de build font partie de la chaîne d'approvisionnement. Le scan des
 manifests fonctionne hors ligne après actualisation de la base Trivy afin qu'une
 limitation de débit Maven Central ne rende pas la CI aléatoire.
 
-Les images finales du backend, du bot et du frontend sont bloquées sur toute
-vulnérabilité haute ou critique corrigible. Pour les images éditeur PostgreSQL et
-RabbitMQ, le contrôle bloquant porte sur les paquets du système d'exploitation ;
+Les images finales du backend, du bot, du frontend statique, du serveur SSR et
+du proxy Nginx sont bloquées sur toute vulnérabilité haute ou critique détectée,
+y compris lorsqu'aucun correctif amont n'est encore publié. Pour les images
+éditeur PostgreSQL et RabbitMQ, le contrôle bloquant porte sur les paquets du
+système d'exploitation ;
 les binaires auxiliaires embarqués par l'éditeur sont revus lors de chaque montée
 de digest. Cette séparation évite de masquer les vulnérabilités applicatives tout
 en tenant compte des composants que le projet ne construit pas. CodeQL analyse

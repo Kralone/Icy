@@ -53,7 +53,6 @@ jobs:
           scan-ref: .
           scanners: vuln,secret,misconfig
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
           format: table
 
@@ -65,7 +64,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build application images
-        run: docker compose build backend bot frontend
+        run: |
+          docker compose build backend bot frontend
+          docker build --file icy-angular/Dockerfile.ssr --tag iceforge/frontend-ssr:ci icy-angular
+          docker build --file icy-angular/Dockerfile.proxy --tag iceforge/frontend-proxy:ci icy-angular
       - name: Scan backend runtime image
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
@@ -73,7 +75,6 @@ jobs:
           image-ref: iceforge/backend:local
           scanners: vuln
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
           format: table
       - name: Scan bot runtime image
@@ -83,7 +84,6 @@ jobs:
           image-ref: iceforge/bot:local
           scanners: vuln
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
           format: table
       - name: Scan frontend runtime image
@@ -93,7 +93,24 @@ jobs:
           image-ref: iceforge/frontend:local
           scanners: vuln
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+      - name: Scan frontend SSR runtime image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: iceforge/frontend-ssr:ci
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          format: table
+      - name: Scan frontend proxy runtime image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: iceforge/frontend-proxy:ci
+          scanners: vuln
+          severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
       - name: Scan PostgreSQL image
@@ -104,7 +121,6 @@ jobs:
           scanners: vuln
           vuln-type: os
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
           format: table
       - name: Scan RabbitMQ image
@@ -115,6 +131,5 @@ jobs:
           scanners: vuln
           vuln-type: os
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
           format: table

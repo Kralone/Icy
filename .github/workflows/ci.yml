@@ -104,6 +104,7 @@ jobs:
         run: |
           docker compose config --quiet
           docker compose -f docker-compose.yml -f docker-compose.validation.yml config --quiet
+          docker compose -f icy-angular/docker-compose.ssr.yml config --quiet
       - name: Validate production configuration
         run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 
@@ -141,7 +142,13 @@ jobs:
           -f docker-compose.yml
           -f docker-compose.validation.yml
           exec -T frontend wget -qO-
-          http://127.0.0.1/api/front/members
+          http://127.0.0.1:8080/api/front/members
+      - name: Verify frontend runs without root
+        run: >-
+          test "$(docker compose -p iceforge-ci
+          -f docker-compose.yml
+          -f docker-compose.validation.yml
+          exec -T frontend id -u)" = "101"
       - name: Verify RabbitMQ application queues
         run: >-
           docker compose -p iceforge-ci
