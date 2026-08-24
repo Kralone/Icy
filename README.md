@@ -20,6 +20,7 @@ ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 - [Audit de securite](docs/SECURITY-AUDIT.md)
 - [Feuille de route produit et visibilite](docs/ROADMAP.md)
 - [Plan de modernisation technique](docs/UPGRADE-PLAN.md)
+- [Architecture de production](docs/PRODUCTION-ARCHITECTURE.md)
 - [Exploitation Docker et rollback](docs/DOCKER.md)
 - [Migration PostgreSQL 15 vers 18](docs/POSTGRESQL-18-MIGRATION.md)
 - [Maintenance technique et CI](docs/MAINTENANCE.md)

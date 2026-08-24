@@ -399,6 +399,14 @@ bout avec l'architecture observée sur le serveur.
 
 ## Audit de la production
 
+L'inventaire en lecture seule du 24 août 2026 est terminé et documenté dans
+[`PRODUCTION-ARCHITECTURE.md`](PRODUCTION-ARCHITECTURE.md). Il confirme Vault
+1.17.6 en production, PostgreSQL 15.13, RabbitMQ 3.13.7 et les runtimes
+applicatifs antérieurs aux branches validées. Il révèle surtout une exposition
+Internet directe des services stateful, sans pare-feu actif ni sauvegarde locale
+récente vérifiable. Le cloisonnement et les restaurations passent donc avant les
+montées de version.
+
 Oui, un accès au serveur permet de vérifier l'architecture réelle. La première
 session doit être **strictement en lecture seule** et produire un document
 sanitisé, sans valeur de secret.
@@ -455,15 +463,14 @@ de retour écrite.
 
 ## Prochaine action recommandée
 
-Les branches applicatives, RabbitMQ et PostgreSQL sont maintenant validées
-localement. La prochaine intervention est l'inventaire **strictement en lecture
-seule** de la production afin de :
+Les branches applicatives, RabbitMQ et PostgreSQL sont validées localement et
+l'inventaire de production est terminé. L'ordre devient :
 
-1. confirmer les versions, volumes, sauvegardes, ports et digests réellement
-   déployés ;
-2. mesurer la taille et la durée réaliste de restauration PostgreSQL avant la
-   fenêtre de bascule ;
-3. confirmer si Vault est utilisé et décider si la branche conditionnelle 12
-   doit être ouverte ;
-4. préparer ensuite `codex/infra-upgrade-finalize` avec les écarts réels de
-   production, sans mutation du serveur pendant l'audit.
+1. fermer au niveau de l'hébergeur les ports publics autres que 80/443 et SSH
+   restreint, après confirmation des clients externes légitimes ;
+2. créer des sauvegardes PostgreSQL, RabbitMQ, Vault et images, puis prouver
+   leurs restaurations sur des volumes isolés ;
+3. aligner le Compose de production sans mélanger ce changement avec les
+   montées de version ;
+4. promouvoir ensuite chaque composant sur sa branche et son palier dédiés ;
+5. terminer par `codex/infra-upgrade-finalize` et une observation de bout en bout.

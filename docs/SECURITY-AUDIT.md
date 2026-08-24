@@ -3,6 +3,13 @@
 Date : **24 août 2026**
 Périmètre : backend Spring Boot, bot Discord, frontend Angular, WebSocket, RabbitMQ, Docker/Nginx, dépendances et production observable.
 
+Ce document conserve les constats du code et du déploiement antérieurs à la
+modernisation. Plusieurs correctifs existent maintenant dans le dépôt local
+(clé bot retirée du code, cog de test supprimé, dépendances et images durcies),
+mais la production exécute encore les anciens artefacts. Un risque n'est donc
+considéré fermé qu'après rotation des secrets concernés et promotion de l'image
+corrigée.
+
 ## Résumé exécutif
 
 Le projet ne doit pas être considéré comme suffisamment cloisonné tant que les P0/P1 ne sont pas corrigés. Le risque dominant est l'authentification et l'autorisation interservices : une clé bot est versionnée, plusieurs mutations backend sensibles sont accessibles à tout membre authentifié, un OFFICIER peut probablement se promouvoir ADMIN et les clients STOMP peuvent envoyer vers le broker sans règle explicite sur `SEND`.
@@ -25,6 +32,18 @@ flowchart LR
 ```
 
 ## P0 — action immédiate
+
+### Services avec état exposés sur Internet
+
+L'audit SSH du 24 août 2026 et un test TCP externe ont confirmé que PostgreSQL
+`5432`, RabbitMQ `5672/15672` et Vault `8200` sont joignables depuis Internet.
+Vault et RabbitMQ Management répondent en HTTP clair. Le pare-feu de l'hôte est
+inactif, SELinux est désactivé et SSH autorise root par mot de passe.
+
+Restreindre d'abord les ports au niveau de l'hébergeur, sans recréer les
+conteneurs stateful, puis retirer leurs publications du Compose après sauvegarde
+et test de restauration. L'état complet et le rollback sont décrits dans
+[`PRODUCTION-ARCHITECTURE.md`](PRODUCTION-ARCHITECTURE.md).
 
 ### Clé backend du bot codée en dur et présente dans Git
 
@@ -93,7 +112,11 @@ Enregistrer des contributions unitaires auditables, appliquer bornes et variatio
 
 #### Cog de test chargé en production
 
-Le bot charge automatiquement tous les `.py` de `cogs` dans [`bot.py:73-83`](../icy/bot.py#L73-L83). [`test_cog.py:9-15`](../icy/cogs/test_cog.py#L9-L15) répond à chaque message humain, interroge un utilisateur codé en dur et republie la réponse backend.
+Le bot de l'audit initial chargeait automatiquement tous les `.py` de `cogs`
+dans [`bot.py`](../icy/bot.py). L'ancien `icy/cogs/test_cog.py` répondait à
+chaque message humain, interrogeait un utilisateur codé en dur et republiait la
+réponse backend. Ce fichier a été supprimé du dépôt modernisé ; la promotion de
+l'image corrigée reste à faire en production.
 
 Retirer ce cog du runtime, définir une liste explicite d'extensions et remplacer ce comportement par des tests isolés.
 
@@ -113,7 +136,9 @@ L'URL AMQP construite dans [`bot.py:39-46`](../icy/bot.py#L39-L46) contient util
 
 #### Broker et management exposés
 
-Le compose publie 5672 et 15672 et accepte un mot de passe de repli connu : [`docker-compose.yml:119-131`](../docker-compose.yml#L119-L131). Même risque conditionnel pour PostgreSQL, backend, bot, images et Vault publiés sur l'hôte.
+Le compose audité publiait 5672 et 15672 et acceptait un mot de passe de repli
+connu. L'audit de production confirme que RabbitMQ, PostgreSQL, backend, images
+et Vault sont effectivement publiés sur l'hôte.
 
 Ne publier que 80/443. Utiliser réseau privé, TLS AMQP, permissions de vhost minimales et accès administrateur par tunnel/VPN.
 
