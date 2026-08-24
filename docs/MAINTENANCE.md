@@ -27,13 +27,17 @@ limitation de débit Maven Central ne rende pas la CI aléatoire.
 Les images finales du backend, du bot, du frontend statique, du serveur SSR et
 du proxy Nginx sont bloquées sur toute vulnérabilité haute ou critique détectée,
 y compris lorsqu'aucun correctif amont n'est encore publié. Pour les images
-éditeur PostgreSQL et RabbitMQ, le contrôle bloquant porte sur les paquets du
-système d'exploitation ;
-les binaires auxiliaires embarqués par l'éditeur sont revus lors de chaque montée
-de digest. Cette séparation évite de masquer les vulnérabilités applicatives tout
-en tenant compte des composants que le projet ne construit pas. CodeQL analyse
-Java, TypeScript/JavaScript et Python. La revue de dépendances bloque une pull
-request qui introduit une vulnérabilité de sévérité haute ou critique.
+éditeur PostgreSQL et RabbitMQ, un premier scan affiche toutes les vulnérabilités
+hautes ou critiques des paquets du système d'exploitation. Un second contrôle ne
+bloque que celles pour lesquelles l'éditeur de la distribution publie une version
+corrigée. Les alertes sans correctif restent donc visibles sans rendre chaque
+pipeline définitivement rouge ; elles imposent une revue du digest ou d'une
+variante d'image sur une branche séparée. Les binaires auxiliaires embarqués par
+l'éditeur sont revus lors de chaque montée de digest. Cette séparation évite de
+masquer les vulnérabilités applicatives tout en tenant compte des composants que
+le projet ne construit pas. CodeQL analyse Java, TypeScript/JavaScript et Python.
+La revue de dépendances bloque une pull request qui introduit une vulnérabilité de
+sévérité haute ou critique.
 
 Toutes les actions tierces sont épinglées par SHA. Dependabot surveille aussi
 ces SHA afin de proposer leurs mises à jour.

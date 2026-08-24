@@ -113,7 +113,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
-      - name: Scan PostgreSQL image
+      - name: Report PostgreSQL OS vulnerabilities
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           version: v0.74.0
@@ -121,9 +121,21 @@ jobs:
           scanners: vuln
           vuln-type: os
           severity: HIGH,CRITICAL
+          exit-code: "0"
+          format: table
+      - name: Block fixable PostgreSQL OS vulnerabilities
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
+          scanners: vuln
+          vuln-type: os
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
-      - name: Scan RabbitMQ image
+          skip-setup-trivy: true
+      - name: Report RabbitMQ OS vulnerabilities
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           version: v0.74.0
@@ -131,5 +143,18 @@ jobs:
           scanners: vuln
           vuln-type: os
           severity: HIGH,CRITICAL
+          exit-code: "0"
+          format: table
+          skip-setup-trivy: true
+      - name: Block fixable RabbitMQ OS vulnerabilities
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: rabbitmq:4.3.5-management@sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca
+          scanners: vuln
+          vuln-type: os
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
+          skip-setup-trivy: true
