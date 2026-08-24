@@ -23,6 +23,7 @@ ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 - [Architecture de production](docs/PRODUCTION-ARCHITECTURE.md)
 - [Exploitation Docker et rollback](docs/DOCKER.md)
 - [Migration PostgreSQL 15 vers 18](docs/POSTGRESQL-18-MIGRATION.md)
+- [Migration Vault 1.17 vers 2.x](docs/VAULT-2-MIGRATION.md)
 - [Maintenance technique et CI](docs/MAINTENANCE.md)
 
 ## Architecture (macro)

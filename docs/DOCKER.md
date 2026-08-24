@@ -145,6 +145,19 @@ Vault rejoint le réseau privé `iceforge_internal`, ce qui rend l'adresse
 est publié uniquement sur `127.0.0.1:8200` pour une utilisation locale ou via un
 tunnel SSH. Ne jamais publier ce port directement sur Internet.
 
+`VAULT_ENABLED=true` ne crée pas automatiquement le service optionnel. Il faut
+lancer explicitement la surcharge, puis initialiser ou unseal Vault avant les
+clients :
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.vault.yml up -d vault
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.vault.yml up -d db rabbitmq backend frontend
+```
+
+Si Vault n'est pas voulu en local, fixer `VAULT_ENABLED=false`. Activer le
+fail-fast tout en omettant `docker-compose.vault.yml` fait redémarrer le backend
+en boucle, car l'adresse `http://vault:8200` ne peut pas être résolue.
+
 ## Sauvegarde et rollback
 
 Une mise à jour applicative et une mise à jour de service stateful doivent rester

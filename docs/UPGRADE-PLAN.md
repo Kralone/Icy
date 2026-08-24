@@ -38,7 +38,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
 | RabbitMQ | 4.3.5 épinglé | dernière 4.3.x stable | Terminée | Paliers 3.13→4.2→4.3 et restaurations de rollback validés localement |
 | Nginx | 1.30.4 épinglé | stable épinglée | Terminée | Frontend et serveur d'images sont uniformisés |
-| Vault | 1.17.6 épinglé | 1.21.x, puis décision distincte pour 2.x | Conditionnelle | Confirmer d'abord qu'il est réellement utilisé en production |
+| Vault | 1.17.6 épinglé | 2.0.5+ Community corrigée | Bloquée éditeur | Migration et rollback 1.17.6→2.0.4 prouvés ; attendre une image sans CVE Go corrigible |
 | Docker Compose | base + surcharges dédiées | socle durci | Terminée | Production, local et validation sont séparés |
 
 Sources de compatibilité et de cycle de vie : [Angular](https://angular.dev/reference/releases),
@@ -74,7 +74,7 @@ flowchart TD
     MQ1 --> MQ2[10 RabbitMQ 4.3]
 
     SB --> PG[11 PostgreSQL 18]
-    C --> V[12 Vault 1.21 si utilisé]
+    C --> V[12 Vault 2.x corrigé si utilisé]
 
     A22 --> F[13 Validation intégrée et promotion]
     MQ2 --> F
@@ -377,13 +377,18 @@ mesure sur le volume de production. Suivre le runbook
 déploiement. Toute écriture après bascule impose un plan de retour spécifique :
 un simple changement de tag Docker est interdit.
 
-### 12 — `codex/upgrade-vault-1-21`
+### 12 — `codex/upgrade-vault-2`
 
-Cette branche n'est ouverte que si l'audit de production confirme que Vault est
-utilisé. Faire snapshot, test d'unseal, revue des politiques/plugins et montée
-vers le dernier patch 1.21.x. Vault 2.x fera l'objet d'une décision et d'une
-branche distinctes après lecture du guide de rupture ; il ne doit pas être
-absorbé dans une mise à jour Docker générale.
+La répétition locale sur données synthétiques a validé le saut direct
+1.17.6→2.0.4, le passage root→UID/GID `100:1000`, Raft, KV v2, AppRole, tokens,
+snapshot, redémarrage et rollback par restauration du snapshot pré-upgrade dans
+un volume 1.17.6 vierge. Le runbook complet est dans
+[`VAULT-2-MIGRATION.md`](VAULT-2-MIGRATION.md).
+
+La branche reste **NO-GO** : Vault 2.0.4 contient encore huit vulnérabilités Go
+HIGH avec correctifs disponibles. Ne modifier le digest Compose qu'après la
+publication d'une image Community ultérieure, un scan strict à zéro et l'audit
+de l'instance de production. Le volume 1.17.6 réel n'a pas été ouvert.
 
 ### 13 — `codex/infra-upgrade-finalize`
 
@@ -473,4 +478,6 @@ l'inventaire de production est terminé. L'ordre devient :
 3. aligner le Compose de production sans mélanger ce changement avec les
    montées de version ;
 4. promouvoir ensuite chaque composant sur sa branche et son palier dédiés ;
-5. terminer par `codex/infra-upgrade-finalize` et une observation de bout en bout.
+5. conserver Vault 1.17.6 derrière le réseau privé jusqu'à la publication d'une
+   image Community 2.x corrigée et la restauration d'un snapshot réel isolé ;
+6. terminer par `codex/infra-upgrade-finalize` et une observation de bout en bout.
