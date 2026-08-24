@@ -22,6 +22,7 @@
 		<java.version>25</java.version>
 		<jackson-2-bom.version>2.21.5</jackson-2-bom.version>
 		<logback.version>1.5.35</logback.version>
+		<rabbit-amqp-client.version>5.33.1</rabbit-amqp-client.version>
 	</properties>
 
 	<dependencies>
