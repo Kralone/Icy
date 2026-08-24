@@ -234,6 +234,22 @@ pool Hikari à l'arrêt.
   comme simples changements de numéro.
 - Ne pas suivre les suggestions Maven milestone, alpha, preview ou RC.
 
+Résultat : Bouncy Castle passe de 1.84 à 1.85.2, jsoup de 1.22.2 à
+1.23.1 et Commons CSV de 1.13.0 à 1.14.1. Les plugins CycloneDX,
+Surefire, Compiler et JAR passent respectivement à 2.9.3, 3.5.6, 3.15.0
+et 3.5.1. Jackson 2.21.5 et Logback 1.5.35 restent volontairement
+surchargés : Spring Boot 3.5.16 gère encore 2.21.4 et 1.5.34, donc les
+retirer aurait constitué une régression. `httpclient` 4.5 et
+`async-http-client` 2 restent inchangés pour être migrés séparément ; le
+transitif `commons-logging` de HttpClient a toutefois été exclu au profit du
+pont `spring-jcl` déjà fourni par Spring.
+
+Le build Java 25 a recompilé 294 sources et exécuté 108 tests. Le SBOM
+CycloneDX contient désormais 124 composants. Le smoke test isolé a validé les
+28 migrations sur PostgreSQL 15.19, la connexion RabbitMQ, REST en HTTP 200,
+SockJS/WebSocket et l'arrêt gracieux de Hikari. Un second démarrage après
+l'exclusion a confirmé la disparition de l'avertissement Commons Logging.
+
 ### 08 — `codex/upgrade-spring-boot-4-1`
 
 - Passer de Boot 3.5.16 à la dernière 4.1.x stable.

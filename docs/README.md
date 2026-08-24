@@ -33,8 +33,8 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - `npx ng build --configuration production` ;
 - `npx ng test --watch=false --browsers=ChromeHeadless` ;
 - `npm audit` pour les dépendances de production et de développement ;
-- `mvn verify` sous Temurin 25, 108 tests, rapport JaCoCo, démarrage isolé,
-  Flyway sur PostgreSQL et connexion RabbitMQ ;
+- `mvn verify` sous Temurin 25, 108 tests, rapport JaCoCo, SBOM de 124
+  composants, démarrage isolé, Flyway sur PostgreSQL et connexion RabbitMQ ;
 - compilation Python complète, 5 tests unitaires, test AMQP réel isolé,
   `pip check` et `pip-audit` ;
 - `docker compose config --quiet` ;

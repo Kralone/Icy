@@ -109,6 +109,15 @@ Toutes les valeurs sensibles doivent venir des variables d'environnement.
 Le build impose Java 25 et Maven 3.9.9 ou plus récent. JaCoCo 0.8.15 assure la
 couverture du bytecode Java 25 ; l'annotation processor Lombok suit la version
 gérée par Spring Boot afin d'éviter un décalage avec la dépendance compilée.
+Surefire 3.5.6 exécute les 108 tests via JUnit Platform. Le build génère aussi
+un SBOM CycloneDX 1.6 de 124 composants sous
+`target/classes/META-INF/sbom/application.cdx.json`.
+
+Les dépendances directes hors BOM actuellement validées comprennent Bouncy
+Castle 1.85.2, jsoup 1.23.1 et Commons CSV 1.14.1. Les passages à Apache
+HttpClient 5, AsyncHttpClient 3, Flyway 13 ou Jackson 2.22 sont considérés comme
+des migrations distinctes et ne doivent pas être appliqués comme de simples
+changements de version.
 
 ## Build
 
