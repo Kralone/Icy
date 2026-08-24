@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkHeaderComponent } from './icelink-header.component';
+import { IceLinkHeaderComponent } from './icelink-header.component';
 
-describe('IcelinkHeaderComponent', () => {
-  let component: IcelinkHeaderComponent;
-  let fixture: ComponentFixture<IcelinkHeaderComponent>;
+describe('IceLinkHeaderComponent', () => {
+  let component: IceLinkHeaderComponent;
+  let fixture: ComponentFixture<IceLinkHeaderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkHeaderComponent]
+      imports: [IceLinkHeaderComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkHeaderComponent);
+    fixture = TestBed.createComponent(IceLinkHeaderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

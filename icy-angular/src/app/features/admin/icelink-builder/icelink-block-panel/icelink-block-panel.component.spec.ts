@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkBlockPanelComponent } from './icelink-block-panel.component';
+import { IceLinkBlockPanelComponent } from './icelink-block-panel.component';
+import {coreTestProviders} from '@testing/test-providers';
 
-describe('IcelinkBlockPanelComponent', () => {
-  let component: IcelinkBlockPanelComponent;
-  let fixture: ComponentFixture<IcelinkBlockPanelComponent>;
+describe('IceLinkBlockPanelComponent', () => {
+  let component: IceLinkBlockPanelComponent;
+  let fixture: ComponentFixture<IceLinkBlockPanelComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkBlockPanelComponent]
+      imports: [IceLinkBlockPanelComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkBlockPanelComponent);
+    fixture = TestBed.createComponent(IceLinkBlockPanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

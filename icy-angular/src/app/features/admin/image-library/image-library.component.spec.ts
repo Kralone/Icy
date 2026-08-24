@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ImageLibraryComponent } from './image-library.component';
+import {coreTestProviders} from '@testing/test-providers';
 
 describe('ImageLibraryComponent', () => {
   let component: ImageLibraryComponent;
@@ -8,7 +9,8 @@ describe('ImageLibraryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ImageLibraryComponent]
+      imports: [ImageLibraryComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 

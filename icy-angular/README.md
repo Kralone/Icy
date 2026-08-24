@@ -1,6 +1,6 @@
 # IcyAngular
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.7.
+This project uses Angular 20.3 and Angular CLI 20.3.
 
 ## Development server
 
@@ -72,7 +72,7 @@ The route strategy is defined in `src/app/app.routes.server.ts`:
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
 
 ```bash
-ng test
+npm run test:ci
 ```
 
 ## Running end-to-end tests

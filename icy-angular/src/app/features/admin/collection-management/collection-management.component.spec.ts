@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CollectionManagementComponent } from './collection-management.component';
+import {coreTestProviders} from '@testing/test-providers';
 
 describe('CollectionManagementComponent', () => {
   let component: CollectionManagementComponent;
@@ -8,7 +9,8 @@ describe('CollectionManagementComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CollectionManagementComponent]
+      imports: [CollectionManagementComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 

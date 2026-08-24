@@ -76,7 +76,7 @@ export class TopbarComponent {
     this.checkViewport();
     window.addEventListener('resize', () => this.checkViewport());
 
-    const rawUsername = this.authService.getCurrentUser();
+    const rawUsername = this.authService.getCurrentUser() ?? 'Unknown';
     const cleanUsername = rawUsername.replace(/^"|"$/g, '');
     this.name = `CMDR ${cleanUsername}`;
 

@@ -7,7 +7,7 @@ RabbitMQ. Ce README se concentre uniquement sur le backend.
 ## Stack
 
 - Java 21
-- Spring Boot 3.4.x
+- Spring Boot 3.5.16
 - Spring Web / WebSocket / Security
 - Spring Data JPA + Flyway
 - RabbitMQ (AMQP)
@@ -103,7 +103,7 @@ Toutes les valeurs sensibles doivent venir des variables d'environnement.
 ## Tests
 
 ```
-./mvnw test
+./mvnw clean verify
 ```
 
 ## Build

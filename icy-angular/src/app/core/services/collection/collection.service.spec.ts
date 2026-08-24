@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 
-import { CollectionService } from './collection.service';
+import { CollectionsService } from './collection.service';
 
-describe('CollectionService', () => {
-  let service: CollectionService;
+describe('CollectionsService', () => {
+  let service: CollectionsService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(CollectionService);
+    TestBed.configureTestingModule({providers: [provideHttpClient()]});
+    service = TestBed.inject(CollectionsService);
   });
 
   it('should be created', () => {

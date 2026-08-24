@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkBuilderComponent } from './icelink-builder.component';
+import { IceLinkBuilderComponent } from './icelink-builder.component';
+import {coreTestProviders} from '@testing/test-providers';
 
-describe('IcelinkBuilderComponent', () => {
-  let component: IcelinkBuilderComponent;
-  let fixture: ComponentFixture<IcelinkBuilderComponent>;
+describe('IceLinkBuilderComponent', () => {
+  let component: IceLinkBuilderComponent;
+  let fixture: ComponentFixture<IceLinkBuilderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkBuilderComponent]
+      imports: [IceLinkBuilderComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkBuilderComponent);
+    fixture = TestBed.createComponent(IceLinkBuilderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

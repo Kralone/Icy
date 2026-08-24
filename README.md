@@ -94,6 +94,7 @@ Backend (exemples de variables):
 Bot:
 - `DISCORD_TOKEN`, `GUILD_ID`
 - `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PSWD`
+- `BOT_API_KEY`, partagé avec le backend et fourni uniquement par l'environnement
 
 Ne stockez jamais de secrets en dur dans le code ou le repo.
 

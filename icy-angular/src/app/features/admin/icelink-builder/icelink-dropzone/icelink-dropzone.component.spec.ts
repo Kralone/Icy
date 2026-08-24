@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkDropzoneComponent } from './icelink-dropzone.component';
+import { IceLinkDropzoneComponent } from './icelink-dropzone.component';
+import {coreTestProviders} from '@testing/test-providers';
 
-describe('IcelinkDropzoneComponent', () => {
-  let component: IcelinkDropzoneComponent;
-  let fixture: ComponentFixture<IcelinkDropzoneComponent>;
+describe('IceLinkDropzoneComponent', () => {
+  let component: IceLinkDropzoneComponent;
+  let fixture: ComponentFixture<IceLinkDropzoneComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkDropzoneComponent]
+      imports: [IceLinkDropzoneComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkDropzoneComponent);
+    fixture = TestBed.createComponent(IceLinkDropzoneComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -6,11 +6,18 @@
     "start": "ng serve",
     "start:audit": "ng serve --configuration audit",
     "build": "node update-version.js && node generate-sitemap.js && ng build",
+    "build:production": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",
     "start-lan": "ng serve --host 0.0.0.0",
     "serve:ssr:icy-angular": "node dist/icy-angular/server/server.mjs"
   },
+  "engines": {
+    "node": "^20.19.0 || ^22.12.0 || ^24.0.0",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10.8.2",
   "private": true,
   "dependencies": {
     "@angular/animations": "^20.3.26",

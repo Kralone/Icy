@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkPreviewComponent } from './icelink-preview.component';
+import { IceLinkPreviewComponent } from './icelink-preview.component';
 
-describe('IcelinkPreviewComponent', () => {
-  let component: IcelinkPreviewComponent;
-  let fixture: ComponentFixture<IcelinkPreviewComponent>;
+describe('IceLinkPreviewComponent', () => {
+  let component: IceLinkPreviewComponent;
+  let fixture: ComponentFixture<IceLinkPreviewComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkPreviewComponent]
+      imports: [IceLinkPreviewComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkPreviewComponent);
+    fixture = TestBed.createComponent(IceLinkPreviewComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

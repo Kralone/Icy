@@ -1,13 +1,17 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 
-import { HttpInterceptor } from './http.interceptor';
+import { HttpAuthInterceptor } from './http.interceptor';
 
-describe('HttpService', () => {
-  let service: HttpInterceptor;
+describe('HttpAuthInterceptor', () => {
+  let service: HttpAuthInterceptor;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(HttpInterceptor);
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideRouter([]), HttpAuthInterceptor]
+    });
+    service = TestBed.inject(HttpAuthInterceptor);
   });
 
   it('should be created', () => {

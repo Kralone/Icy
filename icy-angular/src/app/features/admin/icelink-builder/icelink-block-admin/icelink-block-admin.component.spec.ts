@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkBlockAdminComponent } from './icelink-block-admin.component';
+import { IceLinkBlockAdminComponent } from './icelink-block-admin.component';
+import {coreTestProviders} from '@testing/test-providers';
 
-describe('IcelinkBlockAdminComponent', () => {
-  let component: IcelinkBlockAdminComponent;
-  let fixture: ComponentFixture<IcelinkBlockAdminComponent>;
+describe('IceLinkBlockAdminComponent', () => {
+  let component: IceLinkBlockAdminComponent;
+  let fixture: ComponentFixture<IceLinkBlockAdminComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkBlockAdminComponent]
+      imports: [IceLinkBlockAdminComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkBlockAdminComponent);
+    fixture = TestBed.createComponent(IceLinkBlockAdminComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

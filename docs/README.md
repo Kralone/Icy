@@ -9,14 +9,15 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Audit de sécurité](SECURITY-AUDIT.md) — risques priorisés, preuves et plan de remédiation.
 - [Feuille de route produit et visibilité](ROADMAP.md) — actions 72 h, 30 jours et 90 jours, contenu, distribution et indicateurs.
 - [Plan de modernisation technique](UPGRADE-PLAN.md) — versions cibles, ordre des branches, critères de validation et audit de production.
+- [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
 
 ## Photo rapide du projet
 
 | Élément | État constaté |
 |---|---|
-| Frontend | Angular 20, SSR/prérendu et PWA configurés ; build de production réussi ; tests unitaires bloqués à la compilation |
+| Frontend | Angular 20, SSR/prérendu et PWA configurés ; build de production réussi ; 47 tests unitaires réussis |
 | Backend | Spring Boot 3.5.16 / Java 21 ; 108 tests réussis ; couverture de branches 7,2 % |
-| Bot Discord | Python 3.11 / discord.py / RabbitMQ ; syntaxe valide ; aucun test automatisé |
+| Bot Discord | Python 3.11 / discord.py / RabbitMQ ; syntaxe valide ; 2 tests de configuration réussis |
 | Données | PostgreSQL, 28 migrations Flyway |
 | Temps réel | STOMP/SockJS entre navigateur et backend ; RabbitMQ entre backend et bot |
 | Production observée | Pages publiques disponibles, mais déploiement SPA statique incohérent avec le SSR du dépôt |

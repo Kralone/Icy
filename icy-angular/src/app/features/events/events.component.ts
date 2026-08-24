@@ -35,7 +35,7 @@ export class EventsComponent implements AfterViewInit {
   types: EventType[] = [];
   selectedEvent: any = null;
   showDetailsModal = false;
-  isLoading = false;
+  isLoading = true;
   isAdmin = false;
 
   participationsByStatus = {
@@ -113,7 +113,6 @@ export class EventsComponent implements AfterViewInit {
     this.wsService.connectEvent();
     this.authService.isAdmin().subscribe(isAdmin => (this.isAdmin = isAdmin));
 
-    this.isLoading = true;
     this.loadEvents();
 
     this.route.queryParamMap.subscribe(params => {

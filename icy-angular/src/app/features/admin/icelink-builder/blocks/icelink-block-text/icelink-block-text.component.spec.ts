@@ -1,19 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IcelinkBlockTextComponent } from './icelink-block-text.component';
+import { IceLinkBlockTextComponent } from './icelink-block-text.component';
+import {coreTestProviders} from '@testing/test-providers';
 
-describe('IcelinkBlockTextComponent', () => {
-  let component: IcelinkBlockTextComponent;
-  let fixture: ComponentFixture<IcelinkBlockTextComponent>;
+describe('IceLinkBlockTextComponent', () => {
+  let component: IceLinkBlockTextComponent;
+  let fixture: ComponentFixture<IceLinkBlockTextComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcelinkBlockTextComponent]
+      imports: [IceLinkBlockTextComponent],
+      providers: coreTestProviders
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(IcelinkBlockTextComponent);
+    fixture = TestBed.createComponent(IceLinkBlockTextComponent);
     component = fixture.componentInstance;
+    component.block = {
+      name: 'Test',
+      icon: '📝',
+      headline: 'Bloc de test',
+      content: 'Contenu de test',
+    };
     fixture.detectChanges();
   });
 

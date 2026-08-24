@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TopbarComponent } from './topbar.component';
+import {coreTestProviders} from '@testing/test-providers';
+import {WebSocketService} from '../../core/services/websocket/websocket.service';
+import {NEVER} from 'rxjs';
 
 describe('TopbarComponent', () => {
   let component: TopbarComponent;
@@ -8,7 +11,17 @@ describe('TopbarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TopbarComponent]
+      imports: [TopbarComponent],
+      providers: [
+        ...coreTestProviders,
+        {
+          provide: WebSocketService,
+          useValue: {
+            connectNotifications: () => undefined,
+            listenForNotifications: () => NEVER,
+          },
+        },
+      ]
     })
     .compileComponents();
 
