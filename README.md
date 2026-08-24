@@ -20,6 +20,7 @@ ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 - [Audit de securite](docs/SECURITY-AUDIT.md)
 - [Feuille de route produit et visibilite](docs/ROADMAP.md)
 - [Plan de modernisation technique](docs/UPGRADE-PLAN.md)
+- [Exploitation Docker et rollback](docs/DOCKER.md)
 
 ## Architecture (macro)
 
@@ -127,13 +128,21 @@ python bot.py
 
 ## Deploiement (Docker Compose)
 
-Le fichier `docker-compose.yml` declare:
-- `db` (PostgreSQL)
-- `backend` (Spring Boot)
-- `frontend` (Nginx + build Angular)
-- `bot` (Discord)
-- `icy-images` (Nginx pour servir les images)
-- `rabbitmq`
+En local, le fichier `docker-compose.override.yml` est charge automatiquement et
+publie les ports de developpement uniquement sur `127.0.0.1` :
 
-Adaptez les chemins de build (`./app`, `./frontend`, `./bot`) selon votre
-arborescence locale si besoin.
+```powershell
+docker compose up -d --build --wait
+```
+
+En production, utilisez explicitement la surcharge dediee. Elle ne publie que
+les ports HTTP/HTTPS du frontend et exige les secrets critiques :
+
+```powershell
+docker compose --env-file .\secrets\prod.secrets.env `
+  -f .\docker-compose.yml -f .\docker-compose.prod.yml `
+  up -d --build --wait
+```
+
+La procedure complete de validation, de sauvegarde et de rollback est decrite
+dans [la documentation Docker](docs/DOCKER.md).

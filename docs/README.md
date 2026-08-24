@@ -10,6 +10,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Feuille de route produit et visibilité](ROADMAP.md) — actions 72 h, 30 jours et 90 jours, contenu, distribution et indicateurs.
 - [Plan de modernisation technique](UPGRADE-PLAN.md) — versions cibles, ordre des branches, critères de validation et audit de production.
 - [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
+- [Exploitation Docker et rollback](DOCKER.md) — profils local/production, validation isolée, données persistantes et retour arrière.
 
 ## Photo rapide du projet
 

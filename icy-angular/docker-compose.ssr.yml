@@ -3,23 +3,28 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.ssr
-    container_name: iceforge_frontend_ssr
-    restart: always
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 4000
     expose:
       - "4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/ >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     networks:
       - internal
       - external
 
   frontend_proxy:
-    image: nginx:stable-alpine
-    container_name: iceforge_frontend_proxy
-    restart: always
+    image: nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+    restart: unless-stopped
     depends_on:
-      - frontend_ssr
+      frontend_ssr:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"

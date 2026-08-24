@@ -1,0 +1,20 @@
+services:
+  backend:
+    environment:
+      VAULT_ENABLED: "false"
+
+  bot:
+    # Avoid connecting a real Discord bot during infrastructure smoke tests.
+    profiles: ["external"]
+    environment:
+      VAULT_ENABLED: "false"
+
+volumes:
+  icy_images_data:
+    name: iceforge_validation_images
+
+networks:
+  internal:
+    name: iceforge_validation_internal
+  external:
+    name: iceforge_validation_external

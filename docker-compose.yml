@@ -1,39 +1,61 @@
 services:
   db:
-    image: postgres:15
-    container_name: iceforge_db
-    restart: always
+    image: postgres:15.19-bookworm@sha256:cf7f8fb958c63e62875e30645dc4819ff0243a923f3c709e752b99dedd40bfcd
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-iceforge}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_only}
       POSTGRES_DB: ${POSTGRES_DB:-iceforgedb}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - internal
-      - external
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [internal]
+
+  rabbitmq:
+    image: rabbitmq:3.13.7-management@sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-icy}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PSWD:-change_me_local_only}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [internal]
 
   backend:
-    build: ./icy_backend
-    container_name: iceforge_backend
-    restart: always
+    image: iceforge/backend:local
+    build:
+      context: ./icy_backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/iceforgedb}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-iceforge}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change_me}
-      IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://iceforge.fr/images/}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change_me_local_only}
+      IMAGE_BASE_URL: ${IMAGE_BASE_URL:-http://localhost:8088/images/}
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_JWT_SECRET_32_CHARS_MINIMUM}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      UEX_API_KEY: ${UEX_API_KEY:-}
       BOT_API_KEY: ${BOT_API_KEY:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iceforge.fr}
-      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
-      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER:-icy}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PSWD:-change_me}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PSWD:-change_me_local_only}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
       VAULT_ENABLED: ${VAULT_ENABLED:-false}
       VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
@@ -43,37 +65,28 @@ services:
       VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID:-}
       VAULT_FAIL_FAST: ${VAULT_FAIL_FAST:-true}
     depends_on:
-      - db
-      - rabbitmq
-    ports:
-      - "8080:8080"
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    expose: ["8080"]
     volumes:
       - backend_logs:/app/logs
-      - icy_images_data:/app/uploads/images   # ✅ même volume partagé
-    networks:
-      - internal
-      - external
-
-  frontend:
-    image: nginx:alpine
-    container_name: iceforge_frontend
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - icy_images_data:/usr/share/nginx/html/images:ro
-
-    networks:
-      - external
+      - icy_images_data:/app/uploads/images
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/api/front/members"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [internal]
 
   bot:
-    build: ./icy
-    container_name: iceforge_bot
-    restart: always
+    image: iceforge/bot:local
+    build:
+      context: ./icy
+      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN:-}
       GUILD_ID: ${GUILD_ID:-}
@@ -82,10 +95,11 @@ services:
       DISCORD_NOTIFICATIONS_CHANNEL_ID: ${DISCORD_NOTIFICATIONS_CHANNEL_ID:-}
       DISCORD_DISCUSSION_CHANNEL_ID: ${DISCORD_DISCUSSION_CHANNEL_ID:-}
       ENV_MODE: ${ENV_MODE:-production}
-      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
-      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      BACKEND_API_URL: http://backend:8080
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER:-icy}
-      RABBITMQ_PSWD: ${RABBITMQ_PSWD:-change_me}
+      RABBITMQ_PSWD: ${RABBITMQ_PSWD:-change_me_local_only}
       BOT_API_KEY: ${BOT_API_KEY:-}
       VAULT_ENABLED: ${VAULT_ENABLED:-false}
       VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
@@ -94,55 +108,54 @@ services:
       VAULT_ROLE_ID: ${BOT_VAULT_ROLE_ID:-}
       VAULT_SECRET_ID: ${BOT_VAULT_SECRET_ID:-}
       VAULT_FAIL_FAST: ${VAULT_FAIL_FAST:-true}
-    ports:
-      - "8090:8090"
     depends_on:
-      - backend
-      - rabbitmq
+      backend:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - bot_config:/app/config
-    networks:
-      - internal
-      - external
+    networks: [internal]
+
+  frontend:
+    image: iceforge/frontend:local
+    build:
+      context: ./icy-angular
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose: ["80"]
+    volumes:
+      - icy_images_data:/usr/share/nginx/html/images:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/index.html >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [internal, external]
 
   icy-images:
-    image: nginx:latest
-    container_name: icy-images
+    image: nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+    restart: unless-stopped
     volumes:
-      - icy_images_data:/usr/share/nginx/html/images:ro   # ✅ même volume que backend
-    ports:
-      - "8081:80"
-    networks:
-      - internal
-      - external
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: iceforge_rabbitmq
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-icy}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PSWD:-change_me}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - internal
-      - external
+      - icy_images_data:/usr/share/nginx/html/images:ro
+    networks: [internal]
 
 volumes:
   postgres_data:
-    driver: local
+  rabbitmq_data:
   backend_logs:
-    driver: local
   bot_config:
-    driver: local
   icy_images_data:
-    name: icy_images_data        # ✅ Nom fixe, inchangé, même dossier ou serveur
-    driver: local
+    name: icy_images_data
 
 networks:
   internal:
+    name: iceforge_internal
     internal: true
   external:
+    name: iceforge_external
     driver: bridge

@@ -1,0 +1,8 @@
+.angular
+.git
+.idea
+coverage
+dist
+node_modules
+*.log
+*.iml
