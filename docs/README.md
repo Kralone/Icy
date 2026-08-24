@@ -18,7 +18,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 |---|---|
 | Frontend | Angular 22.1 / TypeScript 6.0, SSR/prérendu et PWA configurés ; build de production réussi ; 47 tests unitaires réussis |
 | Backend | Spring Boot 3.5.16 / Java 21 ; 108 tests réussis ; couverture de branches 7,2 % |
-| Bot Discord | Python 3.11 / discord.py / RabbitMQ ; syntaxe valide ; 2 tests de configuration réussis |
+| Bot Discord | Python 3.14.7 / discord.py 2.7.1 / aio-pika 10 ; 5 tests unitaires et 1 test RabbitMQ réussis |
 | Données | PostgreSQL, 28 migrations Flyway |
 | Temps réel | STOMP/SockJS entre navigateur et backend ; RabbitMQ entre backend et bot |
 | Production observée | Pages publiques disponibles, mais déploiement SPA statique incohérent avec le SSR du dépôt |
@@ -34,7 +34,8 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - `npx ng test --watch=false --browsers=ChromeHeadless` ;
 - `npm audit` pour les dépendances de production et de développement ;
 - `./mvnw.cmd test` et rapport JaCoCo ;
-- analyse syntaxique des 25 fichiers Python et `pip check` ;
+- compilation Python complète, 5 tests unitaires, test AMQP réel isolé,
+  `pip check` et `pip-audit` ;
 - `docker compose config --quiet` ;
 - revue statique des autorisations REST, STOMP, JWT, RabbitMQ, uploads, stockage client et secrets.
 

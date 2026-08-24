@@ -31,9 +31,9 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Java | 21 | Temurin 25 LTS | Moyenne | Java 21 reste supporté ; migration isolée à faible urgence |
 | Spring Boot | 3.5.16 | dernière stable 4.1.x | Moyenne | 3.5.16 est encore stable ; migration majeure séparée vers Spring Framework 7 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
-| Python | `3.11.16-slim-bookworm` | Python 3.14.x | Moyenne | Valider les extensions et le démarrage avant adoption |
+| Python | `3.14.7-slim-bookworm` | Python 3.14.x | Terminée | Image immuable, wheels Linux et exécution non-root validées |
 | discord.py | 2.7.1 | 2.7.1 | Basse | Déjà à la dernière version publiée |
-| Dépendances du bot | épinglées | dernières stables compatibles | Moyenne | FastAPI, Uvicorn, aio-pika, dotenv et soupsieve ont des mises à jour |
+| Dépendances du bot | verrou transitif | dernières stables compatibles | Terminée | 5 tests unitaires, audit CVE et test AMQP réel validés |
 | PostgreSQL | 15.19 épinglé | 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
 | RabbitMQ | 3.13.7 épinglé | 4.2 puis 4.3 | Haute | Le chemin final dépend encore de la version et des feature flags de production |
@@ -198,6 +198,13 @@ SSR conserve entre-temps une allowlist explicite (`iceforge.fr`,
   un fichier de contraintes généré.
 - Tester connexion Discord, synchronisation des commandes, reconnexion AMQP,
   publication, consommation, accusés de réception et arrêt propre.
+
+Résultat : Python 3.14.7 et les dépendances cibles sont verrouillés. Toutes les
+dépendances natives ont une wheel CPython 3.14, `pip check` et `pip-audit` sont
+verts, cinq tests unitaires passent et le cycle publication/consommation a été
+validé avec RabbitMQ 3.13.7 dans un réseau éphémère. La connexion Discord et la
+synchronisation des commandes restent à vérifier lors du déploiement contrôlé,
+sans réutiliser de secret dans les tests locaux.
 
 ### 06 — `codex/upgrade-java-25`
 

@@ -14,6 +14,7 @@ class MessagePublisher:
 
     async def publish(self, routing_key: str, payload: dict):
         """Publie un message sur l’exchange configuré."""
+        channel = None
         try:
             # Ouvre un canal temporaire
             channel = await self.connection.channel()
@@ -34,8 +35,9 @@ class MessagePublisher:
             logger.info(f"📤 Message publié ({routing_key})")
             logger.debug(json.dumps(payload, indent=2, ensure_ascii=False))
 
-            # Fermeture propre du canal
-            await channel.close()
-
         except Exception as e:
             logger.exception(f"❌ Erreur lors de l’envoi du message RabbitMQ : {e}")
+        finally:
+            # Ferme aussi le canal si la déclaration ou la publication échoue.
+            if channel is not None and not channel.is_closed:
+                await channel.close()

@@ -122,7 +122,7 @@ npm run start
 cd icy
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirement.txt
+pip install -r requirements.lock
 python bot.py
 ```
 

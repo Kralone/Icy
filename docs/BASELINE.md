@@ -14,7 +14,7 @@ production ni un test des intégrations réelles Discord, PostgreSQL et RabbitMQ
 | Maven | 3.9.9 | Maven Wrapper |
 | Node.js | 24.19.0 LTS | `.nvmrc`, `engines.node` et image Docker épinglée |
 | npm | 11.17.0 | `packageManager`, `engines.npm` et image Docker du frontend |
-| Python | 3.11.16 | `.python-version` et famille Docker Python 3.11 |
+| Python | 3.14.7 | `.python-version` et image Docker épinglée par digest |
 
 Les images Docker du socle utilisent des tags exacts et des digests immuables.
 Les montées de version des runtimes restent isolées dans leurs branches dédiées.
@@ -47,7 +47,9 @@ le seuil d'avertissement de 10 kB, sans dépasser le seuil bloquant de 14 kB.
 ### Bot
 
 Voir `icy/README.md`. Une reconstruction isolée des dépendances doit précéder
-les tests afin de détecter les environnements virtuels obsolètes ou cassés.
+les tests afin de détecter les environnements virtuels obsolètes ou cassés. La
+suite comprend cinq tests unitaires ; un sixième test d'intégration AMQP est
+activé lorsque `RABBITMQ_TEST_URL` est défini.
 
 ### Compose
 
@@ -61,7 +63,8 @@ branches d'infrastructure.
 
 ## Limites connues de la baseline
 
-- aucun accès à Discord, PostgreSQL ou RabbitMQ réel pendant les tests locaux ;
+- aucun accès à Discord ou PostgreSQL réel pendant les tests locaux ; RabbitMQ
+  est testé avec un broker éphémère isolé ;
 - la pile Compose isolée est validée, mais elle ne remplace pas un démarrage sur
   l'architecture réelle de production ;
 - la clé historique du bot doit encore être révoquée côté production ;
@@ -71,13 +74,14 @@ branches d'infrastructure.
 
 ## État des audits de dépendances
 
-- bot : `pip-audit` ne signale aucune vulnérabilité connue ;
+- bot Python 3.14 : `pip-audit` ne signale aucune vulnérabilité connue dans le
+  verrou transitif ;
 - frontend de production : `npm audit --omit=dev` ne signale aucune
   vulnérabilité ; l'arbre complet de développement conserve 11 alertes
   (4 modérées et 7 hautes) dans la chaîne Karma/Webpack ;
 - backend : un SBOM CycloneDX de 125 composants est généré, mais son scan doit
   être branché sur un outil dédié dans la CI.
 
-Les correctifs de sécurité de production et les migrations Angular 21 puis 22
-ont été validés sur des branches séparées. La migration du builder Karma/Webpack
-reste un changement d'outillage distinct.
+Les correctifs de sécurité de production, les migrations Angular 21 puis 22 et
+la migration Python 3.14 du bot ont été validés sur des branches séparées. La
+migration du builder Karma/Webpack reste un changement d'outillage distinct.

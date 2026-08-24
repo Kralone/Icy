@@ -156,7 +156,7 @@ npx ng test --watch=false --browsers=ChromeHeadless
 
 # Bot : installer puis lancer dans un environnement configuré
 cd ..\icy
-python -m pip install -r requirement.txt
+python -m pip install -r requirements.lock
 python bot.py
 
 # Configuration Docker
