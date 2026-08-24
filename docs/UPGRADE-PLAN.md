@@ -36,7 +36,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Dépendances du bot | verrou transitif | dernières stables compatibles | Terminée | 5 tests unitaires, audit CVE et test AMQP réel validés |
 | PostgreSQL | 15.19 épinglé | 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
-| RabbitMQ | 3.13.7 épinglé | 4.2 puis 4.3 | Haute | Le chemin final dépend encore de la version et des feature flags de production |
+| RabbitMQ | 4.2.9 épinglé | 4.3.5 | Haute | Palier 3.13→4.2 validé ; inventaire production requis avant 4.3 |
 | Nginx | 1.30.4 épinglé | stable épinglée | Terminée | Frontend et serveur d'images sont uniformisés |
 | Vault | 1.17.6 épinglé | 1.21.x, puis décision distincte pour 2.x | Conditionnelle | Confirmer d'abord qu'il est réellement utilisé en production |
 | Docker Compose | base + surcharges dédiées | socle durci | Terminée | Production, local et validation sont séparés |
@@ -279,7 +279,7 @@ framework. Le migrateur de propriétés n'a signalé aucun renommage et a été
 retiré avant fusion.
 
 Le build final compile 294 sources, exécute 108 tests et analyse 204 classes ;
-le SBOM contient 152 composants. Le smoke test isolé valide les 28 migrations
+le SBOM contient 151 composants. Le smoke test isolé valide les 28 migrations
 sur PostgreSQL 15.19, Hibernate/JPA, une connexion RabbitMQ active, REST en HTTP
 200, le handshake SockJS/WebSocket, Java 25.0.4, l'UID non-root 10001 et l'arrêt
 gracieux de Hikari. Le premier démarrage a détecté l'absence du module Flyway
@@ -303,6 +303,29 @@ Le chemin officiel est documenté dans le
 Acceptation : aucune perte de message lors d'un scénario de panne, consommateurs
 et producteurs reconnectés, files et bindings comparés, rollback testé ou
 migration blue/green documentée.
+
+Résultat du palier 4.2 : l'image Docker officielle passe de 3.13.7 à 4.2.9,
+épinglée par digest. RabbitMQ Server 4.2.10 était publié au moment de la
+validation, mais pas encore son Docker Official Image ; un tag inexistant n'est
+pas utilisé à la place d'une image reproductible. L'image 4.2.9 embarque
+Erlang/OTP 27.3.4.16. Ce palier prépare 4.3 et n'est pas la cible finale de
+maintien communautaire.
+
+Le scénario stateful local a démarré 3.13.7 avec tous ses feature flags stables
+activés et Khepri désactivé, créé une file durable et publié un message
+persistant. Après arrêt et copie du volume, 4.2.9 a migré ce même volume, retrouvé
+et consommé le message. Les six tests du bot Python 3.14/aio-pika 10 ont réussi ;
+le backend Spring Boot 4.1 a également démarré, répondu en HTTP 200, établi une
+connexion AMQP et déclaré ses six files durables avec les consommateurs attendus.
+
+Le rollback a ensuite été prouvé en démarrant 3.13.7 sur la copie antérieure au
+changement : le message original était encore présent et lisible. Enfin, tous
+les feature flags 4.2 ont été activés, y compris Khepri et les marqueurs 4.0,
+4.1 et 4.2 ; un redémarrage et les six tests du bot sont restés au vert. Cette
+activation est irréversible : en production, conserver la sauvegarde 3.13 et la
+fenêtre d'observation avant de l'effectuer. Après activation, un retour exige la
+restauration de cette sauvegarde, jamais le redémarrage de 3.13 sur le volume
+migré.
 
 ### 11 — `codex/upgrade-postgres-18`
 

@@ -85,6 +85,18 @@ Avant fusion d'une branche d'infrastructure, vérifier au minimum :
 RabbitMQ possède un nom d'hôte stable (`rabbitmq`). Son identifiant de nœud et
 son répertoire Mnesia restent ainsi cohérents lors d'une recréation de conteneur.
 
+Pour le palier RabbitMQ 3.13 vers 4.2, relever d'abord les plugins, politiques,
+files et feature flags de la production. Tous les flags stables 3.13 doivent être
+activés et Khepri doit rester désactivé avant la montée. Arrêter proprement le
+broker, sauvegarder son volume avec les métadonnées et propriétaires, puis
+démarrer 4.2 avec le même nom d'hôte. Vérifier les messages persistants et les
+deux clients applicatifs avant d'activer les nouveaux flags 4.2.
+
+L'activation de tous les flags 4.2 inclut Khepri et rend le changement
+irréversible au niveau du volume. Le rollback supporté consiste à arrêter 4.2 et
+à restaurer la sauvegarde réalisée sous 3.13 avec l'image 3.13 d'origine. Ne
+jamais essayer de démarrer directement une ancienne image sur le volume migré.
+
 ## Vault
 
 Vault rejoint le réseau privé `iceforge_internal`, ce qui rend l'adresse

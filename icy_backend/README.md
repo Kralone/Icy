@@ -110,7 +110,7 @@ Le build impose Java 25 et Maven 3.9.9 ou plus récent. JaCoCo 0.8.15 assure la
 couverture du bytecode Java 25 ; l'annotation processor Lombok suit la version
 gérée par Spring Boot afin d'éviter un décalage avec la dépendance compilée.
 Surefire 3.5.6 exécute les 108 tests via JUnit Platform. Le build génère aussi
-un SBOM CycloneDX 1.6 de 152 composants sous
+un SBOM CycloneDX 1.6 de 151 composants sous
 `target/classes/META-INF/sbom/application.cdx.json`.
 
 Les dépendances directes hors BOM actuellement validées comprennent Bouncy
