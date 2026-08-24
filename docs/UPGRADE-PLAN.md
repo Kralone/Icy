@@ -390,6 +390,11 @@ HIGH avec correctifs disponibles. Ne modifier le digest Compose qu'après la
 publication d'une image Community ultérieure, un scan strict à zéro et l'audit
 de l'instance de production. Le volume 1.17.6 réel n'a pas été ouvert.
 
+Le palier Community 1.21.4 a également été rejeté avec la même base Trivy : 20
+vulnérabilités OS et 51 dans le binaire, dont cinq critiques au total. Il ne
+constitue pas un meilleur compromis que 2.0.4. En production, réduire d'abord
+l'exposition de 1.17.6 par le réseau privé, TLS et les snapshots.
+
 ### 13 — `codex/infra-upgrade-finalize`
 
 La partie vérifiable hors production est portée par

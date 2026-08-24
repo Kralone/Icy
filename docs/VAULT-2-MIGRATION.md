@@ -11,19 +11,31 @@ migration sûre ni un rollback.
 - stockage : Integrated Storage/Raft dans `/vault/data` ;
 - clients IceForge : authentification AppRole et lecture KV v2 sur des chemins
   canoniques `/v1/<mount>/data/<path>` ;
+- candidate intermédiaire rejetée : Vault Community 1.21.4, image
+  `sha256:4e33b126a59c0c333b76fb4e894722462659a6bec7c48c9ee8cea56fccfd2569` ;
 - dernière candidate testée : Vault Community 2.0.4, image
   `sha256:5be49781ecf78bfe775c5309c6a4d9f4e9e040b6c885c99eb2b12fb69855e1a2`.
 
-La candidate 2.0.4 est **NO-GO** au 24 août 2026. Trivy 0.74.0 ne trouve aucune
-vulnérabilité OS HIGH/CRITICAL dans Alpine 3.24, mais détecte huit
-vulnérabilités HIGH corrigibles dans le binaire Go de Vault. Attendre une image
-Community ultérieure construite au minimum avec Go 1.26.6, l'épingler par digest
-et obtenir un scan strict à zéro avant de modifier Compose.
+Les trois images ont été rescannées avec Trivy 0.74.0 et la même base CVE le
+24 août 2026 :
 
-L'image 1.17.6 actuelle est nettement plus exposée : Alpine 3.20 est en fin de
-support et le même scan trouve 26 vulnérabilités OS (dont deux critiques) et 57
-dans le binaire. Cela rend la migration urgente, mais ne justifie pas de fusionner
-une candidate qui possède encore des correctifs disponibles non intégrés.
+| Version | OS HIGH/CRITICAL | Binaire Go HIGH/CRITICAL | Corrigibles | Décision |
+|---|---:|---:|---:|---|
+| 1.17.6 | 24 / 2 | 55 / 2 | 80 sur 83 | production actuelle à isoler |
+| 1.21.4 | 18 / 2 | 48 / 3 | 65 sur 71 | NO-GO |
+| 2.0.4 | 0 / 0 | 8 / 0 | 8 sur 8 | NO-GO, meilleure candidate |
+
+Le palier 1.21.4 n'est donc pas une réduction suffisante du risque : il conserve
+deux vulnérabilités critiques OS et en ajoute trois dans le binaire Go. La
+candidate 2.0.4 est nettement meilleure, mais ses huit vulnérabilités HIGH ont
+toutes un correctif disponible. Attendre une image Community ultérieure
+construite au minimum avec Go 1.26.6, l'épingler par digest et obtenir un scan
+strict à zéro avant de modifier Compose.
+
+L'image 1.17.6 actuelle reste la plus exposée et Alpine 3.20 est en fin de
+support. Cela rend urgents le cloisonnement réseau, TLS et les snapshots, mais ne
+justifie pas de fusionner une candidate dont les correctifs disponibles ne sont
+pas encore intégrés.
 
 ## Préparation et go/no-go
 

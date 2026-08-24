@@ -158,8 +158,10 @@ et [gestion des snapshots](https://developer.hashicorp.com/vault/docs/sysadmin/s
 
 La migration 1.17.6 vers 2.0.4 et son rollback ont réussi localement sur données
 synthétiques, mais 2.0.4 reste NO-GO tant que l'image Community conserve des
-vulnérabilités Go corrigibles. Une montée intermédiaire vers le dernier patch
-1.21.x peut être évaluée séparément si elle réduit cette fenêtre d'exposition.
+vulnérabilités Go corrigibles. Le palier Community 1.21.4 a aussi été évalué et
+rejeté : son image contient encore cinq vulnérabilités critiques et davantage de
+vulnérabilités corrigibles que 2.0.4. Le cloisonnement et les snapshots de 1.17.6
+sont donc prioritaires en attendant une image 2.x corrigée.
 
 ### Images et configuration
 
