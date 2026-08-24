@@ -79,10 +79,12 @@ branches d'infrastructure.
 - frontend de production : `npm audit --omit=dev` ne signale aucune
   vulnérabilité ; l'arbre complet de développement conserve 11 alertes
   (4 modérées et 7 hautes) dans la chaîne Karma/Webpack ;
-- backend : un SBOM CycloneDX de 124 composants est généré, mais son scan doit
+- backend : un SBOM CycloneDX de 152 composants est généré, mais son scan doit
   être branché sur un outil dédié dans la CI.
 
 Les correctifs de sécurité de production, les migrations Angular 21 puis 22,
 la migration Python 3.14 du bot, Java 25 et les dépendances compatibles du
 backend ont été validés sur des branches séparées. La migration du builder
-Karma/Webpack reste un changement d'outillage distinct.
+Karma/Webpack reste un changement d'outillage distinct. Le backend est désormais
+validé sous Spring Boot 4.1.1 ; le pont Jackson 2 officiel reste temporaire et
+sa suppression exige une migration de contrats JSON séparée.

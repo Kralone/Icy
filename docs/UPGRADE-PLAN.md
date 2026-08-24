@@ -29,7 +29,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Angular | 22.1.3 (CLI/SSR 22.1.5) | 22.1.x | Terminée | Migrations 20→21 puis 21→22 validées sur deux branches isolées |
 | TypeScript | 6.0.3 | 6.0.x imposée par Angular | Terminée | Alias de tests migré sans masquer la dépréciation de `baseUrl` |
 | Java | Temurin 25.0.4 LTS | Temurin 25 LTS | Terminée | 108 tests, JaCoCo, Flyway, AMQP et smoke REST validés |
-| Spring Boot | 3.5.16 | dernière stable 4.1.x | Moyenne | 3.5.16 est encore stable ; migration majeure séparée vers Spring Framework 7 |
+| Spring Boot | 4.1.1 | dernière stable 4.1.x | Terminée | Migration majeure validée avec Spring Framework 7, Security 7, Hibernate 7 et Flyway 12 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
 | Python | `3.14.7-slim-bookworm` | Python 3.14.x | Terminée | Image immuable, wheels Linux et exécution non-root validées |
 | discord.py | 2.7.1 | 2.7.1 | Basse | Déjà à la dernière version publiée |
@@ -263,6 +263,28 @@ l'exclusion a confirmé la disparition de l'avertissement Commons Logging.
 Acceptation backend : 108 tests historiques plus nouveaux tests de sécurité au
 vert, zéro modification involontaire du schéma, contrats API comparés et smoke
 test avec les images cibles.
+
+Résultat : Spring Boot passe de 3.5.16 à 4.1.1 avec Spring Framework 7.0.9,
+Spring Security 7.1.1, Hibernate 7.4.5.Final, Tomcat 11.0.24, Spring AMQP
+4.1.1, Flyway 12.4.0 et JUnit 6.0.3. Les starters modulaires Boot 4 remplacent
+les anciens starters génériques ; Flyway utilise en plus son module PostgreSQL.
+Les tests MVC suivent les nouveaux packages Boot 4 et `@MockitoBean` remplace
+le `@MockBean` supprimé. Le convertisseur RabbitMQ utilise Jackson 3.
+
+Le code métier expose encore largement les types Jackson 2 ; le module officiel
+`spring-boot-jackson2` est donc conservé comme pont temporaire. La migration
+complète des types `com.fasterxml.jackson.databind` vers Jackson 3 fera l'objet
+d'une branche distincte afin de ne pas mélanger contrats JSON et changement de
+framework. Le migrateur de propriétés n'a signalé aucun renommage et a été
+retiré avant fusion.
+
+Le build final compile 294 sources, exécute 108 tests et analyse 204 classes ;
+le SBOM contient 152 composants. Le smoke test isolé valide les 28 migrations
+sur PostgreSQL 15.19, Hibernate/JPA, une connexion RabbitMQ active, REST en HTTP
+200, le handshake SockJS/WebSocket, Java 25.0.4, l'UID non-root 10001 et l'arrêt
+gracieux de Hikari. Le premier démarrage a détecté l'absence du module Flyway
+PostgreSQL ; le module a été ajouté et le second démarrage a confirmé un schéma
+à jour en version 28.
 
 ### 09/10 — RabbitMQ
 

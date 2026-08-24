@@ -21,6 +21,6 @@ public class MiningSheetWebSocketService {
         payload.put("action", action);
         payload.put("sheetId", sheetId);
         payload.put("timestamp", System.currentTimeMillis());
-        messagingTemplate.convertAndSend(DESTINATION, payload);
+        messagingTemplate.convertAndSend(DESTINATION, (Object) payload);
     }
 }

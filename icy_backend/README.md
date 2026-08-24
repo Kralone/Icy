@@ -7,7 +7,7 @@ RabbitMQ. Ce README se concentre uniquement sur le backend.
 ## Stack
 
 - Java 25.0.4 LTS
-- Spring Boot 3.5.16
+- Spring Boot 4.1.1
 - Spring Web / WebSocket / Security
 - Spring Data JPA + Flyway
 - RabbitMQ (AMQP)
@@ -110,14 +110,19 @@ Le build impose Java 25 et Maven 3.9.9 ou plus récent. JaCoCo 0.8.15 assure la
 couverture du bytecode Java 25 ; l'annotation processor Lombok suit la version
 gérée par Spring Boot afin d'éviter un décalage avec la dépendance compilée.
 Surefire 3.5.6 exécute les 108 tests via JUnit Platform. Le build génère aussi
-un SBOM CycloneDX 1.6 de 124 composants sous
+un SBOM CycloneDX 1.6 de 152 composants sous
 `target/classes/META-INF/sbom/application.cdx.json`.
 
 Les dépendances directes hors BOM actuellement validées comprennent Bouncy
-Castle 1.85.2, jsoup 1.23.1 et Commons CSV 1.14.1. Les passages à Apache
-HttpClient 5, AsyncHttpClient 3, Flyway 13 ou Jackson 2.22 sont considérés comme
-des migrations distinctes et ne doivent pas être appliqués comme de simples
-changements de version.
+Castle 1.85.2, jsoup 1.23.1 et Commons CSV 1.14.1. Spring Boot 4.1.1 gère
+notamment Spring Framework 7, Spring Security 7, Hibernate 7 et Flyway 12. Le
+module PostgreSQL de Flyway est requis en plus du starter Boot 4.
+
+Le module officiel `spring-boot-jackson2` reste temporairement présent parce
+que les entités, DTO et services exposent encore des types Jackson 2. Sa
+suppression et le passage complet à Jackson 3 constituent une migration de
+contrats séparée. Les passages à Apache HttpClient 5 et AsyncHttpClient 3 sont
+eux aussi des migrations de code, pas de simples changements de version.
 
 ## Build
 

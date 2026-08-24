@@ -1,3 +1,3 @@
-org.springframework.boot.env.EnvironmentPostProcessor=\
+org.springframework.boot.EnvironmentPostProcessor=\
 com.icy.icy_backend.config.vault.VaultPropertyEnvironmentPostProcessor
 
