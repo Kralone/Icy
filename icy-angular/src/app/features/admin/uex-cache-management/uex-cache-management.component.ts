@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UexDatasetDetail, UexDatasetService, UexDatasetSummary } from '../../../core/services/uex/uex-dataset.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   selector: 'app-uex-cache-management',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './uex-cache-management.component.html'
 })
 export class UexCacheManagementComponent implements OnInit {

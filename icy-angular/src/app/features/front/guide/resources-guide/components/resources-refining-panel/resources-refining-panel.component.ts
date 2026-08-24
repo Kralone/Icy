@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OrbitalStation, OrbitalStationService } from '../../../../../../core/services/station/orbital-station.service';
 import { UexDatasetService, UexRefineryDatasets } from '../../../../../../core/services/uex/uex-dataset.service';
@@ -31,6 +31,7 @@ interface RefinerySummaryRow {
   standalone: true,
   imports: [],
   templateUrl: './resources-refining-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-refining-panel.component.css'
 })
 export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {

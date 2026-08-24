@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventService } from '../../../core/services/scworldevent/sc-world-event.service';
 import { ScwePlayerService } from '../../../core/services/scworldevent/scwe-player.service';
@@ -10,6 +10,7 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   selector: 'app-scwe-widget',
   standalone: true,
   imports: [CommonModule, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-widget.component.html',
 })
 export class ScweWidgetComponent implements OnInit {

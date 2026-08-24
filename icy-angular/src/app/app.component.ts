@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ViewChild, TemplateRef, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, TemplateRef, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { isPlatformBrowser, ViewportScroller } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
@@ -16,6 +16,7 @@ import { PublicTopbarComponent } from './features/front/public-topbar/public-top
     PublicTopbarComponent
 ],
   styleUrl: './app.component.css',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: []
 })
 export class AppComponent implements OnInit {

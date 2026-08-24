@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import {FadeInOnScrollDirective} from "../../../../directives/fade-in-on-scroll.directive";
 
 import strings from '../../../../../assets/i18n/front.json';
@@ -9,6 +9,7 @@ import strings from '../../../../../assets/i18n/front.json';
     FadeInOnScrollDirective
 ],
   templateUrl: './story.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './story.component.css'
 })
 export class StoryComponent {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 import { CollectionGridComponent } from '../collection-grid/collection-grid.component';
 import { UserCollectionDetailDTO } from '../../../../model/collection.model';
@@ -7,6 +7,7 @@ import { UserCollectionDetailDTO } from '../../../../model/collection.model';
   selector: 'app-collection-drawer',
   standalone: true,
   imports: [CollectionGridComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './collection-drawer.component.html',
 })
 export class CollectionDrawerComponent {

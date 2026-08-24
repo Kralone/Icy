@@ -1,5 +1,5 @@
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { GuideBadgeTone } from '../guide-template/guide-template.types';
 
@@ -14,6 +14,7 @@ interface GuideTopbarTab {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './guide-topbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './guide-topbar.component.css'
 })
 export class GuideTopbarComponent {

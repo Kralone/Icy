@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { RouterOutlet } from '@angular/router';
@@ -10,6 +10,7 @@ import { animate, group, query, style, transition, trigger } from '@angular/anim
   imports: [SidebarComponent, TopbarComponent, RouterOutlet, CommonModule],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [
     trigger('utilitySlide', [
       transition('ExecHangarPage => ExecMapsPage', [

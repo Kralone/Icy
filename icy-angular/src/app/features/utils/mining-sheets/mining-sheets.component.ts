@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 import {
@@ -61,6 +61,7 @@ interface JobDraft {
     MiningSheetsSalesComponent
   ],
   templateUrl: './mining-sheets.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets.component.css'
 })
 export class MiningSheetsComponent implements OnInit, OnDestroy {

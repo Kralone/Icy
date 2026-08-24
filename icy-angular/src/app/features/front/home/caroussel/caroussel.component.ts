@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import strings from '../../../../../assets/i18n/front.json';
 
@@ -6,6 +6,7 @@ import strings from '../../../../../assets/i18n/front.json';
   selector: 'front-carousel',
     imports: [],
   templateUrl: './caroussel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './caroussel.component.css'
 })
 export class CarousselComponent {

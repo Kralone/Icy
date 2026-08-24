@@ -1,4 +1,4 @@
-import { Component, HostListener, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CalendarOptions, DatesSetArg, ViewApi } from '@fullcalendar/core';
@@ -26,6 +26,7 @@ type FleetMiniShip = {
   selector: 'app-events',
   standalone: true,
   imports: [FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html'
 })
 export class EventsComponent implements AfterViewInit {

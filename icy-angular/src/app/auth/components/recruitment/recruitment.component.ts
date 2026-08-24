@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Recruitment } from './recruitment.model';
@@ -9,6 +9,7 @@ import {RecruitmentService} from '../../../core/services/recruitment/recruitment
   selector: 'app-recruitment',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './recruitment.component.html'
 })
 export class RecruitmentComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { ImageLibraryService } from '../../../core/services/image/image-library.
   selector: 'app-image-library',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './image-library.component.html'
 })
 export class ImageLibraryComponent implements OnInit {

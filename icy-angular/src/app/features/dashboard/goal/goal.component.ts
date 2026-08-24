@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Goal } from '../../../model/goal.model';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { CommonModule } from '@angular/common';
@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
   selector: 'app-dashboard-goal',
   standalone: true,
   imports: [CommonModule, RouterLink, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal.component.html',
 })
 export class GoalComponent implements OnInit, OnDestroy {

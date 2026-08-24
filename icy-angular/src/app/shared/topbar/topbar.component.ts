@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2 } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -16,6 +16,7 @@ type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
   standalone: true,
   imports: [CommonModule, RouterLink, RankOrbitComponent],
   templateUrl: './topbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./topbar.component.css']
 })
 export class TopbarComponent {

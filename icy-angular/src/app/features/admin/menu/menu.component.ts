@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { UserService } from '../../../core/services/user/user.service';
@@ -14,6 +14,7 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
     LoadingOverlayComponent
 ],
   templateUrl: './menu.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu.component.css'
 })
 export class AdminMenuComponent {

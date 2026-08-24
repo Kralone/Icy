@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-collection-hero',
   standalone: true,
   imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './collection-hero.component.html',
 })
 export class CollectionHeroComponent {

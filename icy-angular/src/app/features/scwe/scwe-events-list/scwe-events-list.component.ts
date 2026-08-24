@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventParticipationViewDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
 import { ScweProgressEditorComponent } from '../scwe-progress-editor/scwe-progress-editor.component';
@@ -7,6 +7,7 @@ import { ScweProgressEditorComponent } from '../scwe-progress-editor/scwe-progre
   selector: 'app-scwe-events-list',
   standalone: true,
   imports: [CommonModule, ScweProgressEditorComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-events-list.component.html',
 })
 export class ScweEventsListComponent {

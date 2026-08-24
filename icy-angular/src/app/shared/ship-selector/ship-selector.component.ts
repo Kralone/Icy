@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShipService } from '../../core/services/ship/ship.service';
@@ -11,6 +11,7 @@ export type AcquisitionType = 'rsi' | 'ingame' | 'reward_ingame' | 'loaner';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ship-selector.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./ship-selector.component.css']
 })
 export class ShipSelectorComponent implements OnInit, OnChanges {

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -20,6 +20,7 @@ interface ShipCargoGridFormValue {
   selector: 'app-ship-management',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './ship-management.component.html',
 })
 export class ShipManagementComponent implements OnInit {

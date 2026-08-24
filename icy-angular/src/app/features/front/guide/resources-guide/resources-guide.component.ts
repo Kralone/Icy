@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ResourcesMiningPanelComponent } from './components/resources-mining-panel/resources-mining-panel.component';
@@ -30,6 +30,7 @@ interface ResourceLine {
   standalone: true,
   imports: [ResourcesSalesPanelComponent, ResourcesMiningPanelComponent, ResourcesRefiningPanelComponent, ResourcesFitPanelComponent],
   templateUrl: './resources-guide.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-guide.component.css'
 })
 export class ResourcesGuideComponent implements OnInit, OnDestroy {

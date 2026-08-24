@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 interface FrontGuideCard {
@@ -15,6 +15,7 @@ interface FrontGuideCard {
   selector: 'front-guides',
   imports: [RouterLink],
   templateUrl: './guides.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './guides.component.css'
 })
 export class GuidesComponent {

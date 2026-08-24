@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SchemaFormModel, FieldForm, MilestoneForm, SchemaTab } from '../../models/scwe-schema.model';
@@ -7,6 +7,7 @@ import { SchemaFormModel, FieldForm, MilestoneForm, SchemaTab } from '../../mode
   selector: 'app-scwe-schema-builder',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-schema-builder.component.html',
 })
 export class ScweSchemaBuilderComponent implements OnInit, OnChanges {

@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -20,6 +20,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
   imports: [FormsModule, RouterLink],
   templateUrl: './wikelo.component.html',
   styleUrl: './wikelo.component.css',
+  changeDetection: ChangeDetectionStrategy.Eager,
   animations: [
     trigger('detailsExpand', [
       transition(':enter', [

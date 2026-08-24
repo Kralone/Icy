@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { ScWorldEventService, ScWorldEventType } from '../../../../../core/services/scworldevent/sc-world-event.service';
@@ -9,6 +9,7 @@ import { SchemaFormModel } from '../../models/scwe-schema.model';
   selector: 'app-scwe-types-admin',
   standalone: true,
   imports: [FormsModule, ScweSchemaBuilderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-types-admin.component.html',
 })
 export class ScweTypesAdminComponent {

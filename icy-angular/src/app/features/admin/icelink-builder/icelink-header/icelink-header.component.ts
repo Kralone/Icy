@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 
 
 @Component({
   selector: 'app-icelink-header',
   standalone: true,
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './icelink-header.component.html',
 })
 export class IceLinkHeaderComponent {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UexDatasetService, UexResourceSale, UexResourceSalePoint } from '../../../../../../core/services/uex/uex-dataset.service';
 import { ApiResponse } from '../../../../../../model/api-response.model';
@@ -16,6 +16,7 @@ interface ResourceSaleMaterial {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './resources-sales-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-sales-panel.component.css'
 })
 export class ResourcesSalesPanelComponent implements OnDestroy {

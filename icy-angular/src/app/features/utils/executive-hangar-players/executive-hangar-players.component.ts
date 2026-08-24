@@ -1,5 +1,5 @@
 
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
@@ -20,6 +20,7 @@ type PlayerRow = {
   selector: 'app-executive-hangar-players',
   imports: [FormsModule, RouterLink],
   templateUrl: './executive-hangar-players.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './executive-hangar-players.component.css'
 })
 export class ExecutiveHangarPlayersComponent implements OnInit {

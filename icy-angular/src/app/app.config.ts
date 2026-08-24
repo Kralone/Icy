@@ -7,7 +7,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpAuthInterceptor } from './core/interceptors/http.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration, withEventReplay, withNoIncrementalHydration } from '@angular/platform-browser';
 
 const enableServiceWorker = () => {
   return !isDevMode();
@@ -37,6 +37,6 @@ export const appConfig: ApplicationConfig = {
     provideServiceWorker('ngsw-worker.js', {
       enabled: enableServiceWorker(),
       registrationStrategy: 'registerWhenStable:30000'
-    }), provideClientHydration(withEventReplay())
+    }), provideClientHydration(withEventReplay(), withNoIncrementalHydration())
   ]
 };

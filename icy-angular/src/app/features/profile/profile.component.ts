@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -45,6 +45,7 @@ interface RankGuideEntry {
   standalone: true,
   imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent],
   templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {

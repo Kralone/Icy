@@ -1,5 +1,5 @@
 
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ItemCatalogItem, ItemCatalogService } from '../../../../../../core/services/item/item-catalog.service';
@@ -40,6 +40,7 @@ interface ModuleFilterOption {
   standalone: true,
   imports: [],
   templateUrl: './resources-fit-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-fit-panel.component.css'
 })
 export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy {

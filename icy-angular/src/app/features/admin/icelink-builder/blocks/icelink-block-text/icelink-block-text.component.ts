@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 import {IceLinkBlock} from '../../../../../core/services/icelink/icelink-block.service';
 
@@ -6,6 +6,7 @@ import {IceLinkBlock} from '../../../../../core/services/icelink/icelink-block.s
   selector: 'app-icelink-block-text',
   standalone: true,
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './icelink-block-text.component.html',
 })
 export class IceLinkBlockTextComponent {

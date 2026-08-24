@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NewsService } from '../../../core/services/news/news.service';
 import { News } from '../../../model/news.model';
@@ -9,6 +9,7 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   selector: 'app-news',
   standalone: true,
   imports: [CommonModule, MarkdownPipe, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './news.component.html',
 })
 export class NewsComponent implements OnInit {

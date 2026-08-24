@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
 import { ApiResponse } from '../../../../../../model/api-response.model';
@@ -39,6 +39,7 @@ interface OreLocationResult {
   standalone: true,
   imports: [],
   templateUrl: './resources-mining-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-mining-panel.component.css'
 })
 export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {

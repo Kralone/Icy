@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core'; // ✅ Ajout OnDestroy
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core'; // ✅ Ajout OnDestroy
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 
@@ -20,6 +20,7 @@ type ViewMode = 'active' | 'history' | 'leaderboard';
   selector: 'app-scwe-player-page',
   standalone: true,
   imports: [CommonModule, ScweEventsListComponent, ScweLeaderboardComponent, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-player-event-page.component.html',
 })
 export class ScwePlayerPageComponent implements OnInit, OnDestroy {

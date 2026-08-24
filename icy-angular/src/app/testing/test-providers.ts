@@ -1,4 +1,4 @@
-import {provideHttpClient} from '@angular/common/http';
+import {provideHttpClient, withXhr} from '@angular/common/http';
 import {provideHttpClientTesting} from '@angular/common/http/testing';
 import {provideRouter} from '@angular/router';
 import {SwPush} from '@angular/service-worker';
@@ -40,7 +40,7 @@ const webSocketStub = {
 };
 
 export const coreTestProviders = [
-  provideHttpClient(),
+  provideHttpClient(withXhr()),
   provideHttpClientTesting(),
   provideRouter([]),
   {provide: SwPush, useValue: swPushStub},

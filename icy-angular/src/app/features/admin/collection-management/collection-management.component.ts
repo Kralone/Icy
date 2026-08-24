@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -8,6 +8,7 @@ import { CollectionsService } from '../../../core/services/collection/collection
   selector: 'app-collection-management',
   standalone: true,
   imports: [FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './collection-management.component.html',
 })
 export class CollectionManagementComponent {

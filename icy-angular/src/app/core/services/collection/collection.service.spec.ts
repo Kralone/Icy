@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 
 import { CollectionsService } from './collection.service';
 
@@ -7,7 +7,7 @@ describe('CollectionsService', () => {
   let service: CollectionsService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({providers: [provideHttpClient()]});
+    TestBed.configureTestingModule({providers: [provideHttpClient(withXhr())]});
     service = TestBed.inject(CollectionsService);
   });
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,6 +13,7 @@ import {
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './planet-management.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './planet-management.component.css'
 })
 export class PlanetManagementComponent implements OnInit {

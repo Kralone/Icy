@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoalService } from '../../../core/services/goal/goal.service';
@@ -23,6 +23,7 @@ type TemplateDraftNode = {
   selector: 'app-goal-management',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-management.component.html',
 })
 export class GoalManagementComponent implements OnInit {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
@@ -51,6 +51,7 @@ type TerminalMapping = {
   selector: 'app-ship-market',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './ship-market.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './ship-market.component.css'
 })
 export class ShipMarketComponent implements OnDestroy {

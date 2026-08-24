@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../model/user.model';
 import { MiningSheet } from '../../../../core/services/mining/mining-sheet.service';
@@ -9,6 +9,7 @@ import { MiningSheet } from '../../../../core/services/mining/mining-sheet.servi
   selector: 'app-mining-sheets-admin-modal',
   imports: [FormsModule],
   templateUrl: './mining-sheets-admin-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-admin-modal.component.css'
 })
 export class MiningSheetsAdminModalComponent {

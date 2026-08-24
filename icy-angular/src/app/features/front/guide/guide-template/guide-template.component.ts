@@ -7,7 +7,8 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
-  ViewEncapsulation
+  ViewEncapsulation,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ItemCatalogItem, ItemCatalogService } from '../../../../core/services/item/item-catalog.service';
@@ -22,6 +23,7 @@ import { GuideContentBlock, GuideDocument, GuideGlossaryItem, GuideSection } fro
   imports: [GuideTopbarComponent],
   templateUrl: './guide-template.component.html',
   styleUrl: './guide-template.component.css',
+  changeDetection: ChangeDetectionStrategy.Eager,
   encapsulation: ViewEncapsulation.None
 })
 export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestroy {

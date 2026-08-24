@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, Inject, NgZone, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, NgZone, OnDestroy, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UserOnline } from '../../../../model/user-online.model';
 import { UserStatusKey } from '../../../../model/user-profile.model';
@@ -35,6 +35,7 @@ interface FrontMember {
   standalone: true,
   imports: [CommonModule, GuidesComponent],
   templateUrl: './online-members.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './online-members.component.css'
 })
 export class OnlineMembersComponent implements OnInit, OnDestroy {

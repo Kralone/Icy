@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -12,6 +12,7 @@ import { isPlatformBrowser } from '@angular/common';
     ReactiveFormsModule,
     RouterLink
 ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {

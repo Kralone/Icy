@@ -1,5 +1,5 @@
 // recruitment-management.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -10,6 +10,7 @@ import { RecruitmentService } from '../../../core/services/recruitment/recruitme
   selector: 'app-recruitment-management',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './recruitment-management.component.html',
 })
 export class RecruitmentManagementComponent implements OnInit {

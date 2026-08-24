@@ -23,7 +23,7 @@
                       @if (event.type?.imageUrl) {
                         <img
                           class="front-online__event-image"
-                          [src]="event.type?.imageUrl!"
+                          [src]="$safeNavigationMigration(event.type?.imageUrl)!"
                           [alt]="event.type?.name || 'Evenement'"
                           loading="lazy"
                           decoding="async"

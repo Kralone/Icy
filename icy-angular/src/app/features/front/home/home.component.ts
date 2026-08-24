@@ -1,6 +1,6 @@
 import { ScrollAnimationDirective } from '../../../directives/scroll-animation.directive';
 
-import {Component} from '@angular/core';
+import {Component, ChangeDetectionStrategy} from '@angular/core';
 import {FadeInOnScrollDirective} from '../../../directives/fade-in-on-scroll.directive';
 import {ParallaxDirective} from '../../../directives/parallax.directive';
 import {HeaderComponent} from './header/header.component';
@@ -17,6 +17,7 @@ import strings from '../../../../assets/i18n/front.json';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [HeaderComponent, OnlineMembersComponent, StoryComponent, ActivitiesComponent, CarousselComponent, PublicUtilsComponent]
 })
 export class HomeComponent {

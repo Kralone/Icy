@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ScWorldEventDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
@@ -10,6 +10,7 @@ type ProgressForm = FormGroup<Record<string, FormControl<number>>>;
   selector: 'app-scwe-progress-editor',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-progress-editor.component.html',
 })
 export class ScweProgressEditorComponent implements OnChanges {

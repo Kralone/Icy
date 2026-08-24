@@ -1,6 +1,6 @@
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -25,6 +25,7 @@ type EntrySortOption =
   selector: 'app-cig-watch-management',
   standalone: true,
   imports: [FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cig-watch-management.component.html'
 })
 export class CigWatchManagementComponent implements OnInit, OnDestroy {

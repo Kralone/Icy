@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { TemplateListItemDTO } from '../../../../model/collection.model';
@@ -8,6 +8,7 @@ import { LoadingOverlayComponent } from '../../../../shared/loading-overlay/load
   selector: 'app-collection-templates',
   standalone: true,
   imports: [FormsModule, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './collection-templates.component.html',
 })
 export class CollectionTemplatesComponent {

@@ -76,7 +76,7 @@
           <h3 class="text-sm uppercase tracking-[0.22em] text-slate-300">Dernieres infos brutes</h3>
           <p class="text-xs text-slate-400">
             {{ feed?.itemCount ?? 0 }} item(s) | {{ feed?.errors?.length ?? 0 }} erreur(s) |
-            generation: {{ formatDate(feed?.generatedAt) }} |
+            generation: {{ formatDate($safeNavigationMigration(feed?.generatedAt)) }} |
             prochain cycle: {{ formatDate(nextScheduledFetchAt) }} |
             dans: {{ schedulerCountdownLabel }}
           </p>

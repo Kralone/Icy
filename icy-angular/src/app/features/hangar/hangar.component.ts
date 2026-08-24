@@ -1,4 +1,4 @@
-import {Component, ElementRef, HostListener} from '@angular/core';
+import {Component, ElementRef, HostListener, ChangeDetectionStrategy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
@@ -22,6 +22,7 @@ import {AcquisitionType} from '../../shared/ship-selector/ship-selector.componen
     ClickOutsideDirective,
     ShipSelectorComponent
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./hangar.component.css']
 })
 export class HangarComponent {

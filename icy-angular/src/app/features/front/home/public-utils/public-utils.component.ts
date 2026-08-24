@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 type PublicUtilityItem = {
@@ -14,6 +14,7 @@ type PublicUtilityItem = {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './public-utils.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './public-utils.component.css'
 })
 export class PublicUtilsComponent {

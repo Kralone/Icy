@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { MiningSheet } from '../../../../core/services/mining/mining-sheet.service';
 
 interface MaterialPieSlice {
@@ -18,6 +18,7 @@ interface MaterialPieSlice {
   selector: 'app-mining-sheets-summary',
   imports: [CommonModule],
   templateUrl: './mining-sheets-summary.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-summary.component.css'
 })
 export class MiningSheetsSummaryComponent implements OnInit, OnChanges, OnDestroy {

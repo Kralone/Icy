@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -9,6 +9,7 @@ import { EventType } from '../../../model/event-type.model';
   selector: 'app-event-management',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-management.component.html',
 })
 export class EventManagementComponent implements OnInit {

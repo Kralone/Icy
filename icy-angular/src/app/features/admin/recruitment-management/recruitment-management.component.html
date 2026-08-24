@@ -260,7 +260,7 @@
             {{ selectedRecruitment?.username }}
           </div>
           <div class="text-slate-300 text-sm">
-            {{ selectedRecruitment?.discordTag }} • {{ selectedRecruitment?.createdAt | date:'medium' }}
+            {{ selectedRecruitment?.discordTag }} • {{ $safeNavigationMigration(selectedRecruitment?.createdAt) | date:'medium' }}
           </div>
         </div>
         <button

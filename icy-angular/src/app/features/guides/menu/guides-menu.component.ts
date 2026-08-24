@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 type InternalGuideMenuItem = {
@@ -14,6 +14,7 @@ type InternalGuideMenuItem = {
   selector: 'app-guides-menu',
   imports: [RouterLink],
   templateUrl: './guides-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './guides-menu.component.css'
 })
 export class GuidesMenuComponent {

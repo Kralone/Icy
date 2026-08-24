@@ -21,12 +21,12 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <p><strong>Type :</strong> {{ selectedEvent?.type?.name }}</p>
         <p><strong>Status :</strong>
-        <span [ngClass]="{ 'text-green-400': !selectedEvent?.finished, 'text-gray-400 italic': selectedEvent?.finished }">
+        <span [ngClass]="{ 'text-green-400': !selectedEvent?.finished, 'text-gray-400 italic': $safeNavigationMigration(selectedEvent?.finished) }">
           {{ selectedEvent?.finished ? 'Terminé' : 'À venir' }}
         </span>
       </p>
-      <p><strong>Début :</strong> {{ selectedEvent?.startDateTime | date:'short' }}</p>
-      <p><strong>Fin :</strong> {{ selectedEvent?.endDateTime | date:'short' }}</p>
+      <p><strong>Début :</strong> {{ $safeNavigationMigration(selectedEvent?.startDateTime) | date:'short' }}</p>
+      <p><strong>Fin :</strong> {{ $safeNavigationMigration(selectedEvent?.endDateTime) | date:'short' }}</p>
     </div>
 
     <div class="mt-4 text-sm">
@@ -82,21 +82,21 @@
       <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
         <button
           (click)="participationChange.emit(1)"
-          [disabled]="selectedEvent?.finished"
+          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
           class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
           Confirmer
         </button>
 
         <button
           (click)="participationChange.emit(0)"
-          [disabled]="selectedEvent?.finished"
+          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
           class="bg-yellow-500 hover:bg-yellow-400 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
           Peut-être
         </button>
 
         <button
           (click)="participationChange.emit(-1)"
-          [disabled]="selectedEvent?.finished"
+          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
           class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
           Refuser
         </button>

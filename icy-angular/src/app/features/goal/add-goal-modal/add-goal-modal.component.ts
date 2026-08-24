@@ -4,7 +4,8 @@ import {
   Input,
   Output,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +14,7 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-add-goal-modal',
   templateUrl: './add-goal-modal.component.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [FormsModule]
 })
 export class AddGoalModalComponent implements OnChanges {

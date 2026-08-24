@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
@@ -8,6 +8,7 @@ import {WebSocketService} from '../../core/services/websocket/websocket.service'
   standalone: true,
   selector: 'app-fleet',
   templateUrl: './fleet.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [LoadingOverlayComponent]
 })
 export class FleetComponent implements OnInit, OnDestroy {

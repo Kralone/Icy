@@ -1,4 +1,4 @@
-import {Component, HostListener} from '@angular/core';
+import {Component, HostListener, ChangeDetectionStrategy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {ShipService} from '../../core/services/ship/ship.service';
@@ -60,6 +60,7 @@ interface StatusStyle {
     LoadingOverlayComponent
   ],
   templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {

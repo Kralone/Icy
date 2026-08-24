@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScWorldEventService, ScWorldEvent, ScWorldEventType, Page } from '../../../../../core/services/scworldevent/sc-world-event.service';
@@ -7,6 +7,7 @@ import { ScWorldEventService, ScWorldEvent, ScWorldEventType, Page } from '../..
   selector: 'app-scwe-events-admin',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-events-admin.component.html',
 })
 export class ScweEventsAdminComponent implements OnInit, OnChanges {

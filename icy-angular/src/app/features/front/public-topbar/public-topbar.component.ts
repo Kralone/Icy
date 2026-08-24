@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 
@@ -13,6 +13,7 @@ type PublicMenuItem = {
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './public-topbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './public-topbar.component.css'
 })
 export class PublicTopbarComponent {

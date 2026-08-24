@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { IceLinkBlockService, IceLinkBlock } from '../../../../core/services/icelink/icelink-block.service';
@@ -9,6 +9,7 @@ import 'emoji-picker-element';
   standalone: true,
   imports: [FormsModule],
   templateUrl: './icelink-block-admin.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class IceLinkBlockAdminComponent implements OnInit {

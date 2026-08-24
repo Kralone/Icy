@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, AfterViewInit, DoCheck, ElementRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, AfterViewInit, DoCheck, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
@@ -9,6 +9,7 @@ import { GoalParticipationSummary } from '../../../model/goal-participation-summ
   selector: 'app-goal-sub',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-sub.component.html',
 })
 export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {

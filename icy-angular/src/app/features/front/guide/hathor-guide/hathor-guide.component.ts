@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
 
@@ -6,6 +6,7 @@ import { GuideDocument } from '../guide-template/guide-template.types';
   selector: 'front-hathor-guide',
   standalone: true,
   imports: [GuideTemplateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<front-guide-template [guide]="guide"></front-guide-template>`
 })
 export class HathorGuideComponent {

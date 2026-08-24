@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 import { HttpAuthInterceptor } from './http.interceptor';
@@ -9,7 +9,7 @@ describe('HttpAuthInterceptor', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideRouter([]), HttpAuthInterceptor]
+      providers: [provideHttpClient(withXhr()), provideRouter([]), HttpAuthInterceptor]
     });
     service = TestBed.inject(HttpAuthInterceptor);
   });

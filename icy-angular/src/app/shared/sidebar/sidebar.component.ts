@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -16,6 +16,7 @@ type SidebarItem = {
   selector: 'app-sidebar',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit {

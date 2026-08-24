@@ -66,18 +66,18 @@ branches d'infrastructure.
   l'architecture réelle de production ;
 - la clé historique du bot doit encore être révoquée côté production ;
 - les quatre avertissements de budget CSS restent à réduire ;
-- l'installation npm du poste audité est cassée, mais le CLI Angular local et
-  le lockfile du dépôt permettent de tester l'état déjà installé.
+- le Node système du poste audité est plus ancien que la matrice Angular 22 ;
+  les validations frontend utilisent donc l'image Node 24.19.0 épinglée.
 
 ## État des audits de dépendances
 
 - bot : `pip-audit` ne signale aucune vulnérabilité connue ;
 - frontend de production : `npm audit --omit=dev` ne signale aucune
-  vulnérabilité ; l'arbre complet de développement conserve 12 alertes
-  (4 modérées et 8 hautes) dans la chaîne de build, à traiter avec Angular 22 ;
+  vulnérabilité ; l'arbre complet de développement conserve 11 alertes
+  (4 modérées et 7 hautes) dans la chaîne Karma/Webpack ;
 - backend : un SBOM CycloneDX de 125 composants est généré, mais son scan doit
   être branché sur un outil dédié dans la CI.
 
-Les correctifs de sécurité de production et la migration Angular 21 ont été
-validés sur deux branches séparées. Angular 22 reste une migration majeure
-distincte.
+Les correctifs de sécurité de production et les migrations Angular 21 puis 22
+ont été validés sur des branches séparées. La migration du builder Karma/Webpack
+reste un changement d'outillage distinct.

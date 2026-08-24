@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventService, ScWorldEventType } from '../../../core/services/scworldevent/sc-world-event.service';
 import { ScweEventsAdminComponent } from './components/scwe-events-admin/scwe-events-admin.component';
@@ -10,6 +10,7 @@ type Tab = 'events' | 'types';
   selector: 'app-sc-world-event-management',
   standalone: true,
   imports: [CommonModule, ScweEventsAdminComponent, ScweTypesAdminComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sc-world-event-management.component.html',
 })
 export class ScWorldEventManagementComponent implements OnInit {

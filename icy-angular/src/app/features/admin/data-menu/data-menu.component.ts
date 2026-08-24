@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -13,6 +13,7 @@ type DataMenuItem = {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './data-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './data-menu.component.css'
 })
 export class DataMenuComponent {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AngularEditorModule, AngularEditorConfig } from '@kolkov/angular-editor';
@@ -11,6 +11,7 @@ import {RouterLink} from '@angular/router';
   selector: 'app-news-management',
   standalone: true,
   templateUrl: './news-management.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule, AngularEditorModule, RouterLink],
 })
 export class NewsManagementComponent implements OnInit, OnDestroy {

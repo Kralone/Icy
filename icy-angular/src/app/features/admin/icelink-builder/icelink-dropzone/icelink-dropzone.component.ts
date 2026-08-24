@@ -7,6 +7,7 @@ import {
   QueryList,
   ViewChildren,
   CUSTOM_ELEMENTS_SCHEMA,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -42,6 +43,7 @@ interface NewMemberOption {
   standalone: true,
   imports: [CommonModule, DragDropModule, FormsModule],
   templateUrl: './icelink-dropzone.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class IceLinkDropzoneComponent {

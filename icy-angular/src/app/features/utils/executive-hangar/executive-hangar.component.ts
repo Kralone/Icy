@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
@@ -26,6 +26,7 @@ type ScheduleRow = {
   selector: 'app-executive-hangar',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './executive-hangar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './executive-hangar.component.css'
 })
 export class ExecutiveHangarComponent implements OnInit, OnDestroy {

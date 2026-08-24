@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SafeHtml } from '@angular/platform-browser';
 import { FleetMiniCardComponent } from '../../../shared/fleet-mini-card/fleet-mini-card.component';
@@ -13,6 +13,7 @@ type FleetMiniShip = {
   selector: 'app-event-details-modal',
   standalone: true,
   imports: [CommonModule, FleetMiniCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-details-modal.component.html'
 })
 export class EventDetailsModalComponent {

@@ -16,7 +16,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 
 | Élément | État constaté |
 |---|---|
-| Frontend | Angular 21.2, SSR/prérendu et PWA configurés ; build de production réussi ; 47 tests unitaires réussis |
+| Frontend | Angular 22.1 / TypeScript 6.0, SSR/prérendu et PWA configurés ; build de production réussi ; 47 tests unitaires réussis |
 | Backend | Spring Boot 3.5.16 / Java 21 ; 108 tests réussis ; couverture de branches 7,2 % |
 | Bot Discord | Python 3.11 / discord.py / RabbitMQ ; syntaxe valide ; 2 tests de configuration réussis |
 | Données | PostgreSQL, 28 migrations Flyway |

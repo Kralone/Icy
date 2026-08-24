@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -14,6 +14,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
   selector: 'app-goal',
   standalone: true,
   imports: [CommonModule, FormsModule, GoalSubComponent, LoadingOverlayComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal.component.html',
 })
 export class GoalComponent implements OnInit, OnDestroy {

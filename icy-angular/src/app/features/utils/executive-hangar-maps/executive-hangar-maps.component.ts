@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 type MapItem = {
@@ -12,6 +12,7 @@ type MapItem = {
   selector: 'app-executive-hangar-maps',
   imports: [RouterLink],
   templateUrl: './executive-hangar-maps.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './executive-hangar-maps.component.css'
 })
 export class ExecutiveHangarMapsComponent {

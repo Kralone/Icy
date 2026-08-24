@@ -26,8 +26,8 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Composant | Dépôt actuellement | Cible recommandée | Priorité | Décision |
 |---|---:|---:|---|---|
 | Node.js | `24.19.0-alpine3.24` | Node 24 LTS | Terminée | Runtime, npm, `.nvmrc` et images SPA/SSR épinglés |
-| Angular | 21.2.21 | 22.1.x | Prochaine | Migration 20→21 validée ; conserver le second palier isolé |
-| TypeScript | 5.9.x | version imposée par Angular | Haute | Angular 22.1 exige TypeScript `>=6.0 <6.1`, pas TypeScript 7 |
+| Angular | 22.1.3 (CLI/SSR 22.1.5) | 22.1.x | Terminée | Migrations 20→21 puis 21→22 validées sur deux branches isolées |
+| TypeScript | 6.0.3 | 6.0.x imposée par Angular | Terminée | Alias de tests migré sans masquer la dépréciation de `baseUrl` |
 | Java | 21 | Temurin 25 LTS | Moyenne | Java 21 reste supporté ; migration isolée à faible urgence |
 | Spring Boot | 3.5.16 | dernière stable 4.1.x | Moyenne | 3.5.16 est encore stable ; migration majeure séparée vers Spring Framework 7 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
@@ -165,6 +165,12 @@ est réservé à `codex/fix-nginx-prerender-redirect`.
 
 ### 04 — `codex/upgrade-angular-22`
 
+État : **validée localement le 24 août 2026** avec Angular/CDK 22.1.3,
+CLI/SSR 22.1.5 et TypeScript 6.0.3. Les 47 tests, les images SPA/SSR, quatre
+routes prérendues, 14 routes publiques, quatre vues mobiles et deux gardes
+privées sont au vert. L'audit de production et l'arbre npm sont à zéro erreur.
+Le bundle initial atteint 740,27 kB, sous la limite de 1,2 MB.
+
 - Exécuter Angular 21 vers 22 et passer à TypeScript 6.0.x.
 - Aligner notamment CDK, SSR, FullCalendar, Angular Editor, Overview et Hot
   Toast sur leurs versions compatibles Angular 22.
@@ -175,6 +181,12 @@ est réservé à `codex/fix-nginx-prerender-redirect`.
 Acceptation frontend : tests au vert, aucune vulnérabilité critique en
 production, toutes les routes auditées en HTTP 200/30x attendu, SSR et PWA
 fonctionnels, smoke test mobile.
+
+Suites isolées : migrer le builder Karma/Webpack vers `@angular/build`/Vitest,
+puis remplacer le `CommonEngine` déprécié par `AngularNodeAppEngine`. Le serveur
+SSR conserve entre-temps une allowlist explicite (`iceforge.fr`,
+`www.iceforge.fr`, `localhost`, `127.0.0.1`) surchargeable via
+`NG_ALLOWED_HOSTS`.
 
 ### 05 — `codex/upgrade-python-3-14-bot`
 

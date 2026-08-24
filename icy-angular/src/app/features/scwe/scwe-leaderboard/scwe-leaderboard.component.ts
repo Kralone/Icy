@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventDto, ScWorldEventParticipationDto, ScweScoreSchema } from '../../../model/scwe-player.model';
 
@@ -6,6 +6,7 @@ import { ScWorldEventDto, ScWorldEventParticipationDto, ScweScoreSchema } from '
   selector: 'app-scwe-leaderboard',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-leaderboard.component.html'
 })
 export class ScweLeaderboardComponent {

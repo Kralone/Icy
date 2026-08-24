@@ -1,5 +1,5 @@
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { MiningSheet } from '../../../../core/services/mining/mining-sheet.service';
 
 @Component({
@@ -7,6 +7,7 @@ import { MiningSheet } from '../../../../core/services/mining/mining-sheet.servi
   selector: 'app-mining-sheets-history-panel',
   imports: [],
   templateUrl: './mining-sheets-history-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-history-panel.component.css'
 })
 export class MiningSheetsHistoryPanelComponent {

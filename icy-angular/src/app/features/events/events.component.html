@@ -47,7 +47,7 @@
   @if (showDetailsModal) {
     <app-event-details-modal
       [selectedEvent]="selectedEvent"
-      [descriptionHtml]="formatEventDescription(selectedEvent?.description)"
+      [descriptionHtml]="formatEventDescription($safeNavigationMigration(selectedEvent?.description))"
       [participationsByStatus]="participationsByStatus"
       [showConfirmedFleets]="showConfirmedFleets"
       [isFleetLoading]="isFleetLoading"

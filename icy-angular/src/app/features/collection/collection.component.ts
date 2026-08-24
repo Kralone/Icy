@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -25,6 +25,7 @@ import { CollectionDrawerComponent } from './components/collection-drawer/collec
     CollectionListComponent,
     CollectionDrawerComponent
 ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './collection.component.html',
 })
 export class CollectionComponent implements OnInit {

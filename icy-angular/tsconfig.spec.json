@@ -3,9 +3,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@testing/*": ["src/app/testing/*"]
+      "@testing/*": ["./src/app/testing/*"]
     },
     "outDir": "./out-tsc/spec",
     "types": [
@@ -16,5 +15,13 @@
     "src/test-polyfills.ts",
     "src/**/*.spec.ts",
     "src/**/*.d.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
+  }
 }

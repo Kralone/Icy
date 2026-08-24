@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import strings from '../../../../../assets/i18n/front.json';
 import {Router, RouterLink} from '@angular/router';
 
@@ -8,6 +8,7 @@ import {Router, RouterLink} from '@angular/router';
     RouterLink
   ],
   templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './header.component.css'
 })
 export class HeaderComponent {

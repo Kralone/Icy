@@ -8,7 +8,7 @@ IceForge combine un site public Star Citizen, un espace membre, une administrati
 flowchart LR
     Visitor[Visiteur] -->|HTTPS| Edge[Nginx]
     Member[Membre] -->|HTTPS + JWT| Edge
-    Edge --> Angular[Angular 21\nSSR / SPA / PWA]
+    Edge --> Angular[Angular 22\nSSR / SPA / PWA]
     Edge -->|/api| API[Spring Boot 3.5.16]
     Edge -->|/ws| WS[STOMP / SockJS]
     Angular -->|REST| API

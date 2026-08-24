@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import {IceLinkBlock, IceLinkBlockService} from '../../../../core/services/icelink/icelink-block.service';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-icelink-block-panel',
   standalone: true,
   imports: [DragDropModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './icelink-block-panel.component.html',
 })
 export class IceLinkBlockPanelComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import {IceLinkBlock} from '../../../../core/services/icelink/icelink-block.service';
 
@@ -6,6 +6,7 @@ import {IceLinkBlock} from '../../../../core/services/icelink/icelink-block.serv
   selector: 'app-icelink-preview',
   standalone: true,
   imports: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './icelink-preview.component.html',
 })
 export class IceLinkPreviewComponent {

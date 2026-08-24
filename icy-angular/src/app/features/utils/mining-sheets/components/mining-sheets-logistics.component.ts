@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { MiningSheet, MiningSheetShip, MiningSheetShipCargoGrid } from '../../../../core/services/mining/mining-sheet.service';
 import { Ship } from '../../../../model/ship.model';
 import { ShipSelectorComponent } from '../../../../shared/ship-selector/ship-selector.component';
@@ -48,6 +48,7 @@ interface CubeDragState {
   standalone: true,
   imports: [CommonModule, ShipSelectorComponent],
   templateUrl: './mining-sheets-logistics.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-logistics.component.css'
 })
 export class MiningSheetsLogisticsComponent {

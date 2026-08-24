@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import {ScrollAnimationDirective} from '../../../../directives/scroll-animation.directive';
 import strings from '../../../../../assets/i18n/front.json';
 
@@ -8,6 +8,7 @@ import strings from '../../../../../assets/i18n/front.json';
     ScrollAnimationDirective
   ],
   templateUrl: './activities.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './activities.component.css'
 })
 export class ActivitiesComponent {

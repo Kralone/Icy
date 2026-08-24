@@ -10,7 +10,12 @@ const browserDistFolder = resolve(serverDistFolder, '../browser');
 const indexHtml = join(serverDistFolder, 'index.server.html');
 
 const app = express();
-const commonEngine = new CommonEngine();
+const defaultAllowedHosts = ['iceforge.fr', 'www.iceforge.fr', 'localhost', '127.0.0.1'];
+const allowedHosts = (process.env['NG_ALLOWED_HOSTS'] || defaultAllowedHosts.join(','))
+  .split(',')
+  .map((host) => host.trim())
+  .filter(Boolean);
+const commonEngine = new CommonEngine({ allowedHosts });
 const seoKnownRoutes = new Set(['/', '/login', '/recrutement']);
 
 function isKnownAppRoute(url: string): boolean {

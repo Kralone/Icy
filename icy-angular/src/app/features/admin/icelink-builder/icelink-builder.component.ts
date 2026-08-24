@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import { IceLinkHeaderComponent } from './icelink-header/icelink-header.component';
 import { IceLinkDropzoneComponent } from './icelink-dropzone/icelink-dropzone.component';
@@ -17,6 +17,7 @@ import {IceLinkBlockAdminComponent} from './icelink-block-admin/icelink-block-ad
     IceLinkPreviewComponent,
     IceLinkBlockAdminComponent
 ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './icelink-builder.component.html',
 })
 export class IceLinkBuilderComponent {

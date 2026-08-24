@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   MiningSheet,
@@ -78,6 +78,7 @@ interface SaleSheetGroupRow {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './mining-sheets-sales.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-sales.component.css'
 })
 export class MiningSheetsSalesComponent implements OnChanges {

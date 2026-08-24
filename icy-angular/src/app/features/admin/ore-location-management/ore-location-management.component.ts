@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -14,6 +14,7 @@ import {
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './ore-location-management.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './ore-location-management.component.css'
 })
 export class OreLocationManagementComponent implements OnInit {
