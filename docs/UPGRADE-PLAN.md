@@ -31,7 +31,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Java | Temurin 25.0.4 LTS | Temurin 25 LTS | Terminée | 108 tests, JaCoCo, Flyway, AMQP et smoke REST validés |
 | Spring Boot | 4.1.1 | dernière stable 4.1.x | Terminée | Migration majeure validée avec Spring Framework 7, Security 7, Hibernate 7 et Flyway 12 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
-| Python | `3.14.7-slim-bookworm` | Python 3.14.x | Terminée | Image immuable, wheels Linux et exécution non-root validées |
+| Python | `3.14.7-alpine3.24` | Python 3.14.x | Terminée | Image immuable, wheels musllinux et exécution non-root validées |
 | discord.py | 2.7.1 | 2.7.1 | Basse | Déjà à la dernière version publiée |
 | Dépendances du bot | verrou transitif | dernières stables compatibles | Terminée | 5 tests unitaires, audit CVE et test AMQP réel validés |
 | PostgreSQL | 18.6 épinglé | dernière 18.x stable | Terminée | Dump/restore 15.19→18.6, intégrité, persistance, application et rollback validés localement |
