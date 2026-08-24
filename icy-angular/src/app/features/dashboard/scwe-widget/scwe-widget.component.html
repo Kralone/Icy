@@ -2,7 +2,7 @@
   class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
          hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
   [attr.data-loading]="loadingEvent"
->
+  >
   <app-loading-overlay
     [isLoading]="loadingEvent"
     [minDurationMs]="550"
@@ -15,106 +15,117 @@
     🌍 SC World Event
   </h2>
 
-  <div *ngIf="!loadingEvent && error" class="text-red-300 text-sm text-center">
-    {{ error }}
-  </div>
-
-  <ng-container *ngIf="!loadingEvent && !error">
-    <div *ngIf="!event" class="text-gray-400 text-sm text-center">
-      Aucun event en cours.
+  @if (!loadingEvent && error) {
+    <div class="text-red-300 text-sm text-center">
+      {{ error }}
     </div>
+  }
 
-    <div *ngIf="event" class="space-y-3">
-      <button
-        type="button"
+  @if (!loadingEvent && !error) {
+    @if (!event) {
+      <div class="text-gray-400 text-sm text-center">
+        Aucun event en cours.
+      </div>
+    }
+    @if (event) {
+      <div class="space-y-3">
+        <button
+          type="button"
         class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0 text-left w-full
                hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition"
-        (click)="openInCalendar()"
-      >
-        <div
-          *ngIf="event.bannerImageUrl || event.typeImageUrl"
-          class="absolute inset-0 bg-center bg-cover opacity-60"
-          [style.backgroundImage]="'url(' + (event.bannerImageUrl || event.typeImageUrl) + ')'"
-        ></div>
-        <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
-
-        <div class="relative p-4 space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <span
-              class="text-[10px] uppercase tracking-[0.3em] text-cyan-200/80"
-            >
-              Event en cours
-            </span>
-            <span
-              class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
-              [style.color]="event.typeTextColor || '#67e8f9'"
-            >
-              {{ event.typeName || 'Evenement' }}
-            </span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/10">
-              <img
-                *ngIf="event.bannerImageUrl || event.typeImageUrl"
-                [src]="event.bannerImageUrl || event.typeImageUrl"
-                alt="SCWE"
-                class="h-full w-full object-cover"
-              />
-              <div *ngIf="!(event.bannerImageUrl || event.typeImageUrl)"
-                   class="h-full w-full flex items-center justify-center text-cyan-200 text-xl">
-                ✦
+          (click)="openInCalendar()"
+          >
+          @if (event.bannerImageUrl || event.typeImageUrl) {
+            <div
+              class="absolute inset-0 bg-center bg-cover opacity-60"
+              [style.backgroundImage]="'url(' + (event.bannerImageUrl || event.typeImageUrl) + ')'"
+            ></div>
+          }
+          <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
+          <div class="relative p-4 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span
+                class="text-[10px] uppercase tracking-[0.3em] text-cyan-200/80"
+                >
+                Event en cours
+              </span>
+              <span
+                class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
+                [style.color]="event.typeTextColor || '#67e8f9'"
+                >
+                {{ event.typeName || 'Evenement' }}
+              </span>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/10">
+                @if (event.bannerImageUrl || event.typeImageUrl) {
+                  <img
+                    [src]="event.bannerImageUrl || event.typeImageUrl"
+                    alt="SCWE"
+                    class="h-full w-full object-cover"
+                    />
+                }
+                @if (!(event.bannerImageUrl || event.typeImageUrl)) {
+                  <div
+                    class="h-full w-full flex items-center justify-center text-cyan-200 text-xl">
+                    ✦
+                  </div>
+                }
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
+                  [style.color]="event.typeTextColor || '#ffffff'">
+                  {{ event.title }}
+                </p>
+                <p class="text-xs text-gray-300 mt-1">
+                  Du {{ event.startAt | date:'dd/MM/yyyy' }}
+                  @if (event.endAt) {
+                    <span>au {{ event.endAt | date:'dd/MM/yyyy' }}</span>
+                  }
+                  @if (!event.endAt) {
+                    <span>- en cours</span>
+                  }
+                </p>
               </div>
             </div>
-
-            <div class="flex-1">
-              <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
-                 [style.color]="event.typeTextColor || '#ffffff'">
-                {{ event.title }}
-              </p>
-              <p class="text-xs text-gray-300 mt-1">
-                Du {{ event.startAt | date:'dd/MM/yyyy' }}
-                <span *ngIf="event.endAt">au {{ event.endAt | date:'dd/MM/yyyy' }}</span>
-                <span *ngIf="!event.endAt">- en cours</span>
-              </p>
+            <div class="text-[11px] text-cyan-200/80">
+              Ouvrir dans le calendrier →
             </div>
           </div>
-
-          <div class="text-[11px] text-cyan-200/80">
-            Ouvrir dans le calendrier →
-          </div>
-        </div>
-      </button>
-
-      <div
-        class="relative rounded-xl border border-white/10 bg-white/5 p-3"
-        [attr.data-loading]="loadingLeaderboard"
-      >
-        <app-loading-overlay
-          [isLoading]="loadingLeaderboard"
-          [minDurationMs]="500"
-          [fadeOutMs]="500"
-          [softFade]="true"
-        ></app-loading-overlay>
-        <p class="text-xs uppercase text-cyan-300/80 mb-2">Top 3 joueurs</p>
-
-        <div *ngIf="!loadingLeaderboard && topPlayers.length === 0" class="text-gray-400 text-sm text-center">
-          Aucun classement pour le moment.
-        </div>
-
-        <ul *ngIf="!loadingLeaderboard && topPlayers.length" class="space-y-2 text-sm">
-          <li
-            *ngFor="let player of topPlayers; let idx = index"
-            class="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2"
+        </button>
+        <div
+          class="relative rounded-xl border border-white/10 bg-white/5 p-3"
+          [attr.data-loading]="loadingLeaderboard"
           >
-            <span class="text-white font-semibold">
-              {{ player.username || 'Anonyme' }}
-            </span>
-            <span class="text-cyan-300">{{ player.total || 0 }}</span>
-          </li>
-        </ul>
+          <app-loading-overlay
+            [isLoading]="loadingLeaderboard"
+            [minDurationMs]="500"
+            [fadeOutMs]="500"
+            [softFade]="true"
+          ></app-loading-overlay>
+          <p class="text-xs uppercase text-cyan-300/80 mb-2">Top 3 joueurs</p>
+          @if (!loadingLeaderboard && topPlayers.length === 0) {
+            <div class="text-gray-400 text-sm text-center">
+              Aucun classement pour le moment.
+            </div>
+          }
+          @if (!loadingLeaderboard && topPlayers.length) {
+            <ul class="space-y-2 text-sm">
+              @for (player of topPlayers; track player; let idx = $index) {
+                <li
+                  class="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2"
+                  >
+                  <span class="text-white font-semibold">
+                    {{ player.username || 'Anonyme' }}
+                  </span>
+                  <span class="text-cyan-300">{{ player.total || 0 }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </div>
-    </div>
-  </ng-container>
+    }
+  }
 </div>
 

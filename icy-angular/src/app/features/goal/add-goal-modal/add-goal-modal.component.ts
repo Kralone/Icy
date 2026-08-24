@@ -7,13 +7,13 @@ import {
   SimpleChanges
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-add-goal-modal',
   templateUrl: './add-goal-modal.component.html',
   standalone: true,
-  imports: [FormsModule, CommonModule]
+  imports: [FormsModule]
 })
 export class AddGoalModalComponent implements OnChanges {
   @Input() allGoals: any[] = [];

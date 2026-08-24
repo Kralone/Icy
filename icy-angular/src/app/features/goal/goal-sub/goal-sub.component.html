@@ -1,10 +1,11 @@
 <div class="relative w-full">
 
   <!-- Ligne verticale -->
-  <div
-    class="absolute top-0 left-3 bottom-0 w-px bg-white/20"
-    *ngIf="goal.subGoals?.length"
-  ></div>
+  @if (goal.subGoals.length) {
+    <div
+      class="absolute top-0 left-3 bottom-0 w-px bg-white/20"
+    ></div>
+  }
 
   <!-- Bloc principal -->
   <div
@@ -17,7 +18,7 @@
       'mt-6': goal.parentId === null,
       'mt-3': goal.parentId !== null
     }"
-  >
+    >
     <div
       class="flex flex-col border rounded-2xl transition"
       [ngClass]="{
@@ -25,7 +26,7 @@
         'gap-2 bg-white/8 border-white/20 shadow-none p-3 sm:p-2.5 min-h-[120px]': depth === 1,
         'gap-2 bg-white/6 border-white/15 shadow-none p-2 sm:p-2 min-h-[96px]': depth >= 2
       }"
-    >
+      >
 
       <!-- Titre + Description -->
       <div
@@ -35,9 +36,9 @@
           'min-h-[28px]': depth === 1,
           'min-h-[24px]': depth >= 2
         }"
-      >
+        >
         <div class="flex items-center gap-2 flex-wrap">
-          <ng-container *ngIf="goal.subGoals?.length">
+          @if (goal.subGoals.length) {
             <button
               (click)="toggleChildrenVisibility()"
               class="rounded-lg focus:outline-none text-cyan-300 hover:text-cyan-100 hover:bg-white/5 transition"
@@ -47,7 +48,7 @@
                 'p-1 -m-1': depth >= 2
               }"
               aria-label="Déplier / replier"
-            >
+              >
               <svg
                 [class.rotate-90]="showChildren"
                 class="transform transition-transform duration-300"
@@ -60,75 +61,80 @@
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-              >
+                >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                d="M8 5l8 7-8 7"
-              />
-            </svg>
-          </button>
-        </ng-container>
+                  d="M8 5l8 7-8 7"
+                  />
+                </svg>
+              </button>
+            }
 
-          <h3
-            class="font-semibold text-white truncate"
+            <h3
+              class="font-semibold text-white truncate"
             [ngClass]="{
               'text-base sm:text-base max-w-[220px]': depth === 0,
               'text-sm sm:text-sm max-w-[240px]': depth === 1,
               'text-xs sm:text-xs max-w-[260px]': depth >= 2
             }"
-          >
-            {{ goal.name }}
-          </h3>
+              >
+              {{ goal.name }}
+            </h3>
 
-          <span
-            *ngIf="goal.username && depth === 0"
-            class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 text-white/70 shrink-0 leading-none text-[13px] pl-2 pr-4 py-1.5"
-          >
-            <span class="relative inline-flex w-6 h-6 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[12px] text-white/80">
-              <img *ngIf="goal.avatarUrl; else goalAvatarInitial"
-                   [src]="goal.avatarUrl"
-                   [alt]="goal.username || 'Avatar'"
-                   class="w-full h-full object-cover" />
-              <ng-template #goalAvatarInitial>{{ getInitial(goal.username) }}</ng-template>
-            </span>
-            <span class="truncate max-w-[140px]">{{ goal.username }}</span>
-          </span>
+            @if (goal.username && depth === 0) {
+              <span
+                class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 text-white/70 shrink-0 leading-none text-[13px] pl-2 pr-4 py-1.5"
+                >
+                <span class="relative inline-flex w-6 h-6 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[12px] text-white/80">
+                  @if (goal.avatarUrl) {
+                    <img
+                      [src]="goal.avatarUrl"
+                      [alt]="goal.username || 'Avatar'"
+                      class="w-full h-full object-cover" />
+                  } @else {
+                    {{ getInitial(goal.username) }}
+                  }
+                </span>
+                <span class="truncate max-w-[140px]">{{ goal.username }}</span>
+              </span>
+            }
 
-          <span
-            *ngIf="isDone(goal)"
-            class="rounded-full border border-white/15 bg-white/5 text-white/60 shrink-0"
+            @if (isDone(goal)) {
+              <span
+                class="rounded-full border border-white/15 bg-white/5 text-white/60 shrink-0"
             [ngClass]="{
               'text-[11px] px-3 py-1': depth === 0,
               'text-[10px] px-2 py-0.5': depth === 1,
               'text-[10px] px-1.5 py-0.5': depth >= 2
             }"
-          >
-            Terminé
-          </span>
-        </div>
+                >
+                Terminé
+              </span>
+            }
+          </div>
 
-        <span
-          class="text-gray-300 italic w-full sm:w-auto"
+          <span
+            class="text-gray-300 italic w-full sm:w-auto"
           [ngClass]="{
             'text-xs sm:text-sm': depth === 0,
             'text-xs': depth >= 1
           }"
-        >
-          {{ goal.description }}
-        </span>
-      </div>
+            >
+            {{ goal.description }}
+          </span>
+        </div>
 
-      <!-- Barre de progression -->
-      <div
-        class="w-full"
+        <!-- Barre de progression -->
+        <div
+          class="w-full"
         [ngClass]="{
           'pb-5': depth === 0,
           'pb-4': depth === 1,
           'pb-3': depth >= 2
         }"
-      >
+          >
           <div
             class="goal-progress-shell relative w-full rounded-md border border-white/10 bg-white/10 overflow-visible"
             [ngClass]="{
@@ -136,41 +142,42 @@
               'h-1.5': depth === 1,
               'h-1': depth >= 2
             }"
-          >
-          <div class="absolute inset-0 rounded-md overflow-visible">
-            <ng-container *ngIf="showCombinedStack && depth === 0 && goal.subGoals?.length && combinedSegments.length; else solidProgress">
-              <div
-                class="relative h-full"
-                [style.width]="progressWidth"
-                [class.transition-none]="disableAnimation"
-              >
-                <div class="h-full rounded-md overflow-hidden">
-                  <div class="flex h-full w-full">
-                    <div
-                      *ngFor="let p of combinedSegments; let i = index"
-                      class="h-full pointer-events-none"
-                      [style.width.%]="getCombinedPercent(p)"
-                      [style.background]="getSegmentColor(i)"
-                    ></div>
+            >
+            <div class="absolute inset-0 rounded-md overflow-visible">
+              @if (showCombinedStack && depth === 0 && goal.subGoals.length && combinedSegments.length) {
+                <div
+                  class="relative h-full"
+                  [style.width]="progressWidth"
+                  [class.transition-none]="disableAnimation"
+                  >
+                  <div class="h-full rounded-md overflow-hidden">
+                    <div class="flex h-full w-full">
+                      @for (p of combinedSegments; track p; let i = $index) {
+                        <div
+                          class="h-full pointer-events-none"
+                          [style.width.%]="getCombinedPercent(p)"
+                          [style.background]="getSegmentColor(i)"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  <div class="absolute -top-6 -bottom-6 left-0 flex w-full z-10 overflow-visible pointer-events-auto">
+                    @for (p of combinedSegments; track p; let i = $index) {
+                      <div
+                        class="relative h-full cursor-pointer pointer-events-auto"
+                        [style.width.%]="getCombinedPercent(p)"
+                        (mouseenter)="showCombinedTooltip(p, getSegmentColor(i), i)"
+                        (mousemove)="moveCombinedTooltip($event)"
+                        (mouseleave)="hideCombinedTooltip()"
+                        >
+                      </div>
+                    }
                   </div>
                 </div>
-                <div class="absolute -top-6 -bottom-6 left-0 flex w-full z-10 overflow-visible pointer-events-auto">
-                    <div
-                      *ngFor="let p of combinedSegments; let i = index"
-                      class="relative h-full cursor-pointer pointer-events-auto"
-                      [style.width.%]="getCombinedPercent(p)"
-                      (mouseenter)="showCombinedTooltip(p, getSegmentColor(i), i)"
-                      (mousemove)="moveCombinedTooltip($event)"
-                      (mouseleave)="hideCombinedTooltip()"
-                    >
-                  </div>
-                </div>
-              </div>
-            </ng-container>
-            <ng-template #solidProgress>
-              <div
-              class="h-full rounded-md transition-all duration-900 ease-out overflow-hidden"
-                [ngClass]="{ 'goal-progress--parent': goal.subGoals.length && !disableAnimation }"
+              } @else {
+                <div
+                  class="h-full rounded-md transition-all duration-900 ease-out overflow-hidden"
+                  [ngClass]="{ 'goal-progress--parent': goal.subGoals.length && !disableAnimation }"
                 [ngStyle]="{
                   'width': progressWidth,
                   'background-image': isDone(goal)
@@ -179,10 +186,10 @@
                       ? undefined
                       : 'linear-gradient(to right, #06b6d4, #2563eb)')
                 }"
-                [class.transition-none]="disableAnimation"
-              ></div>
-            </ng-template>
-          </div>
+                  [class.transition-none]="disableAnimation"
+                ></div>
+              }
+            </div>
             <div
               class="absolute top-[calc(100%+2px)] whitespace-nowrap leading-none font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)] transition-all duration-700 ease-out"
               [ngClass]="{
@@ -193,148 +200,155 @@
               [style.left]="progressLabelLeftValue"
               [style.transform]="progressLabelTransform"
               [class.transition-none]="disableAnimation"
-            >
+              >
               {{ progressValue | number:'1.0-0' }}%
             </div>
 
-            <div
-              *ngIf="tooltipVisible && tooltipUser"
-              #combinedTooltip
-              class="absolute z-50 pointer-events-none -translate-x-1/2"
-              [style.left.%]="tooltipLeftPercent"
-              [style.bottom]="'calc(100% + 6px)'"
-            >
-              <div class="rounded-xl border border-white/15 bg-[#0b1220]/95 px-3 py-1.5 text-[11px] text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.5)] backdrop-blur-md">
-                <div class="flex items-center gap-2">
-                  <span
-                    class="inline-flex w-2.5 h-2.5 rounded-full border border-white/30 shadow-[0_0_8px_rgba(0,0,0,0.35)]"
-                    [style.background]="tooltipColor"
-                  ></span>
-                  <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[10px] text-white/80">
-                    <img *ngIf="tooltipUser.avatarUrl; else tooltipAvatarInitial"
-                         [src]="tooltipUser.avatarUrl"
-                         [alt]="tooltipUser.username || 'Avatar'"
-                         class="w-full h-full object-cover" />
-                    <ng-template #tooltipAvatarInitial>{{ getInitial(tooltipUser.username) }}</ng-template>
-                  </span>
-                  <span class="whitespace-nowrap">
-                    {{ tooltipUser.username || 'Inconnu' }}
-                  </span>
-                  <span class="text-white/60">•</span>
-                  <span class="text-cyan-200 font-semibold">
-                    {{ formatPercent(getCombinedPercent(tooltipUser)) }}
-                  </span>
+            @if (tooltipVisible && tooltipUser) {
+              <div
+                #combinedTooltip
+                class="absolute z-50 pointer-events-none -translate-x-1/2"
+                [style.left.%]="tooltipLeftPercent"
+                [style.bottom]="'calc(100% + 6px)'"
+                >
+                <div class="rounded-xl border border-white/15 bg-[#0b1220]/95 px-3 py-1.5 text-[11px] text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.5)] backdrop-blur-md">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="inline-flex w-2.5 h-2.5 rounded-full border border-white/30 shadow-[0_0_8px_rgba(0,0,0,0.35)]"
+                      [style.background]="tooltipColor"
+                    ></span>
+                    <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[10px] text-white/80">
+                      @if (tooltipUser.avatarUrl) {
+                        <img
+                          [src]="tooltipUser.avatarUrl"
+                          [alt]="tooltipUser.username || 'Avatar'"
+                          class="w-full h-full object-cover" />
+                      } @else {
+                        {{ getInitial(tooltipUser.username) }}
+                      }
+                    </span>
+                    <span class="whitespace-nowrap">
+                      {{ tooltipUser.username || 'Inconnu' }}
+                    </span>
+                    <span class="text-white/60">•</span>
+                    <span class="text-cyan-200 font-semibold">
+                      {{ formatPercent(getCombinedPercent(tooltipUser)) }}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            }
           </div>
-          <div
-            *ngIf="isLeaf(goal)"
-            class="mt-1 flex justify-end text-gray-300"
+          @if (isLeaf(goal)) {
+            <div
+              class="mt-1 flex justify-end text-gray-300"
             [ngClass]="{
               'text-sm': depth === 0,
               'text-xs': depth === 1,
               'text-[10px]': depth >= 2
             }"
-          >
-            {{ goal.current }} / {{ goal.target }}
-          </div>
+              >
+              {{ goal.current }} / {{ goal.target }}
+            </div>
+          }
         </div>
 
 
-      <!-- Actions -->
-      <div
-        class="flex flex-wrap items-center gap-3"
+        <!-- Actions -->
+        <div
+          class="flex flex-wrap items-center gap-3"
         [ngClass]="{
           'min-h-[44px]': depth === 0,
           'min-h-[38px]': depth === 1,
           'min-h-[32px]': depth >= 2,
           'mt-auto': goal.subGoals.length
         }"
-      >
-
-        <!-- Boutons +1 / -1 -->
-          <div
-            class="flex gap-2"
-            *ngIf="!(goal.parentId === null && goal.target === 1)"
           >
-            <button
-              (click)="increment(goal.id, -1)"
-              [disabled]="goal.current <= 0 || loading || (!isAdmin && parentCompleted)"
-              class="rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 transition min-w-[44px] min-h-[32px] flex items-center justify-center"
+
+          <!-- Boutons +1 / -1 -->
+          @if (!(goal.parentId === null && goal.target === 1)) {
+            <div
+              class="flex gap-2"
+              >
+              <button
+                (click)="increment(goal.id, -1)"
+                [disabled]="goal.current <= 0 || loading || (!isAdmin && parentCompleted)"
+                class="rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 transition min-w-[44px] min-h-[32px] flex items-center justify-center"
               [ngClass]="{
                 'px-3 py-1 text-sm': depth === 0,
                 'px-2.5 py-1 text-xs': depth === 1,
                 'px-2 py-0.5 text-xs': depth >= 2
               }"
-            >
-              -1
-            </button>
-
-            <button
-              (click)="increment(goal.id, 1)"
-              [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)"
-              class="rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cyan-500/10 transition min-w-[44px] min-h-[32px] flex items-center justify-center"
+                >
+                -1
+              </button>
+              <button
+                (click)="increment(goal.id, 1)"
+                [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)"
+                class="rounded-md border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cyan-500/10 transition min-w-[44px] min-h-[32px] flex items-center justify-center"
               [ngClass]="{
                 'px-3 py-1 text-sm': depth === 0,
                 'px-2.5 py-1 text-xs': depth === 1,
                 'px-2 py-0.5 text-xs': depth >= 2
               }"
-            >
-              +1
-            </button>
-          </div>
+                >
+                +1
+              </button>
+            </div>
+          }
 
-        <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <button
-            *ngIf="isLeaf(goal)"
-            (click)="toggleParticipations()"
-            class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-transparent px-4 py-2 text-sm text-white/60 hover:border-white/25 hover:text-white/90 transition min-w-[120px] min-h-[32px] justify-center"
+          <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
+            @if (isLeaf(goal)) {
+              <button
+                (click)="toggleParticipations()"
+                class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-transparent px-4 py-2 text-sm text-white/60 hover:border-white/25 hover:text-white/90 transition min-w-[120px] min-h-[32px] justify-center"
             [ngClass]="{
               'text-sm': depth === 0,
               'text-xs': depth === 1,
               'text-[11px]': depth >= 2
             }"
-          >
-            <span class="text-base leading-none">👥</span>
-            <span class="tracking-wide">
-              {{ showParticipations ? 'Participations' : 'Voir les participations' }}
-            </span>
-          </button>
+                >
+                <span class="text-base leading-none">👥</span>
+                <span class="tracking-wide">
+                  {{ showParticipations ? 'Participations' : 'Voir les participations' }}
+                </span>
+              </button>
+            }
 
-          <button
-            *ngIf="depth === 0 && goal.subGoals?.length"
-            (click)="toggleCombinedStack()"
-            class="inline-flex items-center rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/60 hover:border-white/25 hover:text-white/90 transition min-w-[44px] min-h-[32px] justify-center"
-            [attr.aria-label]="showCombinedStack ? 'Barre simple' : 'Barre repartie'"
-            [title]="showCombinedStack ? 'Barre simple' : 'Barre repartie'"
-          >
-            <ng-container *ngIf="showCombinedStack; else stackedIcon">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="6" width="18" height="3" rx="1.5" fill="currentColor" />
-                <rect x="3" y="11" width="18" height="3" rx="1.5" fill="currentColor" />
-                <rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor" />
-              </svg>
-            </ng-container>
-            <ng-template #stackedIcon>
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="6" width="7" height="3" rx="1.5" fill="currentColor" />
-                <rect x="11" y="6" width="4" height="3" rx="1.5" fill="currentColor" />
-                <rect x="16" y="6" width="5" height="3" rx="1.5" fill="currentColor" />
-                <rect x="3" y="11" width="10" height="3" rx="1.5" fill="currentColor" />
-                <rect x="14" y="11" width="7" height="3" rx="1.5" fill="currentColor" />
-                <rect x="3" y="16" width="5" height="3" rx="1.5" fill="currentColor" />
-                <rect x="9" y="16" width="12" height="3" rx="1.5" fill="currentColor" />
-              </svg>
-            </ng-template>
-            <span class="sr-only">{{ showCombinedStack ? 'Barre simple' : 'Barre repartie' }}</span>
-          </button>
+            @if (depth === 0 && goal.subGoals.length) {
+              <button
+                (click)="toggleCombinedStack()"
+                class="inline-flex items-center rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/60 hover:border-white/25 hover:text-white/90 transition min-w-[44px] min-h-[32px] justify-center"
+                [attr.aria-label]="showCombinedStack ? 'Barre simple' : 'Barre repartie'"
+                [title]="showCombinedStack ? 'Barre simple' : 'Barre repartie'"
+                >
+                @if (showCombinedStack) {
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="6" width="18" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="3" y="11" width="18" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor" />
+                  </svg>
+                } @else {
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="6" width="7" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="11" y="6" width="4" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="16" y="6" width="5" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="3" y="11" width="10" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="14" y="11" width="7" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="3" y="16" width="5" height="3" rx="1.5" fill="currentColor" />
+                    <rect x="9" y="16" width="12" height="3" rx="1.5" fill="currentColor" />
+                  </svg>
+                }
+                <span class="sr-only">{{ showCombinedStack ? 'Barre simple' : 'Barre repartie' }}</span>
+              </button>
+            }
 
-          <!-- Boutons admin -->
-          <div *ngIf="isAdmin" class="flex gap-2">
-            <button
-              (click)="togglePinned()"
-              [disabled]="goal.pinned"
+            <!-- Boutons admin -->
+            @if (isAdmin) {
+              <div class="flex gap-2">
+                <button
+                  (click)="togglePinned()"
+                  [disabled]="goal.pinned"
               [ngClass]="{
                 'bg-green-500/20 text-green-300 border-green-400/40 cursor-not-allowed': goal.pinned,
                 'bg-yellow-500/20 text-yellow-200 hover:bg-yellow-400/30 border-yellow-400/40 cursor-pointer': !goal.pinned,
@@ -342,109 +356,118 @@
                 'px-2.5 py-1 text-xs': depth === 1,
                 'px-2 py-0.5 text-xs': depth >= 2
               }"
-              class="rounded-md border font-medium transition min-w-[44px] min-h-[32px] flex items-center justify-center"
-            >
-              📌
-            </button>
-
-            <button
-              (click)="deleteGoal()"
-              class="bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/40 rounded-md font-medium transition min-w-[44px] min-h-[32px] flex items-center justify-center"
+                  class="rounded-md border font-medium transition min-w-[44px] min-h-[32px] flex items-center justify-center"
+                  >
+                  📌
+                </button>
+                <button
+                  (click)="deleteGoal()"
+                  class="bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/40 rounded-md font-medium transition min-w-[44px] min-h-[32px] flex items-center justify-center"
               [ngClass]="{
                 'px-3 py-1 text-sm': depth === 0,
                 'px-2.5 py-1 text-xs': depth === 1,
                 'px-2 py-0.5 text-xs': depth >= 2
               }"
-            >
-              🗑️
-            </button>
+                  >
+                  🗑️
+                </button>
+              </div>
+            }
           </div>
         </div>
-      </div>
 
-      <!-- Participations -->
-      <div *ngIf="isLeaf(goal) && showParticipations" class="pt-3 space-y-3">
-        <div *ngIf="participationsLoading" class="text-xs text-white/50">
-          Chargement...
-        </div>
-        <div *ngIf="!participationsLoading && participations.length === 0" class="text-xs text-white/40">
-          Aucune participation.
-        </div>
-
-        <div
-          *ngFor="let p of participations"
-          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_20px_rgba(34,211,238,0.08)] hover:border-cyan-300/30 hover:bg-white/10 transition"
-        >
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="relative inline-flex w-7 h-7 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[12px] text-white/80 shrink-0">
-              <img *ngIf="p.avatarUrl; else participationAvatarInitial"
-                   [src]="p.avatarUrl"
-                   [alt]="p.username || 'Avatar'"
-                   class="w-full h-full object-cover" />
-              <ng-template #participationAvatarInitial>{{ getInitial(p.username) }}</ng-template>
-            </span>
-            <div class="min-w-0">
-              <div class="text-xs text-white/90 truncate">
-                {{ p.username || 'Inconnu' }}
+        <!-- Participations -->
+        @if (isLeaf(goal) && showParticipations) {
+          <div class="pt-3 space-y-3">
+            @if (participationsLoading) {
+              <div class="text-xs text-white/50">
+                Chargement...
               </div>
-              <div class="text-[10px] text-white/40">
-                {{ p.createdAt | date:'medium' }}
+            }
+            @if (!participationsLoading && participations.length === 0) {
+              <div class="text-xs text-white/40">
+                Aucune participation.
               </div>
-            </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 text-xs text-white/60">
-            <span
-              class="rounded-full border px-2.5 py-0.5 font-semibold tracking-wide"
+            }
+            @for (p of participations; track p) {
+              <div
+                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_20px_rgba(34,211,238,0.08)] hover:border-cyan-300/30 hover:bg-white/10 transition"
+                >
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="relative inline-flex w-7 h-7 rounded-full overflow-hidden bg-white/10 border border-white/15 items-center justify-center text-[12px] text-white/80 shrink-0">
+                    @if (p.avatarUrl) {
+                      <img
+                        [src]="p.avatarUrl"
+                        [alt]="p.username || 'Avatar'"
+                        class="w-full h-full object-cover" />
+                    } @else {
+                      {{ getInitial(p.username) }}
+                    }
+                  </span>
+                  <div class="min-w-0">
+                    <div class="text-xs text-white/90 truncate">
+                      {{ p.username || 'Inconnu' }}
+                    </div>
+                    <div class="text-[10px] text-white/40">
+                      {{ p.createdAt | date:'medium' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-xs text-white/60">
+                  <span
+                    class="rounded-full border px-2.5 py-0.5 font-semibold tracking-wide"
               [ngClass]="{
                 'border-emerald-400/40 bg-emerald-400/10 text-emerald-200': p.delta > 0,
                 'border-red-400/40 bg-red-400/10 text-red-200': p.delta < 0,
                 'border-white/20 bg-white/5 text-white/70': p.delta === 0
               }"
-            >
-              {{ formatDelta(p.delta) }}
-            </span>
+                    >
+                    {{ formatDelta(p.delta) }}
+                  </span>
+                </div>
+                <div class="w-full sm:col-span-2">
+                  <div class="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r from-blue-400 to-cyan-400"
+                      [style.width.%]="getParticipationPercent(p)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
-          <div class="w-full sm:col-span-2">
-            <div class="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-blue-400 to-cyan-400"
-                [style.width.%]="getParticipationPercent(p)"
-              ></div>
-            </div>
-          </div>
-        </div>
+        }
+
       </div>
-
     </div>
-  </div>
 
-  <!-- Sous-objectifs -->
-  <div
+    <!-- Sous-objectifs -->
+    <div
     [ngClass]="{
       'pl-6 sm:pl-8': depth === 0,
       'pl-5 sm:pl-7': depth === 1,
       'pl-4 sm:pl-6': depth >= 2
     }"
-  >
-    <div
-      class="overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out"
-      [style.maxHeight]="showChildren ? '9999px' : '0px'"
-      [style.opacity]="showChildren ? '1' : '0'"
-    >
-      <ng-container *ngFor="let sub of sortedSubGoals; trackBy: trackByGoalId">
-        <app-goal-sub
-          [goal]="sub"
-          [isAdmin]="isAdmin"
-          [depth]="depth + 1"
-          [showChildren]="false"
-          [parentCompleted]="parentCompleted || isDone(goal) || goal.completed"
-          [disableAnimation]="disableAnimation"
-          (refresh)="onChildRefresh()"
-          (progressChange)="onChildProgress($event)"
-          (expandedChange)="expandedChange.emit($event)"
-        ></app-goal-sub>
-      </ng-container>
+      >
+      <div
+        class="overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out"
+        [style.maxHeight]="showChildren ? '9999px' : '0px'"
+        [style.opacity]="showChildren ? '1' : '0'"
+        >
+        @for (sub of sortedSubGoals; track trackByGoalId($index, sub)) {
+          <app-goal-sub
+            [goal]="sub"
+            [isAdmin]="isAdmin"
+            [depth]="depth + 1"
+            [showChildren]="false"
+            [parentCompleted]="parentCompleted || isDone(goal) || goal.completed"
+            [disableAnimation]="disableAnimation"
+            (refresh)="onChildRefresh()"
+            (progressChange)="onChildProgress($event)"
+            (expandedChange)="expandedChange.emit($event)"
+          ></app-goal-sub>
+        }
+      </div>
     </div>
-  </div>
 
-</div>
+  </div>

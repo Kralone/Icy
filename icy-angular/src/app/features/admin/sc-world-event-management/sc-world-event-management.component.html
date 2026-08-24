@@ -13,39 +13,45 @@
         (click)="switchTab('events')"
         class="px-4 py-2 rounded-full transition active:scale-95"
         [ngClass]="tab === 'events' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
-      >
+        >
         Events
       </button>
       <button
         (click)="switchTab('types')"
         class="px-4 py-2 rounded-full transition active:scale-95"
         [ngClass]="tab === 'types' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
-      >
+        >
         Types & Schema
       </button>
     </div>
   </div>
 
   <!-- Messages -->
-  <div *ngIf="error" class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
-    ⚠️ {{ error }}
-  </div>
-  <div *ngIf="success" class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
-    ✅ {{ success }}
-  </div>
+  @if (error) {
+    <div class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
+      ⚠️ {{ error }}
+    </div>
+  }
+  @if (success) {
+    <div class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
+      ✅ {{ success }}
+    </div>
+  }
 
   <!-- Content -->
-  <app-scwe-events-admin
-    *ngIf="tab === 'events'"
-    [types]="types"
-    (message)="setMessage($event)"
-  ></app-scwe-events-admin>
+  @if (tab === 'events') {
+    <app-scwe-events-admin
+      [types]="types"
+      (message)="setMessage($event)"
+    ></app-scwe-events-admin>
+  }
 
-  <app-scwe-types-admin
-    *ngIf="tab === 'types'"
-    [types]="types"
-    (typesUpdated)="reloadTypes()"
-    (message)="setMessage($event)"
-  ></app-scwe-types-admin>
+  @if (tab === 'types') {
+    <app-scwe-types-admin
+      [types]="types"
+      (typesUpdated)="reloadTypes()"
+      (message)="setMessage($event)"
+    ></app-scwe-types-admin>
+  }
 
 </div>

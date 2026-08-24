@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, Input } from '@angular/core';
 import { MiningSheet } from '../../../../core/services/mining/mining-sheet.service';
 
 @Component({
   standalone: true,
   selector: 'app-mining-sheets-history-panel',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './mining-sheets-history-panel.component.html',
   styleUrl: './mining-sheets-history-panel.component.css'
 })

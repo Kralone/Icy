@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {IceLinkBlock} from '../../../../../core/services/icelink/icelink-block.service';
 
 @Component({
   selector: 'app-icelink-block-text',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './icelink-block-text.component.html',
 })
 export class IceLinkBlockTextComponent {

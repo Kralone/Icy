@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -11,7 +11,7 @@ type PublicMenuItem = {
 @Component({
   selector: 'front-public-topbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './public-topbar.component.html',
   styleUrl: './public-topbar.component.css'
 })

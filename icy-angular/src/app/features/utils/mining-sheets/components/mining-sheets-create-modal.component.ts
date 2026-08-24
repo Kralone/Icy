@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../model/user.model';
@@ -6,7 +6,7 @@ import { User } from '../../../../model/user.model';
 @Component({
   standalone: true,
   selector: 'app-mining-sheets-create-modal',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './mining-sheets-create-modal.component.html',
   styleUrl: './mining-sheets-create-modal.component.css'
 })

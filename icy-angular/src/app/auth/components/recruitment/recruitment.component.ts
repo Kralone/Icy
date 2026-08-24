@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Recruitment } from './recruitment.model';
 import {Router, RouterLink} from '@angular/router';
@@ -8,7 +8,7 @@ import {RecruitmentService} from '../../../core/services/recruitment/recruitment
 @Component({
   selector: 'app-recruitment',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './recruitment.component.html'
 })
 export class RecruitmentComponent implements OnInit {

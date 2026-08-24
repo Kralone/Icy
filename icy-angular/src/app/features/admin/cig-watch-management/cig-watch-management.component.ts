@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -24,7 +24,7 @@ type EntrySortOption =
 @Component({
   selector: 'app-cig-watch-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './cig-watch-management.component.html'
 })
 export class CigWatchManagementComponent implements OnInit, OnDestroy {

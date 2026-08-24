@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-fleet-mini-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './fleet-mini-card.component.html'
 })
 export class FleetMiniCardComponent {

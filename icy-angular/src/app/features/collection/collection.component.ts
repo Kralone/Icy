@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CollectionsService } from '../../core/services/collection/collection.service';
@@ -19,13 +19,12 @@ import { CollectionDrawerComponent } from './components/collection-drawer/collec
   selector: 'app-collection',
   standalone: true,
   imports: [
-    CommonModule,
     CollectionHeroComponent,
     CollectionStatsComponent,
     CollectionTemplatesComponent,
     CollectionListComponent,
-    CollectionDrawerComponent,
-  ],
+    CollectionDrawerComponent
+],
   templateUrl: './collection.component.html',
 })
 export class CollectionComponent implements OnInit {

@@ -1,5 +1,5 @@
 import {Component, ViewChild} from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { IceLinkHeaderComponent } from './icelink-header/icelink-header.component';
 import { IceLinkDropzoneComponent } from './icelink-dropzone/icelink-dropzone.component';
 import { IceLinkBlockPanelComponent } from './icelink-block-panel/icelink-block-panel.component';
@@ -11,13 +11,12 @@ import {IceLinkBlockAdminComponent} from './icelink-block-admin/icelink-block-ad
   selector: 'app-icelink-builder',
   standalone: true,
   imports: [
-    CommonModule,
     IceLinkHeaderComponent,
     IceLinkDropzoneComponent,
     IceLinkBlockPanelComponent,
     IceLinkPreviewComponent,
     IceLinkBlockAdminComponent
-  ],
+],
   templateUrl: './icelink-builder.component.html',
 })
 export class IceLinkBuilderComponent {

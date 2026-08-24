@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
@@ -37,7 +37,7 @@ interface OreLocationResult {
 @Component({
   selector: 'front-resources-mining-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './resources-mining-panel.component.html',
   styleUrl: './resources-mining-panel.component.css'
 })

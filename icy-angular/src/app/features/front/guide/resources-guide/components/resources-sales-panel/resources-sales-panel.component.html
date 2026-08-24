@@ -1,93 +1,112 @@
-<div class="resource-sales-controls" *ngIf="!salesLoading && !salesError && salesMaterials.length > 0">
-  <label for="cargo-scu-input">SCU</label>
-  <input
-    id="cargo-scu-input"
-    type="number"
-    min="1"
-    step="1"
-    [value]="cargoScu"
-    (input)="updateCargoScu(($any($event.target)).value)"
-  />
-</div>
+@if (!salesLoading && !salesError && salesMaterials.length > 0) {
+  <div class="resource-sales-controls">
+    <label for="cargo-scu-input">SCU</label>
+    <input
+      id="cargo-scu-input"
+      type="number"
+      min="1"
+      step="1"
+      [value]="cargoScu"
+      (input)="updateCargoScu(($any($event.target)).value)"
+      />
+    </div>
+  }
 
-<div *ngIf="salesLoading" class="resource-sales-state">Chargement des prix depuis le backend...</div>
-<div *ngIf="!salesLoading && salesError" class="resource-sales-state resource-sales-state--error">{{ salesError }}</div>
-<div *ngIf="!salesLoading && !salesError && salesMaterials.length === 0" class="resource-sales-state">Aucune donnee de prix disponible pour le moment.</div>
+  @if (salesLoading) {
+    <div class="resource-sales-state">Chargement des prix depuis le backend...</div>
+  }
+  @if (!salesLoading && salesError) {
+    <div class="resource-sales-state resource-sales-state--error">{{ salesError }}</div>
+  }
+  @if (!salesLoading && !salesError && salesMaterials.length === 0) {
+    <div class="resource-sales-state">Aucune donnee de prix disponible pour le moment.</div>
+  }
 
-<div *ngIf="!salesLoading && !salesError && salesMaterials.length > 0" class="resource-sales-table-wrap" aria-label="Tableau des prix de vente">
-  <table class="resource-sales-table">
-    <thead>
-    <tr>
-      <th>Materiau</th>
-      <th>Meilleurs prix de vente</th>
-      <th class="resource-sales-table__location-header">
-        <div class="resource-sales-table__location-title">Prix {{ selectedLocationLabel() }}</div>
-        <div class="resource-sales-table__location-search">
-          <input
-            id="sale-location-input"
-            type="text"
-            [value]="locationSearchTerm"
-            placeholder="Rechercher un terminal..."
-            autocomplete="off"
-            (input)="updateLocationSearch(($any($event.target)).value)"
-          />
-          <button
-            type="button"
-            class="resource-sales-controls__reset"
-            *ngIf="locationSearchTerm || selectedLocation"
-            (click)="resetLocation()"
-          >
-            Effacer
-          </button>
-        </div>
-        <div *ngIf="locationSuggestions.length > 0" class="resource-sales-suggestions">
-          <button
-            type="button"
-            class="resource-sales-suggestions__item"
-            *ngFor="let location of locationSuggestions"
-            (click)="selectLocation(location)"
-          >
-            {{ location }}
-          </button>
-        </div>
-        <div class="resource-sales-shortcuts">
-          <button
-            type="button"
-            class="resource-sales-shortcuts__item"
-            [class.resource-sales-shortcuts__item--active]="isSelectedLocationShortcut(location)"
-            *ngFor="let location of locationShortcuts"
-            (click)="selectLocationShortcut(location)"
-          >
-            {{ location }}
-          </button>
-        </div>
-      </th>
-      <th>Revenu</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let material of salesMaterials; trackBy: trackMaterial">
-      <td><div class="resource-sales-table__name">{{ material.displayName }}</div></td>
-      <td>
-        <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(material.bestSell)">
-          {{ formatUecWithUnit(material.bestSell) }}
-        </span>
-        <div class="resource-sales-table__subline">{{ material.bestSellTerminal || '-' }}</div>
-      </td>
-      <td>
-        <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(selectedLocationSell(material))">
-          {{ formatUecWithUnit(selectedLocationSell(material)) }}
-        </span>
-        <div class="resource-sales-table__subline" *ngIf="selectedLocation">
-          Ecart: {{ formatUecWithUnit(selectedLocationDelta(material)) }}
-        </div>
-      </td>
-      <td>
-        <span class="resource-sales-table__revenue" [ngStyle]="revenueStyle(material.bestSell)">
-          {{ formatUecWithUnit(computeRevenue(material.bestSell)) }}
-        </span>
-      </td>
-    </tr>
-    </tbody>
-  </table>
-</div>
+  @if (!salesLoading && !salesError && salesMaterials.length > 0) {
+    <div class="resource-sales-table-wrap" aria-label="Tableau des prix de vente">
+      <table class="resource-sales-table">
+        <thead>
+          <tr>
+            <th>Materiau</th>
+            <th>Meilleurs prix de vente</th>
+            <th class="resource-sales-table__location-header">
+              <div class="resource-sales-table__location-title">Prix {{ selectedLocationLabel() }}</div>
+              <div class="resource-sales-table__location-search">
+                <input
+                  id="sale-location-input"
+                  type="text"
+                  [value]="locationSearchTerm"
+                  placeholder="Rechercher un terminal..."
+                  autocomplete="off"
+                  (input)="updateLocationSearch(($any($event.target)).value)"
+                  />
+                  @if (locationSearchTerm || selectedLocation) {
+                    <button
+                      type="button"
+                      class="resource-sales-controls__reset"
+                      (click)="resetLocation()"
+                      >
+                      Effacer
+                    </button>
+                  }
+                </div>
+                @if (locationSuggestions.length > 0) {
+                  <div class="resource-sales-suggestions">
+                    @for (location of locationSuggestions; track location) {
+                      <button
+                        type="button"
+                        class="resource-sales-suggestions__item"
+                        (click)="selectLocation(location)"
+                        >
+                        {{ location }}
+                      </button>
+                    }
+                  </div>
+                }
+                <div class="resource-sales-shortcuts">
+                  @for (location of locationShortcuts; track location) {
+                    <button
+                      type="button"
+                      class="resource-sales-shortcuts__item"
+                      [class.resource-sales-shortcuts__item--active]="isSelectedLocationShortcut(location)"
+                      (click)="selectLocationShortcut(location)"
+                      >
+                      {{ location }}
+                    </button>
+                  }
+                </div>
+              </th>
+              <th>Revenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (material of salesMaterials; track trackMaterial($index, material)) {
+              <tr>
+                <td><div class="resource-sales-table__name">{{ material.displayName }}</div></td>
+                <td>
+                  <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(material.bestSell)">
+                    {{ formatUecWithUnit(material.bestSell) }}
+                  </span>
+                  <div class="resource-sales-table__subline">{{ material.bestSellTerminal || '-' }}</div>
+                </td>
+                <td>
+                  <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(selectedLocationSell(material))">
+                    {{ formatUecWithUnit(selectedLocationSell(material)) }}
+                  </span>
+                  @if (selectedLocation) {
+                    <div class="resource-sales-table__subline">
+                      Ecart: {{ formatUecWithUnit(selectedLocationDelta(material)) }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  <span class="resource-sales-table__revenue" [ngStyle]="revenueStyle(material.bestSell)">
+                    {{ formatUecWithUnit(computeRevenue(material.bestSell)) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }

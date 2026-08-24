@@ -24,74 +24,82 @@
       <div>
         <label class="text-gray-300 text-sm">Nom en jeu</label>
         <input type="text" formControlName="username"
-               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-               placeholder="Handle RSI ou pseudo" />
-      </div>
+          class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          placeholder="Handle RSI ou pseudo" />
+        </div>
 
-      <div>
-        <label class="text-gray-300 text-sm">Discord Tag</label>
-        <input type="text" formControlName="discordTag"
-               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-               placeholder="Ex: Glace#1337" />
-      </div>
+        <div>
+          <label class="text-gray-300 text-sm">Discord Tag</label>
+          <input type="text" formControlName="discordTag"
+            class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            placeholder="Ex: Glace#1337" />
+          </div>
 
-      <div>
-        <label class="text-gray-300 text-sm">Motivation</label>
-        <textarea rows="3" formControlName="motivation"
+          <div>
+            <label class="text-gray-300 text-sm">Motivation</label>
+            <textarea rows="3" formControlName="motivation"
+              class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            placeholder="Pourquoi veux-tu rejoindre l’organisation ?"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-gray-300 text-sm">Parrain (optionnel)</label>
+              <input type="text" formControlName="referral"
+                class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                placeholder="Nom du membre" />
+              </div>
+
+              <div>
+                <label class="text-gray-300 text-sm">Expérience en jeu</label>
+                <input type="text" formControlName="experience"
                   class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                  placeholder="Pourquoi veux-tu rejoindre l’organisation ?"></textarea>
-      </div>
+                  placeholder="Ex: 300h de vol, exploration..." />
+                </div>
+              </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-gray-300 text-sm">Parrain (optionnel)</label>
-          <input type="text" formControlName="referral"
-                 class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                 placeholder="Nom du membre" />
-        </div>
+              <div>
+                <label class="text-gray-300 text-sm">Gameplay préféré</label>
+                <input type="text" formControlName="preferredGameplay"
+                  class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                  placeholder="Commerce, Exploration, Combat, etc." />
+                </div>
 
-        <div>
-          <label class="text-gray-300 text-sm">Expérience en jeu</label>
-          <input type="text" formControlName="experience"
-                 class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                 placeholder="Ex: 300h de vol, exploration..." />
-        </div>
-      </div>
+                <button type="submit"
+                  [disabled]="loading || recruitmentForm.invalid"
+                  class="relative mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
+                  @if (!loading) {
+                    <span>🚀 Envoyer ma candidature</span>
+                  }
+                  @if (loading) {
+                    <span class="flex justify-center items-center">
+                      <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                      </svg>
+                      Envoi en cours...
+                    </span>
+                  }
+                </button>
 
-      <div>
-        <label class="text-gray-300 text-sm">Gameplay préféré</label>
-        <input type="text" formControlName="preferredGameplay"
-               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-               placeholder="Commerce, Exploration, Combat, etc." />
-      </div>
+                @if (successMessage) {
+                  <p class="text-green-400 text-center mt-3 animate__animated animate__fadeIn">
+                    {{ successMessage }}
+                  </p>
+                }
 
-      <button type="submit"
-              [disabled]="loading || recruitmentForm.invalid"
-              class="relative mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
-        <span *ngIf="!loading">🚀 Envoyer ma candidature</span>
-        <span *ngIf="loading" class="flex justify-center items-center">
-          <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-          </svg>
-          Envoi en cours...
-        </span>
-      </button>
+                @if (errorMessage) {
+                  <p class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
+                    {{ errorMessage }}
+                  </p>
+                }
+              </form>
 
-      <p *ngIf="successMessage" class="text-green-400 text-center mt-3 animate__animated animate__fadeIn">
-        {{ successMessage }}
-      </p>
-
-      <p *ngIf="errorMessage" class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
-        {{ errorMessage }}
-      </p>
-    </form>
-
-    <button
-      type="button"
-      routerLink="/"
-      class="mt-6 text-sm text-gray-400 hover:text-cyan-300 hover:underline transition self-center block mx-auto">
-      ← Accueil
-    </button>
-  </div>
-</div>
+              <button
+                type="button"
+                routerLink="/"
+                class="mt-6 text-sm text-gray-400 hover:text-cyan-300 hover:underline transition self-center block mx-auto">
+                ← Accueil
+              </button>
+            </div>
+          </div>

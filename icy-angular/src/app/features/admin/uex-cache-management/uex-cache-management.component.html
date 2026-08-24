@@ -2,7 +2,7 @@
   <a
     routerLink="/icy/admin/data"
     class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-  >
+    >
     <span class="text-base leading-none">←</span>
     <span>Retour Data</span>
   </a>
@@ -18,52 +18,57 @@
       class="px-4 py-2 rounded-full border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30 transition"
       (click)="loadDatasets()"
       [disabled]="loadingDatasets"
-    >
+      >
       {{ loadingDatasets ? 'Chargement...' : 'Recharger la liste' }}
     </button>
   </div>
 
-  <div *ngIf="error" class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
-    {{ error }}
-  </div>
+  @if (error) {
+    <div class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
+      {{ error }}
+    </div>
+  }
 
-  <div *ngIf="success" class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
-    {{ success }}
-  </div>
+  @if (success) {
+    <div class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
+      {{ success }}
+    </div>
+  }
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <section class="lg:col-span-1 bg-[#0b1324]/80 border border-white/10 rounded-2xl p-4 space-y-3">
       <h3 class="text-sm uppercase tracking-[0.2em] text-slate-300">Datasets</h3>
       <div class="space-y-2">
-        <button
-          *ngFor="let dataset of datasets; trackBy: trackDataset"
-          type="button"
-          class="w-full text-left rounded-xl border px-3 py-3 transition"
+        @for (dataset of datasets; track trackDataset($index, dataset)) {
+          <button
+            type="button"
+            class="w-full text-left rounded-xl border px-3 py-3 transition"
           [ngClass]="dataset.datasetKey === selectedDatasetKey
             ? 'border-cyan-400/50 bg-cyan-500/15'
             : 'border-white/10 bg-white/5 hover:bg-white/10'"
-          (click)="selectDataset(dataset.datasetKey)"
-        >
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold text-cyan-100">{{ dataset.datasetKey }}</span>
-            <span class="text-xs text-slate-300">{{ dataset.itemCount || 0 }} items</span>
-          </div>
-          <p class="mt-1 text-xs text-slate-400 break-all">{{ dataset.sourceUrl }}</p>
-          <p class="mt-1 text-xs text-slate-500">
-            Dernier fetch:
-            {{ dataset.fetchedAt ? (dataset.fetchedAt | date:'dd/MM/yyyy HH:mm:ss') : 'Jamais' }}
-          </p>
-          <div class="mt-2">
-            <button
-              type="button"
-              class="text-xs px-3 py-1 rounded-full border border-cyan-400/40 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25 transition"
-              (click)="refreshDataset(dataset.datasetKey); $event.stopPropagation()"
-              [disabled]="refreshingKey === dataset.datasetKey"
+            (click)="selectDataset(dataset.datasetKey)"
             >
-              {{ refreshingKey === dataset.datasetKey ? 'Refresh...' : 'Refresh & overwrite' }}
-            </button>
-          </div>
-        </button>
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-semibold text-cyan-100">{{ dataset.datasetKey }}</span>
+              <span class="text-xs text-slate-300">{{ dataset.itemCount || 0 }} items</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-400 break-all">{{ dataset.sourceUrl }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+              Dernier fetch:
+              {{ dataset.fetchedAt ? (dataset.fetchedAt | date:'dd/MM/yyyy HH:mm:ss') : 'Jamais' }}
+            </p>
+            <div class="mt-2">
+              <button
+                type="button"
+                class="text-xs px-3 py-1 rounded-full border border-cyan-400/40 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25 transition"
+                (click)="refreshDataset(dataset.datasetKey); $event.stopPropagation()"
+                [disabled]="refreshingKey === dataset.datasetKey"
+                >
+                {{ refreshingKey === dataset.datasetKey ? 'Refresh...' : 'Refresh & overwrite' }}
+              </button>
+            </div>
+          </button>
+        }
       </div>
     </section>
 
@@ -71,22 +76,34 @@
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <h3 class="text-sm uppercase tracking-[0.2em] text-slate-300">
           Preview BDD
-          <span *ngIf="selectedDetail" class="normal-case tracking-normal text-cyan-200 ml-2">{{ selectedDetail.datasetKey }}</span>
+          @if (selectedDetail) {
+            <span class="normal-case tracking-normal text-cyan-200 ml-2">{{ selectedDetail.datasetKey }}</span>
+          }
         </h3>
-        <p *ngIf="selectedDetail" class="text-xs text-slate-400">
-          {{ selectedDetail.previewItemCount }} items affiches
-          <span *ngIf="selectedDetail.truncated">(preview tronque)</span>
-        </p>
+        @if (selectedDetail) {
+          <p class="text-xs text-slate-400">
+            {{ selectedDetail.previewItemCount }} items affiches
+            @if (selectedDetail.truncated) {
+              <span>(preview tronque)</span>
+            }
+          </p>
+        }
       </div>
 
-      <div *ngIf="loadingDetail" class="text-slate-400 text-sm">Chargement du dataset...</div>
+      @if (loadingDetail) {
+        <div class="text-slate-400 text-sm">Chargement du dataset...</div>
+      }
 
-      <div *ngIf="!loadingDetail && !selectedDetail" class="text-slate-500 text-sm">
-        Selectionne un dataset pour voir le contenu en base.
-      </div>
+      @if (!loadingDetail && !selectedDetail) {
+        <div class="text-slate-500 text-sm">
+          Selectionne un dataset pour voir le contenu en base.
+        </div>
+      }
 
-      <pre *ngIf="!loadingDetail && selectedDetail"
-           class="w-full max-h-[580px] overflow-auto text-xs leading-5 rounded-xl border border-white/10 bg-[#060c19] p-4 text-cyan-100 whitespace-pre-wrap break-words">{{ previewJson }}</pre>
+      @if (!loadingDetail && selectedDetail) {
+        <pre
+        class="w-full max-h-[580px] overflow-auto text-xs leading-5 rounded-xl border border-white/10 bg-[#060c19] p-4 text-cyan-100 whitespace-pre-wrap break-words">{{ previewJson }}</pre>
+      }
     </section>
   </div>
 </div>

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 
 type DataMenuItem = {
@@ -11,7 +11,7 @@ type DataMenuItem = {
 @Component({
   selector: 'app-data-menu',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './data-menu.component.html',
   styleUrl: './data-menu.component.css'
 })

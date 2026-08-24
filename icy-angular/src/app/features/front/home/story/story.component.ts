@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
 import {FadeInOnScrollDirective} from "../../../../directives/fade-in-on-scroll.directive";
-import {CommonModule} from "@angular/common";
+
 import strings from '../../../../../assets/i18n/front.json';
 
 @Component({
   selector: 'front-story',
   imports: [
-    FadeInOnScrollDirective,
-    CommonModule
-  ],
+    FadeInOnScrollDirective
+],
   templateUrl: './story.component.html',
   styleUrl: './story.component.css'
 })

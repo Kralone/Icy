@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {IceLinkBlock} from '../../../../core/services/icelink/icelink-block.service';
 
 @Component({
   selector: 'app-icelink-preview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './icelink-preview.component.html',
 })
 export class IceLinkPreviewComponent {

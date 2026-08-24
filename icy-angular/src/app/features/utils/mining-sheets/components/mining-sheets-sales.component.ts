@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -76,7 +76,7 @@ interface SaleSheetGroupRow {
 @Component({
   selector: 'app-mining-sheets-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './mining-sheets-sales.component.html',
   styleUrl: './mining-sheets-sales.component.css'
 })

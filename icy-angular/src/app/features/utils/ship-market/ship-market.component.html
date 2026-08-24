@@ -14,7 +14,7 @@
       <a
         [routerLink]="[backToMenuLink]"
         class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
-      >
+        >
         <span class="text-lg">←</span> Retour aux utilitaires
       </a>
     </div>
@@ -30,10 +30,14 @@
     </section>
 
     <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-5">
-      <p *ngIf="isLoading" class="text-slate-300">Chargement du catalogue achat/location...</p>
-      <p *ngIf="errorMessage" class="text-red-300">{{ errorMessage }}</p>
+      @if (isLoading) {
+        <p class="text-slate-300">Chargement du catalogue achat/location...</p>
+      }
+      @if (errorMessage) {
+        <p class="text-red-300">{{ errorMessage }}</p>
+      }
 
-      <ng-container *ngIf="!isLoading && !errorMessage">
+      @if (!isLoading && !errorMessage) {
         <div class="ship-market-mode-wrap" role="tablist" aria-label="Mode d'offres">
           <div class="ship-market-mode-slider" [class.ship-market-mode-slider--location]="selectedOfferMode === 'LOCATION'">
             <span class="ship-market-mode-thumb" aria-hidden="true"></span>
@@ -42,7 +46,7 @@
               class="ship-market-mode-btn"
               [class.ship-market-mode-btn--active]="selectedOfferMode === 'ACHAT'"
               (click)="setOfferMode('ACHAT')"
-            >
+              >
               Achat
             </button>
             <button
@@ -50,12 +54,11 @@
               class="ship-market-mode-btn"
               [class.ship-market-mode-btn--active]="selectedOfferMode === 'LOCATION'"
               (click)="setOfferMode('LOCATION')"
-            >
+              >
               Location
             </button>
           </div>
         </div>
-
         <div class="ship-market-search-wrap">
           <input
             type="text"
@@ -63,129 +66,132 @@
             (ngModelChange)="onSearchTermChange()"
             placeholder="Rechercher un vaisseau, fabricant, role..."
             class="ship-market-search"
-          />
-        </div>
-
-        <div class="location-row-title">Locations majeures</div>
-        <div class="location-card-grid location-card-grid--major">
-          <button
-            type="button"
-            *ngFor="let major of majorLocationCards; trackBy: trackByMajorLocation"
-            (click)="setSelectedMajorLocation(major.majorKey)"
-            [class.location-card--active]="major.majorKey === selectedMajorKey"
-            class="location-card location-card--major"
-            [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.76), rgba(15, 23, 42, 0.48)), url(' + major.majorImageUrl + ')'"
-          >
-            <span class="location-card-title">{{ major.majorLabel }}</span>
-            <span class="location-card-tail">{{ major.cards.length }} sous-locations</span>
-          </button>
-        </div>
-
-        <div class="location-row-title mt-4">Sous-locations</div>
-        <div
-          class="location-card-grid location-card-grid--sub"
-          [class.location-card-grid--sub-transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
-        >
-          <button
-            type="button"
-            *ngFor="let card of subLocationCards; trackBy: trackByLocation"
-            (click)="selectLocation(card.location)"
-            [class.location-card--active]="card.location === selectedLocation"
-            class="location-card"
-            [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.7), rgba(15, 23, 42, 0.35)), url(' + card.imageUrl + ')'"
-          >
-            <span class="location-card-title">{{ card.titleLine }}</span>
-            <span class="location-card-tail">{{ card.bodyLine1 }}</span>
-            <span class="location-card-system">{{ card.bodyLine2 }}</span>
-            <span *ngIf="card.promoLabel" class="location-card-promo">{{ card.promoLabel }}</span>
-          </button>
-        </div>
-
-        <div
-          *ngIf="selectedLocationShips.length; else noShipsTemplate"
-          class="ship-market-grid mt-6"
-          [class.ship-market-grid--transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
-        >
-          <article
-            *ngFor="let item of selectedLocationShips; trackBy: trackByShip"
-            class="ship-market-card"
-          >
-            <div class="ship-market-card-main">
-              <div class="ship-market-image-wrap">
-                <img
-                  [src]="item.ship.imageUrl"
-                  [alt]="item.ship.name"
-                  class="ship-market-image"
-                  loading="lazy"
-                />
-                <button
-                  type="button"
-                  class="ship-market-zoom-btn"
-                  (click)="openShipZoom(item.ship)"
-                  aria-label="Zoom image vaisseau"
+            />
+          </div>
+          <div class="location-row-title">Locations majeures</div>
+          <div class="location-card-grid location-card-grid--major">
+            @for (major of majorLocationCards; track trackByMajorLocation($index, major)) {
+              <button
+                type="button"
+                (click)="setSelectedMajorLocation(major.majorKey)"
+                [class.location-card--active]="major.majorKey === selectedMajorKey"
+                class="location-card location-card--major"
+                [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.76), rgba(15, 23, 42, 0.48)), url(' + major.majorImageUrl + ')'"
                 >
-                  Zoom
-                </button>
-                <img
-                  *ngIf="getBrandLogo(item.ship.brand.name) as brandLogo"
-                  [src]="brandLogo"
-                  [alt]="item.ship.brand.name"
-                  class="ship-market-brand"
-                  loading="lazy"
-                />
+                <span class="location-card-title">{{ major.majorLabel }}</span>
+                <span class="location-card-tail">{{ major.cards.length }} sous-locations</span>
+              </button>
+            }
+          </div>
+          <div class="location-row-title mt-4">Sous-locations</div>
+          <div
+            class="location-card-grid location-card-grid--sub"
+            [class.location-card-grid--sub-transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
+            >
+            @for (card of subLocationCards; track trackByLocation($index, card)) {
+              <button
+                type="button"
+                (click)="selectLocation(card.location)"
+                [class.location-card--active]="card.location === selectedLocation"
+                class="location-card"
+                [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.7), rgba(15, 23, 42, 0.35)), url(' + card.imageUrl + ')'"
+                >
+                <span class="location-card-title">{{ card.titleLine }}</span>
+                <span class="location-card-tail">{{ card.bodyLine1 }}</span>
+                <span class="location-card-system">{{ card.bodyLine2 }}</span>
+                @if (card.promoLabel) {
+                  <span class="location-card-promo">{{ card.promoLabel }}</span>
+                }
+              </button>
+            }
+          </div>
+          @if (selectedLocationShips.length) {
+            <div
+              class="ship-market-grid mt-6"
+              [class.ship-market-grid--transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
+              >
+              @for (item of selectedLocationShips; track trackByShip($index, item)) {
+                <article
+                  class="ship-market-card"
+                  >
+                  <div class="ship-market-card-main">
+                    <div class="ship-market-image-wrap">
+                      <img
+                        [src]="item.ship.imageUrl"
+                        [alt]="item.ship.name"
+                        class="ship-market-image"
+                        loading="lazy"
+                        />
+                        <button
+                          type="button"
+                          class="ship-market-zoom-btn"
+                          (click)="openShipZoom(item.ship)"
+                          aria-label="Zoom image vaisseau"
+                          >
+                          Zoom
+                        </button>
+                        @if (getBrandLogo(item.ship.brand.name); as brandLogo) {
+                          <img
+                            [src]="brandLogo"
+                            [alt]="item.ship.brand.name"
+                            class="ship-market-brand"
+                            loading="lazy"
+                            />
+                        }
+                      </div>
+                      <div class="ship-market-main-info">
+                        <h2 class="ship-market-ship-name">{{ item.ship.name }}</h2>
+                        <p>Fabricant: <span>{{ item.ship.brand.name || '-' }}</span></p>
+                        <p>Role: <span>{{ item.ship.focus || '-' }}</span></p>
+                        <p>Equipage: <span>{{ item.ship.crew || '-' }}</span></p>
+                      </div>
+                    </div>
+                    <aside class="ship-market-side">
+                      <div class="ship-market-price">{{ item.price | number:'1.0-2' }} aUEC</div>
+                      <div class="ship-market-stats">
+                        <p><span>Taille</span><strong>{{ item.ship.size || '-' }}</strong></p>
+                        <p><span>SCU</span><strong>{{ item.ship.scu ?? '-' }}</strong></p>
+                        <p><span>Flight Ready</span><strong>{{ item.ship.flightReady ? 'Oui' : 'Non' }}</strong></p>
+                      </div>
+                    </aside>
+                  </article>
+                }
               </div>
+            } @else {
+              @if (!(isSwitchingLocation || isSwitchingMajor || isSwitchingOfferMode)) {
+                <div
+                  class="text-slate-300 mt-6 ship-market-empty-state"
+                  >
+                  Aucun vaisseau ne correspond a la recherche pour cette location.
+                </div>
+              }
+            }
+          }
 
-              <div class="ship-market-main-info">
-                <h2 class="ship-market-ship-name">{{ item.ship.name }}</h2>
-                <p>Fabricant: <span>{{ item.ship.brand.name || '-' }}</span></p>
-                <p>Role: <span>{{ item.ship.focus || '-' }}</span></p>
-                <p>Equipage: <span>{{ item.ship.crew || '-' }}</span></p>
-              </div>
-            </div>
+        </section>
+      </div>
 
-            <aside class="ship-market-side">
-              <div class="ship-market-price">{{ item.price | number:'1.0-2' }} aUEC</div>
-              <div class="ship-market-stats">
-                <p><span>Taille</span><strong>{{ item.ship.size || '-' }}</strong></p>
-                <p><span>SCU</span><strong>{{ item.ship.scu ?? '-' }}</strong></p>
-                <p><span>Flight Ready</span><strong>{{ item.ship.flightReady ? 'Oui' : 'Non' }}</strong></p>
-              </div>
-            </aside>
-          </article>
-        </div>
-      </ng-container>
-
-      <ng-template #noShipsTemplate>
+      @if (zoomedShip; as ship) {
         <div
-          *ngIf="!(isSwitchingLocation || isSwitchingMajor || isSwitchingOfferMode)"
-          class="text-slate-300 mt-6 ship-market-empty-state"
-        >
-          Aucun vaisseau ne correspond a la recherche pour cette location.
-        </div>
-      </ng-template>
-    </section>
-  </div>
-
-  <div
-    *ngIf="zoomedShip as ship"
-    class="ship-market-zoom-backdrop"
-    (click)="closeShipZoom()"
-  >
-    <div class="ship-market-zoom-panel" (click)="$event.stopPropagation()">
-      <button
-        type="button"
-        class="ship-market-zoom-close"
-        (click)="closeShipZoom()"
-        aria-label="Fermer le zoom"
-      >
-        ×
-      </button>
-      <img
-        [src]="ship.imageUrl"
-        [alt]="ship.name"
-        class="ship-market-zoom-image"
-      />
-      <div class="ship-market-zoom-caption">{{ ship.name }}</div>
-    </div>
-  </div>
-</div>
+          class="ship-market-zoom-backdrop"
+          (click)="closeShipZoom()"
+          >
+          <div class="ship-market-zoom-panel" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="ship-market-zoom-close"
+              (click)="closeShipZoom()"
+              aria-label="Fermer le zoom"
+              >
+              ×
+            </button>
+            <img
+              [src]="ship.imageUrl"
+              [alt]="ship.name"
+              class="ship-market-zoom-image"
+              />
+              <div class="ship-market-zoom-caption">{{ ship.name }}</div>
+            </div>
+          </div>
+        }
+      </div>

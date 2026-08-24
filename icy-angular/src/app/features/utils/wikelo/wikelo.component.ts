@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +17,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 @Component({
   standalone: true,
   selector: 'app-wikelo',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './wikelo.component.html',
   styleUrl: './wikelo.component.css',
   animations: [

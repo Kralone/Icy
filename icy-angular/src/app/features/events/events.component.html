@@ -7,54 +7,56 @@
       Calendrier des Événements
     </h1>
 
-    <button
-      *ngIf="isAdmin"
-      routerLink="/icy/admin/events"
+    @if (isAdmin) {
+      <button
+        routerLink="/icy/admin/events"
       class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
              bg-white/10 backdrop-blur-md border border-cyan-400/30
              text-cyan-200 font-semibold text-sm shadow-lg
              hover:bg-cyan-500/20 hover:scale-105 transition-all">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-           stroke="currentColor" class="w-5 h-5 text-cyan-300">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 7h18M3 12h18M3 17h18"/>
-      </svg>
-      Gérer les events
-    </button>
-  </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" class="w-5 h-5 text-cyan-300">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 7h18M3 12h18M3 17h18"/>
+          </svg>
+          Gérer les events
+        </button>
+      }
+    </div>
 
-  <!-- Conteneur calendrier -->
-  <div
+    <!-- Conteneur calendrier -->
+    <div
     class="relative loading-reveal flex-1 p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl
          overflow-y-auto flex flex-col"
-    [attr.data-loading]="isLoading"
-  >
-    <app-loading-overlay
-      [isLoading]="isLoading"
-      [minDurationMs]="0"
-      [fadeOutMs]="500"
-      [softFade]="true"
-    ></app-loading-overlay>
-    <full-calendar
-      [options]="calendarOptions"
-      class="flex-1 min-h-[420px] sm:min-h-[640px] w-full text-gray-100"
-    ></full-calendar>
+      [attr.data-loading]="isLoading"
+      >
+      <app-loading-overlay
+        [isLoading]="isLoading"
+        [minDurationMs]="0"
+        [fadeOutMs]="500"
+        [softFade]="true"
+      ></app-loading-overlay>
+      <full-calendar
+        [options]="calendarOptions"
+        class="flex-1 min-h-[420px] sm:min-h-[640px] w-full text-gray-100"
+      ></full-calendar>
+    </div>
   </div>
-</div>
 
-<!-- MODAL DETAILS -->
-<app-event-details-modal
-  *ngIf="showDetailsModal"
-  [selectedEvent]="selectedEvent"
-  [descriptionHtml]="formatEventDescription(selectedEvent?.description)"
-  [participationsByStatus]="participationsByStatus"
-  [showConfirmedFleets]="showConfirmedFleets"
-  [isFleetLoading]="isFleetLoading"
-  [fleetByBrand]="fleetByBrand"
-  [fleetBrandKeys]="fleetBrandKeys"
-  (requestClose)="showDetailsModal = false"
-  (participationChange)="setParticipationStatus($event)"
-  (toggleFleets)="toggleConfirmedFleets()"
-></app-event-details-modal>
+  <!-- MODAL DETAILS -->
+  @if (showDetailsModal) {
+    <app-event-details-modal
+      [selectedEvent]="selectedEvent"
+      [descriptionHtml]="formatEventDescription(selectedEvent?.description)"
+      [participationsByStatus]="participationsByStatus"
+      [showConfirmedFleets]="showConfirmedFleets"
+      [isFleetLoading]="isFleetLoading"
+      [fleetByBrand]="fleetByBrand"
+      [fleetBrandKeys]="fleetBrandKeys"
+      (requestClose)="showDetailsModal = false"
+      (participationChange)="setParticipationStatus($event)"
+      (toggleFleets)="toggleConfirmedFleets()"
+    ></app-event-details-modal>
+  }
 
 

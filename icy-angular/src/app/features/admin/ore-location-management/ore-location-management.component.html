@@ -3,7 +3,7 @@
     <a
       routerLink="/icy/admin/data"
       class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-    >
+      >
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
@@ -17,7 +17,7 @@
         type="button"
         (click)="loadLocations()"
         class="px-4 py-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-400/20 transition"
-      >
+        >
         Recharger
       </button>
     </div>
@@ -31,98 +31,112 @@
           (change)="onUploadFile($event)"
           [disabled]="uploading"
           class="ore-file-input"
-        />
-      </div>
-      <p *ngIf="successMessage" class="text-sm text-emerald-300">{{ successMessage }}</p>
-      <p *ngIf="errorMessage" class="text-sm text-red-300">{{ errorMessage }}</p>
-    </div>
-
-    <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
-      <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
-        <div class="p-4 border-b border-cyan-300/15">
-          <input
-            type="text"
-            [(ngModel)]="search"
-            (ngModelChange)="onSearchChange()"
-            class="ore-search"
-            placeholder="Rechercher location ou minerai (ex: GLACIUM, QUANTANIUM)"
           />
         </div>
-        <div class="overflow-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
-            <tr>
-              <th class="px-4 py-3 text-left">Code</th>
-              <th class="px-4 py-3 text-left">Users</th>
-              <th class="px-4 py-3 text-left">Scans</th>
-              <th class="px-4 py-3 text-left">Clusters</th>
-              <th class="px-4 py-3 text-left">Top minerais</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngIf="loading">
-              <td class="px-4 py-4 text-cyan-100/70" colspan="5">Chargement...</td>
-            </tr>
-            <tr
-              *ngFor="let location of pagedLocations()"
-              class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition cursor-pointer"
-              [class.ore-row-selected]="selectedLocation?.id === location.id"
-              (click)="selectLocation(location)"
-            >
-              <td class="px-4 py-3 font-semibold text-cyan-100">{{ location.locationCode }}</td>
-              <td class="px-4 py-3">{{ location.users }}</td>
-              <td class="px-4 py-3">{{ location.scans }}</td>
-              <td class="px-4 py-3">{{ location.clusters }}</td>
-              <td class="px-4 py-3">
-                <span class="ore-badge" *ngFor="let ore of topOres(location, 3)">
-                  {{ ore.oreCode }} {{ formatPercent(ore.probability) }}
-                </span>
-              </td>
-            </tr>
-            <tr *ngIf="!loading && !pagedLocations().length">
-              <td class="px-4 py-4 text-cyan-100/70" colspan="5">Aucune donnee.</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
+        @if (successMessage) {
+          <p class="text-sm text-emerald-300">{{ successMessage }}</p>
+        }
+        @if (errorMessage) {
+          <p class="text-sm text-red-300">{{ errorMessage }}</p>
+        }
       </div>
 
-      <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 p-5 shadow-xl">
-        <h3 class="text-lg font-semibold text-cyan-100 mb-3">Detail location</h3>
-        <div *ngIf="!selectedLocation" class="text-sm text-cyan-100/70">Selectionne une ligne pour voir le detail.</div>
-
-        <ng-container *ngIf="selectedLocation">
-          <div class="space-y-2 text-sm">
-            <p><span class="ore-label">Code:</span> {{ selectedLocation.locationCode }}</p>
-            <p><span class="ore-label">Users / Scans:</span> {{ selectedLocation.users }} / {{ selectedLocation.scans }}</p>
-            <p><span class="ore-label">Clusters:</span> {{ selectedLocation.clusters }}</p>
-            <p><span class="ore-label">ClusterCount (min-med-max):</span> {{ selectedLocation.clusterCount.min }} / {{ selectedLocation.clusterCount.med }} / {{ selectedLocation.clusterCount.max }}</p>
-            <p><span class="ore-label">Mass (min-med-max):</span> {{ selectedLocation.mass.min }} / {{ selectedLocation.mass.med }} / {{ selectedLocation.mass.max }}</p>
-            <p><span class="ore-label">Inst (min-med-max):</span> {{ selectedLocation.inst.min }} / {{ selectedLocation.inst.med }} / {{ selectedLocation.inst.max }}</p>
-            <p><span class="ore-label">Res (min-med-max):</span> {{ selectedLocation.res.min }} / {{ selectedLocation.res.med }} / {{ selectedLocation.res.max }}</p>
-          </div>
-
-          <div class="mt-5">
-            <h4 class="text-sm uppercase tracking-[0.14em] text-cyan-100/80 mb-2">Minerais</h4>
-            <div class="ore-ore-list">
-              <div class="ore-ore-row" *ngFor="let ore of topOres(selectedLocation, 12)">
-                <span class="font-semibold">{{ ore.oreCode }}</span>
-                <span>{{ formatPercent(ore.probability) }}</span>
-              </div>
+      <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
+        <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
+          <div class="p-4 border-b border-cyan-300/15">
+            <input
+              type="text"
+              [(ngModel)]="search"
+              (ngModelChange)="onSearchChange()"
+              class="ore-search"
+              placeholder="Rechercher location ou minerai (ex: GLACIUM, QUANTANIUM)"
+              />
+            </div>
+            <div class="overflow-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
+                  <tr>
+                    <th class="px-4 py-3 text-left">Code</th>
+                    <th class="px-4 py-3 text-left">Users</th>
+                    <th class="px-4 py-3 text-left">Scans</th>
+                    <th class="px-4 py-3 text-left">Clusters</th>
+                    <th class="px-4 py-3 text-left">Top minerais</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (loading) {
+                    <tr>
+                      <td class="px-4 py-4 text-cyan-100/70" colspan="5">Chargement...</td>
+                    </tr>
+                  }
+                  @for (location of pagedLocations(); track location) {
+                    <tr
+                      class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition cursor-pointer"
+                      [class.ore-row-selected]="selectedLocation?.id === location.id"
+                      (click)="selectLocation(location)"
+                      >
+                      <td class="px-4 py-3 font-semibold text-cyan-100">{{ location.locationCode }}</td>
+                      <td class="px-4 py-3">{{ location.users }}</td>
+                      <td class="px-4 py-3">{{ location.scans }}</td>
+                      <td class="px-4 py-3">{{ location.clusters }}</td>
+                      <td class="px-4 py-3">
+                        @for (ore of topOres(location, 3); track ore) {
+                          <span class="ore-badge">
+                            {{ ore.oreCode }} {{ formatPercent(ore.probability) }}
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                  @if (!loading && !pagedLocations().length) {
+                    <tr>
+                      <td class="px-4 py-4 text-cyan-100/70" colspan="5">Aucune donnee.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           </div>
-        </ng-container>
-      </div>
-    </div>
 
-    <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
-      <button type="button" (click)="previousPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-        Precedent
-      </button>
-      <span>Page {{ currentPage }} / {{ totalPages() }}</span>
-      <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages()" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-        Suivant
-      </button>
+          <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 p-5 shadow-xl">
+            <h3 class="text-lg font-semibold text-cyan-100 mb-3">Detail location</h3>
+            @if (!selectedLocation) {
+              <div class="text-sm text-cyan-100/70">Selectionne une ligne pour voir le detail.</div>
+            }
+
+            @if (selectedLocation) {
+              <div class="space-y-2 text-sm">
+                <p><span class="ore-label">Code:</span> {{ selectedLocation.locationCode }}</p>
+                <p><span class="ore-label">Users / Scans:</span> {{ selectedLocation.users }} / {{ selectedLocation.scans }}</p>
+                <p><span class="ore-label">Clusters:</span> {{ selectedLocation.clusters }}</p>
+                <p><span class="ore-label">ClusterCount (min-med-max):</span> {{ selectedLocation.clusterCount.min }} / {{ selectedLocation.clusterCount.med }} / {{ selectedLocation.clusterCount.max }}</p>
+                <p><span class="ore-label">Mass (min-med-max):</span> {{ selectedLocation.mass.min }} / {{ selectedLocation.mass.med }} / {{ selectedLocation.mass.max }}</p>
+                <p><span class="ore-label">Inst (min-med-max):</span> {{ selectedLocation.inst.min }} / {{ selectedLocation.inst.med }} / {{ selectedLocation.inst.max }}</p>
+                <p><span class="ore-label">Res (min-med-max):</span> {{ selectedLocation.res.min }} / {{ selectedLocation.res.med }} / {{ selectedLocation.res.max }}</p>
+              </div>
+              <div class="mt-5">
+                <h4 class="text-sm uppercase tracking-[0.14em] text-cyan-100/80 mb-2">Minerais</h4>
+                <div class="ore-ore-list">
+                  @for (ore of topOres(selectedLocation, 12); track ore) {
+                    <div class="ore-ore-row">
+                      <span class="font-semibold">{{ ore.oreCode }}</span>
+                      <span>{{ formatPercent(ore.probability) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
+          <button type="button" (click)="previousPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
+            Precedent
+          </button>
+          <span>Page {{ currentPage }} / {{ totalPages() }}</span>
+          <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages()" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
+            Suivant
+          </button>
+        </div>
+      </section>
     </div>
-  </section>
-</div>

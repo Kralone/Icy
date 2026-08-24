@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
@@ -8,7 +8,7 @@ import {WebSocketService} from '../../core/services/websocket/websocket.service'
   standalone: true,
   selector: 'app-fleet',
   templateUrl: './fleet.component.html',
-  imports: [CommonModule, LoadingOverlayComponent]
+  imports: [LoadingOverlayComponent]
 })
 export class FleetComponent implements OnInit, OnDestroy {
   private shipService: ShipService;

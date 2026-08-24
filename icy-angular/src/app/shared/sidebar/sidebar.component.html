@@ -4,7 +4,7 @@
          backdrop-blur-xl border-r border-white/10
          shadow-[0_0_25px_rgba(56,189,248,0.15)]
          p-5 text-white z-50 overflow-y-auto"
->
+  >
 
   <div class="flex flex-col items-center justify-center mt-10 mb-6 space-y-2">
     <a [routerLink]="['/icy/dashboard']" class="flex flex-col items-center gap-2 group">
@@ -14,72 +14,75 @@
           alt="IceForge Logo"
           class="h-16 w-16 object-contain transition-transform duration-300
                group-hover:scale-110 drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]"
-        />
-        <div class="absolute inset-0 rounded-full bg-cyan-400/20 blur-2xl scale-125"></div>
-      </div>
-    </a>
-  </div>
+          />
+          <div class="absolute inset-0 rounded-full bg-cyan-400/20 blur-2xl scale-125"></div>
+        </div>
+      </a>
+    </div>
 
-  <nav class="flex-1">
-    <ul class="space-y-2">
-      <li *ngFor="let item of menuItems">
-        <a
-          [routerLink]="item.link"
-          routerLinkActive="bg-white/10 text-cyan-300"
+    <nav class="flex-1">
+      <ul class="space-y-2">
+        @for (item of menuItems; track item) {
+          <li>
+            <a
+              [routerLink]="item.link"
+              routerLinkActive="bg-white/10 text-cyan-300"
           class="relative flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300
                  hover:bg-white/10 hover:text-cyan-300 transition-colors duration-300 group"
-          (click)="onClose()"
-        >
-          <span
-            *ngIf="item.kind === 'scwe' && hasActiveScEvent"
+              (click)="onClose()"
+              >
+              @if (item.kind === 'scwe' && hasActiveScEvent) {
+                <span
             class="pointer-events-none absolute inset-0 rounded-lg
                    bg-cyan-400/10 blur-xl opacity-80"
-          ></span>
-
-          <span class="text-xl relative">
-            {{ item.icon }}
-          </span>
-
-          <span class="text-sm uppercase tracking-wide relative">
-            {{ item.label }}
-          </span>
-
-          <span
-            *ngIf="item.kind === 'scwe' && hasActiveScEvent"
+                ></span>
+              }
+              <span class="text-xl relative">
+                {{ item.icon }}
+              </span>
+              <span class="text-sm uppercase tracking-wide relative">
+                {{ item.label }}
+              </span>
+              @if (item.kind === 'scwe' && hasActiveScEvent) {
+                <span
             class="ml-auto px-2 py-0.5 rounded text-[10px] font-black tracking-widest
                    bg-cyan-500/20 text-cyan-300 border border-cyan-400/30
                    shadow-[0_0_10px_rgba(34,211,238,0.3)]
                    animate-pulse whitespace-nowrap"
-          >
-            LIVE
-          </span>
-        </a>
-      </li>
+                  >
+                  LIVE
+                </span>
+              }
+            </a>
+          </li>
+        }
 
-      <li *ngIf="isAdmin" class="pt-2 border-t border-white/10">
-        <a
-          [routerLink]="['/icy/admin']"
+        @if (isAdmin) {
+          <li class="pt-2 border-t border-white/10">
+            <a
+              [routerLink]="['/icy/admin']"
           class="flex items-center gap-3 px-3 py-2 rounded-lg
                  text-blue-400 hover:bg-blue-400/10 transition-colors duration-300"
-          (click)="onClose()"
-        >
-          <span class="text-xl">🛡️</span>
-          <span class="text-sm uppercase tracking-wide">Admin</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
+              (click)="onClose()"
+              >
+              <span class="text-xl">🛡️</span>
+              <span class="text-sm uppercase tracking-wide">Admin</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
 
-  <div class="pt-4 border-t border-white/10">
-    <button
+    <div class="pt-4 border-t border-white/10">
+      <button
       class="w-full flex items-center justify-center gap-2
              bg-red-600/80 hover:bg-red-700 text-white font-semibold py-2 rounded-xl
              shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-all duration-300
              hover:scale-105 hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]"
-      (click)="logout(); onClose()"
-    >
-      🚪 Logout
-    </button>
-  </div>
+        (click)="logout(); onClose()"
+        >
+        🚪 Logout
+      </button>
+    </div>
 
-</aside>
+  </aside>

@@ -8,34 +8,35 @@
       <a
         [routerLink]="['/icy/admin']"
         class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-      >
+        >
         <span class="text-base leading-none">←</span>
         <span>Retour Admin</span>
       </a>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <a
-        *ngFor="let item of menuItems"
-        [routerLink]="[item.route]"
+      @for (item of menuItems; track item) {
+        <a
+          [routerLink]="[item.route]"
         class="data-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
                shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
                hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
                cursor-pointer overflow-hidden"
-      >
-        <div class="relative h-52 w-full overflow-hidden">
-          <img
-            [src]="item.imageUrl"
-            [alt]="item.label"
-            class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-500"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
-        </div>
-        <div class="flex items-center justify-between px-5 py-4 bg-[#0b1324]/80 border-t border-white/10">
-          <span class="text-sm uppercase tracking-[0.25em] text-slate-300">Section</span>
-          <span class="text-lg font-semibold text-white">{{ item.label }}</span>
-        </div>
-      </a>
+          >
+          <div class="relative h-52 w-full overflow-hidden">
+            <img
+              [src]="item.imageUrl"
+              [alt]="item.label"
+              class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-500"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
+            </div>
+            <div class="flex items-center justify-between px-5 py-4 bg-[#0b1324]/80 border-t border-white/10">
+              <span class="text-sm uppercase tracking-[0.25em] text-slate-300">Section</span>
+              <span class="text-lg font-semibold text-white">{{ item.label }}</span>
+            </div>
+          </a>
+        }
+      </div>
     </div>
   </div>
-</div>

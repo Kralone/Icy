@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -28,7 +28,7 @@ interface ResourceLine {
 @Component({
   selector: 'front-resources-guide',
   standalone: true,
-  imports: [CommonModule, ResourcesSalesPanelComponent, ResourcesMiningPanelComponent, ResourcesRefiningPanelComponent, ResourcesFitPanelComponent],
+  imports: [ResourcesSalesPanelComponent, ResourcesMiningPanelComponent, ResourcesRefiningPanelComponent, ResourcesFitPanelComponent],
   templateUrl: './resources-guide.component.html',
   styleUrl: './resources-guide.component.css'
 })

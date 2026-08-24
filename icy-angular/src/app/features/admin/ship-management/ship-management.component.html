@@ -3,7 +3,7 @@
   <a
     routerLink="/icy/admin/data"
     class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-  >
+    >
     <span class="text-base leading-none">←</span>
     <span>Retour Data</span>
   </a>
@@ -17,15 +17,17 @@
         (click)="openInGameDeletionDialog()"
         title="Retirer de toutes les flottes les achats et récompenses en jeu"
         class="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-gray-300 transition hover:border-red-400/40 hover:bg-red-500/10 hover:text-red-200 focus:outline-none focus:ring-2 focus:ring-red-400/30"
-      >
+        >
         <span aria-hidden="true">🧹</span>
         Nettoyer les acquisitions en jeu
       </button>
     </div>
 
-    <p *ngIf="inGameDeletionResult" class="w-fit max-w-full rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-      {{ inGameDeletionResult }}
-    </p>
+    @if (inGameDeletionResult) {
+      <p class="w-fit max-w-full rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+        {{ inGameDeletionResult }}
+      </p>
+    }
 
     <!-- Formulaire d’ajout -->
     <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-6">
@@ -39,503 +41,514 @@
             placeholder="Nom du vaisseau"
             class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
+            />
+          </div>
 
-        <!-- Marque (ICY select) -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Marque</label>
-          <select
-            [(ngModel)]="newShip.brandName"
+          <!-- Marque (ICY select) -->
+          <div>
+            <label class="block text-sm mb-1 text-gray-300">Marque</label>
+            <select
+              [(ngModel)]="newShip.brandName"
             class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20
                text-white focus:ring-2 focus:ring-cyan-400 outline-none transition"
-            required
-          >
-            <option value="" disabled selected hidden class="bg-[#1b263b] text-gray-400">Choisir une marque...</option>
-            <option *ngFor="let brand of brands" [value]="brand.name" class="bg-[#1b263b] text-white">
-              {{ brand.name }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Image URL (required en DB) -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Image URL</label>
-          <input
-            [(ngModel)]="newShip.imageUrl"
-            placeholder="URL de l’image"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <!-- Focus -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Focus</label>
-          <input
-            [(ngModel)]="newShip.focus"
-            placeholder="Ex: Exploration, Combat..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <!-- SCU (int) -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">SCU</label>
-          <input
-            [(ngModel)]="newShip.scu"
-            type="number"
-            min="0"
-            placeholder="Ex: 64"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <!-- Size -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Taille</label>
-          <input
-            [(ngModel)]="newShip.size"
-            placeholder="Ex: S / M / L / Capital"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <!-- Crew -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Équipage</label>
-          <input
-            [(ngModel)]="newShip.crew"
-            placeholder="Ex: 1-3, 2, 6-12..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <div class="sm:col-span-2 lg:col-span-3">
-          <label class="block text-sm mb-1 text-gray-300">Notes (optionnel)</label>
-          <textarea
-            [(ngModel)]="newShip.notes"
-            rows="3"
-            placeholder="Notes operationnelles, recommandations de fit, role du vaisseau..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-y"
-          ></textarea>
-        </div>
-
-        <!-- Flight Ready (bool) -->
-        <div class="flex items-center gap-3 pt-6">
-          <input
-            id="flightReady"
-            type="checkbox"
-            [(ngModel)]="newShip.flightReady"
-            class="h-5 w-5 rounded border border-white/30 bg-white/10
-               accent-cyan-400 focus:ring-2 focus:ring-cyan-400"
-          />
-          <label for="flightReady" class="text-sm text-gray-200 select-none">
-            Flight Ready
-          </label>
-        </div>
-
-        <div class="sm:col-span-2 lg:col-span-3 space-y-3">
-          <div class="flex items-center justify-between">
-            <label class="block text-sm text-gray-300">Points de vente</label>
-            <button
-              type="button"
-              (click)="addSalePoint()"
-              class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
-            >
-              + Ajouter un point
-            </button>
+              required
+              >
+              <option value="" disabled selected hidden class="bg-[#1b263b] text-gray-400">Choisir une marque...</option>
+              @for (brand of brands; track brand) {
+                <option [value]="brand.name" class="bg-[#1b263b] text-white">
+                  {{ brand.name }}
+                </option>
+              }
+            </select>
           </div>
 
-          <div class="space-y-3">
-            <div
-              *ngFor="let salePoint of newShip.salePoints; let i = index"
-              class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
-            >
-              <div class="sm:col-span-3">
-                <label class="block text-xs mb-1 text-gray-400">Lieu</label>
-                <input
-                  [(ngModel)]="salePoint.location"
-                  placeholder="Ex: Area18, New Babbage..."
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          <!-- Image URL (required en DB) -->
+          <div>
+            <label class="block text-sm mb-1 text-gray-300">Image URL</label>
+            <input
+              [(ngModel)]="newShip.imageUrl"
+              placeholder="URL de l’image"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              />
+            </div>
+
+            <!-- Focus -->
+            <div>
+              <label class="block text-sm mb-1 text-gray-300">Focus</label>
+              <input
+                [(ngModel)]="newShip.focus"
+                placeholder="Ex: Exploration, Combat..."
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                 />
               </div>
 
-              <div class="sm:col-span-1">
-                <label class="block text-xs mb-1 text-gray-400">Prix</label>
+              <!-- SCU (int) -->
+              <div>
+                <label class="block text-sm mb-1 text-gray-300">SCU</label>
                 <input
-                  [(ngModel)]="salePoint.price"
+                  [(ngModel)]="newShip.scu"
                   type="number"
                   min="0"
-                  step="0.01"
-                  placeholder="Ex: 1500000"
+                  placeholder="Ex: 64"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                  />
+                </div>
+
+                <!-- Size -->
+                <div>
+                  <label class="block text-sm mb-1 text-gray-300">Taille</label>
+                  <input
+                    [(ngModel)]="newShip.size"
+                    placeholder="Ex: S / M / L / Capital"
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                    />
+                  </div>
+
+                  <!-- Crew -->
+                  <div>
+                    <label class="block text-sm mb-1 text-gray-300">Équipage</label>
+                    <input
+                      [(ngModel)]="newShip.crew"
+                      placeholder="Ex: 1-3, 2, 6-12..."
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                      />
+                    </div>
+
+                    <div class="sm:col-span-2 lg:col-span-3">
+                      <label class="block text-sm mb-1 text-gray-300">Notes (optionnel)</label>
+                      <textarea
+                        [(ngModel)]="newShip.notes"
+                        rows="3"
+                        placeholder="Notes operationnelles, recommandations de fit, role du vaisseau..."
+            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-y"
+                      ></textarea>
+                    </div>
+
+                    <!-- Flight Ready (bool) -->
+                    <div class="flex items-center gap-3 pt-6">
+                      <input
+                        id="flightReady"
+                        type="checkbox"
+                        [(ngModel)]="newShip.flightReady"
+            class="h-5 w-5 rounded border border-white/30 bg-white/10
+               accent-cyan-400 focus:ring-2 focus:ring-cyan-400"
+                        />
+                        <label for="flightReady" class="text-sm text-gray-200 select-none">
+                          Flight Ready
+                        </label>
+                      </div>
+
+                      <div class="sm:col-span-2 lg:col-span-3 space-y-3">
+                        <div class="flex items-center justify-between">
+                          <label class="block text-sm text-gray-300">Points de vente</label>
+                          <button
+                            type="button"
+                            (click)="addSalePoint()"
+                            class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
+                            >
+                            + Ajouter un point
+                          </button>
+                        </div>
+
+                        <div class="space-y-3">
+                          @for (salePoint of newShip.salePoints; track salePoint; let i = $index) {
+                            <div
+                              class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
+                              >
+                              <div class="sm:col-span-3">
+                                <label class="block text-xs mb-1 text-gray-400">Lieu</label>
+                                <input
+                                  [(ngModel)]="salePoint.location"
+                                  placeholder="Ex: Area18, New Babbage..."
                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                      focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                />
-              </div>
-
-              <div class="sm:col-span-1 flex sm:justify-end">
-                <button
-                  type="button"
-                  (click)="removeSalePoint(i)"
-                  class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="sm:col-span-2 lg:col-span-3 space-y-3">
-          <div class="flex items-center justify-between">
-            <label class="block text-sm text-gray-300">Grilles cargo</label>
-            <button
-              type="button"
-              (click)="addCargoGrid()"
-              class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
-            >
-              + Ajouter une grille
-            </button>
-          </div>
-
-          <div class="space-y-3">
-            <div
-              *ngFor="let cargoGrid of newShip.cargoGrids; let i = index"
-              class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
-            >
-              <div class="sm:col-span-1">
-                <label class="block text-xs mb-1 text-gray-400">X</label>
-                <input
-                  [(ngModel)]="cargoGrid.sizeX"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Ex: 8"
+                                  />
+                                </div>
+                                <div class="sm:col-span-1">
+                                  <label class="block text-xs mb-1 text-gray-400">Prix</label>
+                                  <input
+                                    [(ngModel)]="salePoint.price"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="Ex: 1500000"
                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                      focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                />
-              </div>
+                                    />
+                                  </div>
+                                  <div class="sm:col-span-1 flex sm:justify-end">
+                                    <button
+                                      type="button"
+                                      (click)="removeSalePoint(i)"
+                                      class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
+                                      >
+                                      Supprimer
+                                    </button>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
 
-              <div class="sm:col-span-1">
-                <label class="block text-xs mb-1 text-gray-400">Y</label>
-                <input
-                  [(ngModel)]="cargoGrid.sizeY"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Ex: 4"
+                          <div class="sm:col-span-2 lg:col-span-3 space-y-3">
+                            <div class="flex items-center justify-between">
+                              <label class="block text-sm text-gray-300">Grilles cargo</label>
+                              <button
+                                type="button"
+                                (click)="addCargoGrid()"
+                                class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
+                                >
+                                + Ajouter une grille
+                              </button>
+                            </div>
+
+                            <div class="space-y-3">
+                              @for (cargoGrid of newShip.cargoGrids; track cargoGrid; let i = $index) {
+                                <div
+                                  class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
+                                  >
+                                  <div class="sm:col-span-1">
+                                    <label class="block text-xs mb-1 text-gray-400">X</label>
+                                    <input
+                                      [(ngModel)]="cargoGrid.sizeX"
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      placeholder="Ex: 8"
                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                      focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                />
-              </div>
-
-              <div class="sm:col-span-1">
-                <label class="block text-xs mb-1 text-gray-400">Z</label>
-                <input
-                  [(ngModel)]="cargoGrid.sizeZ"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="Ex: 2"
+                                      />
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                      <label class="block text-xs mb-1 text-gray-400">Y</label>
+                                      <input
+                                        [(ngModel)]="cargoGrid.sizeY"
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        placeholder="Ex: 4"
                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                      focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                />
-              </div>
+                                        />
+                                      </div>
+                                      <div class="sm:col-span-1">
+                                        <label class="block text-xs mb-1 text-gray-400">Z</label>
+                                        <input
+                                          [(ngModel)]="cargoGrid.sizeZ"
+                                          type="number"
+                                          min="1"
+                                          step="1"
+                                          placeholder="Ex: 2"
+                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                                          />
+                                        </div>
+                                        <div class="sm:col-span-1 flex sm:justify-end">
+                                          <button
+                                            type="button"
+                                            (click)="removeCargoGrid(i)"
+                                            class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
+                                            >
+                                            Supprimer
+                                          </button>
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                </div>
 
-              <div class="sm:col-span-1 flex sm:justify-end">
-                <button
-                  type="button"
-                  (click)="removeCargoGrid(i)"
-                  class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                              </div>
 
-      </div>
-
-      <div class="flex justify-end">
-        <button
-          (click)="createOrUpdateShip()"
-          [disabled]="isSubmittingShip"
+                              <div class="flex justify-end">
+                                <button
+                                  (click)="createOrUpdateShip()"
+                                  [disabled]="isSubmittingShip"
           class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
              text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105
              disabled:opacity-50"
-        >
-          {{ editingShip ? 'Mettre à jour' : '+ Ajouter un vaisseau' }}
-        </button>
-      </div>
-    </div>
+                                  >
+                                  {{ editingShip ? 'Mettre à jour' : '+ Ajouter un vaisseau' }}
+                                </button>
+                              </div>
+                            </div>
 
 
-    <!-- Tableau des vaisseaux -->
-    <div class="flex items-center justify-between gap-3">
-      <label class="flex-1 max-w-md">
-        <span class="block text-xs uppercase tracking-[0.14em] text-cyan-200/80 mb-2">Recherche</span>
-        <input
-          [(ngModel)]="shipSearch"
-          (ngModelChange)="onShipSearchChange()"
-          placeholder="Rechercher par nom, marque, focus ou note..."
+                            <!-- Tableau des vaisseaux -->
+                            <div class="flex items-center justify-between gap-3">
+                              <label class="flex-1 max-w-md">
+                                <span class="block text-xs uppercase tracking-[0.14em] text-cyan-200/80 mb-2">Recherche</span>
+                                <input
+                                  [(ngModel)]="shipSearch"
+                                  (ngModelChange)="onShipSearchChange()"
+                                  placeholder="Rechercher par nom, marque, focus ou note..."
           class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-      </label>
-      <span class="text-xs text-gray-300 whitespace-nowrap">{{ filteredShips.length }} résultat(s)</span>
-    </div>
+                                  />
+                                </label>
+                                <span class="text-xs text-gray-300 whitespace-nowrap">{{ filteredShips.length }} résultat(s)</span>
+                              </div>
 
-    <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
-      <table class="min-w-full text-sm text-gray-200">
-        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
-        <tr>
-          <th class="px-4 py-3 text-left">Nom</th>
-          <th class="px-4 py-3 text-left">Marque</th>
-          <th class="px-4 py-3 text-left">Notes</th>
-          <th class="px-4 py-3 text-left">Image</th>
-          <th class="px-4 py-3 text-left">Points de vente</th>
-          <th class="px-4 py-3 text-left">Grilles cargo</th>
-          <th class="px-4 py-3 text-right">Actions</th>
-        </tr>
-        </thead>
+                              <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
+                                <table class="min-w-full text-sm text-gray-200">
+                                  <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
+                                    <tr>
+                                      <th class="px-4 py-3 text-left">Nom</th>
+                                      <th class="px-4 py-3 text-left">Marque</th>
+                                      <th class="px-4 py-3 text-left">Notes</th>
+                                      <th class="px-4 py-3 text-left">Image</th>
+                                      <th class="px-4 py-3 text-left">Points de vente</th>
+                                      <th class="px-4 py-3 text-left">Grilles cargo</th>
+                                      <th class="px-4 py-3 text-right">Actions</th>
+                                    </tr>
+                                  </thead>
 
-        <tbody>
-        <tr
-          *ngFor="let ship of paginatedShips"
-          class="hover:bg-white/10 transition border-b border-white/10"
-        >
-          <td class="px-4 py-3 font-medium">{{ ship.name }}</td>
-          <td class="px-4 py-3">{{ ship.brand?.name }}</td>
-          <td class="px-4 py-3 max-w-xs">
-            <span class="block line-clamp-3 text-xs text-gray-200">{{ ship.notes || '-' }}</span>
-          </td>
-          <td class="px-4 py-3">
-            <img
-              *ngIf="ship.imageUrl"
-              [src]="ship.imageUrl"
-              class="w-32 h-16 rounded-md border border-white/20 object-cover shadow-md"
-            />
-          </td>
-          <td class="px-4 py-3">
-            <div *ngIf="ship.salePoints?.length; else noSalePoints" class="space-y-1">
-              <div *ngFor="let salePoint of ship.salePoints" class="text-xs text-gray-200">
-                {{ salePoint.location }} - {{ salePoint.price | number:'1.0-2' }} aUEC
-              </div>
-            </div>
-            <ng-template #noSalePoints>
-              <span class="text-xs text-gray-400">-</span>
-            </ng-template>
-          </td>
-          <td class="px-4 py-3">
-            <div *ngIf="ship.cargoGrids?.length; else noCargoGrids" class="space-y-1">
-              <div *ngFor="let cargoGrid of ship.cargoGrids" class="text-xs text-gray-200">
-                {{ cargoGrid.sizeX }} × {{ cargoGrid.sizeY }} × {{ cargoGrid.sizeZ }}
-              </div>
-            </div>
-            <ng-template #noCargoGrids>
-              <span class="text-xs text-gray-400">-</span>
-            </ng-template>
-          </td>
-          <td class="px-4 py-3 text-right space-x-3">
-            <button
-              (click)="editShip(ship)"
-              class="text-blue-400 hover:text-blue-300 transition font-medium"
-            >
-              ✏️ Éditer
-            </button>
-            <button
-              (click)="deleteShip(ship.id, ship.name)"
-              class="text-red-400 hover:text-red-300 transition font-medium"
-            >
-              🗑️ Supprimer
-            </button>
-          </td>
-        </tr>
-        <tr *ngIf="!paginatedShips.length">
-          <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-300">
-            Aucun vaisseau trouvé avec cette recherche.
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+                                  <tbody>
+                                    @for (ship of paginatedShips; track ship) {
+                                      <tr
+                                        class="hover:bg-white/10 transition border-b border-white/10"
+                                        >
+                                        <td class="px-4 py-3 font-medium">{{ ship.name }}</td>
+                                        <td class="px-4 py-3">{{ ship.brand?.name }}</td>
+                                        <td class="px-4 py-3 max-w-xs">
+                                          <span class="block line-clamp-3 text-xs text-gray-200">{{ ship.notes || '-' }}</span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                          @if (ship.imageUrl) {
+                                            <img
+                                              [src]="ship.imageUrl"
+                                              class="w-32 h-16 rounded-md border border-white/20 object-cover shadow-md"
+                                              />
+                                          }
+                                        </td>
+                                        <td class="px-4 py-3">
+                                          @if (ship.salePoints?.length) {
+                                            <div class="space-y-1">
+                                              @for (salePoint of ship.salePoints; track salePoint) {
+                                                <div class="text-xs text-gray-200">
+                                                  {{ salePoint.location }} - {{ salePoint.price | number:'1.0-2' }} aUEC
+                                                </div>
+                                              }
+                                            </div>
+                                          } @else {
+                                            <span class="text-xs text-gray-400">-</span>
+                                          }
+                                        </td>
+                                        <td class="px-4 py-3">
+                                          @if (ship.cargoGrids?.length) {
+                                            <div class="space-y-1">
+                                              @for (cargoGrid of ship.cargoGrids; track cargoGrid) {
+                                                <div class="text-xs text-gray-200">
+                                                  {{ cargoGrid.sizeX }} × {{ cargoGrid.sizeY }} × {{ cargoGrid.sizeZ }}
+                                                </div>
+                                              }
+                                            </div>
+                                          } @else {
+                                            <span class="text-xs text-gray-400">-</span>
+                                          }
+                                        </td>
+                                        <td class="px-4 py-3 text-right space-x-3">
+                                          <button
+                                            (click)="editShip(ship)"
+                                            class="text-blue-400 hover:text-blue-300 transition font-medium"
+                                            >
+                                            ✏️ Éditer
+                                          </button>
+                                          <button
+                                            (click)="deleteShip(ship.id, ship.name)"
+                                            class="text-red-400 hover:text-red-300 transition font-medium"
+                                            >
+                                            🗑️ Supprimer
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    }
+                                    @if (!paginatedShips.length) {
+                                      <tr>
+                                        <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-300">
+                                          Aucun vaisseau trouvé avec cette recherche.
+                                        </td>
+                                      </tr>
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-center items-center mt-6 space-x-4 text-gray-300">
-      <button
-        (click)="prevShipPage()"
-        [disabled]="currentShipPage === 1"
-        class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
-      >
-        ◀ Précédent
-      </button>
-      <span>Page {{ currentShipPage }} / {{ totalShipPages }}</span>
-      <button
-        (click)="nextShipPage()"
-        [disabled]="currentShipPage === totalShipPages"
-        class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
-      >
-        Suivant ▶
-      </button>
-    </div>
-  </section>
+                              <!-- Pagination -->
+                              <div class="flex justify-center items-center mt-6 space-x-4 text-gray-300">
+                                <button
+                                  (click)="prevShipPage()"
+                                  [disabled]="currentShipPage === 1"
+                                  class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
+                                  >
+                                  ◀ Précédent
+                                </button>
+                                <span>Page {{ currentShipPage }} / {{ totalShipPages }}</span>
+                                <button
+                                  (click)="nextShipPage()"
+                                  [disabled]="currentShipPage === totalShipPages"
+                                  class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
+                                  >
+                                  Suivant ▶
+                                </button>
+                              </div>
+                            </section>
 
-  <!-- ===================== MARQUES ===================== -->
-  <section class="space-y-8">
-    <div class="flex items-center justify-between">
-      <h2 class="text-3xl font-semibold text-cyan-300">🏷️ Marques</h2>
-    </div>
+                            <!-- ===================== MARQUES ===================== -->
+                            <section class="space-y-8">
+                              <div class="flex items-center justify-between">
+                                <h2 class="text-3xl font-semibold text-cyan-300">🏷️ Marques</h2>
+                              </div>
 
-    <!-- Formulaire d’ajout -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input
-          [(ngModel)]="newBrand.name"
-          placeholder="Nom de la marque"
+                              <!-- Formulaire d’ajout -->
+                              <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-6">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <input
+                                    [(ngModel)]="newBrand.name"
+                                    placeholder="Nom de la marque"
           class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
+                                    />
 
-        <input
-          [(ngModel)]="newBrand.imageUrl"
-          placeholder="URL de l’image"
+                                    <input
+                                      [(ngModel)]="newBrand.imageUrl"
+                                      placeholder="URL de l’image"
           class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-      </div>
+                                      />
+                                    </div>
 
-      <div class="flex justify-end">
-        <button
-          (click)="createOrUpdateBrand()"
-          [disabled]="isSubmittingBrand"
+                                    <div class="flex justify-end">
+                                      <button
+                                        (click)="createOrUpdateBrand()"
+                                        [disabled]="isSubmittingBrand"
           class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
                  text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105
                  disabled:opacity-50"
-        >
-          {{ editingBrand ? 'Mettre à jour' : '+ Ajouter une marque' }}
-        </button>
-      </div>
-    </div>
+                                        >
+                                        {{ editingBrand ? 'Mettre à jour' : '+ Ajouter une marque' }}
+                                      </button>
+                                    </div>
+                                  </div>
 
-    <!-- Tableau des marques -->
-    <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
-      <table class="min-w-full text-sm text-gray-200">
-        <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
-        <tr>
-          <th class="px-4 py-3 text-left">Nom</th>
-          <th class="px-4 py-3 text-left">Image</th>
-          <th class="px-4 py-3 text-right">Actions</th>
-        </tr>
-        </thead>
+                                  <!-- Tableau des marques -->
+                                  <div class="overflow-hidden rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
+                                    <table class="min-w-full text-sm text-gray-200">
+                                      <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
+                                        <tr>
+                                          <th class="px-4 py-3 text-left">Nom</th>
+                                          <th class="px-4 py-3 text-left">Image</th>
+                                          <th class="px-4 py-3 text-right">Actions</th>
+                                        </tr>
+                                      </thead>
 
-        <tbody>
-        <tr
-          *ngFor="let brand of paginatedBrands.slice((brandPage - 1) * itemsPerPage, brandPage * itemsPerPage)"
-          class="hover:bg-white/10 transition border-b border-white/10"
-        >
-          <td class="px-4 py-3 font-medium">{{ brand.name }}</td>
-          <td class="px-4 py-3">
-            <img
-              *ngIf="brand.imageUrl"
-              [src]="brand.imageUrl"
-              class="w-32 h-16 rounded-md border border-white/20 object-cover shadow-md"
-            />
-          </td>
-          <td class="px-4 py-3 text-right space-x-3">
-            <button
-              (click)="editBrand(brand)"
-              class="text-blue-400 hover:text-blue-300 transition font-medium"
-            >
-              ✏️ Éditer
-            </button>
-            <button
-              (click)="deleteBrand(brand.name)"
-              class="text-red-400 hover:text-red-300 transition font-medium"
-            >
-              🗑️ Supprimer
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+                                      <tbody>
+                                        @for (brand of paginatedBrands.slice((brandPage - 1) * itemsPerPage, brandPage * itemsPerPage); track brand) {
+                                          <tr
+                                            class="hover:bg-white/10 transition border-b border-white/10"
+                                            >
+                                            <td class="px-4 py-3 font-medium">{{ brand.name }}</td>
+                                            <td class="px-4 py-3">
+                                              @if (brand.imageUrl) {
+                                                <img
+                                                  [src]="brand.imageUrl"
+                                                  class="w-32 h-16 rounded-md border border-white/20 object-cover shadow-md"
+                                                  />
+                                              }
+                                            </td>
+                                            <td class="px-4 py-3 text-right space-x-3">
+                                              <button
+                                                (click)="editBrand(brand)"
+                                                class="text-blue-400 hover:text-blue-300 transition font-medium"
+                                                >
+                                                ✏️ Éditer
+                                              </button>
+                                              <button
+                                                (click)="deleteBrand(brand.name)"
+                                                class="text-red-400 hover:text-red-300 transition font-medium"
+                                                >
+                                                🗑️ Supprimer
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        }
+                                      </tbody>
+                                    </table>
+                                  </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-center items-center mt-6 space-x-4 text-gray-300">
-      <button
-        (click)="prevBrandPage()"
-        [disabled]="currentBrandPage === 1"
-        class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
-      >
-        ◀ Précédent
-      </button>
-      <span>Page {{ currentBrandPage }} / {{ totalBrandPages }}</span>
-      <button
-        (click)="nextBrandPage()"
-        [disabled]="currentBrandPage === totalBrandPages"
-        class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
-      >
-        Suivant ▶
-      </button>
-    </div>
-  </section>
-</div>
+                                  <!-- Pagination -->
+                                  <div class="flex justify-center items-center mt-6 space-x-4 text-gray-300">
+                                    <button
+                                      (click)="prevBrandPage()"
+                                      [disabled]="currentBrandPage === 1"
+                                      class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
+                                      >
+                                      ◀ Précédent
+                                    </button>
+                                    <span>Page {{ currentBrandPage }} / {{ totalBrandPages }}</span>
+                                    <button
+                                      (click)="nextBrandPage()"
+                                      [disabled]="currentBrandPage === totalBrandPages"
+                                      class="px-4 py-1.5 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition disabled:opacity-40"
+                                      >
+                                      Suivant ▶
+                                    </button>
+                                  </div>
+                                </section>
+                              </div>
 
-<div
-  *ngIf="showInGameDeletionDialog"
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="in-game-deletion-title"
-  (click)="closeInGameDeletionDialog()"
->
-  <div
-    class="w-full max-w-lg overflow-hidden rounded-2xl border border-white/20 bg-slate-900 shadow-2xl"
-    (click)="$event.stopPropagation()"
-  >
-    <div class="border-b border-white/10 px-6 py-5">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">Confirmation</p>
-      <h2 id="in-game-deletion-title" class="mt-2 text-xl font-semibold text-white">
-        Nettoyer les acquisitions en jeu ?
-      </h2>
-    </div>
-
-    <div class="space-y-5 p-6">
-      <div class="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm leading-6 text-gray-200">
-        Les vaisseaux obtenus par <strong>achat en jeu</strong> ou <strong>récompense en jeu</strong>
-        seront retirés de toutes les flottes. Cette action ne peut pas être annulée automatiquement.
-      </div>
-
-      <p *ngIf="inGameDeletionError" class="rounded-lg border border-red-500/60 bg-red-500/15 px-4 py-3 text-sm font-semibold text-red-200">
-        {{ inGameDeletionError }}
-      </p>
-
-      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <button
-          type="button"
-          (click)="closeInGameDeletionDialog()"
-          [disabled]="isDeletingInGameAcquisitions"
-          class="rounded-xl border border-white/20 px-5 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:opacity-40"
-        >
-          Annuler
-        </button>
-        <button
-          type="button"
-          (click)="confirmInGameDeletion()"
-          [disabled]="isDeletingInGameAcquisitions"
-          class="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400/50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {{ isDeletingInGameAcquisitions ? 'Nettoyage en cours...' : 'Confirmer le nettoyage' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+                              @if (showInGameDeletionDialog) {
+                                <div
+                                  class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                                  role="dialog"
+                                  aria-modal="true"
+                                  aria-labelledby="in-game-deletion-title"
+                                  (click)="closeInGameDeletionDialog()"
+                                  >
+                                  <div
+                                    class="w-full max-w-lg overflow-hidden rounded-2xl border border-white/20 bg-slate-900 shadow-2xl"
+                                    (click)="$event.stopPropagation()"
+                                    >
+                                    <div class="border-b border-white/10 px-6 py-5">
+                                      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">Confirmation</p>
+                                      <h2 id="in-game-deletion-title" class="mt-2 text-xl font-semibold text-white">
+                                        Nettoyer les acquisitions en jeu ?
+                                      </h2>
+                                    </div>
+                                    <div class="space-y-5 p-6">
+                                      <div class="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm leading-6 text-gray-200">
+                                        Les vaisseaux obtenus par <strong>achat en jeu</strong> ou <strong>récompense en jeu</strong>
+                                        seront retirés de toutes les flottes. Cette action ne peut pas être annulée automatiquement.
+                                      </div>
+                                      @if (inGameDeletionError) {
+                                        <p class="rounded-lg border border-red-500/60 bg-red-500/15 px-4 py-3 text-sm font-semibold text-red-200">
+                                          {{ inGameDeletionError }}
+                                        </p>
+                                      }
+                                      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                                        <button
+                                          type="button"
+                                          (click)="closeInGameDeletionDialog()"
+                                          [disabled]="isDeletingInGameAcquisitions"
+                                          class="rounded-xl border border-white/20 px-5 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:opacity-40"
+                                          >
+                                          Annuler
+                                        </button>
+                                        <button
+                                          type="button"
+                                          (click)="confirmInGameDeletion()"
+                                          [disabled]="isDeletingInGameAcquisitions"
+                                          class="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                          >
+                                          {{ isDeletingInGameAcquisitions ? 'Nettoyage en cours...' : 'Confirmer le nettoyage' }}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              }

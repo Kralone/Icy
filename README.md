@@ -41,7 +41,7 @@ Images (volume partage via nginx)   Discord
 
 ### Frontend (Angular)
 
-- Base: Angular 20, Tailwind CSS, service worker.
+- Base: Angular 21.2, Tailwind CSS, service worker.
 - Couches: `auth`, `core` (services/interceptors), `features` (pages),
   `shared` (layout, composants partages).
 - Consommation API REST, WebSocket (notifications, temps reel).

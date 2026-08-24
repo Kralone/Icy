@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-icelink-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './icelink-header.component.html',
 })
 export class IceLinkHeaderComponent {

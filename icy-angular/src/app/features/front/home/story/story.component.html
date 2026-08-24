@@ -16,43 +16,45 @@
             alt="Histoire de la Corpo"
             loading="lazy"
             decoding="async"
-          />
-        </div>
-        <div class="story-media__mini" *ngIf="staggeredImages.length > 0">
-          <img
-            [src]="staggeredImages[0]"
-            alt="Vue complementaire"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-      </div>
-    </article>
+            />
+          </div>
+          @if (staggeredImages.length > 0) {
+            <div class="story-media__mini">
+              <img
+                [src]="staggeredImages[0]"
+                alt="Vue complementaire"
+                loading="lazy"
+                decoding="async"
+                />
+              </div>
+            }
+          </div>
+        </article>
 
-    <article class="story-panel story-panel--foundation">
-      <div class="foundation-card">
-        <h2 class="foundation-title">
-          {{strings.sectionTitle}}
-        </h2>
-        <p class="foundation-text" [innerHTML]="strings.sectionParagraph"></p>
-        <p class="foundation-text" [innerHTML]="strings.sectionParagraph2"></p>
-      </div>
+        <article class="story-panel story-panel--foundation">
+          <div class="foundation-card">
+            <h2 class="foundation-title">
+              {{strings.sectionTitle}}
+            </h2>
+            <p class="foundation-text" [innerHTML]="strings.sectionParagraph"></p>
+            <p class="foundation-text" [innerHTML]="strings.sectionParagraph2"></p>
+          </div>
 
-      <div class="foundation-stack">
-        <ng-container *ngFor="let image of staggeredImages.slice(1); let i = index">
-          <img
-            [src]="image"
-            alt="image"
-            class="foundation-stack__image"
-            loading="lazy"
-            decoding="async"
-            [style.animationDelay.ms]="i * 70"
-          />
-        </ng-container>
-      </div>
-    </article>
-  </div>
-</section>
+          <div class="foundation-stack">
+            @for (image of staggeredImages.slice(1); track image; let i = $index) {
+              <img
+                [src]="image"
+                alt="image"
+                class="foundation-stack__image"
+                loading="lazy"
+                decoding="async"
+                [style.animationDelay.ms]="i * 70"
+                />
+              }
+            </div>
+          </article>
+        </div>
+      </section>
 
 
 

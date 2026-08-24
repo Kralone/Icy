@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CollectionsService } from '../../../core/services/collection/collection.service';
@@ -7,7 +7,7 @@ import { CollectionsService } from '../../../core/services/collection/collection
 @Component({
   selector: 'app-collection-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './collection-management.component.html',
 })
 export class CollectionManagementComponent {

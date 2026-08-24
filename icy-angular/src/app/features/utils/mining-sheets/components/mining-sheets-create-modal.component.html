@@ -1,71 +1,77 @@
-<div *ngIf="visible" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>Creer une fiche de minage</h2>
-      <button type="button" class="btn btn-ghost" (click)="close.emit()">Fermer</button>
-    </div>
-
-    <div class="form-grid">
-      <label>
-        Nom de fiche
-        <input type="text" [(ngModel)]="form.sheetName" placeholder="Fiche 12/03 14:42" />
-      </label>
-      <label>
-        Date operation
-        <input type="date" [(ngModel)]="form.operationDate" />
-      </label>
-      <label>
-        Lieu de raffinage
-        <input type="text" [(ngModel)]="form.refineryLocation" placeholder="ARC L1 - Wide Forest Station" />
-      </label>
-      <label>
-        Lieu de vente
-        <input
-          type="text"
-          [ngModel]="form.saleLocation"
-          (ngModelChange)="saleLocationSearchChange.emit($event)"
-          placeholder="Rechercher un terminal de vente"
-        />
-      </label>
-    </div>
-
-    <div class="member-search-list" *ngIf="saleLocationSuggestions.length">
-      <button type="button" *ngFor="let location of saleLocationSuggestions" (click)="saleLocationSelected.emit(location)">
-        {{ location }}
-      </button>
-    </div>
-
-    <div class="member-box">
-      <label>Ajouter des membres</label>
-      <input
-        type="text"
-        [(ngModel)]="form.memberSearch"
-        placeholder="Rechercher un membre"
-      />
-
-      <div class="member-search-list" *ngIf="memberSuggestions.length">
-        <button
-          type="button"
-          *ngFor="let user of memberSuggestions"
-          (click)="addMember.emit(user)"
-        >
-          {{ user.username }}
-        </button>
+@if (visible) {
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Creer une fiche de minage</h2>
+        <button type="button" class="btn btn-ghost" (click)="close.emit()">Fermer</button>
       </div>
-
-      <div class="member-badges">
-        <span class="badge" *ngFor="let member of selectedMembers">
-          {{ member.username }}
-          <button type="button" (click)="removeMember.emit(member.id)">×</button>
-        </span>
+      <div class="form-grid">
+        <label>
+          Nom de fiche
+          <input type="text" [(ngModel)]="form.sheetName" placeholder="Fiche 12/03 14:42" />
+        </label>
+        <label>
+          Date operation
+          <input type="date" [(ngModel)]="form.operationDate" />
+        </label>
+        <label>
+          Lieu de raffinage
+          <input type="text" [(ngModel)]="form.refineryLocation" placeholder="ARC L1 - Wide Forest Station" />
+        </label>
+        <label>
+          Lieu de vente
+          <input
+            type="text"
+            [ngModel]="form.saleLocation"
+            (ngModelChange)="saleLocationSearchChange.emit($event)"
+            placeholder="Rechercher un terminal de vente"
+            />
+          </label>
+        </div>
+        @if (saleLocationSuggestions.length) {
+          <div class="member-search-list">
+            @for (location of saleLocationSuggestions; track location) {
+              <button type="button" (click)="saleLocationSelected.emit(location)">
+                {{ location }}
+              </button>
+            }
+          </div>
+        }
+        <div class="member-box">
+          <label>Ajouter des membres</label>
+          <input
+            type="text"
+            [(ngModel)]="form.memberSearch"
+            placeholder="Rechercher un membre"
+            />
+            @if (memberSuggestions.length) {
+              <div class="member-search-list">
+                @for (user of memberSuggestions; track user) {
+                  <button
+                    type="button"
+                    (click)="addMember.emit(user)"
+                    >
+                    {{ user.username }}
+                  </button>
+                }
+              </div>
+            }
+            <div class="member-badges">
+              @for (member of selectedMembers; track member) {
+                <span class="badge">
+                  {{ member.username }}
+                  <button type="button" (click)="removeMember.emit(member.id)">×</button>
+                </span>
+              }
+            </div>
+          </div>
+          @if (actionError) {
+            <div class="state-card state-card--error">{{ actionError }}</div>
+          }
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" (click)="close.emit()">Annuler</button>
+            <button type="button" class="btn btn-primary" [disabled]="saving" (click)="submit.emit()">Creer la fiche</button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div *ngIf="actionError" class="state-card state-card--error">{{ actionError }}</div>
-
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" (click)="close.emit()">Annuler</button>
-      <button type="button" class="btn btn-primary" [disabled]="saving" (click)="submit.emit()">Creer la fiche</button>
-    </div>
-  </div>
-</div>
+    }

@@ -4,46 +4,57 @@
     <span>{{ historySheets.length }} fiche(s)</span>
   </div>
 
-  <div *ngIf="!historySheets.length" class="empty">Aucune fiche finalisee.</div>
+  @if (!historySheets.length) {
+    <div class="empty">Aucune fiche finalisee.</div>
+  }
 
-  <article *ngFor="let sheet of historySheets" class="history-item">
-    <button type="button" class="history-toggle" (click)="toggleSheet(sheet.id)">
-      <div class="history-title">
-        <strong>{{ sheet.sheetName }}</strong>
-        <span>{{ sheet.refineryLocation }}</span>
+  @for (sheet of historySheets; track sheet) {
+    <article class="history-item">
+      <button type="button" class="history-toggle" (click)="toggleSheet(sheet.id)">
+        <div class="history-title">
+          <strong>{{ sheet.sheetName }}</strong>
+          <span>{{ sheet.refineryLocation }}</span>
+        </div>
+        <div class="history-meta">
+          <span>{{ sheet.members.length }} membre(s)</span>
+          <span>{{ sheet.jobs.length }} job(s)</span>
+          <span class="history-arrow">{{ isExpanded(sheet.id) ? '▾' : '▸' }}</span>
+        </div>
+      </button>
+      @if (isExpanded(sheet.id)) {
+        <div class="history-content">
+          <div class="history-kpis">
+            <article>
+              <span>Estimation</span>
+              <strong>{{ formatNumber(sheet.summary.totalEstimatedAuec) }} aUEC</strong>
+            </article>
+            <article>
+              <span>Couts</span>
+              <strong class="history-negative">{{ formatNegative(sheet.summary.totalCostsAuec) }} aUEC</strong>
+            </article>
+            <article>
+              <span>Net</span>
+              <strong>{{ formatNumber(sheet.summary.netEstimatedAuec) }} aUEC</strong>
+            </article>
+          </div>
+          <p class="history-line">
+            <strong>Raffinage:</strong> {{ sheet.refineryLocation }}
+            @if (sheet.saleLocation) {
+              <span> • <strong>Vente:</strong> {{ sheet.saleLocation }}</span>
+            }
+          </p>
+          @if (sheet.summary.ores.length) {
+            <p class="history-line">
+              <strong>Top minerais:</strong>
+              @for (ore of sheet.summary.ores.slice(0, 4); track ore; let last = $last) {
+                {{ ore.oreName }} ({{ formatNumber(ore.totalScu) }} SCU)@if (!last) {
+                <span>, </span>
+              }
+            }
+          </p>
+        }
       </div>
-      <div class="history-meta">
-        <span>{{ sheet.members.length }} membre(s)</span>
-        <span>{{ sheet.jobs.length }} job(s)</span>
-        <span class="history-arrow">{{ isExpanded(sheet.id) ? '▾' : '▸' }}</span>
-      </div>
-    </button>
-
-    <div *ngIf="isExpanded(sheet.id)" class="history-content">
-      <div class="history-kpis">
-        <article>
-          <span>Estimation</span>
-          <strong>{{ formatNumber(sheet.summary.totalEstimatedAuec) }} aUEC</strong>
-        </article>
-        <article>
-          <span>Couts</span>
-          <strong class="history-negative">{{ formatNegative(sheet.summary.totalCostsAuec) }} aUEC</strong>
-        </article>
-        <article>
-          <span>Net</span>
-          <strong>{{ formatNumber(sheet.summary.netEstimatedAuec) }} aUEC</strong>
-        </article>
-      </div>
-      <p class="history-line">
-        <strong>Raffinage:</strong> {{ sheet.refineryLocation }}
-        <span *ngIf="sheet.saleLocation"> • <strong>Vente:</strong> {{ sheet.saleLocation }}</span>
-      </p>
-      <p class="history-line" *ngIf="sheet.summary.ores.length">
-        <strong>Top minerais:</strong>
-        <ng-container *ngFor="let ore of sheet.summary.ores.slice(0, 4); let last = last">
-          {{ ore.oreName }} ({{ formatNumber(ore.totalScu) }} SCU)<span *ngIf="!last">, </span>
-        </ng-container>
-      </p>
-    </div>
+    }
   </article>
+}
 </section>

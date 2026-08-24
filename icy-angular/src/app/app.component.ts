@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ViewChild, TemplateRef, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser, NgIf, ViewportScroller } from '@angular/common';
+import { isPlatformBrowser, ViewportScroller } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import {VersionService} from './core/services/config/version.service';
@@ -12,10 +12,9 @@ import { PublicTopbarComponent } from './features/front/public-topbar/public-top
   standalone: true,
   templateUrl: './app.component.html',
   imports: [
-    NgIf,
     RouterOutlet,
     PublicTopbarComponent
-  ],
+],
   styleUrl: './app.component.css',
   animations: []
 })

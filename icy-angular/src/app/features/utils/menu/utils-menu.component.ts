@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
@@ -18,11 +18,10 @@ type UtilityMenuItem = {
   standalone: true,
   selector: 'app-utils-menu',
   imports: [
-    CommonModule,
     RouterLink,
     RankOrbitComponent,
     LoadingOverlayComponent
-  ],
+],
   templateUrl: './utils-menu.component.html',
   styleUrl: './utils-menu.component.css'
 })

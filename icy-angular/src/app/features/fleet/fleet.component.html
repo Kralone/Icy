@@ -15,69 +15,69 @@
   </div>
 
   <!-- Résumé -->
-  <ng-container *ngIf="!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0; else noFleet">
-
-    <div *ngFor="let focus of objectKeys(fleetSummary)" class="mb-12">
-      <div class="flex flex-col lg:flex-row gap-6">
-        <div class="lg:w-1/4 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Focus</p>
-          <h3 class="text-2xl font-semibold text-cyan-200 mt-2">{{ focus }}</h3>
-          <div class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-            <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-            {{ fleetSummary[focus].length }} vaisseaux
+  @if (!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0) {
+    @for (focus of objectKeys(fleetSummary); track focus) {
+      <div class="mb-12">
+        <div class="flex flex-col lg:flex-row gap-6">
+          <div class="lg:w-1/4 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Focus</p>
+            <h3 class="text-2xl font-semibold text-cyan-200 mt-2">{{ focus }}</h3>
+            <div class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+              <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+              {{ fleetSummary[focus].length }} vaisseaux
+            </div>
           </div>
-        </div>
-
-        <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          <div
-            *ngFor="let ship of fleetSummary[focus]; let i = index"
-            class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
-          >
-            <div class="relative w-full" style="aspect-ratio: 4 / 3;">
-              <img
-                *ngIf="ship.imageUrl"
-                [src]="ship.imageUrl"
-                alt="{{ ship.name }}"
-                class="absolute inset-0 h-full w-full object-cover opacity-90"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
-              <div class="absolute top-3 left-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
-                {{ i + 1 }}
+          <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            @for (ship of fleetSummary[focus]; track ship; let i = $index) {
+              <div
+                class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
+                >
+                <div class="relative w-full" style="aspect-ratio: 4 / 3;">
+                  @if (ship.imageUrl) {
+                    <img
+                      [src]="ship.imageUrl"
+                      alt="{{ ship.name }}"
+                      class="absolute inset-0 h-full w-full object-cover opacity-90"
+                      />
+                  }
+                  <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
+                  <div class="absolute top-3 left-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
+                    {{ i + 1 }}
+                  </div>
+                  @if (ship.brandImageUrl) {
+                    <img
+                      [src]="ship.brandImageUrl"
+                      alt="Logo marque"
+                      class="absolute top-3 right-3 w-14 h-14 object-contain rounded-full bg-white/40 p-3 shadow-md"
+                      />
+                  }
+                </div>
+                <div class="p-4 space-y-2">
+                  <div class="text-lg font-semibold text-white truncate" [title]="ship.name">
+                    {{ ship.name }}
+                  </div>
+                  <div class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
+                    <span class="h-2 w-2 rounded-full bg-cyan-400/80"></span>
+                    {{ focus }}
+                  </div>
+                </div>
               </div>
-              <img
-                *ngIf="ship.brandImageUrl"
-                [src]="ship.brandImageUrl"
-                alt="Logo marque"
-                class="absolute top-3 right-3 w-14 h-14 object-contain rounded-full bg-white/40 p-3 shadow-md"
-              />
-            </div>
-
-            <div class="p-4 space-y-2">
-            <div class="text-lg font-semibold text-white truncate" [title]="ship.name">
-              {{ ship.name }}
-            </div>
-              <div class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
-                <span class="h-2 w-2 rounded-full bg-cyan-400/80"></span>
-                {{ focus }}
-              </div>
-            </div>
+            }
           </div>
         </div>
       </div>
-    </div>
-
-  </ng-container>
-
-  <!-- Aucun vaisseau -->
-  <ng-template #noFleet>
+    }
+  } @else {
     <div class="flex flex-col items-center justify-center h-96 text-slate-400">
       <svg class="w-14 h-14 mb-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-      <p class="text-lg italic">Aucun vaisseau dans la flotte.</p>
-    </div>
-  </ng-template>
-</div>
+          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <p class="text-lg italic">Aucun vaisseau dans la flotte.</p>
+      </div>
+    }
+
+    <!-- Aucun vaisseau -->
+  </div>
 
 

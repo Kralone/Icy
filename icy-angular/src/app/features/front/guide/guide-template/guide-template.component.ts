@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   AfterViewInit,
   Component,
@@ -19,7 +19,7 @@ import { GuideContentBlock, GuideDocument, GuideGlossaryItem, GuideSection } fro
 @Component({
   selector: 'front-guide-template',
   standalone: true,
-  imports: [CommonModule, GuideTopbarComponent],
+  imports: [GuideTopbarComponent],
   templateUrl: './guide-template.component.html',
   styleUrl: './guide-template.component.css',
   encapsulation: ViewEncapsulation.None

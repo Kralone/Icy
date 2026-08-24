@@ -1,12 +1,10 @@
 import { Component } from '@angular/core';
-import {NgForOf} from "@angular/common";
+
 import strings from '../../../../../assets/i18n/front.json';
 
 @Component({
   selector: 'front-carousel',
-    imports: [
-        NgForOf
-    ],
+    imports: [],
   templateUrl: './caroussel.component.html',
   styleUrl: './caroussel.component.css'
 })

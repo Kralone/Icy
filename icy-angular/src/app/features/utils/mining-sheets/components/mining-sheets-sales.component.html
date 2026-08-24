@@ -22,320 +22,341 @@
       <p>Un seul champ de montant pour toutes les fiches selectionnees.</p>
     </div>
 
-    <div *ngIf="openSaleSheets.length; else saleReadOnlyBlock" class="sales-declare-body">
-      <div class="sheet-actions">
-        <button type="button" class="btn btn-ghost" [disabled]="!openSaleSheets.length" (click)="selectAllSheets()">Tout selectionner</button>
-        <button type="button" class="btn btn-ghost" [disabled]="!selectedSaleSheets.length" (click)="clearSelectedSheets()">Tout retirer</button>
-      </div>
-
-      <div class="sheet-select-list">
-        <label
-          *ngFor="let saleSheet of openSaleSheets; trackBy: trackSheet"
-          class="sheet-option"
-          [class.is-selected]="isSheetSelected(saleSheet.id)"
-        >
-          <input
-            type="checkbox"
-            [ngModel]="isSheetSelected(saleSheet.id)"
-            (ngModelChange)="setSheetSelection(saleSheet.id, $event)"
-          />
-          <span class="sheet-option-main">{{ saleSheet.sheetName }}</span>
-          <span class="sheet-option-meta">{{ toDisplayDate(saleSheet.operationDate) }} • {{ saleSheet.refineryLocation }}</span>
-        </label>
-      </div>
-
-      <div class="sales-single-input-row">
-        <label class="sales-input-field">
-          Montant declare (aUEC)
-          <input
-            type="text"
-            inputmode="numeric"
-            [ngModel]="declarationAmountInput"
-            (ngModelChange)="onDeclarationAmountChange($event)"
-            placeholder="Ex: 1250000"
-          />
-        </label>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving || isDeclarationInvalid()"
-          (click)="submitSales()"
-        >
-          Declarer {{ plannedSheetsCount }} fiche(s) • {{ formatNumber(plannedTotalAuec) }} aUEC
-        </button>
-      </div>
-
-      <div *ngIf="allocatedEntries.length" class="allocation-preview">
-        <h5>Repartition par fiche</h5>
-        <ul>
-          <li *ngFor="let entry of allocatedEntries">
-            <span>{{ saleSheetName(entry.sheetId) }}</span>
-            <strong>{{ formatNumber(entry.creditAuec) }} aUEC</strong>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="sales-sankey">
-    <div class="sales-sankey-head">
-      <h4>Diagramme Sankey</h4>
-      <p>Selection multi-fiches: flux nets des joueurs qui doivent reverser a gauche vers les beneficiaires a droite ({{ sankeyScopeLabel }}).</p>
-    </div>
-
-    <div *ngIf="openSaleSheets.length" class="sankey-sheet-picker">
-      <div class="sankey-sheet-picker-head">
-        <span>Fiches incluses dans le diagramme</span>
-        <div class="sankey-sheet-picker-actions">
-          <button type="button" class="btn btn-ghost" [disabled]="!openSaleSheets.length" (click)="selectAllSankeySheets()">Tout selectionner</button>
-          <button type="button" class="btn btn-ghost" [disabled]="!selectedSankeySheets.length" (click)="clearSelectedSankeySheets()">Tout retirer</button>
+    @if (openSaleSheets.length) {
+      <div class="sales-declare-body">
+        <div class="sheet-actions">
+          <button type="button" class="btn btn-ghost" [disabled]="!openSaleSheets.length" (click)="selectAllSheets()">Tout selectionner</button>
+          <button type="button" class="btn btn-ghost" [disabled]="!selectedSaleSheets.length" (click)="clearSelectedSheets()">Tout retirer</button>
         </div>
-      </div>
-      <div class="sankey-sheet-picker-list">
-        <label
-          *ngFor="let saleSheet of openSaleSheets; trackBy: trackSheet"
-          class="sankey-sheet-chip"
-          [class.is-selected]="isSankeySheetSelected(saleSheet.id)"
-        >
-          <input
-            type="checkbox"
-            [ngModel]="isSankeySheetSelected(saleSheet.id)"
-            (ngModelChange)="setSankeySheetSelection(saleSheet.id, $event)"
-          />
-          <span>{{ saleSheet.sheetName }}</span>
-        </label>
-      </div>
-    </div>
+        <div class="sheet-select-list">
+          @for (saleSheet of openSaleSheets; track trackSheet($index, saleSheet)) {
+            <label
+              class="sheet-option"
+              [class.is-selected]="isSheetSelected(saleSheet.id)"
+              >
+              <input
+                type="checkbox"
+                [ngModel]="isSheetSelected(saleSheet.id)"
+                (ngModelChange)="setSheetSelection(saleSheet.id, $event)"
+                />
+                <span class="sheet-option-main">{{ saleSheet.sheetName }}</span>
+                <span class="sheet-option-meta">{{ toDisplayDate(saleSheet.operationDate) }} • {{ saleSheet.refineryLocation }}</span>
+              </label>
+            }
+          </div>
+          <div class="sales-single-input-row">
+            <label class="sales-input-field">
+              Montant declare (aUEC)
+              <input
+                type="text"
+                inputmode="numeric"
+                [ngModel]="declarationAmountInput"
+                (ngModelChange)="onDeclarationAmountChange($event)"
+                placeholder="Ex: 1250000"
+                />
+              </label>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="saving || isDeclarationInvalid()"
+                (click)="submitSales()"
+                >
+                Declarer {{ plannedSheetsCount }} fiche(s) • {{ formatNumber(plannedTotalAuec) }} aUEC
+              </button>
+            </div>
+            @if (allocatedEntries.length) {
+              <div class="allocation-preview">
+                <h5>Repartition par fiche</h5>
+                <ul>
+                  @for (entry of allocatedEntries; track entry) {
+                    <li>
+                      <span>{{ saleSheetName(entry.sheetId) }}</span>
+                      <strong>{{ formatNumber(entry.creditAuec) }} aUEC</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="sales-readonly">
+            Aucune fiche ouverte n'est disponible.
+          </div>
+        }
+      </section>
 
-    <ng-container *ngIf="sankeyDiagram as diagram; else sankeyEmptyBlock">
-      <div class="sales-sankey-wrap">
-        <div class="sankey-columns">
-          <span>Doivent reverser</span>
-          <span>A recevoir</span>
+      <section class="sales-sankey">
+        <div class="sales-sankey-head">
+          <h4>Diagramme Sankey</h4>
+          <p>Selection multi-fiches: flux nets des joueurs qui doivent reverser a gauche vers les beneficiaires a droite ({{ sankeyScopeLabel }}).</p>
         </div>
-        <svg
-          class="sales-sankey-svg"
-          [attr.viewBox]="'0 0 ' + diagram.width + ' ' + diagram.height"
-          preserveAspectRatio="xMidYMid meet"
-          role="img"
-          aria-label="Diagramme Sankey des repartitions de vente"
-        >
-          <g class="sankey-links">
-            <path
-              *ngFor="let link of diagram.links; trackBy: trackSankeyLink"
-              class="sankey-link"
-              [attr.d]="link.path"
-              [attr.fill]="link.color"
-              [attr.fill-opacity]="link.opacity"
-              stroke="none"
-            >
-              <title>{{ link.sourceLabel }} → {{ link.targetLabel }} : {{ formatNumber(link.amountAuec) }} aUEC</title>
-            </path>
-          </g>
-          <g class="sankey-values">
-            <text
-              *ngFor="let link of diagram.links; trackBy: trackSankeyLink"
-              class="sankey-flow-value"
-              [class.is-left]="link.segment === 'LEFT'"
-              [class.is-right]="link.segment === 'RIGHT'"
-              [attr.x]="link.valueLabelX"
-              [attr.y]="link.valueLabelY"
-              [attr.text-anchor]="link.valueLabelAnchor"
-              dominant-baseline="middle"
-            >
-              {{ formatNumber(link.amountAuec) }}
-            </text>
-          </g>
-          <g class="sankey-nodes">
-            <g *ngFor="let node of diagram.nodes; trackBy: trackSankeyNode">
-              <rect
-                [attr.x]="node.x"
-                [attr.y]="node.y"
-                [attr.width]="node.width"
-                [attr.height]="node.height"
-                [attr.fill]="node.color"
-                [attr.opacity]="node.side === 'SOURCE' ? 0.88 : (node.side === 'MIDDLE' ? 0.82 : 0.7)"
-                [attr.stroke]="node.side === 'TARGET' ? '#94a3b8' : node.color"
-                [attr.stroke-width]="node.side === 'TARGET' ? 1 : 0.6"
-                rx="4"
-                ry="4"
-              >
-                <title>{{ node.label }} : {{ formatNumber(node.valueAuec) }} aUEC</title>
-              </rect>
-              <text
-                [attr.x]="sankeyLabelX(node)"
-                [attr.y]="sankeyLabelY(node)"
-                [attr.text-anchor]="sankeyLabelAnchor(node)"
-                dominant-baseline="middle"
-                class="sankey-node-label"
-              >
-                {{ node.label }}
-              </text>
-              <text
-                *ngIf="node.side === 'SOURCE'"
-                [attr.x]="sankeyLabelX(node)"
-                [attr.y]="sankeyLabelY(node) + 13"
-                text-anchor="end"
-                dominant-baseline="middle"
-                class="sankey-node-credit"
-              >
-                {{ formatNumber(node.valueAuec) }} aUEC
-              </text>
-            </g>
-          </g>
-        </svg>
-      </div>
-    </ng-container>
-  </section>
 
-  <ng-template #sankeyEmptyBlock>
-    <div class="sales-empty">
-      {{ sankeyEmptyMessage }}
-    </div>
-  </ng-template>
+        @if (openSaleSheets.length) {
+          <div class="sankey-sheet-picker">
+            <div class="sankey-sheet-picker-head">
+              <span>Fiches incluses dans le diagramme</span>
+              <div class="sankey-sheet-picker-actions">
+                <button type="button" class="btn btn-ghost" [disabled]="!openSaleSheets.length" (click)="selectAllSankeySheets()">Tout selectionner</button>
+                <button type="button" class="btn btn-ghost" [disabled]="!selectedSankeySheets.length" (click)="clearSelectedSankeySheets()">Tout retirer</button>
+              </div>
+            </div>
+            <div class="sankey-sheet-picker-list">
+              @for (saleSheet of openSaleSheets; track trackSheet($index, saleSheet)) {
+                <label
+                  class="sankey-sheet-chip"
+                  [class.is-selected]="isSankeySheetSelected(saleSheet.id)"
+                  >
+                  <input
+                    type="checkbox"
+                    [ngModel]="isSankeySheetSelected(saleSheet.id)"
+                    (ngModelChange)="setSankeySheetSelection(saleSheet.id, $event)"
+                    />
+                    <span>{{ saleSheet.sheetName }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
 
-  <ng-template #saleReadOnlyBlock>
-    <div class="sales-readonly">
-      Aucune fiche ouverte n'est disponible.
-    </div>
-  </ng-template>
+          @if (sankeyDiagram; as diagram) {
+            <div class="sales-sankey-wrap">
+              <div class="sankey-columns">
+                <span>Doivent reverser</span>
+                <span>A recevoir</span>
+              </div>
+              <svg
+                class="sales-sankey-svg"
+                [attr.viewBox]="'0 0 ' + diagram.width + ' ' + diagram.height"
+                preserveAspectRatio="xMidYMid meet"
+                role="img"
+                aria-label="Diagramme Sankey des repartitions de vente"
+                >
+                <g class="sankey-links">
+                  @for (link of diagram.links; track trackSankeyLink($index, link)) {
+                    <path
+                      class="sankey-link"
+                      [attr.d]="link.path"
+                      [attr.fill]="link.color"
+                      [attr.fill-opacity]="link.opacity"
+                      stroke="none"
+                      >
+                      <title>{{ link.sourceLabel }} → {{ link.targetLabel }} : {{ formatNumber(link.amountAuec) }} aUEC</title>
+                    </path>
+                  }
+                </g>
+                <g class="sankey-values">
+                  @for (link of diagram.links; track trackSankeyLink($index, link)) {
+                    <text
+                      class="sankey-flow-value"
+                      [class.is-left]="link.segment === 'LEFT'"
+                      [class.is-right]="link.segment === 'RIGHT'"
+                      [attr.x]="link.valueLabelX"
+                      [attr.y]="link.valueLabelY"
+                      [attr.text-anchor]="link.valueLabelAnchor"
+                      dominant-baseline="middle"
+                      >
+                      {{ formatNumber(link.amountAuec) }}
+                    </text>
+                  }
+                </g>
+                <g class="sankey-nodes">
+                  @for (node of diagram.nodes; track trackSankeyNode($index, node)) {
+                    <g>
+                      <rect
+                        [attr.x]="node.x"
+                        [attr.y]="node.y"
+                        [attr.width]="node.width"
+                        [attr.height]="node.height"
+                        [attr.fill]="node.color"
+                        [attr.opacity]="node.side === 'SOURCE' ? 0.88 : (node.side === 'MIDDLE' ? 0.82 : 0.7)"
+                        [attr.stroke]="node.side === 'TARGET' ? '#94a3b8' : node.color"
+                        [attr.stroke-width]="node.side === 'TARGET' ? 1 : 0.6"
+                        rx="4"
+                        ry="4"
+                        >
+                        <title>{{ node.label }} : {{ formatNumber(node.valueAuec) }} aUEC</title>
+                      </rect>
+                      <text
+                        [attr.x]="sankeyLabelX(node)"
+                        [attr.y]="sankeyLabelY(node)"
+                        [attr.text-anchor]="sankeyLabelAnchor(node)"
+                        dominant-baseline="middle"
+                        class="sankey-node-label"
+                        >
+                        {{ node.label }}
+                      </text>
+                      @if (node.side === 'SOURCE') {
+                        <text
+                          [attr.x]="sankeyLabelX(node)"
+                          [attr.y]="sankeyLabelY(node) + 13"
+                          text-anchor="end"
+                          dominant-baseline="middle"
+                          class="sankey-node-credit"
+                          >
+                          {{ formatNumber(node.valueAuec) }} aUEC
+                        </text>
+                      }
+                    </g>
+                  }
+                </g>
+              </svg>
+            </div>
+          } @else {
+            <div class="sales-empty">
+              {{ sankeyEmptyMessage }}
+            </div>
+          }
+        </section>
 
-  <section class="sales-groups">
-    <div class="sales-groups-head">
-      <h4>Suivi detaille par fiche ouverte</h4>
-      <p>Vue globale groupee par fiche, avec tri et filtres communs.</p>
-    </div>
 
-    <div class="sales-groups-controls">
-      <label class="sales-input-field sales-filter-field">
-        Rechercher une fiche
-        <input
-          type="search"
-          [ngModel]="groupSearchInput"
-          (ngModelChange)="onGroupSearchChange($event)"
-          placeholder="Nom de fiche, lieu, date..."
-        />
-      </label>
-      <label class="sales-input-field sales-filter-field">
-        Tri global
-        <select [(ngModel)]="groupSortKey">
-          <option value="LAST_DEPOSIT">Dernier depot</option>
-          <option value="SHEET_NAME">Nom de fiche</option>
-          <option value="TOTAL_DECLARED">Total declare</option>
-          <option value="TOTAL_TO_REVERSE">Total a reverser</option>
-        </select>
-      </label>
-      <label class="sales-input-field sales-filter-field">
-        Fiche affichee
-        <select
-          [ngModel]="effectiveFocusedGroupSheetId"
-          (ngModelChange)="onFocusedGroupChange($event)"
-          [disabled]="!visibleSaleGroupRows.length"
-        >
-          <option *ngFor="let row of visibleSaleGroupRows; trackBy: trackSaleGroupRow" [value]="row.sheet.id">
-            {{ row.sheet.sheetName }}
-          </option>
-        </select>
-      </label>
-      <button type="button" class="btn btn-ghost btn-sort-direction" (click)="toggleGroupSortDirection()">
-        Ordre: {{ groupSortDirectionLabel }}
-      </button>
-    </div>
 
-    <div *ngIf="displayedSaleGroupRows.length; else noOpenSheetRows" class="sales-groups-list">
-      <article *ngFor="let row of displayedSaleGroupRows; trackBy: trackSaleGroupRow" class="sales-group-card">
-        <header class="sales-group-head">
-          <div>
-            <h5>{{ row.sheet.sheetName }}</h5>
-            <p>{{ toDisplayDate(row.sheet.operationDate) }} • {{ row.sheet.refineryLocation }}</p>
+        <section class="sales-groups">
+          <div class="sales-groups-head">
+            <h4>Suivi detaille par fiche ouverte</h4>
+            <p>Vue globale groupee par fiche, avec tri et filtres communs.</p>
           </div>
-          <div class="sales-group-kpis">
-            <span>{{ row.depositsCount }} depot(s)</span>
-            <span>{{ row.beneficiariesCount }} beneficiaire(s)</span>
-            <span>{{ formatNumber(row.totalDeclaredAuec) }} aUEC declares</span>
-            <span>{{ formatNumber(row.totalToReverseAuec) }} aUEC a reverser</span>
-          </div>
-        </header>
 
-        <details class="sales-group-section" open>
-          <summary>Depots</summary>
-          <div *ngIf="row.sheet.sales.length; else noGroupSales" class="table-wrap sales-group-content">
-            <table>
-              <thead>
-              <tr>
-                <th>Vendeur</th>
-                <th>Credit declare</th>
-                <th>Declare le</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let sale of row.sheet.sales; trackBy: trackSale" class="sale-row">
-                <td>{{ sale.declaredBy.username }}</td>
-                <td>{{ formatNumber(sale.creditAuec) }} aUEC</td>
-                <td>{{ toDisplayDateTime(sale.declaredAt) }}</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <ng-template #noGroupSales>
-            <div class="sales-empty">Aucun depot sur cette fiche.</div>
-          </ng-template>
-        </details>
+          <div class="sales-groups-controls">
+            <label class="sales-input-field sales-filter-field">
+              Rechercher une fiche
+              <input
+                type="search"
+                [ngModel]="groupSearchInput"
+                (ngModelChange)="onGroupSearchChange($event)"
+                placeholder="Nom de fiche, lieu, date..."
+                />
+              </label>
+              <label class="sales-input-field sales-filter-field">
+                Tri global
+                <select [(ngModel)]="groupSortKey">
+                  <option value="LAST_DEPOSIT">Dernier depot</option>
+                  <option value="SHEET_NAME">Nom de fiche</option>
+                  <option value="TOTAL_DECLARED">Total declare</option>
+                  <option value="TOTAL_TO_REVERSE">Total a reverser</option>
+                </select>
+              </label>
+              <label class="sales-input-field sales-filter-field">
+                Fiche affichee
+                <select
+                  [ngModel]="effectiveFocusedGroupSheetId"
+                  (ngModelChange)="onFocusedGroupChange($event)"
+                  [disabled]="!visibleSaleGroupRows.length"
+                  >
+                  @for (row of visibleSaleGroupRows; track trackSaleGroupRow($index, row)) {
+                    <option [value]="row.sheet.id">
+                      {{ row.sheet.sheetName }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <button type="button" class="btn btn-ghost btn-sort-direction" (click)="toggleGroupSortDirection()">
+                Ordre: {{ groupSortDirectionLabel }}
+              </button>
+            </div>
 
-        <details class="sales-group-section">
-          <summary>Repartition par joueur</summary>
-          <div *ngIf="row.sheet.summary.saleSettlements.length; else noGroupSettlements" class="table-wrap sales-group-content">
-            <table>
-              <thead>
-              <tr>
-                <th>Utilisateur</th>
-                <th>Participation estimee</th>
-                <th>A verser</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let settlement of row.sheet.summary.saleSettlements; trackBy: trackSettlement">
-                <td>{{ settlement.username }}</td>
-                <td>{{ formatNumber(settlement.grossEstimateAuec) }}</td>
-                <td class="sales-payout">{{ formatSigned(settlement.payoutAuec) }}</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <ng-template #noGroupSettlements>
-            <div class="sales-empty">Aucune repartition disponible.</div>
-          </ng-template>
-        </details>
+            @if (displayedSaleGroupRows.length) {
+              <div class="sales-groups-list">
+                @for (row of displayedSaleGroupRows; track trackSaleGroupRow($index, row)) {
+                  <article class="sales-group-card">
+                    <header class="sales-group-head">
+                      <div>
+                        <h5>{{ row.sheet.sheetName }}</h5>
+                        <p>{{ toDisplayDate(row.sheet.operationDate) }} • {{ row.sheet.refineryLocation }}</p>
+                      </div>
+                      <div class="sales-group-kpis">
+                        <span>{{ row.depositsCount }} depot(s)</span>
+                        <span>{{ row.beneficiariesCount }} beneficiaire(s)</span>
+                        <span>{{ formatNumber(row.totalDeclaredAuec) }} aUEC declares</span>
+                        <span>{{ formatNumber(row.totalToReverseAuec) }} aUEC a reverser</span>
+                      </div>
+                    </header>
+                    <details class="sales-group-section" open>
+                      <summary>Depots</summary>
+                      @if (row.sheet.sales.length) {
+                        <div class="table-wrap sales-group-content">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Vendeur</th>
+                                <th>Credit declare</th>
+                                <th>Declare le</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (sale of row.sheet.sales; track trackSale($index, sale)) {
+                                <tr class="sale-row">
+                                  <td>{{ sale.declaredBy.username }}</td>
+                                  <td>{{ formatNumber(sale.creditAuec) }} aUEC</td>
+                                  <td>{{ toDisplayDateTime(sale.declaredAt) }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      } @else {
+                        <div class="sales-empty">Aucun depot sur cette fiche.</div>
+                      }
+                    </details>
+                    <details class="sales-group-section">
+                      <summary>Repartition par joueur</summary>
+                      @if (row.sheet.summary.saleSettlements.length) {
+                        <div class="table-wrap sales-group-content">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Utilisateur</th>
+                                <th>Participation estimee</th>
+                                <th>A verser</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (settlement of row.sheet.summary.saleSettlements; track trackSettlement($index, settlement)) {
+                                <tr>
+                                  <td>{{ settlement.username }}</td>
+                                  <td>{{ formatNumber(settlement.grossEstimateAuec) }}</td>
+                                  <td class="sales-payout">{{ formatSigned(settlement.payoutAuec) }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      } @else {
+                        <div class="sales-empty">Aucune repartition disponible.</div>
+                      }
+                    </details>
+                    <details class="sales-group-section">
+                      <summary>Transferts a effectuer</summary>
+                      @if (row.sheet.summary.saleTransfers.length) {
+                        <div class="table-wrap sales-group-content">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Vendeur</th>
+                                <th>Doit reverser a</th>
+                                <th>Montant</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (transfer of row.sheet.summary.saleTransfers; track trackTransfer($index, transfer)) {
+                                <tr>
+                                  <td>{{ transfer.fromUsername }}</td>
+                                  <td>{{ transfer.toUsername }}</td>
+                                  <td class="sales-payout">{{ formatNumber(transfer.amountAuec) }} aUEC</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      } @else {
+                        <div class="sales-empty">Aucun transfert a effectuer.</div>
+                      }
+                    </details>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="sales-empty">Aucune fiche ouverte ne correspond aux filtres.</div>
+            }
 
-        <details class="sales-group-section">
-          <summary>Transferts a effectuer</summary>
-          <div *ngIf="row.sheet.summary.saleTransfers.length; else noGroupTransfers" class="table-wrap sales-group-content">
-            <table>
-              <thead>
-              <tr>
-                <th>Vendeur</th>
-                <th>Doit reverser a</th>
-                <th>Montant</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let transfer of row.sheet.summary.saleTransfers; trackBy: trackTransfer">
-                <td>{{ transfer.fromUsername }}</td>
-                <td>{{ transfer.toUsername }}</td>
-                <td class="sales-payout">{{ formatNumber(transfer.amountAuec) }} aUEC</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <ng-template #noGroupTransfers>
-            <div class="sales-empty">Aucun transfert a effectuer.</div>
-          </ng-template>
-        </details>
-      </article>
-    </div>
-
-    <ng-template #noOpenSheetRows>
-      <div class="sales-empty">Aucune fiche ouverte ne correspond aux filtres.</div>
-    </ng-template>
-  </section>
-</section>
+          </section>
+        </section>

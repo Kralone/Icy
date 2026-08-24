@@ -1,87 +1,89 @@
 <div class="space-y-6">
-  <div *ngFor="let it of items; trackBy: trackByEventId"
-       class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-visible transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 group">
-
-    <div (click)="mode === 'history' ? toggle(it.event.id) : null"
-         class="w-full text-left block outline-none"
-         [ngClass]="{'cursor-pointer': mode === 'history', 'cursor-default': mode === 'active'}">
-
-      <div class="flex flex-col lg:flex-row items-stretch">
-
-        <div class="lg:w-80 xl:w-96 h-48 lg:h-auto shrink-0 relative overflow-hidden bg-black/50 rounded-t-3xl lg:rounded-tl-3xl lg:rounded-tr-none lg:rounded-bl-none">
-          <img *ngIf="it.event.typeImageUrl"
-               [src]="it.event.typeImageUrl"
-               class="w-full h-full object-cover block transform group-hover:scale-105 transition duration-700"/>
-          <div *ngIf="!it.event.typeImageUrl" class="absolute inset-0 flex items-center justify-center text-white/20 font-bold tracking-widest">
-            NO IMAGE
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-[#0f1016] via-transparent to-transparent lg:hidden"></div>
-        </div>
-
-        <div class="flex-grow p-6 flex flex-col justify-between gap-4">
-
-          <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div class="space-y-3 w-full">
-              <div class="flex items-center gap-3 flex-wrap">
-                   <span class="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider select-none"
-                         [style.color]="it.event.typeTextColor || '#67e8f9'">
-                      {{ it.event.typeName }}
-                   </span>
-                <span *ngIf="isActiveEvent(it.event.startAt, it.event.endAt)" class="px-3 py-1 text-xs font-bold rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] animate-pulse select-none">EN COURS</span>
-                <span *ngIf="!isActiveEvent(it.event.startAt, it.event.endAt)" class="px-3 py-1 text-xs font-bold rounded-full bg-white/5 border border-white/10 text-white/40 select-none">TERMINÉ</span>
+  @for (it of items; track trackByEventId($index, it)) {
+    <div
+      class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-visible transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 group">
+      <div (click)="mode === 'history' ? toggle(it.event.id) : null"
+        class="w-full text-left block outline-none"
+        [ngClass]="{'cursor-pointer': mode === 'history', 'cursor-default': mode === 'active'}">
+        <div class="flex flex-col lg:flex-row items-stretch">
+          <div class="lg:w-80 xl:w-96 h-48 lg:h-auto shrink-0 relative overflow-hidden bg-black/50 rounded-t-3xl lg:rounded-tl-3xl lg:rounded-tr-none lg:rounded-bl-none">
+            @if (it.event.typeImageUrl) {
+              <img
+                [src]="it.event.typeImageUrl"
+                class="w-full h-full object-cover block transform group-hover:scale-105 transition duration-700"/>
+            }
+            @if (!it.event.typeImageUrl) {
+              <div class="absolute inset-0 flex items-center justify-center text-white/20 font-bold tracking-widest">
+                NO IMAGE
               </div>
-
-              <h2 class="text-2xl md:text-3xl font-bold text-white group-hover:text-cyan-100 transition shadow-black drop-shadow-md leading-tight">
-                {{ it.event.title }}
-              </h2>
-
-              <div class="text-sm text-white/50 font-mono flex items-center gap-2">
-                📅 {{ it.event.startAt | date:'dd MMM yyyy HH:mm' }}
-                <span *ngIf="it.event.endAt" class="text-white/30">➔</span>
-                <span *ngIf="it.event.endAt">{{ it.event.endAt | date:'dd MMM yyyy HH:mm' }}</span>
-              </div>
-            </div>
-
-            <div *ngIf="mode === 'history'" class="hidden md:block transition-transform duration-300 opacity-50 group-hover:opacity-100 shrink-0" [class.rotate-180]="expanded[it.event.id]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-            </div>
+            }
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f1016] via-transparent to-transparent lg:hidden"></div>
           </div>
-
-          <ng-container *ngIf="getGlobalMax(it.event.scoreSchema) as globalMax">
-            <div class="mt-4 md:mt-0 pt-4 md:pt-0 border-t border-white/5 md:border-none w-full">
-
-              <div class="flex justify-end mb-2 items-baseline gap-1.5">
-                <div class="text-base md:text-lg font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)] transition-all duration-300">
-                  {{ it.participation?.total || 0 }}
+          <div class="flex-grow p-6 flex flex-col justify-between gap-4">
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+              <div class="space-y-3 w-full">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span class="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider select-none"
+                    [style.color]="it.event.typeTextColor || '#67e8f9'">
+                    {{ it.event.typeName }}
+                  </span>
+                  @if (isActiveEvent(it.event.startAt, it.event.endAt)) {
+                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] animate-pulse select-none">EN COURS</span>
+                  }
+                  @if (!isActiveEvent(it.event.startAt, it.event.endAt)) {
+                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-white/5 border border-white/10 text-white/40 select-none">TERMINÉ</span>
+                  }
                 </div>
-                <div class="text-xs text-white/40 font-normal transition-all duration-300">
-                  / {{ globalMax }} pts
+                <h2 class="text-2xl md:text-3xl font-bold text-white group-hover:text-cyan-100 transition shadow-black drop-shadow-md leading-tight">
+                  {{ it.event.title }}
+                </h2>
+                <div class="text-sm text-white/50 font-mono flex items-center gap-2">
+                  📅 {{ it.event.startAt | date:'dd MMM yyyy HH:mm' }}
+                  @if (it.event.endAt) {
+                    <span class="text-white/30">➔</span>
+                  }
+                  @if (it.event.endAt) {
+                    <span>{{ it.event.endAt | date:'dd MMM yyyy HH:mm' }}</span>
+                  }
                 </div>
               </div>
-
-              <div class="relative w-full bg-white/10 rounded-full h-3 md:h-3 shadow-inner overflow-visible transition-all duration-300">
-
-                <ng-container *ngIf="(it.participation ? ((it.participation.total || 0) / globalMax * 100) : 0) as percent">
-                  <div class="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out z-10 pointer-events-none"
-                       [ngClass]="{'bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]': percent >= 100, 'bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_12px_rgba(34,211,238,0.3)]': percent < 100}"
-                       [style.width.%]="Math.min(100, percent)">
+              @if (mode === 'history') {
+                <div class="hidden md:block transition-transform duration-300 opacity-50 group-hover:opacity-100 shrink-0" [class.rotate-180]="expanded[it.event.id]">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              }
+            </div>
+            @if (getGlobalMax(it.event.scoreSchema); as globalMax) {
+              <div class="mt-4 md:mt-0 pt-4 md:pt-0 border-t border-white/5 md:border-none w-full">
+                <div class="flex justify-end mb-2 items-baseline gap-1.5">
+                  <div class="text-base md:text-lg font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    {{ it.participation?.total || 0 }}
                   </div>
-                </ng-container>
-
-                <ng-container *ngIf="it.event.scoreSchema?.total?.milestones as milestones">
-                  <div *ngFor="let m of milestones; let mIdx = index; let isLast = last"
-                       class="absolute top-0 bottom-0 w-8 -ml-4 z-20 flex justify-center items-center group/marker cursor-pointer"
-                       [style.left.%]="(m.at / globalMax) * 100"
-                       (click)="toggleMilestone(it.event.id + '-' + mIdx, $event)">
-
-                    <div class="w-0.5 h-full bg-white/40 shadow-[0_0_2px_rgba(255,255,255,0.8)]"></div>
-
-                    <div *ngIf="(it.participation?.total || 0) >= m.at"
-                         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-emerald-300 border-2 border-black/60 shadow-[0_0_10px_#6ee7b7] z-30 transition-transform duration-300 transform group-hover/marker:scale-125"
-                         [class.scale-125]="activeMilestoneIndex === (it.event.id + '-' + mIdx)">
+                  <div class="text-xs text-white/40 font-normal transition-all duration-300">
+                    / {{ globalMax }} pts
+                  </div>
+                </div>
+                <div class="relative w-full bg-white/10 rounded-full h-3 md:h-3 shadow-inner overflow-visible transition-all duration-300">
+                  @if ((it.participation ? ((it.participation.total || 0) / globalMax * 100) : 0); as percent) {
+                    <div class="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out z-10 pointer-events-none"
+                      [ngClass]="{'bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]': percent >= 100, 'bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_12px_rgba(34,211,238,0.3)]': percent < 100}"
+                      [style.width.%]="Math.min(100, percent)">
                     </div>
-
-                    <div class="absolute bottom-full mb-3 flex flex-col transition-opacity duration-200 z-50 pointer-events-none"
+                  }
+                  @if (it.event.scoreSchema?.total?.milestones; as milestones) {
+                    @for (m of milestones; track m; let mIdx = $index; let isLast = $last) {
+                      <div
+                        class="absolute top-0 bottom-0 w-8 -ml-4 z-20 flex justify-center items-center group/marker cursor-pointer"
+                        [style.left.%]="(m.at / globalMax) * 100"
+                        (click)="toggleMilestone(it.event.id + '-' + mIdx, $event)">
+                        <div class="w-0.5 h-full bg-white/40 shadow-[0_0_2px_rgba(255,255,255,0.8)]"></div>
+                        @if ((it.participation?.total || 0) >= m.at) {
+                          <div
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-emerald-300 border-2 border-black/60 shadow-[0_0_10px_#6ee7b7] z-30 transition-transform duration-300 transform group-hover/marker:scale-125"
+                            [class.scale-125]="activeMilestoneIndex === (it.event.id + '-' + mIdx)">
+                          </div>
+                        }
+                        <div class="absolute bottom-full mb-3 flex flex-col transition-opacity duration-200 z-50 pointer-events-none"
                          [ngClass]="{
                                  'opacity-0': activeMilestoneIndex !== (it.event.id + '-' + mIdx),
                                  'opacity-100': activeMilestoneIndex === (it.event.id + '-' + mIdx),
@@ -89,76 +91,76 @@
                                  'items-end right-0 translate-x-1.5': isLast,
                                  'items-center left-1/2 -translate-x-1/2': !isLast
                                }">
-
-                      <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-2xl flex flex-col items-center min-w-[140px] w-max max-w-[320px] backdrop-blur-xl relative">
-
-                        <div *ngIf="m.imageUrl" class="h-32 w-auto rounded border border-white/10 mb-2 bg-black/50 inline-flex items-center justify-center">
-                          <img [src]="m.imageUrl" class="h-full w-auto max-w-full object-contain" alt="Reward" />
-                        </div>
-
-                        <div class="flex items-center justify-center gap-2 w-full px-1">
-                          <div class="text-center whitespace-nowrap">
-                            <span class="font-bold text-cyan-300 text-sm">{{ m.at }}</span>
-                            <span *ngIf="m.label" class="opacity-90"> - {{ m.label }}</span>
+                          <div class="bg-black/95 text-white text-xs p-2 rounded-lg border border-white/20 shadow-2xl flex flex-col items-center min-w-[140px] w-max max-w-[320px] backdrop-blur-xl relative">
+                            @if (m.imageUrl) {
+                              <div class="h-32 w-auto rounded border border-white/10 mb-2 bg-black/50 inline-flex items-center justify-center">
+                                <img [src]="m.imageUrl" class="h-full w-auto max-w-full object-contain" alt="Reward" />
+                              </div>
+                            }
+                            <div class="flex items-center justify-center gap-2 w-full px-1">
+                              <div class="text-center whitespace-nowrap">
+                                <span class="font-bold text-cyan-300 text-sm">{{ m.at }}</span>
+                                @if (m.label) {
+                                  <span class="opacity-90"> - {{ m.label }}</span>
+                                }
+                              </div>
+                              @if ((it.participation?.total || 0) >= m.at) {
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">
+                                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                                </svg>
+                              }
+                            </div>
+                            @if (m.reward) {
+                              <div class="mt-2 pt-2 w-full border-t border-white/20 text-center">
+                                <div class="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">Récompense</div>
+                                <div class="font-bold text-amber-300 text-sm drop-shadow-md">{{ m.reward }}</div>
+                              </div>
+                            }
                           </div>
-
-                          <svg *ngIf="(it.participation?.total || 0) >= m.at" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">
-                            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
-                          </svg>
+                          <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-black/90" [class.mr-4]="isLast"></div>
                         </div>
-
-                        <div *ngIf="m.reward" class="mt-2 pt-2 w-full border-t border-white/20 text-center">
-                          <div class="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">Récompense</div>
-                          <div class="font-bold text-amber-300 text-sm drop-shadow-md">{{ m.reward }}</div>
-                        </div>
-
                       </div>
-
-                      <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-black/90" [class.mr-4]="isLast"></div>
-                    </div>
-                  </div>
-                </ng-container>
+                    }
+                  }
+                </div>
               </div>
-            </div>
-          </ng-container>
-
+            }
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="transition-all duration-500 ease-in-out border-t border-white/5 bg-black/20"
+      <div class="transition-all duration-500 ease-in-out border-t border-white/5 bg-black/20"
          [ngClass]="{
             'max-h-0 opacity-0': mode === 'history' && !expanded[it.event.id],
             'max-h-[3000px] opacity-100': mode === 'active' || expanded[it.event.id],
             'overflow-hidden': mode === 'history' && !expanded[it.event.id],
             'overflow-visible': mode === 'active' || expanded[it.event.id]
          }">
-
-      <div class="p-6 md:p-8 space-y-8">
-
-        <div *ngIf="it.event.description" class="prose prose-invert max-w-none text-white/80 whitespace-pre-line text-lg leading-relaxed">{{ it.event.description }}</div>
-
-        <div *ngIf="it.event.gallery?.images?.length || (it.event.gallery && it.event.gallery.length)" class="space-y-4">
-          <h3 class="text-xl font-semibold text-white/90 border-b border-white/10 pb-2 inline-block">Galerie</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <ng-container *ngFor="let g of (it.event.gallery.images || it.event.gallery)">
-              <a [href]="g.url || g" target="_blank" class="block h-64 rounded-2xl overflow-hidden border border-white/10 bg-black/40 hover:border-cyan-500/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition group/img relative">
-                <img [src]="g.url || g" class="w-full h-full object-cover transform group-hover/img:scale-110 transition duration-700" />
-              </a>
-            </ng-container>
+        <div class="p-6 md:p-8 space-y-8">
+          @if (it.event.description) {
+            <div class="prose prose-invert max-w-none text-white/80 whitespace-pre-line text-lg leading-relaxed">{{ it.event.description }}</div>
+          }
+          @if (it.event.gallery?.images?.length || (it.event.gallery && it.event.gallery.length)) {
+            <div class="space-y-4">
+              <h3 class="text-xl font-semibold text-white/90 border-b border-white/10 pb-2 inline-block">Galerie</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @for (g of (it.event.gallery.images || it.event.gallery); track g) {
+                  <a [href]="g.url || g" target="_blank" class="block h-64 rounded-2xl overflow-hidden border border-white/10 bg-black/40 hover:border-cyan-500/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition group/img relative">
+                    <img [src]="g.url || g" class="w-full h-full object-cover transform group-hover/img:scale-110 transition duration-700" />
+                  </a>
+                }
+              </div>
+            </div>
+          }
+          <div class="pt-6 border-t border-white/10">
+            <app-scwe-progress-editor
+              [event]="it.event"
+              [participation]="it.participation"
+              [readonly]="mode === 'history'"
+              (saved)="onSave(it, $event)">
+            </app-scwe-progress-editor>
           </div>
         </div>
-
-        <div class="pt-6 border-t border-white/10">
-          <app-scwe-progress-editor
-            [event]="it.event"
-            [participation]="it.participation"
-            [readonly]="mode === 'history'"
-            (saved)="onSave(it, $event)">
-          </app-scwe-progress-editor>
-        </div>
-
       </div>
     </div>
-  </div>
+  }
 </div>

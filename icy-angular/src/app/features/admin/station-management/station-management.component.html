@@ -3,7 +3,7 @@
     <a
       routerLink="/icy/admin/data"
       class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-    >
+      >
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
@@ -17,7 +17,9 @@
         <label class="text-xs uppercase tracking-[0.14em] text-cyan-100/70" for="station-system-filter">Systeme</label>
         <select id="station-system-filter" [(ngModel)]="selectedSystem" (ngModelChange)="applyFilter()" class="station-input min-w-40">
           <option value="ALL">Tous</option>
-          <option *ngFor="let system of systems" [value]="system">{{ system }}</option>
+          @for (system of systems; track system) {
+            <option [value]="system">{{ system }}</option>
+          }
         </select>
         <button type="button" (click)="loadStations()" class="px-4 py-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-400/20 transition">
           Recharger
@@ -36,35 +38,46 @@
           <select [(ngModel)]="newStation.systemName" class="station-input">
             <option value="Stanton">Stanton</option>
             <option value="Pyro">Pyro</option>
-            <option *ngFor="let system of systems" [value]="system">{{ system }}</option>
+            @for (system of systems; track system) {
+              <option [value]="system">{{ system }}</option>
+            }
           </select>
         </div>
         <div>
           <label class="station-label">Type station</label>
           <select [(ngModel)]="newStation.stationKind" (ngModelChange)="onStationKindChange()" class="station-input">
-            <option *ngFor="let value of stationKindOptions" [value]="value">{{ value }}</option>
+            @for (value of stationKindOptions; track value) {
+              <option [value]="value">{{ value }}</option>
+            }
           </select>
         </div>
-        <div *ngIf="showOrbitKindSelect; else lockedOrbitKind">
-          <label class="station-label">Type orbite</label>
-          <select [(ngModel)]="newStation.orbitKind" class="station-input">
-            <option *ngFor="let value of filteredOrbitKindOptions" [value]="value">{{ value }}</option>
-          </select>
-        </div>
-        <ng-template #lockedOrbitKind>
+        @if (showOrbitKindSelect) {
+          <div>
+            <label class="station-label">Type orbite</label>
+            <select [(ngModel)]="newStation.orbitKind" class="station-input">
+              @for (value of filteredOrbitKindOptions; track value) {
+                <option [value]="value">{{ value }}</option>
+              }
+            </select>
+          </div>
+        } @else {
           <div>
             <label class="station-label">Type orbite</label>
             <div class="station-locked-value">{{ newStation.orbitKind }}</div>
           </div>
-        </ng-template>
-        <div *ngIf="showOrbitTargetField">
-          <label class="station-label">Cible orbite</label>
-          <input [(ngModel)]="newStation.orbitTarget" type="text" class="station-input" placeholder="Ex: ArcCorp, Monox, Nyx..." />
-        </div>
-        <div *ngIf="showLagrangeField">
-          <label class="station-label">Point Lagrange</label>
-          <input [(ngModel)]="newStation.lagrangePoint" type="text" class="station-input" placeholder="Ex: L1, L4..." />
-        </div>
+        }
+        @if (showOrbitTargetField) {
+          <div>
+            <label class="station-label">Cible orbite</label>
+            <input [(ngModel)]="newStation.orbitTarget" type="text" class="station-input" placeholder="Ex: ArcCorp, Monox, Nyx..." />
+          </div>
+        }
+        @if (showLagrangeField) {
+          <div>
+            <label class="station-label">Point Lagrange</label>
+            <input [(ngModel)]="newStation.lagrangePoint" type="text" class="station-input" placeholder="Ex: L1, L4..." />
+          </div>
+        }
         <div>
           <label class="station-label">Operateur</label>
           <input [(ngModel)]="newStation.operatorName" type="text" class="station-input" />
@@ -92,13 +105,15 @@
       </div>
 
       <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div class="text-sm text-red-300" *ngIf="errorMessage">{{ errorMessage }}</div>
+        @if (errorMessage) {
+          <div class="text-sm text-red-300">{{ errorMessage }}</div>
+        }
         <div class="ml-auto flex gap-3">
           <button type="button" (click)="resetForm()" class="px-4 py-2 rounded-xl border border-slate-400/35 bg-slate-500/10 hover:bg-slate-500/20 transition">
             Reset
           </button>
           <button type="button" (click)="createOrUpdateStation()" [disabled]="isSubmitting"
-                  class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-gradient-to-r from-cyan-500/70 to-blue-600/70 hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50">
+            class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-gradient-to-r from-cyan-500/70 to-blue-600/70 hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50">
             {{ editingStation ? 'Mettre a jour' : 'Ajouter une station' }}
           </button>
         </div>
@@ -109,39 +124,49 @@
       <div class="overflow-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left">Nom</th>
-            <th class="px-4 py-3 text-left">Systeme</th>
-            <th class="px-4 py-3 text-left">Type</th>
-            <th class="px-4 py-3 text-left">Orbite</th>
-            <th class="px-4 py-3 text-left">Image</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
+            <tr>
+              <th class="px-4 py-3 text-left">Nom</th>
+              <th class="px-4 py-3 text-left">Systeme</th>
+              <th class="px-4 py-3 text-left">Type</th>
+              <th class="px-4 py-3 text-left">Orbite</th>
+              <th class="px-4 py-3 text-left">Image</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
           </thead>
           <tbody>
-          <tr *ngIf="loading">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="6">Chargement...</td>
-          </tr>
-          <tr *ngFor="let station of pagedStations" class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
-            <td class="px-4 py-3 font-semibold text-cyan-100">{{ station.name }}</td>
-            <td class="px-4 py-3">{{ station.systemName }}</td>
-            <td class="px-4 py-3">{{ station.stationKind }}</td>
-            <td class="px-4 py-3">
-              {{ station.orbitKind }}
-              <span *ngIf="station.orbitTarget"> - {{ station.orbitTarget }}</span>
-              <span *ngIf="station.lagrangePoint"> ({{ station.lagrangePoint }})</span>
-            </td>
-            <td class="px-4 py-3">
-              <img [src]="station.imageUrl" [alt]="station.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
-            </td>
-            <td class="px-4 py-3 text-right space-x-3">
-              <button type="button" (click)="editStation(station)" class="text-blue-300 hover:text-blue-200">Editer</button>
-              <button type="button" (click)="deleteStation(station)" class="text-red-300 hover:text-red-200">Supprimer</button>
-            </td>
-          </tr>
-          <tr *ngIf="!loading && !filteredStations.length">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="6">Aucune station.</td>
-          </tr>
+            @if (loading) {
+              <tr>
+                <td class="px-4 py-4 text-cyan-100/70" colspan="6">Chargement...</td>
+              </tr>
+            }
+            @for (station of pagedStations; track station) {
+              <tr class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
+                <td class="px-4 py-3 font-semibold text-cyan-100">{{ station.name }}</td>
+                <td class="px-4 py-3">{{ station.systemName }}</td>
+                <td class="px-4 py-3">{{ station.stationKind }}</td>
+                <td class="px-4 py-3">
+                  {{ station.orbitKind }}
+                  @if (station.orbitTarget) {
+                    <span> - {{ station.orbitTarget }}</span>
+                  }
+                  @if (station.lagrangePoint) {
+                    <span> ({{ station.lagrangePoint }})</span>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <img [src]="station.imageUrl" [alt]="station.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
+                </td>
+                <td class="px-4 py-3 text-right space-x-3">
+                  <button type="button" (click)="editStation(station)" class="text-blue-300 hover:text-blue-200">Editer</button>
+                  <button type="button" (click)="deleteStation(station)" class="text-red-300 hover:text-red-200">Supprimer</button>
+                </td>
+              </tr>
+            }
+            @if (!loading && !filteredStations.length) {
+              <tr>
+                <td class="px-4 py-4 text-cyan-100/70" colspan="6">Aucune station.</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
@@ -149,11 +174,11 @@
         <span>{{ filteredStations.length }} station(s) - page {{ currentPage }} / {{ totalPages }}</span>
         <div class="flex items-center gap-2">
           <button type="button" (click)="previousPage()" [disabled]="currentPage <= 1"
-                  class="px-3 py-1.5 rounded-lg border border-cyan-400/35 bg-cyan-500/10 hover:bg-cyan-400/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
+            class="px-3 py-1.5 rounded-lg border border-cyan-400/35 bg-cyan-500/10 hover:bg-cyan-400/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
             Precedent
           </button>
           <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages"
-                  class="px-3 py-1.5 rounded-lg border border-cyan-400/35 bg-cyan-500/10 hover:bg-cyan-400/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
+            class="px-3 py-1.5 rounded-lg border border-cyan-400/35 bg-cyan-500/10 hover:bg-cyan-400/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
             Suivant
           </button>
         </div>

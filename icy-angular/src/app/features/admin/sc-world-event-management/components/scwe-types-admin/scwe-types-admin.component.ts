@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ScWorldEventService, ScWorldEventType } from '../../../../../core/services/scworldevent/sc-world-event.service';
 import { ScweSchemaBuilderComponent } from '../scwe-schema-builder/scwe-schema-builder.component';
@@ -8,7 +8,7 @@ import { SchemaFormModel } from '../../models/scwe-schema.model';
 @Component({
   selector: 'app-scwe-types-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, ScweSchemaBuilderComponent],
+  imports: [FormsModule, ScweSchemaBuilderComponent],
   templateUrl: './scwe-types-admin.component.html',
 })
 export class ScweTypesAdminComponent {

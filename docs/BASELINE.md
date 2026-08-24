@@ -62,8 +62,8 @@ branches d'infrastructure.
 ## Limites connues de la baseline
 
 - aucun accès à Discord, PostgreSQL ou RabbitMQ réel pendant les tests locaux ;
-- aucun démarrage complet du Compose tant que les secrets et healthchecks ne
-  sont pas prêts ;
+- la pile Compose isolée est validée, mais elle ne remplace pas un démarrage sur
+  l'architecture réelle de production ;
 - la clé historique du bot doit encore être révoquée côté production ;
 - les quatre avertissements de budget CSS restent à réduire ;
 - l'installation npm du poste audité est cassée, mais le CLI Angular local et
@@ -72,12 +72,12 @@ branches d'infrastructure.
 ## État des audits de dépendances
 
 - bot : `pip-audit` ne signale aucune vulnérabilité connue ;
-- frontend de production : `npm audit --omit=dev` signale 13 dépendances
-  vulnérables (1 critique et 12 hautes), notamment `websocket-driver`, Angular
-  20.3.26 et PostCSS ;
+- frontend de production : `npm audit --omit=dev` ne signale aucune
+  vulnérabilité ; l'arbre complet de développement conserve 12 alertes
+  (4 modérées et 8 hautes) dans la chaîne de build, à traiter avec Angular 22 ;
 - backend : un SBOM CycloneDX de 125 composants est généré, mais son scan doit
   être branché sur un outil dédié dans la CI.
 
-La correction frontend doit rester une branche de sécurité séparée, avant les
-migrations Angular 21 et 22, afin de ne pas mélanger correctifs de sécurité et
-changements majeurs de framework.
+Les correctifs de sécurité de production et la migration Angular 21 ont été
+validés sur deux branches séparées. Angular 22 reste une migration majeure
+distincte.

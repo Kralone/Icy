@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { IceLinkBlockService, IceLinkBlock } from '../../../../core/services/icelink/icelink-block.service';
 import 'emoji-picker-element';
@@ -7,7 +7,7 @@ import 'emoji-picker-element';
 @Component({
   selector: 'app-icelink-block-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './icelink-block-admin.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

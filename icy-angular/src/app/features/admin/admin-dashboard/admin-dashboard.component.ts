@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 
 import { User } from '../../../model/user.model';
 import { UserService } from '../../../core/services/user/user.service';
@@ -12,9 +12,8 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   templateUrl: './admin-dashboard.component.html',
   imports: [
     FormsModule,
-    CommonModule,
     LoadingOverlayComponent
-  ]
+]
 })
 export class AdminDashboardComponent implements OnInit {
   users: User[] = [];

@@ -1,119 +1,127 @@
-<div *ngIf="loading" class="refining-state">Chargement des raffineries...</div>
-<div *ngIf="!loading && error" class="refining-state refining-state--error">{{ error }}</div>
+@if (loading) {
+  <div class="refining-state">Chargement des raffineries...</div>
+}
+@if (!loading && error) {
+  <div class="refining-state refining-state--error">{{ error }}</div>
+}
 
-<ng-container *ngIf="!loading && !error">
+@if (!loading && !error) {
   <section class="refining-summary">
     <span>Rendements UEX: {{ formatDate(yieldsFetchedAt || '') }}</span>
   </section>
-
-  <section *ngIf="refineries.length" class="refining-block">
-    <div class="refining-block__head">
-      <h3>Raffineries</h3>
-      <span>Deplie une ligne pour voir les rendements locaux</span>
-    </div>
-
-    <div class="refining-search" [class.refining-search--animating]="searchAnimating">
-      <span class="refining-search__icon" aria-hidden="true">⌕</span>
-      <input
-        type="text"
-        class="refining-search__input"
-        [value]="searchQuery"
-        (input)="updateSearch(searchInput.value)"
-        #searchInput
-        placeholder="Chercher une station ou un minerai"
-        aria-label="Recherche raffinerie"
-      />
-      <span class="refining-search__meta">{{ filteredRefineries.length }} / {{ refineries.length }}</span>
-    </div>
-
-    <div class="refining-table-wrap">
-      <table class="refining-table refining-table--main">
-        <thead>
-        <tr>
-          <th>Image</th>
-          <th>Station</th>
-        </tr>
-        </thead>
-        <tbody>
-        <ng-container *ngFor="let row of filteredRefineries; trackBy: trackRefinery">
-          <tr
-            class="refining-row"
-            [class.refining-row--open]="isExpanded(row)"
-            [attr.aria-expanded]="isExpanded(row)"
-            role="button"
-            tabindex="0"
-            (click)="toggleRefinery(row)"
-            (keydown.enter)="toggleRefinery(row)"
-            (keydown.space)="toggleRefinery(row); $event.preventDefault()"
-          >
-            <td class="refining-table__image">
-              <img
-                *ngIf="row.imageUrl; else noImageTpl"
-                class="refinery-thumb"
-                [src]="row.imageUrl"
-                [alt]="row.stationName"
-                loading="lazy"
-                decoding="async"
-              />
-              <ng-template #noImageTpl>
-                <div class="refinery-thumb refinery-thumb--placeholder">N/A</div>
-              </ng-template>
-            </td>
-            <td class="refining-table__station">
-              <div class="refining-station">
-                <strong>{{ row.stationName }}</strong>
-                <span class="refining-station__meta">{{ row.oresCount }} minerais suivis</span>
-              </div>
-            </td>
-          </tr>
-
-          <tr class="refining-expand">
-            <td colspan="2">
-              <div class="refining-expand__inner" [class.refining-expand__inner--open]="isExpanded(row)">
-                <div class="refining-expand__head">Rendements a {{ row.stationName }}</div>
-
-                <table *ngIf="row.yields.length" class="refining-table refining-table--nested">
-                  <thead>
-                  <tr>
-                    <th>Minerai</th>
-                    <th>Rendement</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let yieldRow of row.yields; trackBy: trackYield">
-                    <td>{{ yieldRow.commodity }}</td>
-                    <td>
-                      <div class="yield-meter">
-                        <span class="yield-meter__midline"></span>
-                        <span
-                          class="yield-meter__delta"
-                          [class.yield-meter__delta--neg]="yieldDeltaTone(yieldRow.bestYieldPct) === 'neg'"
-                          [class.yield-meter__delta--neu]="yieldDeltaTone(yieldRow.bestYieldPct) === 'neu'"
-                          [style.left]="yieldDeltaLeft(yieldRow.bestYieldPct)"
-                          [style.width]="yieldDeltaWidth(yieldRow.bestYieldPct)"
-                        ></span>
-                        <span class="yield-meter__label">{{ formatNumber(yieldRow.bestYieldPct, '%') }}</span>
-                      </div>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-
-                <div *ngIf="!row.yields.length" class="refining-empty">Aucun rendement specifique disponible pour cette station.</div>
-              </div>
-            </td>
-          </tr>
-        </ng-container>
-        </tbody>
-      </table>
-    </div>
-
-    <div *ngIf="searchQuery && !filteredRefineries.length" class="refining-empty">
-      Aucune station ou minerai ne correspond a "{{ searchQuery }}".
-    </div>
-  </section>
-
-  <div *ngIf="!refineries.length" class="refining-empty refining-empty--card">
-    Aucune raffinerie exploitable dans les datasets UEX actuels.
-  </div>
-</ng-container>
+  @if (refineries.length) {
+    <section class="refining-block">
+      <div class="refining-block__head">
+        <h3>Raffineries</h3>
+        <span>Deplie une ligne pour voir les rendements locaux</span>
+      </div>
+      <div class="refining-search" [class.refining-search--animating]="searchAnimating">
+        <span class="refining-search__icon" aria-hidden="true">⌕</span>
+        <input
+          type="text"
+          class="refining-search__input"
+          [value]="searchQuery"
+          (input)="updateSearch(searchInput.value)"
+          #searchInput
+          placeholder="Chercher une station ou un minerai"
+          aria-label="Recherche raffinerie"
+          />
+          <span class="refining-search__meta">{{ filteredRefineries.length }} / {{ refineries.length }}</span>
+        </div>
+        <div class="refining-table-wrap">
+          <table class="refining-table refining-table--main">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Station</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of filteredRefineries; track trackRefinery($index, row)) {
+                <tr
+                  class="refining-row"
+                  [class.refining-row--open]="isExpanded(row)"
+                  [attr.aria-expanded]="isExpanded(row)"
+                  role="button"
+                  tabindex="0"
+                  (click)="toggleRefinery(row)"
+                  (keydown.enter)="toggleRefinery(row)"
+                  (keydown.space)="toggleRefinery(row); $event.preventDefault()"
+                  >
+                  <td class="refining-table__image">
+                    @if (row.imageUrl) {
+                      <img
+                        class="refinery-thumb"
+                        [src]="row.imageUrl"
+                        [alt]="row.stationName"
+                        loading="lazy"
+                        decoding="async"
+                        />
+                    } @else {
+                      <div class="refinery-thumb refinery-thumb--placeholder">N/A</div>
+                    }
+                  </td>
+                  <td class="refining-table__station">
+                    <div class="refining-station">
+                      <strong>{{ row.stationName }}</strong>
+                      <span class="refining-station__meta">{{ row.oresCount }} minerais suivis</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="refining-expand">
+                  <td colspan="2">
+                    <div class="refining-expand__inner" [class.refining-expand__inner--open]="isExpanded(row)">
+                      <div class="refining-expand__head">Rendements a {{ row.stationName }}</div>
+                      @if (row.yields.length) {
+                        <table class="refining-table refining-table--nested">
+                          <thead>
+                            <tr>
+                              <th>Minerai</th>
+                              <th>Rendement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (yieldRow of row.yields; track trackYield($index, yieldRow)) {
+                              <tr>
+                                <td>{{ yieldRow.commodity }}</td>
+                                <td>
+                                  <div class="yield-meter">
+                                    <span class="yield-meter__midline"></span>
+                                    <span
+                                      class="yield-meter__delta"
+                                      [class.yield-meter__delta--neg]="yieldDeltaTone(yieldRow.bestYieldPct) === 'neg'"
+                                      [class.yield-meter__delta--neu]="yieldDeltaTone(yieldRow.bestYieldPct) === 'neu'"
+                                      [style.left]="yieldDeltaLeft(yieldRow.bestYieldPct)"
+                                      [style.width]="yieldDeltaWidth(yieldRow.bestYieldPct)"
+                                    ></span>
+                                    <span class="yield-meter__label">{{ formatNumber(yieldRow.bestYieldPct, '%') }}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                      @if (!row.yields.length) {
+                        <div class="refining-empty">Aucun rendement specifique disponible pour cette station.</div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (searchQuery && !filteredRefineries.length) {
+          <div class="refining-empty">
+            Aucune station ou minerai ne correspond a "{{ searchQuery }}".
+          </div>
+        }
+      </section>
+    }
+    @if (!refineries.length) {
+      <div class="refining-empty refining-empty--card">
+        Aucune raffinerie exploitable dans les datasets UEX actuels.
+      </div>
+    }
+  }

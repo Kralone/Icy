@@ -9,214 +9,232 @@
       class="logistics-add-btn"
       [disabled]="saving || !canEdit"
       (click)="openShipSelector()"
-    >
+      >
       + Ajouter un vaisseau
     </button>
   </div>
 
-  <div *ngIf="!sheet.sheetShips?.length" class="logistics-empty">
-    Aucun vaisseau ajoute pour cette fiche.
-  </div>
+  @if (!sheet.sheetShips.length) {
+    <div class="logistics-empty">
+      Aucun vaisseau ajoute pour cette fiche.
+    </div>
+  }
 
-  <div *ngIf="sheet.sheetShips?.length" class="sheet-ships-list">
-    <article *ngFor="let sheetShip of sheet.sheetShips; trackBy: trackSheetShip" class="sheet-ship-card">
-      <header class="sheet-ship-head">
-        <div class="sheet-ship-title">
-          <div class="sheet-ship-image">
-            <img *ngIf="sheetShip.shipImageUrl" [src]="sheetShip.shipImageUrl" [alt]="sheetShip.shipName" />
-          </div>
-          <div>
-            <h4>{{ sheetShip.shipName }}</h4>
-            <p>
-              {{ sheetShip.shipBrandName || 'Marque inconnue' }}
-              <span *ngIf="sheetShip.shipSize"> • {{ sheetShip.shipSize }}</span>
-              <span *ngIf="sheetShip.shipScu !== null"> • {{ sheetShip.shipScu }} SCU</span>
-            </p>
-            <p class="sheet-ship-meta">
-              Ajoute par {{ sheetShip.addedBy.username }} le {{ toDisplayDateTime(sheetShip.addedAt) }}
-            </p>
-          </div>
-        </div>
-        <button
-          *ngIf="sheetShip.removableByCurrentUser"
-          type="button"
-          class="sheet-ship-remove-btn"
-          [disabled]="saving"
-          (click)="removeSheetShip(sheetShip.id)"
-        >
-          Retirer
-        </button>
-      </header>
-
-      <div *ngIf="!sheetShip.cargoGrids?.length" class="cargo-empty">
-        Aucune grille cargo enregistree pour ce vaisseau.
-      </div>
-
-      <div *ngIf="sheetShip.cargoGrids?.length" class="cargo-grid-list">
-        <article *ngFor="let cargoGrid of sheetShip.cargoGrids; let cargoGridIndex = index; trackBy: trackCargoGrid" class="cargo-grid-card">
-          <div class="cargo-grid-header">
-            <strong>Grille cargo</strong>
-            <span>{{ cargoGrid.sizeX }} x {{ cargoGrid.sizeY }} x {{ cargoGrid.sizeZ }} ({{ cargoGrid.slotCount }} slots)</span>
-          </div>
-
-          <div
-            #previewViewport
-            class="cargo-grid-preview"
-            [class.is-grabbing]="isPreviewBeingGrabbed(sheetShip.id, cargoGridIndex, cargoGrid)"
-            (pointerdown)="startPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
-            (pointermove)="movePreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-            (pointerup)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
-            (pointercancel)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
-            (lostpointercapture)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
-            (wheel)="zoomPreview($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-          >
-            <div class="preview-zoom-controls" (pointerdown)="$event.stopPropagation()">
-              <button
-                type="button"
-                class="preview-zoom-btn"
-                (click)="zoomInPreview(sheetShip.id, cargoGridIndex, cargoGrid)"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                class="preview-zoom-btn"
-                (click)="zoomOutPreview(sheetShip.id, cargoGridIndex, cargoGrid)"
-              >
-                -
-              </button>
-              <span class="preview-zoom-value">{{ previewZoomPercent(sheetShip.id, cargoGridIndex, cargoGrid) }}%</span>
-            </div>
-            <div class="cargo-grid-orbit" [ngStyle]="cargoOrbitStyle(sheetShip.id, cargoGridIndex, cargoGrid)">
-              <div #gridScene class="cargo-grid-3d" [ngStyle]="cargoGridStyle(cargoGrid)">
-                <div class="cargo-volume cuboid" [ngStyle]="cargoVolumeStyle(cargoGrid)">
-                  <div class="cuboid-face cuboid-front"></div>
-                  <div class="cuboid-face cuboid-back"></div>
-                  <div class="cuboid-face cuboid-right"></div>
-                  <div class="cuboid-face cuboid-left"></div>
-                  <div class="cuboid-face cuboid-top"></div>
-                  <div class="cuboid-face cuboid-bottom"></div>
-                </div>
-                <div class="axis axis-x">X {{ cargoGrid.sizeX }}</div>
-                <div class="axis axis-y">Y {{ cargoGrid.sizeY }}</div>
-                <div class="axis axis-z">Z {{ cargoGrid.sizeZ }}</div>
-                <div
-                  *ngFor="let cube of cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid); let cubeIndex = index; trackBy: trackCubePlacement"
-                  class="cube-block cuboid"
-                  [class.is-draggable]="canEdit"
-                  [class.is-drag-source]="isCubeDragged(sheetShip.id, cargoGridIndex, cargoGrid, cube.id)"
-                  [ngStyle]="cubeStyle(cube, cargoGrid)"
-                  (pointerdown)="startCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, cube.id, gridScene)"
-                  (pointermove)="moveCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
-                  (pointerup)="endCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-                  (pointercancel)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-                  (lostpointercapture)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-                >
-                  <div class="cuboid-face cuboid-front"></div>
-                  <div class="cuboid-face cuboid-back"></div>
-                  <div class="cuboid-face cuboid-right"></div>
-                  <div class="cuboid-face cuboid-left"></div>
-                  <div class="cuboid-face cuboid-top"></div>
-                  <div class="cuboid-face cuboid-bottom"></div>
-                  <span class="cube-label">{{ cubeLabel(cubeIndex) }}</span>
-                </div>
-
-                <div
-                  *ngIf="cubeDragPreview(sheetShip.id, cargoGridIndex, cargoGrid) as previewCube"
-                  class="cube-block cube-block-preview cuboid"
-                  [ngStyle]="previewCubeStyle(previewCube, cargoGrid)"
-                >
-                  <div class="cuboid-face cuboid-front"></div>
-                  <div class="cuboid-face cuboid-back"></div>
-                  <div class="cuboid-face cuboid-right"></div>
-                  <div class="cuboid-face cuboid-left"></div>
-                  <div class="cuboid-face cuboid-top"></div>
-                  <div class="cuboid-face cuboid-bottom"></div>
-                </div>
+  @if (sheet.sheetShips.length) {
+    <div class="sheet-ships-list">
+      @for (sheetShip of sheet.sheetShips; track trackSheetShip($index, sheetShip)) {
+        <article class="sheet-ship-card">
+          <header class="sheet-ship-head">
+            <div class="sheet-ship-title">
+              <div class="sheet-ship-image">
+                @if (sheetShip.shipImageUrl) {
+                  <img [src]="sheetShip.shipImageUrl" [alt]="sheetShip.shipName" />
+                }
+              </div>
+              <div>
+                <h4>{{ sheetShip.shipName }}</h4>
+                <p>
+                  {{ sheetShip.shipBrandName || 'Marque inconnue' }}
+                  @if (sheetShip.shipSize) {
+                    <span> • {{ sheetShip.shipSize }}</span>
+                  }
+                  @if (sheetShip.shipScu !== null) {
+                    <span> • {{ sheetShip.shipScu }} SCU</span>
+                  }
+                </p>
+                <p class="sheet-ship-meta">
+                  Ajoute par {{ sheetShip.addedBy.username }} le {{ toDisplayDateTime(sheetShip.addedAt) }}
+                </p>
               </div>
             </div>
-          </div>
-
-          <div class="cube-planner">
-            <p class="cube-help">
-              Grab vue: glisse dans la zone 3D. Zoom: molette ou +/-. Grab caisse: prends une caisse et depose-la.
-            </p>
-            <div class="cube-stats">
-              {{ placedCubeCount(sheetShip.id, cargoGridIndex, cargoGrid) }} cube(s) 2x2x2 •
-              {{ usedSlots(sheetShip.id, cargoGridIndex, cargoGrid) }} / {{ cargoGrid.slotCount }} slots •
-              {{ fillPercent(sheetShip.id, cargoGridIndex, cargoGrid) }}%
+            @if (sheetShip.removableByCurrentUser) {
+              <button
+                type="button"
+                class="sheet-ship-remove-btn"
+                [disabled]="saving"
+                (click)="removeSheetShip(sheetShip.id)"
+                >
+                Retirer
+              </button>
+            }
+          </header>
+          @if (!sheetShip.cargoGrids.length) {
+            <div class="cargo-empty">
+              Aucune grille cargo enregistree pour ce vaisseau.
             </div>
-
-            <div class="cube-controls">
-              <label>
-                X
-                <input #cubeX type="number" min="0" [max]="maxCubeOriginX(cargoGrid)" [value]="0" />
-              </label>
-              <label>
-                Y
-                <input #cubeY type="number" min="0" [max]="maxCubeOriginY(cargoGrid)" [value]="0" />
-              </label>
-              <label>
-                Z
-                <input #cubeZ type="number" min="0" [max]="maxCubeOriginZ(cargoGrid)" [value]="0" />
-              </label>
-              <button
-                type="button"
-                class="planner-btn planner-btn-primary"
-                [disabled]="!canHostCubes(cargoGrid)"
-                (click)="addCubeAt(sheetShip.id, cargoGridIndex, cargoGrid, cubeX.value, cubeY.value, cubeZ.value)"
-              >
-                + Cube 2x2x2
-              </button>
-              <button
-                type="button"
-                class="planner-btn planner-btn-primary"
-                [disabled]="!canHostCubes(cargoGrid)"
-                (pointerdown)="startCubeSpawnGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
-                (pointermove)="moveCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
-                (pointerup)="endCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-                (pointercancel)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-                (lostpointercapture)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
-              >
-                Grab nouvelle caisse
-              </button>
-              <button
-                type="button"
-                class="planner-btn"
-                [disabled]="!canHostCubes(cargoGrid)"
-                (click)="autoPlaceCube(sheetShip.id, cargoGridIndex, cargoGrid)"
-              >
-                Auto
-              </button>
-              <button
-                type="button"
-                class="planner-btn planner-btn-danger"
-                [disabled]="!cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid).length"
-                (click)="clearCubes(sheetShip.id, cargoGridIndex, cargoGrid)"
-              >
-                Vider
-              </button>
+          }
+          @if (sheetShip.cargoGrids.length) {
+            <div class="cargo-grid-list">
+              @for (cargoGrid of sheetShip.cargoGrids; track trackCargoGrid(cargoGridIndex, cargoGrid); let cargoGridIndex = $index) {
+                <article class="cargo-grid-card">
+                  <div class="cargo-grid-header">
+                    <strong>Grille cargo</strong>
+                    <span>{{ cargoGrid.sizeX }} x {{ cargoGrid.sizeY }} x {{ cargoGrid.sizeZ }} ({{ cargoGrid.slotCount }} slots)</span>
+                  </div>
+                  <div
+                    #previewViewport
+                    class="cargo-grid-preview"
+                    [class.is-grabbing]="isPreviewBeingGrabbed(sheetShip.id, cargoGridIndex, cargoGrid)"
+                    (pointerdown)="startPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
+                    (pointermove)="movePreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                    (pointerup)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
+                    (pointercancel)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
+                    (lostpointercapture)="endPreviewGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, previewViewport)"
+                    (wheel)="zoomPreview($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                    >
+                    <div class="preview-zoom-controls" (pointerdown)="$event.stopPropagation()">
+                      <button
+                        type="button"
+                        class="preview-zoom-btn"
+                        (click)="zoomInPreview(sheetShip.id, cargoGridIndex, cargoGrid)"
+                        >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        class="preview-zoom-btn"
+                        (click)="zoomOutPreview(sheetShip.id, cargoGridIndex, cargoGrid)"
+                        >
+                        -
+                      </button>
+                      <span class="preview-zoom-value">{{ previewZoomPercent(sheetShip.id, cargoGridIndex, cargoGrid) }}%</span>
+                    </div>
+                    <div class="cargo-grid-orbit" [ngStyle]="cargoOrbitStyle(sheetShip.id, cargoGridIndex, cargoGrid)">
+                      <div #gridScene class="cargo-grid-3d" [ngStyle]="cargoGridStyle(cargoGrid)">
+                        <div class="cargo-volume cuboid" [ngStyle]="cargoVolumeStyle(cargoGrid)">
+                          <div class="cuboid-face cuboid-front"></div>
+                          <div class="cuboid-face cuboid-back"></div>
+                          <div class="cuboid-face cuboid-right"></div>
+                          <div class="cuboid-face cuboid-left"></div>
+                          <div class="cuboid-face cuboid-top"></div>
+                          <div class="cuboid-face cuboid-bottom"></div>
+                        </div>
+                        <div class="axis axis-x">X {{ cargoGrid.sizeX }}</div>
+                        <div class="axis axis-y">Y {{ cargoGrid.sizeY }}</div>
+                        <div class="axis axis-z">Z {{ cargoGrid.sizeZ }}</div>
+                        @for (cube of cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid); track trackCubePlacement(cubeIndex, cube); let cubeIndex = $index) {
+                          <div
+                            class="cube-block cuboid"
+                            [class.is-draggable]="canEdit"
+                            [class.is-drag-source]="isCubeDragged(sheetShip.id, cargoGridIndex, cargoGrid, cube.id)"
+                            [ngStyle]="cubeStyle(cube, cargoGrid)"
+                            (pointerdown)="startCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, cube.id, gridScene)"
+                            (pointermove)="moveCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
+                            (pointerup)="endCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                            (pointercancel)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                            (lostpointercapture)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                            >
+                            <div class="cuboid-face cuboid-front"></div>
+                            <div class="cuboid-face cuboid-back"></div>
+                            <div class="cuboid-face cuboid-right"></div>
+                            <div class="cuboid-face cuboid-left"></div>
+                            <div class="cuboid-face cuboid-top"></div>
+                            <div class="cuboid-face cuboid-bottom"></div>
+                            <span class="cube-label">{{ cubeLabel(cubeIndex) }}</span>
+                          </div>
+                        }
+                        @if (cubeDragPreview(sheetShip.id, cargoGridIndex, cargoGrid); as previewCube) {
+                          <div
+                            class="cube-block cube-block-preview cuboid"
+                            [ngStyle]="previewCubeStyle(previewCube, cargoGrid)"
+                            >
+                            <div class="cuboid-face cuboid-front"></div>
+                            <div class="cuboid-face cuboid-back"></div>
+                            <div class="cuboid-face cuboid-right"></div>
+                            <div class="cuboid-face cuboid-left"></div>
+                            <div class="cuboid-face cuboid-top"></div>
+                            <div class="cuboid-face cuboid-bottom"></div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div class="cube-planner">
+                    <p class="cube-help">
+                      Grab vue: glisse dans la zone 3D. Zoom: molette ou +/-. Grab caisse: prends une caisse et depose-la.
+                    </p>
+                    <div class="cube-stats">
+                      {{ placedCubeCount(sheetShip.id, cargoGridIndex, cargoGrid) }} cube(s) 2x2x2 •
+                      {{ usedSlots(sheetShip.id, cargoGridIndex, cargoGrid) }} / {{ cargoGrid.slotCount }} slots •
+                      {{ fillPercent(sheetShip.id, cargoGridIndex, cargoGrid) }}%
+                    </div>
+                    <div class="cube-controls">
+                      <label>
+                        X
+                        <input #cubeX type="number" min="0" [max]="maxCubeOriginX(cargoGrid)" [value]="0" />
+                      </label>
+                      <label>
+                        Y
+                        <input #cubeY type="number" min="0" [max]="maxCubeOriginY(cargoGrid)" [value]="0" />
+                      </label>
+                      <label>
+                        Z
+                        <input #cubeZ type="number" min="0" [max]="maxCubeOriginZ(cargoGrid)" [value]="0" />
+                      </label>
+                      <button
+                        type="button"
+                        class="planner-btn planner-btn-primary"
+                        [disabled]="!canHostCubes(cargoGrid)"
+                        (click)="addCubeAt(sheetShip.id, cargoGridIndex, cargoGrid, cubeX.value, cubeY.value, cubeZ.value)"
+                        >
+                        + Cube 2x2x2
+                      </button>
+                      <button
+                        type="button"
+                        class="planner-btn planner-btn-primary"
+                        [disabled]="!canHostCubes(cargoGrid)"
+                        (pointerdown)="startCubeSpawnGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
+                        (pointermove)="moveCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid, gridScene)"
+                        (pointerup)="endCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                        (pointercancel)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                        (lostpointercapture)="cancelCubeGrab($event, sheetShip.id, cargoGridIndex, cargoGrid)"
+                        >
+                        Grab nouvelle caisse
+                      </button>
+                      <button
+                        type="button"
+                        class="planner-btn"
+                        [disabled]="!canHostCubes(cargoGrid)"
+                        (click)="autoPlaceCube(sheetShip.id, cargoGridIndex, cargoGrid)"
+                        >
+                        Auto
+                      </button>
+                      <button
+                        type="button"
+                        class="planner-btn planner-btn-danger"
+                        [disabled]="!cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid).length"
+                        (click)="clearCubes(sheetShip.id, cargoGridIndex, cargoGrid)"
+                        >
+                        Vider
+                      </button>
+                    </div>
+                    @if (plannerMessage(sheetShip.id, cargoGridIndex, cargoGrid)) {
+                      <p class="cube-message">
+                        {{ plannerMessage(sheetShip.id, cargoGridIndex, cargoGrid) }}
+                      </p>
+                    }
+                    @if (cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid).length) {
+                      <div class="cube-list">
+                        @for (cube of cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid); track trackCubePlacement(cubeIndex, cube); let cubeIndex = $index) {
+                          <button
+                            type="button"
+                            class="cube-chip"
+                            (click)="removeCube(sheetShip.id, cargoGridIndex, cargoGrid, cube.id)"
+                            >
+                            Cube {{ cubeLabel(cubeIndex) }}: {{ cube.x }} / {{ cube.y }} / {{ cube.z }} ✕
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </article>
+              }
             </div>
-
-            <p *ngIf="plannerMessage(sheetShip.id, cargoGridIndex, cargoGrid)" class="cube-message">
-              {{ plannerMessage(sheetShip.id, cargoGridIndex, cargoGrid) }}
-            </p>
-
-            <div *ngIf="cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid).length" class="cube-list">
-              <button
-                *ngFor="let cube of cubePlacements(sheetShip.id, cargoGridIndex, cargoGrid); let cubeIndex = index; trackBy: trackCubePlacement"
-                type="button"
-                class="cube-chip"
-                (click)="removeCube(sheetShip.id, cargoGridIndex, cargoGrid, cube.id)"
-              >
-                Cube {{ cubeLabel(cubeIndex) }}: {{ cube.x }} / {{ cube.y }} / {{ cube.z }} ✕
-              </button>
-            </div>
-          </div>
+          }
         </article>
-      </div>
-    </article>
-  </div>
+      }
+    </div>
+  }
 </section>
 
 <app-ship-selector

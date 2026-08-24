@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -18,7 +18,7 @@ type PlayerRow = {
 @Component({
   standalone: true,
   selector: 'app-executive-hangar-players',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './executive-hangar-players.component.html',
   styleUrl: './executive-hangar-players.component.css'
 })

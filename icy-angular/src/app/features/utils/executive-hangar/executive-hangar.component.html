@@ -4,24 +4,27 @@
       <a
         [routerLink]="[backToMenuLink]"
         class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
-      >
+        >
         <span class="text-lg">←</span> Retour aux utilitaires
       </a>
 
-      <button
-        *ngIf="canManageTiming"
-        type="button"
-        (click)="openTimingModal()"
+      @if (canManageTiming) {
+        <button
+          type="button"
+          (click)="openTimingModal()"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20
                bg-white/5 text-slate-200 text-xs tracking-wide
                hover:border-cyan-300/40 hover:text-cyan-100 transition"
-      >
-        🛡️ Admin
-      </button>
+          >
+          🛡️ Admin
+        </button>
+      }
     </div>
 
     <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
-      <p *ngIf="configError" class="mb-4 text-sm text-amber-200">{{ configError }}</p>
+      @if (configError) {
+        <p class="mb-4 text-sm text-amber-200">{{ configError }}</p>
+      }
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Suivi PYAM</p>
@@ -38,25 +41,27 @@
       </p>
 
       <div class="progress-indicator mt-5">
-        <div
-          *ngFor="let color of circles"
-          class="indicator-segment"
-          [class.indicator-segment--green]="color === 'green'"
-          [class.indicator-segment--red]="color === 'red'"
-        ></div>
+        @for (color of circles; track color) {
+          <div
+            class="indicator-segment"
+            [class.indicator-segment--green]="color === 'green'"
+            [class.indicator-segment--red]="color === 'red'"
+          ></div>
+        }
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <a
-          *ngIf="isAuthenticated"
-          [routerLink]="['/utilitaires/executive-hangar-players']"
+        @if (isAuthenticated) {
+          <a
+            [routerLink]="['/utilitaires/executive-hangar-players']"
           class="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-cyan-200/85
                  bg-cyan-300/25 text-cyan-50 font-bold tracking-wide
                  shadow-[0_0_30px_rgba(34,211,238,0.45)] hover:bg-cyan-200/35 hover:scale-[1.03]
                  transition"
-        >
-          ← Voir les joueurs
-        </a>
+            >
+            ← Voir les joueurs
+          </a>
+        }
 
         <a
           [routerLink]="[mapsLink]"
@@ -64,7 +69,7 @@
                  bg-cyan-300/25 text-cyan-50 font-bold tracking-wide
                  shadow-[0_0_30px_rgba(34,211,238,0.45)] hover:bg-cyan-200/35 hover:scale-[1.03]
                  transition"
-        >
+          >
           Voir les maps →
         </a>
       </div>
@@ -82,14 +87,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of scheduleRows" class="border-b border-white/10 text-slate-200">
-              <td class="px-4 py-3">
-                <span class="status-chip" [class.status-chip--online]="row.statusClass === 'status-online'" [class.status-chip--offline]="row.statusClass === 'status-offline'">
-                  {{ row.status }}
-                </span>
-              </td>
-              <td class="px-4 py-3">{{ row.time | date:'medium' }}</td>
-            </tr>
+            @for (row of scheduleRows; track row) {
+              <tr class="border-b border-white/10 text-slate-200">
+                <td class="px-4 py-3">
+                  <span class="status-chip" [class.status-chip--online]="row.statusClass === 'status-online'" [class.status-chip--offline]="row.statusClass === 'status-offline'">
+                    {{ row.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">{{ row.time | date:'medium' }}</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
@@ -97,54 +104,54 @@
   </div>
 </div>
 
-<div
-  *ngIf="showTimingModal"
-  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
-  (click)="closeTimingModal()"
->
+@if (showTimingModal) {
   <div
-    class="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b1324] p-6 text-white shadow-[0_28px_60px_rgba(0,0,0,0.6)]"
-    (click)="$event.stopPropagation()"
-  >
-    <h3 class="text-xl font-semibold text-cyan-200">Prochain cycle EN LIGNE</h3>
-    <p class="mt-2 text-sm text-slate-300">
-      Definis la date/heure de la prochaine ouverture online pour recalibrer le timer apres une mise a jour.
-    </p>
-
-    <label class="block mt-4 text-sm text-slate-300">Date et heure</label>
-    <input
-      type="datetime-local"
-      [(ngModel)]="timingInput"
-      step="1"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+    (click)="closeTimingModal()"
+    >
+    <div
+      class="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b1324] p-6 text-white shadow-[0_28px_60px_rgba(0,0,0,0.6)]"
+      (click)="$event.stopPropagation()"
+      >
+      <h3 class="text-xl font-semibold text-cyan-200">Prochain cycle EN LIGNE</h3>
+      <p class="mt-2 text-sm text-slate-300">
+        Definis la date/heure de la prochaine ouverture online pour recalibrer le timer apres une mise a jour.
+      </p>
+      <label class="block mt-4 text-sm text-slate-300">Date et heure</label>
+      <input
+        type="datetime-local"
+        [(ngModel)]="timingInput"
+        step="1"
       class="mt-2 w-full rounded-xl border border-white/15 bg-[#101a2f] px-4 py-2 text-white
              focus:outline-none focus:ring-2 focus:ring-cyan-400"
-    />
-
-    <p *ngIf="timingError" class="mt-3 text-sm text-red-300">{{ timingError }}</p>
-
-    <div class="mt-6 flex flex-wrap justify-end gap-3">
-      <button
-        type="button"
-        (click)="resetTimingToDefault()"
-        class="px-4 py-2 rounded-full border border-white/20 text-slate-200 hover:border-cyan-300/50 transition"
-      >
-        Reinitialiser
-      </button>
-      <button
-        type="button"
-        (click)="closeTimingModal()"
-        class="px-4 py-2 rounded-full border border-white/20 text-slate-200 hover:border-cyan-300/50 transition"
-      >
-        Annuler
-      </button>
-      <button
-        type="button"
-        (click)="saveNextOnlineTiming()"
+        />
+        @if (timingError) {
+          <p class="mt-3 text-sm text-red-300">{{ timingError }}</p>
+        }
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            (click)="resetTimingToDefault()"
+            class="px-4 py-2 rounded-full border border-white/20 text-slate-200 hover:border-cyan-300/50 transition"
+            >
+            Reinitialiser
+          </button>
+          <button
+            type="button"
+            (click)="closeTimingModal()"
+            class="px-4 py-2 rounded-full border border-white/20 text-slate-200 hover:border-cyan-300/50 transition"
+            >
+            Annuler
+          </button>
+          <button
+            type="button"
+            (click)="saveNextOnlineTiming()"
         class="px-5 py-2 rounded-full border border-cyan-200/85 bg-cyan-300/25 text-cyan-50 font-bold
                hover:bg-cyan-200/35 transition"
-      >
-        Appliquer
-      </button>
+            >
+            Appliquer
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  }

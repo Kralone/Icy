@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OrbitalStation, OrbitalStationService } from '../../../../../../core/services/station/orbital-station.service';
@@ -29,7 +29,7 @@ interface RefinerySummaryRow {
 @Component({
   selector: 'front-resources-refining-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './resources-refining-panel.component.html',
   styleUrl: './resources-refining-panel.component.css'
 })

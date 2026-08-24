@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import {IceLinkBlock, IceLinkBlockService} from '../../../../core/services/icelink/icelink-block.service';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-icelink-block-panel',
   standalone: true,
-  imports: [CommonModule, DragDropModule, FormsModule],
+  imports: [DragDropModule, FormsModule],
   templateUrl: './icelink-block-panel.component.html',
 })
 export class IceLinkBlockPanelComponent implements OnInit {

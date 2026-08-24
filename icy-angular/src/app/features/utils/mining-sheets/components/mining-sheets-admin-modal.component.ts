@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../model/user.model';
@@ -7,7 +7,7 @@ import { MiningSheet } from '../../../../core/services/mining/mining-sheet.servi
 @Component({
   standalone: true,
   selector: 'app-mining-sheets-admin-modal',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './mining-sheets-admin-modal.component.html',
   styleUrl: './mining-sheets-admin-modal.component.css'
 })

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TemplateListItemDTO, UserCollectionListItemDTO } from '../../../../model/collection.model';
 import { LoadingOverlayComponent } from '../../../../shared/loading-overlay/loading-overlay.component';
@@ -7,7 +7,7 @@ import { LoadingOverlayComponent } from '../../../../shared/loading-overlay/load
 @Component({
   selector: 'app-collection-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingOverlayComponent],
+  imports: [FormsModule, LoadingOverlayComponent],
   templateUrl: './collection-list.component.html',
 })
 export class CollectionListComponent {

@@ -3,7 +3,7 @@
     <a
       routerLink="/icy/admin/data"
       class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-    >
+      >
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
@@ -20,15 +20,17 @@
           [ngModel]="selectedSystem"
           (ngModelChange)="selectedSystem = $event; onSystemChange()"
           class="planet-input min-w-40"
-        >
+          >
           <option value="ALL">Tous</option>
-          <option *ngFor="let system of systems" [value]="system">{{ system }}</option>
+          @for (system of systems; track system) {
+            <option [value]="system">{{ system }}</option>
+          }
         </select>
         <button
           type="button"
           (click)="loadPlanets()"
           class="px-4 py-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-400/20 transition"
-        >
+          >
           Recharger
         </button>
       </div>
@@ -44,7 +46,9 @@
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Systeme</label>
           <select [(ngModel)]="newPlanet.systemName" (ngModelChange)="onFormSystemChange()" class="planet-input">
-            <option *ngFor="let system of formSystemOptions" [value]="system">{{ system }}</option>
+            @for (system of formSystemOptions; track system) {
+              <option [value]="system">{{ system }}</option>
+            }
           </select>
         </div>
 
@@ -52,7 +56,9 @@
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Planete parente (optionnel)</label>
           <select [(ngModel)]="newPlanet.parentPlanet" class="planet-input">
             <option [ngValue]="null">Aucune (corps considere comme planete)</option>
-            <option *ngFor="let parent of parentPlanetOptions" [ngValue]="parent">{{ parent }}</option>
+            @for (parent of parentPlanetOptions; track parent) {
+              <option [ngValue]="parent">{{ parent }}</option>
+            }
           </select>
         </div>
 
@@ -81,19 +87,23 @@
             >?</span>
           </label>
           <select [(ngModel)]="newPlanet.sortOrder" class="planet-input">
-            <option *ngFor="let option of sortOrderOptions" [ngValue]="option.value">{{ option.label }}</option>
+            @for (option of sortOrderOptions; track option) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
           </select>
         </div>
       </div>
 
       <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div class="text-sm text-red-300" *ngIf="errorMessage">{{ errorMessage }}</div>
+        @if (errorMessage) {
+          <div class="text-sm text-red-300">{{ errorMessage }}</div>
+        }
         <div class="ml-auto flex gap-3">
           <button
             type="button"
             (click)="resetForm()"
             class="px-4 py-2 rounded-xl border border-slate-400/35 bg-slate-500/10 hover:bg-slate-500/20 transition"
-          >
+            >
             Reset
           </button>
           <button
@@ -102,7 +112,7 @@
             [disabled]="isSubmitting"
             class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-gradient-to-r from-cyan-500/70 to-blue-600/70
                    hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50"
-          >
+            >
             {{ editingPlanet ? 'Mettre a jour' : 'Ajouter une planete' }}
           </button>
         </div>
@@ -113,58 +123,66 @@
       <div class="overflow-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left">Nom</th>
-            <th class="px-4 py-3 text-left">Type</th>
-            <th class="px-4 py-3 text-left">Systeme</th>
-            <th class="px-4 py-3 text-left">Version</th>
-            <th class="px-4 py-3 text-left">Image</th>
-            <th class="px-4 py-3 text-left">Wiki</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
+            <tr>
+              <th class="px-4 py-3 text-left">Nom</th>
+              <th class="px-4 py-3 text-left">Type</th>
+              <th class="px-4 py-3 text-left">Systeme</th>
+              <th class="px-4 py-3 text-left">Version</th>
+              <th class="px-4 py-3 text-left">Image</th>
+              <th class="px-4 py-3 text-left">Wiki</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
           </thead>
           <tbody>
-          <tr *ngIf="loading">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="7">Chargement...</td>
-          </tr>
-          <tr *ngFor="let body of paginatedBodies" class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
-            <td class="px-4 py-3 font-semibold text-cyan-100">
-              <div [class.moon-indent]="body.bodyType === 'MOON'">
-                <span *ngIf="body.bodyType === 'MOON'" class="moon-link-mark">↳</span>{{ body.name }}
-              </div>
-            </td>
-            <td class="px-4 py-3">{{ body.bodyType === 'PLANET' ? 'Planete' : 'Lune' }}</td>
-            <td class="px-4 py-3">{{ body.systemName }}</td>
-            <td class="px-4 py-3">{{ body.gameVersion }}</td>
-            <td class="px-4 py-3">
-              <img [src]="body.imageUrl" [alt]="body.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
-            </td>
-            <td class="px-4 py-3">
-              <a [href]="body.wikiUrl" target="_blank" rel="noopener noreferrer" class="text-cyan-300 hover:text-cyan-200 underline">
-                Source
-              </a>
-            </td>
-            <td class="px-4 py-3 text-right space-x-3">
-              <button type="button" (click)="editPlanet(body)" class="text-blue-300 hover:text-blue-200">Editer</button>
-              <button type="button" (click)="deletePlanet(body)" class="text-red-300 hover:text-red-200">Supprimer</button>
-            </td>
-          </tr>
-          <tr *ngIf="!loading && !paginatedBodies.length">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="7">Aucune donnee.</td>
-          </tr>
-          </tbody>
-        </table>
+            @if (loading) {
+              <tr>
+                <td class="px-4 py-4 text-cyan-100/70" colspan="7">Chargement...</td>
+              </tr>
+            }
+            @for (body of paginatedBodies; track body) {
+              <tr class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
+                <td class="px-4 py-3 font-semibold text-cyan-100">
+                  <div [class.moon-indent]="body.bodyType === 'MOON'">
+                    @if (body.bodyType === 'MOON') {
+                      <span class="moon-link-mark">↳</span>
+                      }{{ body.name }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">{{ body.bodyType === 'PLANET' ? 'Planete' : 'Lune' }}</td>
+                  <td class="px-4 py-3">{{ body.systemName }}</td>
+                  <td class="px-4 py-3">{{ body.gameVersion }}</td>
+                  <td class="px-4 py-3">
+                    <img [src]="body.imageUrl" [alt]="body.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
+                  </td>
+                  <td class="px-4 py-3">
+                    <a [href]="body.wikiUrl" target="_blank" rel="noopener noreferrer" class="text-cyan-300 hover:text-cyan-200 underline">
+                      Source
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 text-right space-x-3">
+                    <button type="button" (click)="editPlanet(body)" class="text-blue-300 hover:text-blue-200">Editer</button>
+                    <button type="button" (click)="deletePlanet(body)" class="text-red-300 hover:text-red-200">Supprimer</button>
+                  </td>
+                </tr>
+              }
+              @if (!loading && !paginatedBodies.length) {
+                <tr>
+                  <td class="px-4 py-4 text-cyan-100/70" colspan="7">Aucune donnee.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
-      <button type="button" (click)="prevPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-        Precedent
-      </button>
-      <span>Page {{ currentPage }} / {{ totalPages }}</span>
-      <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-        Suivant
-      </button>
-    </div>
-  </section>
-</div>
+      <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
+        <button type="button" (click)="prevPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
+          Precedent
+        </button>
+        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
+          Suivant
+        </button>
+      </div>
+    </section>
+  </div>

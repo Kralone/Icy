@@ -26,20 +26,20 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Composant | Dépôt actuellement | Cible recommandée | Priorité | Décision |
 |---|---:|---:|---|---|
 | Node.js | `24.19.0-alpine3.24` | Node 24 LTS | Terminée | Runtime, npm, `.nvmrc` et images SPA/SSR épinglés |
-| Angular | 20.3.x | 21.x puis 22.1.x | Haute | Deux migrations successives avec `ng update`, jamais un saut direct |
+| Angular | 21.2.21 | 22.1.x | Prochaine | Migration 20→21 validée ; conserver le second palier isolé |
 | TypeScript | 5.9.x | version imposée par Angular | Haute | Angular 22.1 exige TypeScript `>=6.0 <6.1`, pas TypeScript 7 |
 | Java | 21 | Temurin 25 LTS | Moyenne | Java 21 reste supporté ; migration isolée à faible urgence |
 | Spring Boot | 3.5.16 | dernière stable 4.1.x | Moyenne | 3.5.16 est encore stable ; migration majeure séparée vers Spring Framework 7 |
 | Maven | wrapper 3.9.9 | 3.9.9 | Basse | Déjà satisfaisant ; ajouter une règle Enforcer |
-| Python | `3.11-slim` | Python 3.14.x | Moyenne | Valider les extensions et le démarrage avant adoption |
+| Python | `3.11.16-slim-bookworm` | Python 3.14.x | Moyenne | Valider les extensions et le démarrage avant adoption |
 | discord.py | 2.7.1 | 2.7.1 | Basse | Déjà à la dernière version publiée |
 | Dépendances du bot | épinglées | dernières stables compatibles | Moyenne | FastAPI, Uvicorn, aio-pika, dotenv et soupsieve ont des mises à jour |
-| PostgreSQL | tag `15` | 15.19 d'abord, puis 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
+| PostgreSQL | 15.19 épinglé | 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
-| RabbitMQ | tag `3-management` | pont selon la production, puis 4.2 et 4.3 | Haute | La version 3 exacte doit être relevée ; le chemin dépend de celle-ci |
-| Nginx | tags flottants multiples | 1.28.3 stable, digest épinglé | Haute | Uniformiser frontend et serveur d'images |
-| Vault | 1.17 | 1.21.x, puis décision distincte pour 2.x | Conditionnelle | Confirmer d'abord qu'il est réellement utilisé en production |
-| Docker Compose | fichier unique hybride | base + override de production | Haute | Séparer build local, secrets, volumes et exposition réseau |
+| RabbitMQ | 3.13.7 épinglé | 4.2 puis 4.3 | Haute | Le chemin final dépend encore de la version et des feature flags de production |
+| Nginx | 1.30.4 épinglé | stable épinglée | Terminée | Frontend et serveur d'images sont uniformisés |
+| Vault | 1.17.6 épinglé | 1.21.x, puis décision distincte pour 2.x | Conditionnelle | Confirmer d'abord qu'il est réellement utilisé en production |
+| Docker Compose | base + surcharges dédiées | socle durci | Terminée | Production, local et validation sont séparés |
 
 Sources de compatibilité et de cycle de vie : [Angular](https://angular.dev/reference/releases),
 [compatibilité Angular](https://next.angular.dev/reference/versions),
@@ -147,6 +147,15 @@ sont au vert.
 - Vérifier build SPA, SSR, service worker et budgets de bundles.
 
 ### 03 — `codex/upgrade-angular-21`
+
+État : **validée localement le 24 août 2026** avec Angular/CLI/SSR 21.2.21,
+CDK 21.2.14 et FullCalendar 6.1.21. Les 47 tests, les builds SPA/SSR, quatre
+routes prérendues, 14 routes publiques, quatre vues mobiles et deux gardes
+privées sont au vert. L'audit des dépendances de production est à zéro.
+
+Le parcours a aussi révélé que la redirection Nginx d'une route prérendue perd
+le port de développement. Ce défaut d'infrastructure, indépendant d'Angular,
+est réservé à `codex/fix-nginx-prerender-redirect`.
 
 - Exécuter les migrations officielles Angular 20 vers 21.
 - Aligner core, CLI, CDK, SSR et compiler ; ne pas mettre à jour les autres

@@ -8,19 +8,20 @@
   </div>
 
   <div class="flex items-center gap-3">
-    <button
-      *ngIf="showAdmin"
-      routerLink="/icy/admin/collections"
+    @if (showAdmin) {
+      <button
+        routerLink="/icy/admin/collections"
       class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl
              bg-white/10 backdrop-blur-md border border-cyan-400/30
              text-cyan-200 font-semibold text-sm shadow-lg
              hover:bg-cyan-500/20 hover:scale-105 transition-all">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-           stroke="currentColor" class="w-5 h-5 text-cyan-300">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 7h18M3 12h18M3 17h18"/>
-      </svg>
-      Gerer
-    </button>
-  </div>
-</header>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" class="w-5 h-5 text-cyan-300">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 7h18M3 12h18M3 17h18"/>
+          </svg>
+          Gerer
+        </button>
+      }
+    </div>
+  </header>

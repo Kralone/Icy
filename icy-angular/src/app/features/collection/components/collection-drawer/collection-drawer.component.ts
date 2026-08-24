@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { CollectionGridComponent } from '../collection-grid/collection-grid.component';
 import { UserCollectionDetailDTO } from '../../../../model/collection.model';
 
 @Component({
   selector: 'app-collection-drawer',
   standalone: true,
-  imports: [CommonModule, CollectionGridComponent],
+  imports: [CollectionGridComponent],
   templateUrl: './collection-drawer.component.html',
 })
 export class CollectionDrawerComponent {

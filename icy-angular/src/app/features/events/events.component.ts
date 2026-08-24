@@ -1,5 +1,5 @@
 import { Component, HostListener, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CalendarOptions, DatesSetArg, ViewApi } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -25,7 +25,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent, LoadingOverlayComponent],
+  imports: [FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent, LoadingOverlayComponent],
   templateUrl: './events.component.html'
 })
 export class EventsComponent implements AfterViewInit {

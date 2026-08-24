@@ -1,7 +1,7 @@
 <section
   class="relative loading-reveal bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6 transition hover:shadow-cyan-500/10"
   [attr.data-loading]="isLoading"
->
+  >
   <app-loading-overlay
     [isLoading]="isLoading"
     [minDurationMs]="0"
@@ -16,75 +16,80 @@
         placeholder="Rechercher un template..."
         [ngModel]="templateSearchTerm"
         (ngModelChange)="templateSearchTermChange.emit($event)"
-      />
-      <span class="text-xs text-slate-300">{{ totalTemplates }} templates</span>
-    </div>
-  </div>
-
-  <div *ngIf="!isLoading && error"
-       class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
-    ❌ Erreur de chargement.
-  </div>
-
-  <div *ngIf="!isLoading && !error" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <div *ngFor="let t of templates; trackBy: trackById"
-         class="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg transition hover:-translate-y-1 hover:shadow-cyan-500/20">
-      <div class="flex items-start justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-white">{{ t.name }}</h3>
-          <p class="text-xs text-slate-300 mt-1">Template #{{ t.id }}</p>
-        </div>
-        <span class="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
-          {{ t.archetype }}
-        </span>
+        />
+        <span class="text-xs text-slate-300">{{ totalTemplates }} templates</span>
       </div>
+    </div>
 
-      <p class="mt-4 text-xs text-slate-300">
-        Collection inspiree de l'archetype {{ t.archetype }}.
-      </p>
+    @if (!isLoading && error) {
+      <div
+        class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+        ❌ Erreur de chargement.
+      </div>
+    }
 
-      <div class="mt-5 flex items-center justify-between">
-        <button type="button"
+    @if (!isLoading && !error) {
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (t of templates; track trackById($index, t)) {
+          <div
+            class="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg transition hover:-translate-y-1 hover:shadow-cyan-500/20">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-white">{{ t.name }}</h3>
+                <p class="text-xs text-slate-300 mt-1">Template #{{ t.id }}</p>
+              </div>
+              <span class="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+                {{ t.archetype }}
+              </span>
+            </div>
+            <p class="mt-4 text-xs text-slate-300">
+              Collection inspiree de l'archetype {{ t.archetype }}.
+            </p>
+            <div class="mt-5 flex items-center justify-between">
+              <button type="button"
                 class="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-cyan-600 to-blue-700 hover:scale-[1.03] transition text-white text-xs font-semibold px-3 py-1.5 shadow-lg disabled:opacity-70"
                 [disabled]="loadingTemplateId === t.id"
                 (click)="createFromTemplate.emit(t.id)">
-          <ng-container *ngIf="loadingTemplateId !== t.id; else loadingIcon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-              <path fill-rule="evenodd" d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z" clip-rule="evenodd" />
-            </svg>
-            Creer
-          </ng-container>
-          <ng-template #loadingIcon>
-            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                 viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10"
-                      stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
+                @if (loadingTemplateId !== t.id) {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path fill-rule="evenodd" d="M10 5a.75.75 0 01.75.75v3.5h3.5a.75.75 0 010 1.5h-3.5v3.5a.75.75 0 01-1.5 0v-3.5h-3.5a.75.75 0 010-1.5h3.5v-3.5A.75.75 0 0110 5z" clip-rule="evenodd" />
+                  </svg>
+                  Creer
+                } @else {
+                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                    stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-          </ng-template>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isLoading && !error) {
+      <div class="mt-6 flex items-center justify-between text-xs text-slate-300">
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
+          [disabled]="templatePageIndex === 1"
+          (click)="prevPage.emit()">
+          Page precedente
+        </button>
+        <span>Page {{ templatePageIndex }} / {{ templateTotalPages }}</span>
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
+          [disabled]="templatePageIndex === templateTotalPages"
+          (click)="nextPage.emit()">
+          Page suivante
         </button>
       </div>
-    </div>
-  </div>
-
-  <div *ngIf="!isLoading && !error" class="mt-6 flex items-center justify-between text-xs text-slate-300">
-    <button
-      type="button"
-      class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
-      [disabled]="templatePageIndex === 1"
-      (click)="prevPage.emit()">
-      Page precedente
-    </button>
-    <span>Page {{ templatePageIndex }} / {{ templateTotalPages }}</span>
-    <button
-      type="button"
-      class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
-      [disabled]="templatePageIndex === templateTotalPages"
-      (click)="nextPage.emit()">
-      Page suivante
-    </button>
-  </div>
-</section>
+    }
+  </section>
 
 

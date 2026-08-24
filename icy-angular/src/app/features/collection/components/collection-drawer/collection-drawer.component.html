@@ -1,55 +1,60 @@
-<div *ngIf="isOpen" class="fixed inset-0 z-40">
-  <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" (click)="close.emit()"></div>
-  <div class="absolute right-0 top-16 h-[calc(100%-4rem)] w-full sm:w-[640px] lg:w-[720px] bg-[#0f172a] border-l border-white/10 shadow-2xl">
-    <div class="h-full flex flex-col">
-      <div class="p-5 border-b border-white/10 flex items-center justify-between">
-        <div class="space-y-1">
-          <p class="text-xs uppercase tracking-[0.2em] text-cyan-300/70">Collection</p>
-          <h3 class="text-lg font-semibold text-white">{{ selectedLabel }}</h3>
-          <p class="text-xs text-slate-300">{{ selectedTemplateName }}</p>
-        </div>
-        <button type="button"
-                class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition"
-                (click)="close.emit()">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-               stroke="currentColor" class="w-5 h-5 text-slate-200">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-6 space-y-4">
-        <div *ngIf="selectedCollectionId as selectedId">
-          <div *ngIf="rowLoading.has(selectedId)" class="text-gray-400 text-center">Chargement des details…</div>
-          <div *ngIf="!rowLoading.has(selectedId) && rowError.has(selectedId)"
-               class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
-            ❌ Erreur lors du chargement des details.
+@if (isOpen) {
+  <div class="fixed inset-0 z-40">
+    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" (click)="close.emit()"></div>
+    <div class="absolute right-0 top-16 h-[calc(100%-4rem)] w-full sm:w-[640px] lg:w-[720px] bg-[#0f172a] border-l border-white/10 shadow-2xl">
+      <div class="h-full flex flex-col">
+        <div class="p-5 border-b border-white/10 flex items-center justify-between">
+          <div class="space-y-1">
+            <p class="text-xs uppercase tracking-[0.2em] text-cyan-300/70">Collection</p>
+            <h3 class="text-lg font-semibold text-white">{{ selectedLabel }}</h3>
+            <p class="text-xs text-slate-300">{{ selectedTemplateName }}</p>
           </div>
-
-          <ng-container *ngIf="!rowLoading.has(selectedId) && !rowError.has(selectedId)">
-            <ng-container *ngIf="detail as d">
-              <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
-                <div class="flex items-center justify-between text-xs text-slate-300 mb-3">
-                  <span>Progression</span>
-                  <span>{{ progressPercent }}%</span>
+          <button type="button"
+            class="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition"
+            (click)="close.emit()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" class="w-5 h-5 text-slate-200">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+          @if (selectedCollectionId; as selectedId) {
+            <div>
+              @if (rowLoading.has(selectedId)) {
+                <div class="text-gray-400 text-center">Chargement des details…</div>
+              }
+              @if (!rowLoading.has(selectedId) && rowError.has(selectedId)) {
+                <div
+                  class="rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 px-4 py-3 text-center">
+                  ❌ Erreur lors du chargement des details.
                 </div>
-                <div class="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
-                       [style.width.%]="progressPercent"></div>
-                </div>
-              </div>
-
-              <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
-                <app-collection-grid
-                  [detail]="d"
-                  [template]="d.template"
-                  (toggleCell)="toggleCell.emit($event)">
-                </app-collection-grid>
-              </div>
-            </ng-container>
-          </ng-container>
+              }
+              @if (!rowLoading.has(selectedId) && !rowError.has(selectedId)) {
+                @if (detail; as d) {
+                  <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
+                    <div class="flex items-center justify-between text-xs text-slate-300 mb-3">
+                      <span>Progression</span>
+                      <span>{{ progressPercent }}%</span>
+                    </div>
+                    <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
+                      [style.width.%]="progressPercent"></div>
+                    </div>
+                  </div>
+                  <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
+                    <app-collection-grid
+                      [detail]="d"
+                      [template]="d.template"
+                      (toggleCell)="toggleCell.emit($event)">
+                    </app-collection-grid>
+                  </div>
+                }
+              }
+            </div>
+          }
         </div>
       </div>
     </div>
   </div>
-</div>
+}

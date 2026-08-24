@@ -1,173 +1,195 @@
-<section class="section-block" *ngIf="sheet.summary as summary">
-  <div class="section-head">
-    <h3 class="section-title">Synthèse</h3>
-  </div>
-
-  <div class="kpi-grid">
-    <article>
-      <span>Estimation brute</span>
-      <strong [ngStyle]="valueHeatStyle(summary.totalEstimatedAuec, 0, summary.totalEstimatedAuec || 1)">{{ formatNumber(summary.totalEstimatedAuec) }} aUEC</strong>
-    </article>
-    <article>
-      <span>Coûts totaux</span>
-      <strong [ngStyle]="negativeCostStyle(summary.totalCostsAuec)">{{ formatNegativeAmount(summary.totalCostsAuec) }} aUEC</strong>
-    </article>
-    <article>
-      <span>Net estimé</span>
-      <strong [ngStyle]="signedHeatStyle(summary.netEstimatedAuec, summary.totalEstimatedAuec || 1)">{{ formatNumber(summary.netEstimatedAuec) }} aUEC</strong>
-    </article>
-    <article>
-      <span>Raffinage max restant</span>
-      <strong>{{ formatDuration(longestRemainingSeconds(sheet)) }}</strong>
-    </article>
-  </div>
-
-  <div class="table-wrap" *ngIf="summary.ores.length">
-    <table>
-      <thead>
-      <tr>
-        <th>Minerai</th>
-        <th>cSCU total</th>
-        <th>SCU total</th>
-        <th>{{ sheet.saleLocation ? ('Vente a ' + sheet.saleLocation) : 'Vente' }}</th>
-        <th>Estimation</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let ore of summary.ores">
-        <td>{{ ore.oreName }}</td>
-        <td>{{ formatNumber(ore.totalCscu) }}</td>
-        <td [ngStyle]="valueHeatStyle(ore.totalScu, 0, summary.ores[0].totalScu || ore.totalScu || 1)">{{ formatNumber(ore.totalScu) }}</td>
-        <td>{{ ore.bestSellAuec ? (formatNumber(ore.bestSellAuec) + ' aUEC') : '-' }}</td>
-        <td [ngStyle]="valueHeatStyle(ore.estimatedAuec, 0, summary.totalEstimatedAuec || ore.estimatedAuec || 1)">{{ ore.estimatedAuec ? (formatNumber(ore.estimatedAuec) + ' aUEC') : '-' }}</td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="table-wrap" *ngIf="summary.keptOres.length">
-    <table>
-      <thead>
-      <tr>
-        <th>Ressources conservées</th>
-        <th>cSCU total</th>
-        <th>SCU total</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let ore of summary.keptOres">
-        <td>{{ ore.oreName }}</td>
-        <td>{{ formatNumber(ore.totalCscu) }}</td>
-        <td>{{ formatNumber(ore.totalScu) }}</td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="summary-card summary-card--full">
-    <h4 class="summary-title">Répartition</h4>
-    <div class="table-wrap table-wrap--full" *ngIf="summary.settlements.length">
-      <table>
-        <thead>
-        <tr>
-          <th>Utilisateur</th>
-          <th>Brut</th>
-          <th>Coûts payés</th>
-          <th>Part coûts</th>
-          <th>Compensation</th>
-          <th>Payout</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let settlement of summary.settlements">
-          <td>{{ settlement.username }}</td>
-          <td [ngStyle]="valueHeatStyle(settlement.grossEstimateAuec, 0, summary.totalEstimatedAuec || settlement.grossEstimateAuec || 1)">{{ formatNumber(settlement.grossEstimateAuec) }}</td>
-          <td [ngStyle]="negativeCostStyle(settlement.paidCostsAuec)">{{ formatNegativeAmount(settlement.paidCostsAuec) }}</td>
-          <td [ngStyle]="valueHeatStyle(settlement.sharedCostAuec, 0, summary.totalCostsAuec || settlement.sharedCostAuec || 1)">{{ formatNumber(settlement.sharedCostAuec) }}</td>
-          <td [ngStyle]="signedHeatStyle(settlement.compensationAuec, summary.totalCostsAuec || 1)">{{ formatNumber(settlement.compensationAuec) }}</td>
-          <td>
-            <span
-              class="payout-pill"
-              [attr.data-tone]="payoutTone(settlement.payoutAuec)"
-              [ngStyle]="signedHeatStyle(settlement.payoutAuec, maxSettlementPayoutAbs(summary))"
-            >
-              {{ formatSignedAmount(settlement.payoutAuec) }}
-            </span>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+@if (sheet.summary; as summary) {
+  <section class="section-block">
+    <div class="section-head">
+      <h3 class="section-title">Synthèse</h3>
     </div>
-  </div>
-
-  <div class="summary-card">
-    <h4 class="summary-title">Matériaux par utilisateur</h4>
-    <div *ngIf="!summary.userMaterials.length" class="empty">Aucun minerai en raffinage.</div>
-    <div class="materials-chart" *ngIf="materialPieSlices(summary) as pieSlices">
-      <div class="materials-pie-wrap" *ngIf="pieSlices.length">
-        <svg class="materials-pie" viewBox="0 0 140 140" role="img" aria-label="Répartition des matériaux par utilisateur">
-          <circle
-            class="materials-pie-track"
-            [attr.cx]="materialPieCenter"
-            [attr.cy]="materialPieCenter"
-            [attr.r]="materialPieRadius"
-          ></circle>
-          <circle
-            *ngFor="let slice of pieSlices; trackBy: trackMaterialSlice"
-            class="materials-pie-segment"
-            [attr.cx]="materialPieCenter"
-            [attr.cy]="materialPieCenter"
-            [attr.r]="materialPieRadius"
-            [attr.stroke]="slice.color"
-            [attr.stroke-dasharray]="materialPieStrokeDasharray(slice)"
-            [attr.stroke-dashoffset]="materialPieStrokeDashoffset(slice)"
-            [class.is-active]="hoveredMaterialUserId === slice.userId"
-            [class.is-dimmed]="hoveredMaterialUserId && hoveredMaterialUserId !== slice.userId"
-            (mouseenter)="setHoveredMaterialUser(slice.userId)"
-            (mouseleave)="setHoveredMaterialUser(null)"
-          ></circle>
-        </svg>
-        <div class="materials-pie-center" *ngIf="activeMaterialSliceFromSlices(pieSlices) as activeSlice">
-          <strong>{{ activeSlice.percent | number:'1.0-1' }}%</strong>
-          <span>{{ activeSlice.username }}</span>
-        </div>
-      </div>
-
-      <div class="materials-legend" *ngIf="pieSlices.length">
-        <button
-          type="button"
-          class="materials-legend-item"
-          *ngFor="let slice of pieSlices; trackBy: trackMaterialSlice"
-          [class.is-active]="hoveredMaterialUserId === slice.userId"
-          (mouseenter)="setHoveredMaterialUser(slice.userId)"
-          (mouseleave)="setHoveredMaterialUser(null)"
-        >
-          <span class="materials-dot" [style.background]="slice.color"></span>
-          <span class="materials-legend-name">{{ slice.username }}</span>
-          <span class="materials-legend-share">{{ slice.percent | number:'1.0-1' }}%</span>
-          <span class="materials-legend-amount">{{ formatNumber(slice.totalScu) }} SCU</span>
-        </button>
-      </div>
-
-      <article
-        class="materials-hover-card"
-        *ngFor="let activeSlice of activeMaterialSlicesForRender(pieSlices); trackBy: trackMaterialSlice"
-      >
-        <header>
-          <strong>{{ activeSlice.username }}</strong>
-          <span>{{ formatNumber(activeSlice.totalScu) }} SCU ({{ activeSlice.percent | number:'1.0-1' }}%)</span>
-        </header>
-        <div class="materials-hover-table">
-          <div class="materials-hover-row materials-hover-row--head">
-            <span>Minerai</span>
-            <span>SCU</span>
-          </div>
-          <div class="materials-hover-row" *ngFor="let ore of activeSlice.ores">
-            <span>{{ ore.oreName }}</span>
-            <span>{{ formatNumber(ore.totalScu) }}</span>
-          </div>
-        </div>
+    <div class="kpi-grid">
+      <article>
+        <span>Estimation brute</span>
+        <strong [ngStyle]="valueHeatStyle(summary.totalEstimatedAuec, 0, summary.totalEstimatedAuec || 1)">{{ formatNumber(summary.totalEstimatedAuec) }} aUEC</strong>
+      </article>
+      <article>
+        <span>Coûts totaux</span>
+        <strong [ngStyle]="negativeCostStyle(summary.totalCostsAuec)">{{ formatNegativeAmount(summary.totalCostsAuec) }} aUEC</strong>
+      </article>
+      <article>
+        <span>Net estimé</span>
+        <strong [ngStyle]="signedHeatStyle(summary.netEstimatedAuec, summary.totalEstimatedAuec || 1)">{{ formatNumber(summary.netEstimatedAuec) }} aUEC</strong>
+      </article>
+      <article>
+        <span>Raffinage max restant</span>
+        <strong>{{ formatDuration(longestRemainingSeconds(sheet)) }}</strong>
       </article>
     </div>
-  </div>
-</section>
+    @if (summary.ores.length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Minerai</th>
+              <th>cSCU total</th>
+              <th>SCU total</th>
+              <th>{{ sheet.saleLocation ? ('Vente a ' + sheet.saleLocation) : 'Vente' }}</th>
+              <th>Estimation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ore of summary.ores; track ore) {
+              <tr>
+                <td>{{ ore.oreName }}</td>
+                <td>{{ formatNumber(ore.totalCscu) }}</td>
+                <td [ngStyle]="valueHeatStyle(ore.totalScu, 0, summary.ores[0].totalScu || ore.totalScu || 1)">{{ formatNumber(ore.totalScu) }}</td>
+                <td>{{ ore.bestSellAuec ? (formatNumber(ore.bestSellAuec) + ' aUEC') : '-' }}</td>
+                <td [ngStyle]="valueHeatStyle(ore.estimatedAuec, 0, summary.totalEstimatedAuec || ore.estimatedAuec || 1)">{{ ore.estimatedAuec ? (formatNumber(ore.estimatedAuec) + ' aUEC') : '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (summary.keptOres.length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ressources conservées</th>
+              <th>cSCU total</th>
+              <th>SCU total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ore of summary.keptOres; track ore) {
+              <tr>
+                <td>{{ ore.oreName }}</td>
+                <td>{{ formatNumber(ore.totalCscu) }}</td>
+                <td>{{ formatNumber(ore.totalScu) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <div class="summary-card summary-card--full">
+      <h4 class="summary-title">Répartition</h4>
+      @if (summary.settlements.length) {
+        <div class="table-wrap table-wrap--full">
+          <table>
+            <thead>
+              <tr>
+                <th>Utilisateur</th>
+                <th>Brut</th>
+                <th>Coûts payés</th>
+                <th>Part coûts</th>
+                <th>Compensation</th>
+                <th>Payout</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (settlement of summary.settlements; track settlement) {
+                <tr>
+                  <td>{{ settlement.username }}</td>
+                  <td [ngStyle]="valueHeatStyle(settlement.grossEstimateAuec, 0, summary.totalEstimatedAuec || settlement.grossEstimateAuec || 1)">{{ formatNumber(settlement.grossEstimateAuec) }}</td>
+                  <td [ngStyle]="negativeCostStyle(settlement.paidCostsAuec)">{{ formatNegativeAmount(settlement.paidCostsAuec) }}</td>
+                  <td [ngStyle]="valueHeatStyle(settlement.sharedCostAuec, 0, summary.totalCostsAuec || settlement.sharedCostAuec || 1)">{{ formatNumber(settlement.sharedCostAuec) }}</td>
+                  <td [ngStyle]="signedHeatStyle(settlement.compensationAuec, summary.totalCostsAuec || 1)">{{ formatNumber(settlement.compensationAuec) }}</td>
+                  <td>
+                    <span
+                      class="payout-pill"
+                      [attr.data-tone]="payoutTone(settlement.payoutAuec)"
+                      [ngStyle]="signedHeatStyle(settlement.payoutAuec, maxSettlementPayoutAbs(summary))"
+                      >
+                      {{ formatSignedAmount(settlement.payoutAuec) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+    <div class="summary-card">
+      <h4 class="summary-title">Matériaux par utilisateur</h4>
+      @if (!summary.userMaterials.length) {
+        <div class="empty">Aucun minerai en raffinage.</div>
+      }
+      @if (materialPieSlices(summary); as pieSlices) {
+        <div class="materials-chart">
+          @if (pieSlices.length) {
+            <div class="materials-pie-wrap">
+              <svg class="materials-pie" viewBox="0 0 140 140" role="img" aria-label="Répartition des matériaux par utilisateur">
+                <circle
+                  class="materials-pie-track"
+                  [attr.cx]="materialPieCenter"
+                  [attr.cy]="materialPieCenter"
+                  [attr.r]="materialPieRadius"
+                ></circle>
+                @for (slice of pieSlices; track trackMaterialSlice($index, slice)) {
+                  <circle
+                    class="materials-pie-segment"
+                    [attr.cx]="materialPieCenter"
+                    [attr.cy]="materialPieCenter"
+                    [attr.r]="materialPieRadius"
+                    [attr.stroke]="slice.color"
+                    [attr.stroke-dasharray]="materialPieStrokeDasharray(slice)"
+                    [attr.stroke-dashoffset]="materialPieStrokeDashoffset(slice)"
+                    [class.is-active]="hoveredMaterialUserId === slice.userId"
+                    [class.is-dimmed]="hoveredMaterialUserId && hoveredMaterialUserId !== slice.userId"
+                    (mouseenter)="setHoveredMaterialUser(slice.userId)"
+                    (mouseleave)="setHoveredMaterialUser(null)"
+                  ></circle>
+                }
+              </svg>
+              @if (activeMaterialSliceFromSlices(pieSlices); as activeSlice) {
+                <div class="materials-pie-center">
+                  <strong>{{ activeSlice.percent | number:'1.0-1' }}%</strong>
+                  <span>{{ activeSlice.username }}</span>
+                </div>
+              }
+            </div>
+          }
+          @if (pieSlices.length) {
+            <div class="materials-legend">
+              @for (slice of pieSlices; track trackMaterialSlice($index, slice)) {
+                <button
+                  type="button"
+                  class="materials-legend-item"
+                  [class.is-active]="hoveredMaterialUserId === slice.userId"
+                  (mouseenter)="setHoveredMaterialUser(slice.userId)"
+                  (mouseleave)="setHoveredMaterialUser(null)"
+                  >
+                  <span class="materials-dot" [style.background]="slice.color"></span>
+                  <span class="materials-legend-name">{{ slice.username }}</span>
+                  <span class="materials-legend-share">{{ slice.percent | number:'1.0-1' }}%</span>
+                  <span class="materials-legend-amount">{{ formatNumber(slice.totalScu) }} SCU</span>
+                </button>
+              }
+            </div>
+          }
+          @for (activeSlice of activeMaterialSlicesForRender(pieSlices); track trackMaterialSlice($index, activeSlice)) {
+            <article
+              class="materials-hover-card"
+              >
+              <header>
+                <strong>{{ activeSlice.username }}</strong>
+                <span>{{ formatNumber(activeSlice.totalScu) }} SCU ({{ activeSlice.percent | number:'1.0-1' }}%)</span>
+              </header>
+              <div class="materials-hover-table">
+                <div class="materials-hover-row materials-hover-row--head">
+                  <span>Minerai</span>
+                  <span>SCU</span>
+                </div>
+                @for (ore of activeSlice.ores; track ore) {
+                  <div class="materials-hover-row">
+                    <span>{{ ore.oreName }}</span>
+                    <span>{{ formatNumber(ore.totalScu) }}</span>
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}

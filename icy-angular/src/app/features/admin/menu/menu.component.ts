@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
@@ -10,10 +10,9 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   selector: 'app-admin-menu',
   imports: [
     RouterLink,
-    CommonModule,
     RankOrbitComponent,
     LoadingOverlayComponent
-  ],
+],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })

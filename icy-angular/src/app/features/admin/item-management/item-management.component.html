@@ -3,7 +3,7 @@
     <a
       routerLink="/icy/admin/data"
       class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-    >
+      >
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
@@ -36,7 +36,9 @@
           <label class="block text-sm mb-1 text-gray-300">Categorie</label>
           <select [(ngModel)]="form.categoryId" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white">
             <option [ngValue]="null">Sans categorie</option>
-            <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+            @for (category of categories; track category) {
+              <option [ngValue]="category.id">{{ category.name }}</option>
+            }
           </select>
         </div>
         <div class="md:col-span-2 xl:col-span-3">
@@ -46,7 +48,7 @@
         <div class="md:col-span-2 xl:col-span-3">
           <label class="block text-sm mb-1 text-gray-300">Stats</label>
           <textarea [(ngModel)]="form.stats" rows="3" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white"
-                    placeholder='Ex: {"power":12,"cooldown":4.2}'></textarea>
+          placeholder='Ex: {"power":12,"cooldown":4.2}'></textarea>
         </div>
       </div>
 
@@ -58,96 +60,109 @@
             type="text"
             placeholder="Nom categorie"
             class="min-w-[240px] flex-1 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white"
-          />
-          <button
-            type="button"
-            (click)="createCategory()"
-            [disabled]="isCategorySubmitting"
-            class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-cyan-500/20 hover:bg-cyan-400/30 transition disabled:opacity-50"
-          >
-            Creer categorie
-          </button>
+            />
+            <button
+              type="button"
+              (click)="createCategory()"
+              [disabled]="isCategorySubmitting"
+              class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-cyan-500/20 hover:bg-cyan-400/30 transition disabled:opacity-50"
+              >
+              Creer categorie
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div class="text-sm text-red-300" *ngIf="errorMessage">{{ errorMessage }}</div>
-        <div class="ml-auto flex gap-3">
-          <button type="button" (click)="resetForm()" class="px-4 py-2 rounded-xl border border-slate-400/35 bg-slate-500/10 hover:bg-slate-500/20 transition">
-            Reset
-          </button>
-          <button type="button" (click)="createOrUpdateItem()" [disabled]="isSubmitting"
-                  class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-gradient-to-r from-cyan-500/70 to-blue-600/70 hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50">
-            {{ editingItem ? 'Mettre a jour' : 'Ajouter item' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
-      <div class="px-4 py-4 border-b border-cyan-300/10 bg-cyan-500/5">
-        <div class="text-xs uppercase tracking-[0.12em] text-cyan-100/75 mb-3">Filtrer par categorie</div>
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            (click)="setCategoryFilter(null)"
-            [class]="isCategorySelected(null) ? 'px-3 py-1.5 rounded-full text-xs border border-cyan-200 bg-cyan-500/35 text-white' : 'px-3 py-1.5 rounded-full text-xs border border-cyan-300/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 transition'"
-          >
-            Toutes
-          </button>
-          <button
-            *ngFor="let category of categories"
-            type="button"
-            (click)="setCategoryFilter(category.id)"
-            [class]="isCategorySelected(category.id) ? 'px-3 py-1.5 rounded-full text-xs border border-cyan-200 bg-cyan-500/35 text-white' : 'px-3 py-1.5 rounded-full text-xs border border-cyan-300/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 transition'"
-          >
-            {{ category.name }}
-          </button>
-          <div class="ml-auto text-xs text-cyan-100/75">
-            {{ filteredItems.length }} item(s)
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          @if (errorMessage) {
+            <div class="text-sm text-red-300">{{ errorMessage }}</div>
+          }
+          <div class="ml-auto flex gap-3">
+            <button type="button" (click)="resetForm()" class="px-4 py-2 rounded-xl border border-slate-400/35 bg-slate-500/10 hover:bg-slate-500/20 transition">
+              Reset
+            </button>
+            <button type="button" (click)="createOrUpdateItem()" [disabled]="isSubmitting"
+              class="px-4 py-2 rounded-xl border border-cyan-300/35 bg-gradient-to-r from-cyan-500/70 to-blue-600/70 hover:from-cyan-400 hover:to-blue-500 transition disabled:opacity-50">
+              {{ editingItem ? 'Mettre a jour' : 'Ajouter item' }}
+            </button>
           </div>
         </div>
       </div>
-      <div class="overflow-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left">Id</th>
-            <th class="px-4 py-3 text-left">Nom</th>
-            <th class="px-4 py-3 text-left">Categorie</th>
-            <th class="px-4 py-3 text-left">Manufacturer</th>
-            <th class="px-4 py-3 text-left">Image</th>
-            <th class="px-4 py-3 text-left">Description</th>
-            <th class="px-4 py-3 text-left">Stats</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngIf="loading">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="8">Chargement...</td>
-          </tr>
-          <tr *ngFor="let item of filteredItems" class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
-            <td class="px-4 py-3 font-mono text-xs">{{ item.id }}</td>
-            <td class="px-4 py-3 font-semibold text-cyan-100">{{ item.name }}</td>
-            <td class="px-4 py-3">{{ item.category?.name || '-' }}</td>
-            <td class="px-4 py-3">{{ item.manufacturer || '-' }}</td>
-            <td class="px-4 py-3">
-              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
-              <span *ngIf="!item.imageUrl">-</span>
-            </td>
-            <td class="px-4 py-3 max-w-sm whitespace-pre-line">{{ item.description || '-' }}</td>
-            <td class="px-4 py-3 max-w-sm whitespace-pre-line">{{ item.stats || '-' }}</td>
-            <td class="px-4 py-3 text-right space-x-3 whitespace-nowrap">
-              <button type="button" (click)="editItem(item)" class="text-blue-300 hover:text-blue-200">Editer</button>
-              <button type="button" (click)="deleteItem(item)" class="text-red-300 hover:text-red-200">Supprimer</button>
-            </td>
-          </tr>
-          <tr *ngIf="!loading && !filteredItems.length">
-            <td class="px-4 py-4 text-cyan-100/70" colspan="8">Aucun item.</td>
-          </tr>
-          </tbody>
-        </table>
+
+      <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
+        <div class="px-4 py-4 border-b border-cyan-300/10 bg-cyan-500/5">
+          <div class="text-xs uppercase tracking-[0.12em] text-cyan-100/75 mb-3">Filtrer par categorie</div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              (click)="setCategoryFilter(null)"
+              [class]="isCategorySelected(null) ? 'px-3 py-1.5 rounded-full text-xs border border-cyan-200 bg-cyan-500/35 text-white' : 'px-3 py-1.5 rounded-full text-xs border border-cyan-300/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 transition'"
+              >
+              Toutes
+            </button>
+            @for (category of categories; track category) {
+              <button
+                type="button"
+                (click)="setCategoryFilter(category.id)"
+                [class]="isCategorySelected(category.id) ? 'px-3 py-1.5 rounded-full text-xs border border-cyan-200 bg-cyan-500/35 text-white' : 'px-3 py-1.5 rounded-full text-xs border border-cyan-300/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 transition'"
+                >
+                {{ category.name }}
+              </button>
+            }
+            <div class="ml-auto text-xs text-cyan-100/75">
+              {{ filteredItems.length }} item(s)
+            </div>
+          </div>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
+              <tr>
+                <th class="px-4 py-3 text-left">Id</th>
+                <th class="px-4 py-3 text-left">Nom</th>
+                <th class="px-4 py-3 text-left">Categorie</th>
+                <th class="px-4 py-3 text-left">Manufacturer</th>
+                <th class="px-4 py-3 text-left">Image</th>
+                <th class="px-4 py-3 text-left">Description</th>
+                <th class="px-4 py-3 text-left">Stats</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (loading) {
+                <tr>
+                  <td class="px-4 py-4 text-cyan-100/70" colspan="8">Chargement...</td>
+                </tr>
+              }
+              @for (item of filteredItems; track item) {
+                <tr class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition">
+                  <td class="px-4 py-3 font-mono text-xs">{{ item.id }}</td>
+                  <td class="px-4 py-3 font-semibold text-cyan-100">{{ item.name }}</td>
+                  <td class="px-4 py-3">{{ item.category?.name || '-' }}</td>
+                  <td class="px-4 py-3">{{ item.manufacturer || '-' }}</td>
+                  <td class="px-4 py-3">
+                    @if (item.imageUrl) {
+                      <img [src]="item.imageUrl" [alt]="item.name" class="h-14 w-24 object-cover rounded-lg border border-cyan-300/20" />
+                    }
+                    @if (!item.imageUrl) {
+                      <span>-</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 max-w-sm whitespace-pre-line">{{ item.description || '-' }}</td>
+                  <td class="px-4 py-3 max-w-sm whitespace-pre-line">{{ item.stats || '-' }}</td>
+                  <td class="px-4 py-3 text-right space-x-3 whitespace-nowrap">
+                    <button type="button" (click)="editItem(item)" class="text-blue-300 hover:text-blue-200">Editer</button>
+                    <button type="button" (click)="deleteItem(item)" class="text-red-300 hover:text-red-200">Supprimer</button>
+                  </td>
+                </tr>
+              }
+              @if (!loading && !filteredItems.length) {
+                <tr>
+                  <td class="px-4 py-4 text-cyan-100/70" colspan="8">Aucun item.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  </section>
-</div>
+    </section>
+  </div>

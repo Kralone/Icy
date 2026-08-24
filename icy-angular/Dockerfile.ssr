@@ -2,7 +2,7 @@ FROM node:24.19.0-alpine3.24@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 COPY . .
 RUN npm run build
@@ -15,7 +15,7 @@ ENV HOST=0.0.0.0
 ENV PORT=4000
 
 COPY --chown=node:node package*.json ./
-RUN npm ci --omit=dev --ignore-scripts --legacy-peer-deps && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 COPY --from=build --chown=node:node /app/dist/icy-angular ./dist/icy-angular
 

@@ -13,14 +13,15 @@
         {{ editingGoal ? '✏️ Édition' : '➕ Création' }}
       </div>
 
-      <button
-        *ngIf="editingGoal"
-        (click)="resetForm()"
+      @if (editingGoal) {
+        <button
+          (click)="resetForm()"
         class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
                transition active:scale-95"
-      >
-        Annuler
-      </button>
+          >
+          Annuler
+        </button>
+      }
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -31,432 +32,6 @@
           [(ngModel)]="form.name"
           class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-300">Cible</label>
-        <input
-          type="number" min="1"
-          [(ngModel)]="form.target"
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-300">Actuel</label>
-        <input
-          type="number" min="0"
-          [(ngModel)]="form.current"
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-      </div>
-
-      <div class="lg:col-span-3">
-        <label class="text-sm text-gray-300">Description</label>
-        <textarea
-          [(ngModel)]="form.description"
-          class="w-full min-h-[90px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        ></textarea>
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-300">Objectif principal</label>
-        <select
-          [(ngModel)]="selectedRootId"
-          (change)="onRootParentChange()"
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1b263b]/70 border border-white/20 text-cyan-100
-                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
-        >
-          <option [ngValue]="null">— Aucun —</option>
-          <option *ngFor="let g of rootGoals" [ngValue]="g.id">{{ g.name }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-300">Sous-objectif parent</label>
-        <select
-          [(ngModel)]="form.parentId"
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1b263b]/70 border border-white/20 text-cyan-100
-                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
-        >
-          <option [ngValue]="selectedRootId" [disabled]="!selectedRootId">
-            — Directement sous le parent —
-          </option>
-          <option *ngFor="let sg of subGoalsForSelectedRoot" [ngValue]="sg.id">
-            {{ sg.name }}
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-300">Utilisateur lié (optionnel)</label>
-        <input
-          [(ngModel)]="formUserInput"
-          (input)="onUserInputChange()"
-          list="goal-user-options"
-          placeholder="Rechercher ou sélectionner un utilisateur..."
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-        <datalist id="goal-user-options">
-          <option *ngFor="let u of users" [value]="u.username"></option>
-        </datalist>
-      </div>
-
-      <div class="flex items-end">
-        <button
-          (click)="form.pinned = !form.pinned"
-          class="w-full min-h-[44px] rounded-xl border font-semibold transition
-                 hover:brightness-110 active:scale-95"
-          [ngClass]="{
-            'bg-cyan-500/20 border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25': form.pinned,
-            'bg-white/5 border-white/20 text-white/70 hover:bg-white/10': !form.pinned
-          }"
-        >
-          📌 {{ form.pinned ? 'Épinglé' : 'Non épinglé' }}
-        </button>
-      </div>
-
-    </div>
-
-    <div class="flex justify-end">
-      <button
-        (click)="createOrUpdateGoal()"
-        class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500
-               hover:from-cyan-300 hover:to-sky-400 transition font-semibold
-               active:scale-95"
-      >
-        {{ editingGoal ? 'Mettre à jour' : '+ Ajouter' }}
-      </button>
-    </div>
-  </div>
-
-  <!-- ===================== LIST ===================== -->
-  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
-    <div class="px-4 py-3 border-b border-white/10 text-sm text-cyan-100/90">
-      Objectifs principaux en cours
-    </div>
-
-    <div *ngFor="let root of paginatedRoots" class="border-b border-white/10">
-
-      <!-- ROOT ROW -->
-      <div
-        class="flex items-center justify-between px-4 py-3 cursor-pointer
-               transition-all duration-200
-               hover:bg-white/10 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]
-               active:scale-[0.995]"
-        (click)="toggleRoot(root)"
-      >
-        <div class="flex items-center gap-3">
-          <ng-container *ngIf="!isRootOpen(root); else openIcon">
-            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
-            </svg>
-          </ng-container>
-          <ng-template #openIcon>
-            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
-            </svg>
-          </ng-template>
-
-          <span class="font-semibold tracking-wide">{{ root.name }}</span>
-
-          <span *ngIf="root.pinned"
-                class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
-            📌
-          </span>
-
-          <span *ngIf="root.username"
-                class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
-            <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
-              <img *ngIf="root.avatarUrl; else rootAvatarInitial"
-                   [src]="root.avatarUrl"
-                   [alt]="root.username || 'Avatar'"
-                   class="w-full h-full object-cover" />
-              <ng-template #rootAvatarInitial>{{ getInitial(root.username) }}</ng-template>
-            </span>
-            <span class="truncate max-w-[140px]">{{ root.username }}</span>
-          </span>
-
-          <span *ngIf="isDone(root)"
-                class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
-            Terminé
-          </span>
-        </div>
-
-        <div class="flex gap-2">
-          <button
-            (click)="editGoal(root); $event.stopPropagation()"
-            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                   hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-            title="Éditer"
-          >
-            ✏️
-          </button>
-
-          <button
-            (click)="deleteGoal(root.id, root.name); $event.stopPropagation()"
-            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                   hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-            title="Supprimer"
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
-
-      <!-- CHILDREN -->
-      <div *ngIf="isRootOpen(root)" class="bg-white/5 border-t border-white/10">
-        <div
-          *ngFor="let node of getVisibleTree(root)"
-          class="flex items-center justify-between px-4 py-2 border-t border-white/10
-                 transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
-          [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-white/35">↳</span>
-            <span class="text-white/85">{{ node.goal.name }}</span>
-
-            <span *ngIf="node.goal.pinned"
-                  class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
-
-            <span *ngIf="node.goal.username"
-                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
-              <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
-                <img *ngIf="node.goal.avatarUrl; else nodeAvatarInitial"
-                     [src]="node.goal.avatarUrl"
-                     [alt]="node.goal.username || 'Avatar'"
-                     class="w-full h-full object-cover" />
-                <ng-template #nodeAvatarInitial>{{ getInitial(node.goal.username) }}</ng-template>
-              </span>
-              <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
-            </span>
-
-            <span *ngIf="isDone(node.goal)"
-                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
-          </div>
-
-          <div class="flex gap-2">
-            <button
-              (click)="editGoal(node.goal); $event.stopPropagation()"
-              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                     hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-              title="Éditer"
-            >
-              ✏️
-            </button>
-            <button
-              (click)="deleteGoal(node.goal.id, node.goal.name); $event.stopPropagation()"
-              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-              title="Supprimer"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Completed main goals (separate folded section) -->
-    <div class="border-t border-white/20">
-      <button
-        type="button"
-        class="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition"
-        (click)="toggleCompletedMainSection()"
-      >
-        <span class="text-sm text-white/80">
-          Objectifs principaux terminés ({{ completedMainRootGoals.length }})
-        </span>
-        <svg
-          class="w-4 h-4 text-cyan-300 transition-transform"
-          [ngClass]="{ 'rotate-180': completedMainSectionOpen }"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
-        </svg>
-      </button>
-
-      <div *ngIf="completedMainSectionOpen">
-        <div *ngFor="let root of completedMainRootGoals" class="border-t border-white/10">
-          <div
-            class="flex items-center justify-between px-4 py-3 cursor-pointer
-                   transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
-            (click)="toggleRoot(root)"
-          >
-            <div class="flex items-center gap-3 opacity-50">
-              <ng-container *ngIf="!isRootOpen(root); else openDoneIcon">
-                <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
-                </svg>
-              </ng-container>
-              <ng-template #openDoneIcon>
-                <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
-                </svg>
-              </ng-template>
-
-              <span class="font-semibold tracking-wide">{{ root.name }}</span>
-
-              <span *ngIf="root.pinned"
-                    class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
-                📌
-              </span>
-
-              <span *ngIf="root.username"
-                    class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
-                <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
-                  <img *ngIf="root.avatarUrl; else doneRootAvatarInitial"
-                       [src]="root.avatarUrl"
-                       [alt]="root.username || 'Avatar'"
-                       class="w-full h-full object-cover" />
-                  <ng-template #doneRootAvatarInitial>{{ getInitial(root.username) }}</ng-template>
-                </span>
-                <span class="truncate max-w-[140px]">{{ root.username }}</span>
-              </span>
-
-              <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
-                Terminé
-              </span>
-            </div>
-
-            <div class="flex gap-2">
-              <button
-                (click)="editGoal(root); $event.stopPropagation()"
-                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                       hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-                title="Éditer"
-              >
-                ✏️
-              </button>
-
-              <button
-                (click)="deleteGoal(root.id, root.name); $event.stopPropagation()"
-                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                       hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-                title="Supprimer"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-
-          <div *ngIf="isRootOpen(root)" class="bg-white/5 border-t border-white/10">
-            <div
-              *ngFor="let node of getVisibleTree(root)"
-              class="flex items-center justify-between px-4 py-2 border-t border-white/10
-                     transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
-              [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
-            >
-              <div class="flex items-center gap-2 opacity-50">
-                <span class="text-white/35">↳</span>
-                <span class="text-white/85">{{ node.goal.name }}</span>
-
-                <span *ngIf="node.goal.pinned"
-                      class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
-
-                <span *ngIf="node.goal.username"
-                      class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
-                  <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
-                    <img *ngIf="node.goal.avatarUrl; else doneNodeAvatarInitial"
-                         [src]="node.goal.avatarUrl"
-                         [alt]="node.goal.username || 'Avatar'"
-                         class="w-full h-full object-cover" />
-                    <ng-template #doneNodeAvatarInitial>{{ getInitial(node.goal.username) }}</ng-template>
-                  </span>
-                  <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
-                </span>
-
-                <span *ngIf="isDone(node.goal)"
-                      class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
-              </div>
-
-              <div class="flex gap-2">
-                <button
-                  (click)="editGoal(node.goal); $event.stopPropagation()"
-                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                         hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-                  title="Éditer"
-                >
-                  ✏️
-                </button>
-                <button
-                  (click)="deleteGoal(node.goal.id, node.goal.name); $event.stopPropagation()"
-                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                         hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-                  title="Supprimer"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="completedMainRootGoals.length === 0" class="px-4 py-4 text-sm text-white/50 border-t border-white/10">
-          Aucun objectif principal terminé.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pagination -->
-  <div class="flex justify-center items-center gap-4 text-gray-300">
-    <button
-      (click)="prevPage()"
-      [disabled]="currentPage === 1"
-      class="px-4 py-2 bg-white/10 border border-white/20 rounded-xl
-             hover:bg-white/20 transition disabled:opacity-40 active:scale-95"
-      title="Page précédente"
-    >
-      ❮
-    </button>
-
-    <span class="text-white/70">Page <span class="text-cyan-200 font-semibold">{{ currentPage }}</span> / {{ totalPages }}</span>
-
-    <button
-      (click)="nextPage()"
-      [disabled]="currentPage === totalPages"
-      class="px-4 py-2 bg-white/10 border border-white/20 rounded-xl
-             hover:bg-white/20 transition disabled:opacity-40 active:scale-95"
-      title="Page suivante"
-    >
-      ❯
-    </button>
-  </div>
-
-  <!-- ===================== TEMPLATES ===================== -->
-  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
-    <div class="flex items-center justify-between gap-3">
-      <div class="text-lg font-semibold text-cyan-200">
-        {{ editingTemplateTreeRootId !== null ? '✏️ Édition template complet' : '🧩 Création template complet' }}
-      </div>
-      <button
-        *ngIf="editingTemplateTreeRootId !== null"
-        (click)="resetTemplateDraft()"
-        class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
-               transition active:scale-95"
-      >
-        Annuler édition
-      </button>
-    </div>
-
-    <div class="space-y-4">
-      <div class="text-sm text-white/70">Objectif parent (racine)</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div>
-          <label class="text-sm text-gray-300">Nom</label>
-          <input
-            [(ngModel)]="templateDraftRoot.name"
-            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
           />
         </div>
 
@@ -464,217 +39,676 @@
           <label class="text-sm text-gray-300">Cible</label>
           <input
             type="number" min="1"
-            [(ngModel)]="templateDraftRoot.target"
-            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          />
-        </div>
-
-        <div class="lg:col-span-3">
-          <label class="text-sm text-gray-300">Description</label>
-          <textarea
-            [(ngModel)]="templateDraftRoot.description"
-            class="w-full min-h-[90px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-          ></textarea>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <button
-          (click)="resetTemplateDraft()"
-          class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
-                 transition active:scale-95"
-        >
-          Réinitialiser
-        </button>
-      </div>
-    </div>
-
-    <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
-      <div class="text-sm text-white/70">Prévisualisation</div>
-      <ng-template #draftNode let-node let-depth="depth">
-        <div
-          class="flex flex-wrap items-center gap-3 border border-white/10 bg-white/5 rounded-xl px-3 py-2"
-          [style.marginLeft.px]="depth * 16"
-        >
-          <div class="flex-1 min-w-[180px]">
-            <input
-              [(ngModel)]="node.name"
-              placeholder="Nom"
-              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+            [(ngModel)]="form.target"
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
             />
           </div>
-          <div class="w-24">
-            <input
-              type="number" min="1"
-              [(ngModel)]="node.target"
-              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-          <div class="flex-1 min-w-[220px]">
-            <input
-              [(ngModel)]="node.description"
-              placeholder="Description"
-              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-          <div class="flex gap-2">
-            <button
-              (click)="addTemplateChild(node)"
-              [disabled]="editingTemplateTreeRootId !== null"
-              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                     hover:bg-white/10 hover:border-white/25 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Ajouter un sous-objectif"
-            >
-              ➕
-            </button>
-            <button
-              *ngIf="node !== templateDraftRoot"
-              (click)="removeTemplateNode(node)"
-              [disabled]="editingTemplateTreeRootId !== null"
-              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Supprimer"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-        <div *ngFor="let child of node.children" class="mt-2">
-          <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: child, depth: depth + 1 }"></ng-container>
-        </div>
-      </ng-template>
 
-      <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: templateDraftRoot, depth: 0 }"></ng-container>
-    </div>
+          <div>
+            <label class="text-sm text-gray-300">Actuel</label>
+            <input
+              type="number" min="0"
+              [(ngModel)]="form.current"
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              />
+            </div>
 
-    <div class="flex justify-end">
-      <button
-        (click)="createTemplateTree()"
+            <div class="lg:col-span-3">
+              <label class="text-sm text-gray-300">Description</label>
+              <textarea
+                [(ngModel)]="form.description"
+          class="w-full min-h-[90px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="text-sm text-gray-300">Objectif principal</label>
+              <select
+                [(ngModel)]="selectedRootId"
+                (change)="onRootParentChange()"
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1b263b]/70 border border-white/20 text-cyan-100
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+                >
+                <option [ngValue]="null">— Aucun —</option>
+                @for (g of rootGoals; track g) {
+                  <option [ngValue]="g.id">{{ g.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm text-gray-300">Sous-objectif parent</label>
+              <select
+                [(ngModel)]="form.parentId"
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-[#1b263b]/70 border border-white/20 text-cyan-100
+                 focus:ring-2 focus:ring-cyan-400 outline-none transition"
+                >
+                <option [ngValue]="selectedRootId" [disabled]="!selectedRootId">
+                  — Directement sous le parent —
+                </option>
+                @for (sg of subGoalsForSelectedRoot; track sg) {
+                  <option [ngValue]="sg.id">
+                    {{ sg.name }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm text-gray-300">Utilisateur lié (optionnel)</label>
+              <input
+                [(ngModel)]="formUserInput"
+                (input)="onUserInputChange()"
+                list="goal-user-options"
+                placeholder="Rechercher ou sélectionner un utilisateur..."
+          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                />
+                <datalist id="goal-user-options">
+                  @for (u of users; track u) {
+                    <option [value]="u.username"></option>
+                  }
+                </datalist>
+              </div>
+
+              <div class="flex items-end">
+                <button
+                  (click)="form.pinned = !form.pinned"
+          class="w-full min-h-[44px] rounded-xl border font-semibold transition
+                 hover:brightness-110 active:scale-95"
+          [ngClass]="{
+            'bg-cyan-500/20 border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25': form.pinned,
+            'bg-white/5 border-white/20 text-white/70 hover:bg-white/10': !form.pinned
+          }"
+                  >
+                  📌 {{ form.pinned ? 'Épinglé' : 'Non épinglé' }}
+                </button>
+              </div>
+
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                (click)="createOrUpdateGoal()"
         class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500
                hover:from-cyan-300 hover:to-sky-400 transition font-semibold
                active:scale-95"
-      >
-        {{ editingTemplateTreeRootId !== null ? 'Mettre à jour le template' : '+ Enregistrer le template' }}
-      </button>
-    </div>
+                >
+                {{ editingGoal ? 'Mettre à jour' : '+ Ajouter' }}
+              </button>
+            </div>
+          </div>
 
-  </div>
+          <!-- ===================== LIST ===================== -->
+          <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-white/10 text-sm text-cyan-100/90">
+              Objectifs principaux en cours
+            </div>
 
-  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
-    <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
-      <div class="text-sm text-white/70">Templates prêts à être ajoutés</div>
-      <div class="min-w-[240px]">
-        <input
-          [(ngModel)]="templateApplyUserInput"
-          (input)="onTemplateApplyUserInputChange()"
-          list="template-apply-user-options"
-          placeholder="Utilisateur (optionnel)"
-          class="w-full min-h-[36px] px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-        />
-        <datalist id="template-apply-user-options">
-          <option *ngFor="let u of users" [value]="u.username"></option>
-        </datalist>
-      </div>
-    </div>
-
-    <div *ngFor="let root of templateRoots" class="border-b border-white/10">
-      <div
+            @for (root of paginatedRoots; track root) {
+              <div class="border-b border-white/10">
+                <!-- ROOT ROW -->
+                <div
         class="flex items-center justify-between px-4 py-3 cursor-pointer
                transition-all duration-200
                hover:bg-white/10 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]
                active:scale-[0.995]"
-        (click)="toggleTemplateRoot(root)"
-      >
-        <div class="flex items-center gap-3">
-          <ng-container *ngIf="!isTemplateRootOpen(root); else openTemplateIcon">
-            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
-            </svg>
-          </ng-container>
-          <ng-template #openTemplateIcon>
-            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
-            </svg>
-          </ng-template>
-
-          <span class="font-semibold tracking-wide">{{ root.name }}</span>
-        </div>
-
-        <div class="flex gap-2">
-          <button
-            (click)="editTemplate(root); $event.stopPropagation()"
+                  (click)="toggleRoot(root)"
+                  >
+                  <div class="flex items-center gap-3">
+                    @if (!isRootOpen(root)) {
+                      <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
+                      </svg>
+                    } @else {
+                      <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+                      </svg>
+                    }
+                    <span class="font-semibold tracking-wide">{{ root.name }}</span>
+                    @if (root.pinned) {
+                      <span
+                        class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
+                        📌
+                      </span>
+                    }
+                    @if (root.username) {
+                      <span
+                        class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                        <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                          @if (root.avatarUrl) {
+                            <img
+                              [src]="root.avatarUrl"
+                              [alt]="root.username || 'Avatar'"
+                              class="w-full h-full object-cover" />
+                          } @else {
+                            {{ getInitial(root.username) }}
+                          }
+                        </span>
+                        <span class="truncate max-w-[140px]">{{ root.username }}</span>
+                      </span>
+                    }
+                    @if (isDone(root)) {
+                      <span
+                        class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
+                        Terminé
+                      </span>
+                    }
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      (click)="editGoal(root); $event.stopPropagation()"
             class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
                    hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-            title="Éditer template"
-          >
-            ✏️
-          </button>
-          <button
-            (click)="applyTemplate(root); $event.stopPropagation()"
-            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                   hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
-            title="Ajouter aux objectifs"
-          >
-            ➕
-          </button>
-          <button
-            (click)="deleteTemplate(root.id, root.name); $event.stopPropagation()"
+                      title="Éditer"
+                      >
+                      ✏️
+                    </button>
+                    <button
+                      (click)="deleteGoal(root.id, root.name); $event.stopPropagation()"
             class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
                    hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-            title="Supprimer"
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
-
-      <div *ngIf="isTemplateRootOpen(root)" class="bg-white/5 border-t border-white/10">
-        <div
-          *ngFor="let node of getVisibleTemplateTree(root)"
+                      title="Supprimer"
+                      >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+                <!-- CHILDREN -->
+                @if (isRootOpen(root)) {
+                  <div class="bg-white/5 border-t border-white/10">
+                    @for (node of getVisibleTree(root); track node) {
+                      <div
           class="flex items-center justify-between px-4 py-2 border-t border-white/10
                  transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
-          [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-white/35">↳</span>
-            <span class="text-white/85">{{ node.template.name }}</span>
-          </div>
-
-          <div class="flex gap-2">
-            <button
-              (click)="editTemplate(node.template); $event.stopPropagation()"
+                        [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
+                        >
+                        <div class="flex items-center gap-2">
+                          <span class="text-white/35">↳</span>
+                          <span class="text-white/85">{{ node.goal.name }}</span>
+                          @if (node.goal.pinned) {
+                            <span
+                            class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
+                          }
+                          @if (node.goal.username) {
+                            <span
+                              class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                              <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                                @if (node.goal.avatarUrl) {
+                                  <img
+                                    [src]="node.goal.avatarUrl"
+                                    [alt]="node.goal.username || 'Avatar'"
+                                    class="w-full h-full object-cover" />
+                                } @else {
+                                  {{ getInitial(node.goal.username) }}
+                                }
+                              </span>
+                              <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
+                            </span>
+                          }
+                          @if (isDone(node.goal)) {
+                            <span
+                            class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
+                          }
+                        </div>
+                        <div class="flex gap-2">
+                          <button
+                            (click)="editGoal(node.goal); $event.stopPropagation()"
               class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
                      hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-              title="Éditer template"
-            >
-              ✏️
-            </button>
-            <button
-              (click)="applyTemplate(node.template); $event.stopPropagation()"
-              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
-                     hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
-              title="Ajouter aux objectifs"
-            >
-              ➕
-            </button>
-            <button
-              (click)="deleteTemplate(node.template.id, node.template.name); $event.stopPropagation()"
+                            title="Éditer"
+                            >
+                            ✏️
+                          </button>
+                          <button
+                            (click)="deleteGoal(node.goal.id, node.goal.name); $event.stopPropagation()"
               class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
                      hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-              title="Supprimer"
-            >
-              🗑️
+                            title="Supprimer"
+                            >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Completed main goals (separate folded section) -->
+            <div class="border-t border-white/20">
+              <button
+                type="button"
+                class="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 transition"
+                (click)="toggleCompletedMainSection()"
+                >
+                <span class="text-sm text-white/80">
+                  Objectifs principaux terminés ({{ completedMainRootGoals.length }})
+                </span>
+                <svg
+                  class="w-4 h-4 text-cyan-300 transition-transform"
+                  [ngClass]="{ 'rotate-180': completedMainSectionOpen }"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+                </svg>
+              </button>
+
+              @if (completedMainSectionOpen) {
+                <div>
+                  @for (root of completedMainRootGoals; track root) {
+                    <div class="border-t border-white/10">
+                      <div
+            class="flex items-center justify-between px-4 py-3 cursor-pointer
+                   transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+                        (click)="toggleRoot(root)"
+                        >
+                        <div class="flex items-center gap-3 opacity-50">
+                          @if (!isRootOpen(root)) {
+                            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
+                            </svg>
+                          } @else {
+                            <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+                            </svg>
+                          }
+                          <span class="font-semibold tracking-wide">{{ root.name }}</span>
+                          @if (root.pinned) {
+                            <span
+                              class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
+                              📌
+                            </span>
+                          }
+                          @if (root.username) {
+                            <span
+                              class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                              <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                                @if (root.avatarUrl) {
+                                  <img
+                                    [src]="root.avatarUrl"
+                                    [alt]="root.username || 'Avatar'"
+                                    class="w-full h-full object-cover" />
+                                } @else {
+                                  {{ getInitial(root.username) }}
+                                }
+                              </span>
+                              <span class="truncate max-w-[140px]">{{ root.username }}</span>
+                            </span>
+                          }
+                          <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/20">
+                            Terminé
+                          </span>
+                        </div>
+                        <div class="flex gap-2">
+                          <button
+                            (click)="editGoal(root); $event.stopPropagation()"
+                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                       hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                            title="Éditer"
+                            >
+                            ✏️
+                          </button>
+                          <button
+                            (click)="deleteGoal(root.id, root.name); $event.stopPropagation()"
+                class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                       hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                            title="Supprimer"
+                            >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                      @if (isRootOpen(root)) {
+                        <div class="bg-white/5 border-t border-white/10">
+                          @for (node of getVisibleTree(root); track node) {
+                            <div
+              class="flex items-center justify-between px-4 py-2 border-t border-white/10
+                     transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+                              [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
+                              >
+                              <div class="flex items-center gap-2 opacity-50">
+                                <span class="text-white/35">↳</span>
+                                <span class="text-white/85">{{ node.goal.name }}</span>
+                                @if (node.goal.pinned) {
+                                  <span
+                                  class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">📌</span>
+                                }
+                                @if (node.goal.username) {
+                                  <span
+                                    class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/20 inline-flex items-center gap-2">
+                                    <span class="relative inline-flex w-5 h-5 rounded-full overflow-hidden bg-white/10 border border-white/20 items-center justify-center text-[10px] text-white/80">
+                                      @if (node.goal.avatarUrl) {
+                                        <img
+                                          [src]="node.goal.avatarUrl"
+                                          [alt]="node.goal.username || 'Avatar'"
+                                          class="w-full h-full object-cover" />
+                                      } @else {
+                                        {{ getInitial(node.goal.username) }}
+                                      }
+                                    </span>
+                                    <span class="truncate max-w-[140px]">{{ node.goal.username }}</span>
+                                  </span>
+                                }
+                                @if (isDone(node.goal)) {
+                                  <span
+                                  class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/20">Terminé</span>
+                                }
+                              </div>
+                              <div class="flex gap-2">
+                                <button
+                                  (click)="editGoal(node.goal); $event.stopPropagation()"
+                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                         hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                                  title="Éditer"
+                                  >
+                                  ✏️
+                                </button>
+                                <button
+                                  (click)="deleteGoal(node.goal.id, node.goal.name); $event.stopPropagation()"
+                  class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                         hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                                  title="Supprimer"
+                                  >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (completedMainRootGoals.length === 0) {
+                    <div class="px-4 py-4 text-sm text-white/50 border-t border-white/10">
+                      Aucun objectif principal terminé.
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="flex justify-center items-center gap-4 text-gray-300">
+            <button
+              (click)="prevPage()"
+              [disabled]="currentPage === 1"
+      class="px-4 py-2 bg-white/10 border border-white/20 rounded-xl
+             hover:bg-white/20 transition disabled:opacity-40 active:scale-95"
+              title="Page précédente"
+              >
+              ❮
+            </button>
+
+            <span class="text-white/70">Page <span class="text-cyan-200 font-semibold">{{ currentPage }}</span> / {{ totalPages }}</span>
+
+            <button
+              (click)="nextPage()"
+              [disabled]="currentPage === totalPages"
+      class="px-4 py-2 bg-white/10 border border-white/20 rounded-xl
+             hover:bg-white/20 transition disabled:opacity-40 active:scale-95"
+              title="Page suivante"
+              >
+              ❯
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-</div>
+          <!-- ===================== TEMPLATES ===================== -->
+          <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-lg font-semibold text-cyan-200">
+                {{ editingTemplateTreeRootId !== null ? '✏️ Édition template complet' : '🧩 Création template complet' }}
+              </div>
+              @if (editingTemplateTreeRootId !== null) {
+                <button
+                  (click)="resetTemplateDraft()"
+        class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
+               transition active:scale-95"
+                  >
+                  Annuler édition
+                </button>
+              }
+            </div>
+
+            <div class="space-y-4">
+              <div class="text-sm text-white/70">Objectif parent (racine)</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-sm text-gray-300">Nom</label>
+                  <input
+                    [(ngModel)]="templateDraftRoot.name"
+            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="text-sm text-gray-300">Cible</label>
+                    <input
+                      type="number" min="1"
+                      [(ngModel)]="templateDraftRoot.target"
+            class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                      />
+                    </div>
+
+                    <div class="lg:col-span-3">
+                      <label class="text-sm text-gray-300">Description</label>
+                      <textarea
+                        [(ngModel)]="templateDraftRoot.description"
+            class="w-full min-h-[90px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      (click)="resetTemplateDraft()"
+          class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10
+                 transition active:scale-95"
+                      >
+                      Réinitialiser
+                    </button>
+                  </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                  <div class="text-sm text-white/70">Prévisualisation</div>
+                  <ng-template #draftNode let-node let-depth="depth">
+                    <div
+                      class="flex flex-wrap items-center gap-3 border border-white/10 bg-white/5 rounded-xl px-3 py-2"
+                      [style.marginLeft.px]="depth * 16"
+                      >
+                      <div class="flex-1 min-w-[180px]">
+                        <input
+                          [(ngModel)]="node.name"
+                          placeholder="Nom"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                          />
+                        </div>
+                        <div class="w-24">
+                          <input
+                            type="number" min="1"
+                            [(ngModel)]="node.target"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                            />
+                          </div>
+                          <div class="flex-1 min-w-[220px]">
+                            <input
+                              [(ngModel)]="node.description"
+                              placeholder="Description"
+              class="w-full min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                              />
+                            </div>
+                            <div class="flex gap-2">
+                              <button
+                                (click)="addTemplateChild(node)"
+                                [disabled]="editingTemplateTreeRootId !== null"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-white/10 hover:border-white/25 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                title="Ajouter un sous-objectif"
+                                >
+                                ➕
+                              </button>
+                              @if (node !== templateDraftRoot) {
+                                <button
+                                  (click)="removeTemplateNode(node)"
+                                  [disabled]="editingTemplateTreeRootId !== null"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                  title="Supprimer"
+                                  >
+                                  🗑️
+                                </button>
+                              }
+                            </div>
+                          </div>
+                          @for (child of node.children; track child) {
+                            <div class="mt-2">
+                              <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+                            </div>
+                          }
+                        </ng-template>
+
+                        <ng-container *ngTemplateOutlet="draftNode; context: { $implicit: templateDraftRoot, depth: 0 }"></ng-container>
+                      </div>
+
+                      <div class="flex justify-end">
+                        <button
+                          (click)="createTemplateTree()"
+        class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500
+               hover:from-cyan-300 hover:to-sky-400 transition font-semibold
+               active:scale-95"
+                          >
+                          {{ editingTemplateTreeRootId !== null ? 'Mettre à jour le template' : '+ Enregistrer le template' }}
+                        </button>
+                      </div>
+
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+                      <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
+                        <div class="text-sm text-white/70">Templates prêts à être ajoutés</div>
+                        <div class="min-w-[240px]">
+                          <input
+                            [(ngModel)]="templateApplyUserInput"
+                            (input)="onTemplateApplyUserInputChange()"
+                            list="template-apply-user-options"
+                            placeholder="Utilisateur (optionnel)"
+          class="w-full min-h-[36px] px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-white
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                            />
+                            <datalist id="template-apply-user-options">
+                              @for (u of users; track u) {
+                                <option [value]="u.username"></option>
+                              }
+                            </datalist>
+                          </div>
+                        </div>
+
+                        @for (root of templateRoots; track root) {
+                          <div class="border-b border-white/10">
+                            <div
+        class="flex items-center justify-between px-4 py-3 cursor-pointer
+               transition-all duration-200
+               hover:bg-white/10 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]
+               active:scale-[0.995]"
+                              (click)="toggleTemplateRoot(root)"
+                              >
+                              <div class="flex items-center gap-3">
+                                @if (!isTemplateRootOpen(root)) {
+                                  <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
+                                  </svg>
+                                } @else {
+                                  <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 10l6 6 6-6" />
+                                  </svg>
+                                }
+                                <span class="font-semibold tracking-wide">{{ root.name }}</span>
+                              </div>
+                              <div class="flex gap-2">
+                                <button
+                                  (click)="editTemplate(root); $event.stopPropagation()"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                   hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                                  title="Éditer template"
+                                  >
+                                  ✏️
+                                </button>
+                                <button
+                                  (click)="applyTemplate(root); $event.stopPropagation()"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                   hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
+                                  title="Ajouter aux objectifs"
+                                  >
+                                  ➕
+                                </button>
+                                <button
+                                  (click)="deleteTemplate(root.id, root.name); $event.stopPropagation()"
+            class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                   hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                                  title="Supprimer"
+                                  >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                            @if (isTemplateRootOpen(root)) {
+                              <div class="bg-white/5 border-t border-white/10">
+                                @for (node of getVisibleTemplateTree(root); track node) {
+                                  <div
+          class="flex items-center justify-between px-4 py-2 border-t border-white/10
+                 transition-all duration-200 hover:bg-white/10 active:scale-[0.995]"
+                                    [style.paddingLeft.px]="40 + (node.depth - 1) * 18"
+                                    >
+                                    <div class="flex items-center gap-2">
+                                      <span class="text-white/35">↳</span>
+                                      <span class="text-white/85">{{ node.template.name }}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                      <button
+                                        (click)="editTemplate(node.template); $event.stopPropagation()"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-white/10 hover:border-white/25 transition active:scale-95"
+                                        title="Éditer template"
+                                        >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        (click)="applyTemplate(node.template); $event.stopPropagation()"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-cyan-500/20 hover:border-cyan-400/30 transition active:scale-95"
+                                        title="Ajouter aux objectifs"
+                                        >
+                                        ➕
+                                      </button>
+                                      <button
+                                        (click)="deleteTemplate(node.template.id, node.template.name); $event.stopPropagation()"
+              class="px-2 py-1 rounded-lg border border-white/15 bg-white/5
+                     hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
+                                        title="Supprimer"
+                                        >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+
+                    </div>

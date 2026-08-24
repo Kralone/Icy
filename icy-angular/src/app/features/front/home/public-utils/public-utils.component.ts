@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -12,7 +12,7 @@ type PublicUtilityItem = {
 @Component({
   selector: 'front-public-utils',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './public-utils.component.html',
   styleUrl: './public-utils.component.css'
 })

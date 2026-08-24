@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -12,7 +12,7 @@ type InternalGuideMenuItem = {
 @Component({
   standalone: true,
   selector: 'app-guides-menu',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './guides-menu.component.html',
   styleUrl: './guides-menu.component.css'
 })

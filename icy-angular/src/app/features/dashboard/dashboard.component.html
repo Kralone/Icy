@@ -2,14 +2,14 @@
   class="flex flex-col xl:flex-row flex-1 min-h-screen p-4 sm:p-6
          bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77]
          text-white overflow-y-auto overflow-x-hidden"
->
+  >
   <!-- Contenu principal -->
   <div class="flex-1 xl:mr-6 mb-6 xl:mb-0">
     <!-- Header avec bouton -->
     <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
       <h1
         class="text-2xl sm:text-3xl font-bold text-cyan-300 drop-shadow-md text-center xl:text-left flex-1"
-      >
+        >
         ❄️ Bienvenue sur le Dashboard
       </h1>
 
@@ -19,7 +19,7 @@
         class="px-4 py-2 rounded-xl bg-white/10 border border-cyan-400 text-cyan-300
                backdrop-blur-md hover:bg-cyan-500/20 hover:text-white transition
                shadow-lg hover:shadow-cyan-500/30 whitespace-nowrap"
-      >
+        >
         ⚡ Installer Iceforge
       </button>
     </div>
@@ -39,93 +39,98 @@
       class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg overflow-hidden"
       [ngClass]="hasUpcomingEvents ? 'hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]' : ''"
       [attr.data-loading]="isEventsLoading"
-    >
+      >
       <app-loading-overlay
         [isLoading]="isEventsLoading"
         [minDurationMs]="500"
         [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
-      <div *ngIf="hasUpcomingEvents" class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
-      <div *ngIf="hasUpcomingEvents" class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
+      @if (hasUpcomingEvents) {
+        <div class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
+      }
+      @if (hasUpcomingEvents) {
+        <div class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
+      }
 
       <h2 class="relative text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
         📅 Événements
       </h2>
 
       <div class="relative overflow-y-auto scrollbar-custom pr-1 max-h-[30vh]">
-        <ng-container *ngIf="events && events.length > 0; else noEvents">
+        @if (events && events.length > 0) {
           <div class="space-y-3">
-            <button
-              *ngFor="let event of events"
-              type="button"
-              (click)="openEvent(event)"
+            @for (event of events; track event) {
+              <button
+                type="button"
+                (click)="openEvent(event)"
               class="group relative w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0 text-left
                      hover:border-cyan-400/40 hover:shadow-[0_0_18px_rgba(34,211,238,0.2)] transition
                      cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
-            >
-              <div
-                *ngIf="event.typeImageUrl"
-                class="absolute inset-0 bg-center bg-cover opacity-60"
-                [style.backgroundImage]="'url(' + event.typeImageUrl + ')'"
-              ></div>
-              <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
-
-              <div class="relative p-3 space-y-2">
-                <div class="flex items-center justify-between gap-2">
-                  <span
-                    class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
-                    [style.background]="event.typeBackgroundColor || 'rgba(15,23,42,0.6)'"
-                    [style.borderColor]="event.typeBackgroundColor || 'rgba(255,255,255,0.2)'"
-                    [style.color]="event.typeTextColor || '#67e8f9'"
-                  >
-                    {{ event.type }}
-                  </span>
-                  <span class="text-[10px] text-cyan-200/70 inline-flex items-center gap-1">
-                    Ouvrir
-                    <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </span>
-                </div>
-
-                <div class="flex items-start gap-3">
-                  <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/10">
-                    <img
-                      *ngIf="event.typeImageUrl"
-                      [src]="event.typeImageUrl"
-                      alt="Event"
-                      class="h-full w-full object-cover"
-                    />
-                    <div *ngIf="!event.typeImageUrl"
-                         class="h-full w-full flex items-center justify-center text-cyan-200 text-lg">
-                      ✦
+                >
+                @if (event.typeImageUrl) {
+                  <div
+                    class="absolute inset-0 bg-center bg-cover opacity-60"
+                    [style.backgroundImage]="'url(' + event.typeImageUrl + ')'"
+                  ></div>
+                }
+                <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
+                <div class="relative p-3 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span
+                      class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
+                      [style.background]="event.typeBackgroundColor || 'rgba(15,23,42,0.6)'"
+                      [style.borderColor]="event.typeBackgroundColor || 'rgba(255,255,255,0.2)'"
+                      [style.color]="event.typeTextColor || '#67e8f9'"
+                      >
+                      {{ event.type }}
+                    </span>
+                    <span class="text-[10px] text-cyan-200/70 inline-flex items-center gap-1">
+                      Ouvrir
+                      <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/10">
+                      @if (event.typeImageUrl) {
+                        <img
+                          [src]="event.typeImageUrl"
+                          alt="Event"
+                          class="h-full w-full object-cover"
+                          />
+                      }
+                      @if (!event.typeImageUrl) {
+                        <div
+                          class="h-full w-full flex items-center justify-center text-cyan-200 text-lg">
+                          ✦
+                        </div>
+                      }
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
+                        [style.color]="event.typeTextColor || '#ffffff'">
+                        {{ event.name }}
+                      </p>
+                      <p class="text-xs text-gray-300 mt-1">
+                        {{ capitalizeFirst(event.date | date:"EEEE d MMMM y 'à' HH'h'mm":undefined:'fr-FR') }}
+                      </p>
+                    </div>
+                    <div class="self-center text-cyan-200/70 group-hover:text-cyan-100 transition">
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
                     </div>
                   </div>
-
-                  <div class="flex-1">
-                    <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
-                       [style.color]="event.typeTextColor || '#ffffff'">
-                      {{ event.name }}
-                    </p>
-                    <p class="text-xs text-gray-300 mt-1">
-                      {{ capitalizeFirst(event.date | date:"EEEE d MMMM y 'à' HH'h'mm":undefined:'fr-FR') }}
-                    </p>
-                  </div>
-                  <div class="self-center text-cyan-200/70 group-hover:text-cyan-100 transition">
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+            }
           </div>
-        </ng-container>
-
-        <ng-template #noEvents>
+        } @else {
           <p class="text-gray-400 text-sm italic text-center">Aucun événement prévu.</p>
-        </ng-template>
+        }
+
       </div>
     </div>
 
@@ -134,7 +139,7 @@
       class="relative dashboard-widget p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
              hover:shadow-cyan-500/20 transition"
       [attr.data-loading]="isOnlineLoading"
-    >
+      >
       <app-loading-overlay
         [isLoading]="isOnlineLoading"
         [minDurationMs]="500"
@@ -151,49 +156,58 @@
       </div>
 
       <div class="space-y-3">
-        <div *ngIf="onlineUsers.length === 0" class="text-xs text-cyan-100/60 text-center py-4">
-          Aucun membre en ligne.
-        </div>
-        <div
-          *ngFor="let member of paginatedOnlineUsers"
-          class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-        >
-          <div class="h-9 w-9 rounded-full overflow-hidden border border-white/10 bg-white/10 flex items-center justify-center">
-            <img *ngIf="member.avatarUrl" [src]="member.avatarUrl" [alt]="member.username" class="h-full w-full object-cover" />
-            <span *ngIf="!member.avatarUrl" class="text-sm font-bold text-cyan-200">
-              {{ member.username.charAt(0) }}
+        @if (onlineUsers.length === 0) {
+          <div class="text-xs text-cyan-100/60 text-center py-4">
+            Aucun membre en ligne.
+          </div>
+        }
+        @for (member of paginatedOnlineUsers; track member) {
+          <div
+            class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+            >
+            <div class="h-9 w-9 rounded-full overflow-hidden border border-white/10 bg-white/10 flex items-center justify-center">
+              @if (member.avatarUrl) {
+                <img [src]="member.avatarUrl" [alt]="member.username" class="h-full w-full object-cover" />
+              }
+              @if (!member.avatarUrl) {
+                <span class="text-sm font-bold text-cyan-200">
+                  {{ member.username.charAt(0) }}
+                </span>
+              }
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-white">{{ member.username }}</p>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="statusStyles[member.status].badgeClass">
+              {{ statusStyles[member.status].label }}
             </span>
           </div>
-          <div class="flex-1">
-            <p class="text-sm font-semibold text-white">{{ member.username }}</p>
-          </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full border" [ngClass]="statusStyles[member.status].badgeClass">
-            {{ statusStyles[member.status].label }}
-          </span>
-        </div>
+        }
       </div>
 
-      <div *ngIf="totalPages > 1" class="mt-4 flex items-center justify-between text-xs text-cyan-100/70">
-        <button
-          type="button"
-          (click)="changePage(-1)"
-          [disabled]="currentPage === 1"
+      @if (totalPages > 1) {
+        <div class="mt-4 flex items-center justify-between text-xs text-cyan-100/70">
+          <button
+            type="button"
+            (click)="changePage(-1)"
+            [disabled]="currentPage === 1"
           class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
                  disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Prec
-        </button>
-        <span>Page {{ currentPage }} / {{ totalPages }}</span>
-        <button
-          type="button"
-          (click)="changePage(1)"
-          [disabled]="currentPage === totalPages"
+            >
+            Prec
+          </button>
+          <span>Page {{ currentPage }} / {{ totalPages }}</span>
+          <button
+            type="button"
+            (click)="changePage(1)"
+            [disabled]="currentPage === totalPages"
           class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
                  disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Suiv
-        </button>
-      </div>
+            >
+            Suiv
+          </button>
+        </div>
+      }
     </div>
 
     <!-- Résumé de la flotte -->
@@ -201,7 +215,7 @@
       class="relative dashboard-widget flex-[3] p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
              hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
       [attr.data-loading]="isLoading"
-    >
+      >
       <app-loading-overlay
         [isLoading]="isLoading"
         [minDurationMs]="500"
@@ -212,85 +226,94 @@
         🛸 Résumé de la flotte
       </h2>
 
-      <div *ngIf="hasFleetSummary" class="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <select
-          [(ngModel)]="fleetCategoryFilter"
+      @if (hasFleetSummary) {
+        <div class="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <select
+            [(ngModel)]="fleetCategoryFilter"
           class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
                  focus:outline-none focus:border-cyan-400"
-        >
-          <option value="">Toutes catégories</option>
-          <option *ngFor="let category of fleetCategories" [value]="category">
-            {{ category }}
-          </option>
-        </select>
-
-        <select
-          [(ngModel)]="fleetBrandFilter"
+            >
+            <option value="">Toutes catégories</option>
+            @for (category of fleetCategories; track category) {
+              <option [value]="category">
+                {{ category }}
+              </option>
+            }
+          </select>
+          <select
+            [(ngModel)]="fleetBrandFilter"
           class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
                  focus:outline-none focus:border-cyan-400"
-        >
-          <option value="">Toutes marques</option>
-          <option *ngFor="let brand of fleetBrands" [value]="brand">
-            {{ brand }}
-          </option>
-        </select>
-
-        <input
-          [(ngModel)]="fleetSearchFilter"
-          type="text"
-          placeholder="Rechercher un vaisseau..."
+            >
+            <option value="">Toutes marques</option>
+            @for (brand of fleetBrands; track brand) {
+              <option [value]="brand">
+                {{ brand }}
+              </option>
+            }
+          </select>
+          <input
+            [(ngModel)]="fleetSearchFilter"
+            type="text"
+            placeholder="Rechercher un vaisseau..."
           class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
                  placeholder:text-cyan-100/40 focus:outline-none focus:border-cyan-400"
-        />
-      </div>
+            />
+          </div>
+        }
 
-      <div *ngIf="hasFleetSummary && hasActiveFleetFilters" class="mb-3 flex justify-end">
-        <button
-          type="button"
-          (click)="resetFleetFilters()"
-          class="text-[11px] px-2 py-1 rounded-lg border border-white/20 bg-white/5 text-cyan-100/80 hover:border-cyan-400/50 hover:text-cyan-100 transition"
-        >
-          Réinitialiser filtres
-        </button>
-      </div>
-
-      <div class="overflow-y-auto scrollbar-custom pr-1 max-h-[55vh]">
-        <ng-container *ngIf="hasFleetSummary; else noFleet">
-          <ng-container *ngIf="objectKeys(filteredFleetSummary).length > 0; else noFleetMatch">
-          <div *ngFor="let focus of objectKeys(filteredFleetSummary)" class="mb-4">
-            <h3 class="text-sm font-bold text-cyan-200 uppercase tracking-wide mb-1">
-              {{ focus }}
-            </h3>
-            <ul class="list-none pl-0 text-gray-200 text-sm space-y-1 overflow-hidden">
-              <li
-                *ngFor="let ship of filteredFleetSummary[focus]"
-                class="relative flex items-center justify-between h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition"
+        @if (hasFleetSummary && hasActiveFleetFilters) {
+          <div class="mb-3 flex justify-end">
+            <button
+              type="button"
+              (click)="resetFleetFilters()"
+              class="text-[11px] px-2 py-1 rounded-lg border border-white/20 bg-white/5 text-cyan-100/80 hover:border-cyan-400/50 hover:text-cyan-100 transition"
               >
-                <div *ngIf="ship.imageUrl" class="absolute inset-0">
-                  <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-70" />
-                  <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
-                </div>
-                <span class="relative z-10 pl-2 truncate">{{ ship.displayName }}</span>
+              Réinitialiser filtres
+            </button>
+          </div>
+        }
+
+        <div class="overflow-y-auto scrollbar-custom pr-1 max-h-[55vh]">
+          @if (hasFleetSummary) {
+            @if (objectKeys(filteredFleetSummary).length > 0) {
+              @for (focus of objectKeys(filteredFleetSummary); track focus) {
+                <div class="mb-4">
+                  <h3 class="text-sm font-bold text-cyan-200 uppercase tracking-wide mb-1">
+                    {{ focus }}
+                  </h3>
+                  <ul class="list-none pl-0 text-gray-200 text-sm space-y-1 overflow-hidden">
+                    @for (ship of filteredFleetSummary[focus]; track ship) {
+                      <li
+                        class="relative flex items-center justify-between h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition"
+                        >
+                        @if (ship.imageUrl) {
+                          <div class="absolute inset-0">
+                            <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-70" />
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
+                          </div>
+                        }
+                        <span class="relative z-10 pl-2 truncate">{{ ship.displayName }}</span>
                 <span class="relative z-10 mr-2 shrink-0 text-[10px] uppercase tracking-wide text-cyan-100/80
                              px-1.5 py-0.5 rounded border border-white/20 bg-slate-900/40">
-                  {{ ship.brandName }}
-                </span>
-              </li>
-            </ul>
-          </div>
-          </ng-container>
-        </ng-container>
+                          {{ ship.brandName }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            } @else {
+              <p class="text-gray-400 text-sm italic">Aucun vaisseau ne correspond aux filtres.</p>
+            }
+          } @else {
+            <p class="text-gray-400 text-sm italic">Aucun vaisseau dans la flotte.</p>
+          }
 
-        <ng-template #noFleetMatch>
-          <p class="text-gray-400 text-sm italic">Aucun vaisseau ne correspond aux filtres.</p>
-        </ng-template>
 
-        <ng-template #noFleet>
-          <p class="text-gray-400 text-sm italic">Aucun vaisseau dans la flotte.</p>
-        </ng-template>
+        </div>
       </div>
-    </div>
 
-  </aside>
-</main>
+    </aside>
+  </main>
 

@@ -10,20 +10,21 @@
     </div>
 
     <div class="front-utils__grid">
-      <a
-        *ngFor="let item of externalItems"
-        [routerLink]="[item.route]"
-        class="front-utils__card"
-      >
-        <div class="front-utils__media">
-          <img [src]="item.imageUrl" [alt]="item.label" loading="lazy" decoding="async" />
-        </div>
-        <div class="front-utils__content">
-          <h3>{{ item.label }}</h3>
-          <p>{{ item.description }}</p>
-          <span class="front-utils__cta">Ouvrir</span>
-        </div>
-      </a>
+      @for (item of externalItems; track item) {
+        <a
+          [routerLink]="[item.route]"
+          class="front-utils__card"
+          >
+          <div class="front-utils__media">
+            <img [src]="item.imageUrl" [alt]="item.label" loading="lazy" decoding="async" />
+          </div>
+          <div class="front-utils__content">
+            <h3>{{ item.label }}</h3>
+            <p>{{ item.description }}</p>
+            <span class="front-utils__cta">Ouvrir</span>
+          </div>
+        </a>
+      }
     </div>
   </div>
 </section>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, Input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { GuideBadgeTone } from '../guide-template/guide-template.types';
@@ -12,7 +12,7 @@ interface GuideTopbarTab {
 @Component({
   selector: 'front-guide-topbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './guide-topbar.component.html',
   styleUrl: './guide-topbar.component.css'
 })

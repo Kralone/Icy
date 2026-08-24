@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -38,7 +38,7 @@ interface ModuleFilterOption {
 @Component({
   selector: 'front-resources-fit-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './resources-fit-panel.component.html',
   styleUrl: './resources-fit-panel.component.css'
 })

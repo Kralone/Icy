@@ -3,16 +3,15 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import {firstValueFrom} from 'rxjs';
-import {isPlatformBrowser, NgIf} from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   imports: [
     ReactiveFormsModule,
-    NgIf,
     RouterLink
-  ],
+],
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {

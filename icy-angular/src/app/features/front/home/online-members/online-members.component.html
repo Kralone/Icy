@@ -12,31 +12,39 @@
               <h2 class="front-online__title">Derniers evenements</h2>
             </div>
 
-            <div class="front-online__events-list" *ngIf="recentEvents.length > 0; else emptyEvents">
-              <article class="front-online__event-card" *ngFor="let event of recentEvents">
-                <div
-                  class="front-online__event-media"
-                  [class.front-online__event-media--fallback]="!event.type?.imageUrl"
-                >
-                  <img
-                    *ngIf="event.type?.imageUrl"
-                    class="front-online__event-image"
-                    [src]="event.type?.imageUrl!"
-                    [alt]="event.type?.name || 'Evenement'"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="front-online__event-type">{{ event.type?.name || 'Evenement' }}</span>
-                </div>
-                <div class="front-online__event-content">
-                  <p class="front-online__event-title">{{ event.title }}</p>
-                  <p class="front-online__event-date">{{ formatEventDate(event.endDateTime) }}</p>
-                </div>
-              </article>
-            </div>
-            <ng-template #emptyEvents>
-              <p class="front-online__empty" *ngIf="!isLoading; else loadingState">Aucun evenement recent.</p>
-            </ng-template>
+            @if (recentEvents.length > 0) {
+              <div class="front-online__events-list">
+                @for (event of recentEvents; track event) {
+                  <article class="front-online__event-card">
+                    <div
+                      class="front-online__event-media"
+                      [class.front-online__event-media--fallback]="!event.type?.imageUrl"
+                      >
+                      @if (event.type?.imageUrl) {
+                        <img
+                          class="front-online__event-image"
+                          [src]="event.type?.imageUrl!"
+                          [alt]="event.type?.name || 'Evenement'"
+                          loading="lazy"
+                          decoding="async"
+                          />
+                      }
+                      <span class="front-online__event-type">{{ event.type?.name || 'Evenement' }}</span>
+                    </div>
+                    <div class="front-online__event-content">
+                      <p class="front-online__event-title">{{ event.title }}</p>
+                      <p class="front-online__event-date">{{ formatEventDate(event.endDateTime) }}</p>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              @if (!isLoading) {
+                <p class="front-online__empty">Aucun evenement recent.</p>
+              } @else {
+                <p class="front-online__empty">Chargement des membres...</p>
+              }
+            }
           </aside>
 
           <div class="front-online__members">
@@ -48,47 +56,57 @@
               </p>
             </div>
 
-            <div class="front-online__list" *ngIf="allMembers.length > 0; else emptyState">
-              <div class="front-online__item" *ngFor="let member of paginatedMembers">
-                <div class="front-online__avatar">
-                  <img *ngIf="member.avatarUrl" [src]="member.avatarUrl" [alt]="member.username" loading="lazy" decoding="async" />
-                  <span *ngIf="!member.avatarUrl">{{ member.username.charAt(0) }}</span>
-                </div>
-                <p class="front-online__name">{{ member.username }}</p>
-                <span class="front-online__badge" [ngClass]="statusStyles[member.status].badgeClass">
-                {{ statusStyles[member.status].label }}
-              </span>
+            @if (allMembers.length > 0) {
+              <div class="front-online__list">
+                @for (member of paginatedMembers; track member) {
+                  <div class="front-online__item">
+                    <div class="front-online__avatar">
+                      @if (member.avatarUrl) {
+                        <img [src]="member.avatarUrl" [alt]="member.username" loading="lazy" decoding="async" />
+                      }
+                      @if (!member.avatarUrl) {
+                        <span>{{ member.username.charAt(0) }}</span>
+                      }
+                    </div>
+                    <p class="front-online__name">{{ member.username }}</p>
+                    <span class="front-online__badge" [ngClass]="statusStyles[member.status].badgeClass">
+                      {{ statusStyles[member.status].label }}
+                    </span>
+                  </div>
+                }
               </div>
-            </div>
-            <div class="front-online__pagination" *ngIf="totalPages > 1">
-              <button
-                type="button"
-                class="front-online__page-btn"
-                (click)="goToPreviousPage()"
-                [disabled]="currentPage === 1"
-              >
-                Precedent
-              </button>
-              <span class="front-online__page-info">Page {{ currentPage }} / {{ totalPages }}</span>
-              <button
-                type="button"
-                class="front-online__page-btn"
-                (click)="goToNextPage()"
-                [disabled]="currentPage === totalPages"
-              >
-                Suivant
-              </button>
-            </div>
+            } @else {
+              @if (!isLoading) {
+                <p class="front-online__empty">Aucun membre a afficher.</p>
+              } @else {
+                <p class="front-online__empty">Chargement des membres...</p>
+              }
+            }
+            @if (totalPages > 1) {
+              <div class="front-online__pagination">
+                <button
+                  type="button"
+                  class="front-online__page-btn"
+                  (click)="goToPreviousPage()"
+                  [disabled]="currentPage === 1"
+                  >
+                  Precedent
+                </button>
+                <span class="front-online__page-info">Page {{ currentPage }} / {{ totalPages }}</span>
+                <button
+                  type="button"
+                  class="front-online__page-btn"
+                  (click)="goToNextPage()"
+                  [disabled]="currentPage === totalPages"
+                  >
+                  Suivant
+                </button>
+              </div>
+            }
 
-            <ng-template #emptyState>
-              <p class="front-online__empty" *ngIf="!isLoading; else loadingState">Aucun membre a afficher.</p>
-            </ng-template>
           </div>
         </div>
       </div>
-      <ng-template #loadingState>
-        <p class="front-online__empty">Chargement des membres...</p>
-      </ng-template>
     </div>
   </div>
 </section>

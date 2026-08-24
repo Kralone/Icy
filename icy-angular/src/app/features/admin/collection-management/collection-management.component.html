@@ -4,7 +4,7 @@
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-2">
         <a routerLink="/icy/collection"
-           class="text-cyan-300 hover:text-cyan-200 transition flex items-center gap-2 font-medium">
+          class="text-cyan-300 hover:text-cyan-200 transition flex items-center gap-2 font-medium">
           <span class="text-lg">←</span> Retour aux collections
         </a>
         <h1 class="text-3xl sm:text-4xl font-bold text-white">Administration des templates</h1>
@@ -41,270 +41,296 @@
             placeholder="Nom du template"
             class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
                    focus:ring-2 focus:ring-cyan-400 outline-none transition"
-          />
-        </div>
+            />
+          </div>
 
-        <div>
-          <label class="block mb-2 text-sm text-gray-300">Archetype</label>
-          <input
-            [(ngModel)]="newTemplate.archetype"
-            type="text"
-            placeholder="Exploration, Combat..."
+          <div>
+            <label class="block mb-2 text-sm text-gray-300">Archetype</label>
+            <input
+              [(ngModel)]="newTemplate.archetype"
+              type="text"
+              placeholder="Exploration, Combat..."
             class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400
                    focus:ring-2 focus:ring-cyan-400 outline-none transition"
-          />
-        </div>
-      </div>
+              />
+            </div>
+          </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="text-lg font-semibold text-cyan-200">Axe X</h4>
-            <button
-              (click)="addAxis('x', 'new')"
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-cyan-200">Axe X</h4>
+                <button
+                  (click)="addAxis('x', 'new')"
               class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
                      text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition transform hover:scale-105">
-              + Ajouter
-            </button>
-          </div>
+                  + Ajouter
+                </button>
+              </div>
 
-          <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
-            <div *ngFor="let val of newTemplate.axisX; let i = index"
-                 class="flex items-center gap-2 bg-white/10 rounded-md p-2">
-              <input
-                [(ngModel)]="val.label"
-                placeholder="Valeur X..."
-                class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"
-              />
-              <button
-                (click)="removeAxis('x', i, 'new')"
-                class="text-red-400 hover:text-red-300 transition text-sm">
-                ✕
-              </button>
-            </div>
-          </div>
-        </div>
+              <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
+                @for (val of newTemplate.axisX; track val; let i = $index) {
+                  <div
+                    class="flex items-center gap-2 bg-white/10 rounded-md p-2">
+                    <input
+                      [(ngModel)]="val.label"
+                      placeholder="Valeur X..."
+                      class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"
+                      />
+                      <button
+                        (click)="removeAxis('x', i, 'new')"
+                        class="text-red-400 hover:text-red-300 transition text-sm">
+                        ✕
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
 
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="text-lg font-semibold text-cyan-200">Axe Y</h4>
-            <button
-              (click)="addAxis('y', 'new')"
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-lg font-semibold text-cyan-200">Axe Y</h4>
+                  <button
+                    (click)="addAxis('y', 'new')"
               class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
                      text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition transform hover:scale-105">
-              + Ajouter
-            </button>
-          </div>
+                    + Ajouter
+                  </button>
+                </div>
 
-          <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
-            <div *ngFor="let val of newTemplate.axisY; let i = index"
-                 class="flex items-center gap-2 bg-white/10 rounded-md p-2">
-              <input
-                [(ngModel)]="val.label"
-                placeholder="Valeur Y..."
-                class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"
-              />
-              <button
-                (click)="removeAxis('y', i, 'new')"
-                class="text-red-400 hover:text-red-300 transition text-sm">
-                ✕
-              </button>
+                <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
+                  @for (val of newTemplate.axisY; track val; let i = $index) {
+                    <div
+                      class="flex items-center gap-2 bg-white/10 rounded-md p-2">
+                      <input
+                        [(ngModel)]="val.label"
+                        placeholder="Valeur Y..."
+                        class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"
+                        />
+                        <button
+                          (click)="removeAxis('y', i, 'new')"
+                          class="text-red-400 hover:text-red-300 transition text-sm">
+                          ✕
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <section class="space-y-4">
+                <h3 class="text-cyan-200 font-semibold text-lg">Apercu du tableau</h3>
+
+                <div class="overflow-x-auto border border-white/20 rounded-xl bg-white/5 backdrop-blur-md icy-scrollbar">
+                  <table class="min-w-[600px] w-full text-sm text-gray-200">
+                    <thead class="bg-white/10 text-cyan-300 uppercase border-b border-white/10">
+                      <tr>
+                        <th class="px-3 py-2 text-left">Y \\ X</th>
+                        @for (x of newTemplate.axisX; track x) {
+                          <th class="px-3 py-2 text-left">{{ x.label || '—' }}</th>
+                        }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (y of newTemplate.axisY; track y) {
+                        <tr
+                          class="border-t border-white/10 hover:bg-white/10 transition">
+                          <th class="px-3 py-2 font-medium text-cyan-200 whitespace-nowrap">{{ y.label || '—' }}</th>
+                          @for (_ of newTemplate.axisX; track _) {
+                            <td class="px-3 py-2 text-center">⬜</td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+
+            <!-- Templates -->
+            <section class="space-y-6">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 class="text-2xl font-semibold text-cyan-300">Templates existants</h2>
+                  <p class="text-xs text-slate-300">Gestion des templates actifs.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    class="w-full sm:w-64 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                    placeholder="Rechercher un template..."
+                    [(ngModel)]="templateSearchTerm"
+                    (ngModelChange)="onTemplateSearchChange($event)"
+                    />
+                    <select
+                      class="w-full sm:w-48 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                      [(ngModel)]="templateFilterArchetype"
+                      (ngModelChange)="onTemplateFilterChange($event)">
+                      <option value="all">Tous les archetypes</option>
+                      @for (archetype of templateArchetypes; track archetype) {
+                        <option [value]="archetype">{{ archetype }}</option>
+                      }
+                    </select>
+                    <span class="text-xs text-slate-300">
+                      {{ filteredTemplates.length }} templates
+                    </span>
+                  </div>
+                </div>
+
+                @if (isLoadingTemplates) {
+                  <div class="text-center py-6 text-gray-300 animate-pulse">
+                    Chargement des templates...
+                  </div>
+                }
+
+                @if (!isLoadingTemplates && filteredTemplates.length === 0) {
+                  <div
+                    class="text-center italic text-gray-400 py-6">
+                    Aucun template enregistre.
+                  </div>
+                }
+
+                @if (!isLoadingTemplates && filteredTemplates.length > 0) {
+                  <div
+                    class="overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-xl icy-scrollbar">
+                    <table class="min-w-[900px] w-full text-sm text-gray-200">
+                      <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
+                        <tr>
+                          <th class="px-4 py-3 text-left">Nom</th>
+                          <th class="px-4 py-3 text-left">Archetype</th>
+                          <th class="px-4 py-3 text-center">Axe X</th>
+                          <th class="px-4 py-3 text-center">Axe Y</th>
+                          <th class="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (t of pagedTemplates; track trackByTemplateId($index, t)) {
+                          <tr class="hover:bg-white/10 transition border-b border-white/10">
+                            <td class="px-4 py-3 font-medium">{{ t.name }}</td>
+                            <td class="px-4 py-3">{{ t.archetype }}</td>
+                            <td class="px-4 py-3 text-center">{{ t.axisX?.length || 0 }}</td>
+                            <td class="px-4 py-3 text-center">{{ t.axisY?.length || 0 }}</td>
+                            <td class="px-4 py-3 text-right flex flex-wrap justify-end gap-2">
+                              <button (click)="editTemplate(t)"
+                                class="text-blue-400 hover:text-blue-300 transition font-medium">
+                                ✏️ Modifier
+                              </button>
+                              <button (click)="deleteTemplate(t)"
+                                class="text-red-400 hover:text-red-300 transition font-medium">
+                                🗑️ Supprimer
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
+                @if (!isLoadingTemplates && filteredTemplates.length > 0) {
+                  <div
+                    class="mt-6 flex items-center justify-between text-xs text-slate-300">
+                    <button
+                      type="button"
+                      class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
+                      [disabled]="templatePageIndex === 1"
+                      (click)="prevTemplatePage()">
+                      Page precedente
+                    </button>
+                    <span>Page {{ templatePageIndex }} / {{ templateTotalPages }}</span>
+                    <button
+                      type="button"
+                      class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
+                      [disabled]="templatePageIndex === templateTotalPages"
+                      (click)="nextTemplatePage()">
+                      Page suivante
+                    </button>
+                  </div>
+                }
+              </section>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <section class="space-y-4">
-        <h3 class="text-cyan-200 font-semibold text-lg">Apercu du tableau</h3>
-
-        <div class="overflow-x-auto border border-white/20 rounded-xl bg-white/5 backdrop-blur-md icy-scrollbar">
-          <table class="min-w-[600px] w-full text-sm text-gray-200">
-            <thead class="bg-white/10 text-cyan-300 uppercase border-b border-white/10">
-            <tr>
-              <th class="px-3 py-2 text-left">Y \\ X</th>
-              <th *ngFor="let x of newTemplate.axisX" class="px-3 py-2 text-left">{{ x.label || '—' }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let y of newTemplate.axisY"
-                class="border-t border-white/10 hover:bg-white/10 transition">
-              <th class="px-3 py-2 font-medium text-cyan-200 whitespace-nowrap">{{ y.label || '—' }}</th>
-              <td *ngFor="let _ of newTemplate.axisX" class="px-3 py-2 text-center">⬜</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
-    <!-- Templates -->
-    <section class="space-y-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 class="text-2xl font-semibold text-cyan-300">Templates existants</h2>
-          <p class="text-xs text-slate-300">Gestion des templates actifs.</p>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <input
-            class="w-full sm:w-64 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-            placeholder="Rechercher un template..."
-            [(ngModel)]="templateSearchTerm"
-            (ngModelChange)="onTemplateSearchChange($event)"
-          />
-          <select
-            class="w-full sm:w-48 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-            [(ngModel)]="templateFilterArchetype"
-            (ngModelChange)="onTemplateFilterChange($event)">
-            <option value="all">Tous les archetypes</option>
-            <option *ngFor="let archetype of templateArchetypes" [value]="archetype">{{ archetype }}</option>
-          </select>
-          <span class="text-xs text-slate-300">
-            {{ filteredTemplates.length }} templates
-          </span>
-        </div>
-      </div>
-
-      <div *ngIf="isLoadingTemplates" class="text-center py-6 text-gray-300 animate-pulse">
-        Chargement des templates...
-      </div>
-
-      <div *ngIf="!isLoadingTemplates && filteredTemplates.length === 0"
-           class="text-center italic text-gray-400 py-6">
-        Aucun template enregistre.
-      </div>
-
-      <div *ngIf="!isLoadingTemplates && filteredTemplates.length > 0"
-           class="overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-xl icy-scrollbar">
-        <table class="min-w-[900px] w-full text-sm text-gray-200">
-          <thead class="bg-white/10 text-cyan-300 uppercase tracking-wider border-b border-white/10">
-          <tr>
-            <th class="px-4 py-3 text-left">Nom</th>
-            <th class="px-4 py-3 text-left">Archetype</th>
-            <th class="px-4 py-3 text-center">Axe X</th>
-            <th class="px-4 py-3 text-center">Axe Y</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let t of pagedTemplates; trackBy: trackByTemplateId" class="hover:bg-white/10 transition border-b border-white/10">
-            <td class="px-4 py-3 font-medium">{{ t.name }}</td>
-            <td class="px-4 py-3">{{ t.archetype }}</td>
-            <td class="px-4 py-3 text-center">{{ t.axisX?.length || 0 }}</td>
-            <td class="px-4 py-3 text-center">{{ t.axisY?.length || 0 }}</td>
-            <td class="px-4 py-3 text-right flex flex-wrap justify-end gap-2">
-              <button (click)="editTemplate(t)"
-                      class="text-blue-400 hover:text-blue-300 transition font-medium">
-                ✏️ Modifier
-              </button>
-              <button (click)="deleteTemplate(t)"
-                      class="text-red-400 hover:text-red-300 transition font-medium">
-                🗑️ Supprimer
-              </button>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div *ngIf="!isLoadingTemplates && filteredTemplates.length > 0"
-           class="mt-6 flex items-center justify-between text-xs text-slate-300">
-        <button
-          type="button"
-          class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
-          [disabled]="templatePageIndex === 1"
-          (click)="prevTemplatePage()">
-          Page precedente
-        </button>
-        <span>Page {{ templatePageIndex }} / {{ templateTotalPages }}</span>
-        <button
-          type="button"
-          class="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition disabled:opacity-40"
-          [disabled]="templatePageIndex === templateTotalPages"
-          (click)="nextTemplatePage()">
-          Page suivante
-        </button>
-      </div>
-    </section>
-  </div>
-
-  <!-- Modal d’edition -->
-  <div *ngIf="editingTemplate"
-       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-3xl p-4 sm:p-8 relative text-white overflow-y-auto max-h-[90vh]">
-      <button (click)="cancelEdit()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">✖</button>
-
-      <h3 class="text-2xl font-semibold mb-6 text-cyan-300">
-        Modifier le template : <span class="text-white">{{ editingTemplate.name }}</span>
-      </h3>
-
-      <div *ngIf="isLoadingTemplateDetail" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-        <div class="animate-pulse text-cyan-300">Chargement...</div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6" *ngIf="!isLoadingTemplateDetail">
-        <div>
-          <label class="block mb-2 text-sm text-gray-300">Nom</label>
-          <input [(ngModel)]="editingTemplate.name" readonly
-                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-400 cursor-not-allowed"/>
-        </div>
-        <div>
-          <label class="block mb-2 text-sm text-gray-300">Archetype</label>
-          <input [(ngModel)]="editingTemplate.archetype"
-                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-cyan-400"/>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-cyan-200 font-semibold">Axe X</h4>
-            <button (click)="addAxis('x', 'edit')"
+            <!-- Modal d’edition -->
+            @if (editingTemplate) {
+              <div
+                class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl w-full max-w-3xl p-4 sm:p-8 relative text-white overflow-y-auto max-h-[90vh]">
+                  <button (click)="cancelEdit()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">✖</button>
+                  <h3 class="text-2xl font-semibold mb-6 text-cyan-300">
+                    Modifier le template : <span class="text-white">{{ editingTemplate.name }}</span>
+                  </h3>
+                  @if (isLoadingTemplateDetail) {
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
+                      <div class="animate-pulse text-cyan-300">Chargement...</div>
+                    </div>
+                  }
+                  @if (!isLoadingTemplateDetail) {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label class="block mb-2 text-sm text-gray-300">Nom</label>
+                        <input [(ngModel)]="editingTemplate.name" readonly
+                          class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-400 cursor-not-allowed"/>
+                        </div>
+                        <div>
+                          <label class="block mb-2 text-sm text-gray-300">Archetype</label>
+                          <input [(ngModel)]="editingTemplate.archetype"
+                            class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-cyan-400"/>
+                          </div>
+                        </div>
+                      }
+                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                          <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-cyan-200 font-semibold">Axe X</h4>
+                            <button (click)="addAxis('x', 'edit')"
                     class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
                            text-white text-sm px-3 py-1.5 rounded-lg shadow-md transition transform hover:scale-105">
-              + Ajouter
-            </button>
-          </div>
-          <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
-            <div *ngFor="let item of editingTemplate.axisX; let i = index"
-                 class="flex items-center gap-2 bg-white/10 rounded-md p-2">
-              <input [(ngModel)]="item.label" placeholder="Valeur X..."
-                     class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"/>
-              <button (click)="removeAxis('x', i, 'edit')"
-                      class="text-red-400 hover:text-red-300 transition text-sm">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-cyan-200 font-semibold">Axe Y</h4>
-            <button (click)="addAxis('y', 'edit')"
+                              + Ajouter
+                            </button>
+                          </div>
+                          <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
+                            @for (item of editingTemplate.axisX; track item; let i = $index) {
+                              <div
+                                class="flex items-center gap-2 bg-white/10 rounded-md p-2">
+                                <input [(ngModel)]="item.label" placeholder="Valeur X..."
+                                  class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"/>
+                                  <button (click)="removeAxis('x', i, 'edit')"
+                                  class="text-red-400 hover:text-red-300 transition text-sm">✕</button>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                          <div>
+                            <div class="flex items-center justify-between mb-2">
+                              <h4 class="text-cyan-200 font-semibold">Axe Y</h4>
+                              <button (click)="addAxis('y', 'edit')"
                     class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
                            text-white text-sm px-3 py-1.5 rounded-lg shadow-md transition transform hover:scale-105">
-              + Ajouter
-            </button>
-          </div>
-          <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
-            <div *ngFor="let item of editingTemplate.axisY; let i = index"
-                 class="flex items-center gap-2 bg-white/10 rounded-md p-2">
-              <input [(ngModel)]="item.label" placeholder="Valeur Y..."
-                     class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"/>
-              <button (click)="removeAxis('y', i, 'edit')"
-                      class="text-red-400 hover:text-red-300 transition text-sm">✕</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-4 mt-8">
-        <button (click)="cancelEdit()" class="text-gray-400 hover:text-white transition">Annuler</button>
-        <button (click)="updateTemplate()"
-                [disabled]="isUpdatingTemplate"
+                                + Ajouter
+                              </button>
+                            </div>
+                            <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
+                              @for (item of editingTemplate.axisY; track item; let i = $index) {
+                                <div
+                                  class="flex items-center gap-2 bg-white/10 rounded-md p-2">
+                                  <input [(ngModel)]="item.label" placeholder="Valeur Y..."
+                                    class="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-400"/>
+                                    <button (click)="removeAxis('y', i, 'edit')"
+                                    class="text-red-400 hover:text-red-300 transition text-sm">✕</button>
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                          <div class="flex justify-end gap-4 mt-8">
+                            <button (click)="cancelEdit()" class="text-gray-400 hover:text-white transition">Annuler</button>
+                            <button (click)="updateTemplate()"
+                              [disabled]="isUpdatingTemplate"
                 class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
                        text-white px-5 py-2 rounded-lg font-semibold shadow-md transition disabled:opacity-50">
-          {{ isUpdatingTemplate ? 'Mise a jour…' : 'Sauvegarder' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+                              {{ isUpdatingTemplate ? 'Mise a jour…' : 'Sauvegarder' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>

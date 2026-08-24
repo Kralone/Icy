@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 
 @Component({
   selector: 'app-loading-overlay',
-  imports: [
-    NgIf
-  ],
+  imports: [],
   templateUrl: './loading-overlay.component.html',
   styleUrl: './loading-overlay.component.css'
 })

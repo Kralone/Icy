@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -10,7 +10,7 @@ type MapItem = {
 @Component({
   standalone: true,
   selector: 'app-executive-hangar-maps',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './executive-hangar-maps.component.html',
   styleUrl: './executive-hangar-maps.component.css'
 })
