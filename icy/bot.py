@@ -35,6 +35,7 @@ logger.info(f"🌍 Mode: {env_mode.upper()}")
 # Récupération des variables
 token = os.getenv("DISCORD_TOKEN")
 guild_id_str = os.getenv("GUILD_ID")
+bot_api_key = os.getenv("BOT_API_KEY")
 
 # --- RabbitMQ config ---
 rabbit_host = os.getenv("RABBITMQ_HOST", "localhost")
@@ -55,6 +56,10 @@ if not guild_id_str:
     logger.error("❌ Variable d'environnement GUILD_ID manquante.")
     sys.exit(1)
 
+if not bot_api_key:
+    logger.error("❌ Variable d'environnement BOT_API_KEY manquante.")
+    sys.exit(1)
+
 try:
     guild_id = int(guild_id_str)
 except ValueError:
@@ -73,8 +78,8 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 async def setup():
     """Charge dynamiquement tous les COGs"""
     cogs_dir = "cogs"
-    for filename in os.listdir(cogs_dir):
-        if filename.endswith(".py") and not filename.startswith("__"):
+    for filename in sorted(os.listdir(cogs_dir)):
+        if filename.endswith(".py") and not filename.startswith(("__", "test_")):
             cog_name = f"{cogs_dir}.{filename[:-3]}"
             try:
                 await bot.load_extension(cog_name)
