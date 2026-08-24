@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY requirement.txt requirements.lock ./
 RUN pip install --no-cache-dir -r requirements.lock \
-    && pip check
+    && pip check \
+    && python -m pip uninstall --yes pip
 
 RUN groupadd --gid 10001 iceforge \
     && useradd --uid 10001 --gid iceforge --create-home --shell /usr/sbin/nologin iceforge \
