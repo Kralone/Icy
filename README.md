@@ -12,6 +12,15 @@ images, etc.). Le backend expose des API REST et du WebSocket, persiste les donn
 dans PostgreSQL, et orchestre des notifications via RabbitMQ. Le bot Discord
 ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 
+## Documentation
+
+- [Index de la documentation](docs/README.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Inventaire et audit du frontend](docs/FRONTEND-PAGES.md)
+- [Audit de securite](docs/SECURITY-AUDIT.md)
+- [Feuille de route produit et visibilite](docs/ROADMAP.md)
+- [Plan de modernisation technique](docs/UPGRADE-PLAN.md)
+
 ## Architecture (macro)
 
 ```
@@ -31,14 +40,14 @@ Images (volume partage via nginx)   Discord
 
 ### Frontend (Angular)
 
-- Base: Angular 19, Tailwind CSS, service worker.
+- Base: Angular 20, Tailwind CSS, service worker.
 - Couches: `auth`, `core` (services/interceptors), `features` (pages),
   `shared` (layout, composants partages).
 - Consommation API REST, WebSocket (notifications, temps reel).
 
 ### Backend (Spring Boot)
 
-- Java 21, Spring Boot 3.4.x.
+- Java 21, Spring Boot 3.5.16.
 - REST + WebSocket.
 - Security (JWT + refresh), CORS, CSRF.
 - Data JPA + Flyway (migrations).
