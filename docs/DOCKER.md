@@ -97,6 +97,12 @@ irréversible au niveau du volume. Le rollback supporté consiste à arrêter 4.
 à restaurer la sauvegarde réalisée sous 3.13 avec l'image 3.13 d'origine. Ne
 jamais essayer de démarrer directement une ancienne image sur le volume migré.
 
+Le passage 4.2 vers 4.3 exige que tous les flags 4.2, Khepri inclus, soient déjà
+activés. Appliquer la même séquence : inventaire, sauvegarde 4.2 testée, arrêt
+propre, montée avec le nom d'hôte stable, contrôle des messages et des clients,
+puis seulement activation des flags 4.3. Une fois ces flags activés, le rollback
+nécessite la restauration de la sauvegarde 4.2 avec l'image 4.2 d'origine.
+
 ## Vault
 
 Vault rejoint le réseau privé `iceforge_internal`, ce qui rend l'adresse

@@ -19,7 +19,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 | Frontend | Angular 22.1 / TypeScript 6.0, SSR/prérendu et PWA configurés ; build de production réussi ; 47 tests unitaires réussis |
 | Backend | Spring Boot 4.1.1 / Java 25.0.4 LTS ; 108 tests réussis ; couverture de branches 7,2 % |
 | Bot Discord | Python 3.14.7 / discord.py 2.7.1 / aio-pika 10 ; 5 tests unitaires et 1 test RabbitMQ réussis |
-| Données | PostgreSQL, 28 migrations Flyway ; RabbitMQ 4.2.9 / Erlang 27.3 |
+| Données | PostgreSQL, 28 migrations Flyway ; RabbitMQ 4.3.5 / Erlang 27.3 |
 | Temps réel | STOMP/SockJS entre navigateur et backend ; RabbitMQ entre backend et bot |
 | Production observée | Pages publiques disponibles, mais déploiement SPA statique incohérent avec le SSR du dépôt |
 | Risque le plus urgent | Clé d'authentification du bot codée en dur et présente dans l'historique Git |

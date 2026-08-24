@@ -17,7 +17,7 @@ services:
     networks: [internal]
 
   rabbitmq:
-    image: rabbitmq:4.2.9-management@sha256:65df8b4486d38eab1dbbb0784790b235a2df2bf1db8b9b70c46cbcf669ecffa7
+    image: rabbitmq:4.3.5-management@sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca
     hostname: rabbitmq
     restart: unless-stopped
     environment:

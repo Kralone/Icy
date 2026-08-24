@@ -36,7 +36,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Dépendances du bot | verrou transitif | dernières stables compatibles | Terminée | 5 tests unitaires, audit CVE et test AMQP réel validés |
 | PostgreSQL | 15.19 épinglé | 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
-| RabbitMQ | 4.2.9 épinglé | 4.3.5 | Haute | Palier 3.13→4.2 validé ; inventaire production requis avant 4.3 |
+| RabbitMQ | 4.3.5 épinglé | dernière 4.3.x stable | Terminée | Paliers 3.13→4.2→4.3 et restaurations de rollback validés localement |
 | Nginx | 1.30.4 épinglé | stable épinglée | Terminée | Frontend et serveur d'images sont uniformisés |
 | Vault | 1.17.6 épinglé | 1.21.x, puis décision distincte pour 2.x | Conditionnelle | Confirmer d'abord qu'il est réellement utilisé en production |
 | Docker Compose | base + surcharges dédiées | socle durci | Terminée | Production, local et validation sont séparés |
@@ -326,6 +326,26 @@ activation est irréversible : en production, conserver la sauvegarde 3.13 et la
 fenêtre d'observation avant de l'effectuer. Après activation, un retour exige la
 restauration de cette sauvegarde, jamais le redémarrage de 3.13 sur le volume
 migré.
+
+Résultat du palier 4.3 : l'image Docker officielle passe de 4.2.9 à 4.3.5,
+épinglée au digest `sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca`.
+Elle embarque Erlang/OTP 27.3.4.16. Le volume 4.2 de départ avait tous ses
+feature flags activés, notamment Khepri et les marqueurs 4.0, 4.1 et 4.2, comme
+l'exige le chemin de migration officiel.
+
+Un message persistant publié sous 4.2 a été retrouvé et consommé après la montée
+vers 4.3.5. Les six tests du bot Python 3.14/aio-pika 10 ont réussi et le backend
+Spring Boot 4.1 a répondu en HTTP 200, établi sa connexion AMQP et déclaré ses
+six files durables avec les consommateurs attendus. Le rollback a été exercé en
+redémarrant 4.2.9 sur une copie antérieure à l'upgrade ; le message 4.2 était
+toujours présent et lisible.
+
+Après cette preuve, tous les nouveaux flags 4.3 ont été activés, dont
+`rabbitmq_4.3.0`, `topic_binding_projection_v4`,
+`topic_binding_projection_v5` et `track_qq_members_uids`. Le broker a redémarré
+sans flag désactivé ; les six tests du bot et la reconnexion du backend sont
+restés au vert. En production, activer ces flags seulement après la fenêtre
+d'observation et conserver la sauvegarde 4.2 jusqu'à validation définitive.
 
 ### 11 — `codex/upgrade-postgres-18`
 
