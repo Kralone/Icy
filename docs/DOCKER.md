@@ -12,6 +12,7 @@ afin qu'un redéploiement ou un rollback reconstruise le même environnement.
 | `docker-compose.override.yml` | Développement local, ports liés à `127.0.0.1` |
 | `docker-compose.prod.yml` | Production, secrets obligatoires, limites et durcissement |
 | `docker-compose.validation.yml` | Test isolé sans connexion réelle du bot à Discord |
+| `docker-compose.backup-test.yml` | Cibles stateful autonomes, sans ports, pour les répétitions de restauration |
 | `docker-compose.vault.yml` | Vault accessible par les services et par l'hôte local uniquement |
 | `icy-angular/docker-compose.ssr.yml` | Variante frontend SSR, à activer séparément |
 
@@ -180,3 +181,6 @@ Les volumes nommés (`postgres18_data`, `rabbitmq_data`, `backend_logs`,
 L'ancien volume `postgres_data` doit également être conservé pendant la fenêtre
 de validation PostgreSQL 18. L'option `down -v` est réservée à la pile isolée
 `iceforge-validation`.
+
+Le chiffrement, la rétention, les scripts et les preuves de restauration sont
+décrits dans [`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md).

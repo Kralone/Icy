@@ -478,8 +478,10 @@ l'inventaire de production est terminé. L'ordre devient :
 
 1. fermer au niveau de l'hébergeur les ports publics autres que 80/443 et SSH
    restreint, après confirmation des clients externes légitimes ;
-2. créer des sauvegardes PostgreSQL, RabbitMQ, Vault et images, puis prouver
-   leurs restaurations sur des volumes isolés ;
+2. créer les sauvegardes PostgreSQL, RabbitMQ, Vault et images décrites dans
+   [`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md), puis prouver leurs
+   restaurations sur des volumes isolés ; l'outillage est validé sur données
+   synthétiques, mais aucune sauvegarde de production n'a encore été créée ;
 3. aligner le Compose de production sans mélanger ce changement avec les
    montées de version ;
 4. promouvoir ensuite chaque composant sur sa branche et son palier dédiés ;

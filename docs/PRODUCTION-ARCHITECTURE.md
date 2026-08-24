@@ -210,7 +210,7 @@ Chaque ligne correspond à une branche ou une intervention indépendante. Une
 | Ordre | Branche/intervention | Changement | Preuve avant promotion | Rollback |
 |---:|---|---|---|---|
 | 0 | pare-feu hébergeur | n'autoriser publiquement que 80/443 et SSH restreint ; fermer 111, 5432, 5672, 15672, 8080, 8081, 8090, 8200 | test externe + connexions internes | réouvrir uniquement le port client identifié |
-| 1 | `codex/prod-backups` | scripts et procédure PG, RabbitMQ, Vault, images/config | restaurations isolées + checksums | conserver les sources intactes |
+| 1 | `codex/prod-backups` | scripts et procédure [`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md) pour PG, RabbitMQ, Vault et images/config | restaurations isolées + checksums | conserver les sources intactes |
 | 2 | `codex/prod-network-lockdown` | retirer les publications Compose internes, placer Vault sur le réseau privé | pile clone, API via Nginx, DB/MQ/Vault depuis les clients | ancien Compose archivé + règle temporaire réversible |
 | 3 | `codex/prod-ssh-hardening` | clé uniquement, root sans mot de passe, compte admin nominatif, fermer rpcbind | seconde session SSH ouverte avant de fermer la première | restauration config + reload SSH validé |
 | 4 | `codex/prod-host-almalinux-9-8` | correctifs AlmaLinux/Docker, redémarrage | snapshot hébergeur, maintenance, santé complète | snapshot ou versions RPM conservées |

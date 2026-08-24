@@ -1,0 +1,13 @@
+# Copier cette liste hors Git et l'adapter au répertoire de déploiement réel.
+docker-compose.yml
+docker-compose.prod.yml
+docker-compose.vault.yml
+nginx
+vault/config
+ops/backups
+docs/PRODUCTION-BACKUPS.md
+
+# Ajouter .env uniquement si sa copie chiffrée est nécessaire à la reprise et
+# si la clé age est conservée hors du serveur. Ne jamais inclure la clé age,
+# les clés d'unseal Vault ou un fichier contenant celles-ci.
+# .env

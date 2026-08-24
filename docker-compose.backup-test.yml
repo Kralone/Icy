@@ -1,0 +1,74 @@
+services:
+  db:
+    image: "${BACKUP_TEST_POSTGRES_IMAGE:-postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108}"
+    environment:
+      POSTGRES_USER: ${BACKUP_TEST_POSTGRES_USER:-iceforge_test}
+      POSTGRES_PASSWORD: ${BACKUP_TEST_POSTGRES_PASSWORD:-synthetic_backup_password}
+      POSTGRES_DB: ${BACKUP_TEST_POSTGRES_DB:-iceforge_test}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [backup_test]
+
+  rabbitmq:
+    image: "${BACKUP_TEST_RABBITMQ_IMAGE:-rabbitmq:4.3.5-management@sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca}"
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: iceforge_test
+      RABBITMQ_DEFAULT_PASS: synthetic_backup_password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    networks: [backup_test]
+
+  vault:
+    image: "${BACKUP_TEST_VAULT_IMAGE:-hashicorp/vault:1.17.6@sha256:74a4ab138ab5d64725e89cd9a9c73f7040c7fe49e98b71697b275ca9a69919df}"
+    user: "0:0"
+    environment:
+      VAULT_ADDR: http://127.0.0.1:8200
+    entrypoint: ["vault"]
+    cap_add: ["IPC_LOCK"]
+    command: ["server", "-config=/vault/config/vault.hcl"]
+    volumes:
+      - vault_data:/vault/data
+      - ./vault/config:/vault/config:ro
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+    networks: [backup_test]
+
+  backend:
+    image: nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+    entrypoint: ["sh", "-c", "exec sleep 2147483647"]
+    volumes:
+      - images_data:/app/uploads/images
+    networks: [backup_test]
+
+  bot:
+    image: nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+    entrypoint: ["sh", "-c", "exec sleep 2147483647"]
+    volumes:
+      - bot_config:/app/config
+    networks: [backup_test]
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  vault_data:
+  images_data:
+  bot_config:
+
+networks:
+  backup_test:
+    internal: true
