@@ -61,6 +61,24 @@ JWT, Discord et la clé partagée du bot. Le backend et le bot utilisent un
 système de fichiers racine en lecture seule, un `/tmp` temporaire, l'option
 `no-new-privileges`, des limites CPU/mémoire et une limite de processus.
 
+Le frontend Nginx, ainsi que le proxy de la variante SSR, s'exécutent avec
+l'utilisateur non privilégié `nginx`. Docker publie les ports hôte `80/443` vers
+les ports internes `8080/8443`; le système de fichiers racine est en lecture
+seule et les fichiers temporaires restent dans un `/tmp` éphémère. La clé privée
+Let’s Encrypt montée en lecture seule doit être lisible par l'UID du conteneur
+Nginx (`101` pour l'image Alpine épinglée), au moyen d'une ACL ciblée sur les
+répertoires parents et la clé. Ne rendez jamais la clé privée lisible par tous.
+Vérifier les permissions avant le déploiement avec :
+
+```powershell
+docker compose --env-file .\secrets\prod.secrets.env `
+  -f .\docker-compose.yml -f .\docker-compose.prod.yml `
+  run --no-deps --rm frontend nginx -t
+```
+
+Pour la variante SSR, exécuter le même préflight sur le service
+`frontend_proxy`.
+
 ## Validation isolée
 
 La pile de validation porte ses propres noms de réseaux et de volumes. Elle ne
