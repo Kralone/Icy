@@ -1,13 +1,13 @@
 services:
   db:
-    image: postgres:15.19-bookworm@sha256:cf7f8fb958c63e62875e30645dc4819ff0243a923f3c709e752b99dedd40bfcd
+    image: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-iceforge}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_only}
       POSTGRES_DB: ${POSTGRES_DB:-iceforgedb}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres18_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -145,7 +145,7 @@ services:
     networks: [internal]
 
 volumes:
-  postgres_data:
+  postgres18_data:
   rabbitmq_data:
   backend_logs:
   bot_config:

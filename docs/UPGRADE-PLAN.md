@@ -34,7 +34,7 @@ la fois**, avec une validation et un retour arrière explicites à chaque étape
 | Python | `3.14.7-slim-bookworm` | Python 3.14.x | Terminée | Image immuable, wheels Linux et exécution non-root validées |
 | discord.py | 2.7.1 | 2.7.1 | Basse | Déjà à la dernière version publiée |
 | Dépendances du bot | verrou transitif | dernières stables compatibles | Terminée | 5 tests unitaires, audit CVE et test AMQP réel validés |
-| PostgreSQL | 15.19 épinglé | 18.6 | Moyenne | PostgreSQL 15 reste supporté jusqu'en novembre 2027 |
+| PostgreSQL | 18.6 épinglé | dernière 18.x stable | Terminée | Dump/restore 15.19→18.6, intégrité, persistance, application et rollback validés localement |
 | Pilote PostgreSQL | 42.7.13 | BOM Spring ou dernière stable compatible | Basse | Éviter de le sur-épingler sans raison |
 | RabbitMQ | 4.3.5 épinglé | dernière 4.3.x stable | Terminée | Paliers 3.13→4.2→4.3 et restaurations de rollback validés localement |
 | Nginx | 1.30.4 épinglé | stable épinglée | Terminée | Frontend et serveur d'images sont uniformisés |
@@ -349,19 +349,33 @@ d'observation et conserver la sauvegarde 4.2 jusqu'à validation définitive.
 
 ### 11 — `codex/upgrade-postgres-18`
 
-- Épingler immédiatement la production PostgreSQL 15 au dernier patch 15.19.
-- Créer ensuite une nouvelle instance/volume PostgreSQL 18.6.
-- Répéter une restauration complète d'un dump récent et mesurer sa durée.
-- Valider extensions, collations, propriétaires, séquences, contraintes,
-  comptages métier, Flyway et requêtes lentes.
-- Tenir compte du changement de `PGDATA` de l'image officielle PostgreSQL 18 :
-  le volume est désormais organisé sous `/var/lib/postgresql/18/docker`.
-- Préférer une bascule blue/green ou dump/restore à une modification directe du
-  volume existant.
+Terminée localement avec l'image officielle PostgreSQL 18.6 Bookworm épinglée
+au digest
+`sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108`.
+L'image utilise `PGDATA=/var/lib/postgresql/18/docker` et le volume Compose
+`postgres18_data` est monté sur son parent `/var/lib/postgresql`. Le volume 15
+historique `postgres_data` n'est ni réutilisé ni supprimé.
 
-Rollback : ancienne instance PostgreSQL 15 conservée en lecture seule jusqu'à
-validation ; toute écriture après bascule impose une procédure de retour
-spécifique, pas un simple changement de tag Docker.
+La répétition a utilisé `pg_dump` 18.6 contre une source 15.19, puis
+`pg_restore` 18.6 dans un volume vierge : dump de 134 777 octets en 626 ms et
+restauration en 967 ms sur les données de test. Les 13 schémas, 49 tables, 365
+colonnes, 129 contraintes applicatives, 21 séquences, 120 index, 28 migrations
+Flyway, propriétaires, locale et le contenu exact des 112 lignes ont été
+comparés. `pgcrypto` est passé normalement de 1.3 à 1.4 et ses fonctions ont été
+testées. PostgreSQL 18 expose en plus les contraintes `NOT NULL` dans son
+catalogue ; leur sémantique a été comparée colonne par colonne.
+
+Le backend Java 25/Spring Boot 4.1.1 a validé les 28 migrations sans en rejouer,
+Hibernate a reconnu PostgreSQL 18.6, l'API a répondu en HTTP 200 et la connexion
+aux six files RabbitMQ 4.3.5 est restée active. Les 108 tests Maven ont réussi.
+Après recréation du conteneur 18, les données étaient toujours présentes. Le
+rollback a été prouvé en relisant la source 15.19 restée intacte.
+
+La répétition locale ne remplace pas une restauration d'un dump réel ni la
+mesure sur le volume de production. Suivre le runbook
+[`POSTGRESQL-18-MIGRATION.md`](POSTGRESQL-18-MIGRATION.md) avant tout
+déploiement. Toute écriture après bascule impose un plan de retour spécifique :
+un simple changement de tag Docker est interdit.
 
 ### 12 — `codex/upgrade-vault-1-21`
 
@@ -435,16 +449,17 @@ Les migrations PostgreSQL, RabbitMQ et Vault nécessitent en plus un « go/no-go
 avec sauvegarde vérifiée, durée de fenêtre, responsable de décision et procédure
 de retour écrite.
 
-## Première action recommandée
+## Prochaine action recommandée
 
-Ne pas commencer par Spring Boot 4 ni PostgreSQL 18. La prochaine intervention
-devrait être :
+Les branches applicatives, RabbitMQ et PostgreSQL sont maintenant validées
+localement. La prochaine intervention est l'inventaire **strictement en lecture
+seule** de la production afin de :
 
-1. décider si `agent/security-bug-audit` devient la nouvelle base de `main` ;
-2. commiter la documentation d'audit ;
-3. effectuer le préflight secret/production ;
-4. ouvrir `codex/chore-upgrade-baseline` ;
-5. enchaîner sur `codex/infra-compose-foundation`, puis Node 24 et Angular 21.
-
-Ce démarrage réduit immédiatement le risque de build et prépare les migrations
-majeures sans rendre plusieurs causes de panne indissociables.
+1. confirmer les versions, volumes, sauvegardes, ports et digests réellement
+   déployés ;
+2. mesurer la taille et la durée réaliste de restauration PostgreSQL avant la
+   fenêtre de bascule ;
+3. confirmer si Vault est utilisé et décider si la branche conditionnelle 12
+   doit être ouverte ;
+4. préparer ensuite `codex/infra-upgrade-finalize` avec les écarts réels de
+   production, sans mutation du serveur pendant l'audit.

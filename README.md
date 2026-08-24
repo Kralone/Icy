@@ -21,6 +21,7 @@ ecoute RabbitMQ pour relayer des informations et interagir avec la communaute.
 - [Feuille de route produit et visibilite](docs/ROADMAP.md)
 - [Plan de modernisation technique](docs/UPGRADE-PLAN.md)
 - [Exploitation Docker et rollback](docs/DOCKER.md)
+- [Migration PostgreSQL 15 vers 18](docs/POSTGRESQL-18-MIGRATION.md)
 
 ## Architecture (macro)
 
@@ -48,7 +49,7 @@ Images (volume partage via nginx)   Discord
 
 ### Backend (Spring Boot)
 
-- Java 25 LTS, Spring Boot 3.5.16.
+- Java 25 LTS, Spring Boot 4.1.1.
 - REST + WebSocket.
 - Security (JWT + refresh), CORS, CSRF.
 - Data JPA + Flyway (migrations).
@@ -63,8 +64,8 @@ Images (volume partage via nginx)   Discord
 
 ### Infra
 
-- PostgreSQL pour la persistence.
-- RabbitMQ pour la messagerie asynchrone.
+- PostgreSQL 18.6 pour la persistence.
+- RabbitMQ 4.3.5 pour la messagerie asynchrone.
 - Nginx pour servir le front et les images.
 
 ## Structure du repo

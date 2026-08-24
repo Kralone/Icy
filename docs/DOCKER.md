@@ -19,6 +19,11 @@ Le socle contient PostgreSQL, RabbitMQ, le backend Spring Boot, le bot Discord,
 le frontend Nginx et le service d'images. PostgreSQL et RabbitMQ ne publient
 aucun port en production. Seul le frontend publie `80` et `443`.
 
+PostgreSQL 18 utilise `PGDATA=/var/lib/postgresql/18/docker`. Son volume
+`postgres18_data` doit être monté sur `/var/lib/postgresql`, comme le prescrit
+l'image officielle. L'ancien volume PostgreSQL 15 `postgres_data` n'est pas
+réutilisé : il constitue le point de retour avant la bascule définitive.
+
 ## Développement local
 
 Compose charge automatiquement la surcharge locale :
@@ -103,6 +108,18 @@ propre, montée avec le nom d'hôte stable, contrôle des messages et des client
 puis seulement activation des flags 4.3. Une fois ces flags activés, le rollback
 nécessite la restauration de la sauvegarde 4.2 avec l'image 4.2 d'origine.
 
+## PostgreSQL 18
+
+Le changement de tag et de point de montage n'effectue aucune migration du
+format binaire PostgreSQL 15. La montée validée est un dump/restore logique vers
+le volume séparé `postgres18_data`. Démarrer d'abord uniquement la base 18,
+restaurer et contrôler les données, puis démarrer le backend et enfin les autres
+services. Ne jamais lancer `docker compose down -v` pendant cette opération :
+le volume PostgreSQL 15 doit rester disponible pour le rollback.
+
+La procédure détaillée, les contrôles go/no-go et la frontière de rollback sont
+décrits dans [`POSTGRESQL-18-MIGRATION.md`](POSTGRESQL-18-MIGRATION.md).
+
 ## Vault
 
 Vault rejoint le réseau privé `iceforge_internal`, ce qui rend l'adresse
@@ -127,6 +144,8 @@ Compose suffit généralement. Pour PostgreSQL, RabbitMQ ou Vault, ne jamais
 redescendre simplement l'image après une migration de format : arrêter le
 service et restaurer la sauvegarde validée avec la version antérieure.
 
-Les volumes nommés (`postgres_data`, `rabbitmq_data`, `backend_logs`,
+Les volumes nommés (`postgres18_data`, `rabbitmq_data`, `backend_logs`,
 `bot_config`, `icy_images_data`) ne sont pas supprimés par `docker compose down`.
-L'option `down -v` est réservée à la pile isolée `iceforge-validation`.
+L'ancien volume `postgres_data` doit également être conservé pendant la fenêtre
+de validation PostgreSQL 18. L'option `down -v` est réservée à la pile isolée
+`iceforge-validation`.

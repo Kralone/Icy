@@ -9,12 +9,12 @@ flowchart LR
     Visitor[Visiteur] -->|HTTPS| Edge[Nginx]
     Member[Membre] -->|HTTPS + JWT| Edge
     Edge --> Angular[Angular 22\nSSR / SPA / PWA]
-    Edge -->|/api| API[Spring Boot 3.5.16]
+    Edge -->|/api| API[Spring Boot 4.1.1]
     Edge -->|/ws| WS[STOMP / SockJS]
     Angular -->|REST| API
     Angular -->|STOMP| WS
     WS --> API
-    API --> PG[(PostgreSQL 15)]
+    API --> PG[(PostgreSQL 18.6)]
     Flyway[28 migrations Flyway] --> PG
     API --> Images[(Volume images)]
     API --> Rabbit[(RabbitMQ)]
