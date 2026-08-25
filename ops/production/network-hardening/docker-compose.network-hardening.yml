@@ -10,11 +10,11 @@ services:
 
   backend:
     ports: !override []
-    networks: !override [internal]
+    networks: !override [internal, external]
 
   bot:
     ports: !override []
-    networks: !override [internal]
+    networks: !override [internal, external]
 
   frontend:
     networks: !override [internal, external]

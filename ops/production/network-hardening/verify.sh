@@ -9,6 +9,7 @@ Exemple :
   verify.sh -- \
     --project-name iceforge \
     --env-file /root/iceforge/.env \
+    --env-file /root/iceforge/.secrets/vault/compose.prod.env \
     -f /root/iceforge/docker-compose.yml \
     -f /root/iceforge/docker-compose.vault.yml \
     -f /root/iceforge/ops/network-hardening/docker-compose.network-hardening.yml
@@ -57,8 +58,8 @@ printf '%s' "$resolved" | jq -e '
   (["backend", "bot", "db", "frontend", "icy-images", "rabbitmq", "vault"] - ($services | keys)) == [] and
   (.networks.internal.internal == true) and
   network_names($services.frontend) == ["external", "internal"] and
-  network_names($services.backend) == ["internal"] and
-  network_names($services.bot) == ["internal"] and
+  network_names($services.backend) == ["external", "internal"] and
+  network_names($services.bot) == ["external", "internal"] and
   network_names($services.db) == ["internal"] and
   network_names($services["icy-images"]) == ["internal"] and
   network_names($services.rabbitmq) == ["internal"] and
@@ -71,6 +72,14 @@ printf '%s' "$resolved" | jq -e '
   localhost_port($services.vault; 8200; 8200) and
   ((ports($services.frontend) | map(.published) | sort) == ["443", "80"]) and
   ([ports($services.frontend)[] | (.host_ip // "0.0.0.0")] | all(. == "0.0.0.0" or . == "::")) and
+  ($services.backend.environment.VAULT_ENABLED == "true") and
+  ($services.backend.environment.VAULT_KV_PATH == "iceforge/prod/backend") and
+  (($services.backend.environment.VAULT_ROLE_ID // "") | length) > 0 and
+  (($services.backend.environment.VAULT_SECRET_ID // "") | length) > 0 and
+  ($services.bot.environment.VAULT_ENABLED == "true") and
+  ($services.bot.environment.VAULT_KV_PATH == "iceforge/prod/bot") and
+  (($services.bot.environment.VAULT_ROLE_ID // "") | length) > 0 and
+  (($services.bot.environment.VAULT_SECRET_ID // "") | length) > 0 and
   ([$services[] | select(.network_mode == "host")] | length) == 0
 ' >/dev/null
 unset resolved
@@ -79,3 +88,4 @@ printf 'NETWORK_HARDENING_CONFIG_VALID=true\n'
 printf 'COMPOSE_VERSION=%s\n' "$compose_version"
 printf 'PUBLIC_PORTS=80,443\n'
 printf 'LOCALHOST_ADMIN_PORTS=8200,15672\n'
+printf 'VAULT_APPROLE_CONFIG_VALID=true\n'
