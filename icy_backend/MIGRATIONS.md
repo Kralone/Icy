@@ -41,10 +41,11 @@ V21 à V44 a été ramenée à huit migrations cohérentes :
 - V28 : refresh tokens.
 
 Cette consolidation supprime le doublon V31/V37 et les allers-retours V23/V24 et
-V41/V42. Elle ne doit être réparée sur une base existante que si cette base possède
-déjà l'ancien historique complet jusqu'à V44. Avant tout `repair`, effectuer une
-sauvegarde et vérifier que les 44 entrées sont réussies. Une base arrêtée entre V21 et
-V43 ne doit pas être réparée avec le nouvel historique.
+V41/V42. Un simple `flyway repair` est interdit sur l'ancien historique : il pourrait
+marquer la nouvelle V28 comme appliquée sans créer `core.refresh_tokens`. La base de
+production arrêtée à l'ancienne V43 suit la procédure transactionnelle décrite dans
+`docs/PRODUCTION-BACKEND-JAVA25.md`. Toute autre variante d'historique doit être
+analysée séparément et ne doit pas être réparée par analogie.
 
 Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V28.
 Toute évolution de schéma doit désormais être ajoutée dans une nouvelle migration,
