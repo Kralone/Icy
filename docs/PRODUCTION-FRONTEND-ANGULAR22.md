@@ -8,7 +8,7 @@ L’image cible embarque Angular 22, Node 24 pour le build et nginx 1.30.4 pour 
 
 ## Particularité TLS
 
-La clé `/etc/letsencrypt/live/iceforge.fr/privkey.pem` est `root:root 0600`. Le maître nginx démarre donc en UID 0 pour lire la clé, puis crée ses workers avec l’utilisateur `nginx`. Le conteneur reste en lecture seule, sans capacité Linux et avec `no-new-privileges`.
+La clé `/etc/letsencrypt/live/iceforge.fr/privkey.pem` est `root:root 0600`. Le maître nginx démarre donc en UID 0 pour lire la clé, puis crée ses workers avec l’utilisateur `nginx` (UID 101). Le conteneur reste en lecture seule et utilise `no-new-privileges`. Toutes les capacités Linux sont supprimées, puis seules `CHOWN`, `SETGID` et `SETUID` sont réautorisées pour préparer les répertoires temporaires et abandonner les privilèges des workers.
 
 ## Fichiers Compose obligatoires
 
@@ -90,4 +90,3 @@ docker compose \
 ```
 
 Si l’ancienne image locale a disparu, la recharger d’abord avec `gunzip -c image.tar.gz | docker image load`. Contrôler ensuite `https://iceforge.fr/`, `https://iceforge.fr/api/front/members`, les logs nginx et les huit ports externes interdits décrits dans le durcissement réseau.
-

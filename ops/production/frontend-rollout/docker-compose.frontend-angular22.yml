@@ -23,6 +23,7 @@ services:
     tmpfs: !override
       - /tmp:size=64m,mode=1777
     cap_drop: !override ["ALL"]
+    cap_add: !override ["CHOWN", "SETGID", "SETUID"]
     security_opt: !override ["no-new-privileges:true"]
     cpus: "0.5"
     mem_limit: 256m

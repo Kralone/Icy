@@ -56,6 +56,7 @@ actual_id="$(docker inspect --format '{{.Image}}' "$frontend_container")"
 expected_id="$(docker image inspect --format '{{.Id}}' "$frontend_image")"
 read_only="$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$frontend_container")"
 container_user="$(docker inspect --format '{{.Config.User}}' "$frontend_container")"
+cap_add="$(docker inspect --format '{{json .HostConfig.CapAdd}}' "$frontend_container")"
 
 [[ "$running" == "true" ]] || { echo "ERROR: frontend is not running" >&2; exit 1; }
 [[ "$health" == "healthy" ]] || { echo "ERROR: frontend health is $health" >&2; exit 1; }
@@ -63,6 +64,10 @@ container_user="$(docker inspect --format '{{.Config.User}}' "$frontend_containe
 [[ "$actual_id" == "$expected_id" ]] || { echo "ERROR: frontend image ID differs from the loaded image" >&2; exit 1; }
 [[ "$read_only" == "true" ]] || { echo "ERROR: frontend root filesystem is writable" >&2; exit 1; }
 [[ "$container_user" == "0:0" || "$container_user" == "0" ]] || { echo "ERROR: nginx master user is not root" >&2; exit 1; }
+for capability in CAP_CHOWN CAP_SETGID CAP_SETUID; do
+  grep -Fq "\"${capability}\"" <<<"$cap_add" || { echo "ERROR: required nginx capability is missing: $capability" >&2; exit 1; }
+done
+[[ "$(grep -o 'CAP_' <<<"$cap_add" | wc -l)" -eq 3 ]] || { echo "ERROR: unexpected extra frontend capability" >&2; exit 1; }
 
 networks="$(docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$frontend_container" | sort)"
 [[ "$networks" == $'iceforge_external\niceforge_internal' ]] || { echo "ERROR: unexpected frontend networks" >&2; exit 1; }
@@ -78,9 +83,9 @@ done
 
 docker exec "$frontend_container" nginx -t >/dev/null
 docker exec "$frontend_container" nginx -T 2>&1 | grep -Fq 'user nginx;'
-process_users="$(docker top "$frontend_container" -eo user,comm)"
-grep -Eq '^root[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx master is not running as root" >&2; exit 1; }
-grep -Eq '^nginx[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx workers are not running as nginx" >&2; exit 1; }
+process_users="$(docker top "$frontend_container" -eo user,pid,comm)"
+grep -Eq '^root[[:space:]]+[0-9]+[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx master is not running as root" >&2; exit 1; }
+grep -Eq '^(nginx|101)[[:space:]]+[0-9]+[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx workers are not running as UID 101" >&2; exit 1; }
 image_count="$(docker exec "$frontend_container" sh -c 'find /usr/share/nginx/html/images -type f | wc -l')"
 [[ "$image_count" -gt 0 ]] || { echo "ERROR: the shared image volume is empty" >&2; exit 1; }
 

@@ -35,6 +35,8 @@ if network_names != {"internal", "external"}:
 
 if "ALL" not in frontend.get("cap_drop", []):
     fail("frontend must drop all Linux capabilities")
+if set(frontend.get("cap_add", [])) != {"CHOWN", "SETGID", "SETUID"}:
+    fail("frontend must add back only CHOWN, SETGID, and SETUID for nginx workers")
 if "no-new-privileges:true" not in frontend.get("security_opt", []):
     fail("frontend must enable no-new-privileges")
 
@@ -59,4 +61,3 @@ if ports != {("80", "8080"), ("443", "8443")}:
     fail("frontend ports must be exactly 80:8080 and 443:8443")
 
 print("Effective frontend Compose model: OK")
-
