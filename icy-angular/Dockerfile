@@ -1,13 +1,16 @@
 FROM node:24.19.0-alpine3.24@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS build
+ARG ICEFORGE_BUILD_COMMIT=unknown
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN ICEFORGE_BUILD_COMMIT="${ICEFORGE_BUILD_COMMIT}" npm run build
 
 FROM nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+ARG ICEFORGE_BUILD_COMMIT=unknown
+LABEL org.opencontainers.image.revision="${ICEFORGE_BUILD_COMMIT}"
 
 COPY --from=build /app/dist/icy-angular/browser/ /usr/share/nginx/html/
 COPY nginx/nginx.conf /etc/nginx/nginx.conf

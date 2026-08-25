@@ -16,6 +16,7 @@ try {
   // 2. Créer l'objet de données
   const versionData = {
     version: currentVersion,
+    commit: process.env.ICEFORGE_BUILD_COMMIT || 'unknown',
     hash: new Date().getTime().toString(), // Hash unique basé sur le temps
     date: new Date().toISOString()
   };
