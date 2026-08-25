@@ -10,6 +10,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Feuille de route produit et visibilité](ROADMAP.md) — actions 72 h, 30 jours et 90 jours, contenu, distribution et indicateurs.
 - [Plan de modernisation technique](UPGRADE-PLAN.md) — versions cibles, ordre des branches, critères de validation et audit de production.
 - [Architecture de production](PRODUCTION-ARCHITECTURE.md) — topologie réellement observée, expositions, sauvegardes et ordre de remédiation.
+- [Cloisonnement réseau de production](PRODUCTION-NETWORK-HARDENING.md) — surcharge Compose, validation, déploiement par vagues et rollback sans changement de version.
 - [Sauvegardes et reprise de production](PRODUCTION-BACKUPS.md) — scripts chiffrés, restaurations et répétitions PostgreSQL, RabbitMQ, Vault et images.
 - [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
 - [Exploitation Docker et rollback](DOCKER.md) — profils local/production, validation isolée, données persistantes et retour arrière.
