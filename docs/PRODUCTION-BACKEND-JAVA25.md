@@ -52,6 +52,21 @@ logs ni créer le dossier d'avatars. Changer les propriétaires vers `10001:101`
 gêne pas le rollback : l'ancien backend root conserve l'accès et les lecteurs nginx
 continuent à lire les fichiers.
 
+Le script `prepare-volumes.sh` possède trois modes :
+
+```bash
+BACKEND_IMAGE="iceforge/backend:<commit>" ./prepare-volumes.sh inspect
+BACKEND_IMAGE="iceforge/backend:<commit>" ./prepare-volumes.sh apply
+BACKEND_IMAGE="iceforge/backend:<commit>" ./prepare-volumes.sh verify
+```
+
+`apply` refuse de continuer si `iceforge_backend` est encore actif. Il exécute un
+conteneur éphémère sans réseau, avec une racine en lecture seule et uniquement les
+capacités nécessaires au `chown`. `verify` écrit puis supprime deux sentinelles dans
+les volumes avec l'UID 10001. La répétition locale a confirmé le refus avant
+préparation, le changement récursif des fichiers existants et le refus lorsque le
+backend désigné tourne.
+
 ## Fichiers et ordre Compose
 
 La production active utilise le projet `/root/iceforge` et cet ordre :
@@ -63,11 +78,26 @@ docker compose \
   --env-file /root/iceforge/.secrets/vault/compose.prod.env \
   -f /root/iceforge/docker-compose.yml \
   -f /root/iceforge/docker-compose.vault.yml \
-  -f /root/iceforge/ops/network-hardening/docker-compose.network-hardening.yml
+  -f /root/iceforge/ops/network-hardening/docker-compose.network-hardening.yml \
+  -f /root/iceforge/ops/backend-rollout/docker-compose.backend-java25.yml
 ```
 
 Les deux fichiers d'environnement et l'overlay Vault restent obligatoires. Aucun
 secret ne doit être affiché, copié dans un script ou ajouté au dépôt.
+
+L'overlay backend impose : image immuable sans build sur le serveur, UID 10001/GID
+101, racine en lecture seule, `/tmp` en tmpfs, aucune capability, `no-new-privileges`,
+healthcheck local, aucun port hôte, réseaux `internal` et `external`, 2 CPU, 2 Gio de
+mémoire et 200 PID. Le backend actuel consomme environ 687 Mio au repos ; cette
+limite conserve une marge importante.
+
+Avant la fenêtre de maintenance, valider le modèle effectif sans imprimer sa
+configuration :
+
+```bash
+export BACKEND_IMAGE="iceforge/backend:<commit>"
+/root/iceforge/ops/backend-rollout/verify.sh config
+```
 
 ## Réconciliation Flyway
 
@@ -84,6 +114,19 @@ docker exec -i iceforge_db \
 Le résultat attendu avant le démarrage candidat est V1-V27. Démarrer ensuite
 uniquement le backend candidat. Flyway doit annoncer l'application d'une migration
 et la version V28 ; Hibernate doit terminer sa validation.
+
+```bash
+BACKEND_IMAGE="$BACKEND_IMAGE" \
+  docker compose \
+  --project-directory /root/iceforge \
+  --env-file /root/iceforge/.env \
+  --env-file /root/iceforge/.secrets/vault/compose.prod.env \
+  -f /root/iceforge/docker-compose.yml \
+  -f /root/iceforge/docker-compose.vault.yml \
+  -f /root/iceforge/ops/network-hardening/docker-compose.network-hardening.yml \
+  -f /root/iceforge/ops/backend-rollout/docker-compose.backend-java25.yml \
+  up --detach --no-deps --no-build --pull never backend
+```
 
 Exécuter alors le contrôle en lecture seule :
 
@@ -103,6 +146,17 @@ Le résultat attendu est `28 | 28 | true | core.refresh_tokens`. Vérifier aussi
 - Vault AppRole fonctionnel et aucun secret dans les logs ;
 - bot redémarré seulement après validation du backend.
 
+Le contrôle runtime automatisé couvre ces invariants techniques :
+
+```bash
+BACKEND_IMAGE="$BACKEND_IMAGE" \
+  /root/iceforge/ops/backend-rollout/verify.sh runtime
+```
+
+La même définition durcie a démarré localement sur PostgreSQL 18.6 et RabbitMQ
+4.3.5 : 28 migrations appliquées, HTTP 200, zéro redémarrage, volumes accessibles,
+racine non inscriptible et limites Docker effectives.
+
 ## Rollback
 
 Arrêter le backend candidat, puis restaurer l'ancien historique :
@@ -117,6 +171,10 @@ Le script refuse toute base qui n'est pas exactement en V1-V28 ou dont la sauveg
 V1-V43 ne possède pas l'empreinte attendue. Il ne supprime ni table ni jeton. Recréer
 ensuite l'ancien backend avec son image conservée et vérifier l'API, l'authentification,
 RabbitMQ et le bot.
+
+Pour recréer l'ancien backend, omettre l'overlay Java 25 et utiliser explicitement
+l'image ID sauvegardée. Les volumes peuvent rester en `10001:101` : le conteneur root
+historique conserve l'accès.
 
 Après un rollback, ne pas retenter automatiquement la consolidation : la table
 additive existe encore et le script refusera de continuer. Analyser son contenu et
