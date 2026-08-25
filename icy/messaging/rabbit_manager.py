@@ -2,11 +2,25 @@ import asyncio
 import aio_pika
 import json
 import logging
+from urllib.parse import urlsplit
 
 from messaging.message_handler import MessageHandler
 from messaging.message_publisher import MessagePublisher
 
 logger = logging.getLogger("icy.rabbit")
+
+
+def safe_amqp_endpoint(amqp_url: str) -> str:
+    """Return a connection target that never contains AMQP credentials."""
+    try:
+        parsed = urlsplit(amqp_url)
+        if parsed.scheme not in {"amqp", "amqps"} or not parsed.hostname:
+            return "<invalid-amqp-endpoint>"
+        port = f":{parsed.port}" if parsed.port is not None else ""
+        path = parsed.path or "/"
+        return f"{parsed.scheme}://{parsed.hostname}{port}{path}"
+    except (TypeError, ValueError):
+        return "<invalid-amqp-endpoint>"
 
 
 class RabbitManager:
@@ -17,6 +31,7 @@ class RabbitManager:
 
     def __init__(self, amqp_url: str, bot, exchange_name: str = "icy.exchange"):
         self.amqp_url = amqp_url
+        self.safe_endpoint = safe_amqp_endpoint(amqp_url)
         self.exchange_name = exchange_name
         self.connection = None
         self.channel = None
@@ -36,7 +51,7 @@ class RabbitManager:
 
     async def connect(self):
         """Établit la connexion à RabbitMQ et configure les composants."""
-        logger.info(f"🐇 Connexion à RabbitMQ ({self.amqp_url})...")
+        logger.info("🐇 Connexion à RabbitMQ (%s)...", self.safe_endpoint)
 
         try:
             self.connection = await aio_pika.connect_robust(self.amqp_url)
@@ -63,8 +78,12 @@ class RabbitManager:
             logger.info("✅ RabbitMQ connecté et en écoute sur toutes les files.")
             return True
 
-        except Exception as e:
-            logger.exception(f"❌ Erreur lors de la connexion à RabbitMQ : {e}")
+        except Exception as exception:
+            logger.error(
+                "❌ Connexion RabbitMQ impossible vers %s (%s)",
+                self.safe_endpoint,
+                type(exception).__name__,
+            )
             return False
 
     async def on_message(self, message: aio_pika.IncomingMessage):

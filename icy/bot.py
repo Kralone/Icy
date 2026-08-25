@@ -4,6 +4,7 @@ import sys
 import discord
 import asyncio
 import logging
+from urllib.parse import quote
 from discord.ext import commands
 from dotenv import load_dotenv
 from messaging.rabbit_manager import RabbitManager
@@ -40,11 +41,18 @@ bot_api_key = os.getenv("BOT_API_KEY")
 # --- RabbitMQ config ---
 rabbit_host = os.getenv("RABBITMQ_HOST", "localhost")
 rabbit_port = os.getenv("RABBITMQ_PORT", "5672")
-rabbit_user = os.getenv("RABBITMQ_USER", "icy")
-rabbit_pass = os.getenv("RABBITMQ_PSWD", "icy123")
+rabbit_user = os.getenv("RABBITMQ_USER")
+rabbit_pass = os.getenv("RABBITMQ_PSWD")
 
-rabbit_url = f"amqp://{rabbit_user}:{rabbit_pass}@{rabbit_host}:{rabbit_port}/"
-logger.info("🔌 Configuration RabbitMQ chargée : %s:%s (utilisateur: %s)", rabbit_host, rabbit_port, rabbit_user)
+if not rabbit_user or not rabbit_pass:
+    logger.error("❌ Identifiants RabbitMQ manquants.")
+    sys.exit(1)
+
+rabbit_url = (
+    f"amqp://{quote(rabbit_user, safe='')}:{quote(rabbit_pass, safe='')}"
+    f"@{rabbit_host}:{rabbit_port}/"
+)
+logger.info("🔌 Configuration RabbitMQ chargée : %s:%s", rabbit_host, rabbit_port)
 
 
 # Vérifications préliminaires

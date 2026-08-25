@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aio_pika
 
 from messaging.message_publisher import MessagePublisher
-from messaging.rabbit_manager import RabbitManager
+from messaging.rabbit_manager import RabbitManager, safe_amqp_endpoint
 
 
 class MessagePublisherTest(unittest.IsolatedAsyncioTestCase):
@@ -49,6 +49,18 @@ class MessagePublisherTest(unittest.IsolatedAsyncioTestCase):
 
 
 class RabbitManagerTest(unittest.IsolatedAsyncioTestCase):
+    def test_safe_endpoint_never_contains_credentials(self):
+        endpoint = safe_amqp_endpoint(
+            "amqps://iceforge-user:super-secret@rabbitmq.internal:5671/iceforge"
+        )
+
+        self.assertEqual(
+            "amqps://rabbitmq.internal:5671/iceforge",
+            endpoint,
+        )
+        self.assertNotIn("iceforge-user", endpoint)
+        self.assertNotIn("super-secret", endpoint)
+
     @patch("messaging.rabbit_manager.MessageHandler")
     @patch("messaging.rabbit_manager.MessagePublisher")
     @patch("messaging.rabbit_manager.aio_pika.connect_robust", new_callable=AsyncMock)
@@ -68,7 +80,8 @@ class RabbitManagerTest(unittest.IsolatedAsyncioTestCase):
         bot = object()
         manager = RabbitManager("amqp://guest:guest@rabbitmq/", bot)
 
-        self.assertTrue(await manager.connect())
+        with self.assertLogs("icy.rabbit", level="INFO") as captured_logs:
+            self.assertTrue(await manager.connect())
 
         connect_robust.assert_awaited_once_with("amqp://guest:guest@rabbitmq/")
         channel.declare_exchange.assert_awaited_once_with(
@@ -79,6 +92,25 @@ class RabbitManagerTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(4, queue.consume.await_count)
         publisher_type.assert_called_once_with(connection)
         handler_type.assert_called_once_with(bot, publisher_type.return_value)
+        rendered_logs = "\n".join(captured_logs.output)
+        self.assertIn("amqp://rabbitmq/", rendered_logs)
+        self.assertNotIn("guest", rendered_logs)
+
+    @patch("messaging.rabbit_manager.aio_pika.connect_robust", new_callable=AsyncMock)
+    async def test_connection_error_does_not_log_credentials(self, connect_robust):
+        secret_url = "amqp://iceforge-user:super-secret@rabbitmq:5672/"
+        connect_robust.side_effect = RuntimeError(
+            f"connection rejected for {secret_url}"
+        )
+        manager = RabbitManager(secret_url, object())
+
+        with self.assertLogs("icy.rabbit", level="ERROR") as captured_logs:
+            self.assertFalse(await manager.connect())
+
+        rendered_logs = "\n".join(captured_logs.output)
+        self.assertIn("amqp://rabbitmq:5672/", rendered_logs)
+        self.assertNotIn("iceforge-user", rendered_logs)
+        self.assertNotIn("super-secret", rendered_logs)
 
 
 if __name__ == "__main__":
