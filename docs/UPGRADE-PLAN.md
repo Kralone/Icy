@@ -476,6 +476,12 @@ de retour écrite.
 Les branches applicatives, RabbitMQ et PostgreSQL sont validées localement et
 l'inventaire de production est terminé. L'ordre devient :
 
+Le cloisonnement des ports Docker, les sauvegardes PostgreSQL/RabbitMQ/Vault et
+les restaurations isolées ont été réalisés les 25 août 2026. Le port hôte 111 et
+le durcissement SSH restent dans une opération système séparée. La prochaine
+branche de promotion peut donc cibler le frontend, sans mélanger le backend ni
+les services stateful.
+
 1. fermer au niveau de l'hébergeur les ports publics autres que 80/443 et SSH
    restreint, après confirmation des clients externes légitimes ;
 2. créer les sauvegardes PostgreSQL, RabbitMQ, Vault et images décrites dans

@@ -2,6 +2,13 @@
 
 Date de l'observation : **24 août 2026**
 
+Mise à jour du **25 août 2026** : la surcharge décrite dans
+[`PRODUCTION-NETWORK-HARDENING.md`](PRODUCTION-NETWORK-HARDENING.md) est déployée.
+PostgreSQL, AMQP, RabbitMQ Management, backend, serveur d'images, API bot et
+Vault ne sont plus joignables depuis Internet. Seuls 22, 80 et 443 répondent lors
+du contrôle externe final. Les images et volumes ont été conservés ; les sept
+conteneurs sont stables avec un compteur de redémarrage à zéro.
+
 Méthode : inventaire SSH et tests HTTP/TCP externes, strictement en lecture
 seule. Aucun conteneur, fichier, règle réseau, secret ou volume n'a été modifié.
 L'adresse de l'hôte, les identifiants, les chemins de secrets et les identifiants

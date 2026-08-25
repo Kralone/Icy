@@ -1,0 +1,29 @@
+services:
+  db:
+    ports: !override []
+    networks: !override [internal]
+
+  rabbitmq:
+    ports: !override
+      - "127.0.0.1:15672:15672"
+    networks: !override [internal]
+
+  backend:
+    ports: !override []
+    networks: !override [internal, external]
+
+  bot:
+    ports: !override []
+    networks: !override [internal, external]
+
+  frontend:
+    networks: !override [internal, external]
+
+  icy-images:
+    ports: !override []
+    networks: !override [internal]
+
+  vault:
+    ports: !override
+      - "127.0.0.1:8200:8200"
+    networks: !override [internal]
