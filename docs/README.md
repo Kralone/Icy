@@ -13,6 +13,7 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Cloisonnement réseau de production](PRODUCTION-NETWORK-HARDENING.md) — surcharge Compose, validation, déploiement par vagues et rollback sans changement de version.
 - [Promotion du frontend Angular 22](PRODUCTION-FRONTEND-ANGULAR22.md) — image immuable, préflight, bascule ciblée, validation et rollback.
 - [Promotion du backend Java 25](PRODUCTION-BACKEND-JAVA25.md) — répétition sur copie de production, consolidation Flyway V1–V28 et rollback.
+- [Sécurisation des logs AMQP du bot](PRODUCTION-BOT-AMQP-REDACTION.md) — suppression des identifiants, déploiement isolé et rotation coordonnée.
 - [Sauvegardes et reprise de production](PRODUCTION-BACKUPS.md) — scripts chiffrés, restaurations et répétitions PostgreSQL, RabbitMQ, Vault et images.
 - [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
 - [Exploitation Docker et rollback](DOCKER.md) — profils local/production, validation isolée, données persistantes et retour arrière.
