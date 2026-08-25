@@ -55,3 +55,22 @@ doit apparaître ni dans une commande enregistrée, ni dans le dépôt, ni dans 
 La rotation reste bloquée tant qu'un jeton Vault disposant des droits d'écriture sur
 les deux chemins KV n'est pas disponible. Ne modifier qu'un seul consommateur : cela
 couperait soit le backend, soit le bot.
+
+## Déploiement validé du 25 août 2026
+
+- image active : `iceforge/bot:6eb3f25` ;
+- image ID serveur :
+  `sha256:77e69dec0f7301e62ae6d2b9a78246cf6bac4eb911ded00d52a71b04f87a40cc` ;
+- sauvegarde de rollback :
+  `/var/backups/iceforge/bot-pre-amqp-redaction-20260825T210404Z` ;
+- bot `healthy`, connecté à Discord et RabbitMQ, zéro redémarrage ;
+- quatre files consommées par le bot et sept files totales sans message en attente ;
+- UID/GID 10001, racine read-only, aucune capability, 0,5 CPU, 256 Mio et 100 PID ;
+- les logs montrent `amqp://rabbitmq:5672/` sans utilisateur ni mot de passe ;
+- le vérificateur runtime recherche et bloque toute URL AMQP contenant un userinfo.
+
+Le chemin KV bot fournit `RABBITMQ_USER` et `RABBITMQ_PSWD`. Le chemin KV backend
+fournit `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD` et leurs alias Spring. Les deux
+AppRoles ont uniquement la capacité `read` sur leur propre chemin ; aucun ne peut
+effectuer la rotation. Le mot de passe exposé reste donc à révoquer dès qu'un jeton
+Vault doté de `update` sur les deux chemins sera disponible.
