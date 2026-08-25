@@ -92,3 +92,19 @@ docker compose \
 ```
 
 Si l’ancienne image locale a disparu, la recharger d’abord avec `gunzip -c image.tar.gz | docker image load`. Contrôler ensuite `https://iceforge.fr/`, `https://iceforge.fr/api/front/members`, les logs nginx et les huit ports externes interdits décrits dans le durcissement réseau.
+
+## Déploiement validé du 25 août 2026
+
+- image active : `iceforge/frontend:8e2b2f04e584` ;
+- image ID Docker : `sha256:d695cfbb61047121e3af5a20a9d32b9d32678665e0d56ca884dcaf4f206547c7` ;
+- provenance exposée par le label OCI et `/assets/version.json` : commit `8e2b2f04e584` ;
+- sauvegarde de rollback : `/var/backups/iceforge/frontend-pre-angular22-20260825T103756Z` ;
+- 47 tests unitaires réussis, 45 fichiers de tests, audit npm à zéro vulnérabilité ;
+- build Angular réussi avec quatre avertissements de budget CSS non bloquants ;
+- préproduction isolée réussie avec les vrais certificats, le volume de 28 images et le proxy vers le backend ;
+- runtime final `healthy`, zéro redémarrage, nginx valide, filesystem read-only, maître root et workers UID 101 ;
+- accueil, recrutement, guides, utilitaires, Wikelo, marché des vaisseaux, login et redirection de la zone privée validés dans un navigateur ;
+- PostgreSQL, RabbitMQ, Vault, backend, bot et serveur d'images restés actifs avec zéro redémarrage ;
+- depuis Internet, seuls 22, 80 et 443 sont ouverts parmi les ports contrôlés.
+
+Points non bloquants à traiter séparément : l'image distante `sibyllasc.fr/.../Refinery_01_V2-Min.jpg.webp` ne charge plus sur les menus de ressources, des transitions Angular peuvent journaliser un timeout lors de navigations automatisées très rapides, et le contrôle mobile 390 px n'a pas pu être reproduit car le navigateur intégré a conservé un viewport de 1280 px.
