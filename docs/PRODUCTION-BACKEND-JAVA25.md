@@ -186,3 +186,28 @@ La promotion reste interdite tant que l'image candidate immuable, l'overlay Comp
 la préparation des volumes, le dump final et le contrôle Vault n'ont pas été validés
 ensemble pendant une répétition. Cette documentation et les scripts ne constituent
 pas une autorisation de déploiement automatique.
+
+## Déploiement validé du 25 août 2026
+
+- image active : `iceforge/backend:689b22c` ;
+- image ID serveur :
+  `sha256:c0fd7e1863473b7c12bbf9d581dc7c573cb3e72b9f02fe41ec27c70fe3234da7` ;
+- sauvegarde de rollback :
+  `/var/backups/iceforge/backend-pre-java25-20260825T204550Z` ;
+- image précédente exportée et contrôlée par checksum ;
+- dumps PostgreSQL avant et après gel des écritures vérifiés avec `pg_restore --list` ;
+- historique original V1-V43 conservé dans
+  `public.flyway_schema_history_pre_v28_consolidation` ;
+- historique actif : 28 migrations réussies, version V28 et V29 libre ;
+- Java 25.0.4, Spring Boot 4.1.1, UID 10001/GID 101, racine read-only, zéro
+  capability, `no-new-privileges`, 2 CPU, 2 Gio et 200 PID ;
+- backend `healthy`, zéro redémarrage, API interne et publique en HTTP 200 ;
+- Vault activé avec `fail-fast`, instance initialisée et non scellée ;
+- bot reconnecté à Discord, sept files RabbitMQ avec un consommateur et zéro
+  message en attente ;
+- frontend, PostgreSQL, RabbitMQ, Vault et serveur d'images restés actifs pendant
+  la bascule.
+
+Un risque existant a été observé dans les logs du bot : l'URL de connexion AMQP est
+journalisée avec ses identifiants. Sa correction et la rotation associée doivent
+rester dans une branche de sécurité séparée du rollback backend.

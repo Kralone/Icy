@@ -75,10 +75,14 @@ for destination in /app/logs /app/uploads/images; do
   grep -Fxq "$destination true" <<<"$mounts" || { echo "ERROR: writable mount missing: $destination" >&2; exit 1; }
 done
 
-[[ "$(docker exec "$backend_container" id -u)" == "10001" ]]
-[[ "$(docker exec "$backend_container" id -g)" == "101" ]]
-docker exec "$backend_container" java -version 2>&1 | grep -Fq '25.0.4'
-docker exec "$backend_container" wget -q --spider http://127.0.0.1:8080/api/front/members
+runtime_uid="$(docker exec "$backend_container" id -u)"
+runtime_gid="$(docker exec "$backend_container" id -g)"
+[[ "$runtime_uid" == "10001" ]] || { echo "ERROR: backend runtime UID is $runtime_uid" >&2; exit 1; }
+[[ "$runtime_gid" == "101" ]] || { echo "ERROR: backend runtime GID is $runtime_gid" >&2; exit 1; }
+java_version="$(docker exec "$backend_container" java -version 2>&1)"
+grep -Fq '25.0.4' <<<"$java_version" || { echo "ERROR: backend is not running Java 25.0.4" >&2; exit 1; }
+docker exec "$backend_container" wget -q --spider http://127.0.0.1:8080/api/front/members \
+  || { echo "ERROR: local backend API probe failed" >&2; exit 1; }
 if docker exec "$backend_container" touch /app/.root-filesystem-write-check >/dev/null 2>&1; then
   docker exec "$backend_container" rm -f /app/.root-filesystem-write-check
   echo "ERROR: backend root filesystem accepted a write" >&2
@@ -86,8 +90,10 @@ if docker exec "$backend_container" touch /app/.root-filesystem-write-check >/de
 fi
 
 docker exec -i iceforge_db psql -U iceforge -d iceforge_db \
-  <"${rollout_dir}/verify-flyway-v28.sql" >/dev/null
-curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members
+  <"${rollout_dir}/verify-flyway-v28.sql" >/dev/null \
+  || { echo "ERROR: Flyway V28 verification failed" >&2; exit 1; }
+curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members \
+  || { echo "ERROR: public backend API probe failed" >&2; exit 1; }
 
 recent_logs="$(docker logs --since 10m "$backend_container" 2>&1)"
 if grep -Eiq '(^|[[:space:]])ERROR([[:space:]]|$)|Application run failed|Schema-validation|Validate failed' <<<"$recent_logs"; then
