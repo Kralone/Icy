@@ -411,11 +411,13 @@ bout avec l'architecture observée sur le serveur.
 
 L'inventaire en lecture seule du 24 août 2026 est terminé et documenté dans
 [`PRODUCTION-ARCHITECTURE.md`](PRODUCTION-ARCHITECTURE.md). Il confirme Vault
-1.17.6 en production, PostgreSQL 15.13, RabbitMQ 3.13.7 et les runtimes
-applicatifs antérieurs aux branches validées. Il révèle surtout une exposition
-Internet directe des services stateful, sans pare-feu actif ni sauvegarde locale
-récente vérifiable. Le cloisonnement et les restaurations passent donc avant les
-montées de version.
+1.17.6 en production, PostgreSQL 15.13 et RabbitMQ 3.13.7. Le frontend a depuis
+été promu vers Angular 22.1.3 / TypeScript 6.0.3 / Nginx 1.30.4 ; le backend et
+le bot utilisent encore leurs runtimes antérieurs aux branches validées. L'audit
+avait révélé une exposition Internet directe des services stateful et l'absence
+de sauvegardes restaurées. Le cloisonnement Compose, les contrôles externes et
+les restaurations PostgreSQL, RabbitMQ et Vault ont depuis été réalisés le
+25 août 2026.
 
 Oui, un accès au serveur permet de vérifier l'architecture réelle. La première
 session doit être **strictement en lecture seule** et produire un document
@@ -473,24 +475,19 @@ de retour écrite.
 
 ## Prochaine action recommandée
 
-Les branches applicatives, RabbitMQ et PostgreSQL sont validées localement et
-l'inventaire de production est terminé. L'ordre devient :
+Le cloisonnement Docker, les sauvegardes/restaurations PostgreSQL, RabbitMQ et
+Vault, puis la promotion du frontend Angular 22 ont été réalisés et validés le
+25 août 2026. Le port hôte 111 et le durcissement SSH restent dans une opération
+système séparée.
 
-Le cloisonnement des ports Docker, les sauvegardes PostgreSQL/RabbitMQ/Vault et
-les restaurations isolées ont été réalisés les 25 août 2026. Le port hôte 111 et
-le durcissement SSH restent dans une opération système séparée. La prochaine
-branche de promotion peut donc cibler le frontend, sans mélanger le backend ni
-les services stateful.
-
-1. fermer au niveau de l'hébergeur les ports publics autres que 80/443 et SSH
-   restreint, après confirmation des clients externes légitimes ;
-2. créer les sauvegardes PostgreSQL, RabbitMQ, Vault et images décrites dans
-   [`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md), puis prouver leurs
-   restaurations sur des volumes isolés ; l'outillage est validé sur données
-   synthétiques, mais aucune sauvegarde de production n'a encore été créée ;
-3. aligner le Compose de production sans mélanger ce changement avec les
-   montées de version ;
-4. promouvoir ensuite chaque composant sur sa branche et son palier dédiés ;
+1. fusionner `codex/deploy-frontend-angular-22` après l'observation finale ;
+2. créer `codex/deploy-backend-java25-spring41`, archiver l'image actuelle et
+   promouvoir uniquement le backend avec tests API, auth, Flyway, Vault,
+   RabbitMQ et WebSocket ;
+3. promouvoir ensuite le bot Python 3.14 / discord.py 2.7 sur une branche
+   distincte, avec contrôle Discord et RabbitMQ ;
+4. migrer RabbitMQ puis PostgreSQL sur leurs branches stateful et leurs fenêtres
+   dédiées ;
 5. conserver Vault 1.17.6 derrière le réseau privé jusqu'à la publication d'une
-   image Community 2.x corrigée et la restauration d'un snapshot réel isolé ;
+   image Community 2.x corrigée ;
 6. terminer par `codex/infra-upgrade-finalize` et une observation de bout en bout.

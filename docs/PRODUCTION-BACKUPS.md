@@ -300,6 +300,22 @@ helper standard de l'hôte ou du conteneur. Le provisionneur de token a donc ét
 validé sur un Vault 1.17.6 synthétique : politique `read` exacte, durée de 30
 minutes, snapshot valide et révocation confirmée.
 
+## Snapshot Vault réel et matériel de reprise
+
+La sauvegarde Vault manquante a ensuite été réalisée le 25 août 2026 avec un
+token court dédié, sans élargir les AppRoles applicatives. Le bundle chiffré
+`iceforge-vault-20260825T091028Z.tar.gz.age` et son checksum ont été copiés hors
+hôte. Le snapshot a été déchiffré dans un environnement isolé, restauré sur
+Vault 1.17.6, puis descellé avec la clé réelle du serveur ; l'état Raft et le KV
+ont été validés sans afficher de secret.
+
+Le matériel de reprise réel du serveur a également été chiffré hors hôte dans
+`iceforge-vault-recovery-material-20260825.age`, et son schéma de déchiffrement a
+été testé. Le fichier local `.secrets/vault/prod-init.json` du dépôt est ancien
+et incorrect : ne jamais l'utiliser pour la production. La source correcte
+reste `/root/iceforge/.secrets/vault/prod-init.json`, dont seule la copie
+chiffrée hors hôte doit être conservée.
+
 ## Planification, alertes et preuves
 
 Créer un service et un timer systemd seulement après la première répétition

@@ -103,7 +103,7 @@ doit rester séparée des changements applicatifs :
 
 | Composant | Production | Cible déjà validée dans le dépôt |
 |---|---|---|
-| Frontend | Angular 19.1 / TypeScript 5.7, build statique ; Nginx 1.27.5 | Angular 22.1 / TypeScript 6.0 ; Nginx 1.30.4 épinglé |
+| Frontend | Angular 22.1.3 / TypeScript 6.0.3 ; Nginx 1.30.4, image `iceforge/frontend:8e2b2f04e584` | Déployée et validée le 25 août 2026 |
 | Backend | Java 21.0.11 / Spring Boot 3.4.2 | Java 25.0.4 / Spring Boot 4.1.1 |
 | Bot | Python 3.11.14 / discord.py 2.3.2 / aio-pika 9.6.1 / FastAPI 0.110.0 | Python 3.14.7 / discord.py 2.7.1 / aio-pika 10.0.1 / FastAPI 0.141.1 |
 | PostgreSQL | 15.13, Debian 12, locale `en_US.utf8` | 18.6 Bookworm, même locale |
@@ -111,12 +111,12 @@ doit rester séparée des changements applicatifs :
 | Vault | 1.17.6 Community, Raft | Vault 2.x Community corrigée après répétition |
 | Serveur d'images | Nginx 1.29.2 via tag flottant `latest` | Nginx 1.30.4 épinglé |
 
-Les images publiques de production sont référencées par tags flottants dans le
-Compose, même si Docker conserve localement leurs digests. Les images backend et
-bot ne portent ni digest de registre ni SHA Git. Le dossier déployé ne contient
-aucune métadonnée Git et les deux fichiers Compose diffèrent de ceux du dépôt
-modernisé. Un rollback applicatif reproductible n'est donc pas garanti avant
-l'archivage des images actuelles et de leur configuration sanitisée.
+Le frontend fait désormais exception aux tags flottants : son tag porte le SHA
+Git, le même SHA est exposé dans le label OCI et dans `/assets/version.json`, et
+l'ancienne image/configuration a été archivée avant la bascule. Les images
+backend et bot ne portent encore ni digest de registre ni SHA Git. Le dossier
+déployé ne contient pas de métadonnée Git et ses fichiers Compose restent
+différents de ceux du dépôt modernisé.
 
 ## Données, sauvegardes et retour arrière
 
@@ -127,7 +127,8 @@ l'archivage des images actuelles et de leur configuration sanitisée.
 - encodage UTF-8 et collations `en_US.utf8`, ce qui confirme le choix de
   PostgreSQL 18 **Bookworm** plutôt qu'Alpine ;
 - `archive_mode=off`, aucune réplication et aucun PITR ;
-- aucun job de sauvegarde local observé ; deux dumps SQL datent du 2 mars 2026.
+- dump chiffré hors hôte créé le 25 août 2026 puis restauré avec succès sur
+  PostgreSQL 15.13 isolé, inventaire identique.
 
 Il faut produire un dump `pg_dump -Fc`, les objets globaux, le checksum et une
 copie chiffrée hors hôte, puis restaurer réellement le tout dans PostgreSQL 18
@@ -141,7 +142,8 @@ sauvegarde physique et archivage continu :
   l'observation ;
 - toutes les feature flags stables de 3.13 sont actives ; Khepri est désactivé ;
 - données dans un **volume Docker anonyme** d'environ 284 Kio ;
-- aucune exportation de définitions ou sauvegarde du volume observée.
+- définitions chiffrées hors hôte puis restaurées dans RabbitMQ 3.13.7 isolé ;
+  la copie physique du volume reste requise avant la migration stateful.
 
 Avant toute recréation, nommer explicitement le volume, exporter les définitions
 et tester une restauration avec le même nom de nœud. RabbitMQ précise que les
@@ -154,9 +156,9 @@ exige le même nom de nœud :
 - Vault Community 1.17.6, actif et non scellé ;
 - un seul nœud Raft, stockage d'environ 99 Mio ;
 - initialisation Shamir avec une seule part et un seuil de une (`1/1`) ;
-- listener API avec `tls_disable=1`, publié sur Internet ;
-- aucun snapshot Raft local observé ; les sauvegardes éventuelles de l'hébergeur
-  restent à confirmer.
+- listener API avec `tls_disable=1`, désormais limité au réseau Docker interne ;
+- snapshot Raft chiffré hors hôte, intégrité vérifiée et restauration réussie
+  dans un Vault 1.17.6 isolé avec la clé d'unseal de la source.
 
 HashiCorp indique que Vault doit toujours utiliser TLS en production et que les
 snapshots Raft doivent être conservés de façon sûre hors du stockage du cluster :
@@ -172,7 +174,8 @@ sont donc prioritaires en attendant une image 2.x corrigée.
 
 ### Images et configuration
 
-- volume d'images : environ 15 Mio ; aucune sauvegarde locale observée ;
+- volume d'images : environ 15 Mio ; conservé intact pendant la promotion du
+  frontend et monté en lecture seule dans le nouveau conteneur ;
 - fichiers d'environnement en mode `0644`, atténué par un répertoire `/root` en
   `0550`, mais `0600` reste la cible ;
 - configuration, certificats, scripts de déploiement et images applicatives
@@ -184,10 +187,12 @@ Hostinger doivent être confirmés avant toute opération.
 
 ## Durcissement des conteneurs
 
-Les sept services actifs n'ont ni healthcheck Docker, ni limite CPU/mémoire/PID,
-ni système de fichiers racine en lecture seule, ni `no-new-privileges`, ni retrait
-de capacités. Backend, bot, Nginx, RabbitMQ et Vault démarrent en root. Aucun
-redémarrage ou OOM n'a toutefois été observé depuis leur dernier démarrage.
+Le frontend dispose maintenant d'un healthcheck HTTPS, de limites
+CPU/mémoire/PID, d'un système de fichiers racine en lecture seule et de
+`no-new-privileges`. Toutes ses capacités sont supprimées sauf `CHOWN`, `SETGID`
+et `SETUID`, nécessaires au maître nginx pour préparer `/tmp` puis lancer les
+workers en UID 101. Les six autres services restent à durcir séparément. Aucun
+redémarrage ou OOM n'a été observé après la promotion Angular 22.
 
 Le fichier `docker-compose.prod.yml` du dépôt modernisé couvre déjà une grande
 partie de ces écarts. Il ne doit pas être appliqué directement à l'ancienne pile :
@@ -200,10 +205,11 @@ doit être promu séparément après sauvegarde et smoke test.
   timer Certbot est actif ;
 - le site redirige HTTP vers HTTPS ;
 - Nginx révèle sa version ;
-- aucun HSTS, CSP, `X-Content-Type-Options`, `Referrer-Policy` ou
-  `Permissions-Policy` n'est présent sur la page d'accueil ;
-- Vault envoie un HSTS sur une connexion HTTP, ce qui ne chiffre pas la requête ;
-- RabbitMQ Management est servi en HTTP clair.
+- `X-Content-Type-Options` et `Referrer-Policy` sont maintenant présents ; HSTS,
+  CSP et `Permissions-Policy` restent à ajouter après inventaire des ressources
+  externes ;
+- Vault et RabbitMQ Management utilisent encore HTTP dans le réseau interne,
+  sans exposition Internet directe ;
 
 Les en-têtes du site et `server_tokens off` peuvent être livrés avec le prochain
 déploiement Nginx stateless, après validation de la CSP sur les ressources
@@ -226,6 +232,10 @@ Chaque ligne correspond à une branche ou une intervention indépendante. Une
 | 7 | `codex/upgrade-postgresql-18` | dump/restore vers volume Bookworm neuf | schéma, lignes, collations, Flyway, API | volume PostgreSQL 15 intact |
 | 8 | branche Vault | snapshot restauré, TLS, réseau privé, version corrigée | unseal, KV v2, AppRole, redémarrage et snapshot | volume neuf 1.17.6 + snapshot pré-upgrade |
 | 9 | `codex/infra-upgrade-finalize` | observabilité, alertes, documentation et suppression différée des anciens artefacts | test bout en bout et fenêtre d'observation | commits/digests précédents |
+
+La partie frontend de l'étape 5 a été terminée le 25 août 2026 sur la branche
+`codex/deploy-frontend-angular-22`. Le backend puis le bot restent deux
+promotions indépendantes.
 
 ## Go/no-go immédiat
 
