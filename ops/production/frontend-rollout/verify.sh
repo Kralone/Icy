@@ -70,7 +70,7 @@ done
 [[ "$(grep -o 'CAP_' <<<"$cap_add" | wc -l)" -eq 3 ]] || { echo "ERROR: unexpected extra frontend capability" >&2; exit 1; }
 
 networks="$(docker inspect --format '{{json .NetworkSettings.Networks}}' "$frontend_container" \
-  | python3 -c 'import json, sys; print("\\n".join(sorted(json.load(sys.stdin))))')"
+  | python3 -c 'import json, sys; print("\n".join(sorted(json.load(sys.stdin))))')"
 [[ "$networks" == $'iceforge_external\niceforge_internal' ]] || { echo "ERROR: unexpected frontend networks" >&2; exit 1; }
 
 ports="$(docker port "$frontend_container" | sort)"
