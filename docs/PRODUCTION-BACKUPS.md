@@ -241,6 +241,32 @@ première exécution sur le serveur reste une opération autorisée séparément
 elle écrit un snapshot, crée un bundle et, en mode pré-migration, provoque des
 arrêts ciblés.
 
+## Première sauvegarde réelle partielle
+
+Le 25 août 2026, une première copie de production a été effectuée sans arrêt
+ni redémarrage de service. Elle contient le dump PostgreSQL et les définitions
+RabbitMQ, chiffrés avec une clé `age` dont l'identité privée est restée hors du
+serveur. Le nom du ciphertext contient volontairement `no-vault` et son
+manifeste indique `vault_included=false` : cette copie ne doit pas être
+présentée comme une sauvegarde complète.
+
+Les contrôles suivants ont réussi :
+
+- checksum du ciphertext identique sur le serveur et la copie hors hôte ;
+- déchiffrement uniquement dans un volume Docker temporaire ;
+- tous les checksums internes valides ;
+- restauration PostgreSQL sur l'image source 15.13 exacte, inventaire identique ;
+- import RabbitMQ 3.13.7, neuf files et huit exchanges persistants après
+  redémarrage du broker isolé ;
+- zéro restart des sept conteneurs de production et aucun staging clair restant.
+
+Vault est absent car l'AppRole applicatif refuse, comme attendu, la capacité
+`sys/storage/raft/snapshot`. Ne pas élargir cette AppRole. Créer séparément un
+token court dédié à la politique de snapshot documentée plus haut, sans copier
+de token administrateur dans le dépôt ou la conversation. Les uploads, la
+configuration, les images applicatives et le volume physique RabbitMQ restent
+également à inclure dans la sauvegarde complète pré-migration.
+
 ## Planification, alertes et preuves
 
 Créer un service et un timer systemd seulement après la première répétition

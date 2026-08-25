@@ -227,11 +227,20 @@ il ne modifie ni les conteneurs ni les données. Il nécessite toutefois de
 connaître l'adresse d'administration à autoriser et de vérifier qu'aucun client
 externe légitime ne se connecte directement à PostgreSQL, RabbitMQ ou Vault.
 
-Avant la moindre recréation de conteneur, il faut répondre à ces questions :
+Le 25 août 2026, le propriétaire a confirmé qu'aucun client externe n'utilise
+directement ces trois services. Les snapshots Hostinger sont hebdomadaires,
+stockés séparément du serveur principal et annoncent environ 30 minutes de
+restauration ; les plus anciens sont remplacés automatiquement. Une première
+sauvegarde applicative partielle PostgreSQL + définitions RabbitMQ a aussi été
+restaurée avec succès, comme consigné dans
+[`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md).
 
-1. Hostinger fournit-il des snapshots, avec quelle fréquence et quelle rétention ?
-2. Où la clé d'unseal Vault est-elle conservée, par combien de responsables et
+Avant la moindre recréation de conteneur, les points suivants restent ouverts :
+
+1. Où la clé d'unseal Vault est-elle conservée, par combien de responsables et
    a-t-elle déjà été testée depuis un support de secours ?
-3. Existe-t-il un client externe légitime pour 5432, 5672 ou 8200 ?
-4. Quelle fenêtre de maintenance accepte-t-on pour la première restauration
-   testée et pour les paliers stateful ?
+2. Quelle fenêtre de maintenance accepte-t-on pour la sauvegarde physique
+   RabbitMQ et les paliers stateful ?
+3. Quelle adresse d'administration faut-il autoriser avant de restreindre SSH ?
+4. Quel token Vault court, limité au snapshot Raft, utilisera la sauvegarde
+   complète sans élargir l'AppRole applicatif ?
