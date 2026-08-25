@@ -83,7 +83,8 @@ for destination in /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf /etc/let
 done
 
 docker exec "$frontend_container" nginx -t >/dev/null
-docker exec "$frontend_container" nginx -T 2>&1 | grep -Fq 'user nginx;'
+nginx_config="$(docker exec "$frontend_container" nginx -T 2>&1)"
+grep -Fq 'user nginx;' <<<"$nginx_config"
 process_users="$(docker top "$frontend_container" -eo user,pid,comm)"
 grep -Eq '^root[[:space:]]+[0-9]+[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx master is not running as root" >&2; exit 1; }
 grep -Eq '^(nginx|101)[[:space:]]+[0-9]+[[:space:]]+nginx$' <<<"$process_users" || { echo "ERROR: nginx workers are not running as UID 101" >&2; exit 1; }
@@ -94,7 +95,8 @@ for path in / /recrutement /guides/minage-star-citizen /utilitaires /assets/vers
   curl --fail --silent --show-error --output /dev/null "https://iceforge.fr${path}"
 done
 
-if docker logs --since 10m "$frontend_container" 2>&1 | grep -Eiq '\[(emerg|alert|crit)\]'; then
+recent_logs="$(docker logs --since 10m "$frontend_container" 2>&1)"
+if grep -Eiq '\[(emerg|alert|crit)\]' <<<"$recent_logs"; then
   echo "ERROR: critical nginx marker found in recent logs" >&2
   exit 1
 fi
