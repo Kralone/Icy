@@ -67,16 +67,18 @@ les valeurs interpolées de l'environnement.
 
 Toutes les commandes doivent conserver exactement le même projet, le même
 fichier d'environnement et les trois mêmes fichiers Compose, dans le même ordre.
-Utiliser `docker compose up -d --no-deps --no-build` afin de refuser tout build
-ou changement d'image implicite.
+Utiliser `docker compose up -d --no-deps --no-build --pull never` afin de refuser
+tout build, téléchargement ou changement d'image implicite.
 
-1. Recréer `frontend`, `backend` et `icy-images`, puis vérifier la page publique,
+1. Recréer `vault`, l'unseal avec la clé de production, puis vérifier AppRole et
+   les lectures KV du backend et du bot. Cette première vague garantit que Vault
+   a rejoint `internal` avant que les applications quittent `external`.
+2. Recréer `frontend`, `backend` et `icy-images`, puis vérifier la page publique,
    le proxy API et les images.
-2. Recréer `bot`, puis vérifier sa connexion Discord, RabbitMQ, Vault et backend.
-3. Recréer `db`, puis vérifier PostgreSQL et le backend.
-4. Recréer `rabbitmq`, puis vérifier ses files, consommateurs et connexions.
-5. Recréer `vault`, l'unseal avec la clé de production si nécessaire, puis
-   vérifier AppRole et les lectures KV du backend et du bot.
+3. Recréer `bot`, puis vérifier sa connexion Discord, RabbitMQ, Vault et backend.
+4. Recréer `db`, puis vérifier PostgreSQL et le backend.
+5. Recréer `rabbitmq`, puis vérifier que le volume anonyme est conservé, ainsi
+   que ses files, consommateurs et connexions.
 
 Après chaque vague, arrêter immédiatement en cas de service non sain, de compteur
 de redémarrage croissant, de réponse HTTP incorrecte ou de perte de connectivité
@@ -101,7 +103,8 @@ Le retour arrière consiste à relancer les mêmes services avec seulement les d
 fichiers Compose historiques, donc sans la surcharge. Aucun volume n'est supprimé
 et aucune commande `down` n'est utilisée.
 
-Procéder dans l'ordre inverse (`vault`, `rabbitmq`, `db`, `bot`, puis la vague
-HTTP) et vérifier chaque service. Le rollback rétablit temporairement les anciens
-ports publics ; il ne doit être utilisé que pour restaurer le service, puis le
-diagnostic doit reprendre avant une nouvelle tentative.
+Procéder dans l'ordre inverse (`rabbitmq`, `db`, `bot`, vague HTTP, puis `vault`)
+et vérifier chaque service. Pour Vault, refaire l'unseal après la recréation. Le
+rollback rétablit temporairement les anciens ports publics ; il ne doit être
+utilisé que pour restaurer le service, puis le diagnostic doit reprendre avant
+une nouvelle tentative.
