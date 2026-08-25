@@ -8,7 +8,8 @@ SQL. Une correction ultérieure prend une nouvelle version et avance le schéma.
 ## Règles pour les prochaines migrations
 
 1. Rebaser la branche sur `main` avant de choisir le numéro, puis utiliser la version
-   qui suit immédiatement la dernière migration présente.
+   qui suit immédiatement la dernière migration présente. L'historique actuel se
+   termine à V28 : la prochaine migration doit donc être V29.
 2. Regrouper dans une version une évolution métier atomique et cohérente. Ne pas
    regrouper plusieurs fonctionnalités sans rapport sous prétexte qu'elles arrivent
    dans la même livraison.
@@ -45,6 +46,6 @@ déjà l'ancien historique complet jusqu'à V44. Avant tout `repair`, effectuer 
 sauvegarde et vérifier que les 44 entrées sont réussies. Une base arrêtée entre V21 et
 V43 ne doit pas être réparée avec le nouvel historique.
 
-Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V20.
-Après validation et réparation des environnements existants, V21 à V28 devront être
-ajoutées au manifeste et `LOCKED_THROUGH_VERSION` devra passer à 28.
+Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V28.
+Toute évolution de schéma doit désormais être ajoutée dans une nouvelle migration,
+à commencer par V29.

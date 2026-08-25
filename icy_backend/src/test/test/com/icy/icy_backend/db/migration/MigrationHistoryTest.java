@@ -26,7 +26,7 @@ class MigrationHistoryTest {
     private static final Path MIGRATIONS = Path.of("src/main/resources/db/migration");
     private static final Path CHECKSUMS = Path.of("src/test/resources/db/migration-history.sha256");
     private static final Pattern FILE_NAME = Pattern.compile("^V(\\d+)__([a-z0-9_]+)\\.sql$");
-    private static final int LOCKED_THROUGH_VERSION = 20;
+    private static final int LOCKED_THROUGH_VERSION = 28;
 
     @Test
     void versionsAreUniqueContiguousAndNamedConsistently() throws IOException {
