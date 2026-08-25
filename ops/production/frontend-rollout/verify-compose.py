@@ -27,6 +27,9 @@ if frontend.get("user") not in ("0:0", "0"):
     fail("frontend master must start as root to read the 0600 TLS key")
 if frontend.get("read_only") is not True:
     fail("frontend root filesystem is not read-only")
+health_test = frontend.get("healthcheck", {}).get("test", [])
+if not any("https://127.0.0.1:8443/index.html" in item for item in health_test):
+    fail("frontend healthcheck must probe the internal TLS listener on 8443")
 
 networks = frontend.get("networks", {})
 network_names = set(networks if isinstance(networks, list) else networks.keys())

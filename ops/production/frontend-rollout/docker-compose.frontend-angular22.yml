@@ -14,7 +14,9 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - icy_images_data:/usr/share/nginx/html/images:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/index.html >/dev/null"]
+      # Port 8080 redirects to HTTPS. Probe the actual internal TLS listener so
+      # wget does not follow the redirect to the nonexistent internal port 443.
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://127.0.0.1:8443/index.html >/dev/null"]
       interval: 15s
       timeout: 5s
       retries: 5

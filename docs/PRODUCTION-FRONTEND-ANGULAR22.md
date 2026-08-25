@@ -10,6 +10,8 @@ L’image cible embarque Angular 22, Node 24 pour le build et nginx 1.30.4 pour 
 
 La clé `/etc/letsencrypt/live/iceforge.fr/privkey.pem` est `root:root 0600`. Le maître nginx démarre donc en UID 0 pour lire la clé, puis crée ses workers avec l’utilisateur `nginx` (UID 101). Le conteneur reste en lecture seule et utilise `no-new-privileges`. Toutes les capacités Linux sont supprimées, puis seules `CHOWN`, `SETGID` et `SETUID` sont réautorisées pour préparer les répertoires temporaires et abandonner les privilèges des workers.
 
+Le healthcheck sonde directement `https://127.0.0.1:8443/index.html`. La sonde ne doit pas utiliser HTTP 8080 : sa redirection mènerait `wget` vers le port interne 443, qui n’est volontairement pas écouté.
+
 ## Fichiers Compose obligatoires
 
 Toujours conserver cet ordre et les deux fichiers d’environnement :
