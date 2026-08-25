@@ -243,4 +243,6 @@ Avant la moindre recréation de conteneur, les points suivants restent ouverts :
    RabbitMQ et les paliers stateful ?
 3. Quelle adresse d'administration faut-il autoriser avant de restreindre SSH ?
 4. Quel token Vault court, limité au snapshot Raft, utilisera la sauvegarde
-   complète sans élargir l'AppRole applicatif ?
+   complète sans élargir l'AppRole applicatif ? Le provisionneur testé dans
+   [`PRODUCTION-BACKUPS.md`](PRODUCTION-BACKUPS.md) attend encore une saisie
+   masquée unique d'un token Vault administrateur.

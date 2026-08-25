@@ -67,12 +67,14 @@ Avant la première exécution :
 
 ```bash
 sudo install -d -m 0700 /run/iceforge-backup /var/backups/iceforge
-sudo install -m 0600 /dev/null /run/iceforge-backup/vault-snapshot.token
-sudoedit /run/iceforge-backup/vault-snapshot.token
 sudo install -m 0600 ops/backups/recovery-files.example \
   /run/iceforge-backup/recovery-files
 sudoedit /run/iceforge-backup/recovery-files
 ```
+
+Ne pas précréer `vault-snapshot.token` : le provisionneur ci-dessous doit le
+créer lui-même et refuse volontairement tout écrasement. Pour renouveler un
+token, révoquer l'ancien, supprimer son fichier, puis relancer le provisionneur.
 
 Le token doit être court, renouvelé par le planificateur et limité à la lecture
 du snapshot Raft :
@@ -82,6 +84,28 @@ path "sys/storage/raft/snapshot" {
   capabilities = ["read"]
 }
 ```
+
+Pour une première sauvegarde manuelle, ne pas réutiliser l'AppRole applicatif et
+ne jamais transmettre le token administrateur dans une conversation ou un
+argument de commande. L'utilitaire suivant le lit sur stdin, crée la politique
+ci-dessus et écrit un token orphelin limité à 30 minutes :
+
+```bash
+read -rsp 'Token Vault admin (saisie masquée): ' ADMIN_TOKEN; printf '\n'
+printf '%s\n' "$ADMIN_TOKEN" | \
+  ops/backups/provision-vault-snapshot-token.sh \
+  --output-file /run/iceforge-backup/vault-snapshot.token \
+  -- --project-name iceforge \
+  --env-file /root/iceforge/.env \
+  -f /root/iceforge/docker-compose.yml \
+  -f /root/iceforge/docker-compose.vault.yml
+unset ADMIN_TOKEN
+```
+
+L'outil refuse d'écraser un fichier existant, impose le mode `0600`, contrôle
+que la seule capacité effective sur l'endpoint de snapshot est `read` et révoque
+le token limité si sa validation échoue. Après la sauvegarde, révoquer ce token
+et supprimer son fichier ; la politique minimale peut rester en place.
 
 Sauvegarde quotidienne en ligne :
 
@@ -266,6 +290,15 @@ token court dédié à la politique de snapshot documentée plus haut, sans copi
 de token administrateur dans le dépôt ou la conversation. Les uploads, la
 configuration, les images applicatives et le volume physique RabbitMQ restent
 également à inclure dans la sauvegarde complète pré-migration.
+
+Le contrôle fonctionnel du 25 août 2026 confirme que Vault 1.17.6 est initialisé,
+non scellé, sur stockage Raft, sans restart du conteneur. Une authentification
+AppRole réelle et la lecture du chemin KV applicatif ont réussi sans afficher de
+valeur ; aucune erreur Vault n'a été trouvée dans les logs du backend ou du bot
+sur les dernières 24 heures. Aucun token administrateur n'est stocké dans le
+helper standard de l'hôte ou du conteneur. Le provisionneur de token a donc été
+validé sur un Vault 1.17.6 synthétique : politique `read` exacte, durée de 30
+minutes, snapshot valide et révocation confirmée.
 
 ## Planification, alertes et preuves
 
