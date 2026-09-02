@@ -10,6 +10,7 @@ import com.icy.icy_backend.service.notification.NotificationPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,20 +44,16 @@ public class NotificationPushController {
     }
 
     @PostMapping("/test")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> sendTest(@RequestBody NotificationTestPushRequest request) {
-        if (!AuthUtils.isAdmin()) {
-            return ResponseEntity.status(403).build();
-        }
         LOGGER.info("Push test request received");
         pushService.sendTest(AuthUtils.getCurrentUserId(), request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/send")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> send(@RequestBody NotificationSendRequest request) {
-        if (!AuthUtils.isAdmin()) {
-            return ResponseEntity.status(403).build();
-        }
         if (request == null) {
             throw new BadRequestException("Notification invalide");
         }

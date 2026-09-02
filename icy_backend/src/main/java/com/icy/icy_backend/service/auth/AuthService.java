@@ -41,7 +41,7 @@ public class AuthService {
     }
 
     public LoginResponseDTO authenticate(String username, String password) {
-        logger.info("Tentative d'authentification pour l'utilisateur: {}", username);
+        logger.info("Tentative d'authentification.");
 
         try {
             // Charger les détails utilisateur
@@ -49,11 +49,11 @@ public class AuthService {
 
             // Vérification du mot de passe
             if (!passwordEncoder.matches(password, userDetails.getPassword())) {
-                logger.warn("Échec d'authentification pour l'utilisateur: {}", username);
+                logger.warn("Echec d'authentification.");
                 throw new InvalidCredentialsException("Identifiants incorrects !");
             }
 
-            logger.info("Authentification réussie pour l'utilisateur: {}", username);
+            logger.info("Authentification reussie.");
 
             // Charger l'utilisateur complet depuis la BDD (avec les rôles)
             User user = userService.getByUsername(username);
@@ -74,14 +74,14 @@ public class AuthService {
 
             String refreshToken = refreshTokenService.issue(user);
 
-            logger.info("Tokens générés avec succès pour l'utilisateur: {}", username);
+            logger.info("Tokens generes avec succes.");
 
             return new LoginResponseDTO(accessToken, refreshToken, userDto);
 
         } catch (InvalidCredentialsException e) {
             throw e; // garde le message utilisateur
         } catch (Exception e) {
-            logger.error("Erreur lors de l'authentification de l'utilisateur: {}", username, e);
+            logger.warn("Erreur lors de l'authentification (type={}).", e.getClass().getSimpleName());
             throw new InvalidCredentialsException("Erreur lors de l'authentification.");
         }
     }
@@ -94,7 +94,7 @@ public class AuthService {
         RefreshTokenService.Rotation rotation = refreshTokenService.rotate(oldRefreshToken);
         User user = rotation.user();
         String username = user.getUsername();
-        logger.info("Rafraîchissement réussi pour l'utilisateur: {}", username);
+        logger.info("Rafraichissement reussi.");
 
         // ⚙️ Récupérer les rôles depuis la BDD (source fiable)
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -105,7 +105,7 @@ public class AuthService {
                 user.getId()
         );
 
-        logger.info("Nouveaux tokens générés avec succès pour l'utilisateur: {}", username);
+        logger.info("Nouveaux tokens generes avec succes.");
 
         return Map.of(
                 "accessToken", newAccessToken,

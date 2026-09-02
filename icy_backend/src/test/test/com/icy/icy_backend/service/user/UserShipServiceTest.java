@@ -5,6 +5,8 @@ import com.icy.icy_backend.db.entity.ship.Ship;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserShip;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.exception.definition.ForbiddenException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.ship.ShipService;
 import com.icy.icy_backend.websocket.ShipFleetWebSocketService;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -34,9 +37,11 @@ class UserShipServiceTest {
         ShipService shipService = Mockito.mock(ShipService.class);
         UserWebSocketService userWebSocketService = Mockito.mock(UserWebSocketService.class);
         ShipFleetWebSocketService shipFleetWebSocketService = Mockito.mock(ShipFleetWebSocketService.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
 
         UserShipService service = new UserShipService(
-                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService
+                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService,
+                eventParticipationRepository
         );
 
         User user = new User();
@@ -58,9 +63,11 @@ class UserShipServiceTest {
         ShipService shipService = Mockito.mock(ShipService.class);
         UserWebSocketService userWebSocketService = Mockito.mock(UserWebSocketService.class);
         ShipFleetWebSocketService shipFleetWebSocketService = Mockito.mock(ShipFleetWebSocketService.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
 
         UserShipService service = new UserShipService(
-                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService
+                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService,
+                eventParticipationRepository
         );
 
         UUID userId = UUID.randomUUID();
@@ -93,8 +100,10 @@ class UserShipServiceTest {
         ShipService shipService = Mockito.mock(ShipService.class);
         UserWebSocketService userWebSocketService = Mockito.mock(UserWebSocketService.class);
         ShipFleetWebSocketService shipFleetWebSocketService = Mockito.mock(ShipFleetWebSocketService.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
         UserShipService service = new UserShipService(
-                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService
+                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService,
+                eventParticipationRepository
         );
 
         UserShip purchase = new UserShip();
@@ -120,8 +129,10 @@ class UserShipServiceTest {
         ShipService shipService = Mockito.mock(ShipService.class);
         UserWebSocketService userWebSocketService = Mockito.mock(UserWebSocketService.class);
         ShipFleetWebSocketService shipFleetWebSocketService = Mockito.mock(ShipFleetWebSocketService.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
         UserShipService service = new UserShipService(
-                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService
+                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService,
+                eventParticipationRepository
         );
 
         when(userShipRepository.findAllInGameAcquisitions()).thenReturn(List.of());
@@ -131,6 +142,27 @@ class UserShipServiceTest {
         assertThat(service.deleteAllInGameAcquisitions()).isEqualTo(response);
         verify(userShipRepository, never()).deleteAllInBatch(any());
         verify(shipFleetWebSocketService, never()).sendShipFleetUpdate(any());
+    }
+
+    @Test
+    void memberFleetRequiresConfirmedParticipationInRequestedEvent() {
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        UserService userService = Mockito.mock(UserService.class);
+        ShipService shipService = Mockito.mock(ShipService.class);
+        UserWebSocketService userWebSocketService = Mockito.mock(UserWebSocketService.class);
+        ShipFleetWebSocketService shipFleetWebSocketService = Mockito.mock(ShipFleetWebSocketService.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipService service = new UserShipService(
+                userShipRepository, messageService, userService, shipService, userWebSocketService, shipFleetWebSocketService,
+                eventParticipationRepository
+        );
+        UUID eventId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> service.getConfirmedParticipantShips(eventId, userId))
+                .isInstanceOf(ForbiddenException.class);
+        verify(userShipRepository, never()).findByUserId(any());
     }
 
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {

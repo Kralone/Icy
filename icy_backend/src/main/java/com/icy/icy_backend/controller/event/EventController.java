@@ -4,9 +4,8 @@ import com.icy.icy_backend.controller.dto.event.CreateEventRequest;
 import com.icy.icy_backend.controller.dto.event.EventParticipationRequest;
 import com.icy.icy_backend.controller.dto.event.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.EventParticipationResponseDTO;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
-import com.icy.icy_backend.db.entity.event.Event;
-import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
 import com.icy.icy_backend.service.event.EventService;
 import org.springframework.http.ResponseEntity;
@@ -76,12 +75,12 @@ public class EventController {
     }
 
     @GetMapping("/participation")
-    public ResponseEntity<MessageResponse<List<EventParticipation>>> getParticipation(@RequestParam UUID eventId) {
+    public ResponseEntity<MessageResponse<List<EventParticipationResponseDTO>>> getParticipation(@RequestParam UUID eventId) {
         return eventService.getEventParticipations(eventId);
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
+    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getUpcomingEvents() {
         return eventService.getUpcomingEvents();
     }
 

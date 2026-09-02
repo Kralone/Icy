@@ -6,14 +6,21 @@ import com.icy.icy_backend.exception.definition.ForbiddenException;
 import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.exception.definition.RateLimitExceededException;
 import com.icy.icy_backend.service.common.MessageService;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
 
 import java.util.Map;
 
@@ -60,6 +67,27 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleExpiredJwtException(ExpiredJwtException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Le jeton JWT a expiré. Veuillez vous reconnecter.");
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Map<String, String>> handleRateLimitExceededException(RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.getRetryAfterSeconds()))
+                .body(Map.of("error", "Too Many Requests", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDeniedException(HttpServletResponse response) throws IOException {
+        if (!response.isCommitted()) {
+            response.sendError(HttpStatus.FORBIDDEN.value());
+        }
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public void handleAuthenticationException(HttpServletResponse response) throws IOException {
+        if (!response.isCommitted()) {
+            response.sendError(HttpStatus.UNAUTHORIZED.value());
+        }
     }
 
 

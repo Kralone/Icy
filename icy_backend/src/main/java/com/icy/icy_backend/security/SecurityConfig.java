@@ -2,6 +2,7 @@ package com.icy.icy_backend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,15 +18,23 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.net.URI;
+import java.util.Arrays;
 
 @EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final BotApiKeyAuthenticationFilter botApiKeyAuthenticationFilter;
+    private final List<String> allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          BotApiKeyAuthenticationFilter botApiKeyAuthenticationFilter,
+                          @Value("${icy.cors.allowed-origins:https://iceforge.fr}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.botApiKeyAuthenticationFilter = botApiKeyAuthenticationFilter;
+        this.allowedOrigins = parseAllowedOrigins(allowedOrigins);
     }
 
     @Bean
@@ -61,7 +70,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // 🧱 Filtre JWT avant l’authentification standard
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(botApiKeyAuthenticationFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -69,11 +79,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "https://iceforge.fr",
-                "http://localhost:4200",
-                "https://localhost:4200"
-        ));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
@@ -81,6 +87,27 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    public static List<String> parseAllowedOrigins(String configuredOrigins) {
+        List<String> origins = Arrays.stream(configuredOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .distinct()
+                .toList();
+        if (origins.isEmpty()) {
+            throw new IllegalArgumentException("Au moins une origine CORS exacte est requise.");
+        }
+        for (String origin : origins) {
+            URI uri = URI.create(origin);
+            if (origin.contains("*") || uri.getHost() == null
+                    || !("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
+                    || (uri.getPath() != null && !uri.getPath().isEmpty())
+                    || uri.getQuery() != null || uri.getFragment() != null) {
+                throw new IllegalArgumentException("Origine CORS invalide: " + origin);
+            }
+        }
+        return origins;
     }
 
     @Bean

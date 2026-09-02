@@ -1,11 +1,14 @@
 package com.icy.icy_backend.config;
 
 import com.icy.icy_backend.security.JwtUtil;
+import com.icy.icy_backend.security.SecurityConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,9 +24,12 @@ import java.util.UUID;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtUtil jwtUtil;
+    private final List<String> allowedOrigins;
 
-    public WebSocketConfig(JwtUtil jwtUtil) {
+    public WebSocketConfig(JwtUtil jwtUtil,
+                           @Value("${icy.cors.allowed-origins:https://iceforge.fr}") String allowedOrigins) {
         this.jwtUtil = jwtUtil;
+        this.allowedOrigins = SecurityConfig.parseAllowedOrigins(allowedOrigins);
     }
 
     @Override
@@ -35,8 +41,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("https://iceforge.fr", "https://localhost:4200", "http://localhost:4200")
+                .setAllowedOrigins(allowedOrigins.toArray(String[]::new))
                 .withSockJS();
+    }
+
+    List<String> getAllowedOrigins() {
+        return allowedOrigins;
     }
 
     @Override
@@ -44,15 +54,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    authenticate(accessor);
-                } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-                    authorizeSubscription(accessor);
-                }
-                return message;
+                return WebSocketConfig.this.preSend(message);
             }
         });
+    }
+
+    Message<?> preSend(Message<?> message) {
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        if (accessor == null) {
+            return message;
+        }
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            authenticate(accessor);
+        } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+            authorizeSubscription(accessor);
+        } else if (StompCommand.SEND.equals(accessor.getCommand())) {
+            throw new AccessDeniedException("Les émissions STOMP client sont interdites.");
+        }
+        return message;
     }
 
     void authenticate(StompHeaderAccessor accessor) {

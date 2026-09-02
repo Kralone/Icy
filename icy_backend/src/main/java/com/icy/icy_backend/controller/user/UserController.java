@@ -10,6 +10,7 @@ import com.icy.icy_backend.controller.dto.response.user.UserQuickStatsResponseDT
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.security.AuthUtils;
+import com.icy.icy_backend.security.UserManagementPolicy;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.user.UserService;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class UserController {
     }
 
     @GetMapping("/{discordId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<User>> getUserByDiscordId(@PathVariable String discordId) {
         return userService.getUserByDiscordId(discordId);
     }
@@ -44,12 +46,14 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<User>>createUser(@RequestBody CreateUserRequest createUserRequest) {
+        UserManagementPolicy.assertCanManage(null, createUserRequest.getRole());
         return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<User>> updateUser(@RequestBody UpdateUserRequest request) {
+        UserManagementPolicy.assertCanManage(userService.resolveUser(request.getId()), request.getRole());
         return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole());
     }
 
@@ -57,16 +61,21 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/by-id")
     public ResponseEntity<MessageResponse<Void>> deleteUserById(@RequestParam UUID id) {
-        return userService.deactivateUser(userService.resolveUser(id));
+        User target = userService.resolveUser(id);
+        UserManagementPolicy.assertCanManage(target, null);
+        return userService.deactivateUser(target);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/by-discord")
     public ResponseEntity<MessageResponse<Void>> deleteUserByDiscordId(@RequestParam Long discordId) {
-        return userService.deactivateUser(userService.resolveUser(discordId));
+        User target = userService.resolveUser(discordId);
+        UserManagementPolicy.assertCanManage(target, null);
+        return userService.deactivateUser(target);
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<List<UserResponseDTO>>> getAllUsers() {
         return userService.getAllActiveUsers();
     }

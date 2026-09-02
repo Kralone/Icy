@@ -6,6 +6,7 @@ import com.icy.icy_backend.controller.dto.response.scworldevent.ScWorldEventType
 import com.icy.icy_backend.service.scworldevent.ScWorldEventTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,16 +31,19 @@ public class ScWorldEventTypeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ScWorldEventTypeDTO> create(@RequestBody CreateScWorldEventTypeDTO dto) {
         return ResponseEntity.ok(ScWorldEventTypeDTO.from(service.create(dto)));
     }
 
     @PutMapping("/{name}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ScWorldEventTypeDTO> update(@PathVariable String name, @RequestBody UpdateScWorldEventTypeDTO dto) {
         return ResponseEntity.ok(ScWorldEventTypeDTO.from(service.update(name, dto)));
     }
 
     @DeleteMapping("/{name}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable String name) {
         service.delete(name);
         return ResponseEntity.ok().build();

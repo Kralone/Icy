@@ -18,6 +18,7 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
     long countByUser_Id(UUID userId);
     long countByUser_IdAndStatus(UUID userId, int status);
     long countByUser_IdAndStatusAndEvent_FinishedTrue(UUID userId, int status);
+    boolean existsByEvent_IdAndUser_IdAndStatus(UUID eventId, UUID userId, int status);
 }
 
 

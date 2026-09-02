@@ -4,8 +4,12 @@ import com.icy.icy_backend.controller.dto.auth.LoginRequest;
 import com.icy.icy_backend.controller.dto.auth.ResetPasswordRequest;
 import com.icy.icy_backend.controller.dto.response.auth.LoginResponseDTO;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.exception.definition.InvalidCredentialsException;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.security.AuthUtils;
+import com.icy.icy_backend.security.UserManagementPolicy;
 import com.icy.icy_backend.security.JwtUtil;
+import com.icy.icy_backend.security.PublicEndpointRateLimiter;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.service.auth.AuthService;
 import com.icy.icy_backend.service.auth.RefreshTokenService;
@@ -34,39 +38,62 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
     private final RefreshTokenService refreshTokenService;
+    private final PublicEndpointRateLimiter rateLimiter;
 
     public AuthController(AuthService authService, UserService userService, JwtUtil jwtUtil,
-                          MessageService messageService, RefreshTokenService refreshTokenService) {
+                          MessageService messageService, RefreshTokenService refreshTokenService,
+                          PublicEndpointRateLimiter rateLimiter) {
         this.authService = authService;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
         this.messageService = messageService;
         this.refreshTokenService = refreshTokenService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest request) {
-        logger.info("Requête de login reçue pour : {}", request.getUsername());
-        LoginResponseDTO tokens = authService.authenticate(request.getUsername(), request.getPassword());
-        logger.info("Login réussi, retour des tokens.");
-        return ResponseEntity.ok(tokens);
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        rateLimiter.checkLogin(httpRequest, request == null ? null : request.getUsername());
+        if (request == null || isBlank(request.getUsername()) || isBlank(request.getPassword())) {
+            throw new BadRequestException("Identifiant et mot de passe requis");
+        }
+        logger.info("Requete de login recue.");
+        try {
+            LoginResponseDTO tokens = authService.authenticate(request.getUsername(), request.getPassword());
+            logger.info("Login reussi, retour des tokens.");
+            return ResponseEntity.ok(tokens);
+        } catch (InvalidCredentialsException ex) {
+            rateLimiter.recordLoginFailure(httpRequest, request == null ? null : request.getUsername());
+            throw ex;
+        }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<LoginResponseDTO> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<LoginResponseDTO> resetPassword(@RequestBody ResetPasswordRequest request,
+                                                           HttpServletRequest httpRequest) {
+        rateLimiter.checkPasswordReset(httpRequest);
+        if (request == null || isBlank(request.getResetToken()) || isBlank(request.getNewPassword())) {
+            throw new BadRequestException("Jeton et nouveau mot de passe requis");
+        }
         return ResponseEntity.ok(authService.completePasswordReset(request.getResetToken(), request.getNewPassword()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/admin/force-reset-password")
     public ResponseEntity<MessageResponse<Void>> forceResetPassword(@RequestParam UUID id) {
+        UserManagementPolicy.assertCanManage(userService.findUserById(id), null);
         authService.forcePasswordReset(id);
         return messageService.buildResponse("user.password.reset", null);
     }
 
 
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body,
+                                                        HttpServletRequest httpRequest) {
+        rateLimiter.checkRefresh(httpRequest);
+        if (body == null) {
+            throw new BadRequestException("Corps de requete manquant");
+        }
         String refreshToken = body.get("refreshToken");
 
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -78,6 +105,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody Map<String, String> body) {
+        if (body == null || isBlank(body.get("refreshToken"))) {
+            throw new BadRequestException("Refresh token requis");
+        }
         refreshTokenService.revoke(body.get("refreshToken"));
         return ResponseEntity.noContent().build();
     }
@@ -101,6 +131,10 @@ public class AuthController {
     @GetMapping("/isAdmin")
     public ResponseEntity<Boolean> getAuthenticatedUser() {
         return ResponseEntity.ok(AuthUtils.isAdmin());
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
 }

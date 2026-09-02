@@ -89,7 +89,6 @@ Principales cles (exemples):
 - `JWT_REFRESH_EXPIRATION`
 - `IMAGE_BASE_URL`, `ICY_IMAGE_PATH`
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
-- `BOT_URL`
 - `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PSWD`
 
 Toutes les valeurs sensibles doivent venir des variables d'environnement.

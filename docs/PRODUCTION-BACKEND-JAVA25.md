@@ -1,5 +1,11 @@
 # Promotion du backend Java 25 / Spring Boot 4.1
 
+> Cette page décrit la consolidation historique terminée le 25 août 2026. Les
+> exigences « V29 libre » et `verify-flyway-v28.sql` sont le point de contrôle de
+> cette ancienne opération, avant livraison de V29. Elles ne doivent pas servir à
+> valider le candidat de stabilisation actuel. Pour ce candidat, suivre
+> `PRODUCTION-V29-SECURITY.md` après sauvegarde et répétition sur copie restaurée.
+
 ## Portée
 
 Cette procédure prépare la promotion du seul backend vers Java 25.0.4 et Spring

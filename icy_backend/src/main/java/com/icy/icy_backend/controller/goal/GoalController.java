@@ -7,6 +7,7 @@ import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationSummary
 import com.icy.icy_backend.service.goal.GoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class GoalController {
     private final GoalService goalService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<Void> createGoal(@RequestBody CreateGoalDTO dto) {
         goalService.createGoal(dto);
         return ResponseEntity.ok().build();
@@ -26,6 +28,7 @@ public class GoalController {
 
     /** ✅ UPDATE via le même DTO */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<Void> updateGoal(@PathVariable Long id, @RequestBody CreateGoalDTO dto) {
         goalService.updateGoal(id, dto);
         return ResponseEntity.noContent().build();
@@ -42,12 +45,14 @@ public class GoalController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<Void> deleteGoal(@PathVariable Long id) {
         goalService.deleteGoal(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/pin")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<Void> pinGoalByPath(@PathVariable Long id) {
         goalService.pinGoal(id);
         return ResponseEntity.noContent().build();
@@ -55,6 +60,7 @@ public class GoalController {
 
     /** Legacy endpoint kept for backward compatibility. */
     @PostMapping("/pin")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<Void> pinGoal(@RequestBody Long goalId) {
         goalService.pinGoal(goalId);
         return ResponseEntity.noContent().build();

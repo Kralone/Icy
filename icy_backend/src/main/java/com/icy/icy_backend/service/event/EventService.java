@@ -1,6 +1,7 @@
 package com.icy.icy_backend.service.event;
 
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.EventParticipationResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
@@ -235,8 +236,13 @@ public class EventService {
                 });
     }
 
-    public ResponseEntity<MessageResponse<List<Event>>> getUpcomingEvents() {
-        return messageService.buildResponse("event.upcoming", eventRepository.findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now()));
+    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getUpcomingEvents() {
+        List<EventResponseDTO> events = eventRepository
+                .findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now())
+                .stream()
+                .map(EventResponseDTO::new)
+                .toList();
+        return messageService.buildResponse("event.upcoming", events);
     }
 
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getRecentFinishedEvents() {
@@ -418,12 +424,14 @@ public class EventService {
         return messageService.buildResponse("event.participation.set", null);
     }
 
-    public ResponseEntity<MessageResponse<List<EventParticipation>>> getEventParticipations(UUID eventId) {
+    public ResponseEntity<MessageResponse<List<EventParticipationResponseDTO>>> getEventParticipations(UUID eventId) {
 
         Optional<List<EventParticipation>> participations = participationRepository.findAllByEvent(findEventById(eventId));
         if (participations.isPresent()) {
-
-            return messageService.buildResponse("event.participation.get", participations.get());
+            List<EventParticipationResponseDTO> response = participations.get().stream()
+                    .map(EventParticipationResponseDTO::new)
+                    .toList();
+            return messageService.buildResponse("event.participation.get", response);
         } else {
             throw new ResourceNotFoundException("Aucune participation enregistré pour cet event");
         }

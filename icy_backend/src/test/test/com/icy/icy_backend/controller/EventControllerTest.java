@@ -5,9 +5,11 @@ import com.icy.icy_backend.controller.dto.event.CreateEventRequest;
 import com.icy.icy_backend.controller.dto.event.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.EventParticipationResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.SecurityConfig;
@@ -38,6 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(controllers = EventController.class, excludeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
@@ -68,8 +71,23 @@ class EventControllerTest {
         when(eventService.createEventType(any(), any(), any(), any())).thenReturn(okResponse(new EventType()));
         when(eventService.deleteEventType(eq("type"))).thenReturn(okResponse(null));
         when(eventService.setParticipation(any(), anyInt())).thenReturn(okResponse(null));
-        when(eventService.getEventParticipations(any())).thenReturn(okResponse(List.of(new EventParticipation())));
-        when(eventService.getUpcomingEvents()).thenReturn(okResponse(List.of(new Event())));
+        Event participationEvent = new Event();
+        participationEvent.setId(UUID.randomUUID());
+        EventParticipation participation = new EventParticipation();
+        participation.setId(UUID.randomUUID());
+        participation.setEvent(participationEvent);
+        User participant = new User();
+        participant.setId(UUID.randomUUID());
+        participant.setUsername("alice");
+        participant.setDiscordId("123");
+        participant.setPassword("must-not-leak");
+        participant.setPwdReset(true);
+        participation.setUser(participant);
+        participation.setStatus(1);
+        when(eventService.getEventParticipations(any()))
+                .thenReturn(okResponse(List.of(new EventParticipationResponseDTO(participation))));
+        when(eventService.getUpcomingEvents())
+                .thenReturn(okResponse(List.of(new EventResponseDTO(new Event()))));
         when(eventService.updateEventType(eq("type"), any(EventType.class))).thenReturn(okResponse(new EventType()));
 
         CreateEventRequest createRequest = new CreateEventRequest();
@@ -115,7 +133,12 @@ class EventControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/events/participation")
                         .param("eventId", UUID.randomUUID().toString()))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].user.username").value("alice"))
+                .andExpect(jsonPath("$.data[0].user.discordId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].user.password").doesNotExist())
+                .andExpect(jsonPath("$.data[0].user.pwdReset").doesNotExist())
+                .andExpect(jsonPath("$.data[0].event.discordChannelId").doesNotExist());
         mockMvc.perform(get("/api/events/upcoming"))
                 .andExpect(status().isOk());
         mockMvc.perform(put("/api/events/types/type")

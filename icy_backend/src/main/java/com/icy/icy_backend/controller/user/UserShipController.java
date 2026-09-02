@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.ship.AddShipDTO;
 import com.icy.icy_backend.controller.dto.user.AddUserShip;
 import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
 import com.icy.icy_backend.db.entity.ship.Ship;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserShip;
@@ -69,15 +70,25 @@ public class UserShipController {
         return userShipService.deleteAllInGameAcquisitions();
     }
 
+    @GetMapping("/member")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<List<UserShipDTO>>> getMemberShips(@RequestParam UUID eventId,
+                                                                              @RequestParam UUID userId) {
+        logger.debug("MEMBER : récupération de la flotte publique liée aux événements");
+        return userShipService.getConfirmedParticipantShips(eventId, userId);
+    }
+
     // ===== BOT ENDPOINTS =====
 
     @GetMapping("/bot")
+    @PreAuthorize("hasRole('BOT')")
     public ResponseEntity<MessageResponse<List<UserShip>>> getUserShipsForBot(@RequestParam Long discordId) {
         logger.debug("BOT : récupération des vaisseaux pour discordId : {}", discordId);
         return userShipService.getShipsByUserId(discordId);
     }
 
     @PostMapping("/bot")
+    @PreAuthorize("hasRole('BOT')")
     public ResponseEntity<MessageResponse<UserShip>> addUserShipForBot(@RequestBody AddUserShip addUserShipDto) {
         logger.debug("BOT : ajout d'un vaisseau pour discordId : {}, shipId : {}",
                 addUserShipDto.getDiscordId(), addUserShipDto.getShipId());
@@ -92,6 +103,7 @@ public class UserShipController {
     }
 
     @DeleteMapping("/bot")
+    @PreAuthorize("hasRole('BOT')")
     public ResponseEntity<MessageResponse<Void>> deleteUserShipForBot(@RequestParam Long discordId, @RequestParam Long shipId) {
         logger.debug("BOT : suppression du vaisseau shipId : {} pour discordId : {}", shipId, discordId);
         return userShipService.deleteShipFromUser(discordId, shipId);

@@ -30,7 +30,7 @@ public class RecruitmentService {
     }
 
     public RecruitmentDTO create(RecruitmentDTO dto) {
-        logger.info("Creating recruitment for {}", dto.getUsername());
+        logger.info("Creating recruitment request.");
         Recruitment recruitment = new Recruitment(dto);
         Recruitment saved = recruitmentRepository.save(recruitment);
         notifyAdmins(

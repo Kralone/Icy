@@ -10,6 +10,7 @@ import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.collection.CollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,6 +44,7 @@ public class CollectionController {
     }
 
     @PutMapping("/templates/{name}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public TemplateDetailDTO updateTemplateByName(@PathVariable String name, @RequestBody TemplateCreateDTO dto) {
         log.debug("Mise à jour du template name={} avec données={}", name, dto);
         return collectionService.updateTemplateByName(name, dto);
@@ -97,6 +99,7 @@ public class CollectionController {
     }
 
     @PostMapping("/templates")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public TemplateDetailDTO createTemplate(@RequestBody TemplateCreateDTO dto) {
         return collectionService.createTemplate(dto);
     }

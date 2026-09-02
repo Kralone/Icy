@@ -5,10 +5,13 @@ import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationSummaryDTO;
+import com.icy.icy_backend.controller.support.TestAuth;
+import com.icy.icy_backend.controller.support.TestMethodSecurityConfig;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.SecurityConfig;
 import com.icy.icy_backend.service.goal.GoalService;
+import com.icy.icy_backend.service.common.MessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -38,8 +42,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@Import({TestMethodSecurityConfig.class, GlobalExceptionHandler.class})
 @SuppressWarnings("removal")
 class GoalControllerTest {
+
+    private static final UUID ACTOR_ID = UUID.fromString("00000000-0000-0000-0000-000000000011");
 
     @Autowired
     private MockMvc mockMvc;
@@ -49,6 +56,9 @@ class GoalControllerTest {
 
     @MockitoBean
     private GoalService goalService;
+
+    @MockitoBean
+    private MessageService messageService;
 
     @Test
     void goalEndpointsReturnOk() throws Exception {
@@ -86,10 +96,12 @@ class GoalControllerTest {
         dto.setName("name");
 
         mockMvc.perform(post("/api/goals")
+                        .with(TestAuth.user(ACTOR_ID, "OFFICIER"))
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
         mockMvc.perform(put("/api/goals/1")
+                        .with(TestAuth.user(ACTOR_ID, "OFFICIER"))
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNoContent());
@@ -97,11 +109,12 @@ class GoalControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/goals/pinned"))
                 .andExpect(status().isOk());
-        mockMvc.perform(delete("/api/goals/1"))
+        mockMvc.perform(delete("/api/goals/1").with(TestAuth.user(ACTOR_ID, "OFFICIER")))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(post("/api/goals/1/pin"))
+        mockMvc.perform(post("/api/goals/1/pin").with(TestAuth.user(ACTOR_ID, "OFFICIER")))
                 .andExpect(status().isNoContent());
         mockMvc.perform(post("/api/goals/pin")
+                        .with(TestAuth.user(ACTOR_ID, "OFFICIER"))
                         .contentType("application/json")
                         .content("1"))
                 .andExpect(status().isNoContent());
@@ -111,6 +124,31 @@ class GoalControllerTest {
         mockMvc.perform(get("/api/goals/1/participations"))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/goals/1/participations/combined"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void managementMutationsRejectRegularUsersButProgressRemainsAvailable() throws Exception {
+        CreateGoalDTO dto = new CreateGoalDTO();
+        dto.setName("name");
+        String body = objectMapper.writeValueAsString(dto);
+
+        mockMvc.perform(post("/api/goals").with(TestAuth.user(ACTOR_ID, "USER"))
+                        .contentType("application/json").content(body))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/goals/1").with(TestAuth.user(ACTOR_ID, "USER"))
+                        .contentType("application/json").content(body))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/goals/1").with(TestAuth.user(ACTOR_ID, "USER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/goals/1/pin").with(TestAuth.user(ACTOR_ID, "USER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/goals/pin").with(TestAuth.user(ACTOR_ID, "USER"))
+                        .contentType("application/json").content("1"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/goals/1/increment").with(TestAuth.user(ACTOR_ID, "USER"))
+                        .param("delta", "1"))
                 .andExpect(status().isOk());
     }
 }

@@ -7,6 +7,7 @@ import com.icy.icy_backend.service.scworldevent.ScWorldEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -79,16 +80,19 @@ public class ScWorldEventController {
     // --- ÉCRITURE (ADMIN) ---
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ScWorldEventDTO> create(@RequestBody CreateScWorldEventDTO dto) {
         return ResponseEntity.ok(ScWorldEventDTO.from(service.create(dto)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ScWorldEventDTO> update(@PathVariable UUID id, @RequestBody UpdateScWorldEventDTO dto) {
         return ResponseEntity.ok(ScWorldEventDTO.from(service.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.ok().build();

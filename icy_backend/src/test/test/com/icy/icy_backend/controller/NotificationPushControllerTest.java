@@ -6,10 +6,12 @@ import com.icy.icy_backend.controller.dto.notification.NotificationSubscriptionR
 import com.icy.icy_backend.controller.dto.notification.NotificationTestPushRequest;
 import com.icy.icy_backend.controller.dto.notification.NotificationUnsubscribeRequest;
 import com.icy.icy_backend.controller.support.TestAuth;
+import com.icy.icy_backend.controller.support.TestMethodSecurityConfig;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.SecurityConfig;
 import com.icy.icy_backend.service.notification.NotificationPushService;
+import com.icy.icy_backend.service.common.MessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -38,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@Import({TestMethodSecurityConfig.class, GlobalExceptionHandler.class})
 @SuppressWarnings("removal")
 class NotificationPushControllerTest {
 
@@ -49,6 +53,9 @@ class NotificationPushControllerTest {
 
     @MockitoBean
     private NotificationPushService pushService;
+
+    @MockitoBean
+    private MessageService messageService;
 
     @Test
     void notificationPushEndpointsReturnOk() throws Exception {
@@ -104,6 +111,26 @@ class NotificationPushControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(targeted)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void privilegedPushEndpointsRejectNonAdmins() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000015");
+        NotificationSendRequest send = new NotificationSendRequest();
+        send.setTitle("title");
+        send.setBody("body");
+        send.setBroadcast(true);
+
+        for (String role : List.of("USER", "OFFICIER")) {
+            mockMvc.perform(post("/api/notifications/push/test").with(TestAuth.user(userId, role))
+                            .contentType("application/json")
+                            .content(objectMapper.writeValueAsString(new NotificationTestPushRequest())))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(post("/api/notifications/push/send").with(TestAuth.user(userId, role))
+                            .contentType("application/json")
+                            .content(objectMapper.writeValueAsString(send)))
+                    .andExpect(status().isForbidden());
+        }
     }
 }
 

@@ -7,10 +7,12 @@ import com.icy.icy_backend.controller.dto.collection.TemplateListItemDTO;
 import com.icy.icy_backend.controller.dto.collection.UserCollectionDetailDTO;
 import com.icy.icy_backend.controller.dto.collection.UserCollectionListItemDTO;
 import com.icy.icy_backend.controller.support.TestAuth;
+import com.icy.icy_backend.controller.support.TestMethodSecurityConfig;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.SecurityConfig;
 import com.icy.icy_backend.service.collection.CollectionService;
+import com.icy.icy_backend.service.common.MessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -40,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@Import({TestMethodSecurityConfig.class, GlobalExceptionHandler.class})
 @SuppressWarnings("removal")
 class CollectionControllerTest {
 
@@ -51,6 +55,9 @@ class CollectionControllerTest {
 
     @MockitoBean
     private CollectionService collectionService;
+
+    @MockitoBean
+    private MessageService messageService;
 
     @Test
     void collectionEndpointsReturnOk() throws Exception {
@@ -72,6 +79,7 @@ class CollectionControllerTest {
         mockMvc.perform(get("/api/collections/templates/1"))
                 .andExpect(status().isOk());
         mockMvc.perform(put("/api/collections/templates/name")
+                        .with(TestAuth.user(userId, "OFFICIER"))
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(new TemplateCreateDTO())))
                 .andExpect(status().isOk());
@@ -97,8 +105,25 @@ class CollectionControllerTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/collections/templates")
+                        .with(TestAuth.user(userId, "OFFICIER"))
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(new TemplateCreateDTO())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void templateMutationsRejectRegularUsersWhilePersonalCollectionsRemainAvailable() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000013");
+        String body = objectMapper.writeValueAsString(new TemplateCreateDTO());
+        when(collectionService.getUserCollections(any())).thenReturn(List.of());
+
+        mockMvc.perform(put("/api/collections/templates/name").with(TestAuth.user(userId, "USER"))
+                        .contentType("application/json").content(body))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/collections/templates").with(TestAuth.user(userId, "USER"))
+                        .contentType("application/json").content(body))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/collections/me").with(TestAuth.user(userId, "USER")))
                 .andExpect(status().isOk());
     }
 }

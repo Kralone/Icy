@@ -7,6 +7,7 @@ import com.icy.icy_backend.service.scworldevent.ScWorldEventParticipationService
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -65,6 +66,7 @@ public class ScWorldEventParticipationController {
      * (on garde ton endpoint existant, mais on force aussi l'UUID regex)
      */
     @PutMapping("/{id:[0-9a-fA-F\\-]{36}}/participation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<ScWorldEventParticipationDTO> upsert(
             @PathVariable("id") UUID scweId,
             @RequestParam(required = false) UUID userId,

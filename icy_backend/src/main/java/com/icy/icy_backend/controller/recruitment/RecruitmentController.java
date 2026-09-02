@@ -2,6 +2,8 @@ package com.icy.icy_backend.controller.recruitment;
 
 import com.icy.icy_backend.controller.dto.recruitment.RecruitmentDTO;
 import com.icy.icy_backend.service.recruitment.RecruitmentService;
+import com.icy.icy_backend.security.PublicEndpointRateLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +15,17 @@ import java.util.List;
 public class RecruitmentController {
 
     private final RecruitmentService recruitmentService;
+    private final PublicEndpointRateLimiter rateLimiter;
 
-    public RecruitmentController(RecruitmentService recruitmentService) {
+    public RecruitmentController(RecruitmentService recruitmentService, PublicEndpointRateLimiter rateLimiter) {
         this.recruitmentService = recruitmentService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping
-    public ResponseEntity<RecruitmentDTO> create(@RequestBody RecruitmentDTO recruitment) {
+    public ResponseEntity<RecruitmentDTO> create(@RequestBody RecruitmentDTO recruitment,
+                                                  HttpServletRequest httpRequest) {
+        rateLimiter.checkRecruitment(httpRequest);
         return ResponseEntity.ok(recruitmentService.create(recruitment));
     }
 

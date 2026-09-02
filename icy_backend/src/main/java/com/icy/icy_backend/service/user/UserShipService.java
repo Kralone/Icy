@@ -8,6 +8,8 @@ import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserShip;
 import com.icy.icy_backend.db.entity.user.id.UserShipId;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.exception.definition.ForbiddenException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.ship.ShipService;
 import com.icy.icy_backend.websocket.ShipFleetWebSocketService;
@@ -30,16 +32,19 @@ public class UserShipService {
     private final ShipService shipService;
     private final UserWebSocketService userWebSocketService;
     private final ShipFleetWebSocketService shipFleetWebSocketService;
+    private final EventParticipationRepository eventParticipationRepository;
 
     public UserShipService(UserShipRepository userShipRepository, MessageService messageService,
                            UserService userService, ShipService shipService,
-                           UserWebSocketService userWebSocketService, ShipFleetWebSocketService shipFleetWebSocketService) {
+                           UserWebSocketService userWebSocketService, ShipFleetWebSocketService shipFleetWebSocketService,
+                           EventParticipationRepository eventParticipationRepository) {
         this.userShipRepository = userShipRepository;
         this.messageService = messageService;
         this.userService = userService;
         this.shipService = shipService;
         this.userWebSocketService = userWebSocketService;
         this.shipFleetWebSocketService = shipFleetWebSocketService;
+        this.eventParticipationRepository = eventParticipationRepository;
     }
 
     public ResponseEntity<MessageResponse<List<UserShip>>> getShipsByUserId(Object userIdentifier) {
@@ -56,6 +61,14 @@ public class UserShipService {
 
         logger.info("Nombre de vaisseaux trouvés: {}", userShips.size());
         return messageService.buildResponse("user.found", userShips);
+    }
+
+    public ResponseEntity<MessageResponse<List<UserShipDTO>>> getConfirmedParticipantShips(UUID eventId, UUID userId) {
+        if (!eventParticipationRepository.existsByEvent_IdAndUser_IdAndStatus(eventId, userId, 1)) {
+            throw new ForbiddenException("La flotte demandée n'appartient pas à un participant confirmé.");
+        }
+        List<UserShipDTO> ships = getShipsByUserIdDTO(userId);
+        return messageService.buildResponse("user.found", ships);
     }
 
     public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId, boolean isInGame, boolean isRewardInGame, boolean isLoaner) {

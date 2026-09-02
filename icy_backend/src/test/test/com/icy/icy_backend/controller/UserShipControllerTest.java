@@ -4,6 +4,8 @@ import com.icy.icy_backend.controller.user.UserShipController;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
 import com.icy.icy_backend.controller.support.TestAuth;
+import com.icy.icy_backend.controller.support.TestMethodSecurityConfig;
+import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserShip;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
@@ -18,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         classes = {SecurityConfig.class, JwtAuthenticationFilter.class, GlobalExceptionHandler.class}
 ))
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestMethodSecurityConfig.class)
 @SuppressWarnings("removal")
 class UserShipControllerTest {
 
@@ -56,6 +60,10 @@ class UserShipControllerTest {
         when(userShipService.addShipToUser(any(UUID.class), eq(1L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
         when(userShipService.deleteShipFromUser(any(UUID.class), eq(1L))).thenReturn(okResponse(null));
         when(userShipService.deleteAllInGameAcquisitions()).thenReturn(okResponse(2));
+        UUID eventId = UUID.randomUUID();
+        UUID participantId = UUID.randomUUID();
+        when(userShipService.getConfirmedParticipantShips(eq(eventId), eq(participantId)))
+                .thenReturn(okResponse(List.<UserShipDTO>of()));
         when(userShipService.getShipsByUserId(eq(123L))).thenReturn(okResponse(List.of(new UserShip())));
         when(userService.resolveUser(eq("123"))).thenReturn(new User());
         when(userShipService.addShipToUser(any(UUID.class), eq(2L), eq(true), eq(false), eq(false))).thenReturn(okResponse(new UserShip()));
@@ -81,14 +89,23 @@ class UserShipControllerTest {
                         .with(TestAuth.user(userId, "ADMIN")))
                 .andExpect(status().isOk());
 
+        mockMvc.perform(get("/api/user-ships/member")
+                        .with(TestAuth.user(userId, "USER"))
+                        .param("eventId", eventId.toString())
+                        .param("userId", participantId.toString()))
+                .andExpect(status().isOk());
+
         mockMvc.perform(get("/api/user-ships/bot")
+                        .with(TestAuth.user(userId, "BOT"))
                         .param("discordId", "123"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/user-ships/bot")
+                        .with(TestAuth.user(userId, "BOT"))
                         .contentType("application/json")
                         .content("{\"discordId\":\"123\",\"shipId\":2,\"inGame\":true,\"rewardInGame\":false,\"loaner\":false}"))
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/user-ships/bot")
+                        .with(TestAuth.user(userId, "BOT"))
                         .param("discordId", "123")
                         .param("shipId", "2"))
                 .andExpect(status().isOk());

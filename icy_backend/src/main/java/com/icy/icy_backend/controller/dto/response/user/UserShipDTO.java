@@ -11,6 +11,7 @@ public class UserShipDTO {
     private Long shipId;
     private String name;
     private String brand;
+    private String brandImageUrl;
     private String imageUrl;
     private String focus;
     private String crew;
@@ -18,11 +19,12 @@ public class UserShipDTO {
     private boolean rewardInGame;
     private boolean loaner;
 
-    public UserShipDTO(Long shipId, String name, String brand, String imageUrl, String focus, String crew,
+    public UserShipDTO(Long shipId, String name, String brand, String brandImageUrl, String imageUrl, String focus, String crew,
                        boolean inGamePurchase, boolean rewardInGame, boolean loaner) {
         this.shipId = shipId;
         this.name = name;
         this.brand = brand;
+        this.brandImageUrl = brandImageUrl;
         this.imageUrl = imageUrl;
         this.focus = focus;
         this.crew = crew;
@@ -37,6 +39,7 @@ public class UserShipDTO {
         this.shipId = ship.getId();
         this.name = ship.getName();
         this.brand = ship.getBrand().getName();
+        this.brandImageUrl = ship.getBrand().getImageUrl();
         this.imageUrl = ship.getImageUrl();
         this.focus = ship.getFocus();
         this.crew = ship.getCrew();
@@ -51,6 +54,7 @@ public class UserShipDTO {
                 ship.getId(),
                 ship.getName(),
                 ship.getBrand().getName(),
+                ship.getBrand().getImageUrl(),
                 ship.getImageUrl(),
                 ship.getFocus(),
                 ship.getCrew(),

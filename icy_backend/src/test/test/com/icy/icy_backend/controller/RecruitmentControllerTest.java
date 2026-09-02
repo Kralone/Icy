@@ -5,6 +5,7 @@ import com.icy.icy_backend.controller.dto.recruitment.RecruitmentDTO;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
 import com.icy.icy_backend.security.SecurityConfig;
+import com.icy.icy_backend.security.PublicEndpointRateLimiter;
 import com.icy.icy_backend.service.recruitment.RecruitmentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class RecruitmentControllerTest {
 
     @MockitoBean
     private RecruitmentService recruitmentService;
+
+    @MockitoBean
+    private PublicEndpointRateLimiter rateLimiter;
 
     @Test
     void recruitmentEndpointsReturnOk() throws Exception {
