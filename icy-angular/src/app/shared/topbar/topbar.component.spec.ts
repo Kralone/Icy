@@ -18,6 +18,7 @@ describe('TopbarComponent', () => {
           provide: WebSocketService,
           useValue: {
             connectNotifications: () => undefined,
+            disconnectNotifications: () => undefined,
             listenForNotifications: () => NEVER,
           },
         },

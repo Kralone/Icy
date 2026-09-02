@@ -3,6 +3,7 @@ export interface ShipListDTO {
   shipId: number;
   name: string;
   brand: string;
+  brandImageUrl?: string;
   imageUrl: string;
   focus: string;
   crew: string;

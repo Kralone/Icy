@@ -15,9 +15,11 @@ const swPushStub = {
 
 const webSocketStub = {
   connectShipUpdate: () => undefined,
+  disconnectShipUpdate: () => undefined,
   connectFleetUpdate: () => undefined,
   connectEvent: () => undefined,
   connectNotifications: () => undefined,
+  disconnectNotifications: () => undefined,
   connectGoalUpdates: () => undefined,
   connectMiningSheets: () => undefined,
   disconnectFleetUpdate: () => undefined,

@@ -1,4 +1,4 @@
-import {Component, ElementRef, HostListener, ChangeDetectionStrategy} from '@angular/core';
+import {Component, ElementRef, HostListener, ChangeDetectionStrategy, OnDestroy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
@@ -11,6 +11,7 @@ import {HotToastService} from '@ngxpert/hot-toast';
 import {AuthService} from '../../core/services/auth/auth.service';
 import {ShipSelectorComponent} from '../../shared/ship-selector/ship-selector.component';
 import {AcquisitionType} from '../../shared/ship-selector/ship-selector.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-hangar',
@@ -25,7 +26,7 @@ import {AcquisitionType} from '../../shared/ship-selector/ship-selector.componen
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./hangar.component.css']
 })
-export class HangarComponent {
+export class HangarComponent implements OnDestroy {
   ships: ShipListDTO[]= [];
 
   isModalOpen = false;
@@ -43,6 +44,8 @@ export class HangarComponent {
 
   messages: string[] = [];
   userId: string = "";
+  private shipUpdatesSubscription?: Subscription;
+  private loadingFallback?: ReturnType<typeof setTimeout>;
 
   constructor(private shipService: ShipService, private wsService: WebSocketService,
               private eRef: ElementRef, private toast: HotToastService, private authService: AuthService) {}
@@ -56,30 +59,35 @@ export class HangarComponent {
 
     this.isLoading = true;
     this.hasReceivedFirstMessage = false;
-    const loadingFallback = setTimeout(() => {
+    this.loadingFallback = setTimeout(() => {
       if (!this.hasReceivedFirstMessage) {
         this.isLoading = false;
       }
     }, 5000);
 
-    this.shipService.listenForUserShips(this.userId).subscribe((message) => {
+    this.shipUpdatesSubscription = this.shipService.listenForUserShips(this.userId).subscribe((message) => {
       try {
         const parsed = JSON.parse(message);
 
         // Si c’est une liste de vaisseaux
         if (Array.isArray(parsed)) {
-          this.ships = parsed;
+          this.ships = this.deduplicateShips(parsed);
           console.log('📦 Chargement initial de la flotte');
           this.hasReceivedFirstMessage = true;
           this.isLoading = false;
-          clearTimeout(loadingFallback);
-          this.filteredShips = [...this.ships]; // initialise filtrés
+          if (this.loadingFallback) clearTimeout(this.loadingFallback);
+          this.applyFilters();
         } else {
           this.messages.push(message); // Sinon, c’est un message événement individuel
           if (parsed.type === 'ADD') {
             console.log(parsed)
-            this.ships.push(parsed.ship);
-            this.filteredShips.push(parsed.ship);
+            // STOMP may redeliver an update around a reconnect. Treat ADD as
+            // an upsert so the UI mirrors the database's unique user/ship key.
+            this.ships = [
+              ...this.ships.filter(ship => ship.shipId !== parsed.ship.shipId),
+              parsed.ship
+            ];
+            this.applyFilters();
             this.sortShipsByManufacturer();
           } else if (parsed.type === 'DELETE') {
             this.ships = this.ships.filter(s => s.shipId !== parsed.ship.shipId);
@@ -90,11 +98,17 @@ export class HangarComponent {
         this.messages.push(message);
         if (!this.hasReceivedFirstMessage) {
           this.isLoading = false;
-          clearTimeout(loadingFallback);
+          if (this.loadingFallback) clearTimeout(this.loadingFallback);
         }
       }
       this.sortShipsByName();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.shipUpdatesSubscription?.unsubscribe();
+    if (this.loadingFallback) clearTimeout(this.loadingFallback);
+    if (this.userId) this.wsService.disconnectShipUpdate(this.userId);
   }
 
   openModal() {
@@ -121,6 +135,10 @@ export class HangarComponent {
       const brandB = String(b.brand || '').toLowerCase();
       return brandA.localeCompare(brandB);
     });
+  }
+
+  private deduplicateShips(ships: ShipListDTO[]): ShipListDTO[] {
+    return [...new Map(ships.map(ship => [ship.shipId, ship])).values()];
   }
 
   toggleBrand(brand: string): void {

@@ -8,6 +8,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
 import { HotToastService } from '@ngxpert/hot-toast';
 import { UserService } from '../../core/services/user/user.service';
 import { RankOrbitComponent } from '../rank-orbit/rank-orbit.component';
+import { Subscription } from 'rxjs';
 
 type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 
@@ -27,6 +28,7 @@ export class TopbarComponent {
   isDesktop = false; // ✅ détecte les écrans larges
   lastScrollY = 0;
   private scrollListener: (() => void) | null = null;
+  private notificationsSubscription?: Subscription;
   showNotifications = false;
   notifications: NotificationItem[] = [];
   unreadCount = 0;
@@ -105,7 +107,7 @@ export class TopbarComponent {
         this.websocketService.connectNotifications();
       }
 
-      this.websocketService.listenForNotifications().subscribe((raw) => {
+      this.notificationsSubscription = this.websocketService.listenForNotifications().subscribe((raw) => {
         this.zone.run(() => {
           try {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -154,6 +156,8 @@ export class TopbarComponent {
   }
 
   ngOnDestroy(): void {
+    this.notificationsSubscription?.unsubscribe();
+    this.websocketService.disconnectNotifications();
     if (this.scrollListener) {
       this.scrollListener();
       this.scrollListener = null;

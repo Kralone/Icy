@@ -16,7 +16,7 @@ describe('EventsComponent', () => {
         ...coreTestProviders,
         {
           provide: WebSocketService,
-          useValue: {connectEvent: () => undefined, listenForEvent: () => NEVER},
+          useValue: {connectEvent: () => undefined, disconnectEvent: () => undefined, listenForEvent: () => NEVER},
         },
       ]
     })

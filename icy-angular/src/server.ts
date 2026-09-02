@@ -4,6 +4,7 @@ import express from 'express';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import bootstrap from './main.server';
+import { isKnownAppRoute, resolveCanonicalRedirect } from './app/app-route-policy';
 
 const serverDistFolder = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDistFolder, '../browser');
@@ -16,14 +17,6 @@ const allowedHosts = (process.env['NG_ALLOWED_HOSTS'] || defaultAllowedHosts.joi
   .map((host) => host.trim())
   .filter(Boolean);
 const commonEngine = new CommonEngine({ allowedHosts });
-const seoKnownRoutes = new Set(['/', '/login', '/recrutement']);
-
-function isKnownAppRoute(url: string): boolean {
-  const path = url.split('?')[0] || '/';
-  if (seoKnownRoutes.has(path)) return true;
-  if (path === '/icy' || path.startsWith('/icy/')) return true;
-  return false;
-}
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -40,6 +33,18 @@ function isKnownAppRoute(url: string): boolean {
 /**
  * Serve static files from /browser
  */
+app.get('**', (req, res, next) => {
+  const destination = resolveCanonicalRedirect(req.originalUrl);
+  if (!destination) {
+    next();
+    return;
+  }
+
+  const queryIndex = req.originalUrl.indexOf('?');
+  const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+  res.redirect(308, `${destination}${query}`);
+});
+
 app.get(
   '**',
   express.static(browserDistFolder, {

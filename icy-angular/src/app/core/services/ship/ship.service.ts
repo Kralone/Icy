@@ -28,7 +28,7 @@ export class ShipService {
    * Écoute les mises à jour WebSocket pour les vaisseaux d'un utilisateur.
    */
   listenForUserShips(userId: string): Observable<any> {
-    return this.wsService.listenForUserShips(Number(userId));
+    return this.wsService.listenForUserShips(userId);
   }
 
   /**
@@ -46,10 +46,10 @@ export class ShipService {
   }
 
   /**
-   * Récupère tous les vaisseaux d'un utilisateur via son discordId.
+   * Récupère la flotte réduite d'un participant confirmé à un événement.
    */
-  getUserShipsByDiscordId(discordId: string): Observable<{ data: any[] }> {
-    return this.http.get<{ data: any[] }>('/api/user-ships/bot', { params: { discordId } });
+  getConfirmedParticipantShips(eventId: string, userId: string): Observable<{ data: ShipListDTO[] }> {
+    return this.http.get<{ data: ShipListDTO[] }>('/api/user-ships/member', { params: { eventId, userId } });
   }
 
   /**

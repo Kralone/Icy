@@ -44,7 +44,10 @@ export class HttpAuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 || error.status === 403) {
+        // 401 means the credentials may be expired. A 403 is an authorization
+        // decision (valid identity, insufficient role) and must be returned to
+        // the caller without rotating tokens or logging the user out.
+        if (error.status === 401) {
           return this.refreshTokensOnce().pipe(
             switchMap(res => {
               if (this.isBrowser) {

@@ -1,4 +1,4 @@
-import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { CalendarOptions, DatesSetArg, ViewApi } from '@fullcalendar/core';
@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ShipService } from '../../core/services/ship/ship.service';
-import { catchError, finalize, forkJoin, map, of } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 
@@ -29,7 +29,7 @@ type FleetMiniShip = {
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html'
 })
-export class EventsComponent implements AfterViewInit {
+export class EventsComponent implements AfterViewInit, OnDestroy {
   @ViewChild(FullCalendarComponent) calendarComponent?: FullCalendarComponent;
 
   calendarEvents: any[] = [];
@@ -53,6 +53,7 @@ export class EventsComponent implements AfterViewInit {
   private lastIsMobile: boolean | null = null;
   private desktopPreferredView: ViewApi['type'] = 'dayGridWeek';
   private mobilePreferredView: ViewApi['type'] = 'threeDay';
+  private eventUpdatesSubscription?: Subscription;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
@@ -126,6 +127,11 @@ export class EventsComponent implements AfterViewInit {
     setTimeout(() => this.updateResponsiveCalendarLayout(true));
   }
 
+  ngOnDestroy(): void {
+    this.eventUpdatesSubscription?.unsubscribe();
+    this.wsService.disconnectEvent();
+  }
+
   @HostListener('window:resize', [])
   onWindowResize() {
     this.updateResponsiveCalendarLayout();
@@ -180,7 +186,7 @@ export class EventsComponent implements AfterViewInit {
   }
 
   private loadEvents() {
-    this.eventService.listenForEventUpdate().subscribe((message) => {
+    this.eventUpdatesSubscription = this.eventService.listenForEventUpdate().subscribe((message) => {
       try {
         const parsed = JSON.parse(message);
         if (parsed.action === 'INIT' && Array.isArray(parsed.events)) {
@@ -447,35 +453,35 @@ export class EventsComponent implements AfterViewInit {
   private loadConfirmedFleets(): void {
     const confirmedUsers = this.participationsByStatus.confirmed
       .map((p: any) => p.user)
-      .filter((user: any) => user?.discordId);
-    const uniqueDiscordIds = Array.from(new Set(confirmedUsers.map((user: any) => user.discordId)));
+      .filter((user: any) => user?.id);
+    const uniqueUserIds = Array.from(new Set(confirmedUsers.map((user: any) => user.id))) as string[];
 
-    if (!uniqueDiscordIds.length) {
+    if (!uniqueUserIds.length || !this.selectedEvent?.id) {
       this.fleetByBrand = {};
       this.fleetBrandKeys = [];
       return;
     }
 
     this.isFleetLoading = true;
-    const requests = uniqueDiscordIds.map((discordId: string) => {
-      if (this.userFleetCache[discordId]) {
-        return of(this.userFleetCache[discordId]);
+    const requests = uniqueUserIds.map((userId: string) => {
+      const cacheKey = `${this.selectedEvent.id}:${userId}`;
+      if (this.userFleetCache[cacheKey]) {
+        return of(this.userFleetCache[cacheKey]);
       }
 
-      return this.shipService.getUserShipsByDiscordId(discordId).pipe(
+      return this.shipService.getConfirmedParticipantShips(this.selectedEvent.id, userId).pipe(
         map((res: any) => {
-          const ships = (res?.data || []).map((item: any) => item.ship).filter(Boolean);
-          const mapped = ships.map((ship: any) => ({
+          const mapped = (res?.data || []).map((ship: any) => ({
             name: ship.name,
             imageUrl: ship.imageUrl,
-            brandName: ship.brand?.name,
-            brandImageUrl: ship.brand?.imageUrl
+            brandName: ship.brand,
+            brandImageUrl: ship.brandImageUrl
           })) as FleetMiniShip[];
-          this.userFleetCache[discordId] = mapped;
+          this.userFleetCache[cacheKey] = mapped;
           return mapped;
         }),
         catchError((err) => {
-          console.error('Erreur récupération flotte', discordId, err);
+          console.error('Erreur récupération flotte participant', userId, err);
           return of([] as FleetMiniShip[]);
         })
       );

@@ -35,6 +35,7 @@ export class FleetComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.wsService.disconnectFleetUpdate();
     if (this.loadingFallback) {
       clearTimeout(this.loadingFallback);
     }

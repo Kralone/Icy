@@ -3,13 +3,16 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  Inject,
   Input,
   OnChanges,
   OnDestroy,
+  PLATFORM_ID,
   SimpleChanges,
   ViewEncapsulation,
   ChangeDetectionStrategy
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ItemCatalogItem, ItemCatalogService } from '../../../../core/services/item/item-catalog.service';
 import { ShipService } from '../../../../core/services/ship/ship.service';
@@ -47,12 +50,16 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   private readonly itemLookupByKey = new Map<string, ItemCatalogItem>();
   private shipLookupSubscription?: Subscription;
   private itemLookupSubscription?: Subscription;
+  private readonly isBrowser: boolean;
 
   constructor(
     private readonly hostRef: ElementRef<HTMLElement>,
     private readonly shipService: ShipService,
-    private readonly itemCatalogService: ItemCatalogService
-  ) {}
+    private readonly itemCatalogService: ItemCatalogService,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   formatStep(step: number): string {
     return step < 10 ? `0${step}` : `${step}`;
@@ -421,6 +428,12 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   private renderShipTooltip(lookupValue: string): string {
+    // Relative API calls during build-time rendering target ng-localhost and
+    // keep Angular unstable until the prerender timeout. Render the same
+    // loading state the browser starts with, then hydrate the live lookup.
+    if (!this.isBrowser) {
+      return 'Chargement du vaisseau...';
+    }
     this.ensureShipLookupLoaded();
     if (this.shipLookupLoading && !this.shipLookupLoaded) {
       return 'Chargement du vaisseau...';
@@ -454,6 +467,9 @@ export class GuideTemplateComponent implements AfterViewInit, OnChanges, OnDestr
   }
 
   private renderItemTooltip(lookupValue: string): string {
+    if (!this.isBrowser) {
+      return 'Chargement de l item...';
+    }
     this.ensureItemLookupLoaded();
     if (this.itemLookupLoading && !this.itemLookupLoaded) {
       return 'Chargement de l item...';

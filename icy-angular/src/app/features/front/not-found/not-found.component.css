@@ -25,6 +25,14 @@
   margin-bottom: 0.5rem;
 }
 
+.not-found-kicker {
+  margin: 0 0 0.75rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
 .not-found-actions {
   margin-top: 1.5rem;
   display: flex;
