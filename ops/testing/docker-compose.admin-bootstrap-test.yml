@@ -1,0 +1,38 @@
+services:
+  db:
+    environment:
+      POSTGRES_USER: iceforge_bootstrap_test
+      POSTGRES_PASSWORD: iceforge_bootstrap_test
+      POSTGRES_DB: iceforge_bootstrap_test
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: iceforge_bootstrap_test
+      RABBITMQ_DEFAULT_PASS: iceforge_bootstrap_test
+      RABBITMQ_DEFAULT_VHOST: /
+
+  backend:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/iceforge_bootstrap_test
+      SPRING_DATASOURCE_USERNAME: iceforge_bootstrap_test
+      SPRING_DATASOURCE_PASSWORD: iceforge_bootstrap_test
+      JWT_SECRET: iceforge_bootstrap_test_jwt_secret_32_chars_minimum
+      BOT_API_KEY: iceforge_bootstrap_test_bot_api_key
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: iceforge_bootstrap_test
+      RABBITMQ_PASSWORD: iceforge_bootstrap_test
+      VAULT_ENABLED: "false"
+      SPRING_FLYWAY_TARGET: ${ICEFORGE_ADMIN_TEST_FLYWAY_TARGET:-29}
+
+  bot:
+    profiles: ["external"]
+
+volumes:
+  icy_images_data:
+    name: iceforge_admin_bootstrap_test_images_data
+
+networks:
+  internal:
+    name: iceforge_admin_bootstrap_test_internal
+  external:
+    name: iceforge_admin_bootstrap_test_external

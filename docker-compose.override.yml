@@ -6,8 +6,21 @@ services:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
   backend:
+    environment:
+      # Trust only this stack's Nginx address, never the whole Docker subnet.
+      ICY_RATE_LIMIT_TRUSTED_PROXIES: ${ICEFORGE_LOCAL_FRONTEND_IP:-10.253.20.10}/32
     ports: ["127.0.0.1:8080:8080"]
   frontend:
     ports: ["127.0.0.1:8088:8080"]
+    networks:
+      internal:
+        ipv4_address: ${ICEFORGE_LOCAL_FRONTEND_IP:-10.253.20.10}
+      external: {}
   icy-images:
     ports: ["127.0.0.1:8081:80"]
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: ${ICEFORGE_LOCAL_INTERNAL_SUBNET:-10.253.20.0/24}

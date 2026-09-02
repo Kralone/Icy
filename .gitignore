@@ -19,3 +19,5 @@
 *.py[cod]
 /.ai/
 /.aiassistant/
+/.codex-tmp/
+/.pnpm-store/

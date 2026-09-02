@@ -1,5 +1,10 @@
 # Inventaire et audit du frontend
 
+> État historique observé le 24 août 2026. L'audit de la candidate locale du
+> 2 septembre 2026 remplace les chiffres de dépendances ci-dessous : aucune
+> vulnérabilité critique ou élevée en production, trois avis modérés transitifs
+> via Express 4 / `qs`. Voir `SECURITY-AUDIT.md`.
+
 ## Périmètre testé
 
 Toutes les routes publiques ont été ouvertes sur `https://iceforge.fr` dans un navigateur réel. Elles ont aussi été contrôlées avec un viewport mobile de 390 × 844 px. Les routes protégées ont été testées anonymement jusqu'à leur redirection vers `/login`, puis revues dans le code.

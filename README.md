@@ -62,7 +62,7 @@ Images (volume partage via nginx)   Discord
 
 ### Bot Discord (Python)
 
-- Discord.py, FastAPI (API HTTP), RabbitMQ via aio-pika.
+- Discord.py et RabbitMQ via aio-pika ; aucune API HTTP n'est exposée par le bot.
 - Ecoute des messages RabbitMQ (news, events, users, scwe).
 - Publie des evenements vers RabbitMQ si necessaire.
 
@@ -95,7 +95,6 @@ Backend (exemples de variables):
 - `JWT_SECRET`, `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
 - `IMAGE_BASE_URL`, `ICY_IMAGE_PATH`
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
-- `BOT_URL`
 
 Bot:
 - `DISCORD_TOKEN`, `GUILD_ID`
@@ -105,6 +104,18 @@ Bot:
 Ne stockez jamais de secrets en dur dans le code ou le repo.
 
 ## Lancer en local (dev)
+
+Pour lancer toute la plateforme dans une pile Docker persistante, isolée de la
+validation et de la production, consultez
+[`ops/dev/README.md`](ops/dev/README.md). Le premier démarrage se fait avec :
+
+```powershell
+.\ops\dev\start-dev.ps1 -Build -Seed
+```
+
+Le site local est alors disponible sur `http://127.0.0.1:18088`. Le bot Discord
+reste volontairement optionnel afin de ne jamais connecter le bot réel par
+accident.
 
 ### Backend
 

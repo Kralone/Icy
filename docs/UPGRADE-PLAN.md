@@ -193,7 +193,8 @@ SSR conserve entre-temps une allowlist explicite (`iceforge.fr`,
 - Passer l'image à Python 3.14.x.
 - Conserver discord.py 2.7.1, déjà à jour.
 - Mettre à jour séparément dans le même lock cohérent : python-dotenv 1.2.3,
-  FastAPI 0.141.x, Uvicorn 0.52.x, aio-pika 10.x et soupsieve 2.9.x.
+  aio-pika 10.x et soupsieve 2.9.x. FastAPI/Uvicorn sont retirés avec l'ancien
+  serveur HTTP du bot, devenu inutile et non authentifié.
 - Remplacer `requirement.txt` par un mécanisme verrouillé avec hashes ou ajouter
   un fichier de contraintes généré.
 - Tester connexion Discord, synchronisation des commandes, reconnexion AMQP,
@@ -201,8 +202,8 @@ SSR conserve entre-temps une allowlist explicite (`iceforge.fr`,
 
 Résultat : Python 3.14.7 et les dépendances cibles sont verrouillés. Toutes les
 dépendances natives ont une wheel CPython 3.14, `pip check` et `pip-audit` sont
-verts, cinq tests unitaires passent et le cycle publication/consommation a été
-validé avec RabbitMQ 3.13.7 dans un réseau éphémère. La connexion Discord et la
+verts, 49 tests passent et le cycle publication/consommation a été validé avec
+le backend et RabbitMQ réels dans un réseau isolé. La connexion Discord et la
 synchronisation des commandes restent à vérifier lors du déploiement contrôlé,
 sans réutiliser de secret dans les tests locaux.
 

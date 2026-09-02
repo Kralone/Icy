@@ -105,7 +105,7 @@ doit rester séparée des changements applicatifs :
 |---|---|---|
 | Frontend | Angular 22.1.3 / TypeScript 6.0.3 ; Nginx 1.30.4, image `iceforge/frontend:8e2b2f04e584` | Déployée et validée le 25 août 2026 |
 | Backend | Java 21.0.11 / Spring Boot 3.4.2 | Java 25.0.4 / Spring Boot 4.1.1 |
-| Bot | Python 3.11.14 / discord.py 2.3.2 / aio-pika 9.6.1 / FastAPI 0.110.0 | Python 3.14.7 / discord.py 2.7.1 / aio-pika 10.0.1 / FastAPI 0.141.1 |
+| Bot | Python 3.11.14 / discord.py 2.3.2 / aio-pika 9.6.1 / FastAPI 0.110.0 | Python 3.14.7 / discord.py 2.7.1 / aio-pika 10.0.1, sans serveur HTTP FastAPI |
 | PostgreSQL | 15.13, Debian 12, locale `en_US.utf8` | 18.6 Bookworm, même locale |
 | RabbitMQ | 3.13.7 / Erlang 26.2.5.15 | 4.3.5 / Erlang 27.3, en deux paliers |
 | Vault | 1.17.6 Community, Raft | Vault 2.x Community corrigée après répétition |

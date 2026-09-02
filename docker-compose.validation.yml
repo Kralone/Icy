@@ -1,7 +1,32 @@
 services:
+  db:
+    ports: !reset []
+
+  rabbitmq:
+    ports: !reset []
+
   backend:
     environment:
       VAULT_ENABLED: "false"
+      # Always use the disposable Compose database during validation. Values
+      # loaded from a developer env file may otherwise point at localhost or
+      # another database outside this isolated project.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-iceforgedb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-iceforge}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_only}
+      ICY_CORS_ALLOWED_ORIGINS: http://127.0.0.1:8088,http://localhost:8088,http://localhost:4200
+      ICY_RATE_LIMIT_TRUSTED_PROXIES: ${ICEFORGE_VALIDATION_FRONTEND_IP:-10.253.30.10}/32
+    ports: !reset []
+
+  frontend:
+    ports: !override ["127.0.0.1:8088:8080"]
+    networks:
+      internal:
+        ipv4_address: ${ICEFORGE_VALIDATION_FRONTEND_IP:-10.253.30.10}
+      external: {}
+
+  icy-images:
+    ports: !reset []
 
   bot:
     # Avoid connecting a real Discord bot during infrastructure smoke tests.
@@ -16,5 +41,8 @@ volumes:
 networks:
   internal:
     name: iceforge_validation_internal
+    ipam:
+      config:
+        - subnet: ${ICEFORGE_VALIDATION_INTERNAL_SUBNET:-10.253.30.0/24}
   external:
     name: iceforge_validation_external
