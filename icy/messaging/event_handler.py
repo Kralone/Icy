@@ -63,9 +63,10 @@ def format_time(date_str: str) -> str:
 
 
 class EventHandler:
-    def __init__(self, bot, rabbit):
+    def __init__(self, bot, rabbit, discord_link_store=None):
         self.bot = bot
         self.rabbit = rabbit
+        self.discord_link_store = discord_link_store
         self.channel_id = self._read_channel_id("DISCORD_EVENTS_CHANNEL_ID")
         self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
         self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
@@ -107,6 +108,9 @@ class EventHandler:
 
 
     async def handle_event_created(self, payload: dict):
+        event_id = payload.get("id")
+        if not event_id:
+            raise ValueError("Event id is required")
         title = payload.get("title", "Sans titre")
         description = html_to_discord(payload.get("description", ""))
         creator = payload.get("author", "Inconnu")
@@ -144,17 +148,37 @@ class EventHandler:
         channel = self.bot.get_channel(self.channel_id)
         if not channel:
             logger.error(f"⚠️ Salon introuvable (ID={self.channel_id})")
-            return
+            raise RuntimeError("Discord events channel is unavailable")
 
-        message = await channel.send(embed=embed, view=view)
-        logger.info(f"✅ Événement '{title}' publié dans #{channel.name}")
+        link = (
+            self.discord_link_store.get("event", event_id)
+            if self.discord_link_store
+            else None
+        )
+        if link is None:
+            message = await channel.send(embed=embed, view=view)
+            logger.info(f"✅ Événement '{title}' publié dans #{channel.name}")
+            if self.discord_link_store:
+                link = self.discord_link_store.save(
+                    "event", event_id, message.channel.id, message.id
+                )
+            else:
+                channel_id = message.channel.id
+                message_id = message.id
+        else:
+            logger.info(
+                "♻️ Message Discord existant réutilisé pour eventId=%s", event_id
+            )
+        if link is not None:
+            channel_id = link.channel_id
+            message_id = link.message_id
 
         await self.rabbit.publish(
             "event.discordLinked",
             {
-                "eventId": payload["id"],
-                "messageId": message.id,
-                "channelId": message.channel.id,
+                "eventId": event_id,
+                "messageId": message_id,
+                "channelId": channel_id,
             },
         )
 
@@ -170,7 +194,7 @@ class EventHandler:
         channel = self.bot.get_channel(int(channel_id))
         if not channel:
             logger.error(f"⚠️ Channel introuvable ({channel_id})")
-            return
+            raise RuntimeError("Discord event channel is unavailable")
 
         try:
             message = await channel.fetch_message(int(message_id))
@@ -232,7 +256,7 @@ class EventHandler:
         channel = self.bot.get_channel(int(channel_id))
         if not channel:
             logger.error(f"⚠️ Channel introuvable ({channel_id})")
-            return
+            raise RuntimeError("Discord event channel is unavailable")
 
         try:
             message = await channel.fetch_message(int(message_id))
@@ -288,8 +312,12 @@ class EventHandler:
                 logger.info(f"🧹 Reminder 1h supprimé (eventId={event_id}, messageId={message_id})")
             except discord.NotFound:
                 continue
-            except Exception as e:
-                logger.warning(f"⚠️ Impossible de supprimer reminder 1h ({message_id}) : {e}")
+            except Exception as exc:
+                logger.warning(
+                    "⚠️ Impossible de supprimer reminder 1h (%s, %s)",
+                    message_id,
+                    type(exc).__name__,
+                )
 
         # 2) Mettre à jour les dailyPing qui contiennent cet event
         for message_id, metadata in list(self._daily_ping_messages.items()):
@@ -323,8 +351,12 @@ class EventHandler:
                 logger.info(f"🧹 Daily ping mis à jour (event retiré) (messageId={message_id})")
             except discord.NotFound:
                 self._daily_ping_messages.pop(message_id, None)
-            except Exception as e:
-                logger.warning(f"⚠️ Impossible de mettre à jour le daily ping ({message_id}) : {e}")
+            except Exception as exc:
+                logger.warning(
+                    "⚠️ Impossible de mettre à jour le daily ping (%s, %s)",
+                    message_id,
+                    type(exc).__name__,
+                )
 
 
     async def cleanup_daily_ping(self):
@@ -348,8 +380,11 @@ class EventHandler:
                 try:
                     await message.delete()
                     logger.info(f"🧹 Message dailyPing du {today_iso} supprimé.")
-                except Exception as e:
-                    logger.error(f"❌ Erreur lors du nettoyage dailyPing : {e}")
+                except Exception as exc:
+                    logger.error(
+                        "❌ Erreur lors du nettoyage dailyPing (%s)",
+                        type(exc).__name__,
+                    )
                 return
 
         logger.warning(f"⚠️ Aucun message dailyPing trouvé pour {today_iso}.")
@@ -367,21 +402,31 @@ class EventHandler:
         channel = self.bot.get_channel(int(channel_id))
         if not channel:
             logger.error(f"⚠️ Channel introuvable ({channel_id})")
-            return
+            raise RuntimeError("Discord event channel is unavailable")
 
         try:
             message = await channel.fetch_message(int(message_id))
             await message.delete()
+            if self.discord_link_store and event_id:
+                self.discord_link_store.delete("event", event_id)
             logger.info(f"🗑️ Événement supprimé de Discord (eventId={event_id})")
-        except Exception as e:
-            logger.exception(f"❌ Erreur lors de la suppression de l’event Discord : {e}")
+        except discord.NotFound:
+            if self.discord_link_store and event_id:
+                self.discord_link_store.delete("event", event_id)
+            logger.warning(f"⚠️ Message déjà supprimé pour event {event_id}")
+        except Exception as exc:
+            logger.error(
+                "❌ Erreur lors de la suppression de l’event Discord (%s)",
+                type(exc).__name__,
+            )
+            raise
 
 
     async def handle_daily_ping(self, payload: dict):
         channel = self.bot.get_channel(self.channel_id)
         if not channel:
             logger.error("⚠️ Salon introuvable pour dailyPing")
-            return
+            raise RuntimeError("Discord events channel is unavailable")
 
         events = payload.get("events", [])
         date = format_day(payload.get("date"))
@@ -409,7 +454,7 @@ class EventHandler:
         channel = self.bot.get_channel(self.channel_id)
         if not channel:
             logger.error("⚠️ Salon Discord introuvable pour reminderOneHour")
-            return
+            raise RuntimeError("Discord events channel is unavailable")
 
         title = payload.get("title")
         participants = payload.get("participants", [])
@@ -458,8 +503,12 @@ class EventHandler:
         if not channel:
             try:
                 channel = await self.bot.fetch_channel(self.channel_id)
-            except Exception as e:
-                logger.error(f"❌ Impossible de récupérer le salon d'events ({self.channel_id}): {e}")
+            except Exception as exc:
+                logger.error(
+                    "❌ Impossible de récupérer le salon d'events (%s, %s)",
+                    self.channel_id,
+                    type(exc).__name__,
+                )
                 return
 
         restored = 0
@@ -545,16 +594,26 @@ class EventParticipationView(ui.View):
 
     async def _send_participation(self, interaction: discord.Interaction, status: int):
         await interaction.response.defer(ephemeral=True)
-        await self.rabbit.publish(
-            "events.participation",
-            {
-                "eventId": self.event_id,
-                "userId": interaction.user.id,
-                "username": interaction.user.name,
-                "status": status,
-            },
-        )
+        try:
+            await self.rabbit.publish(
+                "events.participation",
+                {
+                    "eventId": self.event_id,
+                    "userId": interaction.user.id,
+                    "username": interaction.user.name,
+                    "status": status,
+                },
+            )
+        except Exception as exc:
+            logger.error(
+                "❌ Publication de participation impossible (%s)",
+                type(exc).__name__,
+            )
+            await interaction.followup.send(
+                "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard.",
+                ephemeral=True,
+            )
+            return
         await interaction.followup.send(
-            "✅ Votre choix a été enregistré !",
-            ephemeral=True,
+            "✅ Votre choix a été enregistré !", ephemeral=True
         )

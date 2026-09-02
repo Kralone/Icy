@@ -17,6 +17,14 @@ Le bot refuse volontairement de démarrer si `BOT_API_KEY` est absent. Les
 autres secrets et identifiants Discord doivent également être fournis par
 l'environnement et ne doivent jamais être ajoutés au dépôt.
 
+La création d'événements depuis Discord n'est pas exposée : l'ancien cog ne
+disposait ni d'un contrat d'authentification backend compatible, ni d'un modèle
+de permissions Discord fiable. Les événements doivent être créés depuis
+l'interface web authentifiée jusqu'à la définition explicite d'un contrat bot.
+
+L'ancien serveur HTTP `/notify-password` a été supprimé. La notification de
+réinitialisation transite uniquement par la file RabbitMQ interne.
+
 ## Validation sans connexion à Discord
 
 ```powershell
@@ -28,3 +36,19 @@ l'environnement et ne doivent jamais être ajoutés au dépôt.
 Lors d'une mise à jour, modifier d'abord `requirement.txt`, régénérer
 `requirements.lock` sous Python 3.14, puis exécuter toute la validation avant
 de remplacer le verrou existant.
+
+## Livraison RabbitMQ
+
+Un échec de handler est retenté trois fois par défaut, avec un délai de cinq
+secondes, puis envoyé dans la file durable
+`icy.exchange.bot.dlx.queue`. Les variables `BOT_RABBIT_RETRY_LIMIT` (0 à 10)
+et `BOT_RABBIT_RETRY_DELAY_MS` (100 à 300000) permettent d'ajuster cette
+politique. Un JSON invalide va directement en DLQ.
+
+Cette livraison est **at-least-once**, pas exactly-once. Pour les créations
+d'actualités et d'événements, le bot enregistre le lien Discord dans
+`/app/config/discord-links.sqlite3` avant le callback `*.discordLinked`. Un retry
+réutilise donc le message déjà créé au lieu de le publier en double. Le fichier
+est conservé par le volume `bot_config`. Une interruption exactement entre la
+réponse Discord et l'écriture SQLite reste une limite théorique des deux systèmes
+non transactionnels.

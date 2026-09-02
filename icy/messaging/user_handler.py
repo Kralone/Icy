@@ -1,5 +1,4 @@
 import logging
-import json
 
 logger = logging.getLogger("icy.user")
 
@@ -16,12 +15,23 @@ class UserHandler:
             else:
                 logger.warning(f"⚠️ Clé de routage non gérée : {routing_key}")
 
-        except Exception as e:
-            logger.exception(f"❌ Erreur dans UserHandler : {e}")
+        except Exception as exc:
+            # Discord/client exceptions can contain message content. Password-reset
+            # payloads are sensitive, so never render the exception itself.
+            logger.error("❌ Erreur dans UserHandler (%s)", type(exc).__name__)
+            raise
 
     async def _handle_password_reset(self, payload: dict):
-        discord_id = int(payload.get("discordId"))
+        try:
+            discord_id = int(payload.get("discordId"))
+        except (TypeError, ValueError):
+            logger.warning("⚠️ Notification de mot de passe ignorée: Discord ID invalide.")
+            return
         temp_password = payload.get("tempPassword")
+
+        if discord_id <= 0 or not isinstance(temp_password, str) or not temp_password:
+            logger.warning("⚠️ Notification de mot de passe ignorée: payload invalide.")
+            return
 
         logger.info(f"🔐 Notification de mot de passe pour {discord_id}")
 

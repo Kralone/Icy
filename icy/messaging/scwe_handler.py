@@ -31,7 +31,7 @@ class ScweHandler:
         channel = self.bot.get_channel(self.channel_id)
         if not channel:
             logger.error(f"⚠️ Salon introuvable (ID={self.channel_id}) pour SCWE Tier")
-            return
+            raise RuntimeError("Discord notifications channel is unavailable")
 
         description = payload.get("discordDescription", "Un palier a été franchi !")
         image_url = payload.get("imageUrl")
@@ -63,5 +63,9 @@ class ScweHandler:
         try:
             await channel.send(embed=embed)
             logger.info(f"🏆 Notification SCWE envoyée avec récompense : {reward_text}")
-        except Exception as e:
-            logger.error(f"❌ Erreur lors de l'envoi du message SCWE : {e}")
+        except Exception as exc:
+            logger.error(
+                "❌ Erreur lors de l'envoi du message SCWE (%s)",
+                type(exc).__name__,
+            )
+            raise

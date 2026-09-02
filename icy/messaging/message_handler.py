@@ -1,5 +1,4 @@
 import logging
-import json
 from messaging.news_handler import NewsHandler
 from messaging.event_handler import EventHandler  # à venir
 from messaging.scwe_handler import ScweHandler
@@ -11,13 +10,13 @@ logger = logging.getLogger("icy.handler")
 class MessageHandler:
     """Dispatch des messages RabbitMQ vers le handler métier approprié."""
 
-    def __init__(self, bot, rabbit=None):
+    def __init__(self, bot, rabbit=None, discord_link_store=None):
         self.bot = bot
         self.rabbit = rabbit
 
         # Enregistre les sous-handlers
-        self.news_handler = NewsHandler(bot, rabbit)
-        self.event_handler = EventHandler(bot, rabbit)  # sera ajouté plus tard
+        self.news_handler = NewsHandler(bot, rabbit, discord_link_store)
+        self.event_handler = EventHandler(bot, rabbit, discord_link_store)
         self.user_handler = UserHandler(bot)  # 👈 ajouté
         self.scwe_handler = ScweHandler(bot, rabbit)
 
@@ -30,7 +29,7 @@ class MessageHandler:
 
 
         logger.info(f"🔔 Message RabbitMQ reçu ({routing_key})")
-        logger.debug(json.dumps(payload, indent=2, ensure_ascii=False))
+        logger.debug("Champs du message RabbitMQ : %s", sorted(payload.keys()))
 
         # --- NEWS ---
         if routing_key.startswith("news."):

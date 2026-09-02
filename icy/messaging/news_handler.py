@@ -9,9 +9,10 @@ logger = logging.getLogger("icy.news_handler")
 class NewsHandler:
     """Gère la logique métier liée aux actualités (news.*)."""
 
-    def __init__(self, bot, rabbit=None):
+    def __init__(self, bot, rabbit=None, discord_link_store=None):
         self.bot = bot
         self.rabbit = rabbit
+        self.discord_link_store = discord_link_store
         self.news_channel_id = self._read_channel_id("DISCORD_NEWS_CHANNEL_ID")
         self.notifications_channel_id = self._read_channel_id("DISCORD_NOTIFICATIONS_CHANNEL_ID")
 
@@ -42,6 +43,9 @@ class NewsHandler:
     # 🧊 NEWS.CREATED
     # -----------------------------------------------------------------------
     async def _created(self, payload: dict):
+        news_id = payload.get("id")
+        if not news_id:
+            raise ValueError("News id is required")
         title = payload.get("title", "Sans titre")
         author = payload.get("author", "Inconnu")
         content = html_to_discord(payload.get("content", "Aucun contenu"))
@@ -64,22 +68,42 @@ class NewsHandler:
         channel = self._resolve_target_channel(payload)
         if not channel:
             logger.error("⚠️ Salon cible introuvable pour publication de news")
-            return
+            raise RuntimeError("Discord news channel is unavailable")
 
-        message = await channel.send(embed=embed)
-        logger.info(f"✅ Actualité publiée : '{title}' dans #{channel.name}")
+        link = (
+            self.discord_link_store.get("news", news_id)
+            if self.discord_link_store
+            else None
+        )
+        if link is None:
+            message = await channel.send(embed=embed)
+            logger.info(f"✅ Actualité publiée : '{title}' dans #{channel.name}")
+            if self.discord_link_store:
+                link = self.discord_link_store.save(
+                    "news", news_id, message.channel.id, message.id
+                )
+            else:
+                channel_id = message.channel.id
+                message_id = message.id
+        else:
+            logger.info(
+                "♻️ Message Discord existant réutilisé pour newsId=%s", news_id
+            )
+        if link is not None:
+            channel_id = link.channel_id
+            message_id = link.message_id
 
         # Retour backend (news.discordLinked)
         if self.rabbit:
             await self.rabbit.publish(
                 "news.discordLinked",
                 {
-                    "newsId": payload["id"],
-                    "messageId": message.id,
-                    "channelId": message.channel.id,
+                    "newsId": news_id,
+                    "messageId": message_id,
+                    "channelId": channel_id,
                 },
             )
-            logger.info(f"📨 Réponse RabbitMQ envoyée pour newsId={payload['id']}")
+            logger.info(f"📨 Réponse RabbitMQ envoyée pour newsId={news_id}")
 
     def _resolve_target_channel(self, payload: dict):
         if self._is_cig_weekly_report(payload) and self.notifications_channel_id:
@@ -111,9 +135,12 @@ class NewsHandler:
         try:
             channel = self.bot.get_channel(int(channel_id))
             message = await channel.fetch_message(int(message_id))
-        except Exception as e:
-            logger.warning(f"⚠️ Impossible de récupérer le message Discord : {e}")
-            return
+        except Exception as exc:
+            logger.warning(
+                "⚠️ Impossible de récupérer le message Discord (%s)",
+                type(exc).__name__,
+            )
+            raise
 
         title = payload.get("title", "Sans titre")
         author = payload.get("author", "Inconnu")
@@ -150,8 +177,16 @@ class NewsHandler:
             channel = self.bot.get_channel(int(channel_id))
             message = await channel.fetch_message(int(message_id))
             await message.delete()
+            if self.discord_link_store and news_id:
+                self.discord_link_store.delete("news", news_id)
             logger.info(f"🗑️ Actualité supprimée sur Discord (newsId={news_id})")
         except discord.NotFound:
+            if self.discord_link_store and news_id:
+                self.discord_link_store.delete("news", news_id)
             logger.warning("⚠️ Message déjà supprimé ou introuvable")
-        except Exception as e:
-            logger.exception(f"❌ Erreur lors de la suppression Discord : {e}")
+        except Exception as exc:
+            logger.error(
+                "❌ Erreur lors de la suppression Discord (%s)",
+                type(exc).__name__,
+            )
+            raise

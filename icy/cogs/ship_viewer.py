@@ -11,9 +11,15 @@ class ShipViewer(discord.ui.View):
         self.index = 0
 
     async def fetch_ships(self):
-        response = await self.api_cog.api_request("GET", f"api/user-ships?discordId={self.discord_id}")
+        response = await self.api_cog.api_request(
+            "GET", f"api/user-ships/bot?discordId={self.discord_id}"
+        )
 
-        if response and response["httpCode"] == 200:
+        if (
+            isinstance(response, dict)
+            and response.get("httpCode") == 200
+            and isinstance(response.get("data"), list)
+        ):
             self.ships = response["data"]
         else:
             self.ships = []
@@ -38,15 +44,35 @@ class ShipViewer(discord.ui.View):
         )
         return embed
 
+    async def _can_interact(self, interaction):
+        if interaction.user.id != self.discord_id:
+            await interaction.response.send_message(
+                "Cette liste de vaisseaux ne vous appartient pas.", ephemeral=True
+            )
+            return False
+        if not self.ships:
+            await interaction.response.send_message(
+                "Aucun vaisseau n'est disponible.", ephemeral=True
+            )
+            return False
+        return True
+
     @discord.ui.button(label="⬅️", style=discord.ButtonStyle.primary)
     async def previous_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._can_interact(interaction):
+            return
         self.index = (self.index - 1) % len(self.ships)
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
     @discord.ui.button(label="🗑️", style=discord.ButtonStyle.danger)
     async def delete_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._can_interact(interaction):
+            return
         ship_id = self.ships[self.index]['id']
-        response = await self.api_cog.api_request("DELETE", f"api/user-ships?discordId={interaction.user.id}&shipId={ship_id}")
+        response = await self.api_cog.api_request(
+            "DELETE",
+            f"api/user-ships/bot?discordId={interaction.user.id}&shipId={ship_id}",
+        )
 
         if response and response["httpCode"] == 200:
             self.ships.pop(self.index)
@@ -60,6 +86,8 @@ class ShipViewer(discord.ui.View):
 
     @discord.ui.button(label="➡️", style=discord.ButtonStyle.primary)
     async def next_ship(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._can_interact(interaction):
+            return
         self.index = (self.index + 1) % len(self.ships)
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
 

@@ -2,10 +2,6 @@ discord.py==2.7.1
 asyncpg==0.31.0
 python-dotenv==1.2.3
 
-# Pour l'API HTTP
-fastapi==0.141.1
-uvicorn[standard]==0.52.4
-
 # Rabbit
 aio-pika==10.0.1
 
