@@ -2,12 +2,14 @@
 set -euo pipefail
 
 INIT_JSON=
+PREFLIGHT=0
 usage() {
-  echo "Usage: configure-production-secrets.sh [--init-json /chemin/prod-init.json]" >&2
+  echo "Usage: configure-production-secrets.sh [--init-json /chemin/prod-init.json] [--preflight]" >&2
 }
 while (($#)); do
   case "$1" in
     --init-json) INIT_JSON=${2:?chemin manquant}; shift 2 ;;
+    --preflight) PREFLIGHT=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
   esac
@@ -182,22 +184,41 @@ if bot_existing_read=$(vault_exec kv get -format=json "$VAULT_MOUNT/$BOT_PATH" 2
 fi
 unset backend_existing_read bot_existing_read
 
-postgres_user=$(dotenv_value SPRING_DATASOURCE_USERNAME)
+postgres_url=$(json_value "$backend_existing" spring.datasource.url)
+postgres_user=$(json_value "$backend_existing" spring.datasource.username)
+postgres_password=$(json_value "$backend_existing" spring.datasource.password)
+[[ -n $postgres_url ]] || postgres_url=$(dotenv_value SPRING_DATASOURCE_URL)
+[[ -n $postgres_user ]] || postgres_user=$(dotenv_value SPRING_DATASOURCE_USERNAME)
 [[ -n $postgres_user ]] || postgres_user=$(dotenv_value POSTGRES_USER)
-postgres_db=$(dotenv_value POSTGRES_DB)
-postgres_password=$(dotenv_value SPRING_DATASOURCE_PASSWORD)
+[[ -n $postgres_password ]] || postgres_password=$(dotenv_value SPRING_DATASOURCE_PASSWORD)
 [[ -n $postgres_password ]] || postgres_password=$(dotenv_value POSTGRES_PASSWORD)
-[[ -n $postgres_user && -n $postgres_db && -n $postgres_password ]] \
-  || die 'identifiants PostgreSQL incomplets dans .env'
+if [[ -z $postgres_url ]]; then
+  postgres_db=$(dotenv_value POSTGRES_DB)
+  [[ -z $postgres_db ]] || postgres_url="jdbc:postgresql://db:5432/$postgres_db"
+fi
+[[ -n $postgres_url && -n $postgres_user && -n $postgres_password ]] \
+  || die 'identifiants PostgreSQL incomplets dans Vault et .env'
 [[ $postgres_password != change_me_local_only ]] || die 'mot de passe PostgreSQL de demonstration refuse'
 
-rabbit_user=$(dotenv_value RABBITMQ_USER)
+rabbit_user=$(json_value "$backend_existing" spring.rabbitmq.username)
+[[ -n $rabbit_user ]] || rabbit_user=$(json_value "$bot_existing" RABBITMQ_USER)
+rabbit_password=$(json_value "$backend_existing" spring.rabbitmq.password)
+[[ -n $rabbit_password ]] || rabbit_password=$(json_value "$bot_existing" RABBITMQ_PSWD)
+rabbit_host=$(json_value "$backend_existing" spring.rabbitmq.host)
+[[ -n $rabbit_host ]] || rabbit_host=$(json_value "$bot_existing" RABBITMQ_HOST)
+[[ -n $rabbit_host ]] || rabbit_host=rabbitmq
+rabbit_port=$(json_value "$backend_existing" spring.rabbitmq.port)
+[[ -n $rabbit_port ]] || rabbit_port=$(json_value "$bot_existing" RABBITMQ_PORT)
+[[ -n $rabbit_port ]] || rabbit_port=5672
+rabbit_vhost=$(json_value "$backend_existing" spring.rabbitmq.virtual-host)
+[[ -n $rabbit_vhost ]] || rabbit_vhost=$(json_value "$bot_existing" RABBITMQ_VHOST)
+[[ -n $rabbit_user ]] || rabbit_user=$(dotenv_value RABBITMQ_USER)
 [[ -n $rabbit_user ]] || rabbit_user=$(dotenv_value RABBITMQ_DEFAULT_USER)
-rabbit_password=$(dotenv_value RABBITMQ_PSWD)
+[[ -n $rabbit_password ]] || rabbit_password=$(dotenv_value RABBITMQ_PSWD)
 [[ -n $rabbit_password ]] || rabbit_password=$(dotenv_value RABBITMQ_DEFAULT_PASS)
-rabbit_vhost=$(dotenv_value RABBITMQ_VHOST)
+[[ -n $rabbit_vhost ]] || rabbit_vhost=$(dotenv_value RABBITMQ_VHOST)
 [[ -n $rabbit_vhost ]] || rabbit_vhost=/
-[[ -n $rabbit_user && -n $rabbit_password ]] || die 'identifiants RabbitMQ incomplets dans .env'
+[[ -n $rabbit_user && -n $rabbit_password ]] || die 'identifiants RabbitMQ incomplets dans Vault et .env'
 [[ $rabbit_password != change_me_local_only ]] || die 'mot de passe RabbitMQ de demonstration refuse'
 
 jwt_secret=$(json_value "$backend_existing" jwt.secret)
@@ -220,6 +241,20 @@ events_channel=$(json_value "$bot_existing" DISCORD_EVENTS_CHANNEL_ID)
 news_channel=$(json_value "$bot_existing" DISCORD_NEWS_CHANNEL_ID)
 notifications_channel=$(json_value "$bot_existing" DISCORD_NOTIFICATIONS_CHANNEL_ID)
 discussion_channel=$(json_value "$bot_existing" DISCORD_DISCUSSION_CHANNEL_ID)
+
+if ((PREFLIGHT)); then
+  (( ${#jwt_secret} >= 32 )) || die 'secret JWT Vault absent ou trop court'
+  (( ${#bot_api_key} >= 32 )) || die 'BOT_API_KEY Vault absente ou trop courte'
+  (( ${#discord_token} >= 30 )) || die 'token Discord Vault absent ou trop court'
+  for id in "$guild_id" "$events_channel" "$news_channel" "$notifications_channel" "$discussion_channel"; do
+    [[ $id =~ ^[0-9]{15,25}$ ]] || die 'un identifiant Discord Vault est absent ou invalide'
+  done
+  if [[ -n $vapid_public || -n $vapid_private ]]; then
+    [[ -n $vapid_public && -n $vapid_private ]] || die 'paire VAPID Vault incomplete'
+  fi
+  printf 'VAULT_PRODUCTION_PREFLIGHT=OK postgres=present rabbitmq=present app=present\n'
+  exit 0
+fi
 
 prompt_secret jwt_secret 'Secret de signature JWT (32 caracteres minimum)' "$jwt_secret" 1
 prompt_secret bot_api_key 'Cle partagee backend/bot (32 caracteres minimum)' "$bot_api_key" 1
@@ -245,8 +280,8 @@ if [[ -n $vapid_public || -n $vapid_private ]]; then
   [[ -n $vapid_public && -n $vapid_private ]] || die 'les deux cles VAPID doivent etre renseignees ensemble'
 fi
 
-for value in "$postgres_user" "$postgres_db" "$postgres_password" "$rabbit_user" \
-  "$rabbit_password" "$rabbit_vhost" "$jwt_secret" "$bot_api_key" \
+for value in "$postgres_url" "$postgres_user" "$postgres_password" "$rabbit_host" \
+  "$rabbit_port" "$rabbit_user" "$rabbit_password" "$rabbit_vhost" "$jwt_secret" "$bot_api_key" \
   "$discord_token" "$openai_api_key" "$uex_api_key" "$vapid_public" \
   "$vapid_private" "$vapid_subject" "$guild_id" "$events_channel" \
   "$news_channel" "$notifications_channel" "$discussion_channel"; do
@@ -256,35 +291,35 @@ done
 backend_existing_data=$(jq -c '.data.data // {}' <<<"$backend_existing")
 bot_existing_data=$(jq -c '.data.data // {}' <<<"$bot_existing")
 backend_payload=$({
-  printf '%s\n' "$backend_existing_data" "jdbc:postgresql://db:5432/$postgres_db" \
-    "$postgres_user" "$postgres_password" "$rabbit_user" "$rabbit_password" \
-    "$rabbit_vhost" "$jwt_secret" "$bot_api_key" "$openai_api_key" \
+  printf '%s\n' "$backend_existing_data" "$postgres_url" \
+    "$postgres_user" "$postgres_password" "$rabbit_host" "$rabbit_port" \
+    "$rabbit_user" "$rabbit_password" "$rabbit_vhost" "$jwt_secret" "$bot_api_key" "$openai_api_key" \
     "$uex_api_key" 'https://iceforge.fr/images/' "$vapid_public" \
     "$vapid_private" "$vapid_subject"
 } | jq -Rn '[inputs] as $v | ($v[0] | fromjson) + {
   "spring.datasource.url":$v[1],
   "spring.datasource.username":$v[2],
   "spring.datasource.password":$v[3],
-  "spring.rabbitmq.host":"rabbitmq",
-  "spring.rabbitmq.port":"5672",
-  "spring.rabbitmq.username":$v[4],
-  "spring.rabbitmq.password":$v[5],
-  "spring.rabbitmq.virtual-host":$v[6],
-  "jwt.secret":$v[7],
-  "bot.api-key":$v[8],
-  "openai.api-key":$v[9],
-  "icy.uex.api-key":$v[10],
-  "icy.image.base-url":$v[11],
-  "push.vapid.public-key":$v[12],
-  "push.vapid.private-key":$v[13],
-  "push.vapid.subject":$v[14]
+  "spring.rabbitmq.host":$v[4],
+  "spring.rabbitmq.port":$v[5],
+  "spring.rabbitmq.username":$v[6],
+  "spring.rabbitmq.password":$v[7],
+  "spring.rabbitmq.virtual-host":$v[8],
+  "jwt.secret":$v[9],
+  "bot.api-key":$v[10],
+  "openai.api-key":$v[11],
+  "icy.uex.api-key":$v[12],
+  "icy.image.base-url":$v[13],
+  "push.vapid.public-key":$v[14],
+  "push.vapid.private-key":$v[15],
+  "push.vapid.subject":$v[16]
 }')
 
 bot_payload=$({
   printf '%s\n' "$bot_existing_data" "$discord_token" "$guild_id" \
     "$events_channel" "$news_channel" "$notifications_channel" \
-    "$discussion_channel" "$bot_api_key" "$rabbit_user" \
-    "$rabbit_password" "$rabbit_vhost"
+    "$discussion_channel" "$bot_api_key" "$rabbit_host" "$rabbit_port" \
+    "$rabbit_user" "$rabbit_password" "$rabbit_vhost"
 } | jq -Rn '[inputs] as $v | ($v[0] | fromjson) + {
   DISCORD_TOKEN:$v[1],
   GUILD_ID:$v[2],
@@ -294,11 +329,11 @@ bot_payload=$({
   DISCORD_DISCUSSION_CHANNEL_ID:$v[6],
   ENV_MODE:"production",
   BOT_API_KEY:$v[7],
-  RABBITMQ_HOST:"rabbitmq",
-  RABBITMQ_PORT:"5672",
-  RABBITMQ_USER:$v[8],
-  RABBITMQ_PSWD:$v[9],
-  RABBITMQ_VHOST:$v[10]
+  RABBITMQ_HOST:$v[8],
+  RABBITMQ_PORT:$v[9],
+  RABBITMQ_USER:$v[10],
+  RABBITMQ_PSWD:$v[11],
+  RABBITMQ_VHOST:$v[12]
 }')
 unset backend_existing_data bot_existing_data
 
