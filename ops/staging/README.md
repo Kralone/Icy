@@ -50,8 +50,10 @@ plutôt depuis PowerShell :
   -IdentityFile "$env:USERPROFILE\.ssh\iceforge_ops_ed25519"
 ```
 
-Le script PowerShell demande le token avec `SecureString` puis le transmet sur
-l'entrée standard SSH. Il n'est jamais placé dans les arguments du processus.
+Le script PowerShell demande uniquement le token avec `SecureString`, utilise
+les identifiants du serveur et du salon Discord temporaire dédiés, normalise les
+fins de ligne Windows, puis transmet le tout sur l'entrée standard SSH. Le token
+n'est jamais placé dans les arguments du processus.
 
 Puis démarrer le profil Discord :
 
