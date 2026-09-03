@@ -1,0 +1,12 @@
+# Fichiers réellement utilisés par la pile de production IceForge actuelle.
+# Cette liste est destinée à recovery-assets.sh avec /root/iceforge comme racine.
+docker-compose.yml
+docker-compose.vault.yml
+ops/backups
+ops/network-hardening
+ops/bot-rollout
+ops/backend-rollout
+ops/frontend-rollout
+.env
+.secrets/vault/compose.prod.env
+.secrets/vault/prod-init.json
