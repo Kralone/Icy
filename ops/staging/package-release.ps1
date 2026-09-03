@@ -42,6 +42,7 @@ $releaseFiles = @(
     'install-release.sh',
     'deploy.sh',
     'verify.sh',
+    'verify-discord-e2e.sh',
     'destroy.sh',
     'README.md'
 )

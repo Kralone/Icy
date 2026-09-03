@@ -76,8 +76,14 @@ Le navigateur peut alors ouvrir `http://127.0.0.1:19088`.
 ```bash
 sudo /opt/iceforge-staging/current/verify.sh \
   --release-dir "$(readlink -f /opt/iceforge-staging/current)"
+sudo /opt/iceforge-staging/current/verify-discord-e2e.sh
 sudo /opt/iceforge-staging/current/destroy.sh
 ```
+
+Le test Discord crée un événement synthétique, attend sa publication, republie
+le même message AMQP pour prouver la déduplication, vérifie la mise à jour puis
+la suppression du message et confirme le nettoyage en base et dans le ledger du
+bot. Le scénario possède un nettoyage de secours en cas d'échec.
 
 `destroy.sh` supprime explicitement les conteneurs, réseaux et volumes de
 staging. Il ne touche ni à la pile `iceforge`, ni aux sauvegardes, ni aux
