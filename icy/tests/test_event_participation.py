@@ -1,7 +1,18 @@
 import unittest
 from unittest.mock import AsyncMock
 
-from messaging.event_handler import EventParticipationView
+from messaging.event_handler import EventParticipationView, is_supported_discord_image_url
+
+
+class DiscordEventImageUrlTest(unittest.TestCase):
+    def test_accepts_absolute_http_urls(self):
+        self.assertTrue(is_supported_discord_image_url("https://cdn.example.test/event.png"))
+        self.assertTrue(is_supported_discord_image_url("http://example.test/event.png"))
+
+    def test_rejects_relative_or_non_http_urls(self):
+        for value in ("/assets/event.png", "event.png", "file:///event.png", "", None):
+            with self.subTest(value=value):
+                self.assertFalse(is_supported_discord_image_url(value))
 
 
 class EventParticipationViewTest(unittest.IsolatedAsyncioTestCase):

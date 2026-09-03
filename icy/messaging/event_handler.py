@@ -6,9 +6,21 @@ from utils.html_to_discord import html_to_discord
 import logging
 from typing import Dict, List, Tuple, Optional
 import re
+from urllib.parse import urlsplit
 
 logger = logging.getLogger("icy.event_handler")
 EVENT_BUTTON_CUSTOM_ID_RE = re.compile(r"^event:([0-9a-fA-F-]{36}):(-?1|0|1)$")
+
+
+def is_supported_discord_image_url(value: object) -> bool:
+    """Discord embed images must be reachable through an absolute HTTP(S) URL."""
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = urlsplit(value.strip())
+        return parsed.scheme.lower() in {"http", "https"} and bool(parsed.netloc)
+    except ValueError:
+        return False
 
 def format_date(date_str: str) -> str:
     """Convertit une date ISO (ex: 2025-11-03T12:30:00) en format lisible français, sans dépendre de la locale système."""
@@ -140,8 +152,10 @@ class EventHandler:
         embed.add_field(name="❔ Peut-être", value=fmt_list(maybe), inline=True)
         embed.add_field(name="❌ Refusés", value=fmt_list(refused), inline=True)
         embed.set_footer(text=f"Créé par {creator}")
-        if image_url:
+        if is_supported_discord_image_url(image_url):
             embed.set_image(url=image_url)
+        elif image_url:
+            logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
 
         view = EventParticipationView(self.rabbit, payload["id"])
 
@@ -231,8 +245,10 @@ class EventHandler:
         embed.add_field(name="❔ Peut-être", value=fmt_list(maybe), inline=True)
         embed.add_field(name="❌ Refusés", value=fmt_list(refused), inline=True)
         embed.set_footer(text=f"Créé par {creator}")
-        if image_url:
+        if is_supported_discord_image_url(image_url):
             embed.set_image(url=image_url)
+        elif image_url:
+            logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
 
         view = EventParticipationView(self.rabbit, event_id)
         await message.edit(embed=embed, view=view)
