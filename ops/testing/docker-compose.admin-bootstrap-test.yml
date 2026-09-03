@@ -22,7 +22,7 @@ services:
       RABBITMQ_USERNAME: iceforge_bootstrap_test
       RABBITMQ_PASSWORD: iceforge_bootstrap_test
       VAULT_ENABLED: "false"
-      SPRING_FLYWAY_TARGET: ${ICEFORGE_ADMIN_TEST_FLYWAY_TARGET:-29}
+      SPRING_FLYWAY_TARGET: ${ICEFORGE_ADMIN_TEST_FLYWAY_TARGET:-30}
 
   bot:
     profiles: ["external"]

@@ -47,6 +47,9 @@ $securePassword = ConvertTo-SecureString $temporaryPassword -AsPlainText -Force
 $previousFlywayTarget = $env:ICEFORGE_ADMIN_TEST_FLYWAY_TARGET
 
 try {
+    # Always exercise the backend and migrations from the current checkout,
+    # never a stale image left by a previous validation run.
+    Invoke-Compose build backend
     Invoke-Compose up -d --wait db rabbitmq
     $dbContainer = (& $script:Docker ps -q --filter "label=com.docker.compose.project=$projectName" --filter 'label=com.docker.compose.service=db').Trim()
     if (-not $dbContainer) { throw 'Conteneur PostgreSQL de test introuvable.' }
@@ -99,9 +102,38 @@ try {
         throw "L'administrateur amorcé n'est pas conforme: $adminState"
     }
 
+    & $script:Docker exec $dbContainer psql -X -q -v ON_ERROR_STOP=1 -U iceforge_bootstrap_test -d iceforge_bootstrap_test -c "INSERT INTO events.events(id, type, title, description, start_date_time, end_date_time) VALUES ('00000000-0000-0000-0000-000000000029', 'legacy_v30_type', 'Legacy V29 probe', 'backfill probe', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '1 hour');" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "La préparation d'un événement historique V29 a échoué." }
+
+    $env:ICEFORGE_ADMIN_TEST_FLYWAY_TARGET = '30'
+    Invoke-Compose up -d --no-build --force-recreate --wait backend
+
+    $migrationState = (& $script:Docker exec $dbContainer psql -X -U iceforge_bootstrap_test -d iceforge_bootstrap_test -Atc "SELECT count(*) || '|' || min(version::integer) || '|' || max(version::integer) || '|' || bool_and(success) FROM public.flyway_schema_history").Trim()
+    if ($migrationState -ne '30|1|30|true') {
+        throw "Historique Flyway inattendu après migration V30: $migrationState"
+    }
+
+    $eventColumns = (& $script:Docker exec $dbContainer psql -X -U iceforge_bootstrap_test -d iceforge_bootstrap_test -Atc "SELECT string_agg(column_name || '=' || is_nullable, ',' ORDER BY column_name) FROM information_schema.columns WHERE table_schema='events' AND table_name='events' AND column_name IN ('event_type', 'type')").Trim()
+    if ($eventColumns -ne 'event_type=NO,type=YES') {
+        throw "Contraintes de colonnes événement inattendues après V30: $eventColumns"
+    }
+
+    $legacyEventState = (& $script:Docker exec $dbContainer psql -X -U iceforge_bootstrap_test -d iceforge_bootstrap_test -Atc "SELECT type || '|' || event_type || '|' || (SELECT count(*) FROM events.event_types et WHERE et.name=e.event_type) FROM events.events e WHERE id='00000000-0000-0000-0000-000000000029';").Trim()
+    if ($legacyEventState -ne 'legacy_v30_type|legacy_v30_type|1') {
+        throw "La reprise du type de l'événement historique V29 a échoué: $legacyEventState"
+    }
+
+    & $script:Docker exec $dbContainer psql -X -q -v ON_ERROR_STOP=1 -U iceforge_bootstrap_test -d iceforge_bootstrap_test -c "INSERT INTO events.event_types(name) VALUES ('bootstrap_v30_type') ON CONFLICT DO NOTHING; INSERT INTO events.events(id, title, description, start_date_time, end_date_time, event_type) VALUES ('00000000-0000-0000-0000-000000000030', 'V30 probe', 'constraint probe', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '1 hour', 'bootstrap_v30_type');" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "La création moderne d'un événement sans colonne type a échoué." }
+    $eventInsertState = (& $script:Docker exec $dbContainer psql -X -U iceforge_bootstrap_test -d iceforge_bootstrap_test -Atc "SELECT event_type || '|' || (type IS NULL) FROM events.events WHERE id='00000000-0000-0000-0000-000000000030';").Trim()
+    if ($eventInsertState -ne 'bootstrap_v30_type|true') {
+        throw "La création moderne d'un événement sans colonne type a échoué: $eventInsertState"
+    }
+
     Write-Host 'ADMIN-BOOTSTRAP-E2E=OK'
     Write-Host 'V29-ADMIN-READINESS=OK'
-    Write-Host 'FLYWAY-BASELINE-V1-TO-V29=OK'
+    Write-Host 'V30-EVENT-SCHEMA=OK'
+    Write-Host 'FLYWAY-BASELINE-V1-TO-V30=OK'
 } finally {
     $temporaryPassword = $null
     $securePassword.Dispose()

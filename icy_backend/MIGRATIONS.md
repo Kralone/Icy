@@ -9,7 +9,7 @@ SQL. Une correction ultérieure prend une nouvelle version et avance le schéma.
 
 1. Rebaser la branche sur `main` avant de choisir le numéro, puis utiliser la version
    qui suit immédiatement la dernière migration présente. L'historique actuel se
-   termine à V29 : la prochaine migration doit donc être V30.
+   termine à V30 : la prochaine migration doit donc être V31.
 2. Regrouper dans une version une évolution métier atomique et cohérente. Ne pas
    regrouper plusieurs fonctionnalités sans rapport sous prétexte qu'elles arrivent
    dans la même livraison.
@@ -41,6 +41,9 @@ V21 à V44 a été ramenée à huit migrations cohérentes :
 - V28 : refresh tokens.
 - V29 : neutralisation conditionnelle du compte administrateur historique resté
   strictement inchangé depuis V2.
+- V30 : alignement de la colonne de type des événements avec le modèle actuel,
+  avec reprise des valeurs historiques et conservation nullable de l'ancienne
+  colonne pour permettre un retour arrière applicatif.
 
 Cette consolidation supprime le doublon V31/V37 et les allers-retours V23/V24 et
 V41/V42. Un simple `flyway repair` est interdit sur l'ancien historique : il pourrait
@@ -49,6 +52,6 @@ production arrêtée à l'ancienne V43 suit la procédure transactionnelle décr
 `docs/PRODUCTION-BACKEND-JAVA25.md`. Toute autre variante d'historique doit être
 analysée séparément et ne doit pas être réparée par analogie.
 
-Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V29.
+Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V30.
 Toute évolution de schéma doit désormais être ajoutée dans une nouvelle migration,
-à commencer par V30.
+à commencer par V31.

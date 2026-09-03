@@ -1,4 +1,4 @@
-# SHA-256 du contenu UTF-8, BOM et fins de ligne normalisés. V1 à V29 sont immuables.
+# SHA-256 du contenu UTF-8, BOM et fins de ligne normalisés. V1 à V30 sont immuables.
 4a44eff75d31a702597e64f4f53a3e6ee4afe35be4d4c115994a172cbe580854 V1__init_db.sql
 d04430b7179fec77c48be70d0257b3361734195e8553b4f1a955177c20859b45 V2__add_roles.sql
 2264436ecc5ceac8fa03d9aa9168ae1b1093d9831bcff0293b4527d850a35e41 V3__add_brand.sql
@@ -28,3 +28,4 @@ ca449f8a85a353942549b5407d3c7f0f2346976fe47bc43e8f6d48747deb3beb V26__create_cig
 0b83d26e9da5f4c0bc7474b33ef5a15b36d580a380c667ed00628115e254f14f V27__create_mining_operations.sql
 712641e5bdf11d7eba1e7761b0122a62335b990220ff81ba45b3615e613330d9 V28__create_refresh_tokens.sql
 d61eb184509452ddef32e12cd7b10dbeb6de424670deeb4301ea44b6c25ab861 V29__disable_unchanged_legacy_admin.sql
+84902bf756505cae187129d91dfdb691e8a4920a01be6070bfcf9cb5f5105f0a V30__align_event_type_column.sql
