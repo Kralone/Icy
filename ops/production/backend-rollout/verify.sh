@@ -98,7 +98,7 @@ curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/fro
   || { echo "ERROR: public backend API probe failed" >&2; exit 1; }
 
 recent_logs="$(docker logs --since 10m "$backend_container" 2>&1)"
-if grep -Eiq '(^|[[:space:]])ERROR([[:space:]]|$)|Application run failed|Schema-validation|Validate failed' <<<"$recent_logs"; then
+if grep -Eq '(^|[[:space:]])ERROR([[:space:]]|$)|Application run failed|Schema-validation|Validate failed' <<<"$recent_logs"; then
   echo "ERROR: backend error marker found in recent logs" >&2
   exit 1
 fi
