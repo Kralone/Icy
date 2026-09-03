@@ -22,7 +22,7 @@ $actualSha256 = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLo
 if ($actualSha256 -ne $expectedSha256) { throw 'SHA-256 local de l archive incorrect.' }
 
 $required = @(
-    'docker-compose.staging.yml', 'prepare-env.sh', 'install-release.sh',
+    'docker-compose.staging.yml', 'prepare-env.sh', 'configure-discord.sh', 'install-release.sh',
     'deploy.sh', 'verify.sh', 'destroy.sh', 'validation-fixtures.sql',
     'README.md', 'release.json', 'iceforge-images.tar'
 )
@@ -42,8 +42,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Transfert de la release echoue.' }
 
 $remote = "sudo -n install -d -m 0750 /opt/iceforge-staging/releases/$revision; " +
           "sudo -n install -o root -g root -m 0640 $uploadDir/docker-compose.staging.yml $uploadDir/validation-fixtures.sql $uploadDir/README.md $uploadDir/release.json /opt/iceforge-staging/releases/$revision/; " +
-          "sudo -n install -o root -g root -m 0750 $uploadDir/prepare-env.sh $uploadDir/install-release.sh $uploadDir/deploy.sh $uploadDir/verify.sh $uploadDir/destroy.sh /opt/iceforge-staging/releases/$revision/; " +
+          "sudo -n install -o root -g root -m 0750 $uploadDir/prepare-env.sh $uploadDir/configure-discord.sh $uploadDir/install-release.sh $uploadDir/deploy.sh $uploadDir/verify.sh $uploadDir/destroy.sh /opt/iceforge-staging/releases/$revision/; " +
           "sudo -n /opt/iceforge-staging/releases/$revision/install-release.sh --revision $revision --image-archive $uploadDir/iceforge-images.tar --sha256 $expectedSha256"
 & ssh @sshOptions $sshTarget $remote
 if ($LASTEXITCODE -ne 0) { throw 'Installation distante de la release echouee.' }
+& ssh @sshOptions $sshTarget "rm -rf -- '$uploadDir'"
+if ($LASTEXITCODE -ne 0) { throw 'Nettoyage du repertoire de transit echoue.' }
 Write-Host "Release $revision installee sur $Server sans demarrer de service."

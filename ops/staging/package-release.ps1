@@ -38,6 +38,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Build frontend echoue.' }
 $releaseFiles = @(
     'docker-compose.staging.yml',
     'prepare-env.sh',
+    'configure-discord.sh',
     'install-release.sh',
     'deploy.sh',
     'verify.sh',

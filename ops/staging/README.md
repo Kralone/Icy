@@ -34,7 +34,14 @@ sudo /opt/iceforge-staging/releases/<sha>/deploy.sh \
 ```
 
 Après création du bot Discord temporaire, renseigner uniquement les variables
-`STAGING_DISCORD_*`, puis :
+`STAGING_DISCORD_*` avec le configurateur interactif. Le token est saisi masqué
+et n'apparaît ni dans les arguments du processus ni dans les logs :
+
+```bash
+sudo /opt/iceforge-staging/current/configure-discord.sh
+```
+
+Puis démarrer le profil Discord :
 
 ```bash
 sudo /opt/iceforge-staging/current/deploy.sh \

@@ -29,7 +29,7 @@ actual_sha256=$(sha256sum "$IMAGE_ARCHIVE" | awk '{print $1}')
 
 RELEASE_DIR=/opt/iceforge-staging/releases/$REVISION
 [[ -d $RELEASE_DIR && ! -L $RELEASE_DIR ]] || { echo "Release absente: $RELEASE_DIR" >&2; exit 1; }
-for file in docker-compose.staging.yml deploy.sh verify.sh destroy.sh prepare-env.sh validation-fixtures.sql; do
+for file in docker-compose.staging.yml deploy.sh verify.sh destroy.sh prepare-env.sh configure-discord.sh validation-fixtures.sql; do
   [[ -f $RELEASE_DIR/$file && ! -L $RELEASE_DIR/$file ]] || { echo "Fichier de release absent: $file" >&2; exit 1; }
 done
 
