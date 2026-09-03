@@ -60,7 +60,6 @@ unset created create_payload
 
 db_cid=$("${COMPOSE[@]}" ps -q db)
 bot_cid=$("${COMPOSE[@]}" --profile discord ps -q bot)
-rabbit_cid=$("${COMPOSE[@]}" ps -q rabbitmq)
 link=
 for _ in $(seq 1 30); do
   link=$(docker exec "$db_cid" psql -X -At -U "$STAGING_POSTGRES_USER" \
@@ -74,9 +73,34 @@ done
 duplicate_payload=$(jq -cn --arg id "$event_id" --arg title "$title" \
   --arg start "$start_time" \
   '{id:$id,title:$title,description:"Cycle Discord jetable",author:"validation_admin",date:$start,type:{name:"VALIDATION",color:"#123456",imageUrl:null},participants:[]}')
-docker exec -e "ICEFORGE_E2E_PAYLOAD=$duplicate_payload" "$rabbit_cid" sh -ceu '
-  rabbitmqadmin --username "$RABBITMQ_DEFAULT_USER" --password "$RABBITMQ_DEFAULT_PASS" \
-    publish exchange=icy.exchange routing_key=events.created payload="$ICEFORGE_E2E_PAYLOAD" >/dev/null
+docker exec -e "ICEFORGE_E2E_PAYLOAD=$duplicate_payload" "$bot_cid" python -c '
+import asyncio
+import os
+from urllib.parse import quote
+
+import aio_pika
+
+async def publish_duplicate():
+    user = quote(os.environ["RABBITMQ_USER"], safe="")
+    password = quote(os.environ["RABBITMQ_PSWD"], safe="")
+    host = os.environ.get("RABBITMQ_HOST", "rabbitmq")
+    port = os.environ.get("RABBITMQ_PORT", "5672")
+    connection = await aio_pika.connect_robust(
+        f"amqp://{user}:{password}@{host}:{port}/"
+    )
+    async with connection:
+        channel = await connection.channel()
+        exchange = await channel.get_exchange("icy.exchange")
+        await exchange.publish(
+            aio_pika.Message(
+                body=os.environ["ICEFORGE_E2E_PAYLOAD"].encode("utf-8"),
+                content_type="application/json",
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            ),
+            routing_key="events.created",
+        )
+
+asyncio.run(publish_duplicate())
 '
 for _ in $(seq 1 20); do
   logs=$(docker logs --since "$started_at" "$bot_cid" 2>&1)
