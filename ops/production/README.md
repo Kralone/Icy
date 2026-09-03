@@ -46,3 +46,8 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
 Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
+
+La rotation du mot de passe du compte RabbitMQ existant est coordonnée avec les
+deux chemins Vault par `rotate-rabbitmq-password.sh`. Le secret est généré sur
+le VPS, n'est jamais affiché et l'ancien état est restauré automatiquement si
+la recréation ou les contrôles du backend/bot échouent.
