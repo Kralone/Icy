@@ -4,16 +4,18 @@ set -Eeuo pipefail
 ROOT_DIR=${ICEFORGE_ROOT:-/root/iceforge}
 REVISION=
 AGE_RECIPIENT=
+BACKUP_ARCHIVE=
 PREFLIGHT_ONLY=0
 
 usage() {
-  echo "Usage: $0 --revision <git-sha> --age-recipient 'age1...'|\"ssh-ed25519 AAAA...\" [--preflight]" >&2
+  echo "Usage: $0 --revision <git-sha> [--age-recipient 'age1...'|\"ssh-ed25519 AAAA...\"] [--verified-backup /var/backups/iceforge/iceforge-*.tar.gz.age] [--preflight]" >&2
 }
 
 while (($#)); do
   case "$1" in
     --revision) REVISION=${2:?}; shift 2 ;;
     --age-recipient) AGE_RECIPIENT=${2:?}; shift 2 ;;
+    --verified-backup) BACKUP_ARCHIVE=${2:?}; shift 2 ;;
     --preflight) PREFLIGHT_ONLY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
@@ -22,10 +24,31 @@ done
 
 [[ $EUID -eq 0 ]] || { echo 'Ce script doit être exécuté en root.' >&2; exit 1; }
 [[ $REVISION =~ ^[0-9a-f]{40}$ ]] || { echo 'Révision Git invalide.' >&2; exit 1; }
-[[ $AGE_RECIPIENT == age1* || $AGE_RECIPIENT == 'ssh-ed25519 '* ]] || {
-  echo 'Destinataire age invalide.' >&2
-  exit 1
-}
+if [[ -z $BACKUP_ARCHIVE ]]; then
+  [[ $AGE_RECIPIENT == age1* || $AGE_RECIPIENT == 'ssh-ed25519 '* ]] || {
+    echo 'Destinataire age invalide.' >&2
+    exit 1
+  }
+else
+  [[ $BACKUP_ARCHIVE == /var/backups/iceforge/iceforge-*.tar.gz.age ]] || {
+    echo 'Archive de reprise hors du répertoire autorisé.' >&2
+    exit 1
+  }
+  [[ -f $BACKUP_ARCHIVE && ! -L $BACKUP_ARCHIVE ]] || {
+    echo 'Archive de reprise absente ou invalide.' >&2
+    exit 1
+  }
+  [[ -f $BACKUP_ARCHIVE.sha256 && ! -L $BACKUP_ARCHIVE.sha256 ]] || {
+    echo 'Checksum de reprise absent ou invalide.' >&2
+    exit 1
+  }
+  archive_age=$(( $(date +%s) - $(stat -c %Y "$BACKUP_ARCHIVE") ))
+  ((archive_age >= 0 && archive_age <= 7200)) || {
+    echo "Archive de reprise trop ancienne: ${archive_age}s." >&2
+    exit 1
+  }
+  (cd /var/backups/iceforge && sha256sum -c "$(basename -- "$BACKUP_ARCHIVE.sha256")")
+fi
 
 BACKEND_IMAGE="iceforge/backend:${REVISION}"
 BOT_IMAGE="iceforge/bot:${REVISION}"
@@ -121,7 +144,11 @@ rollback() {
   exit "$status"
 }
 
-"$ROOT_DIR/ops/production/backup-before-deploy.sh" --age-recipient "$AGE_RECIPIENT"
+if [[ -n $BACKUP_ARCHIVE ]]; then
+  printf 'PREDEPLOY-BACKUP=REUSED archive=%s age_seconds=%s\n' "$BACKUP_ARCHIVE" "$archive_age"
+else
+  "$ROOT_DIR/ops/production/backup-before-deploy.sh" --age-recipient "$AGE_RECIPIENT"
+fi
 trap rollback ERR
 
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend

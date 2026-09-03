@@ -57,7 +57,15 @@ if docker exec "$bot_container" touch /app/.root-filesystem-write-check >/dev/nu
   exit 1
 fi
 
-recent_logs="$(docker logs --since 10m "$bot_container" 2>&1)"
+recent_logs=
+for _ in $(seq 1 30); do
+  recent_logs="$(docker logs --since 10m "$bot_container" 2>&1)"
+  if grep -Fq 'Connecté en tant que' <<<"$recent_logs" \
+    && grep -Fq 'RabbitMQ connecté et en écoute' <<<"$recent_logs"; then
+    break
+  fi
+  sleep 2
+done
 grep -Fq 'Connecté en tant que' <<<"$recent_logs" || { echo "ERROR: Discord connection marker is missing" >&2; exit 1; }
 grep -Fq 'RabbitMQ connecté et en écoute' <<<"$recent_logs" || { echo "ERROR: RabbitMQ connection marker is missing" >&2; exit 1; }
 if grep -Eq 'amqps?://[^/@:]+:[^/@]+@' <<<"$recent_logs"; then

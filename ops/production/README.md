@@ -33,6 +33,16 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
   --age-recipient 'ssh-ed25519 AAAA...'
 ```
 
+Après un rollback applicatif sans restauration de données, une nouvelle
+tentative peut réutiliser pendant deux heures une sauvegarde créée et validée
+par ce même processus. Son chemin et son fichier `.sha256` sont revérifiés :
+
+```bash
+sudo /root/iceforge/ops/production/deploy-application-release.sh \
+  --revision <sha-git> \
+  --verified-backup /var/backups/iceforge/iceforge-<horodatage>.tar.gz.age
+```
+
 Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
