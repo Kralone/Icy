@@ -20,7 +20,7 @@ required_files=(
   "${iceforge_root}/ops/network-hardening/docker-compose.network-hardening.yml"
   "${rollout_dir}/docker-compose.backend-java25.yml"
   "${rollout_dir}/verify-compose.py"
-  "${rollout_dir}/verify-flyway-v28.sql"
+  "${rollout_dir}/verify-flyway-v30.sql"
 )
 for file in "${required_files[@]}"; do
   [[ -f "$file" ]] || { echo "ERROR: required file is missing: $file" >&2; exit 1; }
@@ -89,9 +89,11 @@ if docker exec "$backend_container" touch /app/.root-filesystem-write-check >/de
   exit 1
 fi
 
-docker exec -i iceforge_db psql -U iceforge -d iceforge_db \
-  <"${rollout_dir}/verify-flyway-v28.sql" >/dev/null \
-  || { echo "ERROR: Flyway V28 verification failed" >&2; exit 1; }
+docker exec -i "$backend_container" true >/dev/null
+docker exec -i iceforge_db sh -ceu \
+  'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  <"${rollout_dir}/verify-flyway-v30.sql" >/dev/null \
+  || { echo "ERROR: Flyway V30 verification failed" >&2; exit 1; }
 curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members \
   || { echo "ERROR: public backend API probe failed" >&2; exit 1; }
 
