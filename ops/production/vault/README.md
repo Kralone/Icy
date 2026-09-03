@@ -44,3 +44,15 @@ peut etre retrouve depuis le fichier Compose existant ou l'etat des accessors.
 Vault doit etre initialise et descelle. Ne jamais transmettre dans un chat le
 token administrateur, une cle d'unseal, une cle privee `age`, un token Discord
 ou une cle API.
+
+Depuis Windows, la saisie distante peut être lancée avec :
+
+```powershell
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+  .\ops\production\vault\configure-from-windows.ps1 `
+  -Server 82.29.170.11 `
+  -IdentityFile "$env:USERPROFILE\.ssh\iceforge_ops_ed25519"
+```
+
+Les valeurs secrètes sont saisies directement dans le terminal distant et ne
+transitent ni dans les arguments SSH ni dans l'historique PowerShell.
