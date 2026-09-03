@@ -1,0 +1,11 @@
+services:
+  rabbitmq:
+    image: ${PROD_RABBITMQ_IMAGE:?required}
+    hostname: ${PROD_RABBITMQ_HOSTNAME:?required}
+    volumes: !override
+      - production_rabbitmq_state:/var/lib/rabbitmq
+
+volumes:
+  production_rabbitmq_state:
+    external: true
+    name: ${PROD_RABBITMQ_VOLUME:?required}
