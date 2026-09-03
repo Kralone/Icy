@@ -63,7 +63,13 @@ $manifest = [ordered]@{
     images = $images
     createdAtUtc = [DateTime]::UtcNow.ToString('o')
 }
-$manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'release.json') -Encoding utf8NoBOM
+$manifestJson = $manifest | ConvertTo-Json -Depth 4
+$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+[IO.File]::WriteAllText(
+    (Join-Path $OutputDirectory 'release.json'),
+    $manifestJson,
+    $utf8WithoutBom
+)
 Write-Host "Release preparee dans $OutputDirectory"
 Write-Host "Revision: $revision"
 Write-Host "SHA-256 archive: $imageSha256"

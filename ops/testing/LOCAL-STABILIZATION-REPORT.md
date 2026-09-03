@@ -1,6 +1,6 @@
 # Rapport de stabilisation locale
 
-Date de la campagne : 2 septembre 2026
+Date de la dernière campagne complète : 3 septembre 2026
 
 Branche : `codex/local-stabilization`
 
@@ -18,7 +18,7 @@ données synthétiques.
 | Backend | 144/144 | tests Maven/Java 25 pendant la construction de l'image |
 | Frontend unitaire | 58/58 | composants, services, routes, hangar et isolation WebSocket par utilisateur |
 | Frontend/API | 85/85 | routes, rôles, refus, redirections, cache et PWA via Nginx |
-| Bot | 49/49 | tests Python, backend réel, RabbitMQ réel, retry, DLQ et déduplication |
+| Bot | 51/51 | tests Python, backend réel, RabbitMQ réel, retry, DLQ et déduplication |
 | Dépendances bot | OK | `pip-audit` : aucune vulnérabilité connue |
 | Dépendances frontend prod | Accepté | 0 critique/élevée, 3 modérées transitives via Express 4 / `qs` |
 | Reverse proxy | OK | proxy exact en `/32`, en-têtes forgés ignorés, réponse 429 |
