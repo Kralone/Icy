@@ -39,8 +39,17 @@ Une fois la pile saine et les fixtures injectées :
 ```
 
 Le script refuse toute URL non locale et vérifie que le port ciblé appartient bien
-au frontend actif portant le label Compose `iceforge_validation`, ainsi que le
-backend sain de cette même pile. Il authentifie les
+au frontend actif portant le label Compose `iceforge_validation` (par défaut) ou
+`iceforge_staging` (sur demande), ainsi que le backend sain de la même pile. Pour
+la répétition locale du staging :
+
+```powershell
+.\ops\testing\test-validation-api.ps1 `
+  -BaseUri http://127.0.0.1:19088 `
+  -ProjectName iceforge_staging
+```
+
+Il authentifie les
 trois comptes, vérifie des routes publiques, les refus anonymes et la matrice de
 rôles. Les mutations utilisent uniquement des payloads invalides qui doivent être
 rejetés avant persistance. Aucun mot de passe, token ou corps de réponse n'est

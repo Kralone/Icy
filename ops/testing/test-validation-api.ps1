@@ -2,11 +2,13 @@
 param(
     [string]$BaseUri = 'http://127.0.0.1:8088',
     [string]$ValidationPassword = 'password',
+    [ValidateSet('iceforge_validation', 'iceforge_staging')]
+    [string]$ProjectName = 'iceforge_validation',
     [string]$DockerPath
 )
 
 $ErrorActionPreference = 'Stop'
-$projectName = 'iceforge_validation'
+$projectName = $ProjectName
 $BaseUri = $BaseUri.TrimEnd('/')
 
 function Resolve-DockerExecutable {
