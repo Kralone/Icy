@@ -41,6 +41,18 @@ et n'apparaît ni dans les arguments du processus ni dans les logs :
 sudo /opt/iceforge-staging/current/configure-discord.sh
 ```
 
+Avec la clé SSH d'exploitation restrictive (sans pseudo-terminal), lancer
+plutôt depuis PowerShell :
+
+```powershell
+.\ops\staging\configure-discord-from-windows.ps1 `
+  -Server SERVEUR `
+  -IdentityFile "$env:USERPROFILE\.ssh\iceforge_ops_ed25519"
+```
+
+Le script PowerShell demande le token avec `SecureString` puis le transmet sur
+l'entrée standard SSH. Il n'est jamais placé dans les arguments du processus.
+
 Puis démarrer le profil Discord :
 
 ```bash
@@ -48,7 +60,8 @@ sudo /opt/iceforge-staging/current/deploy.sh \
   --release-dir "$(readlink -f /opt/iceforge-staging/current)" --with-bot
 ```
 
-Accès depuis le PC par tunnel SSH :
+Accès depuis le PC par tunnel SSH, uniquement après avoir autorisé une
+redirection limitée à `127.0.0.1:19088` pour la clé d'exploitation :
 
 ```powershell
 ssh -N -L 19088:127.0.0.1:19088 iceforge-ops@SERVEUR
