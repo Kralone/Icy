@@ -54,5 +54,8 @@ Depuis Windows, la saisie distante peut être lancée avec :
   -IdentityFile "$env:USERPROFILE\.ssh\iceforge_ops_ed25519"
 ```
 
-Les valeurs secrètes sont saisies directement dans le terminal distant et ne
-transitent ni dans les arguments SSH ni dans l'historique PowerShell.
+Les valeurs secrètes sont saisies de façon masquée dans PowerShell puis envoyées
+uniquement sur l'entrée standard chiffrée de SSH. Elles ne transitent ni dans les
+arguments SSH, ni dans l'historique PowerShell, ni dans un fichier temporaire.
+Ce mode fonctionne avec une clé `authorized_keys` marquée `restrict` et ne
+nécessite donc pas d'autoriser un PTY distant.
