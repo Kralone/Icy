@@ -59,3 +59,9 @@ uniquement sur l'entrée standard chiffrée de SSH. Elles ne transitent ni dans 
 arguments SSH, ni dans l'historique PowerShell, ni dans un fichier temporaire.
 Ce mode fonctionne avec une clé `authorized_keys` marquée `restrict` et ne
 nécessite donc pas d'autoriser un PTY distant.
+
+Ajouter `-GenerateLocalSecrets` génère localement, sans les afficher ni les
+écrire sur disque, un nouveau secret JWT, une nouvelle clé backend/bot et une
+nouvelle paire VAPID P-256. Les tokens Discord, OpenAI et UEX doivent être créés
+chez leurs fournisseurs puis collés dans les invites masquées ; une saisie vide
+conserve la valeur déjà présente dans Vault.
