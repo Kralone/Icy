@@ -36,6 +36,28 @@ done
 [[ $(stat -c %a "$INIT_JSON") == 600 ]] || { echo "$INIT_JSON doit être en mode 0600." >&2; exit 1; }
 [[ ! -e $TOKEN_FILE ]] || { echo "Token temporaire déjà présent: $TOKEN_FILE" >&2; exit 1; }
 
+running_image() {
+  local service=$1
+  local ids image
+  mapfile -t ids < <(docker ps -q \
+    --filter 'label=com.docker.compose.project=iceforge' \
+    --filter "label=com.docker.compose.service=$service")
+  [[ ${#ids[@]} -eq 1 ]] || {
+    echo "Impossible d'identifier l'unique conteneur de production: $service" >&2
+    exit 1
+  }
+  image=$(docker inspect -f '{{.Config.Image}}' "${ids[0]}")
+  [[ -n $image ]] || { echo "Image active introuvable: $service" >&2; exit 1; }
+  printf '%s' "$image"
+}
+
+# Les anciens rollouts exigeaient ces variables dans le shell appelant. Une
+# sauvegarde autonome doit figer les images réellement exécutées sans dépendre
+# de l'historique de la session administrateur.
+export BACKEND_IMAGE=${BACKEND_IMAGE:-$(running_image backend)}
+export BOT_IMAGE=${BOT_IMAGE:-$(running_image bot)}
+export FRONTEND_IMAGE=${FRONTEND_IMAGE:-$(running_image frontend)}
+
 compose=(
   docker compose
   --project-name iceforge
