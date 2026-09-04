@@ -59,6 +59,8 @@ NETWORK_DIR=$ROOT_DIR/ops/network-hardening
 BACKEND_DIR=$ROOT_DIR/ops/backend-rollout
 BOT_DIR=$ROOT_DIR/ops/bot-rollout
 FRONTEND_DIR=$ROOT_DIR/ops/frontend-rollout
+source "$ROOT_DIR/ops/stateful/load-runtime.sh"
+load_stateful_runtime "$ROOT_DIR"
 
 required_files=(
   "$ROOT_DIR/.env"
@@ -91,6 +93,7 @@ compose=(
   -f "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   -f "$BACKEND_DIR/docker-compose.backend-java25.yml"
   -f "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
+  "${STATEFUL_COMPOSE_ARGS[@]}"
 )
 
 db_psql() {

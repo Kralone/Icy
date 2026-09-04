@@ -57,6 +57,8 @@ running_image() {
 export BACKEND_IMAGE=${BACKEND_IMAGE:-$(running_image backend)}
 export BOT_IMAGE=${BOT_IMAGE:-$(running_image bot)}
 export FRONTEND_IMAGE=${FRONTEND_IMAGE:-$(running_image frontend)}
+source "$ROOT_DIR/ops/stateful/load-runtime.sh"
+load_stateful_runtime "$ROOT_DIR"
 
 compose=(
   docker compose
@@ -69,6 +71,7 @@ compose=(
   -f "$ROOT_DIR/ops/bot-rollout/docker-compose.bot-amqp-redaction.yml"
   -f "$ROOT_DIR/ops/backend-rollout/docker-compose.backend-java25.yml"
   -f "$ROOT_DIR/ops/frontend-rollout/docker-compose.frontend-angular22.yml"
+  "${STATEFUL_COMPOSE_ARGS[@]}"
 )
 
 cleanup() {

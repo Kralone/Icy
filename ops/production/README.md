@@ -47,6 +47,13 @@ Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
 
+Après leur réussite, `.secrets/vault/stateful.prod.env` fige les images,
+volumes, points de montage et hostname effectivement promus. Les scripts de
+déploiement, de sauvegarde et de rotation RabbitMQ chargent automatiquement ce
+fichier root-only ainsi que les deux overlays `ops/stateful`. Une opération
+future ne peut donc pas réintroduire les anciens services stateful du Compose
+historique.
+
 La rotation du mot de passe du compte RabbitMQ existant est coordonnée avec les
 deux chemins Vault par `rotate-rabbitmq-password.sh`. Le secret est généré sur
 le VPS, n'est jamais affiché et l'ancien état est restauré automatiquement si

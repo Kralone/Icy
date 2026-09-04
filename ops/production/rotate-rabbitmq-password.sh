@@ -64,12 +64,15 @@ BACKEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_backend)
 BOT_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_bot)
 FRONTEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_frontend)
 export BACKEND_IMAGE BOT_IMAGE FRONTEND_IMAGE
+source "$ROOT_DIR/ops/stateful/load-runtime.sh"
+load_stateful_runtime "$ROOT_DIR"
 compose=(docker compose --project-name iceforge --env-file "$ROOT_DIR/.env" --env-file "$ROOT_DIR/.secrets/vault/compose.prod.env"
   -f "$ROOT_DIR/docker-compose.yml" -f "$ROOT_DIR/docker-compose.vault.yml"
   -f "$ROOT_DIR/ops/network-hardening/docker-compose.network-hardening.yml"
   -f "$ROOT_DIR/ops/bot-rollout/docker-compose.bot-amqp-redaction.yml"
   -f "$ROOT_DIR/ops/backend-rollout/docker-compose.backend-java25.yml"
-  -f "$ROOT_DIR/ops/frontend-rollout/docker-compose.frontend-angular22.yml")
+  -f "$ROOT_DIR/ops/frontend-rollout/docker-compose.frontend-angular22.yml"
+  "${STATEFUL_COMPOSE_ARGS[@]}")
 
 changed=0
 rollback() {

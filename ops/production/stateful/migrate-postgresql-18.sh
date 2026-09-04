@@ -185,5 +185,17 @@ trap - ERR
 BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
 BOT_ROLLOUT_DIR=$ROOT_DIR/ops/bot-rollout "$ROOT_DIR/ops/bot-rollout/verify.sh" runtime
 FRONTEND_ROLLOUT_DIR=$ROOT_DIR/ops/frontend-rollout "$ROOT_DIR/ops/frontend-rollout/verify.sh" runtime
+state_file=$ROOT_DIR/.secrets/vault/stateful.prod.env
+state_tmp=$(mktemp "$ROOT_DIR/.secrets/vault/.stateful.prod.env.XXXXXX")
+chmod 0600 "$state_tmp"
+{
+  printf 'PROD_POSTGRES_IMAGE=%s\n' "$TARGET_IMAGE"
+  printf 'PROD_POSTGRES_VOLUME=%s\n' "$TARGET_VOLUME"
+  printf 'PROD_POSTGRES_MOUNT=/var/lib/postgresql\n'
+  printf 'PROD_RABBITMQ_IMAGE=%s\n' "$PROD_RABBITMQ_IMAGE"
+  printf 'PROD_RABBITMQ_VOLUME=%s\n' "$PROD_RABBITMQ_VOLUME"
+  printf 'PROD_RABBITMQ_HOSTNAME=%s\n' "$PROD_RABBITMQ_HOSTNAME"
+} >"$state_tmp"
+mv -f -- "$state_tmp" "$state_file"
 printf 'POSTGRESQL18_MIGRATION=OK source_version=%s target_version=%s source_volume=%s target_volume=%s artifacts=%s\n' \
   "$source_version" "$target_version" "$old_volume" "$TARGET_VOLUME" "$migration_dir"

@@ -9,4 +9,5 @@ ops/backend-rollout
 ops/frontend-rollout
 .env
 .secrets/vault/compose.prod.env
+.secrets/vault/stateful.prod.env
 .secrets/vault/prod-init.json
