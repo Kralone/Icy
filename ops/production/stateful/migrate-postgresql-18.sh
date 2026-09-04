@@ -56,6 +56,8 @@ compose=(docker compose --project-name iceforge --env-file "$ROOT_DIR/.env" --en
   -f "$ROOT_DIR/ops/backend-rollout/docker-compose.backend-java25.yml"
   -f "$ROOT_DIR/ops/frontend-rollout/docker-compose.frontend-angular22.yml"
   -f "$RABBIT_OVERLAY" -f "$PG_OVERLAY")
+export PROD_POSTGRES_IMAGE=$TARGET_IMAGE PROD_POSTGRES_VOLUME=$TARGET_VOLUME PROD_POSTGRES_MOUNT=/var/lib/postgresql
+"${compose[@]}" config --quiet
 
 migration_dir=/var/backups/iceforge/postgresql-15-to-18-$(date -u +%Y%m%dT%H%M%SZ)
 install -d -o root -g root -m 0700 "$migration_dir"
@@ -96,7 +98,6 @@ sha256sum "$dump_file" "$source_inventory" >"$migration_dir/SHA256SUMS"
 
 docker stop -t 120 iceforge_db >/dev/null
 docker volume create "$TARGET_VOLUME" >/dev/null
-export PROD_POSTGRES_IMAGE=$TARGET_IMAGE PROD_POSTGRES_VOLUME=$TARGET_VOLUME PROD_POSTGRES_MOUNT=/var/lib/postgresql
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait db
 
 target_version=$(docker exec iceforge_db sh -ceu '
