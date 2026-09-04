@@ -25,9 +25,37 @@ old_volume=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/
 old_mount=/var/lib/postgresql/data
 [[ -n $old_volume ]] || { echo 'Volume PostgreSQL 15 source introuvable.' >&2; exit 1; }
 
-POSTGRES_USER=$(docker exec iceforge_db sh -ceu 'printf %s "$POSTGRES_USER"')
-POSTGRES_PASSWORD=$(docker exec iceforge_db sh -ceu 'printf %s "$POSTGRES_PASSWORD"')
-POSTGRES_DB=$(docker exec iceforge_db sh -ceu 'printf %s "$POSTGRES_DB"')
+compose_env=$ROOT_DIR/.secrets/vault/compose.prod.env
+compose_env_value() {
+  local key=$1
+  awk -v key="$key" 'index($0, key "=") == 1 { sub("^[^=]*=", ""); print; exit }' "$compose_env"
+}
+backend_role_id=$(compose_env_value BACKEND_VAULT_ROLE_ID)
+backend_secret_id=$(compose_env_value BACKEND_VAULT_SECRET_ID)
+vault_mount=$(compose_env_value VAULT_KV_MOUNT)
+backend_path=$(compose_env_value BACKEND_VAULT_KV_PATH)
+[[ -n $backend_role_id && -n $backend_secret_id && -n $vault_mount && -n $backend_path ]] || { echo 'AppRole backend incomplet.' >&2; exit 1; }
+login_json=$({ printf '%s\n' "$backend_role_id" "$backend_secret_id"; } | docker exec -i \
+  -e VAULT_ADDR=http://127.0.0.1:8200 iceforge_vault sh -ceu '
+    IFS= read -r role_id
+    IFS= read -r secret_id
+    exec vault write -format=json auth/approle/login role_id="$role_id" secret_id="$secret_id"
+  ')
+vault_token=$(jq -er '.auth.client_token' <<<"$login_json")
+backend_secret=$(printf '%s\n' "$vault_token" | docker exec -i \
+  -e VAULT_ADDR=http://127.0.0.1:8200 iceforge_vault sh -ceu '
+    IFS= read -r VAULT_TOKEN
+    export VAULT_TOKEN
+    exec vault kv get -format=json "$1"
+  ' sh "$vault_mount/$backend_path")
+printf '%s\n' "$vault_token" | docker exec -i -e VAULT_ADDR=http://127.0.0.1:8200 \
+  iceforge_vault sh -ceu 'IFS= read -r VAULT_TOKEN; export VAULT_TOKEN; vault token revoke -self >/dev/null'
+POSTGRES_USER=$(jq -er '.data.data["spring.datasource.username"]' <<<"$backend_secret")
+POSTGRES_PASSWORD=$(jq -er '.data.data["spring.datasource.password"]' <<<"$backend_secret")
+postgres_url=$(jq -er '.data.data["spring.datasource.url"]' <<<"$backend_secret")
+POSTGRES_DB=${postgres_url##*/}
+POSTGRES_DB=${POSTGRES_DB%%\?*}
+unset backend_role_id backend_secret_id login_json vault_token backend_secret postgres_url
 [[ -n $POSTGRES_USER && -n $POSTGRES_PASSWORD && -n $POSTGRES_DB ]] || { echo 'Identifiants PostgreSQL source incomplets.' >&2; exit 1; }
 case $POSTGRES_DB in postgres|template0|template1) echo 'Nom de base applicative non pris en charge.' >&2; exit 1;; esac
 export POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
