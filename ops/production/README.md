@@ -47,6 +47,30 @@ Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
 
+## Maintenance AlmaLinux 9
+
+`system/update-almalinux9.sh` contrôle ou applique les mises à jour du VPS. Le
+mode d'application refuse de démarrer sans sauvegarde chiffrée vérifiée. Il ne
+modifie ni la configuration/version de Vault ni SSH. La désactivation de
+`rpcbind` est optionnelle et refusée automatiquement si NFS est utilisé.
+
+```bash
+sudo /root/iceforge/ops/production/system/update-almalinux9.sh --check
+
+sudo /root/iceforge/ops/production/system/update-almalinux9.sh \
+  --apply \
+  --verified-backup /var/backups/iceforge/iceforge-<horodatage>.tar.gz.age \
+  --disable-unused-rpcbind
+```
+
+Le redémarrage reste explicite avec `--reboot`, afin de pouvoir vérifier les
+conteneurs et organiser la coupure avant de charger le nouveau noyau.
+
+Une mise à jour de Docker peut redémarrer ses conteneurs et donc resceller
+Vault. Le script le détecte, refuse de déclarer la maintenance réussie et exige
+le déverrouillage opérateur avant la vérification du backend et du bot. Il ne
+charge jamais automatiquement la clé de déverrouillage.
+
 Après leur réussite, `.secrets/vault/stateful.prod.env` fige les images,
 volumes, points de montage et hostname effectivement promus. Les scripts de
 déploiement, de sauvegarde et de rotation RabbitMQ chargent automatiquement ce
