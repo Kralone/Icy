@@ -77,6 +77,11 @@ icy:
   uex:
     base-url: ${UEX_API_BASE_URL:https://api.uexcorp.uk/2.0}
     api-key: ${UEX_API_KEY:}
+  catalog-sync:
+    wiki-base-url: ${SC_WIKI_API_BASE_URL:https://api.star-citizen.wiki/api}
+    page-size: ${SC_WIKI_API_PAGE_SIZE:200}
+    uex-delay-millis: ${UEX_API_DELAY_MILLIS:6500}
+    user-agent: ${CATALOG_SYNC_USER_AGENT:IceForge/1.0 (https://iceforge.fr)}
 
 
 server:

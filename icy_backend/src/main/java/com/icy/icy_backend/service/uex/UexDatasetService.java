@@ -28,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,17 +40,7 @@ import java.util.Set;
 @Service
 public class UexDatasetService {
     private static final int PREVIEW_LIMIT = 50;
-    private static final Map<String, String> SUPPORTED_DATASETS = Map.of(
-            "commodities", "/commodities",
-            "commodities_prices", "/commodities_prices_all",
-            "terminals", "/terminals",
-            "refineries_audits", "/refineries_audits",
-            "refineries_capacities", "/refineries_capacities",
-            "refineries_methods", "/refineries_methods",
-            "refineries_yields", "/refineries_yields",
-            "vehicles_purchases_prices", "/vehicles_purchases_prices_all",
-            "vehicles_rentals_prices", "/vehicles_rentals_prices_all"
-    );
+    private static final Map<String, String> SUPPORTED_DATASETS = supportedDatasets();
     private static final List<String> DEFAULT_SALES_RESOURCE_NAMES = List.of(
             "Ricite", "Stileron", "Savrilium", "Quantanium", "Lindinium", "Bexalite", "Taranite",
             "Diamond", "Gold", "Borase", "Laranite", "Beryl", "Hephaestanite", "Agricium",
@@ -82,6 +73,10 @@ public class UexDatasetService {
         this.messageService = messageService;
         this.uexProperties = uexProperties;
         this.objectMapper = objectMapper;
+    }
+
+    public List<String> supportedDatasetKeys() {
+        return List.copyOf(SUPPORTED_DATASETS.keySet());
     }
 
     @Transactional(readOnly = true)
@@ -569,6 +564,35 @@ public class UexDatasetService {
             normalizedBase = normalizedBase.substring(0, normalizedBase.length() - 1);
         }
         return normalizedBase + endpointPath;
+    }
+
+    private static Map<String, String> supportedDatasets() {
+        Map<String, String> datasets = new LinkedHashMap<>();
+        datasets.put("categories", "/categories");
+        datasets.put("categories_attributes", "/categories_attributes");
+        datasets.put("cities", "/cities");
+        datasets.put("commodities", "/commodities");
+        datasets.put("commodities_prices", "/commodities_prices_all");
+        datasets.put("companies", "/companies");
+        datasets.put("items_prices", "/items_prices_all");
+        datasets.put("jump_points", "/jump_points");
+        datasets.put("moons", "/moons");
+        datasets.put("orbits", "/orbits");
+        datasets.put("outposts", "/outposts");
+        datasets.put("planets", "/planets");
+        datasets.put("poi", "/poi");
+        datasets.put("refineries_audits", "/refineries_audits");
+        datasets.put("refineries_capacities", "/refineries_capacities");
+        datasets.put("refineries_methods", "/refineries_methods");
+        datasets.put("refineries_yields", "/refineries_yields");
+        datasets.put("space_stations", "/space_stations");
+        datasets.put("star_systems", "/star_systems");
+        datasets.put("terminals", "/terminals");
+        datasets.put("vehicles", "/vehicles");
+        datasets.put("vehicles_prices", "/vehicles_prices");
+        datasets.put("vehicles_purchases_prices", "/vehicles_purchases_prices_all");
+        datasets.put("vehicles_rentals_prices", "/vehicles_rentals_prices_all");
+        return Collections.unmodifiableMap(datasets);
     }
 
     private record PreviewResult(JsonNode node, int previewItemCount, boolean truncated) {

@@ -66,6 +66,22 @@ export interface UexVehicleTerminal {
   screenshot: string | null;
 }
 
+export type CatalogMapScope = 'VEHICLES' | 'ITEMS' | 'LOCATIONS' | 'ECONOMY' | 'WIKELO';
+
+export interface CatalogSyncRun {
+  id: number;
+  operation: 'SCRAPE_ALL' | 'SCRAPE_AND_MAP';
+  scope: CatalogMapScope | null;
+  status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  currentStep: number;
+  totalSteps: number;
+  message: string | null;
+  errorMessage: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UexDatasetService {
   private readonly baseUrl = '/api/utils/uex/datasets';
@@ -82,6 +98,18 @@ export class UexDatasetService {
 
   refreshDataset(datasetKey: string): Observable<ApiResponse<UexDatasetDetail>> {
     return this.http.post<ApiResponse<UexDatasetDetail>>(`${this.baseUrl}/${encodeURIComponent(datasetKey)}/refresh`, {});
+  }
+
+  scrapeAllCatalogSources(): Observable<ApiResponse<CatalogSyncRun>> {
+    return this.http.post<ApiResponse<CatalogSyncRun>>('/api/admin/catalog-sync/scrape-all', {});
+  }
+
+  scrapeAndMapCatalogScope(scope: CatalogMapScope): Observable<ApiResponse<CatalogSyncRun>> {
+    return this.http.post<ApiResponse<CatalogSyncRun>>('/api/admin/catalog-sync/scrape-and-map', { scope });
+  }
+
+  getCurrentCatalogSync(): Observable<ApiResponse<CatalogSyncRun | null>> {
+    return this.http.get<ApiResponse<CatalogSyncRun | null>>('/api/admin/catalog-sync/current');
   }
 
   listResourceSales(names: string[]): Observable<ApiResponse<UexResourceSale[]>> {

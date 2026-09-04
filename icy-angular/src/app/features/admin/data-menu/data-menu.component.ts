@@ -44,7 +44,7 @@ export class DataMenuComponent {
       route: '/icy/admin/stations'
     },
     {
-      label: 'UEX Cache',
+      label: 'Catalogue externe',
       imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGL-rKIO_HjiN6cjSaLCWD8rdMftVK689z_Q&s',
       route: '/icy/admin/uex-cache'
     },

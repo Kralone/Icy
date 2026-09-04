@@ -10,8 +10,8 @@
   <div class="flex items-center justify-between gap-4 flex-wrap">
     <div class="space-y-1">
       <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Console</p>
-      <h2 class="text-2xl font-semibold text-cyan-200">UEX Data Cache</h2>
-      <p class="text-sm text-slate-400">Verifie la data en BDD et force un refresh overwrite depuis UEXCorp.</p>
+      <h2 class="text-2xl font-semibold text-cyan-200">Catalogue externe</h2>
+      <p class="text-sm text-slate-400">Pilote les scrapes Star Citizen Wiki, UEX et Wikelo, puis mappe uniquement la partie choisie.</p>
     </div>
     <button
       type="button"
@@ -22,6 +22,82 @@
       {{ loadingDatasets ? 'Chargement...' : 'Recharger la liste' }}
     </button>
   </div>
+
+  <section class="rounded-2xl border border-cyan-300/20 bg-[#0b1324]/90 p-5 space-y-4">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="space-y-1">
+        <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Catalogue externe</p>
+        <h3 class="text-xl font-semibold text-white">Scrape global ou mapping cible</h3>
+        <p class="max-w-3xl text-sm text-slate-400">
+          Le scrape global ne touche qu'aux donnees brutes. Le second bouton scrape puis mappe uniquement la famille selectionnee.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <button
+          type="button"
+          class="rounded-xl border border-sky-300/35 bg-sky-500/15 px-4 py-2.5 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="scrapeAll()"
+          [disabled]="startingCatalogAction || catalogRunActive"
+        >
+          Scraper tout
+        </button>
+
+        <label class="flex min-w-72 flex-col gap-1 text-xs uppercase tracking-[0.14em] text-slate-400">
+          Partie a mapper
+          <select
+            class="rounded-xl border border-white/15 bg-[#07101e] px-3 py-2.5 text-sm normal-case tracking-normal text-white outline-none focus:border-cyan-400/60"
+            [value]="selectedMapScope"
+            (change)="onMapScopeChange($any($event.target).value)"
+            [disabled]="startingCatalogAction || catalogRunActive"
+          >
+            @for (scope of mapScopes; track scope.value) {
+              <option [value]="scope.value">{{ scope.label }}</option>
+            }
+          </select>
+        </label>
+
+        <button
+          type="button"
+          class="rounded-xl border border-emerald-300/35 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="scrapeAndMap()"
+          [disabled]="startingCatalogAction || catalogRunActive"
+        >
+          Scraper et mapper
+        </button>
+      </div>
+    </div>
+
+    @if (catalogRun) {
+      <div class="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span class="font-semibold text-cyan-100">
+            Run #{{ catalogRun.id }} · {{ catalogRun.operation === 'SCRAPE_ALL' ? 'Scrape brut complet' : ('Mapping ' + catalogRun.scope) }}
+          </span>
+          <span
+            class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em]"
+            [ngClass]="{
+              'border-amber-300/30 bg-amber-400/10 text-amber-100': catalogRunActive,
+              'border-emerald-300/30 bg-emerald-400/10 text-emerald-100': catalogRun.status === 'SUCCEEDED',
+              'border-red-300/30 bg-red-400/10 text-red-100': catalogRun.status === 'FAILED'
+            }"
+          >
+            {{ catalogRun.status }}
+          </span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-white/10">
+          <div class="h-full rounded-full bg-cyan-400 transition-all duration-500" [style.width.%]="catalogProgressPercent"></div>
+        </div>
+        <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-400">
+          <span>{{ catalogRun.message || 'En attente' }}</span>
+          <span>{{ catalogRun.currentStep }} / {{ catalogRun.totalSteps }} · {{ catalogProgressPercent }}%</span>
+        </div>
+        @if (catalogRun.errorMessage) {
+          <p class="text-sm text-red-200">{{ catalogRun.errorMessage }}</p>
+        }
+      </div>
+    }
+  </section>
 
   @if (error) {
     <div class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">

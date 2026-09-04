@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-labelledby="title desc">
+  <title id="title">Visuel catalogue indisponible</title>
+  <desc id="desc">Visuel de remplacement IceForge pour une entree sans image externe.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081321"/>
+      <stop offset="1" stop-color="#102a3d"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#background)"/>
+  <circle cx="400" cy="210" r="180" fill="url(#glow)"/>
+  <path d="M400 92 510 156v128L400 348 290 284V156z" fill="none" stroke="#67e8f9" stroke-width="6" opacity=".8"/>
+  <path d="M400 128v168M330 169l140 82M470 169l-140 82" stroke="#67e8f9" stroke-width="3" opacity=".45"/>
+  <text x="400" y="405" text-anchor="middle" fill="#bae6fd" font-family="system-ui, sans-serif" font-size="24" letter-spacing="6">ICEFORGE CATALOG</text>
+</svg>

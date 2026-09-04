@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { UexDatasetDetail, UexDatasetService, UexDatasetSummary } from '../../../core/services/uex/uex-dataset.service';
+import {
+  CatalogMapScope,
+  CatalogSyncRun,
+  UexDatasetDetail,
+  UexDatasetService,
+  UexDatasetSummary
+} from '../../../core/services/uex/uex-dataset.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -11,7 +18,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './uex-cache-management.component.html'
 })
-export class UexCacheManagementComponent implements OnInit {
+export class UexCacheManagementComponent implements OnInit, OnDestroy {
   datasets: UexDatasetSummary[] = [];
   selectedDatasetKey = '';
   selectedDetail: UexDatasetDetail | null = null;
@@ -22,11 +29,87 @@ export class UexCacheManagementComponent implements OnInit {
   refreshingKey = '';
   error = '';
   success = '';
+  selectedMapScope: CatalogMapScope = 'VEHICLES';
+  catalogRun: CatalogSyncRun | null = null;
+  startingCatalogAction = false;
+  readonly mapScopes: Array<{ value: CatalogMapScope; label: string }> = [
+    { value: 'VEHICLES', label: 'Vaisseaux et vehicules' },
+    { value: 'ITEMS', label: 'Armes, armures, modules et outils' },
+    { value: 'LOCATIONS', label: 'Systemes, planetes, villes et stations' },
+    { value: 'ECONOMY', label: 'Achats, ventes et locations' },
+    { value: 'WIKELO', label: 'Wikelo' }
+  ];
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private catalogPollHandle: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly uexDatasetService: UexDatasetService) {}
 
   ngOnInit(): void {
     this.loadDatasets();
+    this.loadCatalogSyncStatus();
+  }
+
+  ngOnDestroy(): void {
+    this.stopCatalogPolling();
+  }
+
+  scrapeAll(): void {
+    const confirmed = window.confirm(
+      'Scraper toutes les sources externes ? Cette action met uniquement a jour la zone brute et ne mappe pas le catalogue.'
+    );
+    if (!confirmed) return;
+
+    this.startingCatalogAction = true;
+    this.clearMessages();
+    this.uexDatasetService.scrapeAllCatalogSources().subscribe({
+      next: (response) => {
+        this.catalogRun = response?.data ?? null;
+        this.startingCatalogAction = false;
+        this.success = 'Scrape complet demarre en arriere-plan. Aucune table catalogue ne sera mappee.';
+        this.scheduleCatalogPoll();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.startingCatalogAction = false;
+        this.error = this.extractHttpErrorMessage('Impossible de demarrer le scrape complet.', error);
+      }
+    });
+  }
+
+  scrapeAndMap(): void {
+    const label = this.mapScopes.find((scope) => scope.value === this.selectedMapScope)?.label ?? this.selectedMapScope;
+    const confirmed = window.confirm(`Scraper puis mapper uniquement : ${label} ?`);
+    if (!confirmed) return;
+
+    this.startingCatalogAction = true;
+    this.clearMessages();
+    this.uexDatasetService.scrapeAndMapCatalogScope(this.selectedMapScope).subscribe({
+      next: (response) => {
+        this.catalogRun = response?.data ?? null;
+        this.startingCatalogAction = false;
+        this.success = `Scrape et mapping demarres pour : ${label}.`;
+        this.scheduleCatalogPoll();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.startingCatalogAction = false;
+        this.error = this.extractHttpErrorMessage('Impossible de demarrer le scrape et mapping.', error);
+      }
+    });
+  }
+
+  onMapScopeChange(value: string): void {
+    if (this.mapScopes.some((scope) => scope.value === value)) {
+      this.selectedMapScope = value as CatalogMapScope;
+    }
+  }
+
+  get catalogRunActive(): boolean {
+    return this.catalogRun?.status === 'QUEUED' || this.catalogRun?.status === 'RUNNING';
+  }
+
+  get catalogProgressPercent(): number {
+    const total = this.catalogRun?.totalSteps ?? 0;
+    if (total <= 0) return 0;
+    return Math.min(100, Math.round(((this.catalogRun?.currentStep ?? 0) / total) * 100));
   }
 
   loadDatasets(): void {
@@ -92,6 +175,43 @@ export class UexCacheManagementComponent implements OnInit {
     return dataset.datasetKey;
   }
 
+  private loadCatalogSyncStatus(): void {
+    this.uexDatasetService.getCurrentCatalogSync().subscribe({
+      next: (response) => {
+        this.catalogRun = response?.data ?? null;
+        if (this.catalogRunActive) this.scheduleCatalogPoll();
+      }
+    });
+  }
+
+  private scheduleCatalogPoll(): void {
+    this.stopCatalogPolling();
+    if (!this.isBrowser || !this.catalogRunActive) return;
+    this.catalogPollHandle = setTimeout(() => {
+      this.uexDatasetService.getCurrentCatalogSync().subscribe({
+        next: (response) => {
+          this.catalogRun = response?.data ?? null;
+          if (this.catalogRunActive) {
+            this.scheduleCatalogPoll();
+          } else if (this.catalogRun?.status === 'SUCCEEDED') {
+            this.success = this.catalogRun.message || 'Traitement catalogue termine.';
+            this.loadDatasets();
+          } else if (this.catalogRun?.status === 'FAILED') {
+            this.error = this.catalogRun.errorMessage || 'Le traitement catalogue a echoue.';
+          }
+        },
+        error: () => this.scheduleCatalogPoll()
+      });
+    }, 2500);
+  }
+
+  private stopCatalogPolling(): void {
+    if (this.catalogPollHandle !== null) {
+      clearTimeout(this.catalogPollHandle);
+      this.catalogPollHandle = null;
+    }
+  }
+
   private clearMessages(): void {
     this.error = '';
     this.success = '';
@@ -109,7 +229,7 @@ export class UexCacheManagementComponent implements OnInit {
   }
 
   private extractHttpErrorMessage(defaultMessage: string, error?: HttpErrorResponse): string {
-    const apiMessage = error?.error?.messageDetail?.message;
+    const apiMessage = error?.error?.messageDetail?.message ?? error?.error?.message;
     return typeof apiMessage === 'string' && apiMessage.trim() ? apiMessage : defaultMessage;
   }
 }

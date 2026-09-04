@@ -52,18 +52,33 @@ public class WikeloService {
 
     @Transactional
     public ResponseEntity<MessageResponse<List<WikeloShip>>> rescrapeShips() {
-        List<WikeloShip> scrapedShips = scrapeShipsFromGoogleSheets();
+        List<WikeloShip> scrapedShips = scrapeShips();
+        List<WikeloShip> savedShips = publishScrapedShips(scrapedShips);
+        return messageService.buildResponse("wikelo.ships.scraped", savedShips, savedShips.size());
+    }
+
+    @Transactional
+    public List<WikeloShip> publishScrapedShips(List<WikeloShip> scrapedShips) {
+        if (scrapedShips.isEmpty()) {
+            throw new IllegalStateException(
+                    "Le rescrape Wikelo n'a retourne aucune offre; les donnees publiees sont conservees."
+            );
+        }
         wikeloShipRepository.deleteAllInBatch();
         List<WikeloShip> savedShips = wikeloShipRepository.saveAll(scrapedShips);
         savedShips.sort(Comparator.comparing(WikeloShip::getShipName, String.CASE_INSENSITIVE_ORDER));
-        return messageService.buildResponse("wikelo.ships.scraped", savedShips, savedShips.size());
+        return savedShips;
+    }
+
+    public List<WikeloShip> scrapeShips() {
+        return scrapeShipsFromGoogleSheets();
     }
 
     private List<WikeloShip> scrapeShipsFromGoogleSheets() {
         String csvUrl = buildCsvUrl();
         logger.info("Wikelo scrape depuis {}", csvUrl);
 
-        String csvContent = restTemplate.getForObject(csvUrl, String.class);
+        String csvContent = fetchCsv(csvUrl);
         if (csvContent == null || csvContent.isBlank()) {
             logger.warn("Le contenu CSV Wikelo est vide");
             return List.of();
@@ -101,6 +116,10 @@ public class WikeloService {
         }
 
         return new ArrayList<>(dedup.values());
+    }
+
+    String fetchCsv(String csvUrl) {
+        return restTemplate.getForObject(csvUrl, String.class);
     }
 
     private String buildCsvUrl() {
