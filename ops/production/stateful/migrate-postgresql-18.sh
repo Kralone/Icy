@@ -89,6 +89,21 @@ compose=(docker compose --project-name iceforge --env-file "$ROOT_DIR/.env" --en
 export PROD_POSTGRES_IMAGE=$TARGET_IMAGE PROD_POSTGRES_VOLUME=$TARGET_VOLUME PROD_POSTGRES_MOUNT=/var/lib/postgresql
 "${compose[@]}" config --quiet
 
+wait_for_postgres() {
+  for _ in $(seq 1 90); do
+    if docker exec iceforge_db pg_isready -q --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" \
+      && docker exec iceforge_db sh -ceu '
+        export PGPASSWORD="$POSTGRES_PASSWORD"
+        psql -XAt --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="SELECT 1"
+      ' | grep -qx 1; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo 'PostgreSQL ne répond pas à une vraie requête SQL.' >&2
+  return 1
+}
+
 migration_dir=/var/backups/iceforge/postgresql-15-to-18-$(date -u +%Y%m%dT%H%M%SZ)
 install -d -o root -g root -m 0700 "$migration_dir"
 dump_file=$migration_dir/postgresql-15-final.dump
@@ -129,11 +144,15 @@ sha256sum "$dump_file" "$source_inventory" >"$migration_dir/SHA256SUMS"
 docker stop -t 120 iceforge_db >/dev/null
 docker volume create "$TARGET_VOLUME" >/dev/null
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait db
+wait_for_postgres
 
-target_version=$(docker exec iceforge_db sh -ceu '
-  export PGPASSWORD="$POSTGRES_PASSWORD"
-  psql -XAt -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SHOW server_version_num"
-')
+if ! target_version=$(docker exec iceforge_db sh -ceu '
+    export PGPASSWORD="$POSTGRES_PASSWORD"
+    psql -XAt -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SHOW server_version_num"
+  '); then
+  echo 'Version PostgreSQL cible illisible.' >&2
+  false
+fi
 [[ $target_version == 180006 ]] || { echo "Version cible inattendue: $target_version" >&2; exit 1; }
 docker exec iceforge_db sh -ceu '
   export PGPASSWORD="$POSTGRES_PASSWORD"
