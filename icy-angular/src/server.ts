@@ -33,7 +33,7 @@ const commonEngine = new CommonEngine({ allowedHosts });
 /**
  * Serve static files from /browser
  */
-app.get('**', (req, res, next) => {
+app.get('/{*splat}', (req, res, next) => {
   const destination = resolveCanonicalRedirect(req.originalUrl);
   if (!destination) {
     next();
@@ -45,8 +45,7 @@ app.get('**', (req, res, next) => {
   res.redirect(308, `${destination}${query}`);
 });
 
-app.get(
-  '**',
+app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',
     index: 'index.html',
@@ -59,7 +58,7 @@ app.get(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.get('**', (req, res, next) => {
+app.get('/{*splat}', (req, res, next) => {
   const { protocol, originalUrl, baseUrl, headers } = req;
   const isKnownRoute = isKnownAppRoute(originalUrl);
 
