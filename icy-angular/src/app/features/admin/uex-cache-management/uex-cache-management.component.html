@@ -13,14 +13,22 @@
       <h2 class="text-2xl font-semibold text-cyan-200">Catalogue externe</h2>
       <p class="text-sm text-slate-400">Pilote les scrapes Star Citizen Wiki, UEX et Wikelo, puis mappe uniquement la partie choisie.</p>
     </div>
-    <button
-      type="button"
-      class="px-4 py-2 rounded-full border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30 transition"
-      (click)="loadDatasets()"
-      [disabled]="loadingDatasets"
+    <div class="flex items-center gap-2">
+      <a
+        routerLink="/icy/admin/catalog"
+        class="px-4 py-2 rounded-full border border-emerald-300/35 bg-emerald-500/15 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/25 transition"
       >
-      {{ loadingDatasets ? 'Chargement...' : 'Recharger la liste' }}
-    </button>
+        Voir le catalogue
+      </a>
+      <button
+        type="button"
+        class="px-4 py-2 rounded-full border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30 transition"
+        (click)="loadDatasets()"
+        [disabled]="loadingDatasets"
+        >
+        {{ loadingDatasets ? 'Chargement...' : 'Recharger la liste' }}
+      </button>
+    </div>
   </div>
 
   <section class="rounded-2xl border border-cyan-300/20 bg-[#0b1324]/90 p-5 space-y-4">

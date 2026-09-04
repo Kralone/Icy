@@ -1,0 +1,256 @@
+<main class="catalog-shell" #catalogTop>
+  <header class="catalog-header">
+    <div class="catalog-header__topline">
+      <a routerLink="/icy/admin/data" class="back-link" aria-label="Retour aux données">
+        <span aria-hidden="true">←</span>
+        Data
+      </a>
+      <a routerLink="/icy/admin/uex-cache" class="sync-link">
+        <span class="sync-link__dot"></span>
+        Centre de synchronisation
+      </a>
+    </div>
+
+    <div class="catalog-hero">
+      <div>
+        <p class="eyebrow">IceForge · Universal index</p>
+        <h1>Le catalogue du <span>’Verse</span></h1>
+        <p class="catalog-hero__copy">
+          Une vue unifiée des vaisseaux, équipements et destinations connus de la base.
+          Chaque fiche conserve sa provenance et ses offres disponibles.
+        </p>
+      </div>
+
+      <div class="catalog-vitals" aria-label="Résumé du catalogue">
+        <div class="vital vital--primary">
+          <span class="vital__value">{{ result?.activeElements ?? '—' }}</span>
+          <span class="vital__label">fiches actives</span>
+        </div>
+        <div class="vital">
+          <span class="vital__value">{{ result?.fallbackImages ?? '—' }}</span>
+          <span class="vital__label">visuels à enrichir</span>
+        </div>
+        <div class="vital">
+          <span class="vital__value">{{ result?.inactiveElements ?? '—' }}</span>
+          <span class="vital__label">archives</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="catalog-controls" aria-label="Filtres du catalogue">
+    <label class="search-box">
+      <span class="search-box__icon" aria-hidden="true"></span>
+      <span class="sr-only">Rechercher</span>
+      <input
+        type="search"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Rechercher un nom ou un fabricant…"
+        autocomplete="off"
+      />
+      @if (search) {
+        <button type="button" (click)="search = ''; applyFilters()" aria-label="Effacer la recherche">×</button>
+      }
+    </label>
+
+    <div class="select-grid">
+      <label>
+        <span>État</span>
+        <select [(ngModel)]="status" (change)="applyFilters()">
+          <option value="ACTIVE">Actifs</option>
+          <option value="INACTIVE">Archivés</option>
+          <option value="ALL">Tous</option>
+        </select>
+      </label>
+      <label>
+        <span>Visuel</span>
+        <select [(ngModel)]="image" (change)="applyFilters()">
+          <option value="ALL">Tous</option>
+          <option value="ORIGINAL">Image dédiée</option>
+          <option value="FALLBACK">À enrichir</option>
+        </select>
+      </label>
+      <label>
+        <span>Source</span>
+        <select [(ngModel)]="source" (change)="applyFilters()">
+          <option value="">Toutes</option>
+          <option value="STAR_CITIZEN_WIKI">Star Citizen Wiki</option>
+        </select>
+      </label>
+      <label>
+        <span>Trier</span>
+        <select [(ngModel)]="sort" (change)="applyFilters()">
+          <option value="name">Nom A–Z</option>
+          <option value="name-desc">Nom Z–A</option>
+          <option value="recent">Mise à jour récente</option>
+          <option value="family">Famille</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <nav class="family-rail" aria-label="Familles du catalogue">
+    @for (option of families; track option.value) {
+      <button
+        type="button"
+        class="family-chip"
+        [class.family-chip--active]="family === option.value"
+        (click)="selectFamily(option.value)"
+      >
+        <span>{{ option.shortLabel }}</span>
+        <strong>{{ familyCount(option.value) }}</strong>
+      </button>
+    }
+  </nav>
+
+  <section class="catalog-results">
+    <div class="results-heading">
+      <div>
+        <p class="eyebrow">Résultats indexés</p>
+        <h2>{{ family ? familyLabel(family) : 'Tout le catalogue' }}</h2>
+      </div>
+      <p>
+        @if (result) {
+          <strong>{{ result.totalElements }}</strong> résultat{{ result.totalElements > 1 ? 's' : '' }}
+        } @else {
+          Chargement de l’index…
+        }
+      </p>
+    </div>
+
+    @if (error) {
+      <div class="state-panel state-panel--error">
+        <span aria-hidden="true">!</span>
+        <div><strong>Connexion au catalogue impossible</strong><p>{{ error }}</p></div>
+        <button type="button" (click)="applyFilters()">Réessayer</button>
+      </div>
+    }
+
+    @if (loading) {
+      <div class="catalog-grid" aria-label="Chargement">
+        @for (placeholder of [1,2,3,4,5,6,7,8]; track placeholder) {
+          <div class="catalog-card catalog-card--skeleton">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-copy"><i></i><i></i><i></i></div>
+          </div>
+        }
+      </div>
+    } @else if (!error && result?.items?.length) {
+      <div class="catalog-grid">
+        @for (entry of result!.items; track trackEntry($index, entry)) {
+          <button type="button" class="catalog-card" (click)="openDetails(entry)">
+            <div class="catalog-card__visual">
+              <img [src]="entry.imageUrl" [alt]="entry.name" loading="lazy" (error)="imageError($event)" />
+              <div class="catalog-card__shade"></div>
+              <span class="family-badge" [attr.data-tone]="familyTone(entry.family)">
+                {{ familyLabel(entry.family) }}
+              </span>
+              @if (!entry.active) { <span class="archive-badge">Archivé</span> }
+              @if (entry.fallbackImage) { <span class="fallback-badge">Visuel générique</span> }
+            </div>
+
+            <div class="catalog-card__body">
+              <p class="catalog-card__maker">{{ entry.manufacturer || entry.source }}</p>
+              <h3>{{ entry.name }}</h3>
+              <p class="catalog-card__description">
+                {{ entry.description || 'Fiche indexée — caractéristiques détaillées à venir.' }}
+              </p>
+              <div class="catalog-card__footer">
+                @if (cheapestOffer(entry); as offer) {
+                  <div class="price-block">
+                    <span>Dès</span>
+                    <strong>{{ formatPrice(offer.price, offer.currency) }}</strong>
+                  </div>
+                } @else {
+                  <div class="price-block price-block--empty"><span>Aucune offre connue</span></div>
+                }
+                <span class="card-arrow" aria-hidden="true">↗</span>
+              </div>
+            </div>
+          </button>
+        }
+      </div>
+
+      @if ((result?.totalPages ?? 0) > 1) {
+        <nav class="pagination" aria-label="Pagination">
+          <button type="button" (click)="goToPage((result?.page ?? 0) - 1)" [disabled]="result?.page === 0">←</button>
+          @for (pageNumber of visiblePages; track pageNumber) {
+            <button
+              type="button"
+              [class.pagination__current]="pageNumber === result?.page"
+              (click)="goToPage(pageNumber)"
+            >{{ pageNumber + 1 }}</button>
+          }
+          <button
+            type="button"
+            (click)="goToPage((result?.page ?? 0) + 1)"
+            [disabled]="(result?.page ?? 0) + 1 >= (result?.totalPages ?? 0)"
+          >→</button>
+        </nav>
+      }
+    } @else if (!error) {
+      <div class="state-panel state-panel--empty">
+        <div class="empty-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div>
+          <p class="eyebrow">Aucun signal</p>
+          <h3>{{ result?.activeElements ? 'Aucune fiche ne correspond à ces filtres.' : 'Le catalogue attend son premier mapping.' }}</h3>
+          <p>Modifie les filtres ou utilise le centre de synchronisation pour préparer une famille.</p>
+        </div>
+        @if (result?.activeElements) {
+          <button type="button" (click)="resetFilters()">Réinitialiser les filtres</button>
+        } @else {
+          <a routerLink="/icy/admin/uex-cache">Ouvrir la synchronisation</a>
+        }
+      </div>
+    }
+  </section>
+</main>
+
+@if (selectedEntry; as entry) {
+  <div class="detail-backdrop" (click)="closeDetails()"></div>
+  <aside class="detail-panel" role="dialog" aria-modal="true" [attr.aria-label]="entry.name">
+    <button type="button" class="detail-close" (click)="closeDetails()" aria-label="Fermer">×</button>
+    <div class="detail-visual">
+      <img [src]="entry.imageUrl" [alt]="entry.name" (error)="imageError($event)" />
+      <div></div>
+      <span class="family-badge" [attr.data-tone]="familyTone(entry.family)">{{ familyLabel(entry.family) }}</span>
+    </div>
+
+    <div class="detail-content">
+      <p class="eyebrow">{{ entry.manufacturer || 'Fabricant inconnu' }}</p>
+      <h2>{{ entry.name }}</h2>
+      <p class="detail-description">{{ entry.description || 'Aucune description disponible dans la source.' }}</p>
+
+      <dl class="detail-metadata">
+        <div><dt>Source</dt><dd>{{ entry.source }}</dd></div>
+        <div><dt>Version</dt><dd>{{ entry.sourceVersion || 'Non renseignée' }}</dd></div>
+        <div><dt>Identifiant</dt><dd title="{{ entry.externalId }}">{{ entry.externalId }}</dd></div>
+        <div><dt>Dernière observation</dt><dd>{{ entry.updatedAt ? (entry.updatedAt | date:'dd/MM/yyyy · HH:mm') : 'Inconnue' }}</dd></div>
+      </dl>
+
+      <section class="offers-section">
+        <div class="offers-heading"><h3>Disponibilités</h3><span>{{ entry.offers.length }}</span></div>
+        @if (entry.offers.length) {
+          <div class="offer-list">
+            @for (offer of entry.offers; track offer.id) {
+              <div class="offer-row">
+                <span class="offer-type">{{ offerLabel(offer.type) }}</span>
+                <div><strong>{{ offer.location }}</strong><small>{{ offer.updatedAt ? (offer.updatedAt | date:'dd/MM/yyyy') : 'Date inconnue' }}</small></div>
+                <b>{{ formatPrice(offer.price, offer.currency) }}</b>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="offers-empty">Aucun lieu d’achat ou de location n’est actuellement relié à cette fiche.</p>
+        }
+      </section>
+
+      @if (entry.sourceUrl) {
+        <a class="source-button" [href]="entry.sourceUrl" target="_blank" rel="noopener noreferrer">
+          Consulter la source <span aria-hidden="true">↗</span>
+        </a>
+      }
+    </div>
+  </aside>
+}

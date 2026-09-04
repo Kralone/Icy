@@ -217,12 +217,15 @@ Endpoints implementes :
 - `POST /api/admin/catalog-sync/scrape-all` : actualise uniquement la zone brute ;
 - `POST /api/admin/catalog-sync/scrape-and-map` : scrape et mappe le scope fourni ;
 - `GET /api/admin/catalog-sync/current` : progression du dernier run.
+- `GET /api/admin/catalog/entries` : consultation paginee du catalogue mappe,
+  avec recherche, filtres de famille, etat, image, source et tri.
 
 Scopes mappables : `VEHICLES`, `ITEMS`, `LOCATIONS`, `ECONOMY`, `WIKELO`.
 
-La consultation paginee, la correction champ par champ et l'historique detaille des
-fiches seront ajoutes avec l'ecran public du catalogue ; ils ne sont pas necessaires
-au fonctionnement des deux boutons de synchronisation.
+La consultation paginee est disponible dans l'explorateur d'administration. La
+correction champ par champ et l'historique detaille des fiches seront ajoutes avec
+l'ecran public du catalogue ; ils ne sont pas necessaires au fonctionnement des deux
+boutons de synchronisation.
 
 L'ecran unique « Catalogue » remplace progressivement les pages data fragmentees. Il
 contient le bouton **Rescanner tout**, la progression, les filtres de famille, une vue

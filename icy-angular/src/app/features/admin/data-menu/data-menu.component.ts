@@ -49,6 +49,11 @@ export class DataMenuComponent {
       route: '/icy/admin/uex-cache'
     },
     {
+      label: 'Explorateur catalogue',
+      imageUrl: '/assets/images/catalog/catalog-fallback.svg',
+      route: '/icy/admin/catalog'
+    },
+    {
       label: 'CIG Watch',
       imageUrl: 'https://static.actugaming.net/media/2018/03/StarCitizen-1024x575.jpg',
       route: '/icy/admin/cig-watch'

@@ -347,6 +347,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/admin/uex-cache-management/uex-cache-management.component').then(m => m.UexCacheManagementComponent)
           },
           {
+            path: 'catalog',
+            loadComponent: () => import('./features/admin/catalog-browser/catalog-browser.component').then(m => m.CatalogBrowserComponent)
+          },
+          {
             path: 'cig-watch',
             loadComponent: () => import('./features/admin/cig-watch-management/cig-watch-management.component').then(m => m.CigWatchManagementComponent)
           },
