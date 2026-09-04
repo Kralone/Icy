@@ -94,8 +94,10 @@ docker exec -i iceforge_db sh -ceu \
   'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
   <"${rollout_dir}/verify-flyway-v30.sql" >/dev/null \
   || { echo "ERROR: Flyway V30 verification failed" >&2; exit 1; }
-curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members \
-  || { echo "ERROR: public backend API probe failed" >&2; exit 1; }
+if [[ ${BACKEND_SKIP_PUBLIC_PROBE:-false} != true ]]; then
+  curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members \
+    || { echo "ERROR: public backend API probe failed" >&2; exit 1; }
+fi
 
 recent_logs="$(docker logs --since 10m "$backend_container" 2>&1)"
 if grep -Eq '(^|[[:space:]])ERROR([[:space:]]|$)|Application run failed|Schema-validation|Validate failed' <<<"$recent_logs"; then

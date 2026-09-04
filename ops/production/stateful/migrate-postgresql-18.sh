@@ -177,10 +177,12 @@ docker exec iceforge_db sh -ceu '
 '
 
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait backend
-BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
+BACKEND_SKIP_PUBLIC_PROBE=true BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout \
+  "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
 trap - ERR
 
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait bot frontend
+BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
 BOT_ROLLOUT_DIR=$ROOT_DIR/ops/bot-rollout "$ROOT_DIR/ops/bot-rollout/verify.sh" runtime
 FRONTEND_ROLLOUT_DIR=$ROOT_DIR/ops/frontend-rollout "$ROOT_DIR/ops/frontend-rollout/verify.sh" runtime
 printf 'POSTGRESQL18_MIGRATION=OK source_version=%s target_version=%s source_volume=%s target_volume=%s artifacts=%s\n' \
