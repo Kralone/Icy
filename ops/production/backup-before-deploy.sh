@@ -5,7 +5,7 @@ ROOT_DIR=/root/iceforge
 BACKUP_DIR=/var/backups/iceforge
 RUNTIME_DIR=/run/iceforge-backup
 TOKEN_FILE=$RUNTIME_DIR/vault-snapshot.token
-RECOVERY_LIST=$RUNTIME_DIR/recovery-files
+RECOVERY_LIST=${ICEFORGE_RECOVERY_LIST:-$ROOT_DIR/.secrets/vault/recovery-files}
 INIT_JSON=$ROOT_DIR/.secrets/vault/prod-init.json
 AGE_RECIPIENT=
 

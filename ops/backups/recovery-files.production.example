@@ -7,6 +7,7 @@ ops/network-hardening
 ops/bot-rollout
 ops/backend-rollout
 ops/frontend-rollout
+ops/stateful
 .env
 .secrets/vault/compose.prod.env
 .secrets/vault/stateful.prod.env
