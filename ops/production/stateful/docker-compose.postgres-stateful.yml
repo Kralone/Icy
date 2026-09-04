@@ -1,0 +1,10 @@
+services:
+  db:
+    image: ${PROD_POSTGRES_IMAGE:?required}
+    volumes: !override
+      - "production_postgres_state:${PROD_POSTGRES_MOUNT:?required}"
+
+volumes:
+  production_postgres_state:
+    external: true
+    name: ${PROD_POSTGRES_VOLUME:?required}
