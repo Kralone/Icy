@@ -41,6 +41,14 @@ compose=(docker compose --project-name iceforge --env-file "$ROOT_DIR/.env" --en
   -f "$ROOT_DIR/ops/backend-rollout/docker-compose.backend-java25.yml"
   -f "$ROOT_DIR/ops/frontend-rollout/docker-compose.frontend-angular22.yml" -f "$OVERLAY")
 
+wait_for_rabbit_app() {
+  for _ in $(seq 1 90); do
+    docker exec iceforge_rabbitmq rabbitmq-diagnostics -q check_running >/dev/null 2>&1 && return 0
+    sleep 2
+  done
+  docker exec iceforge_rabbitmq rabbitmq-diagnostics -q check_running >/dev/null
+}
+
 rollback() {
   status=$?
   trap - ERR
@@ -59,11 +67,11 @@ docker run --rm --entrypoint sh -v "$old_volume:/source:ro" -v "$TARGET_VOLUME:/
 
 export PROD_RABBITMQ_VOLUME=$TARGET_VOLUME PROD_RABBITMQ_IMAGE=$IMAGE_42
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait rabbitmq
+wait_for_rabbit_app
 [[ $(docker exec iceforge_rabbitmq rabbitmqctl version) == 4.2.9 ]] || false
 docker exec iceforge_rabbitmq rabbitmqctl enable_feature_flag all >/dev/null
 docker restart iceforge_rabbitmq >/dev/null
-for _ in $(seq 1 60); do docker exec iceforge_rabbitmq rabbitmq-diagnostics -q ping >/dev/null 2>&1 && break; sleep 2; done
-docker exec iceforge_rabbitmq rabbitmq-diagnostics -q ping >/dev/null
+wait_for_rabbit_app
 
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait backend bot
 BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
@@ -71,11 +79,11 @@ BOT_ROLLOUT_DIR=$ROOT_DIR/ops/bot-rollout "$ROOT_DIR/ops/bot-rollout/verify.sh" 
 
 export PROD_RABBITMQ_IMAGE=$IMAGE_43
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait rabbitmq
+wait_for_rabbit_app
 [[ $(docker exec iceforge_rabbitmq rabbitmqctl version) == 4.3.5 ]] || false
 docker exec iceforge_rabbitmq rabbitmqctl enable_feature_flag all >/dev/null
 docker restart iceforge_rabbitmq >/dev/null
-for _ in $(seq 1 60); do docker exec iceforge_rabbitmq rabbitmq-diagnostics -q ping >/dev/null 2>&1 && break; sleep 2; done
-docker exec iceforge_rabbitmq rabbitmq-diagnostics -q ping >/dev/null
+wait_for_rabbit_app
 "${compose[@]}" up -d --no-deps --no-build --pull never --force-recreate --wait backend bot
 BACKEND_ROLLOUT_DIR=$ROOT_DIR/ops/backend-rollout "$ROOT_DIR/ops/backend-rollout/verify.sh" runtime
 BOT_ROLLOUT_DIR=$ROOT_DIR/ops/bot-rollout "$ROOT_DIR/ops/bot-rollout/verify.sh" runtime
