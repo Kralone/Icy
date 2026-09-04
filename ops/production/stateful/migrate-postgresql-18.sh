@@ -31,6 +31,8 @@ POSTGRES_DB=$(docker exec iceforge_db sh -ceu 'printf %s "$POSTGRES_DB"')
 [[ -n $POSTGRES_USER && -n $POSTGRES_PASSWORD && -n $POSTGRES_DB ]] || { echo 'Identifiants PostgreSQL source incomplets.' >&2; exit 1; }
 case $POSTGRES_DB in postgres|template0|template1) echo 'Nom de base applicative non pris en charge.' >&2; exit 1;; esac
 export POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
+PGPASSWORD=$POSTGRES_PASSWORD
+export PGPASSWORD
 
 source_version=$(docker exec iceforge_db sh -ceu '
   export PGPASSWORD="$POSTGRES_PASSWORD"
