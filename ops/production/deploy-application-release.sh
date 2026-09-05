@@ -72,6 +72,7 @@ required_files=(
   "$BACKEND_DIR/verify-v29-admin-readiness.sql"
   "$BACKEND_DIR/verify-v30-readiness.sql"
   "$BACKEND_DIR/verify-flyway-v30.sql"
+  "$BACKEND_DIR/verify-flyway-v31.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -118,6 +119,9 @@ case "$current_version" in
     ;;
   30)
     db_psql <"$BACKEND_DIR/verify-flyway-v30.sql" >/dev/null
+    ;;
+  31)
+    db_psql <"$BACKEND_DIR/verify-flyway-v31.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
