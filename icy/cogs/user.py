@@ -79,10 +79,14 @@ class UserCog(commands.Cog):
         message = message_detail.get("message", "La demande n'a pas pu être traitée.")
 
         if response.get("httpCode") == 201:
+            safe_username = discord.utils.escape_mentions(
+                discord.utils.escape_markdown(username)
+            )
             await interaction.followup.send(
                 embed=EmbedFactory.success_embed(
                     title,
-                    f"{message}\nUn message privé avec ses accès a été envoyé à {utilisateur.mention}.",
+                    f"Le compte {safe_username} a été créé avec le rôle {role.name}.\n"
+                    f"Un message privé avec ses accès a été envoyé à {utilisateur.mention}.",
                 ),
                 ephemeral=True,
             )

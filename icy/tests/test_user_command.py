@@ -49,7 +49,10 @@ class UserCommandTest(unittest.IsolatedAsyncioTestCase):
             },
         )
         sent_embed = interaction.followup.send.await_args.kwargs["embed"]
+        self.assertIn("discord\\_handle", sent_embed.description)
+        self.assertIn("Ingénieur", sent_embed.description)
         self.assertIn("<@123456789>", sent_embed.description)
+        self.assertNotIn("{0}", sent_embed.description)
 
     async def test_uses_trimmed_optional_pseudonym(self):
         cog, api_client, interaction, member = self.make_command()
