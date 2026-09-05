@@ -17,9 +17,10 @@ public class UserPublisher {
     /**
      * 🔐 Envoie un mot de passe temporaire à l’utilisateur via le bot Discord.
      */
-    public void sendTemporaryPassword(String discordId, String tempPassword) {
+    public void sendTemporaryPassword(String discordId, String username, String tempPassword) {
         Map<String, Object> payload = Map.of(
                 "discordId", discordId,
+                "username", username,
                 "tempPassword", tempPassword
         );
 

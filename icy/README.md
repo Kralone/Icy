@@ -22,6 +22,14 @@ disposait ni d'un contrat d'authentification backend compatible, ni d'un modèle
 de permissions Discord fiable. Les événements doivent être créés depuis
 l'interface web authentifiée jusqu'à la définition explicite d'un contrat bot.
 
+## Commande d'administration
+
+La slash command `/ajouter_utilisateur` est réservée aux administrateurs du
+serveur Discord. Elle demande un membre, un grade IceForge et, facultativement,
+un pseudo différent de son handle Discord. Le compte est créé par la route bot
+authentifiée du backend, puis le membre reçoit en message privé son identifiant
+IceForge et son mot de passe temporaire.
+
 L'ancien serveur HTTP `/notify-password` a été supprimé. La notification de
 réinitialisation transite uniquement par la file RabbitMQ interne.
 

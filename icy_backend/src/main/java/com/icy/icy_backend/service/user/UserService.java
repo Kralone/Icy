@@ -120,7 +120,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
 
-        userPublisher.sendTemporaryPassword(discordId, tempPassword);
+        userPublisher.sendTemporaryPassword(discordId, username, tempPassword);
 
         String roleName = (role == null || role.isBlank()) ? DEFAULT_ROLE_NAME : role;
         Role defaultRole = findRoleByName(roleName);
@@ -386,7 +386,7 @@ public class UserService {
         userRepository.save(user);
 
         logger.info("Mot de passe temporaire réinitialisé pour {}", user.getUsername());
-        userPublisher.sendTemporaryPassword(user.getDiscordId(), tempPassword);
+        userPublisher.sendTemporaryPassword(user.getDiscordId(), user.getUsername(), tempPassword);
         notificationPushService.sendToUsers(
                 List.of(user.getId()),
                 "Compte : mot de passe reinitialise",

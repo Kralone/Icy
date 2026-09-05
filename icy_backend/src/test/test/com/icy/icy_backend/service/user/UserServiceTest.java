@@ -184,7 +184,7 @@ class UserServiceTest {
 
         ResponseEntity<MessageResponse<User>> actual = userService.createUser("alice", "123", "USER");
         assertThat(actual).isEqualTo(response);
-        verify(userPublisher).sendTemporaryPassword(eq("123"), any());
+        verify(userPublisher).sendTemporaryPassword(eq("123"), eq("alice"), any());
         verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
     }
 

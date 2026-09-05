@@ -1,5 +1,7 @@
 import logging
 
+import discord
+
 logger = logging.getLogger("icy.user")
 
 class UserHandler:
@@ -28,8 +30,15 @@ class UserHandler:
             logger.warning("⚠️ Notification de mot de passe ignorée: Discord ID invalide.")
             return
         temp_password = payload.get("tempPassword")
+        username = payload.get("username")
 
-        if discord_id <= 0 or not isinstance(temp_password, str) or not temp_password:
+        if (
+            discord_id <= 0
+            or not isinstance(temp_password, str)
+            or not temp_password
+            or not isinstance(username, str)
+            or not username.strip()
+        ):
             logger.warning("⚠️ Notification de mot de passe ignorée: payload invalide.")
             return
 
@@ -37,7 +46,11 @@ class UserHandler:
 
         user = await self.bot.fetch_user(discord_id)
         if user:
+            safe_username = discord.utils.escape_markdown(
+                discord.utils.escape_mentions(username.strip())
+            )
             await user.send(
+                f"👤 Ton identifiant IceForge est : **{safe_username}**\n"
                 f"🔐 Ton mot de passe temporaire est : **{temp_password}**\n"
                 f"Pense à le changer dès que possible dès ta connexion sur le site !"
             )

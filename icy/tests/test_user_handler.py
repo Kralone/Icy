@@ -13,11 +13,16 @@ class UserHandlerTest(unittest.IsolatedAsyncioTestCase):
 
         await handler.handle(
             "users.password_reset",
-            {"discordId": "123456789", "tempPassword": "one-time-password"},
+            {
+                "discordId": "123456789",
+                "username": "Ice Pilot",
+                "tempPassword": "one-time-password",
+            },
         )
 
         bot.fetch_user.assert_awaited_once_with(123456789)
         sent_message = user.send.await_args.args[0]
+        self.assertIn("Ice Pilot", sent_message)
         self.assertIn("one-time-password", sent_message)
 
     async def test_missing_password_is_rejected_without_discord_call(self):
@@ -34,7 +39,7 @@ class UserHandlerTest(unittest.IsolatedAsyncioTestCase):
 
         await handler.handle(
             "users.password_reset",
-            {"discordId": "not-an-id", "tempPassword": "secret"},
+            {"discordId": "not-an-id", "username": "alice", "tempPassword": "secret"},
         )
 
         bot.fetch_user.assert_not_awaited()
@@ -48,7 +53,11 @@ class UserHandlerTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(RuntimeError):
                 await handler.handle(
                     "users.password_reset",
-                    {"discordId": "123456789", "tempPassword": "super-secret-password"},
+                    {
+                        "discordId": "123456789",
+                        "username": "alice",
+                        "tempPassword": "super-secret-password",
+                    },
                 )
 
         self.assertNotIn("super-secret-password", "\n".join(captured.output))

@@ -39,6 +39,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -173,6 +174,45 @@ class UserControllerTest {
             mockMvc.perform(get("/api/users/123").with(TestAuth.user(actorId, role)))
                     .andExpect(status().isOk());
         }
+    }
+
+    @Test
+    void discordBotCanCreateUserOnlyThroughDedicatedEndpoint() throws Exception {
+        UUID actorId = UUID.randomUUID();
+        when(userService.createUser(eq("alice"), eq("123456789"), eq("SPECIALISTE")))
+                .thenReturn(okResponse(new User()));
+
+        String payload = "{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"SPECIALISTE\"}";
+        mockMvc.perform(post("/api/users/bot/create")
+                        .with(TestAuth.user(actorId, "BOT"))
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/users/create")
+                        .with(TestAuth.user(actorId, "BOT"))
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/users/bot/create")
+                        .with(TestAuth.user(actorId, "ADMIN"))
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void discordBotCreateRejectsRoleOutsideCommandChoices() throws Exception {
+        UUID actorId = UUID.randomUUID();
+
+        mockMvc.perform(post("/api/users/bot/create")
+                        .with(TestAuth.user(actorId, "BOT"))
+                        .contentType("application/json")
+                        .content("{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"BOT\"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoMoreInteractions(userService);
     }
 
     @Test
