@@ -362,11 +362,6 @@ export const routes: Routes = [
             path: 'goals',
             loadComponent: () => import('./features/admin/goal-management/goal-management.component').then(m => m.GoalManagementComponent)
           },
-          {
-            path: 'orbit-spinner-maker',
-            data: { roles: ['ADMIN'] },
-            loadComponent: () => import('./features/admin/orbit-spinner-maker/orbit-spinner-maker.component').then(m => m.OrbitSpinnerMakerComponent)
-          },
         ]
       },
     ]

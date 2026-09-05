@@ -51,8 +51,7 @@ const knownRoutes = new Set([
   '/icy/admin/catalog',
   '/icy/admin/cig-watch',
   '/icy/admin/ore-locations',
-  '/icy/admin/goals',
-  '/icy/admin/orbit-spinner-maker'
+  '/icy/admin/goals'
 ]);
 
 const canonicalRedirects = new Map<string, string>([
