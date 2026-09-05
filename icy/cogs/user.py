@@ -9,6 +9,13 @@ from utils.embeds import EmbedFactory
 
 logger = logging.getLogger("icy.user_command")
 
+ALLOWED_REGISTRATION_ROLE_IDS = frozenset(
+    {
+        1322999139159773305,
+        1325521929456586812,
+    }
+)
+
 USER_ROLES = [
     app_commands.Choice(name="Junior", value="JUNIOR"),
     app_commands.Choice(name="Associé", value="ASSOCIE"),
@@ -33,8 +40,6 @@ class UserCog(commands.Cog):
         pseudo="Pseudo IceForge (le handle Discord est utilisé par défaut)",
     )
     @app_commands.choices(role=USER_ROLES)
-    @app_commands.default_permissions(administrator=True)
-    @app_commands.checks.has_permissions(administrator=True)
     @app_commands.guild_only()
     async def ajouter_utilisateur(
         self,
@@ -44,6 +49,17 @@ class UserCog(commands.Cog):
         pseudo: str | None = None,
     ):
         """Create an IceForge account and trigger the temporary-password DM."""
+        operator_roles = getattr(interaction.user, "roles", ())
+        if not any(
+            getattr(discord_role, "id", None) in ALLOWED_REGISTRATION_ROLE_IDS
+            for discord_role in operator_roles
+        ):
+            await interaction.response.send_message(
+                "Cette commande est réservée aux rôles autorisés.",
+                ephemeral=True,
+            )
+            return
+
         await interaction.response.defer(ephemeral=True)
 
         username = (pseudo if pseudo is not None else utilisateur.name).strip()

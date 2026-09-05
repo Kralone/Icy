@@ -3,11 +3,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 from discord import app_commands
 
-from cogs.user import UserCog
+from cogs.user import ALLOWED_REGISTRATION_ROLE_IDS, UserCog
 
 
 class UserCommandTest(unittest.IsolatedAsyncioTestCase):
-    def make_command(self):
+    def make_command(self, operator_role_id=1322999139159773305):
         api_client = MagicMock()
         api_client.api_request = AsyncMock()
         bot = MagicMock()
@@ -15,14 +15,60 @@ class UserCommandTest(unittest.IsolatedAsyncioTestCase):
         cog = UserCog(bot)
 
         interaction = MagicMock()
+        interaction.response.send_message = AsyncMock()
         interaction.response.defer = AsyncMock()
         interaction.followup.send = AsyncMock()
+        operator_role = MagicMock()
+        operator_role.id = operator_role_id
+        interaction.user.roles = [operator_role]
 
         member = MagicMock()
         member.id = 123456789
         member.name = "discord_handle"
         member.mention = "<@123456789>"
         return cog, api_client, interaction, member
+
+    async def test_allows_each_configured_operator_role(self):
+        self.assertEqual(
+            {1322999139159773305, 1325521929456586812},
+            ALLOWED_REGISTRATION_ROLE_IDS,
+        )
+
+        for operator_role_id in ALLOWED_REGISTRATION_ROLE_IDS:
+            with self.subTest(operator_role_id=operator_role_id):
+                cog, api_client, interaction, member = self.make_command(
+                    operator_role_id
+                )
+                api_client.api_request.return_value = {
+                    "httpCode": 201,
+                    "messageDetail": {"title": "Compte créé", "message": "Bienvenue"},
+                }
+
+                await cog.ajouter_utilisateur.callback(
+                    cog,
+                    interaction,
+                    member,
+                    app_commands.Choice(name="Junior", value="JUNIOR"),
+                )
+
+                api_client.api_request.assert_awaited_once()
+
+    async def test_rejects_operator_without_an_allowed_role(self):
+        cog, api_client, interaction, member = self.make_command(999)
+
+        await cog.ajouter_utilisateur.callback(
+            cog,
+            interaction,
+            member,
+            app_commands.Choice(name="Junior", value="JUNIOR"),
+        )
+
+        interaction.response.send_message.assert_awaited_once_with(
+            "Cette commande est réservée aux rôles autorisés.",
+            ephemeral=True,
+        )
+        interaction.response.defer.assert_not_awaited()
+        api_client.api_request.assert_not_awaited()
 
     async def test_creates_user_with_selected_role_and_discord_handle(self):
         cog, api_client, interaction, member = self.make_command()
