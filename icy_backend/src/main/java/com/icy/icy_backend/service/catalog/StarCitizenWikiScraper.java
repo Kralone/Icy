@@ -1,6 +1,8 @@
 package com.icy.icy_backend.service.catalog;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.config.CatalogSyncProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -9,7 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +23,27 @@ public class StarCitizenWikiScraper {
 
     private final CatalogSyncProperties properties;
     private final CatalogRawStore rawStore;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate;
 
-    public StarCitizenWikiScraper(CatalogSyncProperties properties, CatalogRawStore rawStore) {
+    public StarCitizenWikiScraper(
+            CatalogSyncProperties properties,
+            CatalogRawStore rawStore,
+            ObjectMapper objectMapper
+    ) {
+        this(properties, rawStore, objectMapper, new RestTemplate());
+    }
+
+    StarCitizenWikiScraper(
+            CatalogSyncProperties properties,
+            CatalogRawStore rawStore,
+            ObjectMapper objectMapper,
+            RestTemplate restTemplate
+    ) {
         this.properties = properties;
         this.rawStore = rawStore;
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
     }
 
     public List<String> datasets() {
@@ -62,22 +82,34 @@ public class StarCitizenWikiScraper {
     private JsonNode fetchPage(String datasetKey, int page) {
         String baseUrl = properties.getWikiBaseUrl().replaceAll("/+$", "");
         int pageSize = Math.max(1, Math.min(200, properties.getPageSize()));
-        String url = baseUrl + "/" + datasetKey
-                + "?page%5Bnumber%5D=" + page
-                + "&page%5Bsize%5D=" + pageSize;
+        URI url = UriComponentsBuilder.fromUriString(baseUrl + "/" + datasetKey)
+                .queryParam("page[number]", page)
+                .queryParam("page[size]", pageSize)
+                .build()
+                .encode()
+                .toUri();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         headers.set(HttpHeaders.USER_AGENT, properties.getUserAgent());
-        ResponseEntity<JsonNode> response = restTemplate.exchange(
+        ResponseEntity<String> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                JsonNode.class
+                String.class
         );
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+        if (!response.getStatusCode().is2xxSuccessful()
+                || response.getBody() == null
+                || response.getBody().isBlank()) {
             throw new IllegalStateException("Star Citizen Wiki indisponible pour " + datasetKey + " page " + page);
         }
-        return response.getBody();
+        try {
+            return objectMapper.readTree(response.getBody());
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException(
+                    "Reponse JSON Star Citizen Wiki invalide pour " + datasetKey + " page " + page,
+                    exception
+            );
+        }
     }
 }
