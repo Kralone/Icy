@@ -1,193 +1,153 @@
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-8">
-  <a
-    routerLink="/icy/admin/data"
-    class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-    >
-    <span class="text-base leading-none">←</span>
-    <span>Retour Data</span>
-  </a>
+<main class="catalog-console">
+  <div class="catalog-shell">
+    <nav class="top-nav" aria-label="Navigation du catalogue">
+      <a routerLink="/icy/admin/data" class="back-link"><span aria-hidden="true">←</span> Retour aux donnees</a>
+      <a routerLink="/icy/admin/catalog" class="catalog-link">Ouvrir le catalogue <span aria-hidden="true">↗</span></a>
+    </nav>
 
-  <div class="flex items-center justify-between gap-4 flex-wrap">
-    <div class="space-y-1">
-      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Console</p>
-      <h2 class="text-2xl font-semibold text-cyan-200">Catalogue externe</h2>
-      <p class="text-sm text-slate-400">Pilote les scrapes Star Citizen Wiki, UEX et Wikelo, puis mappe uniquement la partie choisie.</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <a
-        routerLink="/icy/admin/catalog"
-        class="px-4 py-2 rounded-full border border-emerald-300/35 bg-emerald-500/15 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/25 transition"
-      >
-        Voir le catalogue
-      </a>
-      <button
-        type="button"
-        class="px-4 py-2 rounded-full border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30 transition"
-        (click)="loadDatasets()"
-        [disabled]="loadingDatasets"
-        >
-        {{ loadingDatasets ? 'Chargement...' : 'Recharger la liste' }}
-      </button>
-    </div>
-  </div>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Centre de donnees</p>
+        <h1>Bibliotheque des sources</h1>
+        <p class="hero-copy">Explore les donnees collectees pour IceForge, controle leur fraicheur et choisis precisement ce qui doit etre publie dans le catalogue.</p>
+      </div>
+      <div class="hero-stats" aria-label="Resume des sources">
+        <div><strong>{{ datasets.length }}</strong><span>sources suivies</span></div>
+        <div><strong>{{ synchronizedDatasetCount }}</strong><span>synchronisees</span></div>
+        <div><strong>{{ totalDatasetItems | number:'1.0-0' }}</strong><span>entrees stockees</span></div>
+      </div>
+    </header>
 
-  <section class="rounded-2xl border border-cyan-300/20 bg-[#0b1324]/90 p-5 space-y-4">
-    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-      <div class="space-y-1">
-        <p class="text-xs uppercase tracking-[0.25em] text-cyan-300">Catalogue externe</p>
-        <h3 class="text-xl font-semibold text-white">Scrape global ou mapping cible</h3>
-        <p class="max-w-3xl text-sm text-slate-400">
-          Le scrape global ne touche qu'aux donnees brutes. Le second bouton scrape puis mappe uniquement la famille selectionnee.
-        </p>
+    <section class="actions-section" aria-labelledby="actions-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">Mise a jour</p><h2 id="actions-title">Que veux-tu actualiser ?</h2></div>
+        <p>Les deux actions n'ont pas le meme effet. Choisis selon que tu veux seulement collecter les sources ou publier une partie du catalogue.</p>
       </div>
 
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <button
-          type="button"
-          class="rounded-xl border border-sky-300/35 bg-sky-500/15 px-4 py-2.5 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-50"
-          (click)="scrapeAll()"
-          [disabled]="startingCatalogAction || catalogRunActive"
-        >
-          Scraper tout
-        </button>
+      <div class="action-grid">
+        <article class="action-card source-action">
+          <div class="action-icon" aria-hidden="true">↓</div>
+          <div class="action-content">
+            <div class="action-title-row"><h3>Telecharger toutes les sources</h3><span class="impact-badge safe">Catalogue inchange</span></div>
+            <p>Recharge toutes les donnees brutes depuis Star Citizen Wiki, UEX et Wikelo. Rien n'est publie dans les fiches visibles.</p>
+            <button type="button" class="primary-action source-button" (click)="scrapeAll()" [disabled]="startingCatalogAction || catalogRunActive">
+              <span aria-hidden="true">↻</span> {{ startingCatalogAction ? 'Demarrage...' : 'Actualiser les sources uniquement' }}
+            </button>
+          </div>
+        </article>
 
-        <label class="flex min-w-72 flex-col gap-1 text-xs uppercase tracking-[0.14em] text-slate-400">
-          Partie a mapper
-          <select
-            class="rounded-xl border border-white/15 bg-[#07101e] px-3 py-2.5 text-sm normal-case tracking-normal text-white outline-none focus:border-cyan-400/60"
-            [value]="selectedMapScope"
-            (change)="onMapScopeChange($any($event.target).value)"
-            [disabled]="startingCatalogAction || catalogRunActive"
-          >
-            @for (scope of mapScopes; track scope.value) {
-              <option [value]="scope.value">{{ scope.label }}</option>
-            }
-          </select>
-        </label>
-
-        <button
-          type="button"
-          class="rounded-xl border border-emerald-300/35 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
-          (click)="scrapeAndMap()"
-          [disabled]="startingCatalogAction || catalogRunActive"
-        >
-          Scraper et mapper
-        </button>
-      </div>
-    </div>
-
-    @if (catalogRun) {
-      <div class="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span class="font-semibold text-cyan-100">
-            Run #{{ catalogRun.id }} · {{ catalogRun.operation === 'SCRAPE_ALL' ? 'Scrape brut complet' : ('Mapping ' + catalogRun.scope) }}
-          </span>
-          <span
-            class="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em]"
-            [ngClass]="{
-              'border-amber-300/30 bg-amber-400/10 text-amber-100': catalogRunActive,
-              'border-emerald-300/30 bg-emerald-400/10 text-emerald-100': catalogRun.status === 'SUCCEEDED',
-              'border-red-300/30 bg-red-400/10 text-red-100': catalogRun.status === 'FAILED'
-            }"
-          >
-            {{ catalogRun.status }}
-          </span>
-        </div>
-        <div class="h-2 overflow-hidden rounded-full bg-white/10">
-          <div class="h-full rounded-full bg-cyan-400 transition-all duration-500" [style.width.%]="catalogProgressPercent"></div>
-        </div>
-        <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-400">
-          <span>{{ catalogRun.message || 'En attente' }}</span>
-          <span>{{ catalogRun.currentStep }} / {{ catalogRun.totalSteps }} · {{ catalogProgressPercent }}%</span>
-        </div>
-        @if (catalogRun.errorMessage) {
-          <p class="text-sm text-red-200">{{ catalogRun.errorMessage }}</p>
-        }
-      </div>
-    }
-  </section>
-
-  @if (error) {
-    <div class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
-      {{ error }}
-    </div>
-  }
-
-  @if (success) {
-    <div class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
-      {{ success }}
-    </div>
-  }
-
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <section class="lg:col-span-1 bg-[#0b1324]/80 border border-white/10 rounded-2xl p-4 space-y-3">
-      <h3 class="text-sm uppercase tracking-[0.2em] text-slate-300">Datasets</h3>
-      <div class="space-y-2">
-        @for (dataset of datasets; track trackDataset($index, dataset)) {
-          <button
-            type="button"
-            class="w-full text-left rounded-xl border px-3 py-3 transition"
-          [ngClass]="dataset.datasetKey === selectedDatasetKey
-            ? 'border-cyan-400/50 bg-cyan-500/15'
-            : 'border-white/10 bg-white/5 hover:bg-white/10'"
-            (click)="selectDataset(dataset.datasetKey)"
-            >
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-semibold text-cyan-100">{{ dataset.datasetKey }}</span>
-              <span class="text-xs text-slate-300">{{ dataset.itemCount || 0 }} items</span>
-            </div>
-            <p class="mt-1 text-xs text-slate-400 break-all">{{ dataset.sourceUrl }}</p>
-            <p class="mt-1 text-xs text-slate-500">
-              Dernier fetch:
-              {{ dataset.fetchedAt ? (dataset.fetchedAt | date:'dd/MM/yyyy HH:mm:ss') : 'Jamais' }}
-            </p>
-            <div class="mt-2">
-              <button
-                type="button"
-                class="text-xs px-3 py-1 rounded-full border border-cyan-400/40 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25 transition"
-                (click)="refreshDataset(dataset.datasetKey); $event.stopPropagation()"
-                [disabled]="refreshingKey === dataset.datasetKey"
-                >
-                {{ refreshingKey === dataset.datasetKey ? 'Refresh...' : 'Refresh & overwrite' }}
+        <article class="action-card publish-action">
+          <div class="action-icon" aria-hidden="true">✓</div>
+          <div class="action-content">
+            <div class="action-title-row"><h3>Actualiser puis publier une categorie</h3><span class="impact-badge publish">Modifie le catalogue</span></div>
+            <p>Recharge les sources necessaires, puis met a jour uniquement la categorie selectionnee dans le catalogue.</p>
+            <div class="publish-controls">
+              <label><span>Categorie a publier</span>
+                <select [value]="selectedMapScope" (change)="onMapScopeChange($any($event.target).value)" [disabled]="startingCatalogAction || catalogRunActive">
+                  @for (scope of mapScopes; track scope.value) { <option [value]="scope.value">{{ scope.label }}</option> }
+                </select>
+              </label>
+              <button type="button" class="primary-action publish-button" (click)="scrapeAndMap()" [disabled]="startingCatalogAction || catalogRunActive">
+                <span aria-hidden="true">↻</span> Actualiser et publier cette categorie
               </button>
             </div>
-          </button>
-        }
-      </div>
-    </section>
-
-    <section class="lg:col-span-2 bg-[#0b1324]/80 border border-white/10 rounded-2xl p-4 space-y-4 min-h-[420px]">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <h3 class="text-sm uppercase tracking-[0.2em] text-slate-300">
-          Preview BDD
-          @if (selectedDetail) {
-            <span class="normal-case tracking-normal text-cyan-200 ml-2">{{ selectedDetail.datasetKey }}</span>
-          }
-        </h3>
-        @if (selectedDetail) {
-          <p class="text-xs text-slate-400">
-            {{ selectedDetail.previewItemCount }} items affiches
-            @if (selectedDetail.truncated) {
-              <span>(preview tronque)</span>
-            }
-          </p>
-        }
+          </div>
+        </article>
       </div>
 
-      @if (loadingDetail) {
-        <div class="text-slate-400 text-sm">Chargement du dataset...</div>
-      }
-
-      @if (!loadingDetail && !selectedDetail) {
-        <div class="text-slate-500 text-sm">
-          Selectionne un dataset pour voir le contenu en base.
+      @if (catalogRun) {
+        <div class="run-panel" [class.run-failed]="catalogRun.status === 'FAILED'">
+          <div class="run-header">
+            <div><span class="run-kicker">Traitement #{{ catalogRun.id }}</span><strong>{{ catalogRunOperationLabel() }}</strong></div>
+            <span class="run-status" [attr.data-status]="catalogRun.status">{{ catalogRunStatusLabel() }}</span>
+          </div>
+          <div class="progress-track" role="progressbar" [attr.aria-valuenow]="catalogProgressPercent" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="catalogProgressPercent"></span></div>
+          <div class="run-meta"><span>{{ catalogRun.message || 'En attente de demarrage' }}</span><span>{{ catalogRun.currentStep }} / {{ catalogRun.totalSteps }} etapes · {{ catalogProgressPercent }}%</span></div>
+          @if (catalogRun.errorMessage) { <p class="run-error">{{ catalogRun.errorMessage }}</p> }
         </div>
       }
+    </section>
 
-      @if (!loadingDetail && selectedDetail) {
-        <pre
-        class="w-full max-h-[580px] overflow-auto text-xs leading-5 rounded-xl border border-white/10 bg-[#060c19] p-4 text-cyan-100 whitespace-pre-wrap break-words">{{ previewJson }}</pre>
+    @if (error) { <div class="notice error-notice"><span aria-hidden="true">!</span>{{ error }}</div> }
+    @if (success) { <div class="notice success-notice"><span aria-hidden="true">✓</span>{{ success }}</div> }
+
+    <section class="library-section" aria-labelledby="library-title">
+      <div class="library-header">
+        <div><p class="eyebrow">Sources disponibles</p><h2 id="library-title">La bibliotheque</h2><p>Chaque carte represente une source brute stockee en base. Ouvre-la pour inspecter un echantillon ou actualise-la seule.</p></div>
+        <button type="button" class="refresh-list" (click)="loadDatasets()" [disabled]="loadingDatasets"><span aria-hidden="true">↻</span> {{ loadingDatasets ? 'Chargement...' : 'Recharger les indicateurs' }}</button>
+      </div>
+
+      <div class="library-tools">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input type="search" placeholder="Rechercher une source..." [value]="datasetQuery" (input)="onDatasetQuery($any($event.target).value)" /></label>
+        <div class="category-tabs" role="group" aria-label="Filtrer par famille">
+          @for (category of datasetCategories; track category.value) {
+            <button type="button" [class.active]="selectedDatasetCategory === category.value" (click)="setDatasetCategory(category.value)">{{ category.label }}</button>
+          }
+        </div>
+      </div>
+
+      @if (loadingDatasets && datasets.length === 0) {
+        <div class="empty-state">Chargement de la bibliotheque...</div>
+      } @else if (filteredDatasets.length === 0) {
+        <div class="empty-state">Aucune source ne correspond a ces filtres.</div>
+      } @else {
+        <div class="dataset-grid">
+          @for (dataset of filteredDatasets; track trackDataset($index, dataset)) {
+            @let presentation = datasetPresentation(dataset.datasetKey);
+            <article class="dataset-card" [class.selected]="dataset.datasetKey === selectedDatasetKey">
+              <button type="button" class="dataset-cover" (click)="selectDataset(dataset.datasetKey)" [attr.aria-label]="'Ouvrir ' + presentation.title">
+                <img [src]="presentation.imageUrl" alt="" (error)="onImageError($event)" />
+                <span class="cover-shade"></span><span class="category-chip">{{ categoryLabel(presentation.category) }}</span>
+                <span class="sync-chip" [class.ready]="!!dataset.fetchedAt"><span class="status-dot"></span>{{ dataset.fetchedAt ? 'Synchronisee' : 'A initialiser' }}</span>
+              </button>
+              <div class="dataset-body">
+                <button type="button" class="dataset-title" (click)="selectDataset(dataset.datasetKey)">{{ presentation.title }}</button>
+                <p>{{ presentation.description }}</p>
+                <div class="dataset-stats">
+                  <span><strong>{{ (dataset.itemCount || 0) | number:'1.0-0' }}</strong> entrees</span>
+                  <span><strong>{{ dataset.fetchedAt ? (dataset.fetchedAt | date:'dd MMM yyyy') : 'Jamais' }}</strong> derniere collecte</span>
+                </div>
+                <div class="dataset-actions">
+                  <button type="button" class="inspect-button" (click)="selectDataset(dataset.datasetKey)">Voir l'apercu <span aria-hidden="true">→</span></button>
+                  <button type="button" class="single-refresh" (click)="refreshDataset(dataset.datasetKey)" [disabled]="refreshingKey === dataset.datasetKey" [attr.aria-label]="'Actualiser ' + presentation.title" title="Actualiser uniquement cette source">{{ refreshingKey === dataset.datasetKey ? '…' : '↻' }}</button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
       }
     </section>
+
+    @if (selectedDetail && selectedPresentation) {
+      <section class="preview-section" aria-labelledby="preview-title">
+        <div class="preview-header">
+          <div><p class="eyebrow">Apercu en base</p><h2 id="preview-title">{{ selectedPresentation.title }}</h2><p>{{ selectedDetail.previewItemCount }} entrees affichees@if (selectedDetail.truncated) { <span> sur un apercu limite</span> }</p></div>
+          <div class="preview-actions">
+            <button type="button" (click)="showRawJson = !showRawJson">{{ showRawJson ? 'Voir les fiches' : 'Voir le JSON brut' }}</button>
+            <button type="button" class="refresh-selected" (click)="refreshDataset(selectedDetail.datasetKey)" [disabled]="refreshingKey === selectedDetail.datasetKey">↻ {{ refreshingKey === selectedDetail.datasetKey ? 'Actualisation...' : 'Actualiser cette source' }}</button>
+          </div>
+        </div>
+
+        @if (loadingDetail) {
+          <div class="empty-state">Lecture de la source...</div>
+        } @else if (showRawJson) {
+          <pre class="json-preview">{{ previewJson }}</pre>
+        } @else if (previewRecords.length > 0) {
+          <div class="record-grid">
+            @for (record of previewRecords; track $index) {
+              <article class="record-card">
+                @if (recordImage(record); as imageUrl) { <img [src]="imageUrl" [alt]="recordTitle(record, $index)" (error)="onImageError($event)" /> }
+                @else { <div class="record-placeholder" [style.background-image]="'url(' + selectedPresentation.imageUrl + ')'" aria-hidden="true"></div> }
+                <div><h3>{{ recordTitle(record, $index) }}</h3><dl>
+                  @for (field of recordFields(record); track field.label) { <div><dt>{{ field.label }}</dt><dd>{{ field.value }}</dd></div> }
+                </dl></div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">Cette source ne contient encore aucune donnee. Actualise-la pour l'initialiser.</div>
+        }
+      </section>
+    }
   </div>
-</div>
+</main>
