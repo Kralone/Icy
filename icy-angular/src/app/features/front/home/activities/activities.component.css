@@ -19,11 +19,6 @@
   color: #e2f5ff;
 }
 
-.activities-subtitle {
-  color: #94a3b8;
-  font-size: 1rem;
-}
-
 .activities-grid {
   display: grid;
   gap: 2rem;

@@ -10,25 +10,10 @@
   margin-bottom: 1rem;
 }
 
-.guides-header__kicker {
-  margin: 0;
-  color: #8fbcd4;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
 .guides-header h2 {
-  margin: 0.45rem 0 0;
+  margin: 0;
   color: #e7f8ff;
   font-size: clamp(1.35rem, 2.6vw, 2rem);
-}
-
-.guides-header p {
-  color: #9db0c2;
-  margin: 0.5rem 0 0;
-  max-width: 860px;
 }
 
 .guides-grid {
@@ -248,10 +233,6 @@
 
   .guides-header h2 {
     font-size: clamp(1.15rem, 7vw, 1.45rem);
-  }
-
-  .guides-header p {
-    font-size: 0.88rem;
   }
 
   .guide-card {

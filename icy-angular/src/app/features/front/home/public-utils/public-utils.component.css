@@ -46,12 +46,6 @@
   color: #f8fafc;
 }
 
-.front-utils__subtitle {
-  margin: 1rem 0 0;
-  color: #cbd5e1;
-  line-height: 1.65;
-}
-
 .front-utils__grid {
   margin-top: 2rem;
   display: grid;
