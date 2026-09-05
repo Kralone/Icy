@@ -29,6 +29,40 @@
   padding-top: 3.5rem;
 }
 
+.utils-intro {
+  max-width: 48rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.utils-intro h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.08;
+}
+
+.utils-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.utils-section-heading h2 {
+  margin: 0.15rem 0 0;
+  color: #e2e8f0;
+  font-size: 1.2rem;
+}
+
+.utils-menu--public .utils-content {
+  padding-top: 2rem;
+}
+
+.utils-menu--public .utils-rank-label {
+  color: rgba(255, 255, 255, 0.1);
+}
+
 .utils-rank-label {
   position: absolute;
   top: 1rem;

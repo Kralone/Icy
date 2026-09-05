@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
@@ -11,7 +11,7 @@ type UtilityMenuItem = {
   label: string;
   imageUrl: string;
   scope: UtilityScope;
-  route: string;
+  path: string;
 };
 
 @Component({
@@ -30,7 +30,7 @@ export class UtilsMenuComponent {
   isLoading = true;
   cardsVisible = false;
   activeRankKey = 'JUNIOR';
-  isMember = false;
+  isMemberPresentation = false;
   private readonly rankAliases: Record<string, string> = {
     USER: 'JUNIOR',
     MEMBRE: 'JUNIOR',
@@ -39,13 +39,14 @@ export class UtilsMenuComponent {
   private readonly availableRanks = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
   constructor(
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.isMember = this.authService.hasToken();
+    this.isMemberPresentation = this.route.snapshot.data['presentation'] === 'member' && this.authService.hasToken();
 
-    if (!this.isMember) {
+    if (!this.isMemberPresentation) {
       this.isLoading = false;
       this.cardsVisible = true;
       return;
@@ -71,37 +72,37 @@ export class UtilsMenuComponent {
     {
       label: 'Collections',
       imageUrl: 'https://robertsspaceindustries.com/i/b7cfa1fff5a9cfa8d09335a5cd5eb4cfdc6d881d/resize(2500,1407,cover,crop(2926,1646,0,0,D5zH9SyxCKdBd32SC5eKXVbKisohY32kUqrXpvrxgNUg8K37DJgHZAGMiBhbBwQmQH3W6G2GfLhT1aazvMh8bNmsQvoMSnN6cJrnzaAgA5H9CtD6o1ZASnWBWovYQpkTNyiehU))/75/webclips-0002-persistenthangars.webp',
-      route: '/utilitaires/collection',
+      path: 'collection',
       scope: 'Interne' as UtilityScope,
     },
     {
       label: 'Ressources minage',
       imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
-      route: '/utilitaires/ressources-minage',
+      path: 'ressources-minage',
       scope: 'Public' as UtilityScope,
     },
     {
       label: 'Fiches minage',
       imageUrl: 'https://media.starcitizen.tools/thumb/d/d3/Comm-Link-Orion_Mining.jpg/1200px-Comm-Link-Orion_Mining.jpg.webp',
-      route: '/utilitaires/fiches-minage',
+      path: 'fiches-minage',
       scope: 'Interne' as UtilityScope,
     },
     {
       label: 'Hangar executifs',
       imageUrl: 'https://media.starcitizen.tools/b/b8/Cutter_Approaching_Checkmate_Station.png',
-      route: '/utilitaires/executive-hangar',
+      path: 'executive-hangar',
       scope: 'Public' as UtilityScope,
     },
     {
       label: 'Vaisseaux',
       imageUrl: 'https://media.starcitizen.tools/thumb/f/f6/IAE2954-day5-polaris-tunnel-view.jpg/400px-IAE2954-day5-polaris-tunnel-view.jpg.webp',
-      route: '/utilitaires/achat-vaisseaux',
+      path: 'achat-vaisseaux',
       scope: 'Public' as UtilityScope,
     },
     {
       label: 'Wikelo',
       imageUrl: 'https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp',
-      route: '/utilitaires/wikelo',
+      path: 'wikelo',
       scope: 'Public' as UtilityScope,
     }
   ];
@@ -112,6 +113,11 @@ export class UtilsMenuComponent {
 
   get internalItems(): UtilityMenuItem[] {
     return this.menuItems.filter((item) => item.scope === 'Interne');
+  }
+
+  itemRoute(item: UtilityMenuItem): string {
+    const base = this.isMemberPresentation ? '/icy/outils' : '/utilitaires';
+    return `${base}/${item.path}`;
   }
 
   private normalizeRank(role?: string | null): string {

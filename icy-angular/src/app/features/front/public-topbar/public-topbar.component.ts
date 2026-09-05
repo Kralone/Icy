@@ -34,6 +34,6 @@ export class PublicTopbarComponent {
   }
 
   get memberSpaceLabel(): string {
-    return this.isConnected ? 'Retour espace interne' : 'Espace membre';
+    return 'Espace membre';
   }
 }

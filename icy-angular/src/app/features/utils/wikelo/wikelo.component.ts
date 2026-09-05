@@ -2,7 +2,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
 import { WikeloService } from '../../../core/services/wikelo/wikelo.service';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
@@ -13,6 +13,7 @@ import { GoalService } from '../../../core/services/goal/goal.service';
 import { User } from '../../../model/user.model';
 import { Goal } from '../../../model/goal.model';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { utilityRouteFor } from '../utility-route-context';
 
 @Component({
   standalone: true,
@@ -56,7 +57,8 @@ export class WikeloComponent implements OnInit {
     private userService: UserService,
     private shipService: ShipService,
     private goalService: GoalService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -72,7 +74,7 @@ export class WikeloComponent implements OnInit {
   }
 
   get backToMenuLink(): string {
-    return '/utilitaires';
+    return utilityRouteFor(this.router.url);
   }
 
   get filteredShips(): WikeloShip[] {

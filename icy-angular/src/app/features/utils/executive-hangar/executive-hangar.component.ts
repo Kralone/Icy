@@ -1,10 +1,11 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { utilityRouteFor } from '../utility-route-context';
 
 type HangarStatus = 'ONLINE' | 'OFFLINE';
 type CircleColor = 'green' | 'red' | 'empty';
@@ -70,7 +71,8 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   constructor(
     private userService: UserService,
     private executiveHangarApiService: ExecutiveHangarApiService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -98,11 +100,15 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   }
 
   get backToMenuLink(): string {
-    return '/utilitaires';
+    return utilityRouteFor(this.router.url);
   }
 
   get mapsLink(): string {
-    return '/utilitaires/executive-hangar-maps';
+    return utilityRouteFor(this.router.url, 'executive-hangar-maps');
+  }
+
+  get playersLink(): string {
+    return utilityRouteFor(this.router.url, 'executive-hangar-players');
   }
 
   openTimingModal(): void {

@@ -1,6 +1,6 @@
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 type InternalGuideMenuItem = {
   label: string;
@@ -22,14 +22,22 @@ export class GuidesMenuComponent {
     {
       label: 'Guide Minage Star Citizen',
       summary: 'Scan, fracture, extraction, raffinage et vente.',
-      route: '/guides/minage-star-citizen',
+      route: 'minage-star-citizen',
       imageUrl: 'assets/images/home/activities/mining.jpg'
     },
     {
       label: 'Guide Hathor',
       summary: 'Preparation, trajet OLP et execution operationnelle.',
-      route: '/guides/hathor',
+      route: 'hathor',
       imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png'
     }
   ];
+
+  constructor(private router: Router) {}
+
+  itemRoute(item: InternalGuideMenuItem): string {
+    return this.router.url.startsWith('/icy/outils')
+      ? `/icy/outils/guides/${item.route}`
+      : `/guides/${item.route}`;
+  }
 }

@@ -1,12 +1,13 @@
 
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { User } from '../../../model/user.model';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { utilityRouteFor } from '../utility-route-context';
 
 type PlayerRow = {
   id: string;
@@ -46,8 +47,13 @@ export class ExecutiveHangarPlayersComponent implements OnInit {
   constructor(
     private userService: UserService,
     private executiveHangarApiService: ExecutiveHangarApiService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
+
+  get statusLink(): string {
+    return utilityRouteFor(this.router.url, 'executive-hangar');
+  }
 
   ngOnInit(): void {
     this.loadPermissions();

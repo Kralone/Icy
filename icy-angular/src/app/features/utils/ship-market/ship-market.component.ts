@@ -208,7 +208,7 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   get backToMenuLink(): string {
-    return this.router.url.startsWith('/utilitaires') ? '/utilitaires' : '/icy/utilitaires';
+    return this.router.url.startsWith('/icy/outils') ? '/icy/outils' : '/utilitaires';
   }
 
   get totalSalePoints(): number {

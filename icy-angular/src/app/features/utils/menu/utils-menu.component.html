@@ -1,5 +1,7 @@
 <div
   class="utils-menu loading-reveal min-h-full box-border w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12"
+  [class.utils-menu--member]="isMemberPresentation"
+  [class.utils-menu--public]="!isMemberPresentation"
   [attr.data-loading]="isLoading"
   >
   <app-loading-overlay
@@ -9,19 +11,31 @@
     [softFade]="true"
   ></app-loading-overlay>
 
-  <div class="utils-rank-orbit" aria-hidden="true">
-    <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
-  </div>
+  @if (isMemberPresentation) {
+    <div class="utils-rank-orbit" aria-hidden="true">
+      <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
+    </div>
+  }
 
   <div class="utils-rank-label">
-    Utilitaire
+    {{ isMemberPresentation ? 'Opérations' : 'Utilitaires' }}
   </div>
 
   <div class="utils-content max-w-7xl mx-auto space-y-8">
+    <header class="utils-intro">
+      <h1>{{ isMemberPresentation ? 'Centre d’opérations' : 'Explorez les utilitaires IceForge' }}</h1>
+    </header>
+
+    <section class="space-y-4" aria-labelledby="public-tools-title">
+      <div class="utils-section-heading">
+        <div>
+          <h2 id="public-tools-title">{{ isMemberPresentation ? 'Outils partagés' : 'Utilitaires disponibles' }}</h2>
+        </div>
+      </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       @for (item of publicItems; track item; let i = $index) {
         <div
-          [routerLink]="[item.route]"
+          [routerLink]="[itemRoute(item)]"
         class="utils-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
                shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
                hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
@@ -43,17 +57,23 @@
           </div>
         }
       </div>
+    </section>
 
-      @if (isMember) {
+      @if (isMemberPresentation) {
         <div class="utils-divider" aria-hidden="true"></div>
       }
 
-      @if (isMember) {
-        <section class="space-y-4">
+      @if (isMemberPresentation) {
+        <section class="space-y-4" aria-labelledby="internal-tools-title">
+          <div class="utils-section-heading">
+            <div>
+              <h2 id="internal-tools-title">Outils internes</h2>
+            </div>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @for (item of internalItems; track item; let i = $index) {
               <div
-                [routerLink]="[item.route]"
+                [routerLink]="[itemRoute(item)]"
           class="utils-menu-card group relative flex flex-col rounded-2xl border border-cyan-300/20 bg-cyan-500/5
                  shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
                  hover:-translate-y-1 hover:border-cyan-300/55 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]

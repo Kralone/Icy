@@ -1,6 +1,7 @@
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { utilityRouteFor } from '../utility-route-context';
 
 type MapItem = {
   title: string;
@@ -29,8 +30,10 @@ export class ExecutiveHangarMapsComponent {
   selectedMap: MapItem | null = null;
   isClosingModal = false;
 
+  constructor(private router: Router) {}
+
   get backToStatusLink(): string {
-    return '/utilitaires/executive-hangar';
+    return utilityRouteFor(this.router.url, 'executive-hangar');
   }
 
   openMap(map: MapItem): void {

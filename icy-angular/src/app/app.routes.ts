@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from './auth/guards/role.guard';
 import { authGuard } from './auth/guards/auth.guard';
-import { publicAreaGuard } from './auth/guards/public-area.guard';
 
 export const routes: Routes = [
   {
@@ -105,8 +104,6 @@ export const routes: Routes = [
   {
     path: 'utilitaires',
     loadComponent: () => import('./features/front/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
-    canActivate: [publicAreaGuard],
-    canActivateChild: [publicAreaGuard],
     data: {
       seo: {
         title: 'Utilitaires Star Citizen | IceForge Industries',
@@ -118,6 +115,7 @@ export const routes: Routes = [
       {
         path: '',
         data: {
+          presentation: 'public',
           seo: {
             title: 'Utilitaires Star Citizen | IceForge Industries',
             description: 'Selection d utilitaires publics Star Citizen pour consulter hangars, donnees et informations operationnelles.',
@@ -277,9 +275,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/goal/goal.component').then(m => m.GoalComponent)
       },
       {
-        path: 'collection',
-        loadComponent: () => import('./features/collection/collection.component').then(m => m.CollectionComponent)
+        path: 'outils',
+        loadComponent: () => import('./features/utils/member-tools-layout/member-tools-layout.component').then(m => m.MemberToolsLayoutComponent),
+        loadChildren: () => import('./features/utils/member-tools.routes').then(m => m.memberToolsRoutes)
       },
+      { path: 'collection', redirectTo: 'outils/collection', pathMatch: 'full' },
       // SECTION ADMIN
       {
         path: 'admin',

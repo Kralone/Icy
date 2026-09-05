@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       @for (item of menuItems; track item) {
         <a
-          [routerLink]="[item.route]"
+          [routerLink]="[itemRoute(item)]"
           class="guides-menu-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
           >
           <div class="h-52 w-full overflow-hidden">

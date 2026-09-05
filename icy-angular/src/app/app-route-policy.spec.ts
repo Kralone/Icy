@@ -11,6 +11,7 @@ describe('SSR route policy', () => {
   it('recognizes public, protected and admin application routes', () => {
     expect(isKnownAppRoute('/guides/hathor?source=test')).toBe(true);
     expect(isKnownAppRoute('/utilitaires/wikelo/')).toBe(true);
+    expect(isKnownAppRoute('/icy/outils/ressources-minage')).toBe(true);
     expect(isKnownAppRoute('/icy/admin/goals')).toBe(true);
     expect(isKnownAppRoute('/definitely-not-a-route')).toBe(false);
     expect(isKnownAppRoute('/guides/also-not-a-route')).toBe(false);

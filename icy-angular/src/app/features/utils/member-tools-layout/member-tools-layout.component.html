@@ -1,0 +1,25 @@
+<section class="member-tools-shell">
+  <header class="member-tools-shell__header">
+    <div class="member-tools-shell__heading">
+      <span class="member-tools-shell__eyebrow">Espace membre</span>
+      <strong>Outils opérationnels</strong>
+    </div>
+
+    <nav class="member-tools-shell__nav" aria-label="Navigation des outils membre">
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="[item.route]"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/icy/outils' }"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+  </header>
+
+  <div class="member-tools-shell__content">
+    <router-outlet></router-outlet>
+  </div>
+</section>
