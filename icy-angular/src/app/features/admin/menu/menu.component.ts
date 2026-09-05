@@ -5,6 +5,13 @@ import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 
+interface AdminMenuItem {
+  label: string;
+  imageUrl: string;
+  route: string;
+  requiredRoles?: string[];
+}
+
 @Component({
   standalone: true,
   selector: 'app-admin-menu',
@@ -59,7 +66,7 @@ export class AdminMenuComponent {
     });
   }
 
-  menuItems = [
+  menuItems: AdminMenuItem[] = [
     {
       label: 'Membres',
       imageUrl: 'https://swissstarships.org/forums/uploads/monthly_2025_05/dr-fischer-invictus-idris-crew.webp.536e4b2ee37db43cd793445d1b79e763.webp',
@@ -104,12 +111,6 @@ export class AdminMenuComponent {
       label: 'IceLink Builder',
       imageUrl: 'https://media.starcitizen.tools/9/9c/Microtech-new-babbage-cityscape-01.jpg',
       route: '/icy/admin/icelinkBuilder',
-    },
-    {
-      label: 'Orbit Spinner Maker',
-      imageUrl: 'https://images.hdqwalls.com/download/star-citizen-to-3840x2160.jpg',
-      route: '/icy/admin/orbit-spinner-maker',
-      requiredRoles: ['ADMIN'],
     },
   ];
 

@@ -18,7 +18,7 @@ import java.util.List;
 
 @Component
 public class BotApiKeyAuthenticationFilter extends OncePerRequestFilter {
-    static final String BOT_PATH = "/api/user-ships/bot";
+    static final List<String> BOT_PATHS = List.of("/api/user-ships/bot", "/api/users/bot");
     private final byte[] expectedKey;
 
     public BotApiKeyAuthenticationFilter(@Value("${bot.api-key:}") String apiKey) {
@@ -28,7 +28,7 @@ public class BotApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return !(BOT_PATH.equals(path) || path.startsWith(BOT_PATH + "/"));
+        return BOT_PATHS.stream().noneMatch(botPath -> botPath.equals(path) || path.startsWith(botPath + "/"));
     }
 
     @Override

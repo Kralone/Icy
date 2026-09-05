@@ -74,7 +74,6 @@ Sans session, elles redirigent vers `/login?returnUrl=...`, ce qui a été véri
 | `/icy/admin/cig-watch` | veille CIG |
 | `/icy/admin/ore-locations` | minerais et lieux |
 | `/icy/admin/goals` | objectifs et modèles |
-| `/icy/admin/orbit-spinner-maker` | générateur réservé ADMIN |
 
 Le garde client améliore l'UX mais ne constitue jamais une autorisation. L'audit backend montre que plusieurs opérations correspondant à ces pages ne contrôlent pas correctement le rôle côté serveur.
 

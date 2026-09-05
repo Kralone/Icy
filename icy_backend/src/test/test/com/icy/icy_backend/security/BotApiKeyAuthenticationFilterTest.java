@@ -39,25 +39,29 @@ class BotApiKeyAuthenticationFilterTest {
     @Test
     void validCredentialCreatesOnlyBotAuthority() throws Exception {
         BotApiKeyAuthenticationFilter filter = new BotApiKeyAuthenticationFilter(KEY);
-        MockHttpServletRequest request = request("/api/user-ships/bot");
-        request.addHeader("Authorization", "Bot " + KEY);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        FilterChain chain = (req, res) -> {
-            var authentication = SecurityContextHolder.getContext().getAuthentication();
-            assertThat(authentication).isNotNull();
-            assertThat(authentication.getAuthorities()).extracting("authority").containsExactly("ROLE_BOT");
-        };
+        for (String path : new String[] {"/api/user-ships/bot", "/api/users/bot/create"}) {
+            MockHttpServletRequest request = request(path);
+            request.addHeader("Authorization", "Bot " + KEY);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = (req, res) -> {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                assertThat(authentication).isNotNull();
+                assertThat(authentication.getAuthorities()).extracting("authority").containsExactly("ROLE_BOT");
+            };
 
-        filter.doFilter(request, response, chain);
+            filter.doFilter(request, response, chain);
 
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+            assertThat(response.getStatus()).isEqualTo(200);
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        }
     }
 
     @Test
     void botHeaderIsIgnoredOutsideStrictPathScope() throws Exception {
         BotApiKeyAuthenticationFilter filter = new BotApiKeyAuthenticationFilter(KEY);
-        for (String path : new String[] {"/api/user-ships", "/api/users/all", "/api/user-ships/bot-malicious"}) {
+        for (String path : new String[] {
+                "/api/user-ships", "/api/users/all", "/api/user-ships/bot-malicious", "/api/users/bot-malicious"
+        }) {
             MockHttpServletRequest request = request(path);
             request.addHeader("Authorization", "Bot " + KEY);
             MockHttpServletResponse response = new MockHttpServletResponse();
