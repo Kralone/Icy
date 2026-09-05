@@ -40,7 +40,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class UserServiceTest {
@@ -136,12 +138,16 @@ class UserServiceTest {
                 userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
-        when(userRepository.findByDiscordId("123")).thenReturn(Optional.of(new User()));
+        User existing = new User();
+        existing.setActive(true);
+        when(userRepository.findByDiscordIdIncludingInactive("123")).thenReturn(Optional.of(existing));
         ResponseEntity<MessageResponse<User>> response = okResponse(null);
         Mockito.doReturn(response).when(messageService).buildResponse(eq("user.createfailed"), eq(null), any());
 
         ResponseEntity<MessageResponse<User>> actual = userService.createUser("alice", "123", "USER");
         assertThat(actual).isEqualTo(response);
+        verify(userRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(userPublisher);
     }
 
     @Test
@@ -168,7 +174,7 @@ class UserServiceTest {
                 userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
         );
 
-        when(userRepository.findByDiscordId("123")).thenReturn(Optional.empty());
+        when(userRepository.findByDiscordIdIncludingInactive("123")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any())).thenReturn("encoded");
         Role role = new Role();
         role.setName("USER");
@@ -177,7 +183,7 @@ class UserServiceTest {
         User saved = new User();
         saved.setId(UUID.randomUUID());
         saved.setUsername("alice");
-        when(userRepository.save(any(User.class))).thenReturn(saved);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(saved);
 
         ResponseEntity<MessageResponse<User>> response = okResponse(saved);
         Mockito.doReturn(response).when(messageService).buildResponse(eq("user.created"), eq(saved));
@@ -186,6 +192,57 @@ class UserServiceTest {
         assertThat(actual).isEqualTo(response);
         verify(userPublisher).sendTemporaryPassword(eq("123"), eq("alice"), any());
         verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
+    }
+
+    @Test
+    void createUserReactivatesInactiveAccountBeforeNotifying() {
+        UserRepository userRepository = Mockito.mock(UserRepository.class);
+        UserRoleRepository userRoleRepository = Mockito.mock(UserRoleRepository.class);
+        RoleRepository roleRepository = Mockito.mock(RoleRepository.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        UserPublisher userPublisher = Mockito.mock(UserPublisher.class);
+        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
+        UserParamRepository userParamRepository = Mockito.mock(UserParamRepository.class);
+        UserAvatarService userAvatarService = Mockito.mock(UserAvatarService.class);
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository goalParticipationRepository = Mockito.mock(GoalParticipationRepository.class);
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
+        UserCollectionRepository userCollectionRepository = Mockito.mock(UserCollectionRepository.class);
+
+        UserService userService = new UserService(
+                userRepository, userRoleRepository, roleRepository, passwordEncoder,
+                messageService, userPublisher, notificationPushService, shipRepository,
+                userParamRepository, userAvatarService, goalRepository, goalParticipationRepository, eventParticipationRepository, userShipRepository, userCollectionRepository
+        );
+
+        User inactive = new User();
+        inactive.setId(UUID.randomUUID());
+        inactive.setUsername("old-name");
+        inactive.setDiscordId("123");
+        inactive.setActive(false);
+        inactive.assignDefaultRole(new Role());
+
+        Role junior = new Role();
+        junior.setName("JUNIOR");
+        when(userRepository.findByDiscordIdIncludingInactive("123")).thenReturn(Optional.of(inactive));
+        when(passwordEncoder.encode(any())).thenReturn("encoded");
+        when(roleRepository.findByName("JUNIOR")).thenReturn(Optional.of(junior));
+        when(userRepository.saveAndFlush(inactive)).thenReturn(inactive);
+        ResponseEntity<MessageResponse<User>> response = okResponse(inactive);
+        Mockito.doReturn(response).when(messageService).buildResponse("user.created", inactive);
+
+        ResponseEntity<MessageResponse<User>> actual = userService.createUser("alice", "123", "JUNIOR");
+
+        assertThat(actual).isEqualTo(response);
+        assertThat(inactive.getActive()).isTrue();
+        assertThat(inactive.getUsername()).isEqualTo("alice");
+        assertThat(inactive.getRoles()).hasSize(1);
+        assertThat(inactive.getRoles().iterator().next().getRole()).isSameAs(junior);
+        verify(userRepository).saveAndFlush(inactive);
+        verify(userPublisher).sendTemporaryPassword(eq("123"), eq("alice"), any());
     }
 
     @Test

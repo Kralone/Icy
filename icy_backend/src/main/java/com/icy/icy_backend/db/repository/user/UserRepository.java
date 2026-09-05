@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByDiscordId(String discordId);
+    @Query(value = "SELECT * FROM core.users WHERE discord_id = :discordId LIMIT 1", nativeQuery = true)
+    Optional<User> findByDiscordIdIncludingInactive(@Param("discordId") String discordId);
     Optional<User> findByUsername(String username);
     @Query("SELECT DISTINCT u FROM User u " +
             "JOIN u.roles ur " +

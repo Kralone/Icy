@@ -103,30 +103,33 @@ public class UserService {
     /**
      * Crée un nouvel utilisateur s'il n'existe pas déjà.
      */
+    @Transactional
     public ResponseEntity<MessageResponse<User>> createUser(String username, String discordId, String role) {
         logger.info("Création d'un nouvel utilisateur: {} avec Discord ID: {}", username, discordId);
 
-        if (userRepository.findByDiscordId(discordId).isPresent()) {
+        var existingUser = userRepository.findByDiscordIdIncludingInactive(discordId);
+        if (existingUser.filter(user -> Boolean.TRUE.equals(user.getActive())).isPresent()) {
             logger.warn("Un utilisateur avec Discord ID {} existe déjà", discordId);
 
             return messageService.buildResponse("user.createfailed", null,
                     "L'utilisateur avec le Discord ID " + discordId + " existe déjà.");
         }
 
-        User user = new User();
+        User user = existingUser.orElseGet(User::new);
         user.setUsername(username);
         user.setDiscordId(discordId);
+        user.setActive(true);
         String tempPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
 
-        userPublisher.sendTemporaryPassword(discordId, username, tempPassword);
-
         String roleName = (role == null || role.isBlank()) ? DEFAULT_ROLE_NAME : role;
         Role defaultRole = findRoleByName(roleName);
+        user.getRoles().clear();
         user.assignDefaultRole(defaultRole);
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
+        userPublisher.sendTemporaryPassword(discordId, username, tempPassword);
         logger.info("Utilisateur créé avec succès: {}", savedUser.getId());
         notificationPushService.sendBroadcast(
                 "Membre : nouveau",
