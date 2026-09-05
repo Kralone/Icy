@@ -24,6 +24,7 @@ class UserHandlerTest(unittest.IsolatedAsyncioTestCase):
         sent_message = user.send.await_args.args[0]
         self.assertIn("Ice Pilot", sent_message)
         self.assertIn("one-time-password", sent_message)
+        self.assertIn("[Accéder à IceForge](https://iceforge.fr)", sent_message)
 
     async def test_missing_password_is_rejected_without_discord_call(self):
         bot = AsyncMock()

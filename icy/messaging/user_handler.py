@@ -52,7 +52,8 @@ class UserHandler:
             await user.send(
                 f"👤 Ton identifiant IceForge est : **{safe_username}**\n"
                 f"🔐 Ton mot de passe temporaire est : **{temp_password}**\n"
-                f"Pense à le changer dès que possible dès ta connexion sur le site !"
+                "🌐 [Accéder à IceForge](https://iceforge.fr)\n"
+                "Pense à le changer dès que possible dès ta connexion sur le site !"
             )
             logger.info(f"✅ Mot de passe envoyé à {discord_id}")
         else:
