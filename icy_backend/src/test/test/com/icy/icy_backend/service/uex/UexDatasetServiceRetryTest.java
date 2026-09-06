@@ -6,6 +6,7 @@ import com.icy.icy_backend.db.entity.utils.UexDatasetCache;
 import com.icy.icy_backend.db.repository.utils.UexDatasetCacheRepository;
 import com.icy.icy_backend.service.common.MessageService;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +27,18 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class UexDatasetServiceRetryTest {
+
+    @Test
+    void declaresTheProductionConstructorForSpringInjection() throws NoSuchMethodException {
+        var constructor = UexDatasetService.class.getConstructor(
+                UexDatasetCacheRepository.class,
+                MessageService.class,
+                UexProperties.class,
+                ObjectMapper.class
+        );
+
+        assertThat(constructor.isAnnotationPresent(Autowired.class)).isTrue();
+    }
 
     @Test
     void retriesATemporaryFailureBeforeReplacingTheCachedDataset() {

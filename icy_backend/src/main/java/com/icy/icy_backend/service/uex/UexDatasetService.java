@@ -18,6 +18,7 @@ import com.icy.icy_backend.db.repository.utils.UexDatasetCacheRepository;
 import com.icy.icy_backend.service.common.MessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -66,6 +67,7 @@ public class UexDatasetService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
+    @Autowired
     public UexDatasetService(
             UexDatasetCacheRepository cacheRepository,
             MessageService messageService,
