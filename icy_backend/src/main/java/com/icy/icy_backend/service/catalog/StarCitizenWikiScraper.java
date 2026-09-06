@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.config.CatalogSyncProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,7 @@ public class StarCitizenWikiScraper {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
+    @Autowired
     public StarCitizenWikiScraper(
             CatalogSyncProperties properties,
             CatalogRawStore rawStore,

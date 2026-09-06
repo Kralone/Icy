@@ -3,6 +3,7 @@ package com.icy.icy_backend.service.catalog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.config.CatalogSyncProperties;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +20,17 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class StarCitizenWikiScraperTest {
+
+    @Test
+    void declaresTheProductionConstructorForSpringInjection() throws NoSuchMethodException {
+        var constructor = StarCitizenWikiScraper.class.getConstructor(
+                CatalogSyncProperties.class,
+                CatalogRawStore.class,
+                ObjectMapper.class
+        );
+
+        assertThat(constructor.isAnnotationPresent(Autowired.class)).isTrue();
+    }
 
     @Test
     void readsWikiJsonAsTextBeforeParsingItWithTheApplicationObjectMapper() {
