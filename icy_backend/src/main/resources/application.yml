@@ -77,6 +77,8 @@ icy:
   uex:
     base-url: ${UEX_API_BASE_URL:https://api.uexcorp.uk/2.0}
     api-key: ${UEX_API_KEY:}
+    refresh-attempts: ${UEX_API_REFRESH_ATTEMPTS:3}
+    retry-delay-millis: ${UEX_API_RETRY_DELAY_MILLIS:2000}
   catalog-sync:
     wiki-base-url: ${SC_WIKI_API_BASE_URL:https://api.star-citizen.wiki/api}
     page-size: ${SC_WIKI_API_PAGE_SIZE:200}

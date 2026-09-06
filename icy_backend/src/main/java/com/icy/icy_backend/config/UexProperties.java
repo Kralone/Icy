@@ -12,4 +12,6 @@ import org.springframework.stereotype.Component;
 public class UexProperties {
     private String baseUrl;
     private String apiKey;
+    private int refreshAttempts = 3;
+    private long retryDelayMillis = 2000;
 }

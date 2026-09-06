@@ -16,6 +16,8 @@ import com.icy.icy_backend.controller.dto.utils.UexDatasetSummaryDTO;
 import com.icy.icy_backend.db.entity.utils.UexDatasetCache;
 import com.icy.icy_backend.db.repository.utils.UexDatasetCacheRepository;
 import com.icy.icy_backend.service.common.MessageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -39,6 +41,7 @@ import java.util.Set;
 
 @Service
 public class UexDatasetService {
+    private static final Logger logger = LoggerFactory.getLogger(UexDatasetService.class);
     private static final int PREVIEW_LIMIT = 50;
     private static final Map<String, String> SUPPORTED_DATASETS = supportedDatasets();
     private static final List<String> DEFAULT_SALES_RESOURCE_NAMES = List.of(
@@ -61,7 +64,7 @@ public class UexDatasetService {
     private final MessageService messageService;
     private final UexProperties uexProperties;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     public UexDatasetService(
             UexDatasetCacheRepository cacheRepository,
@@ -69,10 +72,21 @@ public class UexDatasetService {
             UexProperties uexProperties,
             ObjectMapper objectMapper
     ) {
+        this(cacheRepository, messageService, uexProperties, objectMapper, new RestTemplate());
+    }
+
+    UexDatasetService(
+            UexDatasetCacheRepository cacheRepository,
+            MessageService messageService,
+            UexProperties uexProperties,
+            ObjectMapper objectMapper,
+            RestTemplate restTemplate
+    ) {
         this.cacheRepository = cacheRepository;
         this.messageService = messageService;
         this.uexProperties = uexProperties;
         this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
     }
 
     public List<String> supportedDatasetKeys() {
@@ -143,29 +157,11 @@ public class UexDatasetService {
             headers.setBearerAuth(uexProperties.getApiKey());
         }
 
-        ResponseEntity<String> response;
-        try {
-            response = restTemplate.exchange(sourceUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        } catch (Exception ex) {
-            return messageService.buildResponse("uex.dataset.invalid", null, "UEX indisponible: " + ex.getMessage());
-        }
-
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().isBlank()) {
-            return messageService.buildResponse("uex.dataset.invalid", null, "Reponse UEX invalide pour " + normalizedKey);
-        }
-
         JsonNode dataNode;
         try {
-            JsonNode root = objectMapper.readTree(response.getBody());
-            if (!"ok".equalsIgnoreCase(root.path("status").asText())) {
-                return messageService.buildResponse("uex.dataset.invalid", null, "UEX status non OK pour " + normalizedKey);
-            }
-            dataNode = root.path("data");
-            if (dataNode.isMissingNode() || dataNode.isNull()) {
-                return messageService.buildResponse("uex.dataset.invalid", null, "Payload data absent pour " + normalizedKey);
-            }
+            dataNode = fetchDatasetData(normalizedKey, sourceUrl, headers);
         } catch (Exception ex) {
-            return messageService.buildResponse("uex.dataset.invalid", null, "Parsing UEX impossible: " + ex.getMessage());
+            return messageService.buildResponse("uex.dataset.invalid", null, ex.getMessage());
         }
 
         int itemCount = resolveItemCount(dataNode);
@@ -180,6 +176,66 @@ public class UexDatasetService {
         UexDatasetCache saved = cacheRepository.save(cache);
         UexDatasetDetailDTO dto = toDetailDto(saved);
         return messageService.buildResponse("uex.dataset.refreshed", dto, normalizedKey, itemCount);
+    }
+
+    private JsonNode fetchDatasetData(String datasetKey, String sourceUrl, HttpHeaders headers) {
+        int maxAttempts = Math.max(1, uexProperties.getRefreshAttempts());
+        Exception lastFailure = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(
+                        sourceUrl,
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        String.class
+                );
+                if (!response.getStatusCode().is2xxSuccessful()
+                        || response.getBody() == null
+                        || response.getBody().isBlank()) {
+                    throw new IllegalStateException("Reponse HTTP UEX vide ou invalide");
+                }
+
+                JsonNode root = objectMapper.readTree(response.getBody());
+                if (!"ok".equalsIgnoreCase(root.path("status").asText())) {
+                    throw new IllegalStateException("UEX a retourne un statut non OK");
+                }
+                JsonNode dataNode = root.path("data");
+                if (dataNode.isMissingNode() || dataNode.isNull()) {
+                    throw new IllegalStateException("Payload data UEX absent");
+                }
+                return dataNode;
+            } catch (Exception exception) {
+                lastFailure = exception;
+                if (attempt < maxAttempts) {
+                    logger.warn(
+                            "Echec temporaire UEX {} (tentative {}/{}): {}. Nouvelle tentative programmee",
+                            datasetKey,
+                            attempt,
+                            maxAttempts,
+                            exception.getMessage()
+                    );
+                    waitBeforeRetry(attempt);
+                }
+            }
+        }
+
+        throw new IllegalStateException(
+                "UEX indisponible pour " + datasetKey + " apres " + maxAttempts + " tentatives: "
+                        + (lastFailure == null ? "erreur inconnue" : lastFailure.getMessage()),
+                lastFailure
+        );
+    }
+
+    private void waitBeforeRetry(int failedAttempt) {
+        long delayMillis = Math.max(0, uexProperties.getRetryDelayMillis()) * failedAttempt;
+        if (delayMillis == 0) return;
+        try {
+            Thread.sleep(delayMillis);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Actualisation UEX interrompue", exception);
+        }
     }
 
     @Transactional(readOnly = true)
