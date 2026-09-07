@@ -153,9 +153,9 @@
             <div class="catalog-card__body">
               <p class="catalog-card__maker">{{ entry.manufacturer || entry.source }}</p>
               <h3>{{ entry.name }}</h3>
-              <p class="catalog-card__description">
-                {{ entry.description || 'Fiche indexée — caractéristiques détaillées à venir.' }}
-              </p>
+              @if (entry.description) {
+                <p class="catalog-card__description">{{ entry.description }}</p>
+              }
               <div class="catalog-card__footer">
                 @if (cheapestOffer(entry); as offer) {
                   <div class="price-block">

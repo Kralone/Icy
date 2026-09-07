@@ -187,8 +187,30 @@ public class CatalogMapper {
 
     private String description(String datasetKey, JsonNode node) {
         return "vehicles".equals(datasetKey)
-                ? firstText(node, "game_description", "description")
-                : text(node, "description");
+                ? firstLocalizedText(node, "game_description", "description")
+                : localizedText(node, "description");
+    }
+
+    private String firstLocalizedText(JsonNode node, String... fields) {
+        for (String field : fields) {
+            String value = localizedText(node, field);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    String localizedText(JsonNode node, String field) {
+        if (node == null) return null;
+        JsonNode value = node.path(field);
+        if (value.isTextual()) {
+            return blankToNull(value.asText());
+        }
+        if (value.isObject()) {
+            return firstText(value, "fr_FR", "fr", "en_EN", "en");
+        }
+        return null;
     }
 
     private String firstImage(JsonNode node) {
@@ -217,8 +239,12 @@ public class CatalogMapper {
 
     private String text(JsonNode node, String field) {
         if (node == null) return null;
-        String value = node.path(field).asText("").trim();
-        return value.isEmpty() ? null : value;
+        return blankToNull(node.path(field).asText(""));
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
     }
 
     private String lower(String value) {

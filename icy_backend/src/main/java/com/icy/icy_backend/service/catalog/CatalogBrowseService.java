@@ -23,6 +23,25 @@ import java.util.Set;
 
 @Service
 public class CatalogBrowseService {
+    private static final String RANKED_ENTRIES = """
+            WITH ranked_entries AS (
+                SELECT e.*,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY CASE
+                               WHEN e.family IN ('SHIP', 'GROUND_VEHICLE', 'POWER_SUIT')
+                                   THEN CONCAT(e.family, '|', LOWER(COALESCE(e.manufacturer, '')), '|', LOWER(e.name))
+                               ELSE CONCAT(e.source, '|', e.external_id)
+                           END
+                           ORDER BY e.active DESC,
+                                    e.image_is_fallback ASC,
+                                    (e.description IS NOT NULL) DESC,
+                                    e.last_seen_at DESC,
+                                    e.id ASC
+                       ) AS variant_rank
+                FROM catalog.entries e
+            %s
+            )
+            """;
     private static final Set<String> FAMILIES = Set.of(
             "SHIP", "GROUND_VEHICLE", "POWER_SUIT", "FPS_WEAPON", "SHIP_WEAPON",
             "ARMOR", "SHIP_COMPONENT", "MODULE", "TOOL", "ITEM", "SYSTEM",
@@ -86,8 +105,9 @@ public class CatalogBrowseService {
         }
 
         String where = clauses.isEmpty() ? "" : " WHERE " + String.join(" AND ", clauses);
+        String rankedEntries = RANKED_ENTRIES.formatted(where);
         long total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM catalog.entries e" + where,
+                rankedEntries + " SELECT COUNT(*) FROM ranked_entries WHERE variant_rank = 1",
                 parameters,
                 Long.class
         );
@@ -98,12 +118,13 @@ public class CatalogBrowseService {
         String orderBy = normalizedSort == null
                 ? SORTS.get("name")
                 : SORTS.getOrDefault(normalizedSort.toLowerCase(Locale.ROOT), SORTS.get("name"));
-        List<EntryRow> rows = jdbcTemplate.query("""
+        List<EntryRow> rows = jdbcTemplate.query(rankedEntries + """
                         SELECT e.id, e.external_id, e.family, e.name, e.slug, e.manufacturer,
                                e.description, e.image_url, e.image_is_fallback, e.source,
                                e.source_url, e.source_version, e.active, e.last_seen_at
-                        FROM catalog.entries e
-                        """ + where + " ORDER BY " + orderBy + " LIMIT :limit OFFSET :offset",
+                        FROM ranked_entries e
+                        WHERE e.variant_rank = 1
+                        ORDER BY """ + orderBy + " LIMIT :limit OFFSET :offset",
                 parameters,
                 (resultSet, rowNumber) -> entryRow(resultSet));
 
@@ -157,10 +178,11 @@ public class CatalogBrowseService {
 
     private Summary summary() {
         Map<String, Long> familyCounts = new LinkedHashMap<>();
-        List<FamilyCount> counts = jdbcTemplate.query("""
+        String rankedEntries = RANKED_ENTRIES.formatted("");
+        List<FamilyCount> counts = jdbcTemplate.query(rankedEntries + """
                         SELECT family, COUNT(*) AS count
-                        FROM catalog.entries
-                        WHERE active = TRUE
+                        FROM ranked_entries
+                        WHERE active = TRUE AND variant_rank = 1
                         GROUP BY family
                         ORDER BY family
                         """,
@@ -170,11 +192,12 @@ public class CatalogBrowseService {
                 ));
         counts.forEach(count -> familyCounts.put(count.family(), count.count()));
 
-        return jdbcTemplate.queryForObject("""
+        return jdbcTemplate.queryForObject(rankedEntries + """
                         SELECT COUNT(*) FILTER (WHERE active) AS active_count,
                                COUNT(*) FILTER (WHERE NOT active) AS inactive_count,
                                COUNT(*) FILTER (WHERE active AND image_is_fallback) AS fallback_count
-                        FROM catalog.entries
+                        FROM ranked_entries
+                        WHERE variant_rank = 1
                         """,
                 new MapSqlParameterSource(),
                 (resultSet, rowNumber) -> new Summary(

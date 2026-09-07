@@ -62,6 +62,22 @@ class CatalogMapperTest {
         verify(jdbcTemplate).update(anyString(), any(org.springframework.jdbc.core.namedparam.SqlParameterSource.class));
     }
 
+    @Test
+    void readsLocalizedDescriptionsInFrenchThenEnglish() throws Exception {
+        assertThat(mapper.localizedText(
+                json("{\"description\":{\"fr_FR\":\"Description française\",\"en_EN\":\"English description\"}}"),
+                "description"
+        )).isEqualTo("Description française");
+        assertThat(mapper.localizedText(
+                json("{\"description\":{\"en_EN\":\"English description\"}}"),
+                "description"
+        )).isEqualTo("English description");
+        assertThat(mapper.localizedText(
+                json("{\"description\":\"Simple description\"}"),
+                "description"
+        )).isEqualTo("Simple description");
+    }
+
     private JsonNode location(String classification) throws Exception {
         return json("{\"type\":{\"classification\":\"" + classification + "\"}}");
     }
