@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN ICEFORGE_BUILD_COMMIT="${ICEFORGE_BUILD_COMMIT}" npm run build
 
-FROM nginx:1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+FROM nginx:1.31.5-alpine3.24@sha256:72ba65eb42c10344912a84ff42408db7d34f2feb642204570ab8fc5ffd29f1d3
 ARG ICEFORGE_BUILD_COMMIT=unknown
 LABEL org.opencontainers.image.revision="${ICEFORGE_BUILD_COMMIT}"
 
