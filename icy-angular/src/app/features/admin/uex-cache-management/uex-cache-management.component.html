@@ -51,7 +51,7 @@
       </div>
 
       @if (catalogRun) {
-        <div class="run-panel" [class.run-failed]="catalogRun.status === 'FAILED'">
+        <div class="run-panel" [class.run-failed]="catalogRun.status === 'FAILED'" [class.run-review]="catalogRun.status === 'WAITING_FOR_REVIEW'">
           <div class="run-header">
             <div><span class="run-kicker">Traitement #{{ catalogRun.id }}</span><strong>{{ catalogRunOperationLabel() }}</strong></div>
             <span class="run-status" [attr.data-status]="catalogRun.status">{{ catalogRunStatusLabel() }}</span>
@@ -60,6 +60,49 @@
           <div class="run-meta"><span>{{ catalogRun.message || 'En attente de demarrage' }}</span><span>{{ catalogRun.currentStep }} / {{ catalogRun.totalSteps }} etapes · {{ catalogProgressPercent }}%</span></div>
           @if (catalogRun.errorMessage) { <p class="run-error">{{ catalogRun.errorMessage }}</p> }
         </div>
+      }
+
+      @if (catalogRun?.status === 'WAITING_FOR_REVIEW') {
+        <section class="conflict-review" aria-labelledby="conflict-review-title">
+          <div class="conflict-review__heading">
+            <div>
+              <span>Validation requise</span>
+              <h3 id="conflict-review-title">Choisir les fiches a conserver</h3>
+            </div>
+            <strong>{{ catalogConflicts.length }} conflit{{ catalogConflicts.length > 1 ? 's' : '' }}</strong>
+          </div>
+
+          @for (conflict of catalogConflicts; track conflict.id) {
+            <article class="conflict-group">
+              <header>
+                <p>{{ conflict.manufacturer || 'Constructeur inconnu' }}</p>
+                <h4>{{ conflict.name }}</h4>
+              </header>
+              <div class="conflict-candidates">
+                @for (candidate of conflict.candidates; track candidate.externalId) {
+                  <div class="conflict-card">
+                    <div class="conflict-card__visual">
+                      <img [src]="candidate.imageUrl" [alt]="candidate.name" (error)="onImageError($event)" />
+                      @if (candidate.fallbackImage) { <span>Visuel generique</span> }
+                    </div>
+                    <div class="conflict-card__body">
+                      <h5>{{ candidate.name }}</h5>
+                      @if (candidate.slug) { <code>{{ candidate.slug }}</code> }
+                      @if (candidate.description) { <p>{{ candidate.description }}</p> }
+                      <button
+                        type="button"
+                        (click)="resolveConflict(conflict, candidate)"
+                        [disabled]="resolvingConflictId === conflict.id"
+                      >{{ resolvingConflictId === conflict.id ? 'Enregistrement...' : 'Conserver cette variante' }}</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+          } @empty {
+            <div class="conflict-loading">Chargement des variantes...</div>
+          }
+        </section>
       }
     </section>
 

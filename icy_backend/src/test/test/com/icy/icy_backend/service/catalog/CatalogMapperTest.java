@@ -21,7 +21,8 @@ class CatalogMapperTest {
     private final CatalogMapper mapper = new CatalogMapper(
             Mockito.mock(NamedParameterJdbcTemplate.class),
             Mockito.mock(CatalogRawStore.class),
-            objectMapper
+            objectMapper,
+            Mockito.mock(CatalogConflictService.class)
     );
 
     @Test
@@ -48,7 +49,9 @@ class CatalogMapperTest {
     void writesLargeCatalogsInBoundedBatches() throws Exception {
         NamedParameterJdbcTemplate jdbcTemplate = Mockito.mock(NamedParameterJdbcTemplate.class);
         CatalogRawStore rawStore = Mockito.mock(CatalogRawStore.class);
-        CatalogMapper batchMapper = new CatalogMapper(jdbcTemplate, rawStore, objectMapper);
+        CatalogMapper batchMapper = new CatalogMapper(
+                jdbcTemplate, rawStore, objectMapper, Mockito.mock(CatalogConflictService.class)
+        );
         List<JsonNode> records = new ArrayList<>();
         for (int index = 0; index <= CatalogMapper.BATCH_SIZE; index++) {
             records.add(json("{\"uuid\":\"item-" + index + "\",\"name\":\"Item " + index + "\"}"));

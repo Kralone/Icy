@@ -72,7 +72,7 @@ export interface CatalogSyncRun {
   id: number;
   operation: 'SCRAPE_ALL' | 'SCRAPE_AND_MAP';
   scope: CatalogMapScope | null;
-  status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  status: 'QUEUED' | 'RUNNING' | 'WAITING_FOR_REVIEW' | 'SUCCEEDED' | 'FAILED';
   currentStep: number;
   totalSteps: number;
   message: string | null;
@@ -80,6 +80,25 @@ export interface CatalogSyncRun {
   startedAt: string | null;
   completedAt: string | null;
   createdAt: string | null;
+}
+
+export interface CatalogConflictCandidate {
+  externalId: string;
+  name: string;
+  slug: string | null;
+  imageUrl: string;
+  fallbackImage: boolean;
+  description: string | null;
+  sourceUrl: string | null;
+}
+
+export interface CatalogConflict {
+  id: number;
+  runId: number;
+  family: string;
+  name: string;
+  manufacturer: string | null;
+  candidates: CatalogConflictCandidate[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -110,6 +129,17 @@ export class UexDatasetService {
 
   getCurrentCatalogSync(): Observable<ApiResponse<CatalogSyncRun | null>> {
     return this.http.get<ApiResponse<CatalogSyncRun | null>>('/api/admin/catalog-sync/current');
+  }
+
+  getCatalogConflicts(runId: number): Observable<ApiResponse<CatalogConflict[]>> {
+    return this.http.get<ApiResponse<CatalogConflict[]>>(`/api/admin/catalog-sync/conflicts?runId=${runId}`);
+  }
+
+  resolveCatalogConflict(conflictId: number, externalId: string): Observable<ApiResponse<CatalogSyncRun>> {
+    return this.http.post<ApiResponse<CatalogSyncRun>>(
+      `/api/admin/catalog-sync/conflicts/${conflictId}/resolve`,
+      { externalId }
+    );
   }
 
   listResourceSales(names: string[]): Observable<ApiResponse<UexResourceSale[]>> {

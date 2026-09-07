@@ -74,27 +74,58 @@ public class CatalogSyncWorker {
                 scrapeAndMap(run, scope);
             }
 
-            run.setStatus("SUCCEEDED");
-            run.setMessage(SCRAPE_ALL.equals(operation)
-                    ? "Toutes les sources ont ete actualisees et tout le catalogue a ete publie"
-                    : "Categorie actualisee et publiee");
-            run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
-            save(run);
+            complete(run, operation);
         } catch (OutOfMemoryError error) {
             logger.error("Memoire insuffisante pendant le run catalogue {}", runId, error);
             fail(run, "Memoire insuffisante pendant le traitement");
+        } catch (CatalogReviewRequiredException exception) {
+            waitForReview(run, exception.getConflictCount());
         } catch (Exception exception) {
             logger.error("Echec du run catalogue {}", runId, exception);
             fail(run, exception.getMessage());
         }
     }
 
-    private void fail(CatalogSyncRun run, String errorMessage) {
-            run.setStatus("FAILED");
-            run.setMessage("Le traitement a echoue; aucune nouvelle etape ne sera lancee");
-            run.setErrorMessage(errorMessage);
-            run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+    @Async("catalogSyncExecutor")
+    public void resumeAfterReview(long runId, String operation, CatalogSyncScope scope) {
+        CatalogSyncRun run = requiredRun(runId);
+        try {
+            run.setStatus("RUNNING");
+            run.setMessage("Reprise apres validation des variantes");
             save(run);
+            if (SCRAPE_ALL.equals(operation)) {
+                mapAllFromStoredSources(run);
+            } else if (scope == CatalogSyncScope.VEHICLES) {
+                int mappedCount = catalogMapper.mapWikiDataset("vehicles", run.getId());
+                advance(run, "Mapping vehicles : " + mappedCount + " fiches");
+            } else {
+                throw new IllegalStateException("Ce traitement ne peut pas etre repris apres validation");
+            }
+            complete(run, operation);
+        } catch (OutOfMemoryError error) {
+            logger.error("Memoire insuffisante pendant la reprise du run catalogue {}", runId, error);
+            fail(run, "Memoire insuffisante pendant le traitement");
+        } catch (CatalogReviewRequiredException exception) {
+            waitForReview(run, exception.getConflictCount());
+        } catch (Exception exception) {
+            logger.error("Echec de la reprise du run catalogue {}", runId, exception);
+            fail(run, exception.getMessage());
+        }
+    }
+
+    private void waitForReview(CatalogSyncRun run, int conflictCount) {
+        run.setStatus("WAITING_FOR_REVIEW");
+        run.setMessage(conflictCount + " choix de variante requis avant publication");
+        run.setErrorMessage(null);
+        save(run);
+    }
+
+    private void fail(CatalogSyncRun run, String errorMessage) {
+        run.setStatus("FAILED");
+        run.setMessage("Le traitement a echoue; aucune nouvelle etape ne sera lancee");
+        run.setErrorMessage(errorMessage);
+        run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        save(run);
     }
 
     private void scrapeAndMapAll(CatalogSyncRun run) {
@@ -116,16 +147,42 @@ public class CatalogSyncWorker {
         List<WikeloShip> wikeloRows = scrapeWikeloRaw(run.getId());
         advance(run, "Wikelo : " + wikeloRows.size() + " offres brutes");
 
+        mapAll(run, wikeloRows);
+    }
+
+    private void mapAllFromStoredSources(CatalogSyncRun run) {
+        List<WikeloShip> wikeloRows = rawStore.loadActive("WIKELO", "offers").stream()
+                .map(this::wikeloShip)
+                .toList();
+        mapAll(run, wikeloRows);
+    }
+
+    private void mapAll(CatalogSyncRun run, List<WikeloShip> wikeloRows) {
         for (String dataset : wikiScraper.datasets()) {
             int mappedCount = catalogMapper.mapWikiDataset(dataset, run.getId());
             advance(run, "Mapping " + dataset + " : " + mappedCount + " fiches");
         }
-
         int offerCount = economyMapper.map(run.getId());
         advance(run, "Mapping economie : " + offerCount + " offres");
-
         wikeloService.publishScrapedShips(wikeloRows);
         advance(run, "Mapping Wikelo : " + wikeloRows.size() + " offres publiees");
+    }
+
+    private WikeloShip wikeloShip(JsonNode node) {
+        try {
+            return objectMapper.treeToValue(node, WikeloShip.class);
+        } catch (Exception exception) {
+            throw new IllegalArgumentException("Offre Wikelo brute invalide", exception);
+        }
+    }
+
+    private void complete(CatalogSyncRun run, String operation) {
+        run.setStatus("SUCCEEDED");
+        run.setMessage(SCRAPE_ALL.equals(operation)
+                ? "Toutes les sources ont ete actualisees et tout le catalogue a ete publie"
+                : "Categorie actualisee et publiee");
+        run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        save(run);
     }
 
     private void scrapeAndMap(CatalogSyncRun run, CatalogSyncScope scope) {

@@ -72,4 +72,17 @@ class CatalogSyncServiceTest {
         assertThat(interruptedRun.getCompletedAt()).isNotNull();
         verify(runRepository).saveAllAndFlush(List.of(interruptedRun));
     }
+
+    @Test
+    void keepsRunsWaitingForAChoiceAcrossRestarts() {
+        CatalogSyncRunRepository runRepository = mock(CatalogSyncRunRepository.class);
+        when(runRepository.findByStatusIn(any())).thenReturn(List.of());
+        CatalogSyncService service = new CatalogSyncService(
+                runRepository, mock(CatalogSyncWorker.class), mock(MessageService.class)
+        );
+
+        service.failInterruptedRuns();
+
+        verify(runRepository).findByStatusIn(List.of("QUEUED", "RUNNING"));
+    }
 }

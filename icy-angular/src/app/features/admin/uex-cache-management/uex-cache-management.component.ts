@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, PLATFORM
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
+  CatalogConflict,
+  CatalogConflictCandidate,
   CatalogMapScope,
   CatalogSyncRun,
   UexDatasetDetail,
@@ -89,6 +91,8 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
   success = '';
   selectedMapScope: CatalogMapScope = 'VEHICLES';
   catalogRun: CatalogSyncRun | null = null;
+  catalogConflicts: CatalogConflict[] = [];
+  resolvingConflictId: number | null = null;
   startingCatalogAction = false;
   readonly mapScopes: Array<{ value: CatalogMapScope; label: string }> = [
     { value: 'VEHICLES', label: 'Vaisseaux et vehicules' },
@@ -165,6 +169,12 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
   }
 
   get catalogRunActive(): boolean {
+    return this.catalogRun?.status === 'QUEUED'
+      || this.catalogRun?.status === 'RUNNING'
+      || this.catalogRun?.status === 'WAITING_FOR_REVIEW';
+  }
+
+  private get catalogRunPolling(): boolean {
     return this.catalogRun?.status === 'QUEUED' || this.catalogRun?.status === 'RUNNING';
   }
 
@@ -231,7 +241,8 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
 
   catalogRunStatusLabel(): string {
     const labels: Record<CatalogSyncRun['status'], string> = {
-      QUEUED: 'En attente', RUNNING: 'En cours', SUCCEEDED: 'Termine', FAILED: 'Echec'
+      QUEUED: 'En attente', RUNNING: 'En cours', WAITING_FOR_REVIEW: 'Choix requis',
+      SUCCEEDED: 'Termine', FAILED: 'Echec'
     };
     return this.catalogRun ? labels[this.catalogRun.status] : '';
   }
@@ -271,6 +282,28 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
     if (!image.src.endsWith('/assets/images/catalog/catalog-fallback.svg')) {
       image.src = '/assets/images/catalog/catalog-fallback.svg';
     }
+  }
+
+  resolveConflict(conflict: CatalogConflict, candidate: CatalogConflictCandidate): void {
+    const confirmed = window.confirm(`Conserver « ${candidate.name} » comme fiche principale ?`);
+    if (!confirmed) return;
+    this.resolvingConflictId = conflict.id;
+    this.clearMessages();
+    this.uexDatasetService.resolveCatalogConflict(conflict.id, candidate.externalId).subscribe({
+      next: (response) => {
+        this.catalogRun = response?.data ?? this.catalogRun;
+        this.catalogConflicts = this.catalogConflicts.filter((item) => item.id !== conflict.id);
+        this.resolvingConflictId = null;
+        if (this.catalogConflicts.length === 0) {
+          this.success = 'Choix enregistres. La publication reprend automatiquement.';
+          this.scheduleCatalogPoll();
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.resolvingConflictId = null;
+        this.error = this.extractHttpErrorMessage('Impossible d’enregistrer ce choix.', error);
+      }
+    });
   }
 
   loadDatasets(clearMessages = true): void {
@@ -341,20 +374,23 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
     this.uexDatasetService.getCurrentCatalogSync().subscribe({
       next: (response) => {
         this.catalogRun = response?.data ?? null;
-        if (this.catalogRunActive) this.scheduleCatalogPoll();
+        if (this.catalogRun?.status === 'WAITING_FOR_REVIEW') this.loadCatalogConflicts();
+        if (this.catalogRunPolling) this.scheduleCatalogPoll();
       }
     });
   }
 
   private scheduleCatalogPoll(): void {
     this.stopCatalogPolling();
-    if (!this.isBrowser || !this.catalogRunActive) return;
+    if (!this.isBrowser || !this.catalogRunPolling) return;
     this.catalogPollHandle = setTimeout(() => {
       this.uexDatasetService.getCurrentCatalogSync().subscribe({
         next: (response) => {
           this.catalogRun = response?.data ?? null;
-          if (this.catalogRunActive) {
+          if (this.catalogRunPolling) {
             this.scheduleCatalogPoll();
+          } else if (this.catalogRun?.status === 'WAITING_FOR_REVIEW') {
+            this.loadCatalogConflicts();
           } else if (this.catalogRun?.status === 'SUCCEEDED') {
             this.success = this.catalogRun.message || 'Traitement catalogue termine.';
             this.loadDatasets();
@@ -365,6 +401,16 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
         error: () => this.scheduleCatalogPoll()
       });
     }, 2500);
+  }
+
+  private loadCatalogConflicts(): void {
+    if (!this.catalogRun) return;
+    this.uexDatasetService.getCatalogConflicts(this.catalogRun.id).subscribe({
+      next: (response) => this.catalogConflicts = response?.data ?? [],
+      error: (error: HttpErrorResponse) => {
+        this.error = this.extractHttpErrorMessage('Impossible de charger les variantes a comparer.', error);
+      }
+    });
   }
 
   private stopCatalogPolling(): void {

@@ -13,6 +13,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class CatalogMapper {
@@ -50,30 +51,37 @@ public class CatalogMapper {
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final CatalogRawStore rawStore;
     private final ObjectMapper objectMapper;
+    private final CatalogConflictService conflictService;
 
     public CatalogMapper(
             NamedParameterJdbcTemplate jdbcTemplate,
             CatalogRawStore rawStore,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            CatalogConflictService conflictService
     ) {
         this.jdbcTemplate = jdbcTemplate;
         this.rawStore = rawStore;
         this.objectMapper = objectMapper;
+        this.conflictService = conflictService;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = CatalogReviewRequiredException.class)
     public int mapWikiDataset(String datasetKey, long runId) {
         List<JsonNode> records = rawStore.loadActive(WIKI_SOURCE, datasetKey);
         if (records.isEmpty()) {
             throw new IllegalStateException("Aucune donnee brute disponible pour " + datasetKey);
         }
+        Set<String> suppressedExternalIds = "vehicles".equals(datasetKey)
+                ? conflictService.prepareVehicleMapping(records, runId)
+                : Set.of();
 
         List<MapSqlParameterSource> batch = new ArrayList<>(BATCH_SIZE);
         int mappedCount = 0;
         for (JsonNode record : records) {
             String externalId = text(record, "uuid");
             String name = text(record, "name");
-            if (externalId == null || name == null || isPlaceholder(name)) {
+            if (externalId == null || name == null || isPlaceholder(name)
+                    || suppressedExternalIds.contains(externalId)) {
                 continue;
             }
 
