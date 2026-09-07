@@ -7,9 +7,7 @@
 
     <header class="hero">
       <div>
-        <p class="eyebrow">Centre de donnees</p>
         <h1>Bibliotheque des sources</h1>
-        <p class="hero-copy">Explore les donnees collectees pour IceForge, controle leur fraicheur et choisis precisement ce qui doit etre publie dans le catalogue.</p>
       </div>
       <div class="hero-stats" aria-label="Resume des sources">
         <div><strong>{{ datasets.length }}</strong><span>sources suivies</span></div>
@@ -20,18 +18,16 @@
 
     <section class="actions-section" aria-labelledby="actions-title">
       <div class="section-heading">
-        <div><p class="eyebrow">Mise a jour</p><h2 id="actions-title">Que veux-tu actualiser ?</h2></div>
-        <p>Actualise et publie tout le catalogue, ou limite le traitement a une seule categorie.</p>
+        <h2 id="actions-title">Actualisation du catalogue</h2>
       </div>
 
       <div class="action-grid">
         <article class="action-card source-action">
           <div class="action-icon" aria-hidden="true">↓</div>
           <div class="action-content">
-            <div class="action-title-row"><h3>Actualiser tout le catalogue</h3><span class="impact-badge publish">Toutes les categories</span></div>
-            <p>Recharge Star Citizen Wiki, UEX et Wikelo, puis publie toutes les categories et leurs donnees economiques.</p>
+            <h3>Catalogue complet</h3>
             <button type="button" class="primary-action source-button" (click)="scrapeAll()" [disabled]="startingCatalogAction || catalogRunActive">
-              <span aria-hidden="true">↻</span> {{ startingCatalogAction ? 'Demarrage...' : 'Tout actualiser et publier' }}
+              <span aria-hidden="true">↻</span> {{ startingCatalogAction ? 'Demarrage...' : 'Tout actualiser' }}
             </button>
           </div>
         </article>
@@ -39,16 +35,15 @@
         <article class="action-card publish-action">
           <div class="action-icon" aria-hidden="true">✓</div>
           <div class="action-content">
-            <div class="action-title-row"><h3>Actualiser une seule categorie</h3><span class="impact-badge publish">Categorie selectionnee</span></div>
-            <p>Recharge les sources necessaires, puis met a jour uniquement la categorie selectionnee dans le catalogue.</p>
+            <h3>Une categorie</h3>
             <div class="publish-controls">
-              <label><span>Categorie a publier</span>
+              <label><span>Categorie</span>
                 <select [value]="selectedMapScope" (change)="onMapScopeChange($any($event.target).value)" [disabled]="startingCatalogAction || catalogRunActive">
                   @for (scope of mapScopes; track scope.value) { <option [value]="scope.value">{{ scope.label }}</option> }
                 </select>
               </label>
               <button type="button" class="primary-action publish-button" (click)="scrapeAndMap()" [disabled]="startingCatalogAction || catalogRunActive">
-                <span aria-hidden="true">↻</span> Actualiser et publier cette categorie
+                <span aria-hidden="true">↻</span> Actualiser la categorie
               </button>
             </div>
           </div>
@@ -73,7 +68,7 @@
 
     <section class="library-section" aria-labelledby="library-title">
       <div class="library-header">
-        <div><p class="eyebrow">Sources disponibles</p><h2 id="library-title">La bibliotheque</h2><p>Chaque carte represente une source brute stockee en base. Ouvre-la pour inspecter un echantillon ou actualise-la seule.</p></div>
+        <h2 id="library-title">Sources</h2>
         <button type="button" class="refresh-list" (click)="loadDatasets()" [disabled]="loadingDatasets"><span aria-hidden="true">↻</span> {{ loadingDatasets ? 'Chargement...' : 'Recharger les indicateurs' }}</button>
       </div>
 
