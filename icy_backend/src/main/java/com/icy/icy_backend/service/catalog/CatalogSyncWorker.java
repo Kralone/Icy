@@ -24,7 +24,7 @@ import java.util.List;
 @Service
 public class CatalogSyncWorker {
     private static final Logger logger = LoggerFactory.getLogger(CatalogSyncWorker.class);
-    private static final String SCRAPE_AND_MAP_ALL = "SCRAPE_AND_MAP_ALL";
+    private static final String SCRAPE_ALL = "SCRAPE_ALL";
 
     private final CatalogSyncRunRepository runRepository;
     private final StarCitizenWikiScraper wikiScraper;
@@ -68,14 +68,14 @@ public class CatalogSyncWorker {
             run.setMessage("Demarrage du traitement");
             save(run);
 
-            if (SCRAPE_AND_MAP_ALL.equals(operation)) {
+            if (SCRAPE_ALL.equals(operation)) {
                 scrapeAndMapAll(run);
             } else {
                 scrapeAndMap(run, scope);
             }
 
             run.setStatus("SUCCEEDED");
-            run.setMessage(SCRAPE_AND_MAP_ALL.equals(operation)
+            run.setMessage(SCRAPE_ALL.equals(operation)
                     ? "Toutes les sources ont ete actualisees et tout le catalogue a ete publie"
                     : "Categorie actualisee et publiee");
             run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
@@ -184,7 +184,7 @@ public class CatalogSyncWorker {
     }
 
     private int totalSteps(String operation, CatalogSyncScope scope) {
-        if (SCRAPE_AND_MAP_ALL.equals(operation)) {
+        if (SCRAPE_ALL.equals(operation)) {
             int wikiDatasetCount = wikiScraper.datasets().size();
             return (wikiDatasetCount * 2) + uexDatasetService.supportedDatasetKeys().size() + 3;
         }

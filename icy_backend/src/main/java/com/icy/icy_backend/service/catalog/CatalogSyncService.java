@@ -31,7 +31,7 @@ public class CatalogSyncService {
     }
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAll() {
-        return start("SCRAPE_AND_MAP_ALL", null);
+        return start("SCRAPE_ALL", null);
     }
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAndMap(String rawScope) {
@@ -56,7 +56,10 @@ public class CatalogSyncService {
         try {
             run = runRepository.saveAndFlush(run);
         } catch (DataIntegrityViolationException exception) {
-            throw new ResourceAlreadyExistsException("Un scrape catalogue est deja en cours.");
+            if (runRepository.existsByStatusIn(ACTIVE_STATUSES)) {
+                throw new ResourceAlreadyExistsException("Un scrape catalogue est deja en cours.");
+            }
+            throw exception;
         }
 
         worker.run(run.getId(), operation, scope);

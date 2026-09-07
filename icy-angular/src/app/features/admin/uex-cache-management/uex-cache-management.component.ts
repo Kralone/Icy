@@ -238,8 +238,7 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
 
   catalogRunOperationLabel(): string {
     if (!this.catalogRun) return '';
-    if (this.catalogRun.operation === 'SCRAPE_ALL') return 'Ancienne collecte de toutes les sources';
-    if (this.catalogRun.operation === 'SCRAPE_AND_MAP_ALL') return 'Mise a jour et publication de tout le catalogue';
+    if (this.catalogRun.operation === 'SCRAPE_ALL') return 'Mise a jour et publication de tout le catalogue';
     const scope = this.mapScopes.find((item) => item.value === this.catalogRun?.scope)?.label ?? this.catalogRun.scope;
     return `Mise a jour et publication · ${scope}`;
   }

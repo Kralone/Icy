@@ -5,8 +5,10 @@ import com.icy.icy_backend.db.repository.catalog.CatalogSyncRunRepository;
 import com.icy.icy_backend.service.common.MessageService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -31,8 +33,24 @@ class CatalogSyncServiceTest {
 
         ArgumentCaptor<CatalogSyncRun> runCaptor = ArgumentCaptor.forClass(CatalogSyncRun.class);
         verify(runRepository).saveAndFlush(runCaptor.capture());
-        assertThat(runCaptor.getValue().getOperation()).isEqualTo("SCRAPE_AND_MAP_ALL");
+        assertThat(runCaptor.getValue().getOperation()).isEqualTo("SCRAPE_ALL");
         assertThat(runCaptor.getValue().getScope()).isNull();
-        verify(worker).run(42L, "SCRAPE_AND_MAP_ALL", null);
+        verify(worker).run(42L, "SCRAPE_ALL", null);
+    }
+
+    @Test
+    void doesNotReportAnUnrelatedDatabaseConstraintAsAnActiveScrape() {
+        CatalogSyncRunRepository runRepository = mock(CatalogSyncRunRepository.class);
+        CatalogSyncWorker worker = mock(CatalogSyncWorker.class);
+        MessageService messageService = mock(MessageService.class);
+        when(runRepository.existsByStatusIn(any())).thenReturn(false);
+        when(runRepository.saveAndFlush(any(CatalogSyncRun.class)))
+                .thenThrow(new DataIntegrityViolationException("constraint rejected"));
+
+        CatalogSyncService service = new CatalogSyncService(runRepository, worker, messageService);
+
+        assertThatThrownBy(service::startScrapeAll)
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("constraint rejected");
     }
 }

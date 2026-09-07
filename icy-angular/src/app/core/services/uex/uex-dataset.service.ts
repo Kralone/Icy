@@ -70,7 +70,7 @@ export type CatalogMapScope = 'VEHICLES' | 'ITEMS' | 'LOCATIONS' | 'ECONOMY' | '
 
 export interface CatalogSyncRun {
   id: number;
-  operation: 'SCRAPE_ALL' | 'SCRAPE_AND_MAP_ALL' | 'SCRAPE_AND_MAP';
+  operation: 'SCRAPE_ALL' | 'SCRAPE_AND_MAP';
   scope: CatalogMapScope | null;
   status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
   currentStep: number;

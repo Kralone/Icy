@@ -71,7 +71,7 @@ class CatalogSyncWorkerTest {
                 new ObjectMapper().findAndRegisterModules()
         );
 
-        worker.run(42L, "SCRAPE_AND_MAP_ALL", null);
+        worker.run(42L, "SCRAPE_ALL", null);
 
         InOrder order = inOrder(wikiScraper, uexDatasetService, wikeloService, catalogMapper, economyMapper);
         order.verify(wikiScraper).scrape("vehicles", 42L);
