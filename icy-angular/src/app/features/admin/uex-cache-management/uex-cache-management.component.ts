@@ -92,6 +92,7 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
   selectedMapScope: CatalogMapScope = 'VEHICLES';
   catalogRun: CatalogSyncRun | null = null;
   catalogConflicts: CatalogConflict[] = [];
+  conflictSelections = new Map<number, Set<string>>();
   resolvingConflictId: number | null = null;
   startingCatalogAction = false;
   readonly mapScopes: Array<{ value: CatalogMapScope; label: string }> = [
@@ -284,15 +285,39 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  resolveConflict(conflict: CatalogConflict, candidate: CatalogConflictCandidate): void {
-    const confirmed = window.confirm(`Conserver « ${candidate.name} » comme fiche principale ?`);
-    if (!confirmed) return;
+  isConflictCandidateSelected(conflictId: number, externalId: string): boolean {
+    return this.conflictSelections.get(conflictId)?.has(externalId) ?? false;
+  }
+
+  selectedConflictCount(conflictId: number): number {
+    return this.conflictSelections.get(conflictId)?.size ?? 0;
+  }
+
+  toggleConflictCandidate(conflictId: number, candidate: CatalogConflictCandidate): void {
+    const selected = new Set(this.conflictSelections.get(conflictId) ?? []);
+    if (selected.has(candidate.externalId)) selected.delete(candidate.externalId);
+    else selected.add(candidate.externalId);
+    this.conflictSelections.set(conflictId, selected);
+  }
+
+  selectAllConflictCandidates(conflict: CatalogConflict): void {
+    this.conflictSelections.set(conflict.id, new Set(conflict.candidates.map(candidate => candidate.externalId)));
+  }
+
+  clearConflictSelection(conflictId: number): void {
+    this.conflictSelections.set(conflictId, new Set());
+  }
+
+  resolveConflict(conflict: CatalogConflict): void {
+    const externalIds = [...(this.conflictSelections.get(conflict.id) ?? [])];
+    if (externalIds.length === 0) return;
     this.resolvingConflictId = conflict.id;
     this.clearMessages();
-    this.uexDatasetService.resolveCatalogConflict(conflict.id, candidate.externalId).subscribe({
+    this.uexDatasetService.resolveCatalogConflict(conflict.id, externalIds).subscribe({
       next: (response) => {
         this.catalogRun = response?.data ?? this.catalogRun;
         this.catalogConflicts = this.catalogConflicts.filter((item) => item.id !== conflict.id);
+        this.conflictSelections.delete(conflict.id);
         this.resolvingConflictId = null;
         if (this.catalogConflicts.length === 0) {
           this.success = 'Choix enregistres. La publication reprend automatiquement.';
@@ -406,7 +431,17 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
   private loadCatalogConflicts(): void {
     if (!this.catalogRun) return;
     this.uexDatasetService.getCatalogConflicts(this.catalogRun.id).subscribe({
-      next: (response) => this.catalogConflicts = response?.data ?? [],
+      next: (response) => {
+        this.catalogConflicts = response?.data ?? [];
+        const refreshedSelections = new Map<number, Set<string>>();
+        for (const conflict of this.catalogConflicts) {
+          const candidateIds = new Set(conflict.candidates.map(candidate => candidate.externalId));
+          const retained = [...(this.conflictSelections.get(conflict.id) ?? [])]
+            .filter(externalId => candidateIds.has(externalId));
+          refreshedSelections.set(conflict.id, new Set(retained));
+        }
+        this.conflictSelections = refreshedSelections;
+      },
       error: (error: HttpErrorResponse) => {
         this.error = this.extractHttpErrorMessage('Impossible de charger les variantes a comparer.', error);
       }

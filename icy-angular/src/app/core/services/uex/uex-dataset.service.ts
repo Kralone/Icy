@@ -135,10 +135,10 @@ export class UexDatasetService {
     return this.http.get<ApiResponse<CatalogConflict[]>>(`/api/admin/catalog-sync/conflicts?runId=${runId}`);
   }
 
-  resolveCatalogConflict(conflictId: number, externalId: string): Observable<ApiResponse<CatalogSyncRun>> {
+  resolveCatalogConflict(conflictId: number, externalIds: string[]): Observable<ApiResponse<CatalogSyncRun>> {
     return this.http.post<ApiResponse<CatalogSyncRun>>(
       `/api/admin/catalog-sync/conflicts/${conflictId}/resolve`,
-      { externalId }
+      { externalIds }
     );
   }
 

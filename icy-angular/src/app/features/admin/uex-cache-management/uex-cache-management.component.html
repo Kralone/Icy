@@ -75,12 +75,18 @@
           @for (conflict of catalogConflicts; track conflict.id) {
             <article class="conflict-group">
               <header>
-                <p>{{ conflict.manufacturer || 'Constructeur inconnu' }}</p>
-                <h4>{{ conflict.name }}</h4>
+                <div>
+                  <p>{{ conflict.manufacturer || 'Constructeur inconnu' }}</p>
+                  <h4>{{ conflict.name }}</h4>
+                </div>
+                <div class="conflict-group__actions">
+                  <button type="button" (click)="selectAllConflictCandidates(conflict)">Tout conserver</button>
+                  <button type="button" (click)="clearConflictSelection(conflict.id)">Effacer</button>
+                </div>
               </header>
               <div class="conflict-candidates">
                 @for (candidate of conflict.candidates; track candidate.externalId) {
-                  <div class="conflict-card">
+                  <div class="conflict-card" [class.selected]="isConflictCandidateSelected(conflict.id, candidate.externalId)">
                     <div class="conflict-card__visual">
                       <img [src]="candidate.imageUrl" [alt]="candidate.name" (error)="onImageError($event)" />
                       @if (candidate.fallbackImage) { <span>Visuel generique</span> }
@@ -89,15 +95,27 @@
                       <h5>{{ candidate.name }}</h5>
                       @if (candidate.slug) { <code>{{ candidate.slug }}</code> }
                       @if (candidate.description) { <p>{{ candidate.description }}</p> }
-                      <button
-                        type="button"
-                        (click)="resolveConflict(conflict, candidate)"
-                        [disabled]="resolvingConflictId === conflict.id"
-                      >{{ resolvingConflictId === conflict.id ? 'Enregistrement...' : 'Conserver cette variante' }}</button>
+                      <label class="conflict-choice">
+                        <input
+                          type="checkbox"
+                          [checked]="isConflictCandidateSelected(conflict.id, candidate.externalId)"
+                          (change)="toggleConflictCandidate(conflict.id, candidate)"
+                          [disabled]="resolvingConflictId === conflict.id"
+                        />
+                        <span>Conserver</span>
+                      </label>
                     </div>
                   </div>
                 }
               </div>
+              <footer class="conflict-group__footer">
+                <span>{{ selectedConflictCount(conflict.id) }} / {{ conflict.candidates.length }} selectionnee{{ selectedConflictCount(conflict.id) > 1 ? 's' : '' }}</span>
+                <button
+                  type="button"
+                  (click)="resolveConflict(conflict)"
+                  [disabled]="selectedConflictCount(conflict.id) === 0 || resolvingConflictId === conflict.id"
+                >{{ resolvingConflictId === conflict.id ? 'Enregistrement...' : 'Valider la selection' }}</button>
+              </footer>
             </article>
           } @empty {
             <div class="conflict-loading">Chargement des variantes...</div>

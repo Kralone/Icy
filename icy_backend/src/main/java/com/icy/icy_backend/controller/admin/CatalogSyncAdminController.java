@@ -65,7 +65,7 @@ public class CatalogSyncAdminController {
             @RequestBody CatalogConflictResolutionRequest request
     ) {
         CatalogConflictService.Resolution resolution = conflictService.resolve(
-                conflictId, request == null ? null : request.externalId()
+                conflictId, request == null ? null : request.selection()
         );
         if (resolution.remainingConflicts() == 0) {
             catalogSyncService.resumeAfterReview(resolution.runId());

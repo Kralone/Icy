@@ -55,7 +55,9 @@ public class CatalogConflictService {
             Selection selection = selections.get(canonicalKey);
             boolean selectionStillValid = selection != null
                     && selection.fingerprint().equals(fingerprint)
-                    && candidates.stream().anyMatch(candidate -> candidate.externalId().equals(selection.externalId()));
+                    && !selection.externalIds().isEmpty()
+                    && candidates.stream().map(VehicleCandidate::externalId).toList()
+                    .containsAll(selection.externalIds());
             if (!selectionStillValid) {
                 saveConflict(runId, candidates, fingerprint);
                 pending++;
@@ -63,7 +65,7 @@ public class CatalogConflictService {
             }
             candidates.stream()
                     .map(VehicleCandidate::externalId)
-                    .filter(externalId -> !externalId.equals(selection.externalId()))
+                    .filter(externalId -> !selection.externalIds().contains(externalId))
                     .forEach(suppressed::add);
         }
         if (pending > 0) {
@@ -118,9 +120,16 @@ public class CatalogConflictService {
     }
 
     @Transactional
-    public Resolution resolve(long conflictId, String externalId) {
-        if (externalId == null || externalId.isBlank()) {
-            throw new IllegalArgumentException("La variante a conserver est requise");
+    public Resolution resolve(long conflictId, List<String> externalIds) {
+        Set<String> selectedIds = new LinkedHashSet<>();
+        if (externalIds != null) {
+            externalIds.stream()
+                    .filter(id -> id != null && !id.isBlank())
+                    .map(String::trim)
+                    .forEach(selectedIds::add);
+        }
+        if (selectedIds.isEmpty()) {
+            throw new IllegalArgumentException("Au moins une variante a conserver est requise");
         }
         ConflictSelection conflict = jdbcTemplate.queryForObject("""
                         SELECT run_id, source, dataset_key, canonical_key, candidate_fingerprint, status
@@ -138,38 +147,57 @@ public class CatalogConflictService {
         if (!"PENDING".equals(conflict.status())) {
             throw new IllegalStateException("Ce conflit catalogue est deja resolu");
         }
-        Boolean candidateExists = jdbcTemplate.queryForObject("""
-                        SELECT EXISTS (
-                            SELECT 1 FROM catalog.sync_conflict_candidates
-                            WHERE conflict_id = :conflictId AND external_id = :externalId
-                        )
+        List<String> candidateIds = jdbcTemplate.query("""
+                        SELECT external_id
+                        FROM catalog.sync_conflict_candidates
+                        WHERE conflict_id = :conflictId
                         """,
-                new MapSqlParameterSource()
-                        .addValue("conflictId", conflictId)
-                        .addValue("externalId", externalId.trim()),
-                Boolean.class);
-        if (!Boolean.TRUE.equals(candidateExists)) {
-            throw new IllegalArgumentException("Cette variante ne fait pas partie du conflit");
+                new MapSqlParameterSource("conflictId", conflictId),
+                (resultSet, rowNumber) -> resultSet.getString("external_id"));
+        if (!candidateIds.containsAll(selectedIds)) {
+            throw new IllegalArgumentException("Une variante selectionnee ne fait pas partie du conflit");
         }
 
+        MapSqlParameterSource selectionKey = new MapSqlParameterSource()
+                .addValue("source", conflict.source())
+                .addValue("datasetKey", conflict.datasetKey())
+                .addValue("canonicalKey", conflict.canonicalKey());
         jdbcTemplate.update("""
+                        DELETE FROM catalog.canonical_selections
+                        WHERE source = :source
+                          AND dataset_key = :datasetKey
+                          AND canonical_key = :canonicalKey
+                        """, selectionKey);
+        MapSqlParameterSource[] canonicalBatch = selectedIds.stream()
+                .map(externalId -> new MapSqlParameterSource()
+                        .addValue("source", conflict.source())
+                        .addValue("datasetKey", conflict.datasetKey())
+                        .addValue("canonicalKey", conflict.canonicalKey())
+                        .addValue("externalId", externalId)
+                        .addValue("fingerprint", conflict.fingerprint()))
+                .toArray(MapSqlParameterSource[]::new);
+        jdbcTemplate.batchUpdate("""
                         INSERT INTO catalog.canonical_selections (
                             source, dataset_key, canonical_key, selected_external_id,
                             candidate_fingerprint, selected_at
                         ) VALUES (
                             :source, :datasetKey, :canonicalKey, :externalId, :fingerprint, NOW()
                         )
-                        ON CONFLICT (source, dataset_key, canonical_key) DO UPDATE SET
-                            selected_external_id = EXCLUDED.selected_external_id,
-                            candidate_fingerprint = EXCLUDED.candidate_fingerprint,
-                            selected_at = NOW()
-                        """,
-                new MapSqlParameterSource()
-                        .addValue("source", conflict.source())
-                        .addValue("datasetKey", conflict.datasetKey())
-                        .addValue("canonicalKey", conflict.canonicalKey())
-                        .addValue("externalId", externalId.trim())
-                        .addValue("fingerprint", conflict.fingerprint()));
+                        """, canonicalBatch);
+
+        jdbcTemplate.update("DELETE FROM catalog.sync_conflict_selections WHERE conflict_id = :conflictId",
+                new MapSqlParameterSource("conflictId", conflictId));
+        MapSqlParameterSource[] conflictBatch = selectedIds.stream()
+                .map(externalId -> new MapSqlParameterSource()
+                        .addValue("conflictId", conflictId)
+                        .addValue("externalId", externalId))
+                .toArray(MapSqlParameterSource[]::new);
+        jdbcTemplate.batchUpdate("""
+                        INSERT INTO catalog.sync_conflict_selections (conflict_id, external_id)
+                        VALUES (:conflictId, :externalId)
+                        """, conflictBatch);
+
+        String firstSelectedId = selectedIds.iterator().next();
         jdbcTemplate.update("""
                         UPDATE catalog.sync_conflicts
                         SET status = 'RESOLVED', selected_external_id = :externalId, resolved_at = NOW()
@@ -177,7 +205,7 @@ public class CatalogConflictService {
                         """,
                 new MapSqlParameterSource()
                         .addValue("id", conflictId)
-                        .addValue("externalId", externalId.trim()));
+                        .addValue("externalId", firstSelectedId));
         Integer remaining = jdbcTemplate.queryForObject("""
                         SELECT COUNT(*) FROM catalog.sync_conflicts
                         WHERE run_id = :runId AND status = 'PENDING'
@@ -195,13 +223,13 @@ public class CatalogConflictService {
                         """,
                 new MapSqlParameterSource().addValue("source", SOURCE).addValue("datasetKey", DATASET),
                 resultSet -> {
-                    selections.put(
-                            resultSet.getString("canonical_key"),
-                            new Selection(
-                                    resultSet.getString("selected_external_id"),
-                                    resultSet.getString("candidate_fingerprint")
-                            )
-                    );
+                    String canonicalKey = resultSet.getString("canonical_key");
+                    String fingerprint = resultSet.getString("candidate_fingerprint");
+                    Selection selection = selections.computeIfAbsent(
+                            canonicalKey, ignored -> new Selection(new LinkedHashSet<>(), fingerprint));
+                    if (selection.fingerprint().equals(fingerprint)) {
+                        selection.externalIds().add(resultSet.getString("selected_external_id"));
+                    }
                 });
         return selections;
     }
@@ -335,7 +363,7 @@ public class CatalogConflictService {
     public record Resolution(long runId, int remainingConflicts) {
     }
 
-    private record Selection(String externalId, String fingerprint) {
+    private record Selection(Set<String> externalIds, String fingerprint) {
     }
 
     private record ConflictRow(long id, long runId, String family, String name, String manufacturer) {
