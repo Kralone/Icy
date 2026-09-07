@@ -31,7 +31,7 @@ public class CatalogSyncService {
     }
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAll() {
-        return start("SCRAPE_ALL", null);
+        return start("SCRAPE_AND_MAP_ALL", null);
     }
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAndMap(String rawScope) {

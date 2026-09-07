@@ -24,6 +24,7 @@ import java.util.List;
 @Service
 public class CatalogSyncWorker {
     private static final Logger logger = LoggerFactory.getLogger(CatalogSyncWorker.class);
+    private static final String SCRAPE_AND_MAP_ALL = "SCRAPE_AND_MAP_ALL";
 
     private final CatalogSyncRunRepository runRepository;
     private final StarCitizenWikiScraper wikiScraper;
@@ -67,27 +68,29 @@ public class CatalogSyncWorker {
             run.setMessage("Demarrage du traitement");
             save(run);
 
-            if ("SCRAPE_ALL".equals(operation)) {
-                scrapeAll(run);
+            if (SCRAPE_AND_MAP_ALL.equals(operation)) {
+                scrapeAndMapAll(run);
             } else {
                 scrapeAndMap(run, scope);
             }
 
             run.setStatus("SUCCEEDED");
-            run.setMessage("Traitement termine");
+            run.setMessage(SCRAPE_AND_MAP_ALL.equals(operation)
+                    ? "Toutes les sources ont ete actualisees et tout le catalogue a ete publie"
+                    : "Categorie actualisee et publiee");
             run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
             save(run);
         } catch (Exception exception) {
             logger.error("Echec du run catalogue {}", runId, exception);
             run.setStatus("FAILED");
-            run.setMessage("Le traitement a echoue; les donnees mappees precedentes sont conservees");
+            run.setMessage("Le traitement a echoue; aucune nouvelle etape ne sera lancee");
             run.setErrorMessage(exception.getMessage());
             run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
             save(run);
         }
     }
 
-    private void scrapeAll(CatalogSyncRun run) {
+    private void scrapeAndMapAll(CatalogSyncRun run) {
         for (String dataset : wikiScraper.datasets()) {
             int count = wikiScraper.scrape(dataset, run.getId());
             advance(run, "Wiki " + dataset + " : " + count + " lignes brutes");
@@ -105,6 +108,17 @@ public class CatalogSyncWorker {
 
         List<WikeloShip> wikeloRows = scrapeWikeloRaw(run.getId());
         advance(run, "Wikelo : " + wikeloRows.size() + " offres brutes");
+
+        for (String dataset : wikiScraper.datasets()) {
+            int mappedCount = catalogMapper.mapWikiDataset(dataset, run.getId());
+            advance(run, "Mapping " + dataset + " : " + mappedCount + " fiches");
+        }
+
+        int offerCount = economyMapper.map(run.getId());
+        advance(run, "Mapping economie : " + offerCount + " offres");
+
+        wikeloService.publishScrapedShips(wikeloRows);
+        advance(run, "Mapping Wikelo : " + wikeloRows.size() + " offres publiees");
     }
 
     private void scrapeAndMap(CatalogSyncRun run, CatalogSyncScope scope) {
@@ -170,8 +184,9 @@ public class CatalogSyncWorker {
     }
 
     private int totalSteps(String operation, CatalogSyncScope scope) {
-        if ("SCRAPE_ALL".equals(operation)) {
-            return wikiScraper.datasets().size() + uexDatasetService.supportedDatasetKeys().size() + 1;
+        if (SCRAPE_AND_MAP_ALL.equals(operation)) {
+            int wikiDatasetCount = wikiScraper.datasets().size();
+            return (wikiDatasetCount * 2) + uexDatasetService.supportedDatasetKeys().size() + 3;
         }
         if (scope == CatalogSyncScope.ECONOMY) {
             return economyMapper.requiredDatasets().size() + 1;

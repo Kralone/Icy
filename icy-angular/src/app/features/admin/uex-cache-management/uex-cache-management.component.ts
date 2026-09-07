@@ -117,7 +117,7 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
 
   scrapeAll(): void {
     const confirmed = window.confirm(
-      'Telecharger a nouveau toutes les sources ? Les donnees brutes seront remplacees, mais le catalogue visible ne changera pas.'
+      'Actualiser toutes les sources puis republier toutes les categories du catalogue ?'
     );
     if (!confirmed) return;
 
@@ -127,12 +127,12 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.catalogRun = response?.data ?? null;
         this.startingCatalogAction = false;
-        this.success = 'Mise a jour de toutes les sources lancee. Le catalogue visible ne sera pas modifie.';
+        this.success = 'Actualisation de toutes les sources et publication de tout le catalogue lancees.';
         this.scheduleCatalogPoll();
       },
       error: (error: HttpErrorResponse) => {
         this.startingCatalogAction = false;
-        this.error = this.extractHttpErrorMessage('Impossible de lancer la mise a jour des sources.', error);
+        this.error = this.extractHttpErrorMessage('Impossible de lancer la mise a jour complete du catalogue.', error);
       }
     });
   }
@@ -238,7 +238,8 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
 
   catalogRunOperationLabel(): string {
     if (!this.catalogRun) return '';
-    if (this.catalogRun.operation === 'SCRAPE_ALL') return 'Mise a jour de toutes les sources';
+    if (this.catalogRun.operation === 'SCRAPE_ALL') return 'Ancienne collecte de toutes les sources';
+    if (this.catalogRun.operation === 'SCRAPE_AND_MAP_ALL') return 'Mise a jour et publication de tout le catalogue';
     const scope = this.mapScopes.find((item) => item.value === this.catalogRun?.scope)?.label ?? this.catalogRun.scope;
     return `Mise a jour et publication · ${scope}`;
   }
