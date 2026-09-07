@@ -80,14 +80,21 @@ public class CatalogSyncWorker {
                     : "Categorie actualisee et publiee");
             run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
             save(run);
+        } catch (OutOfMemoryError error) {
+            logger.error("Memoire insuffisante pendant le run catalogue {}", runId, error);
+            fail(run, "Memoire insuffisante pendant le traitement");
         } catch (Exception exception) {
             logger.error("Echec du run catalogue {}", runId, exception);
+            fail(run, exception.getMessage());
+        }
+    }
+
+    private void fail(CatalogSyncRun run, String errorMessage) {
             run.setStatus("FAILED");
             run.setMessage("Le traitement a echoue; aucune nouvelle etape ne sera lancee");
-            run.setErrorMessage(exception.getMessage());
+            run.setErrorMessage(errorMessage);
             run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
             save(run);
-        }
     }
 
     private void scrapeAndMapAll(CatalogSyncRun run) {

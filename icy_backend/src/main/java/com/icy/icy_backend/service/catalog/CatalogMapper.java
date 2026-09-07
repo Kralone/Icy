@@ -17,6 +17,7 @@ import java.util.Locale;
 @Service
 public class CatalogMapper {
     public static final String WIKI_SOURCE = "STAR_CITIZEN_WIKI";
+    static final int BATCH_SIZE = 250;
     private static final String FALLBACK_IMAGE = "/assets/images/catalog/catalog-fallback.svg";
     private static final String UPSERT_ENTRY_SQL = """
             INSERT INTO catalog.entries (
@@ -67,7 +68,8 @@ public class CatalogMapper {
             throw new IllegalStateException("Aucune donnee brute disponible pour " + datasetKey);
         }
 
-        List<MapSqlParameterSource> batch = new ArrayList<>(records.size());
+        List<MapSqlParameterSource> batch = new ArrayList<>(BATCH_SIZE);
+        int mappedCount = 0;
         for (JsonNode record : records) {
             String externalId = text(record, "uuid");
             String name = text(record, "name");
@@ -92,12 +94,15 @@ public class CatalogMapper {
                     .addValue("sourceUpdatedAt", timestamp(text(record, "updated_at")))
                     .addValue("sourcePayload", json(record))
                     .addValue("runId", runId));
+            if (batch.size() == BATCH_SIZE) {
+                mappedCount += flushBatch(batch);
+            }
         }
-        if (batch.isEmpty()) {
+        mappedCount += flushBatch(batch);
+        if (mappedCount == 0) {
             throw new IllegalStateException("Aucune entree exploitable pour " + datasetKey);
         }
 
-        jdbcTemplate.batchUpdate(UPSERT_ENTRY_SQL, batch.toArray(MapSqlParameterSource[]::new));
         jdbcTemplate.update("""
                 UPDATE catalog.entries
                 SET active = FALSE
@@ -109,7 +114,15 @@ public class CatalogMapper {
                 .addValue("source", WIKI_SOURCE)
                 .addValue("datasetKey", datasetKey)
                 .addValue("runId", runId));
-        return batch.size();
+        return mappedCount;
+    }
+
+    private int flushBatch(List<MapSqlParameterSource> batch) {
+        if (batch.isEmpty()) return 0;
+        int count = batch.size();
+        jdbcTemplate.batchUpdate(UPSERT_ENTRY_SQL, batch.toArray(MapSqlParameterSource[]::new));
+        batch.clear();
+        return count;
     }
 
     String family(String datasetKey, JsonNode record) {

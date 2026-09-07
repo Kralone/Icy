@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,5 +54,22 @@ class CatalogSyncServiceTest {
         assertThatThrownBy(service::startScrapeAll)
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("constraint rejected");
+    }
+
+    @Test
+    void marksRunsInterruptedByAProcessRestartAsFailed() {
+        CatalogSyncRunRepository runRepository = mock(CatalogSyncRunRepository.class);
+        CatalogSyncRun interruptedRun = new CatalogSyncRun();
+        interruptedRun.setStatus("RUNNING");
+        when(runRepository.findByStatusIn(any())).thenReturn(List.of(interruptedRun));
+
+        CatalogSyncService service = new CatalogSyncService(
+                runRepository, mock(CatalogSyncWorker.class), mock(MessageService.class)
+        );
+        service.failInterruptedRuns();
+
+        assertThat(interruptedRun.getStatus()).isEqualTo("FAILED");
+        assertThat(interruptedRun.getCompletedAt()).isNotNull();
+        verify(runRepository).saveAllAndFlush(List.of(interruptedRun));
     }
 }

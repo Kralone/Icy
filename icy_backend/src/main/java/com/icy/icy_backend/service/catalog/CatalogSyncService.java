@@ -7,10 +7,14 @@ import com.icy.icy_backend.db.repository.catalog.CatalogSyncRunRepository;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.service.common.MessageService;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Service
 public class CatalogSyncService {
@@ -32,6 +36,20 @@ public class CatalogSyncService {
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAll() {
         return start("SCRAPE_ALL", null);
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void failInterruptedRuns() {
+        List<CatalogSyncRun> interruptedRuns = runRepository.findByStatusIn(ACTIVE_STATUSES);
+        for (CatalogSyncRun run : interruptedRuns) {
+            run.setStatus("FAILED");
+            run.setMessage("Traitement interrompu avant sa fin");
+            run.setErrorMessage("Le processus de synchronisation a ete interrompu");
+            run.setCompletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        }
+        if (!interruptedRuns.isEmpty()) {
+            runRepository.saveAllAndFlush(interruptedRuns);
+        }
     }
 
     public ResponseEntity<MessageResponse<CatalogSyncRunDTO>> startScrapeAndMap(String rawScope) {

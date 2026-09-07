@@ -14,6 +14,7 @@ import java.util.List;
 
 @Service
 public class CatalogRawStore {
+    private static final int BATCH_SIZE = 250;
     private static final String UPSERT_SQL = """
             INSERT INTO catalog.raw_records (
                 source, dataset_key, external_id, source_version, payload,
@@ -43,7 +44,8 @@ public class CatalogRawStore {
             return 0;
         }
 
-        List<MapSqlParameterSource> batch = new ArrayList<>(records.size());
+        List<MapSqlParameterSource> batch = new ArrayList<>(BATCH_SIZE);
+        int storedCount = 0;
         for (JsonNode record : records) {
             String externalId = externalId(record);
             if (externalId == null) {
@@ -56,12 +58,20 @@ public class CatalogRawStore {
                     .addValue("sourceVersion", text(record, "version"))
                     .addValue("payload", toJson(record))
                     .addValue("runId", runId));
+            if (batch.size() == BATCH_SIZE) {
+                storedCount += flushBatch(batch);
+            }
         }
-        if (batch.isEmpty()) {
-            return 0;
-        }
+        storedCount += flushBatch(batch);
+        return storedCount;
+    }
+
+    private int flushBatch(List<MapSqlParameterSource> batch) {
+        if (batch.isEmpty()) return 0;
+        int count = batch.size();
         jdbcTemplate.batchUpdate(UPSERT_SQL, batch.toArray(MapSqlParameterSource[]::new));
-        return batch.size();
+        batch.clear();
+        return count;
     }
 
     public void deactivateMissing(String source, String datasetKey, long runId) {
