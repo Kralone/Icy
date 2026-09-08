@@ -6,6 +6,7 @@ REVISION=
 AGE_RECIPIENT=
 BACKUP_ARCHIVE=
 PREFLIGHT_ONLY=0
+MAX_BACKUP_AGE_SECONDS=86400
 
 usage() {
   echo "Usage: $0 --revision <git-sha> [--age-recipient 'age1...'|\"ssh-ed25519 AAAA...\"] [--verified-backup /var/backups/iceforge/iceforge-*.tar.gz.age] [--preflight]" >&2
@@ -43,7 +44,7 @@ else
     exit 1
   }
   archive_age=$(( $(date +%s) - $(stat -c %Y "$BACKUP_ARCHIVE") ))
-  ((archive_age >= 0 && archive_age <= 7200)) || {
+  ((archive_age >= 0 && archive_age <= MAX_BACKUP_AGE_SECONDS)) || {
     echo "Archive de reprise trop ancienne: ${archive_age}s." >&2
     exit 1
   }

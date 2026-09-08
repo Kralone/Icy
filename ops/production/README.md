@@ -34,7 +34,7 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
 ```
 
 Après un rollback applicatif sans restauration de données, une nouvelle
-tentative peut réutiliser pendant deux heures une sauvegarde créée et validée
+tentative peut réutiliser pendant vingt-quatre heures une sauvegarde créée et validée
 par ce même processus. Son chemin et son fichier `.sha256` sont revérifiés :
 
 ```bash
