@@ -4,6 +4,7 @@ import com.icy.icy_backend.service.common.MessageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -24,5 +25,17 @@ class CatalogBrowseServiceTest {
                 .hasMessageContaining("Famille catalogue inconnue");
 
         verifyNoInteractions(jdbcTemplate);
+    }
+
+    @Test
+    void separatesOrderByFromTheSelectedSortExpression() {
+        String sql = CatalogBrowseService.buildPageQuery(
+                "WITH ranked_entries AS (SELECT 1)\n",
+                "LOWER(e.name) ASC, e.id ASC"
+        );
+
+        assertThat(sql)
+                .contains("ORDER BY LOWER(e.name) ASC, e.id ASC")
+                .doesNotContain("ORDER BYLOWER");
     }
 }

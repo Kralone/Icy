@@ -118,13 +118,7 @@ public class CatalogBrowseService {
         String orderBy = normalizedSort == null
                 ? SORTS.get("name")
                 : SORTS.getOrDefault(normalizedSort.toLowerCase(Locale.ROOT), SORTS.get("name"));
-        List<EntryRow> rows = jdbcTemplate.query(rankedEntries + """
-                        SELECT e.id, e.external_id, e.family, e.name, e.slug, e.manufacturer,
-                               e.description, e.image_url, e.image_is_fallback, e.source,
-                               e.source_url, e.source_version, e.active, e.last_seen_at
-                        FROM ranked_entries e
-                        WHERE e.variant_rank = 1
-                        ORDER BY """ + orderBy + " LIMIT :limit OFFSET :offset",
+        List<EntryRow> rows = jdbcTemplate.query(buildPageQuery(rankedEntries, orderBy),
                 parameters,
                 (resultSet, rowNumber) -> entryRow(resultSet));
 
@@ -147,6 +141,18 @@ public class CatalogBrowseService {
                 summary.familyCounts()
         );
         return messageService.buildResponse("catalog.entries.list", result, total);
+    }
+
+    static String buildPageQuery(String rankedEntries, String orderBy) {
+        return rankedEntries + """
+                SELECT e.id, e.external_id, e.family, e.name, e.slug, e.manufacturer,
+                       e.description, e.image_url, e.image_is_fallback, e.source,
+                       e.source_url, e.source_version, e.active, e.last_seen_at
+                FROM ranked_entries e
+                WHERE e.variant_rank = 1
+                ORDER BY %s
+                LIMIT :limit OFFSET :offset
+                """.formatted(orderBy);
     }
 
     private Map<Long, List<CatalogOfferViewDTO>> loadOffers(List<EntryRow> rows) {

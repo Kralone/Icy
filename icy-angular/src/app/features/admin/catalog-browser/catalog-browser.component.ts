@@ -197,11 +197,9 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
         this.loading = false;
         if (scroll && this.browser) this.catalogTop?.nativeElement.scrollIntoView({ behavior: 'smooth' });
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        this.error = error?.error?.messageDetail?.message
-          ?? error?.error?.message
-          ?? 'Impossible de charger le catalogue pour le moment.';
+        this.error = 'Impossible de charger le catalogue pour le moment.';
       }
     });
   }
