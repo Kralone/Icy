@@ -31,7 +31,25 @@ final class CatalogCanonicalizer {
     }
 
     static String vehicleKey(String family, String manufacturer, String name) {
-        return normalize(family) + "|" + normalize(manufacturer) + "|" + canonicalVehicleName(name);
+        String group = catalogGroup(family, name);
+        String prefix = normalize(family) + "|" + normalize(manufacturer) + "|";
+        return "STANDARD".equals(group)
+                ? prefix + canonicalVehicleName(name)
+                : prefix + normalize(group) + "|" + normalize(name);
+    }
+
+    static String catalogGroup(String name) {
+        return catalogGroup(null, name);
+    }
+
+    static String catalogGroup(String family, String name) {
+        String normalized = normalize(name);
+        if (normalized.matches(".*\\bwikelo\\b.*")) return "WIKELO";
+        if (family == null || "ship".equals(normalize(family))) {
+            if (normalized.matches(".*\\bpyam\\s+exec$")) return "PYAM_EXEC";
+            if (normalized.matches(".*\\salliance$")) return "BATTAGLIA";
+        }
+        return "STANDARD";
     }
 
     static String canonicalVehicleName(String name) {

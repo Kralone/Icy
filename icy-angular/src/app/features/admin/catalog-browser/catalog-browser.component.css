@@ -20,6 +20,7 @@
 .catalog-header,
 .catalog-controls,
 .family-rail,
+.subcategory-rail,
 .catalog-results {
   position: relative;
   z-index: 1;
@@ -175,6 +176,13 @@
 .family-chip strong { min-width: 1.3rem; padding: 0.12rem 0.36rem; border-radius: 999px; color: #8eb2c0; background: rgba(130, 215, 232, 0.08); font-size: 0.62rem; }
 .family-chip--active { color: #031018; border-color: #6be7f8; background: #6be7f8; box-shadow: 0 8px 28px rgba(80, 217, 239, 0.18); }
 .family-chip--active strong { color: #08202b; background: rgba(0, 26, 35, 0.12); }
+.subcategory-rail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.85rem;
+}
 
 .catalog-results { padding-block: clamp(2.5rem, 4vw, 4.5rem); }
 .results-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }

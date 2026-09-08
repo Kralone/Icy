@@ -6,6 +6,7 @@ import { ApiResponse } from '../../../model/api-response.model';
 export type CatalogStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
 export type CatalogImageFilter = 'ALL' | 'ORIGINAL' | 'FALLBACK';
 export type CatalogSort = 'name' | 'name-desc' | 'recent' | 'family';
+export type CatalogGroup = 'ALL' | 'STANDARD' | 'WIKELO' | 'PYAM_EXEC' | 'BATTAGLIA';
 
 export interface CatalogOffer {
   id: number;
@@ -20,6 +21,7 @@ export interface CatalogEntry {
   id: number;
   externalId: string;
   family: string;
+  catalogGroup: Exclude<CatalogGroup, 'ALL'>;
   name: string;
   slug: string | null;
   manufacturer: string | null;
@@ -44,11 +46,14 @@ export interface CatalogPage {
   inactiveElements: number;
   fallbackImages: number;
   familyCounts: Record<string, number>;
+  groupCounts: Record<string, number>;
+  groupFamilyCounts: Record<string, Record<string, number>>;
 }
 
 export interface CatalogQuery {
   query?: string;
   family?: string;
+  catalogGroup: CatalogGroup;
   status: CatalogStatusFilter;
   image: CatalogImageFilter;
   source?: string;
@@ -66,6 +71,7 @@ export class CatalogService {
   browse(query: CatalogQuery): Observable<ApiResponse<CatalogPage>> {
     let params = new HttpParams()
       .set('status', query.status)
+      .set('catalogGroup', query.catalogGroup)
       .set('image', query.image)
       .set('sort', query.sort)
       .set('page', query.page)

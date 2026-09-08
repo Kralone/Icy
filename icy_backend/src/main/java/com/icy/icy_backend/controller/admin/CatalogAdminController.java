@@ -24,6 +24,7 @@ public class CatalogAdminController {
     public ResponseEntity<MessageResponse<CatalogPageDTO>> browse(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String family,
+            @RequestParam(defaultValue = "ALL") String catalogGroup,
             @RequestParam(defaultValue = "ACTIVE") String status,
             @RequestParam(defaultValue = "ALL") String image,
             @RequestParam(required = false) String source,
@@ -31,6 +32,6 @@ public class CatalogAdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int pageSize
     ) {
-        return catalogBrowseService.browse(query, family, status, image, source, sort, page, pageSize);
+        return catalogBrowseService.browse(query, family, catalogGroup, status, image, source, sort, page, pageSize);
     }
 }

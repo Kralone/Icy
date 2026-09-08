@@ -61,6 +61,20 @@ class CatalogConflictServiceTest {
     }
 
     @Test
+    void doesNotTreatSpecialCollectionsAsVariantsOfTheStandardShip() throws Exception {
+        NamedParameterJdbcTemplate jdbcTemplate = Mockito.mock(NamedParameterJdbcTemplate.class);
+        CatalogConflictService service = new CatalogConflictService(jdbcTemplate, objectMapper);
+
+        Set<String> suppressed = service.prepareVehicleMapping(List.of(
+                vehicle("standard", "F8C Lightning", "anvl-lightning-f8c"),
+                vehicle("pyam", "F8C Lightning PYAM Exec", "anvl-lightning-f8c-pyam"),
+                vehicle("wikelo", "F8C Lightning Wikelo War Special", "anvl-lightning-f8c-wikelo")
+        ), 42L);
+
+        assertThat(suppressed).isEmpty();
+    }
+
+    @Test
     void keepsAnyPreviouslySelectedSubsetOfAConflict() throws Exception {
         NamedParameterJdbcTemplate jdbcTemplate = Mockito.mock(NamedParameterJdbcTemplate.class);
         String canonicalKey = CatalogCanonicalizer.vehicleKey("SHIP", "Anvil Aerospace", "Carrack");

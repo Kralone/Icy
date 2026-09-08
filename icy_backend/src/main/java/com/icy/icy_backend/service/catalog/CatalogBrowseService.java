@@ -29,7 +29,7 @@ public class CatalogBrowseService {
                        ROW_NUMBER() OVER (
                            PARTITION BY CASE
                                WHEN e.family IN ('SHIP', 'GROUND_VEHICLE', 'POWER_SUIT')
-                                   THEN CONCAT(e.family, '|', LOWER(COALESCE(e.manufacturer, '')), '|', LOWER(e.name))
+                                   THEN CONCAT(e.catalog_group, '|', e.family, '|', LOWER(COALESCE(e.manufacturer, '')), '|', LOWER(e.name))
                                ELSE CONCAT(e.source, '|', e.external_id)
                            END
                            ORDER BY e.active DESC,
@@ -46,6 +46,9 @@ public class CatalogBrowseService {
             "SHIP", "GROUND_VEHICLE", "POWER_SUIT", "FPS_WEAPON", "SHIP_WEAPON",
             "ARMOR", "SHIP_COMPONENT", "MODULE", "TOOL", "ITEM", "SYSTEM",
             "PLANET", "MOON", "CITY", "STATION", "JUMP_POINT", "OUTPOST", "LOCATION"
+    );
+    private static final Set<String> CATALOG_GROUPS = Set.of(
+            "STANDARD", "WIKELO", "PYAM_EXEC", "BATTAGLIA"
     );
     private static final Map<String, String> SORTS = Map.of(
             "name", "LOWER(e.name) ASC, e.id ASC",
@@ -66,6 +69,7 @@ public class CatalogBrowseService {
     public ResponseEntity<MessageResponse<CatalogPageDTO>> browse(
             String query,
             String family,
+            String catalogGroup,
             String status,
             String image,
             String source,
@@ -76,6 +80,7 @@ public class CatalogBrowseService {
         int safePage = Math.max(0, page);
         int safePageSize = Math.max(12, Math.min(60, pageSize));
         String normalizedFamily = normalizeFamily(family);
+        String normalizedCatalogGroup = normalizeOption(catalogGroup, CATALOG_GROUPS, "ALL");
         String normalizedStatus = normalizeOption(status, Set.of("ALL", "ACTIVE", "INACTIVE"), "ACTIVE");
         String normalizedImage = normalizeOption(image, Set.of("ALL", "ORIGINAL", "FALLBACK"), "ALL");
         String normalizedSource = blankToNull(source);
@@ -90,6 +95,10 @@ public class CatalogBrowseService {
         if (normalizedFamily != null) {
             clauses.add("e.family = :family");
             parameters.addValue("family", normalizedFamily);
+        }
+        if (!"ALL".equals(normalizedCatalogGroup)) {
+            clauses.add("e.catalog_group = :catalogGroup");
+            parameters.addValue("catalogGroup", normalizedCatalogGroup);
         }
         if (!"ALL".equals(normalizedStatus)) {
             clauses.add("e.active = :active");
@@ -138,14 +147,16 @@ public class CatalogBrowseService {
                 summary.active(),
                 summary.inactive(),
                 summary.fallbackImages(),
-                summary.familyCounts()
+                summary.familyCounts(),
+                summary.groupCounts(),
+                summary.groupFamilyCounts()
         );
         return messageService.buildResponse("catalog.entries.list", result, total);
     }
 
     static String buildPageQuery(String rankedEntries, String orderBy) {
         return rankedEntries + """
-                SELECT e.id, e.external_id, e.family, e.name, e.slug, e.manufacturer,
+                SELECT e.id, e.external_id, e.family, e.catalog_group, e.name, e.slug, e.manufacturer,
                        e.description, e.image_url, e.image_is_fallback, e.source,
                        e.source_url, e.source_version, e.active, e.last_seen_at
                 FROM ranked_entries e
@@ -184,19 +195,30 @@ public class CatalogBrowseService {
 
     private Summary summary() {
         Map<String, Long> familyCounts = new LinkedHashMap<>();
+        Map<String, Long> groupCounts = new LinkedHashMap<>();
+        Map<String, Map<String, Long>> groupFamilyCounts = new LinkedHashMap<>();
         String rankedEntries = RANKED_ENTRIES.formatted("");
-        List<FamilyCount> counts = jdbcTemplate.query(rankedEntries + """
-                        SELECT family, COUNT(*) AS count
+        List<GroupFamilyCount> counts = jdbcTemplate.query(rankedEntries + """
+                        SELECT catalog_group, family, COUNT(*) AS count
                         FROM ranked_entries
                         WHERE active = TRUE AND variant_rank = 1
-                        GROUP BY family
-                        ORDER BY family
+                        GROUP BY catalog_group, family
+                        ORDER BY catalog_group, family
                         """,
-                (resultSet, rowNumber) -> new FamilyCount(
+                (resultSet, rowNumber) -> new GroupFamilyCount(
+                        resultSet.getString("catalog_group"),
                         resultSet.getString("family"),
                         resultSet.getLong("count")
                 ));
-        counts.forEach(count -> familyCounts.put(count.family(), count.count()));
+        counts.forEach(count -> {
+            familyCounts.merge(count.family(), count.count(), Long::sum);
+            groupCounts.merge(count.catalogGroup(), count.count(), Long::sum);
+            groupFamilyCounts
+                    .computeIfAbsent(count.catalogGroup(), ignored -> new LinkedHashMap<>())
+                    .put(count.family(), count.count());
+        });
+        Map<String, Map<String, Long>> immutableGroupFamilyCounts = new LinkedHashMap<>();
+        groupFamilyCounts.forEach((group, familyMap) -> immutableGroupFamilyCounts.put(group, Map.copyOf(familyMap)));
 
         return jdbcTemplate.queryForObject(rankedEntries + """
                         SELECT COUNT(*) FILTER (WHERE active) AS active_count,
@@ -210,7 +232,9 @@ public class CatalogBrowseService {
                         resultSet.getLong("active_count"),
                         resultSet.getLong("inactive_count"),
                         resultSet.getLong("fallback_count"),
-                        Map.copyOf(familyCounts)
+                        Map.copyOf(familyCounts),
+                        Map.copyOf(groupCounts),
+                        Map.copyOf(immutableGroupFamilyCounts)
                 ));
     }
 
@@ -219,6 +243,7 @@ public class CatalogBrowseService {
                 resultSet.getLong("id"),
                 resultSet.getString("external_id"),
                 resultSet.getString("family"),
+                resultSet.getString("catalog_group"),
                 resultSet.getString("name"),
                 resultSet.getString("slug"),
                 resultSet.getString("manufacturer"),
@@ -257,19 +282,27 @@ public class CatalogBrowseService {
         return value.trim();
     }
 
-    private record Summary(long active, long inactive, long fallbackImages, Map<String, Long> familyCounts) {
+    private record Summary(
+            long active,
+            long inactive,
+            long fallbackImages,
+            Map<String, Long> familyCounts,
+            Map<String, Long> groupCounts,
+            Map<String, Map<String, Long>> groupFamilyCounts
+    ) {
     }
 
     private record OfferRow(long entryId, CatalogOfferViewDTO offer) {
     }
 
-    private record FamilyCount(String family, long count) {
+    private record GroupFamilyCount(String catalogGroup, String family, long count) {
     }
 
     private record EntryRow(
             Long id,
             String externalId,
             String family,
+            String catalogGroup,
             String name,
             String slug,
             String manufacturer,
@@ -284,7 +317,7 @@ public class CatalogBrowseService {
     ) {
         private CatalogEntryViewDTO toDto(List<CatalogOfferViewDTO> offers) {
             return new CatalogEntryViewDTO(
-                    id, externalId, family, name, slug, manufacturer, description, imageUrl,
+                    id, externalId, family, catalogGroup, name, slug, manufacturer, description, imageUrl,
                     fallbackImage, source, sourceUrl, sourceVersion, active, updatedAt, offers
             );
         }

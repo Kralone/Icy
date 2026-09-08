@@ -91,24 +91,80 @@
   </section>
 
   <nav class="family-rail" aria-label="Familles du catalogue">
-    @for (option of families; track option.value) {
+    <button
+      type="button"
+      class="family-chip"
+      [class.family-chip--active]="catalogGroup === 'ALL' && !family"
+      (click)="selectFamily('')"
+    >
+      <span>Tout</span>
+      <strong>{{ result?.activeElements ?? 0 }}</strong>
+    </button>
+    <button
+      type="button"
+      class="family-chip"
+      [class.family-chip--active]="family === 'SHIP' && catalogGroup !== 'WIKELO'"
+      (click)="selectShipGroup('STANDARD')"
+    >
+      <span>Vaisseaux</span>
+      <strong>{{ nonWikeloShipCount }}</strong>
+    </button>
+    @for (option of standardFamilies; track option.value) {
       <button
         type="button"
         class="family-chip"
-        [class.family-chip--active]="family === option.value"
+        [class.family-chip--active]="family === option.value && catalogGroup === 'STANDARD'"
         (click)="selectFamily(option.value)"
       >
         <span>{{ option.shortLabel }}</span>
-        <strong>{{ familyCount(option.value) }}</strong>
+        <strong>{{ groupFamilyCount('STANDARD', option.value) }}</strong>
       </button>
     }
+    <button
+      type="button"
+      class="family-chip family-chip--wikelo"
+      [class.family-chip--active]="catalogGroup === 'WIKELO'"
+      (click)="selectWikelo()"
+    >
+      <span>Wikelo</span>
+      <strong>{{ groupCount('WIKELO') }}</strong>
+    </button>
   </nav>
+
+  @if (family === 'SHIP' && catalogGroup !== 'WIKELO') {
+    <nav class="subcategory-rail" aria-label="Collections de vaisseaux">
+      <span>Collections</span>
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'STANDARD'" (click)="selectShipGroup('STANDARD')">
+        Standard <strong>{{ groupFamilyCount('STANDARD', 'SHIP') }}</strong>
+      </button>
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'PYAM_EXEC'" (click)="selectShipGroup('PYAM_EXEC')">
+        PYAM Exec <strong>{{ groupFamilyCount('PYAM_EXEC', 'SHIP') }}</strong>
+      </button>
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'BATTAGLIA'" (click)="selectShipGroup('BATTAGLIA')">
+        Battaglia <strong>{{ groupFamilyCount('BATTAGLIA', 'SHIP') }}</strong>
+      </button>
+    </nav>
+  }
+
+  @if (catalogGroup === 'WIKELO') {
+    <nav class="subcategory-rail subcategory-rail--wikelo" aria-label="Catégories Wikelo">
+      <span>Wikelo</span>
+      <button type="button" class="family-chip" [class.family-chip--active]="!family" (click)="selectWikelo()">
+        Tout <strong>{{ groupCount('WIKELO') }}</strong>
+      </button>
+      @for (option of wikeloFamilies; track option.value) {
+        <button type="button" class="family-chip" [class.family-chip--active]="family === option.value" (click)="selectWikelo(option.value)">
+          {{ option.shortLabel }} <strong>{{ groupFamilyCount('WIKELO', option.value) }}</strong>
+        </button>
+      }
+    </nav>
+  }
 
   <section class="catalog-results">
     <div class="results-heading">
       <div>
         <p class="eyebrow">Résultats indexés</p>
-        <h2>{{ family ? familyLabel(family) : 'Tout le catalogue' }}</h2>
+        <h2>{{ resultTitle }}</h2>
       </div>
       <p>
         @if (result) {

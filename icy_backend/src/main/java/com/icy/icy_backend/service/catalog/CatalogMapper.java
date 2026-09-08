@@ -22,17 +22,18 @@ public class CatalogMapper {
     private static final String FALLBACK_IMAGE = "/assets/images/catalog/catalog-fallback.svg";
     private static final String UPSERT_ENTRY_SQL = """
             INSERT INTO catalog.entries (
-                source, dataset_key, external_id, family, name, slug, manufacturer,
+                source, dataset_key, external_id, family, catalog_group, name, slug, manufacturer,
                 description, image_url, image_is_fallback, source_url, source_version,
                 source_updated_at, source_payload, active, last_seen_at, last_seen_run_id
             ) VALUES (
-                :source, :datasetKey, :externalId, :family, :name, :slug, :manufacturer,
+                :source, :datasetKey, :externalId, :family, :catalogGroup, :name, :slug, :manufacturer,
                 :description, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
                 :sourceUpdatedAt, CAST(:sourcePayload AS jsonb), TRUE, NOW(), :runId
             )
             ON CONFLICT (source, external_id) DO UPDATE SET
                 dataset_key = EXCLUDED.dataset_key,
                 family = EXCLUDED.family,
+                catalog_group = EXCLUDED.catalog_group,
                 name = EXCLUDED.name,
                 slug = EXCLUDED.slug,
                 manufacturer = EXCLUDED.manufacturer,
@@ -86,11 +87,13 @@ public class CatalogMapper {
             }
 
             String imageUrl = firstImage(record);
+            String family = family(datasetKey, record);
             batch.add(new MapSqlParameterSource()
                     .addValue("source", WIKI_SOURCE)
                     .addValue("datasetKey", datasetKey)
                     .addValue("externalId", externalId)
-                    .addValue("family", family(datasetKey, record))
+                    .addValue("family", family)
+                    .addValue("catalogGroup", CatalogCanonicalizer.catalogGroup(family, name))
                     .addValue("name", name)
                     .addValue("slug", text(record, "slug"))
                     .addValue("manufacturer", text(record.path("manufacturer"), "name"))

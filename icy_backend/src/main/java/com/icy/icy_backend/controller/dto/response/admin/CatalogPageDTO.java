@@ -12,6 +12,8 @@ public record CatalogPageDTO(
         long activeElements,
         long inactiveElements,
         long fallbackImages,
-        Map<String, Long> familyCounts
+        Map<String, Long> familyCounts,
+        Map<String, Long> groupCounts,
+        Map<String, Map<String, Long>> groupFamilyCounts
 ) {
 }

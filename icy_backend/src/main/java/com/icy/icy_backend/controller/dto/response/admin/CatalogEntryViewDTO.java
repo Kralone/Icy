@@ -7,6 +7,7 @@ public record CatalogEntryViewDTO(
         Long id,
         String externalId,
         String family,
+        String catalogGroup,
         String name,
         String slug,
         String manufacturer,

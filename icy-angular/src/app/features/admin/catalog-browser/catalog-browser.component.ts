@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
   CatalogEntry,
+  CatalogGroup,
   CatalogImageFilter,
   CatalogOffer,
   CatalogPage,
@@ -37,7 +38,6 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   @ViewChild('catalogTop') catalogTop?: ElementRef<HTMLElement>;
 
   readonly families: FamilyOption[] = [
-    { value: '', label: 'Tout le catalogue', shortLabel: 'Tout' },
     { value: 'SHIP', label: 'Vaisseaux', shortLabel: 'Vaisseaux' },
     { value: 'GROUND_VEHICLE', label: 'Véhicules terrestres', shortLabel: 'Véhicules' },
     { value: 'POWER_SUIT', label: 'Armures motorisées', shortLabel: 'Power suits' },
@@ -57,9 +57,15 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     { value: 'OUTPOST', label: 'Avant-postes', shortLabel: 'Avant-postes' },
     { value: 'LOCATION', label: 'Autres lieux', shortLabel: 'Lieux' }
   ];
+  readonly wikeloFamilies = this.families.filter((family) => [
+    'SHIP', 'GROUND_VEHICLE', 'POWER_SUIT', 'FPS_WEAPON', 'SHIP_WEAPON',
+    'ARMOR', 'SHIP_COMPONENT', 'MODULE', 'TOOL', 'ITEM'
+  ].includes(family.value));
+  readonly standardFamilies = this.families.filter((family) => family.value !== 'SHIP');
 
   search = '';
   family = '';
+  catalogGroup: CatalogGroup = 'ALL';
   status: CatalogStatusFilter = 'ACTIVE';
   image: CatalogImageFilter = 'ALL';
   source = '';
@@ -102,12 +108,26 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
 
   selectFamily(value: string): void {
     this.family = value;
+    this.catalogGroup = value ? 'STANDARD' : 'ALL';
+    this.load(0, false);
+  }
+
+  selectShipGroup(group: Exclude<CatalogGroup, 'ALL' | 'WIKELO'>): void {
+    this.family = 'SHIP';
+    this.catalogGroup = group;
+    this.load(0, false);
+  }
+
+  selectWikelo(family = ''): void {
+    this.family = family;
+    this.catalogGroup = 'WIKELO';
     this.load(0, false);
   }
 
   resetFilters(): void {
     this.search = '';
     this.family = '';
+    this.catalogGroup = 'ALL';
     this.status = 'ACTIVE';
     this.image = 'ALL';
     this.source = '';
@@ -134,9 +154,28 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     return this.families.find((family) => family.value === value)?.label ?? value.replaceAll('_', ' ');
   }
 
-  familyCount(value: string): number {
-    if (!value) return this.result?.activeElements ?? 0;
-    return this.result?.familyCounts?.[value] ?? 0;
+  groupCount(group: Exclude<CatalogGroup, 'ALL'>): number {
+    return this.result?.groupCounts?.[group] ?? 0;
+  }
+
+  groupFamilyCount(group: Exclude<CatalogGroup, 'ALL'>, family: string): number {
+    return this.result?.groupFamilyCounts?.[group]?.[family] ?? 0;
+  }
+
+  get nonWikeloShipCount(): number {
+    return this.groupFamilyCount('STANDARD', 'SHIP')
+      + this.groupFamilyCount('PYAM_EXEC', 'SHIP')
+      + this.groupFamilyCount('BATTAGLIA', 'SHIP');
+  }
+
+  get resultTitle(): string {
+    if (this.catalogGroup === 'WIKELO') {
+      return this.family ? `Wikelo · ${this.familyLabel(this.family)}` : 'Wikelo';
+    }
+    if (this.catalogGroup === 'PYAM_EXEC') return 'Vaisseaux · PYAM Exec';
+    if (this.catalogGroup === 'BATTAGLIA') return 'Vaisseaux · Battaglia';
+    if (this.family) return this.familyLabel(this.family);
+    return 'Tout le catalogue';
   }
 
   familyTone(value: string): string {
@@ -185,6 +224,7 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     this.request = this.catalogService.browse({
       query: this.search,
       family: this.family,
+      catalogGroup: this.catalogGroup,
       status: this.status,
       image: this.image,
       source: this.source,

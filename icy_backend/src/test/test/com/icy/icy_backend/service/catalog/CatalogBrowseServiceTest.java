@@ -19,7 +19,7 @@ class CatalogBrowseServiceTest {
     @Test
     void rejectsUnknownFamiliesBeforeQueryingTheDatabase() {
         assertThatThrownBy(() -> service.browse(
-                null, "NOT_A_REAL_FAMILY", "ACTIVE", "ALL", null, "name", 0, 24
+                null, "NOT_A_REAL_FAMILY", "ALL", "ACTIVE", "ALL", null, "name", 0, 24
         ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Famille catalogue inconnue");
