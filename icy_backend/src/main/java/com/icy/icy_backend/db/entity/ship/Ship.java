@@ -10,14 +10,13 @@ import java.util.List;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@Table(name = "ships", schema = "fleet")
+@Table(name = "ship_compat", schema = "catalog")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Ship {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)

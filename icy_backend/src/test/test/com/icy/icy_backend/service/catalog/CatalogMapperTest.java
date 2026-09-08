@@ -81,6 +81,26 @@ class CatalogMapperTest {
         )).isEqualTo("Simple description");
     }
 
+    @Test
+    void extractsCanonicalShipFieldsFromWikiVehicle() throws Exception {
+        JsonNode basher = json("""
+                {
+                  "role": "Light Fighter",
+                  "cargo_capacity": 0,
+                  "size_label": "Small",
+                  "crew_min": 1,
+                  "crew_max": 1,
+                  "production_status": "Flight ready"
+                }
+                """);
+
+        assertThat(mapper.vehicleFocus("vehicles", basher)).isEqualTo("Light Fighter");
+        assertThat(mapper.vehicleScu("vehicles", basher)).isZero();
+        assertThat(mapper.vehicleSize("vehicles", basher)).isEqualTo("Small");
+        assertThat(mapper.vehicleCrew("vehicles", basher)).isEqualTo("1");
+        assertThat(mapper.vehicleFlightReady("vehicles", basher)).isTrue();
+    }
+
     private JsonNode location(String classification) throws Exception {
         return json("{\"type\":{\"classification\":\"" + classification + "\"}}");
     }

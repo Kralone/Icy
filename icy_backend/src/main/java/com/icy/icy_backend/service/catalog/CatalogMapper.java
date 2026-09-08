@@ -24,11 +24,13 @@ public class CatalogMapper {
             INSERT INTO catalog.entries (
                 source, dataset_key, external_id, family, catalog_group, name, slug, manufacturer,
                 description, image_url, image_is_fallback, source_url, source_version,
-                source_updated_at, source_payload, active, last_seen_at, last_seen_run_id
+                source_updated_at, source_payload, focus, scu, size, crew, flight_ready,
+                active, last_seen_at, last_seen_run_id
             ) VALUES (
                 :source, :datasetKey, :externalId, :family, :catalogGroup, :name, :slug, :manufacturer,
                 :description, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
-                :sourceUpdatedAt, CAST(:sourcePayload AS jsonb), TRUE, NOW(), :runId
+                :sourceUpdatedAt, CAST(:sourcePayload AS jsonb), :focus, :scu, :size, :crew,
+                :flightReady, TRUE, NOW(), :runId
             )
             ON CONFLICT (source, external_id) DO UPDATE SET
                 dataset_key = EXCLUDED.dataset_key,
@@ -44,6 +46,11 @@ public class CatalogMapper {
                 source_version = EXCLUDED.source_version,
                 source_updated_at = EXCLUDED.source_updated_at,
                 source_payload = EXCLUDED.source_payload,
+                focus = EXCLUDED.focus,
+                scu = EXCLUDED.scu,
+                size = EXCLUDED.size,
+                crew = EXCLUDED.crew,
+                flight_ready = EXCLUDED.flight_ready,
                 active = TRUE,
                 last_seen_at = NOW(),
                 last_seen_run_id = EXCLUDED.last_seen_run_id
@@ -104,6 +111,11 @@ public class CatalogMapper {
                     .addValue("sourceVersion", text(record, "version"))
                     .addValue("sourceUpdatedAt", timestamp(text(record, "updated_at")))
                     .addValue("sourcePayload", json(record))
+                    .addValue("focus", vehicleFocus(datasetKey, record))
+                    .addValue("scu", vehicleScu(datasetKey, record))
+                    .addValue("size", vehicleSize(datasetKey, record))
+                    .addValue("crew", vehicleCrew(datasetKey, record))
+                    .addValue("flightReady", vehicleFlightReady(datasetKey, record))
                     .addValue("runId", runId));
             if (batch.size() == BATCH_SIZE) {
                 mappedCount += flushBatch(batch);
@@ -220,6 +232,57 @@ public class CatalogMapper {
         }
         if (value.isObject()) {
             return firstText(value, "fr_FR", "fr", "en_EN", "en");
+        }
+        return null;
+    }
+
+    String vehicleFocus(String datasetKey, JsonNode node) {
+        return "vehicles".equals(datasetKey)
+                ? firstText(node, "role", "focus", "classification_label", "classification")
+                : null;
+    }
+
+    Integer vehicleScu(String datasetKey, JsonNode node) {
+        if (!"vehicles".equals(datasetKey)) return null;
+        JsonNode value = node.path("cargo_capacity");
+        if (!value.isNumber()) return null;
+        return Math.max(0, (int) Math.floor(value.asDouble()));
+    }
+
+    String vehicleSize(String datasetKey, JsonNode node) {
+        if (!"vehicles".equals(datasetKey)) return null;
+        return firstText(node, "size_label", "size");
+    }
+
+    String vehicleCrew(String datasetKey, JsonNode node) {
+        if (!"vehicles".equals(datasetKey)) return null;
+        Integer minimum = integer(node, "crew_min");
+        Integer maximum = integer(node, "crew_max");
+        if (minimum != null && maximum != null) {
+            return minimum.equals(maximum) ? minimum.toString() : minimum + "-" + maximum;
+        }
+        Integer crew = integer(node, "crew");
+        return crew == null ? null : crew.toString();
+    }
+
+    Boolean vehicleFlightReady(String datasetKey, JsonNode node) {
+        if (!"vehicles".equals(datasetKey)) return null;
+        if (node.hasNonNull("is_flight_ready")) {
+            return node.path("is_flight_ready").asBoolean(false);
+        }
+        String status = lower(firstText(node, "production_status", "production_status_label"));
+        return !status.isEmpty() && (status.contains("flight ready") || status.contains("flight-ready"));
+    }
+
+    private Integer integer(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        if (value.isIntegralNumber()) return value.asInt();
+        if (value.isTextual()) {
+            try {
+                return Integer.valueOf(value.asText().trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
         }
         return null;
     }

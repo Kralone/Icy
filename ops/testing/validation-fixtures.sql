@@ -34,13 +34,26 @@ INSERT INTO fleet.brand (id, name, image_url) OVERRIDING SYSTEM VALUE
 VALUES (900001, 'Validation Aerospace', '/assets/images/home/iceforgeLogo.png')
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, image_url=EXCLUDED.image_url;
 
-INSERT INTO fleet.ships (id, name, focus, scu, size, crew, flight_ready, image_url, brand_id, notes) OVERRIDING SYSTEM VALUE
+INSERT INTO catalog.sync_runs (
+    id, operation, scope, status, current_step, total_steps, message, started_at, completed_at
+) OVERRIDING SYSTEM VALUE
+VALUES (900001, 'SCRAPE_AND_MAP', 'VEHICLES', 'SUCCEEDED', 1, 1, 'Validation fixtures', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE SET status='SUCCEEDED', completed_at=NOW(), updated_at=NOW();
+
+INSERT INTO catalog.entries (
+    id, source, dataset_key, external_id, family, catalog_group, name, manufacturer,
+    description, image_url, image_is_fallback, source_payload, focus, scu, size, crew,
+    flight_ready, active, last_seen_run_id
+) OVERRIDING SYSTEM VALUE
 VALUES
- (900001, 'Fixture Scout', 'Exploration', 8, 'S2', '1', true, '/assets/images/home/carousel/img1.jpg', 900001, 'Fixture UI'),
- (900002, 'Fixture Hauler', 'Transport', 64, 'S3', '2-3', true, '/assets/images/home/carousel/img2.jpg', 900001, 'Fixture UI')
-ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, focus=EXCLUDED.focus, scu=EXCLUDED.scu,
- size=EXCLUDED.size, crew=EXCLUDED.crew, flight_ready=EXCLUDED.flight_ready,
- image_url=EXCLUDED.image_url, brand_id=EXCLUDED.brand_id, notes=EXCLUDED.notes;
+ (900001, 'VALIDATION_FIXTURE', 'vehicles', 'fixture-scout', 'SHIP', 'STANDARD', 'Fixture Scout', 'Validation Aerospace',
+  'Fixture UI', '/assets/images/home/carousel/img1.jpg', false, '{}', 'Exploration', 8, 'S2', '1', true, true, 900001),
+ (900002, 'VALIDATION_FIXTURE', 'vehicles', 'fixture-hauler', 'SHIP', 'STANDARD', 'Fixture Hauler', 'Validation Aerospace',
+  'Fixture UI', '/assets/images/home/carousel/img2.jpg', false, '{}', 'Transport', 64, 'S3', '2-3', true, true, 900001)
+ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, manufacturer=EXCLUDED.manufacturer,
+ description=EXCLUDED.description, focus=EXCLUDED.focus, scu=EXCLUDED.scu, size=EXCLUDED.size,
+ crew=EXCLUDED.crew, flight_ready=EXCLUDED.flight_ready, image_url=EXCLUDED.image_url,
+ active=true, last_seen_run_id=EXCLUDED.last_seen_run_id;
 
 UPDATE core.users SET favorite_ship_id=900001 WHERE username='validation_user';
 INSERT INTO fleet.user_ships (id,user_id,ship_id,acquired_at,in_game_purchase,loaner,created_at,reward_in_game)
@@ -50,12 +63,18 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET user_id=EXCLUDED.user_id, ship_id=EXCLUDED.ship_id,
  in_game_purchase=EXCLUDED.in_game_purchase, loaner=EXCLUDED.loaner, reward_in_game=EXCLUDED.reward_in_game;
 
-INSERT INTO fleet.ship_sale_points (id,ship_id,location,price) OVERRIDING SYSTEM VALUE
-VALUES (900001,900001,'Area18 - Fixture terminal',1250000.00)
-ON CONFLICT (id) DO UPDATE SET ship_id=EXCLUDED.ship_id,location=EXCLUDED.location,price=EXCLUDED.price;
-INSERT INTO fleet.ship_cargo_grids (id,ship_id,size_x,size_y,size_z) OVERRIDING SYSTEM VALUE
-VALUES (900001,900002,8,4,2)
-ON CONFLICT (id) DO UPDATE SET ship_id=EXCLUDED.ship_id,size_x=EXCLUDED.size_x,size_y=EXCLUDED.size_y,size_z=EXCLUDED.size_z;
+INSERT INTO catalog.offers (
+    id, source, external_id, entry_id, entity_name, offer_type, location_name,
+    price, currency, source_payload, active, last_seen_run_id
+) OVERRIDING SYSTEM VALUE
+VALUES (900001, 'VALIDATION_FIXTURE', 'fixture-sale-point', 900001, 'Fixture Scout', 'BUY',
+        'Area18 - Fixture terminal', 1250000.00, 'aUEC', '{}', true, 900001)
+ON CONFLICT (id) DO UPDATE SET entry_id=EXCLUDED.entry_id, location_name=EXCLUDED.location_name,
+ price=EXCLUDED.price, active=true, last_seen_run_id=EXCLUDED.last_seen_run_id;
+INSERT INTO catalog.cargo_grids (id,entry_id,size_x,size_y,size_z,source) OVERRIDING SYSTEM VALUE
+VALUES (900001,900002,8,4,2,'VALIDATION_FIXTURE')
+ON CONFLICT (id) DO UPDATE SET entry_id=EXCLUDED.entry_id,size_x=EXCLUDED.size_x,
+ size_y=EXCLUDED.size_y,size_z=EXCLUDED.size_z;
 
 INSERT INTO fleet.item_categories (id,name) OVERRIDING SYSTEM VALUE VALUES (900001,'Validation Components')
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name;

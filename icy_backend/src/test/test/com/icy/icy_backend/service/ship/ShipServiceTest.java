@@ -7,44 +7,37 @@ import com.icy.icy_backend.db.repository.brand.BrandRepository;
 import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
-import com.icy.icy_backend.service.notification.NotificationPushService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ShipServiceTest {
 
     @Test
-    void createShipSavesWithBrand() {
+    void createShipIsRejectedBecauseCatalogIsManagedAutomatically() {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         BrandRepository brandRepository = Mockito.mock(BrandRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);
-        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
-
-        ShipService service = new ShipService(shipRepository, brandRepository, messageService, notificationPushService);
-
-        Brand brand = new Brand();
-        brand.setName("Aegis");
-        when(brandRepository.findByName("Aegis")).thenReturn(Optional.of(brand));
+        ShipService service = new ShipService(shipRepository, brandRepository, messageService);
 
         Ship ship = new Ship();
         ship.setName("Gladius");
-        ship.setBrand(brand);
 
-        when(shipRepository.save(any(Ship.class))).thenReturn(ship);
-        ResponseEntity<MessageResponse<Ship>> response = okResponse(ship);
-        when(messageService.buildResponse(eq("ship.created"), eq(ship), eq("Gladius"))).thenReturn(response);
-
-        assertThat(service.createShip(ship)).isEqualTo(response);
+        assertThatThrownBy(() -> service.createShip(ship))
+                .isInstanceOfSatisfying(ResponseStatusException.class, exception -> {
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.GONE);
+                    assertThat(exception.getReason()).contains("synchronisé automatiquement");
+                });
+        verifyNoInteractions(shipRepository, brandRepository, messageService);
     }
 
     @Test
@@ -52,9 +45,7 @@ class ShipServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         BrandRepository brandRepository = Mockito.mock(BrandRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);
-        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
-
-        ShipService service = new ShipService(shipRepository, brandRepository, messageService, notificationPushService);
+        ShipService service = new ShipService(shipRepository, brandRepository, messageService);
         when(shipRepository.findByName("Ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getShipByName("Ghost"))

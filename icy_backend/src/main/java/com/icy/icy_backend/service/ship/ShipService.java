@@ -7,28 +7,28 @@ import com.icy.icy_backend.db.repository.ship.ShipRepository;
 import com.icy.icy_backend.db.repository.brand.BrandRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
-import com.icy.icy_backend.service.notification.NotificationPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ShipService {
     private static final Logger logger = LoggerFactory.getLogger(ShipService.class);
+    private static final String CATALOG_MANAGED_MESSAGE =
+            "Le catalogue des vaisseaux est synchronisé automatiquement.";
     private final ShipRepository shipRepository;
     private final BrandRepository brandRepository;
     private final MessageService messageService;
-    private final NotificationPushService notificationPushService;
 
-    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService, NotificationPushService notificationPushService) {
+    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService) {
         this.shipRepository = shipRepository;
         this.brandRepository = brandRepository;
         this.messageService = messageService;
-        this.notificationPushService = notificationPushService;
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getAllShips() {
@@ -47,54 +47,15 @@ public class ShipService {
     }
 
     public ResponseEntity<MessageResponse<Ship>> createShip(Ship ship) {
-        logger.info("Création d’un nouveau vaisseau : {}", ship.getName());
-
-        // Vérifie que la marque existe
-        Brand brand = brandRepository.findByName(ship.getBrand().getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + ship.getBrand().getName()));
-
-        ship.setBrand(brand);
-        ship.setSalePoints(ship.getSalePoints());
-        ship.setCargoGrids(ship.getCargoGrids());
-        Ship savedShip = shipRepository.save(ship);
-        notificationPushService.sendBroadcast(
-                "Catalogue : nouveau vaisseau",
-                savedShip.getName() + " est disponible.",
-                "/icy/hangar",
-                1
-        );
-
-        return messageService.buildResponse("ship.created", savedShip, savedShip.getName());
+        throw catalogManagedException();
     }
 
     public ResponseEntity<MessageResponse<Ship>> updateShip(Long shipId, Ship payload) {
-        logger.info("Mise à jour du vaisseau avec ID {}", shipId);
-
-        Ship existing = findShipById(shipId);
-        Brand brand = brandRepository.findByName(payload.getBrand().getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + payload.getBrand().getName()));
-
-        existing.setName(payload.getName());
-        existing.setBrand(brand);
-        existing.setImageUrl(payload.getImageUrl());
-        existing.setFocus(payload.getFocus());
-        existing.setScu(payload.getScu());
-        existing.setSize(payload.getSize());
-        existing.setCrew(payload.getCrew());
-        existing.setNotes(payload.getNotes());
-        existing.setFlightReady(Boolean.TRUE.equals(payload.getFlightReady()));
-        existing.setSalePoints(payload.getSalePoints());
-        existing.setCargoGrids(payload.getCargoGrids());
-
-        Ship updated = shipRepository.save(existing);
-        return messageService.buildResponse("ship.updated", updated, updated.getName());
+        throw catalogManagedException();
     }
 
     public ResponseEntity<MessageResponse<String>> deleteShip(Long shipId) {
-        Ship existing = findShipById(shipId);
-        logger.info("Suppression du vaisseau {}", existing.getName());
-        shipRepository.delete(existing);
-        return messageService.buildResponse("ship.deleted", existing.getName(), existing.getName());
+        throw catalogManagedException();
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getShipsByBrand(String brandName) {
@@ -113,6 +74,10 @@ public class ShipService {
                     logger.warn("Vaisseau introuvable avec ID: {}", shipId);
                     return new ResourceNotFoundException("Aucun vaisseau trouvé avec l'ID: " + shipId);
                 });
+    }
+
+    private ResponseStatusException catalogManagedException() {
+        return new ResponseStatusException(HttpStatus.GONE, CATALOG_MANAGED_MESSAGE);
     }
 
 }
