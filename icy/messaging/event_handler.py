@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 
 logger = logging.getLogger("icy.event_handler")
 EVENT_BUTTON_CUSTOM_ID_RE = re.compile(r"^event:([0-9a-fA-F-]{36}):(-?1|0|1)$")
+EVENT_REMINDER_RESOURCE_TYPE = "event_reminder_one_hour"
 
 
 def is_supported_discord_image_url(value: object) -> bool:
@@ -262,6 +263,12 @@ class EventHandler:
         channel_id = payload.get("channelId")
         message_id = payload.get("messageId")
 
+        # Le nettoyage ne doit pas dépendre de l'état du message principal.
+        # Il doit notamment fonctionner après un redémarrage du bot ou si le
+        # message de l'événement a déjà été supprimé manuellement.
+        if event_id:
+            await self.cleanup_event_notifications(payload)
+
         # 🧹 Cas spécial : signal de nettoyage du dailyPing (aucun message lié)
         if not (channel_id and message_id):
             logger.info("🧹 Signal reçu : suppression du message dailyPing du jour.")
@@ -296,8 +303,6 @@ class EventHandler:
 
         # ❌ Retrait des boutons
         await message.edit(embed=embed, view=None)
-        await self.cleanup_event_notifications(payload)
-
         logger.info(f"🏁 Événement terminé et mis à jour sur Discord (eventId={event_id})")
 
     async def cleanup_event_notifications(self, payload: dict):
@@ -311,31 +316,51 @@ class EventHandler:
             logger.warning("⚠️ cleanup_event_notifications: event_id manquant.")
             return
 
-        channel = self.bot.get_channel(self.channel_id)
-        if not channel:
-            logger.error("⚠️ Salon Discord introuvable pour cleanup event notifications")
-            return
-
         # 1) Supprimer les messages reminderOneHour de cet event
-        reminder_refs = self._reminder_one_hour_messages.pop(event_id, [])
+        reminder_refs = list(self._reminder_one_hour_messages.get(event_id, []))
+        if self.discord_link_store:
+            reminder_refs.extend(
+                (link.channel_id, link.message_id)
+                for link in self.discord_link_store.get_message_refs(
+                    EVENT_REMINDER_RESOURCE_TYPE, event_id
+                )
+            )
+
+        # La même référence peut être présente en mémoire et dans le registre durable.
+        reminder_refs = list(dict.fromkeys(reminder_refs))
+        failed_refs = []
         for channel_id, message_id in reminder_refs:
             try:
                 target_channel = self.bot.get_channel(int(channel_id))
                 if not target_channel:
+                    failed_refs.append((channel_id, message_id))
                     continue
                 message = await target_channel.fetch_message(int(message_id))
                 await message.delete()
                 logger.info(f"🧹 Reminder 1h supprimé (eventId={event_id}, messageId={message_id})")
             except discord.NotFound:
-                continue
+                pass
             except Exception as exc:
+                failed_refs.append((channel_id, message_id))
                 logger.warning(
                     "⚠️ Impossible de supprimer reminder 1h (%s, %s)",
                     message_id,
                     type(exc).__name__,
                 )
+                continue
+
+            if self.discord_link_store:
+                self.discord_link_store.delete_message_ref(
+                    EVENT_REMINDER_RESOURCE_TYPE, event_id, message_id
+                )
+
+        if failed_refs:
+            self._reminder_one_hour_messages[event_id] = failed_refs
+        else:
+            self._reminder_one_hour_messages.pop(event_id, None)
 
         # 2) Mettre à jour les dailyPing qui contiennent cet event
+        daily_ping_failed = False
         for message_id, metadata in list(self._daily_ping_messages.items()):
             events = metadata.get("events", [])
             if not isinstance(events, list):
@@ -351,6 +376,7 @@ class EventHandler:
             try:
                 target_channel = self.bot.get_channel(int(channel_id))
                 if not target_channel:
+                    daily_ping_failed = True
                     continue
                 message = await target_channel.fetch_message(int(message_id))
 
@@ -368,11 +394,17 @@ class EventHandler:
             except discord.NotFound:
                 self._daily_ping_messages.pop(message_id, None)
             except Exception as exc:
+                daily_ping_failed = True
                 logger.warning(
                     "⚠️ Impossible de mettre à jour le daily ping (%s, %s)",
                     message_id,
                     type(exc).__name__,
                 )
+
+        if failed_refs or daily_ping_failed:
+            raise RuntimeError(
+                f"Discord event notification cleanup incomplete for event {event_id}"
+            )
 
 
     async def cleanup_daily_ping(self):
@@ -410,6 +442,9 @@ class EventHandler:
         event_id = payload.get("eventId")
         channel_id = payload.get("channelId")
         message_id = payload.get("messageId")
+
+        if event_id:
+            await self.cleanup_event_notifications(payload)
 
         if not (channel_id and message_id):
             logger.warning(f"⚠️ Données incomplètes pour event.deleted ({event_id})")
@@ -506,6 +541,13 @@ class EventHandler:
         if event_id is not None:
             event_key = str(event_id)
             self._reminder_one_hour_messages.setdefault(event_key, []).append((sent.channel.id, sent.id))
+            if self.discord_link_store:
+                self.discord_link_store.add_message_ref(
+                    EVENT_REMINDER_RESOURCE_TYPE,
+                    event_key,
+                    sent.channel.id,
+                    sent.id,
+                )
 
         logger.info(f"⏰ Rappel 1h avant envoyé pour {title} ({len(confirmed)} confirmés, {len(maybe)} indécis).")
 
