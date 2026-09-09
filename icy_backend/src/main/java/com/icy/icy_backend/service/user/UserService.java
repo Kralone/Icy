@@ -248,6 +248,32 @@ public class UserService {
         return messageService.buildResponse("user.list", userDtos);
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<MessageResponse<List<UserResponseDTO>>> getAllInactiveUsers() {
+        List<UserResponseDTO> userDtos = userRepository.findAllInactive().stream()
+                .map(UserResponseDTO::new)
+                .toList();
+        return messageService.buildResponse("user.list", userDtos);
+    }
+
+    public User findUserByIdIncludingInactive(UUID userId) {
+        return userRepository.findByIdIncludingInactive(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec ID: " + userId));
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> reactivateUser(User user) {
+        user.setActive(true);
+        userRepository.save(user);
+        notifyAdmins(
+                "Admin : compte reactive",
+                "Le compte de " + user.getUsername() + " a ete reactive.",
+                "/icy/admin/members",
+                2
+        );
+        return messageService.buildResponse("user.reactivated", null, user.getUsername());
+    }
+
     public ResponseEntity<MessageResponse<UserProfileResponseDTO>> getCurrentUserProfile(UUID userId) {
         User user = findUserById(userId);
         touchUserActivity(user, LocalDateTime.now());

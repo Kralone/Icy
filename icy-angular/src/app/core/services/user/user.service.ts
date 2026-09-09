@@ -21,6 +21,14 @@ export class UserService {
     return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/all`);
   }
 
+  getInactiveUsers(): Observable<ApiResponse<User[]>> {
+    return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/inactive`);
+  }
+
+  reactivateUser(id: string): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/reactivate?id=${encodeURIComponent(id)}`, {});
+  }
+
   createUser(username: string, discordId: string, role: string): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/create`, { username, discordId, role });
   }

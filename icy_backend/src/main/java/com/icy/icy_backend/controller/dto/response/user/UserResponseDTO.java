@@ -13,6 +13,7 @@ public class UserResponseDTO {
     private String username;
     private List<String> roles;
     private String discordId;
+    private Boolean active;
 
     public UserResponseDTO(User user) {
         this.id = user.getId();
@@ -21,6 +22,7 @@ public class UserResponseDTO {
                 .map(userRole -> userRole.getRole().getName())
                 .toList();
         this.discordId = user.getDiscordId();
+        this.active = user.getActive();
     }
 }
 

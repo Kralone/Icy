@@ -84,9 +84,12 @@ class UserControllerTest {
         when(userService.resolveUser(any(UUID.class))).thenReturn(new User());
         when(userService.resolveUser(any(Long.class))).thenReturn(new User());
         when(userService.deactivateUser(any())).thenReturn(okResponse(null));
+        when(userService.findUserByIdIncludingInactive(any())).thenReturn(new User());
+        when(userService.reactivateUser(any())).thenReturn(okResponse(null));
         User userWithRoles = new User();
         userWithRoles.setRoles(Set.of());
         when(userService.getAllActiveUsers()).thenReturn(okResponse(List.of(new UserResponseDTO(userWithRoles))));
+        when(userService.getAllInactiveUsers()).thenReturn(okResponse(List.of(new UserResponseDTO(userWithRoles))));
         when(userService.getOnlineUsers()).thenReturn(okResponse(List.of(new UserOnlineResponseDTO(userWithRoles))));
 
         UpdateUserRequest update = new UpdateUserRequest();
@@ -116,6 +119,12 @@ class UserControllerTest {
                         .param("discordId", "123"))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/users/all").with(TestAuth.user(staffId, "OFFICIER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/users/inactive").with(TestAuth.user(staffId, "OFFICIER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/users/reactivate")
+                        .with(TestAuth.user(staffId, "OFFICIER"))
+                        .param("id", UUID.randomUUID().toString()))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/users/online"))
                 .andExpect(status().isOk());
@@ -154,6 +163,12 @@ class UserControllerTest {
         UUID actorId = UUID.randomUUID();
 
         mockMvc.perform(get("/api/users/all").with(TestAuth.user(actorId, "USER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/users/inactive").with(TestAuth.user(actorId, "USER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/users/reactivate")
+                        .with(TestAuth.user(actorId, "USER"))
+                        .param("id", UUID.randomUUID().toString()))
                 .andExpect(status().isForbidden());
 
         for (String role : List.of("OFFICIER", "ADMIN")) {

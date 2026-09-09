@@ -9,8 +9,30 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.AuthenticationException;
 
 class SecurityConfigCorsTest {
+
+    @Test
+    void unauthenticatedApiRequestUses401SoTheClientCanRefresh() throws Exception {
+        SecurityConfig config = new SecurityConfig(
+                mock(JwtAuthenticationFilter.class),
+                mock(BotApiKeyAuthenticationFilter.class),
+                "https://iceforge.fr"
+        );
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        config.restAuthenticationEntryPoint().commence(
+                mock(HttpServletRequest.class),
+                response,
+                mock(AuthenticationException.class)
+        );
+
+        verify(response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
 
     @Test
     void validationOriginIsAcceptedOnlyWhenExplicitlyConfigured() {

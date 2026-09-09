@@ -54,8 +54,22 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']?.currentValue) {
+      this.resetForm();
       this.ensureShipsLoaded();
     }
+  }
+
+  private resetForm(): void {
+    this.acquisitionType = 'rsi';
+    this.useClassicAddMode = false;
+    this.shipSearchQuery = '';
+    this.selectedCatalogGroup = 'STANDARD';
+    this.selectedShip = null;
+    this.selectedShipImageUrl = '';
+
+    const firstBrand = this.brands[0];
+    this.selectedBrand = firstBrand?.name ?? '';
+    this.selectedBrandImageUrl = firstBrand?.imageUrl ?? '';
   }
 
   private ensureShipsLoaded(): void {
@@ -101,8 +115,11 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
   selectCatalogGroup(group: ShipCatalogGroup): void {
     if (this.selectedCatalogGroup === group) return;
     this.selectedCatalogGroup = group;
-    this.applyShipSearch();
-    this.applyBrandShipFilter();
+    if (this.useClassicAddMode) {
+      this.applyBrandShipFilter();
+    } else {
+      this.applyShipSearch();
+    }
   }
 
   get selectedCatalogGroupIndex(): number {

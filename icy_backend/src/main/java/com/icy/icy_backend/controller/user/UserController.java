@@ -103,6 +103,20 @@ public class UserController {
         return userService.getAllActiveUsers();
     }
 
+    @GetMapping("/inactive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<List<UserResponseDTO>>> getInactiveUsers() {
+        return userService.getAllInactiveUsers();
+    }
+
+    @PutMapping("/reactivate")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> reactivateUser(@RequestParam UUID id) {
+        User target = userService.findUserByIdIncludingInactive(id);
+        UserManagementPolicy.assertCanManage(target, null);
+        return userService.reactivateUser(target);
+    }
+
     @GetMapping("/online")
     public ResponseEntity<MessageResponse<List<UserOnlineResponseDTO>>> getOnlineUsers() {
         return userService.getOnlineUsers();

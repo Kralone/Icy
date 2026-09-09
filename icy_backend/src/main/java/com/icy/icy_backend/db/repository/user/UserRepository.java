@@ -14,6 +14,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByDiscordId(String discordId);
     @Query(value = "SELECT * FROM core.users WHERE discord_id = :discordId LIMIT 1", nativeQuery = true)
     Optional<User> findByDiscordIdIncludingInactive(@Param("discordId") String discordId);
+    @Query(value = "SELECT * FROM core.users WHERE id = :id LIMIT 1", nativeQuery = true)
+    Optional<User> findByIdIncludingInactive(@Param("id") UUID id);
+    @Query(value = "SELECT * FROM core.users WHERE active = false ORDER BY lower(username)", nativeQuery = true)
+    List<User> findAllInactive();
     Optional<User> findByUsername(String username);
     @Query("SELECT DISTINCT u FROM User u " +
             "JOIN u.roles ur " +

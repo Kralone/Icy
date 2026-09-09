@@ -29,6 +29,7 @@ export class AdminDashboardComponent implements OnInit {
 
   isLoading = true;
   searchTerm: string = '';
+  showInactive = false;
 
   isAddUserModalOpen = false;
 
@@ -73,7 +74,11 @@ export class AdminDashboardComponent implements OnInit {
   loadUsers(): void {
     this.isLoading = true;
 
-    this.userService.getAllUsers().subscribe({
+    const usersRequest = this.showInactive
+      ? this.userService.getInactiveUsers()
+      : this.userService.getAllUsers();
+
+    usersRequest.subscribe({
       next: (response) => {
         this.users = response.data ?? [];
         this.filteredUsers = [...this.users];
@@ -87,6 +92,13 @@ export class AdminDashboardComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  setInactiveView(showInactive: boolean): void {
+    if (this.showInactive === showInactive) return;
+    this.showInactive = showInactive;
+    this.searchTerm = '';
+    this.loadUsers();
   }
 
   // ==== Filters / Search ====
@@ -245,6 +257,18 @@ export class AdminDashboardComponent implements OnInit {
       error: (err) => {
         console.error('Erreur de suppression', err);
         alert('Échec de la suppression');
+      }
+    });
+  }
+
+  reactivateUser(user: User): void {
+    if (!confirm(`Réactiver le compte de ${user.username} ?`)) return;
+
+    this.userService.reactivateUser(user.id).subscribe({
+      next: () => this.loadUsers(),
+      error: (err) => {
+        console.error('Erreur de réactivation', err);
+        alert('Échec de la réactivation');
       }
     });
   }

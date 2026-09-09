@@ -30,6 +30,8 @@ class UserManagementPolicyTest {
 
         assertThatCode(() -> UserManagementPolicy.assertCanManage(userWithRole("USER"), "USER"))
                 .doesNotThrowAnyException();
+        assertThatCode(() -> UserManagementPolicy.assertCanManage(userWithRole("JUNIOR"), "SPECIALISTE"))
+                .doesNotThrowAnyException();
         assertThatThrownBy(() -> UserManagementPolicy.assertCanManage(null, "ADMIN"))
                 .isInstanceOf(ForbiddenException.class);
         assertThatThrownBy(() -> UserManagementPolicy.assertCanManage(userWithRole("ADMIN"), "USER"))

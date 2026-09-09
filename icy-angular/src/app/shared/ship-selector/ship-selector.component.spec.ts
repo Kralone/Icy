@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { Ship } from '../../model/ship.model';
 import { ShipSelectorComponent } from './ship-selector.component';
+import { SimpleChange } from '@angular/core';
 
 const ship = (id: number, name: string, catalogGroup?: Ship['catalogGroup']): Ship => ({
   id,
@@ -30,6 +31,7 @@ describe('ShipSelectorComponent catalog groups', () => {
 
     component.selectCatalogGroup('WIKELO');
     expect(component.filteredShipsSearch.map((item) => item.id)).toEqual([2]);
+    expect(component.selectedShip?.id).toBe(2);
 
     component.selectCatalogGroup('PYAM_EXEC');
     expect(component.filteredShipsSearch.map((item) => item.id)).toEqual([3]);
@@ -49,5 +51,30 @@ describe('ShipSelectorComponent catalog groups', () => {
     component.selectCatalogGroup('WIKELO');
 
     expect(component.filteredShipsSearch.map((item) => item.id)).toEqual([5]);
+    expect(component.selectedShip?.id).toBe(5);
+  });
+
+  it('resets the form and selects the first standard ship whenever it opens', () => {
+    const shipService = {
+      getAllBrandsWithImages: vi.fn(() => of({ data: [] }))
+    };
+    const component = new ShipSelectorComponent(shipService as never);
+    component.showCatalogGroups = true;
+    component.allShipsModal = [
+      ship(2, 'F7 Hornet Mk Wikelo'),
+      ship(1, 'F7C Hornet Mk II')
+    ];
+    (component as any).allShipsLoaded = true;
+    component.acquisitionType = 'loaner';
+    component.shipSearchQuery = 'hornet';
+    component.selectedCatalogGroup = 'WIKELO';
+    component.selectedShip = component.allShipsModal[0];
+
+    component.ngOnChanges({ isOpen: new SimpleChange(false, true, false) });
+
+    expect(component.acquisitionType).toBe('rsi');
+    expect(component.shipSearchQuery).toBe('');
+    expect(component.selectedCatalogGroup).toBe('STANDARD');
+    expect(component.selectedShip?.id).toBe(1);
   });
 });
