@@ -22,6 +22,35 @@ class DiscordLinkStoreTest(unittest.TestCase):
             reopened.delete("event", "event-1")
             self.assertIsNone(first.get("event", "event-1"))
 
+    def test_multiple_message_refs_survive_reopen_and_can_be_deleted_individually(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "links.sqlite3")
+            first = DiscordLinkStore(path)
+            first.add_message_ref("event_reminder_one_hour", "event-1", 123, 456)
+            first.add_message_ref("event_reminder_one_hour", "event-1", 123, 789)
+
+            reopened = DiscordLinkStore(path)
+            self.assertEqual(
+                [(123, 456), (123, 789)],
+                [
+                    (link.channel_id, link.message_id)
+                    for link in reopened.get_message_refs(
+                        "event_reminder_one_hour", "event-1"
+                    )
+                ],
+            )
+
+            reopened.delete_message_ref("event_reminder_one_hour", "event-1", 456)
+            self.assertEqual(
+                [789],
+                [
+                    link.message_id
+                    for link in first.get_message_refs(
+                        "event_reminder_one_hour", "event-1"
+                    )
+                ],
+            )
+
 
 class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
     @staticmethod
