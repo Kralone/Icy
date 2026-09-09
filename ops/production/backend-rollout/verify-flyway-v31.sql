@@ -116,10 +116,24 @@ BEGIN
         RAISE EXCEPTION 'V31 catalog compatibility views are incomplete';
     END IF;
 
-    IF EXISTS (SELECT 1 FROM fleet.user_ships)
-       OR EXISTS (SELECT 1 FROM core.users WHERE favorite_ship_id IS NOT NULL)
-       OR EXISTS (SELECT 1 FROM mining.mining_sheet_ships) THEN
-        RAISE EXCEPTION 'V31 ship reference reset is incomplete';
+    IF EXISTS (
+        SELECT 1
+        FROM fleet.user_ships user_ship
+        LEFT JOIN catalog.entries entry ON entry.id = user_ship.ship_id
+        WHERE entry.id IS NULL
+    ) OR EXISTS (
+        SELECT 1
+        FROM core.users app_user
+        LEFT JOIN catalog.entries entry ON entry.id = app_user.favorite_ship_id
+        WHERE app_user.favorite_ship_id IS NOT NULL
+          AND entry.id IS NULL
+    ) OR EXISTS (
+        SELECT 1
+        FROM mining.mining_sheet_ships sheet_ship
+        LEFT JOIN catalog.entries entry ON entry.id = sheet_ship.ship_id
+        WHERE entry.id IS NULL
+    ) THEN
+        RAISE EXCEPTION 'V31 catalog ship references are invalid';
     END IF;
 
     SELECT count(*)
