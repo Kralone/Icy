@@ -10,6 +10,8 @@ export interface ShipCargoGrid {
   sizeZ: number;
 }
 
+export type ShipCatalogGroup = 'STANDARD' | 'WIKELO' | 'PYAM_EXEC' | 'BATTAGLIA';
+
 export interface Ship {
   id: number;
   name: string;
@@ -19,6 +21,7 @@ export interface Ship {
   imageUrl: string;
   focus: string;
   crew: string;
+  catalogGroup?: ShipCatalogGroup;
   notes?: string;
   size?: string;
   scu?: number;

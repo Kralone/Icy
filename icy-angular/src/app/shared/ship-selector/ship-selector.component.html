@@ -51,6 +51,33 @@
           </button>
         </div>
       </div>
+      @if (showCatalogGroups) {
+        <div class="catalog-group-filter mb-4">
+          <span class="catalog-group-filter__label">Collection</span>
+          <div class="catalog-group-filter__scroll">
+            <div
+              class="catalog-group-filter__track"
+              role="tablist"
+              aria-label="Filtrer les vaisseaux par collection"
+              [style.--active-index]="selectedCatalogGroupIndex"
+            >
+              <span class="catalog-group-filter__cursor" aria-hidden="true"></span>
+              @for (group of catalogGroups; track group.value) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="catalog-group-filter__option"
+                  [class.catalog-group-filter__option--active]="selectedCatalogGroup === group.value"
+                  [attr.aria-selected]="selectedCatalogGroup === group.value"
+                  (click)="selectCatalogGroup(group.value)"
+                >
+                  {{ group.label }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
       @if (useClassicAddMode) {
         <div class="mb-4">
           <label class="block text-sm font-medium mb-1 text-cyan-200">Marque</label>
