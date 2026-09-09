@@ -6,6 +6,7 @@ DO $verify$
 DECLARE
     applied_versions integer[];
     safe_admin_count integer;
+    expected_fk_count integer;
 BEGIN
     SELECT array_agg(version::integer ORDER BY version::integer)
     INTO applied_versions
@@ -26,8 +27,8 @@ BEGIN
         SELECT 1
         FROM public.flyway_schema_history
         WHERE version = '31'
-          AND description = 'create external catalog sync'
-          AND script = 'V31__create_external_catalog_sync.sql'
+          AND description = 'consolidate catalog cutover'
+          AND script = 'V31__consolidate_catalog_cutover.sql'
           AND success
     ) THEN
         RAISE EXCEPTION 'Flyway V31 metadata is invalid';
@@ -87,7 +88,12 @@ BEGIN
     IF to_regclass('catalog.sync_runs') IS NULL
        OR to_regclass('catalog.raw_records') IS NULL
        OR to_regclass('catalog.entries') IS NULL
-       OR to_regclass('catalog.offers') IS NULL THEN
+       OR to_regclass('catalog.offers') IS NULL
+       OR to_regclass('catalog.canonical_selections') IS NULL
+       OR to_regclass('catalog.sync_conflicts') IS NULL
+       OR to_regclass('catalog.sync_conflict_candidates') IS NULL
+       OR to_regclass('catalog.sync_conflict_selections') IS NULL
+       OR to_regclass('catalog.cargo_grids') IS NULL THEN
         RAISE EXCEPTION 'V31 catalog tables are incomplete';
     END IF;
 
@@ -96,6 +102,39 @@ BEGIN
        OR to_regclass('catalog.uk_catalog_entry_source_external') IS NULL
        OR to_regclass('catalog.uk_catalog_offer_source_external') IS NULL THEN
         RAISE EXCEPTION 'V31 catalog uniqueness guarantees are incomplete';
+    END IF;
+
+    IF to_regclass('fleet.ships') IS NOT NULL
+       OR to_regclass('fleet.ship_sale_points') IS NOT NULL
+       OR to_regclass('fleet.ship_cargo_grids') IS NOT NULL THEN
+        RAISE EXCEPTION 'V31 legacy ship storage still exists';
+    END IF;
+
+    IF to_regclass('catalog.ship_compat') IS NULL
+       OR to_regclass('catalog.ship_sale_point_compat') IS NULL
+       OR to_regclass('catalog.ship_cargo_grid_compat') IS NULL THEN
+        RAISE EXCEPTION 'V31 catalog compatibility views are incomplete';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM fleet.user_ships)
+       OR EXISTS (SELECT 1 FROM core.users WHERE favorite_ship_id IS NOT NULL)
+       OR EXISTS (SELECT 1 FROM mining.mining_sheet_ships) THEN
+        RAISE EXCEPTION 'V31 ship reference reset is incomplete';
+    END IF;
+
+    SELECT count(*)
+    INTO expected_fk_count
+    FROM pg_constraint
+    WHERE contype = 'f'
+      AND confrelid = 'catalog.entries'::regclass
+      AND conname IN (
+          'fk_user_ships_catalog_entry',
+          'fk_user_favorite_catalog_entry',
+          'fk_mining_sheet_ships_catalog_entry'
+      );
+
+    IF expected_fk_count <> 3 THEN
+        RAISE EXCEPTION 'V31 catalog ship foreign keys are incomplete: %/3', expected_fk_count;
     END IF;
 END
 $verify$;

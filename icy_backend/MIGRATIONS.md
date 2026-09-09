@@ -9,7 +9,7 @@ SQL. Une correction ultérieure prend une nouvelle version et avance le schéma.
 
 1. Rebaser la branche sur `main` avant de choisir le numéro, puis utiliser la version
    qui suit immédiatement la dernière migration présente. L'historique actuel se
-   termine à V30 : la prochaine migration doit donc être V31.
+   termine à V31 : la prochaine migration doit donc être V32.
 2. Regrouper dans une version une évolution métier atomique et cohérente. Ne pas
    regrouper plusieurs fonctionnalités sans rapport sous prétexte qu'elles arrivent
    dans la même livraison.
@@ -52,6 +52,19 @@ production arrêtée à l'ancienne V43 suit la procédure transactionnelle décr
 `docs/PRODUCTION-BACKEND-JAVA25.md`. Toute autre variante d'historique doit être
 analysée séparément et ne doit pas être réparée par analogie.
 
-Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V30.
+## Consolidation du catalogue après V29
+
+L'ancienne série de développement V31 à V37 a été remplacée par une unique V31
+transactionnelle. V30 reste l'alignement indépendant des événements. V31 crée le
+catalogue final, importe le catalogue flotte historique, remet volontairement à
+zéro les associations membres et supprime le stockage vaisseaux historique dans
+la même transaction.
+
+Le manifeste `src/test/resources/db/migration-history.sha256` verrouille V1 à V31.
 Toute évolution de schéma doit désormais être ajoutée dans une nouvelle migration,
-à commencer par V31.
+à commencer par V32.
+
+Un environnement ayant déjà appliqué l'ancienne série V31-V37 ne doit pas lancer
+un `flyway repair` aveugle. Après sauvegarde vérifiée et arrêt du backend, le script
+`ops/production/backend-rollout/reconcile-flyway-v31.sql` contrôle l'état physique,
+sauvegarde la table d'historique puis la ramène transactionnellement à V1-V31.
