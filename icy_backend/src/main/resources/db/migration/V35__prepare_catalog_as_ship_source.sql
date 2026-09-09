@@ -25,3 +25,19 @@ CREATE TABLE catalog.cargo_grids (
 
 CREATE INDEX idx_catalog_cargo_grids_entry_id
     ON catalog.cargo_grids(entry_id);
+
+CREATE TABLE catalog.legacy_ship_mappings (
+    legacy_ship_id BIGINT PRIMARY KEY,
+    entry_id BIGINT NOT NULL,
+    legacy_name VARCHAR(100) NOT NULL,
+    catalog_name VARCHAR(255) NOT NULL,
+    match_method VARCHAR(40) NOT NULL,
+    mapped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_legacy_ship_mapping_legacy
+        FOREIGN KEY (legacy_ship_id) REFERENCES fleet.ships(id) ON DELETE CASCADE,
+    CONSTRAINT fk_legacy_ship_mapping_entry
+        FOREIGN KEY (entry_id) REFERENCES catalog.entries(id)
+);
+
+CREATE INDEX idx_legacy_ship_mappings_entry_id
+    ON catalog.legacy_ship_mappings(entry_id);

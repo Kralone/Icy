@@ -1,13 +1,15 @@
 # Bascule du catalogue des vaisseaux
 
-Le catalogue canonique est l'unique source de vaisseaux apres V36.
+Le catalogue canonique est l'unique source de vaisseaux apres V37.
 
 ## Etat retenu
 
 - V35 ajoute aux entrees catalogue les champs utilises par les flottes.
-- V36 vide volontairement les acquisitions, les favoris et les associations
+- V36 conserve la bascule historique des references deja appliquee en
+  production.
+- V37 vide volontairement les acquisitions, les favoris et les associations
   mining existantes.
-- V36 supprime `fleet.ships`, `fleet.ship_sale_points` et
+- V37 supprime `fleet.ships`, `fleet.ship_sale_points` et
   `fleet.ship_cargo_grids`.
 - Les nouvelles flottes ciblent directement `catalog.entries`.
 - Des vues de compatibilite conservent temporairement le contrat Java/JSON du

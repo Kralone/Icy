@@ -9,23 +9,42 @@ DELETE FROM fleet.user_ships;
 UPDATE core.users SET favorite_ship_id = NULL WHERE favorite_ship_id IS NOT NULL;
 DELETE FROM mining.mining_sheet_ships;
 
+DROP TABLE IF EXISTS catalog.legacy_ship_mappings;
+
 DO $$
 DECLARE
     constraint_row RECORD;
 BEGIN
     FOR constraint_row IN
-        SELECT conrelid::regclass AS table_name, conname
-          FROM pg_constraint
-         WHERE contype = 'f'
-           AND confrelid = 'fleet.ships'::regclass
+        SELECT DISTINCT c.conrelid::regclass AS table_name, c.conname
+          FROM pg_constraint c
+         WHERE c.contype = 'f'
+           AND (
+               c.confrelid = 'fleet.ships'::regclass
+               OR (
+                   c.conrelid = 'fleet.user_ships'::regclass
+                   AND (SELECT attnum FROM pg_attribute
+                         WHERE attrelid = c.conrelid AND attname = 'ship_id') = ANY (c.conkey)
+               )
+               OR (
+                   c.conrelid = 'core.users'::regclass
+                   AND (SELECT attnum FROM pg_attribute
+                         WHERE attrelid = c.conrelid AND attname = 'favorite_ship_id') = ANY (c.conkey)
+               )
+               OR (
+                   c.conrelid = 'mining.mining_sheet_ships'::regclass
+                   AND (SELECT attnum FROM pg_attribute
+                         WHERE attrelid = c.conrelid AND attname = 'ship_id') = ANY (c.conkey)
+               )
+           )
     LOOP
         EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', constraint_row.table_name, constraint_row.conname);
     END LOOP;
 END
 $$;
 
-DROP TABLE fleet.ship_sale_points;
-DROP TABLE fleet.ship_cargo_grids;
+DROP TABLE IF EXISTS fleet.ship_sale_points;
+DROP TABLE IF EXISTS fleet.ship_cargo_grids;
 DROP TABLE fleet.ships;
 
 ALTER TABLE fleet.user_ships
@@ -40,7 +59,7 @@ ALTER TABLE mining.mining_sheet_ships
     ADD CONSTRAINT fk_mining_sheet_ships_catalog_entry
         FOREIGN KEY (ship_id) REFERENCES catalog.entries(id);
 
-CREATE VIEW catalog.ship_compat AS
+CREATE OR REPLACE VIEW catalog.ship_compat AS
 SELECT e.id,
        e.name,
        b.id AS brand_id,
@@ -60,7 +79,7 @@ SELECT e.id,
  WHERE e.active
    AND e.family IN ('SHIP', 'GROUND_VEHICLE');
 
-CREATE VIEW catalog.ship_sale_point_compat AS
+CREATE OR REPLACE VIEW catalog.ship_sale_point_compat AS
 SELECT o.id,
        o.entry_id AS ship_id,
        o.location_name::VARCHAR(120) AS location,
@@ -70,7 +89,7 @@ SELECT o.id,
    AND o.offer_type = 'BUY'
    AND o.entry_id IS NOT NULL;
 
-CREATE VIEW catalog.ship_cargo_grid_compat AS
+CREATE OR REPLACE VIEW catalog.ship_cargo_grid_compat AS
 SELECT g.id,
        g.entry_id AS ship_id,
        g.size_x,
@@ -84,6 +103,13 @@ BEGIN
        OR EXISTS (SELECT 1 FROM core.users WHERE favorite_ship_id IS NOT NULL)
        OR EXISTS (SELECT 1 FROM mining.mining_sheet_ships) THEN
         RAISE EXCEPTION 'La remise a zero des references vaisseaux est incomplete';
+    END IF;
+
+    IF to_regclass('fleet.ships') IS NOT NULL
+       OR to_regclass('fleet.ship_sale_points') IS NOT NULL
+       OR to_regclass('fleet.ship_cargo_grids') IS NOT NULL
+       OR to_regclass('catalog.legacy_ship_mappings') IS NOT NULL THEN
+        RAISE EXCEPTION 'La suppression du stockage vaisseaux historique est incomplete';
     END IF;
 END
 $$;
