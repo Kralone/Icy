@@ -1,196 +1,122 @@
-<div class="min-h-screen w-full bg-gradient-to-b from-[#07101c] via-[#101a2d] to-[#0f172a] text-white p-8 space-y-8">
-  <div class="flex items-center">
-    <a
-      routerLink="/icy/admin/data"
-      class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-      >
-      <span class="text-base leading-none">←</span>
-      <span>Retour Data</span>
-    </a>
-  </div>
-
-  <div class="flex items-center justify-between gap-4 flex-wrap">
-    <div class="space-y-1">
-      <p class="text-xs uppercase tracking-[0.35em] text-cyan-300/70">Data Watch</p>
-      <h2 class="text-3xl font-semibold text-cyan-100">CIG Flux Brut</h2>
-      <p class="text-sm text-slate-300">Surveille des sources CIG et consulte les dernieres entrees brutes agregees.</p>
+<div class="watch-page">
+  <a routerLink="/icy/admin/data" class="back">← Données</a>
+  <header>
+    <h1>CIG Watch</h1>
+    <div class="actions">
+      <a routerLink="/icy/admin/news">Actualités du site ↗</a>
+      <button type="button" (click)="forceRefresh()" [disabled]="isForcingRefresh || isLoadingFeed">
+        {{ isForcingRefresh ? 'Collecte en cours…' : 'Collecter maintenant' }}
+      </button>
     </div>
-  </div>
-
-  @if (error) {
-    <div class="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-red-200">
-      {{ error }}
-    </div>
-  }
-
-  @if (success) {
-    <div class="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-emerald-200">
-      {{ success }}
-    </div>
-  }
-
-  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-    <section class="xl:col-span-4 rounded-2xl border border-white/10 bg-[#0b1324]/80 p-5 space-y-5">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <h3 class="text-sm uppercase tracking-[0.22em] text-slate-300">Sources surveillees</h3>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-slate-400">{{ sources.length }} source(s)</span>
-          <select
-            [ngModelOptions]="{ standalone: true }"
-            [(ngModel)]="sourceSort"
-            (ngModelChange)="onSourceSortChange()"
-            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400/60"
-            >
-            @for (option of sourceSortOptions; track option) {
-              <option [ngValue]="option.value">{{ option.label }}</option>
-            }
-          </select>
+  </header>
+  @if (error) { <p class="notice error" role="alert">{{ error }}</p> }
+  @if (success) { <p class="notice success" role="status">{{ success }}</p> }
+  <div class="watch-layout">
+    <aside>
+      <section class="panel">
+        <h2>Publication</h2>
+        <div class="statuses">
+          @if (feed?.translationConfigured === true) { <span class="badge good">LibreTranslate · anglais → français</span> }
+          @else if (feed?.translationConfigured === false) { <span class="badge warning">Service de traduction non configuré</span> }
+          @if (feed?.publishingEnabled === true) { <span class="badge good">Publication automatique</span> }
+          @else if (feed?.publishingEnabled === false) { <span class="badge muted">Publication désactivée</span> }
+          @if (feed?.discordRelayEnabled === true) { <span class="badge discord">Relais Discord activé</span> }
+          @else if (feed?.discordRelayEnabled === false) { <span class="badge muted">Relais Discord désactivé</span> }
         </div>
-      </div>
-
-      @if (isLoadingSources) {
-        <div class="text-sm text-slate-400">Chargement des sources...</div>
-      }
-
-      <div class="space-y-3 max-h-[420px] overflow-auto pr-1">
-        @for (source of sources; track trackSource($index, source)) {
-          <article
-            class="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2"
-            >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="font-semibold text-cyan-100">{{ source.label }}</p>
-                <p class="text-xs text-slate-300 uppercase tracking-[0.2em]">{{ source.sourceKind }}</p>
-              </div>
-            </div>
-            <p class="text-xs text-slate-400 break-all">{{ source.sourceUrl }}</p>
-            <p class="text-xs text-slate-500">Maj: {{ formatDate(source.updatedAt) }}</p>
-          </article>
-        }
-      </div>
-    </section>
-
-    <section class="xl:col-span-8 rounded-2xl border border-white/10 bg-[#0b1324]/80 p-5 space-y-5">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h3 class="text-sm uppercase tracking-[0.22em] text-slate-300">Dernieres infos brutes</h3>
-          <p class="text-xs text-slate-400">
-            {{ feed?.itemCount ?? 0 }} item(s) | {{ feed?.errors?.length ?? 0 }} erreur(s) |
-            generation: {{ formatDate($safeNavigationMigration(feed?.generatedAt)) }} |
-            prochain cycle: {{ formatDate(nextScheduledFetchAt) }} |
-            dans: {{ schedulerCountdownLabel }}
-          </p>
-        </div>
-        <div class="rounded-xl border border-cyan-300/30 bg-cyan-500/10 px-4 py-2 text-right">
-          <p class="text-[10px] uppercase tracking-[0.2em] text-cyan-200/80">Prochain fetch</p>
-          <p class="text-2xl font-bold text-cyan-100 tabular-nums">{{ schedulerCountdownLabel }}</p>
-          <p class="text-[11px] text-cyan-200/80">{{ formatDate(nextScheduledFetchAt) }}</p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <select
-            [ngModelOptions]="{ standalone: true }"
-            [(ngModel)]="entrySort"
-            (ngModelChange)="onEntrySortChange()"
-            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-xs text-white focus:outline-none focus:border-cyan-400/60"
-            >
-            @for (option of entrySortOptions; track option) {
-              <option [ngValue]="option.value">{{ option.label }}</option>
-            }
-          </select>
-          <select
-            [ngModelOptions]="{ standalone: true }"
-            [(ngModel)]="entrySourceFilter"
-            (ngModelChange)="onEntrySourceFilterChange()"
-            class="rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-xs text-white focus:outline-none focus:border-cyan-400/60"
-            >
-            @for (source of entrySourceFilterOptions; track source) {
-              <option [ngValue]="source">
-                {{ source === 'ALL' ? 'Toutes sources' : source }}
-              </option>
-            }
-          </select>
-          <input
-            type="number"
-            min="1"
-            max="200"
-            [ngModelOptions]="{ standalone: true }"
-            [(ngModel)]="feedLimit"
-            class="w-20 rounded-xl border border-white/15 bg-[#060d1c] px-2 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/60"
-            />
-            <button
-              type="button"
-              class="rounded-xl border border-emerald-400/35 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30 transition"
-              (click)="forceRefresh()"
-              [disabled]="isForcingRefresh"
-              >
-              {{ isForcingRefresh ? 'Force...' : 'Force refresh' }}
-            </button>
-          </div>
-        </div>
-
-        @if (feed?.errors?.length) {
-          <div class="rounded-xl border border-amber-300/30 bg-amber-500/10 p-3">
-            <h4 class="text-xs uppercase tracking-[0.2em] text-amber-100 mb-2">Sources en erreur</h4>
-            <div class="space-y-2 text-xs text-amber-200">
-              @for (err of feed?.errors; track err) {
-                <div>
-                  <span class="font-semibold">{{ err.sourceLabel }}</span> - {{ err.message }}
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        @if (isLoadingFeed) {
-          <div class="text-sm text-slate-400">Recuperation des dernieres infos...</div>
-        }
-
-        @if (!isLoadingFeed && entries.length === 0) {
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
-            Aucun item recupere. Relance le refresh du flux.
-          </div>
-        }
-        @if (!isLoadingFeed && entries.length > 0 && displayedEntries.length === 0) {
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
-            Aucun item pour cette source. Change le filtre source.
-          </div>
-        }
-
-        <div class="space-y-4 max-h-[780px] overflow-auto pr-1">
-          @for (entry of displayedEntries; track trackEntry($index, entry)) {
-            <article
-              class="rounded-2xl border border-white/10 bg-[#070f1f] p-4 space-y-3"
-              >
-              <div class="flex items-start justify-between gap-3">
-                <div class="space-y-1">
-                  <p class="text-sm uppercase tracking-[0.2em] text-slate-400">{{ entry.sourceLabel }}</p>
-                  <h4 class="text-lg font-semibold text-cyan-100">{{ entry.title }}</h4>
-                </div>
-                <a
-                  [href]="entry.link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-xs rounded-full border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-cyan-100 hover:bg-cyan-400/20 transition"
-                  >
-                  Ouvrir
-                </a>
-              </div>
-              <div class="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
-                <span>Type: {{ entry.entryType || 'n/a' }}</span>
-                <span>Published: {{ formatDate(entry.publishedAt) }}</span>
-                <span>Rank: {{ entry.rankHint ?? 'n/a' }}</span>
-                <span>Fetch: {{ formatDate(entry.fetchedAt) }}</span>
-              </div>
-              @if (entry.rawExcerpt) {
-                <p class="text-sm text-slate-200 leading-6">{{ entry.rawExcerpt }}</p>
-              }
-              <details class="rounded-xl border border-white/10 bg-black/20 p-3">
-                <summary class="cursor-pointer text-xs uppercase tracking-[0.18em] text-slate-300">Payload brut</summary>
-                <pre class="mt-3 text-xs leading-5 text-cyan-100 whitespace-pre-wrap break-words">{{ entry.rawPayload }}</pre>
-              </details>
-            </article>
-          }
-        </div>
+        @if (feed?.refreshing) { <p role="status">Collecte et traduction en cours…</p> }
       </section>
-    </div>
+      <section class="panel">
+        <h2>Sources</h2>
+        @if (isLoadingSources) { <p>Chargement…</p> }
+        @for (source of sources; track source.id) {
+          <a class="source" [href]="source.sourceUrl" target="_blank" rel="noopener noreferrer">
+            <strong>{{ source.label }}</strong><span>↗</span>
+          </a>
+        }
+        <dl class="schedule">
+          <div><dt>Dernière collecte</dt><dd>{{ formatDate(feed?.generatedAt) }}</dd></div>
+          <div><dt>Prochain cycle</dt><dd>{{ formatDate(nextScheduledFetchAt) }}</dd></div>
+        </dl>
+      </section>
+      @if (feed?.errors?.length) {
+        <section class="panel errors" role="alert">
+          <h2>Erreurs de collecte</h2>
+          @for (err of feed?.errors; track err.sourceId) {
+            <p><strong>{{ err.sourceLabel }}</strong><br>{{ err.message }}</p>
+          }
+        </section>
+      }
+    </aside>
+    <section class="feed">
+      <div class="filters">
+        <label>Source
+          <select [(ngModel)]="entrySourceFilter" (ngModelChange)="onEntrySourceFilterChange()">
+            @for (source of entrySourceFilterOptions; track source) {
+              <option [ngValue]="source">{{ source === 'ALL' ? 'Toutes' : source }}</option>
+            }
+          </select>
+        </label>
+        <label>Tri
+          <select [(ngModel)]="entrySort" (ngModelChange)="onEntrySortChange()">
+            @for (option of entrySortOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <label>Limite
+          <input type="number" min="1" max="200" [(ngModel)]="feedLimit" (change)="loadFeed()">
+        </label>
+        <span class="count">{{ displayedEntries.length }} résultat(s)</span>
+      </div>
+      @if (isLoadingFeed && !entries.length) { <p role="status">Chargement…</p> }
+      @if (!isLoadingFeed && !error && !entries.length) { <p class="panel">Aucune actualité collectée.</p> }
+      @if (!isLoadingFeed && entries.length && !displayedEntries.length) { <p class="panel">Aucune actualité pour cette source.</p> }
+      @for (entry of displayedEntries; track trackEntry($index, entry)) {
+        <article class="entry">
+          <div class="entry-top"><span>{{ entry.sourceLabel }}</span><time>{{ formatDate(entry.publishedAt) }}</time></div>
+          <h2><a [href]="entry.link" target="_blank" rel="noopener noreferrer">{{ entry.title }} ↗</a></h2>
+          <div class="statuses">
+            @if (entry.translationStatus === 'TRANSLATED') { <span class="badge good">Traduit en français</span> }
+            @else if (entry.translationStatus === 'FAILED') { <span class="badge warning">Traduction à reprendre</span> }
+            @else if (entry.translationStatus === 'PENDING') { <span class="badge">Traduction en attente</span> }
+            @if (entry.publicationStatus === 'ARCHIVED') { <span class="badge muted">Archive · non publiée</span> }
+            @else if (entry.publicationStatus === 'PUBLISHED') { <span class="badge good">Publiée sur le site</span> }
+            @else if (entry.publicationStatus === 'PENDING') { <span class="badge">Publication en attente</span> }
+            @if (entry.deliveryStatus === 'DELIVERED') { <span class="badge discord">Envoyée sur Discord</span> }
+            @else if (entry.deliveryStatus === 'PENDING') { <span class="badge warning">Discord en attente</span> }
+            @else if (entry.deliveryStatus === 'DISABLED') { <span class="badge muted">Relais Discord désactivé</span> }
+            @else if (entry.deliveryStatus === 'EXPIRED') { <span class="badge warning">Délai d’envoi Discord dépassé</span> }
+          </div>
+          @if (entry.rawExcerpt) { <p class="excerpt">{{ entry.rawExcerpt }}</p> }
+          @if (entry.lastError) { <p class="notice error">{{ entry.lastError }}</p> }
+          @if (entry.nextRetryAt) { <p class="retry">Nouvelle tentative : {{ formatDate(entry.nextRetryAt) }}</p> }
+          <div class="entry-actions">
+            @if (canPublish(entry)) { <button type="button" [disabled]="busyEntryId !== null" (click)="runEntryAction(entry, 'publish')">Publier</button> }
+            @if (canRetry(entry)) { <button type="button" [disabled]="busyEntryId !== null" (click)="runEntryAction(entry, 'retry')">{{ entry.newsId ? 'Envoyer sur Discord' : 'Réessayer la traduction' }}</button> }
+            @if (entry.id && !entry.newsId) { <button type="button" [disabled]="busyEntryId !== null" (click)="editTranslation(entry)">Corriger le français</button> }
+            @if (entry.newsId) { <a routerLink="/icy/admin/news">Modifier l’actualité ↗</a> }
+            @if (busyEntryId === entry.id) { <span role="status">Traitement…</span> }
+          </div>
+          @if (editingEntryId === entry.id) {
+            <form class="translation-editor" (ngSubmit)="saveTranslation(entry)">
+              <label [for]="'title-' + entry.id">Titre français</label>
+              <input [id]="'title-' + entry.id" name="titleFr" [(ngModel)]="draftTitle" maxlength="150" required>
+              <label [for]="'excerpt-' + entry.id">Texte français</label>
+              <textarea [id]="'excerpt-' + entry.id" name="excerptFr" [(ngModel)]="draftExcerpt" maxlength="600" rows="5" required></textarea>
+              <p>La traduction automatique peut nécessiter une correction. Enregistrer conserve cette entrée en attente de publication.</p>
+              <div class="entry-actions">
+                <button type="submit" [disabled]="busyEntryId !== null || !draftTitle.trim() || !draftExcerpt.trim()">Enregistrer</button>
+                <button type="button" [disabled]="busyEntryId !== null" (click)="editingEntryId = null">Annuler</button>
+              </div>
+            </form>
+          }
+          <details>
+            <summary>Détails de la collecte</summary>
+            <p>Collectée le {{ formatDate(entry.fetchedAt) }} · {{ entry.entryType }}</p>
+            <pre>{{ entry.rawPayload }}</pre>
+          </details>
+        </article>
+      }
+    </section>
   </div>
+</div>

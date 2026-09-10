@@ -47,6 +47,30 @@ Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
 
+La release de l’interface applique une seule migration, V32. Le contrôle
+préalable accepte V31 ou une V32 déjà appliquée, en conservant les chemins de
+mise à niveau antérieurs. Après le démarrage du backend,
+`backend-rollout/verify-flyway-v32.sql` contrôle en lecture seule l’historique
+exact V1–V32, les structures CIG Watch, les recettes Wikelo et les corrections
+du catalogue. Ce fichier doit accompagner `backend-rollout/verify.sh` dans
+le répertoire de rollout du serveur.
+
+Le script charge l’image LibreTranslate épinglée par digest si elle manque,
+avant la sauvegarde. Après la sauvegarde, il démarre ce service explicitement
+et attend son état sain avant de remplacer le backend : les déploiements
+applicatifs utilisent `--no-deps` et ne le démarreraient pas automatiquement.
+Le mode `--preflight` ne télécharge aucune image et ne démarre aucun service.
+La traduction anglais/français reste interne, sans port hôte ni clé payante,
+avec un volume persistant pour les modèles et des plafonds de 2 CPU / 2 Gio.
+Prévoir jusqu’à 15 minutes pour le premier téléchargement des modèles et la
+mémoire correspondante en plus de celle des applications.
+
+Un échec du démarrage de la traduction laisse les trois images applicatives
+en place. Le rollback applicatif conserve ce service et son volume ; il ne
+revient pas sur la migration SQL. Les paramètres `CIG_WATCH_TRANSLATION_URL`,
+`CIG_WATCH_PUBLISHING_ENABLED` et `CIG_WATCH_DISCORD_ENABLED` restent fournis
+par la configuration externe existante. Le workflow de sauvegarde ne change pas.
+
 ## Maintenance AlmaLinux 9
 
 `system/update-almalinux9.sh` contrôle ou applique les mises à jour du VPS. Le

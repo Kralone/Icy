@@ -22,4 +22,15 @@ describe('NewsComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+  it('prefers the article image and falls back without broken empty images', () => {
+    const news = {id: 1, title: 'CIG', content: '', author: 'ICY', createdAt: '',
+      imageUrl: 'https://media.robertsspaceindustries.com/article.jpg',
+      type: {id: 1, name: 'CIG', color: '#fff', imageUrl: '/images/type.png'}};
+    expect(component.newsImage(news)).toBe(news.imageUrl);
+    component.imageFailed(news);
+    expect(component.newsImage(news)).toBe('/images/type.png');
+    component.imageFailed(news);
+    expect(component.newsImage(news)).toBeNull();
+    expect(component.newsImage({...news, imageUrl: null, type: null})).toBeNull();
+  });
 });

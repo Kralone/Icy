@@ -12,16 +12,6 @@
         >
         Tableau de bord
       </h1>
-
-      <!-- Bouton d’installation PWA -->
-      <button
-        (click)="installApp()"
-        class="px-4 py-2 rounded-xl bg-white/10 border border-cyan-400 text-cyan-300
-               backdrop-blur-md hover:bg-cyan-500/20 hover:text-white transition
-               shadow-lg hover:shadow-cyan-500/30 whitespace-nowrap"
-        >
-        ⚡ Installer Iceforge
-      </button>
     </div>
 
     <div class="space-y-6">
@@ -138,14 +128,8 @@
     <div
       class="relative dashboard-widget p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
              hover:shadow-cyan-500/20 transition"
-      [attr.data-loading]="isOnlineLoading"
+
       >
-      <app-loading-overlay
-        [isLoading]="isOnlineLoading"
-        [minDurationMs]="500"
-        [fadeOutMs]="500"
-        [softFade]="true"
-      ></app-loading-overlay>
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-cyan-300 drop-shadow-md">
           🟢 En ligne
@@ -161,7 +145,7 @@
             Aucun membre en ligne.
           </div>
         }
-        @for (member of paginatedOnlineUsers; track member) {
+        @for (member of paginatedOnlineUsers; track member.id) {
           <div
             class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
             >
@@ -316,4 +300,3 @@
 
     </aside>
   </main>
-

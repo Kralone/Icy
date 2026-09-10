@@ -73,6 +73,19 @@ Le navigateur peut alors ouvrir `http://127.0.0.1:19088`.
 
 ## Vérification et nettoyage
 
+LibreTranslate est démarré avec le backend, sans port publié sur l’hôte. Les
+modèles anglais/français sont conservés dans le volume de staging dédié. Le
+premier démarrage peut télécharger les modèles ; le déploiement attend jusqu’à
+15 minutes leur disponibilité. Le service est limité à 2 CPU et 2 Gio de RAM.
+
+La publication CIG Watch et son relais Discord sont désactivés par défaut,
+y compris si le bot de test est démarré. Leur activation reste explicite dans
+le fichier d’environnement externe : `STAGING_CIG_WATCH_PUBLISHING_ENABLED`
+et `STAGING_CIG_WATCH_DISCORD_ENABLED`. `STAGING_CIG_WATCH_TRANSLATION_URL`
+utilise par défaut `http://libretranslate:5000`. Aucune clé d’API payante n’est
+nécessaire pour ce service auto-hébergé. Les fichiers de secrets existants sont
+conservés.
+
 ```bash
 sudo /opt/iceforge-staging/current/verify.sh \
   --release-dir "$(readlink -f /opt/iceforge-staging/current)"

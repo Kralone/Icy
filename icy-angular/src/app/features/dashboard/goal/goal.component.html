@@ -44,29 +44,15 @@
       <p class="text-xs text-gray-400 mb-4 text-center sm:text-left">
         Créé le {{ goal.createdAt | date:'medium' }}
       </p>
-      <div class="relative w-full bg-white/10 rounded-full h-3 mb-6 overflow-visible">
-        <div class="absolute inset-0 overflow-hidden rounded-full">
-          <div
-            class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-900"
-            [style.width.%]="getAnimatedProgress(goal)"
-            [ngClass]="{ 'goal-progress--parent': goal.subGoals.length }"
-          ></div>
-        </div>
-        <div
-          class="absolute top-[calc(100%+6px)] text-sm font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)] transition-all duration-700 ease-out"
-        [ngClass]="{
-          'translate-x-0': getAnimatedLabelAlign(goal) === 'left',
-          '-translate-x-1/2': getAnimatedLabelAlign(goal) === 'center',
-          '-translate-x-full': getAnimatedLabelAlign(goal) === 'right'
-        }"
-          [style.left.%]="getAnimatedLabelLeft(goal)"
-          style="transform: translateX(0);"
-          >
-          {{ getAnimatedProgress(goal) | number:'1.0-0' }}%
-        </div>
+      <div class="flex items-center justify-between gap-3 mb-2 text-sm">
+        <span class="text-slate-300">{{ getTotalProgress(goal).current | number }} / {{ getTotalProgress(goal).target | number }}</span>
+        <strong class="text-cyan-200">{{ getAnimatedProgress(goal) | number:'1.0-0' }}%</strong>
       </div>
-      <div class="mb-3">
-        <div class="text-xs text-white/50 uppercase tracking-wider">Progression</div>
+      <div class="relative w-full bg-white/10 rounded-full h-3 mb-4 overflow-hidden"
+           role="progressbar" [attr.aria-label]="goal.name"
+           [attr.aria-valuenow]="calculateProgress(goal)" aria-valuemin="0" aria-valuemax="100">
+        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500"
+             [style.width.%]="getAnimatedProgress(goal)"></div>
       </div>
       @if (goal.subGoals && goal.subGoals.length > 0) {
         <div

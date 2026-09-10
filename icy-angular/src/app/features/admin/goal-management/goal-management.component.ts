@@ -25,8 +25,18 @@ type TemplateDraftNode = {
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-management.component.html',
+  styleUrl: './goal-management.component.css',
 })
 export class GoalManagementComponent implements OnInit {
+  activeTab: 'goals' | 'templates' = 'goals';
+  busy = false;
+  goalsLoading = false;
+  templatesLoading = false;
+  goalsError = '';
+  templatesError = '';
+  usersError = '';
+  actionError = '';
+  successMessage = '';
   goals: Goal[] = [];
 
   // Roots only
@@ -71,6 +81,7 @@ export class GoalManagementComponent implements OnInit {
   templateDraftRoot: TemplateDraftNode = this.createDraftRoot();
   private nextTemplateTempId = 2;
   editingTemplateTreeRootId: number | null = null;
+  private editingTemplateParentId: number | null = null;
   templateApplyUserInput = '';
   templateApplyUserId: string | null = null;
 
@@ -103,13 +114,16 @@ export class GoalManagementComponent implements OnInit {
 
   // ----------------- Load + preserve UI state -----------------
   loadGoals(opts?: { preserveUiState?: boolean }): void {
+    this.goalsLoading = true;
+    this.goalsError = '';
     const preserve = !!opts?.preserveUiState;
 
     // snapshot UI state
     const prevOpenedRootId = preserve ? this.openedRootId : null;
     const prevPage = preserve ? this.currentPage : 1;
 
-    this.goalService.getAllGoals().subscribe((goals) => {
+    this.goalService.getAllGoals().subscribe({ next: (goals) => {
+      this.goalsLoading = false;
       this.goals = goals ?? [];
       this.rootGoals = this.sortGoalsAlphaDoneLast(
         this.goals.filter((g) => g.parentId === null)
@@ -138,24 +152,34 @@ export class GoalManagementComponent implements OnInit {
         const root = this.rootGoals.find((r) => r.id === this.selectedRootId);
         this.subGoalsForSelectedRoot = root?.subGoals ?? [];
       }
-    });
+    }, error: () => {
+      this.goalsLoading = false;
+      this.goalsError = 'Impossible de charger les objectifs.';
+    }});
   }
 
   loadTemplates(): void {
-    this.goalService.getAllTemplates().subscribe((templates) => {
+    this.templatesLoading = true;
+    this.templatesError = '';
+    this.goalService.getAllTemplates().subscribe({ next: (templates) => {
+      this.templatesLoading = false;
       this.templates = templates ?? [];
       this.templateRoots = this.sortTemplatesAlpha(
         this.templates.filter((t) => t.parentId === null)
       );
-    });
+    }, error: () => {
+      this.templatesLoading = false;
+      this.templatesError = 'Impossible de charger les modèles.';
+    }});
   }
 
   loadUsers(): void {
+    this.usersError = '';
     this.userService.getAllUsers().subscribe({
       next: (res) => {
         this.users = res?.data ?? [];
       },
-      error: (err) => console.error('Erreur chargement users:', err),
+      error: () => { this.usersError = 'Impossible de charger les membres.'; },
     });
   }
 
@@ -197,8 +221,7 @@ export class GoalManagementComponent implements OnInit {
   toggleRoot(root: Goal): void {
     // only one opened at a time
     this.openedRootId = this.openedRootId === root.id ? null : root.id;
-    // pas de reload, juste scroll smooth comme demandé
-    this.scrollToTop();
+
   }
 
   isRootOpen(root: Goal): boolean {
@@ -241,16 +264,16 @@ export class GoalManagementComponent implements OnInit {
 
   // ----------------- CRUD (refresh only list, keep unfold) -----------------
   createOrUpdateGoal(): void {
+    if (this.busy || !this.isGoalFormValid) return;
+    this.beginAction();
     const name = this.form.name.trim();
-    if (!name || Number(this.form.target) <= 0) return;
 
     const payload: any = {
       name,
       description: (this.form.description ?? '').trim(),
       target: Number(this.form.target),
-      current: Number(this.form.current ?? 0),
+      ...(this.editingGoal ? {current: Number(this.form.current), pinned: !!this.form.pinned} : {}),
       parentId: this.form.parentId,
-      pinned: !!this.form.pinned,
       userId: this.form.userId,
     };
 
@@ -260,6 +283,8 @@ export class GoalManagementComponent implements OnInit {
 
     req.subscribe({
       next: () => {
+        this.busy = false;
+        this.successMessage = 'Objectif enregistré.';
         // on garde le root ouvert + page
         // (mais on ferme le form d’édition en reset)
         this.resetForm();
@@ -267,12 +292,15 @@ export class GoalManagementComponent implements OnInit {
         this.scrollToTop();
       },
       error: (err) => {
-        console.error('Erreur create/update goal:', err);
+        this.failAction('Impossible d’enregistrer l’objectif. Vos saisies sont conservées.');
       },
     });
   }
 
   editGoal(goal: Goal): void {
+    this.activeTab = 'goals';
+    this.actionError = '';
+    this.successMessage = '';
     this.editingGoal = goal;
 
     this.form = {
@@ -299,51 +327,66 @@ export class GoalManagementComponent implements OnInit {
   }
 
   deleteGoal(id: number, name: string): void {
-    if (!confirm(`Supprimer "${name}" ?`)) return;
+    if (this.busy || !confirm(`Supprimer « ${name} » et ses sous-objectifs ?`)) return;
+    this.beginAction();
 
     this.goalService.deleteGoal(id).subscribe({
       next: () => {
+        this.busy = false;
+        this.successMessage = 'Modification enregistrée.';
         this.loadGoals({ preserveUiState: true });
         this.scrollToTop();
       },
-      error: (err) => console.error('Erreur suppression goal:', err),
+      error: () => this.failAction('Impossible de supprimer l’objectif.'),
     });
   }
 
   deleteTemplate(id: number, name: string): void {
-    if (!confirm(`Supprimer le template "${name}" ?`)) return;
+    if (this.busy || !confirm(`Supprimer le modèle « ${name} » et ses étapes ?`)) return;
+    this.beginAction();
 
     this.goalService.deleteTemplate(id).subscribe({
       next: () => {
+        this.busy = false;
+        this.successMessage = 'Modification enregistrée.';
         if (this.editingTemplateTreeRootId === id) {
           this.resetTemplateDraft();
         }
         this.loadTemplates();
         this.scrollToTop();
       },
-      error: (err) => console.error('Erreur suppression template:', err),
+      error: () => this.failAction('Impossible de supprimer le modèle.'),
     });
   }
 
   editTemplate(template: GoalTemplate): void {
+    this.activeTab = 'templates';
+    this.actionError = '';
+    this.successMessage = '';
     this.editingTemplateTreeRootId = template.id;
+    this.editingTemplateParentId = template.parentId ?? null;
     this.templateDraftRoot = this.mapTemplateToDraft(template);
     this.nextTemplateTempId = this.getMaxTempId(this.templateDraftRoot) + 1;
     this.scrollToTop();
   }
 
   applyTemplate(template: GoalTemplate): void {
+    if (this.busy) return;
+    this.beginAction();
     this.goalService.applyTemplate(template.id, { userId: this.templateApplyUserId }).subscribe({
       next: () => {
+        this.busy = false;
+        this.successMessage = 'Objectif créé depuis le modèle.';
         this.loadGoals({ preserveUiState: true });
         this.scrollToTop();
       },
-      error: (err) => console.error('Erreur application template:', err),
+      error: () => this.failAction('Impossible de créer l’objectif depuis ce modèle.'),
     });
   }
 
   createTemplateTree(): void {
-    if (!this.isTemplateDraftValid(this.templateDraftRoot)) return;
+    if (this.busy || !this.isTemplateDraftValid(this.templateDraftRoot)) return;
+    this.beginAction();
 
     if (this.editingTemplateTreeRootId != null) {
       this.updateTemplateTree();
@@ -353,11 +396,13 @@ export class GoalManagementComponent implements OnInit {
     const payload = this.mapDraftToPayload(this.templateDraftRoot);
     this.goalService.addTemplateTree(payload).subscribe({
       next: () => {
+        this.busy = false;
+        this.successMessage = 'Modification enregistrée.';
         this.resetTemplateDraft();
         this.loadTemplates();
         this.scrollToTop();
       },
-      error: (err) => console.error('Erreur creation template:', err),
+      error: () => this.failAction('Impossible de créer le modèle. Vos saisies sont conservées.'),
     });
   }
 
@@ -423,7 +468,6 @@ export class GoalManagementComponent implements OnInit {
 
   toggleTemplateRoot(root: GoalTemplate): void {
     this.openedTemplateRootId = this.openedTemplateRootId === root.id ? null : root.id;
-    this.scrollToTop();
   }
 
   isTemplateRootOpen(root: GoalTemplate): boolean {
@@ -481,10 +525,11 @@ export class GoalManagementComponent implements OnInit {
     this.templateDraftRoot = this.createDraftRoot();
     this.nextTemplateTempId = 2;
     this.editingTemplateTreeRootId = null;
+    this.editingTemplateParentId = null;
   }
 
   isTemplateDraftValid(node: TemplateDraftNode): boolean {
-    if (!node.name?.trim() || Number(node.target) <= 0) return false;
+    if (!node.name?.trim() || !this.isInt32(node.target, 1)) return false;
     return node.children.every((child) => this.isTemplateDraftValid(child));
   }
 
@@ -515,12 +560,14 @@ export class GoalManagementComponent implements OnInit {
 
   private updateTemplateTree(): void {
     this.updateTemplateTreeAsync().catch((err) => {
-      console.error('Erreur mise à jour template:', err);
+      this.failAction('Impossible d’enregistrer toutes les étapes. Vérifiez le modèle avant de réessayer.');
     });
   }
 
   private async updateTemplateTreeAsync(): Promise<void> {
-    await this.updateTemplateNode(this.templateDraftRoot, null);
+    await this.updateTemplateNode(this.templateDraftRoot, this.editingTemplateParentId);
+    this.busy = false;
+    this.successMessage = 'Modèle enregistré.';
     this.resetTemplateDraft();
     this.loadTemplates();
     this.scrollToTop();
@@ -558,5 +605,38 @@ export class GoalManagementComponent implements OnInit {
     const user = this.users.find((u) => (u.username ?? '').toLowerCase() === lowered);
     return user ? user.id : null;
   }
+
+  get isGoalFormValid(): boolean {
+    return !!this.form.name.trim() && this.isInt32(this.form.target, 1)
+      && (!this.editingGoal || this.isInt32(this.form.current, 0));
+  }
+
+  private isInt32(value: number, minimum: number): boolean {
+    return Number.isInteger(value) && value >= minimum && value <= 2147483647;
+  }
+
+  get parentOptions(): FlatNode[] {
+    const excluded = new Set<number>();
+    const exclude = (goal: Goal) => { excluded.add(goal.id); (goal.subGoals ?? []).forEach(exclude); };
+    if (this.editingGoal) exclude(this.editingGoal);
+    return this.rootGoals.flatMap(root => [{goal: root, depth: 0}, ...this.getVisibleTree(root)])
+      .filter(node => !excluded.has(node.goal.id));
+  }
+
+  goalTotals(goal: Goal): { current: number; target: number } {
+    if (!goal.subGoals?.length) return {current: goal.current ?? 0, target: goal.target ?? 0};
+    return goal.subGoals.reduce((total, child) => {
+      const next = this.goalTotals(child);
+      return {current: total.current + next.current, target: total.target + next.target};
+    }, {current: 0, target: 0});
+  }
+
+  goalPercent(goal: Goal): number {
+    const total = this.goalTotals(goal);
+    return total.target > 0 ? Math.min(100, Math.max(0, total.current / total.target * 100)) : 0;
+  }
+
+  private beginAction(): void { this.busy = true; this.actionError = ''; this.successMessage = ''; }
+  private failAction(message: string): void { this.busy = false; this.actionError = message; }
 
 }

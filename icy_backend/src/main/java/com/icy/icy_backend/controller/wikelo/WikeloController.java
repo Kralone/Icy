@@ -3,10 +3,9 @@ package com.icy.icy_backend.controller.wikelo;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.db.entity.utils.WikeloShip;
 import com.icy.icy_backend.service.wikelo.WikeloService;
+import com.icy.icy_backend.service.wikelo.WikeloEquipmentCatalog;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,9 +15,11 @@ import java.util.List;
 @RequestMapping("/api/wikelo")
 public class WikeloController {
     private final WikeloService wikeloService;
+    private final WikeloEquipmentCatalog equipmentCatalog;
 
-    public WikeloController(WikeloService wikeloService) {
+    public WikeloController(WikeloService wikeloService, WikeloEquipmentCatalog equipmentCatalog) {
         this.wikeloService = wikeloService;
+        this.equipmentCatalog = equipmentCatalog;
     }
 
     @GetMapping("/ships")
@@ -26,9 +27,10 @@ public class WikeloController {
         return wikeloService.getShips();
     }
 
-    @PostMapping("/ships/rescrape")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
-    public ResponseEntity<MessageResponse<List<WikeloShip>>> rescrapeShips() {
-        return wikeloService.rescrapeShips();
+    @GetMapping("/equipment")
+    public EquipmentResponse getEquipment() {
+        return new EquipmentResponse(equipmentCatalog.getEquipment());
     }
+
+    public record EquipmentResponse(List<WikeloEquipmentCatalog.Equipment> data) {}
 }

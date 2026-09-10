@@ -30,6 +30,15 @@ public class MessagePublisher {
         }
     }
 
+    /** Bounded lifetime for automatic announcements; errors remain visible to the durable retry loop. */
+    public void publishExpiring(String exchange, String routingKey, Object message, long ttlMillis) {
+        if (ttlMillis <= 0) throw new IllegalArgumentException("TTL must be positive");
+        rabbitTemplate.convertAndSend(exchange, routingKey, message, outgoing -> {
+            outgoing.getMessageProperties().setExpiration(Long.toString(ttlMillis));
+            return outgoing;
+        });
+    }
+
     /**
      * Envoie un message simple sous forme de Map.
      */

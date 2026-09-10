@@ -1,3 +1,4 @@
+import { CatalogCorrectionsComponent } from '../catalog-corrections/catalog-corrections.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -11,7 +12,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
   CatalogEntry,
@@ -29,7 +30,7 @@ type FamilyOption = { value: string; label: string; shortLabel: string };
 @Component({
   selector: 'app-catalog-browser',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CatalogCorrectionsComponent],
   templateUrl: './catalog-browser.component.html',
   styleUrl: './catalog-browser.component.css',
   changeDetection: ChangeDetectionStrategy.Eager
@@ -40,9 +41,9 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   readonly families: FamilyOption[] = [
     { value: 'SHIP', label: 'Vaisseaux', shortLabel: 'Vaisseaux' },
     { value: 'GROUND_VEHICLE', label: 'Véhicules terrestres', shortLabel: 'Véhicules' },
-    { value: 'POWER_SUIT', label: 'Armures motorisées', shortLabel: 'Power suits' },
+    { value: 'POWER_SUIT', label: 'Armures motorisées', shortLabel: 'Armures motorisées' },
     { value: 'FPS_WEAPON', label: 'Armes FPS', shortLabel: 'Armes FPS' },
-    { value: 'SHIP_WEAPON', label: 'Armes de vaisseau', shortLabel: 'Armes ship' },
+    { value: 'SHIP_WEAPON', label: 'Armes de vaisseau', shortLabel: 'Armes de vaisseau' },
     { value: 'ARMOR', label: 'Armures', shortLabel: 'Armures' },
     { value: 'SHIP_COMPONENT', label: 'Composants', shortLabel: 'Composants' },
     { value: 'MODULE', label: 'Modules', shortLabel: 'Modules' },
@@ -53,7 +54,7 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     { value: 'MOON', label: 'Lunes', shortLabel: 'Lunes' },
     { value: 'CITY', label: 'Villes', shortLabel: 'Villes' },
     { value: 'STATION', label: 'Stations', shortLabel: 'Stations' },
-    { value: 'JUMP_POINT', label: 'Points de saut', shortLabel: 'Jump points' },
+    { value: 'JUMP_POINT', label: 'Points de saut', shortLabel: 'Points de saut' },
     { value: 'OUTPOST', label: 'Avant-postes', shortLabel: 'Avant-postes' },
     { value: 'LOCATION', label: 'Autres lieux', shortLabel: 'Lieux' }
   ];
@@ -62,6 +63,10 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     'ARMOR', 'SHIP_COMPONENT', 'MODULE', 'TOOL', 'ITEM'
   ].includes(family.value));
   readonly standardFamilies = this.families.filter((family) => family.value !== 'SHIP');
+
+  canCorrect = false;
+  correctionsOpen = false;
+  imageCorrectionOpen = false;
 
   search = '';
   family = '';
@@ -78,17 +83,31 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   error = '';
 
   private readonly catalogService = inject(CatalogService);
+  private readonly route = inject(ActivatedRoute);
+  private routeSubscription?: Subscription;
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private request?: Subscription;
+  private previousBodyOverflow: string | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly currencyFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
   ngOnInit(): void {
-    this.load(0, false);
+    this.catalogService.canCorrect().subscribe(allowed => this.canCorrect = allowed);
+    this.routeSubscription = this.route.queryParamMap.subscribe(params => {
+      const family = params.get('family') || '';
+      this.family = this.families.some(option => option.value === family) ? family : '';
+      const group = params.get('catalogGroup') || (this.family ? 'STANDARD' : 'ALL');
+      this.catalogGroup = ['ALL', 'STANDARD', 'WIKELO', 'PYAM_EXEC', 'BATTAGLIA'].includes(group)
+        ? group as CatalogGroup : 'ALL';
+      this.search = params.get('q') || '';
+      this.load(0, false);
+    });
   }
 
   ngOnDestroy(): void {
+    this.closeDetails();
     this.request?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
     if (this.searchTimer !== null) clearTimeout(this.searchTimer);
   }
 
@@ -142,12 +161,19 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
 
   openDetails(entry: CatalogEntry): void {
     this.selectedEntry = entry;
-    if (this.browser) document.body.style.overflow = 'hidden';
+    this.imageCorrectionOpen = false;
+    if (this.browser) {
+      if (this.previousBodyOverflow === null) this.previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   closeDetails(): void {
     this.selectedEntry = null;
-    if (this.browser) document.body.style.overflow = '';
+    if (this.browser && this.previousBodyOverflow !== null) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = null;
+    }
   }
 
   familyLabel(value: string): string {

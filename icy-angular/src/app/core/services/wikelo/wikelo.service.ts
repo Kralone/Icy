@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../../../model/api-response.model';
+import { WikeloEquipment } from '../../../model/wikelo-equipment.model';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
 
 @Injectable({
@@ -14,7 +15,7 @@ export class WikeloService {
     return this.http.get<ApiResponse<WikeloShip[]>>('/api/wikelo/ships');
   }
 
-  rescrapeShips(): Observable<ApiResponse<WikeloShip[]>> {
-    return this.http.post<ApiResponse<WikeloShip[]>>('/api/wikelo/ships/rescrape', {});
+  getEquipment(): Observable<{ data: WikeloEquipment[] }> {
+    return this.http.get<{ data: WikeloEquipment[] }>('/api/wikelo/equipment');
   }
 }

@@ -7,7 +7,7 @@
   </div>
 
   <!-- Contenu principal -->
-  <div class="relative z-10 w-[450px] bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 animate__animated animate__fadeInUp">
+  <div class="relative z-10 w-full max-w-[450px] my-6 mx-4 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 animate__animated animate__fadeInUp">
 
     <!-- Logo -->
     <div class="flex flex-col items-center mb-6">
@@ -18,55 +18,78 @@
       </p>
     </div>
 
+    @if (successMessage) {
+      <section role="status" class="text-center space-y-4">
+        <h2 class="text-xl font-semibold text-green-300">{{ successMessage }}</h2>
+        <p class="text-gray-200">Ta candidature est transmise à l’équipe IceForge pour examen.</p>
+        <p class="text-sm text-gray-300">Ton identifiant Discord permettra à l’équipe de te contacter. Tu peux maintenant revenir à l’accueil.</p>
+      </section>
+    } @else {
     <!-- Formulaire -->
-    <form [formGroup]="recruitmentForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+    <form [formGroup]="recruitmentForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4" novalidate>
+      <p class="text-sm text-gray-300">Les champs marqués * sont obligatoires.</p>
 
       <div>
-        <label class="text-gray-300 text-sm">Nom en jeu</label>
-        <input type="text" formControlName="username"
+        <label for="username" class="text-gray-300 text-sm">Nom en jeu *</label>
+        <input type="text" id="username" formControlName="username" required [attr.aria-invalid]="recruitmentForm.controls['username'].touched && recruitmentForm.controls['username'].invalid" aria-describedby="username-error"
           class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
           placeholder="Handle RSI ou pseudo" />
+          <p id="username-error" class="text-sm text-red-300" aria-live="polite">
+            @if (recruitmentForm.controls['username'].touched && recruitmentForm.controls['username'].invalid) {
+              Indique ton nom en jeu.
+            }
+          </p>
         </div>
 
         <div>
-          <label class="text-gray-300 text-sm">Discord Tag</label>
-          <input type="text" formControlName="discordTag"
+          <label for="discordTag" class="text-gray-300 text-sm">Identifiant Discord *</label>
+          <input type="text" id="discordTag" formControlName="discordTag" required [attr.aria-invalid]="recruitmentForm.controls['discordTag'].touched && recruitmentForm.controls['discordTag'].invalid" aria-describedby="discordTag-error"
             class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            placeholder="Ex: Glace#1337" />
+            placeholder="Ex. : glace" />
+          <p id="discordTag-error" class="text-sm text-red-300" aria-live="polite">
+            @if (recruitmentForm.controls['discordTag'].touched && recruitmentForm.controls['discordTag'].invalid) {
+              Indique ton identifiant Discord.
+            }
+          </p>
           </div>
 
           <div>
-            <label class="text-gray-300 text-sm">Motivation</label>
-            <textarea rows="3" formControlName="motivation"
+            <label for="motivation" class="text-gray-300 text-sm">Motivation *</label>
+            <textarea rows="3" id="motivation" formControlName="motivation" required [attr.aria-invalid]="recruitmentForm.controls['motivation'].touched && recruitmentForm.controls['motivation'].invalid" aria-describedby="motivation-error"
               class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
             placeholder="Pourquoi veux-tu rejoindre l’organisation ?"></textarea>
+          <p id="motivation-error" class="text-sm text-red-300" aria-live="polite">
+            @if (recruitmentForm.controls['motivation'].touched && recruitmentForm.controls['motivation'].invalid) {
+              Explique ta motivation en au moins 10 caractères.
+            }
+          </p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-gray-300 text-sm">Parrain (optionnel)</label>
-              <input type="text" formControlName="referral"
+              <label for="referral" class="text-gray-300 text-sm">Parrain (optionnel)</label>
+              <input type="text" id="referral" formControlName="referral"
                 class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                 placeholder="Nom du membre" />
               </div>
 
               <div>
-                <label class="text-gray-300 text-sm">Expérience en jeu</label>
-                <input type="text" formControlName="experience"
+                <label for="experience" class="text-gray-300 text-sm">Expérience en jeu (optionnel)</label>
+                <input type="text" id="experience" formControlName="experience"
                   class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                   placeholder="Ex: 300h de vol, exploration..." />
                 </div>
               </div>
 
               <div>
-                <label class="text-gray-300 text-sm">Gameplay préféré</label>
-                <input type="text" formControlName="preferredGameplay"
+                <label for="preferredGameplay" class="text-gray-300 text-sm">Gameplay préféré (optionnel)</label>
+                <input type="text" id="preferredGameplay" formControlName="preferredGameplay"
                   class="w-full mt-1 p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                   placeholder="Commerce, Exploration, Combat, etc." />
                 </div>
 
                 <button type="submit"
-                  [disabled]="loading || recruitmentForm.invalid"
+                  [disabled]="loading"
                   class="relative mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
                   @if (!loading) {
                     <span>🚀 Envoyer ma candidature</span>
@@ -82,18 +105,13 @@
                   }
                 </button>
 
-                @if (successMessage) {
-                  <p class="text-green-400 text-center mt-3 animate__animated animate__fadeIn">
-                    {{ successMessage }}
-                  </p>
-                }
-
                 @if (errorMessage) {
-                  <p class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
+                  <p role="alert" class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
                     {{ errorMessage }}
                   </p>
                 }
               </form>
+    }
 
               <button
                 type="button"

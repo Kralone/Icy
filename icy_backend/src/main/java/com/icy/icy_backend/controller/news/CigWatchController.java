@@ -20,9 +20,33 @@ import java.util.List;
 public class CigWatchController {
 
     private final CigWatchService cigWatchService;
+    private final com.icy.icy_backend.service.news.CigWatchPublicationService publication;
 
-    public CigWatchController(CigWatchService cigWatchService) {
+    public CigWatchController(CigWatchService cigWatchService, com.icy.icy_backend.service.news.CigWatchPublicationService publication) {
+        this.publication = publication;
         this.cigWatchService = cigWatchService;
+    }
+
+    public record TranslationCorrection(String titleFr, String excerptFr) {}
+
+    @org.springframework.web.bind.annotation.PutMapping("/entries/{id}/translation")
+    public ResponseEntity<MessageResponse<CigFeedResponseDTO>> correctTranslation(
+            @org.springframework.web.bind.annotation.PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestBody TranslationCorrection correction) {
+        publication.correctTranslation(id, correction.titleFr(), correction.excerptFr());
+        return cigWatchService.loadLatestFeed(40);
+    }
+
+    @PostMapping("/entries/{id}/retry")
+    public ResponseEntity<MessageResponse<CigFeedResponseDTO>> retry(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        publication.requestAction(id, false);
+        return cigWatchService.loadLatestFeed(40);
+    }
+
+    @PostMapping("/entries/{id}/publish")
+    public ResponseEntity<MessageResponse<CigFeedResponseDTO>> publish(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        publication.requestAction(id, true);
+        return cigWatchService.loadLatestFeed(40);
     }
 
     @GetMapping("/sources")

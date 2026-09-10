@@ -26,9 +26,11 @@ type EntrySortOption =
   standalone: true,
   imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.Eager,
-  templateUrl: './cig-watch-management.component.html'
+  templateUrl: './cig-watch-management.component.html',
+  styleUrl: './cig-watch-management.component.css'
 })
 export class CigWatchManagementComponent implements OnInit, OnDestroy {
+  private destroyed = false;
   private readonly schedulerIntervalMinutes = 5;
   readonly sourceSortOptions: { value: SourceSortOption; label: string }[] = [
     { value: 'LABEL_ASC', label: 'Label A -> Z' },
@@ -38,10 +40,10 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
     { value: 'UPDATED_ASC', label: 'Maj + ancienne' }
   ];
   readonly entrySortOptions: { value: EntrySortOption; label: string }[] = [
-    { value: 'PUBLISHED_DESC', label: 'Published + recent' },
-    { value: 'PUBLISHED_ASC', label: 'Published + ancien' },
-    { value: 'FETCH_DESC', label: 'Fetch + recent' },
-    { value: 'FETCH_ASC', label: 'Fetch + ancien' },
+    { value: 'PUBLISHED_DESC', label: 'Publication : récentes' },
+    { value: 'PUBLISHED_ASC', label: 'Publication : anciennes' },
+    { value: 'FETCH_DESC', label: 'Collecte : récentes' },
+    { value: 'FETCH_ASC', label: 'Collecte : anciennes' },
     { value: 'SOURCE_ASC', label: 'Source A -> Z' },
     { value: 'SOURCE_DESC', label: 'Source Z -> A' },
     { value: 'TITLE_ASC', label: 'Titre A -> Z' },
@@ -75,7 +77,9 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.stopSchedulerCountdownTicker();
+    if (this.refreshPollTimer) clearTimeout(this.refreshPollTimer);
   }
 
   loadSources(): void {
@@ -94,10 +98,12 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
   }
 
   loadFeed(): void {
+    if (this.isLoadingFeed) return;
     this.isLoadingFeed = true;
     this.cigWatchService.getFeed(this.feedLimit).subscribe({
       next: (response) => {
         this.feed = response?.data ?? null;
+        this.error = '';
         this.entries = this.feed?.items ? [...this.feed.items] : [];
         this.applyEntrySort();
         this.refreshEntrySourceFilterOptions();
@@ -105,10 +111,14 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
         this.nextScheduledFetchAt = this.resolveNextScheduledFetchAt(this.feed);
         this.updateSchedulerCountdownLabel();
         this.isLoadingFeed = false;
+        this.updateRefreshState();
       },
       error: (error: HttpErrorResponse) => {
         this.isLoadingFeed = false;
-        this.error = this.extractHttpErrorMessage('Impossible de recuperer le flux CIG brut.', error);
+        this.error = this.extractHttpErrorMessage('Impossible de charger les actualités CIG.', error);
+        if (this.isForcingRefresh && !this.destroyed) {
+          this.refreshPollTimer = setTimeout(() => this.loadFeed(), 10000);
+        }
       }
     });
   }
@@ -128,12 +138,73 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
         this.applyEntrySourceFilter();
         this.nextScheduledFetchAt = this.resolveNextScheduledFetchAt(this.feed);
         this.updateSchedulerCountdownLabel();
-        this.success = 'Refresh force lancé.';
-        this.isForcingRefresh = false;
+        this.updateRefreshState(true);
       },
       error: (error: HttpErrorResponse) => {
         this.isForcingRefresh = false;
-        this.error = this.extractHttpErrorMessage('Impossible de forcer le refresh CIG.', error);
+        this.error = this.extractHttpErrorMessage('Impossible de lancer la collecte CIG.', error);
+      }
+    });
+  }
+
+  private deliveryPollsRemaining = 0;
+  busyEntryId: number | null = null;
+  editingEntryId: number | null = null;
+  draftTitle = '';
+  draftExcerpt = '';
+
+  canPublish(entry: CigRawEntry): boolean {
+    return !!entry.id && !entry.newsId && entry.translationStatus === 'TRANSLATED'
+      && this.feed?.publishingEnabled === true
+      && Date.parse(entry.fetchedAt) >= Date.now() - 86_400_000;
+  }
+
+  canRetry(entry: CigRawEntry): boolean {
+    if (!entry.id || entry.deliveryStatus === 'DELIVERED' || entry.deliveryStatus === 'EXPIRED') return false;
+    return entry.translationStatus !== 'TRANSLATED'
+      || (!!entry.newsId && this.feed?.discordRelayEnabled === true);
+  }
+
+  editTranslation(entry: CigRawEntry): void {
+    if (!entry.id || entry.newsId) return;
+    this.editingEntryId = entry.id;
+    this.draftTitle = entry.title;
+    this.draftExcerpt = entry.rawExcerpt ?? '';
+  }
+
+  runEntryAction(entry: CigRawEntry, action: 'publish' | 'retry'): void {
+    if (!entry.id || this.busyEntryId !== null) return;
+    if (action === 'publish' ? !this.canPublish(entry) : !this.canRetry(entry)) return;
+    this.busyEntryId = entry.id;
+    this.clearMessages();
+    this.cigWatchService.entryAction(entry.id, action).subscribe({
+      next: () => {
+        this.busyEntryId = null;
+        this.deliveryPollsRemaining = 12;
+        this.success = action === 'publish' ? 'Publication traitée. Vérifiez son statut.' : 'Tentative traitée. Vérifiez son statut.';
+        this.loadFeed();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.busyEntryId = null;
+        this.error = this.extractHttpErrorMessage('Action impossible. Rechargez le statut avant de réessayer.', error);
+      }
+    });
+  }
+
+  saveTranslation(entry: CigRawEntry): void {
+    if (!entry.id || entry.newsId || this.busyEntryId !== null || !this.draftTitle.trim() || !this.draftExcerpt.trim()) return;
+    this.busyEntryId = entry.id;
+    this.clearMessages();
+    this.cigWatchService.correctTranslation(entry.id, this.draftTitle.trim(), this.draftExcerpt.trim()).subscribe({
+      next: () => {
+        this.busyEntryId = null;
+        this.editingEntryId = null;
+        this.success = 'Correction enregistrée. La publication reste à déclencher.';
+        this.loadFeed();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.busyEntryId = null;
+        this.error = this.extractHttpErrorMessage('Impossible d’enregistrer la correction.', error);
       }
     });
   }
@@ -153,7 +224,7 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
 
   formatDate(value?: string | Date | null): string {
     if (!value) {
-      return 'n/a';
+      return '—';
     }
     const parsed = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(parsed.getTime())) {
@@ -260,6 +331,9 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
   private startSchedulerCountdownTicker(): void {
     this.stopSchedulerCountdownTicker();
     this.schedulerCountdownTimer = setInterval(() => {
+      if (this.nextScheduledFetchAt && this.nextScheduledFetchAt.getTime() <= Date.now()) {
+        this.loadFeed();
+      }
       this.updateSchedulerCountdownLabel();
     }, 1_000);
   }
@@ -359,4 +433,21 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
   }
 
   private schedulerCountdownTimer: ReturnType<typeof setInterval> | null = null;
+  private refreshPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private updateRefreshState(manual = false): void {
+    if (this.destroyed) return;
+    const wasRefreshing = this.isForcingRefresh || manual;
+    this.isForcingRefresh = this.feed?.refreshing === true;
+    if (this.refreshPollTimer) clearTimeout(this.refreshPollTimer);
+    this.refreshPollTimer = null;
+    if (this.isForcingRefresh) {
+      this.refreshPollTimer = setTimeout(() => this.loadFeed(), 3000);
+    } else if (this.deliveryPollsRemaining > 0 && this.entries.some(entry => entry.deliveryStatus === 'PENDING')) {
+      this.deliveryPollsRemaining--;
+      this.refreshPollTimer = setTimeout(() => this.loadFeed(), 3000);
+    } else if (wasRefreshing) {
+      this.success = this.feed?.errors?.length ? 'Collecte terminée avec des erreurs.' : 'Collecte terminée.';
+    }
+  }
 }

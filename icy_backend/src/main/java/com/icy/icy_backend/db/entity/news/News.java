@@ -23,6 +23,9 @@ public class News {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id", nullable = false)
     private NewsType type;

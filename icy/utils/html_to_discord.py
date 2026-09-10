@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import re
+from urllib.parse import urlparse, quote
 
 def html_to_discord(html: str) -> str:
     """
@@ -35,6 +36,21 @@ def html_to_discord(html: str) -> str:
         if color:
             color = color.strip().lower()
             font.insert_before(f"🎨({color}) ")
+
+    # Preserve source links and paragraph boundaries in news embeds.
+    for link in soup.find_all("a"):
+        href = (link.get("href") or "").strip()
+        try:
+            parsed = urlparse(href)
+            valid = parsed.scheme in ("http", "https") and parsed.hostname and not parsed.username
+        except ValueError:
+            valid = False
+        if valid:
+            label = link.get_text().replace("[", "\\[").replace("]", "\\]")
+            safe_url = quote(href, safe=":/?#=&%+@,;~!$*'-._")
+            link.replace_with(f"[{label}]({safe_url})")
+    for paragraph in soup.find_all("p"):
+        paragraph.insert_after("\n\n")
 
     # Supprimer les balises HTML restantes
     text = soup.get_text()

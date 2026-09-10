@@ -1,247 +1,130 @@
-<div class="wikelo-shell">
-  <div class="wikelo-orb wikelo-orb--a"></div>
-  <div class="wikelo-orb wikelo-orb--b"></div>
-  <div class="wikelo-orb wikelo-orb--c"></div>
-
-  <div class="wikelo-frame">
-    <header class="wikelo-topbar">
-      <a [routerLink]="[backToMenuLink]" class="wikelo-back-link">
-        <span>←</span>
-        Retour aux utilitaires
-      </a>
-      @if (canRescrape) {
-        <button
-          type="button"
-          (click)="triggerRescrape()"
-          [disabled]="isRescraping"
-          class="wikelo-rescrape-btn"
-          >
-          {{ isRescraping ? 'Rescrape en cours...' : 'Rescraper Wikelo' }}
-        </button>
-      }
+<div class="wikelo-page" [@.disabled]="reducedMotion">
+  <div class="wikelo-content">
+    <a class="back-link" [routerLink]="[backToMenuLink]">← Retour aux utilitaires</a>
+    <header class="intro">
+      <h1><span>Wikelo</span></h1>
+      <div class="catalog-count"><strong>{{ selectedView === 'ships' ? ships.length : categoryEquipment.length }}</strong><span>{{ selectedView === 'ships' ? 'échanges' : 'équipements' }}</span></div>
     </header>
-
-    <section class="wikelo-intro">
-      <div class="wikelo-intro-text">
-        <p class="wikelo-overline">Wikelo Utility</p>
-        <h1>Wikelo Fleet Atlas</h1>
+    <section class="search-panel" aria-label="Recherche Wikelo">
+      <div class="view-tabs" role="group" aria-label="Catalogue affiché">
+        <button type="button" [class.active]="selectedView === 'ships'" [attr.aria-pressed]="selectedView === 'ships'" (click)="setView('ships')">Vaisseaux</button>
+        <button type="button" [class.active]="selectedView === 'weapons'" [attr.aria-pressed]="selectedView === 'weapons'" (click)="setView('weapons')">Armes</button>
+        <button type="button" [class.active]="selectedView === 'armor'" [attr.aria-pressed]="selectedView === 'armor'" (click)="setView('armor')">Armures</button>
+        @if (hasOtherEquipment) { <button type="button" [class.active]="selectedView === 'other'" [attr.aria-pressed]="selectedView === 'other'" (click)="setView('other')">Autres équipements</button> }
       </div>
-      <div class="wikelo-metrics">
-        <article>
-          <span>Vaisseaux</span>
-          <strong>{{ ships.length }}</strong>
-        </article>
-      </div>
+      <label for="wikelo-search">Rechercher</label>
+      <div class="search-row"><input id="wikelo-search" type="search" [ngModel]="searchTerm" (ngModelChange)="setSearchTerm($event)" placeholder="Nom, ingrédient ou équipement" autocomplete="off">@if (searchTerm) { <button type="button" class="secondary" (click)="clearSearch()">Effacer</button> }</div>
     </section>
-
-    <section class="wikelo-search-panel">
-      <label for="wikelo-search" class="wikelo-search-title">Recherche dynamique</label>
-      <div class="wikelo-search-input-wrap">
-        <input
-          id="wikelo-search"
-          type="text"
-          [ngModel]="searchTerm"
-          (ngModelChange)="setSearchTerm($event)"
-          placeholder="Nom du vaisseau, composant ou coût"
-          class="wikelo-search-input"
-          autocomplete="off"
-          />
-          @if (searchTerm) {
-            <button type="button" class="wikelo-clear-btn" (click)="clearSearch()">
-              Effacer
-            </button>
-          }
-        </div>
-        @if (searchTerm && searchSuggestions.length) {
-          <div class="wikelo-search-list">
-            @for (suggestion of searchSuggestions; track suggestion) {
-              <button
-                type="button"
-                class="wikelo-search-item"
-                (click)="setSearchTerm(suggestion)"
-                >
-                {{ suggestion }}
-              </button>
-            }
-          </div>
-        }
-      </section>
-
-      <section class="wikelo-status-stack">
-        @if (isLoading) {
-          <p class="wikelo-status wikelo-status--info">Chargement des donnees Wikelo...</p>
-        }
-        @if (errorMessage) {
-          <p class="wikelo-status wikelo-status--error">{{ errorMessage }}</p>
-        }
-        @if (goalCreateStatus) {
-          <p class="wikelo-status wikelo-status--success">{{ goalCreateStatus }}</p>
-        }
-      </section>
-
-      @if (!isLoading && !errorMessage) {
-        <section class="wikelo-grid-wrap">
-          <div class="wikelo-grid-head">
-            <h2>Resultats</h2>
-            <p>{{ filteredShips.length }} resultat(s)</p>
-          </div>
-          <div class="wikelo-grid">
-            @for (ship of filteredShips; track ship) {
-              <article class="wikelo-card">
-                <div class="wikelo-card-media">
-                  @if (getShipImage(ship.shipName); as imageUrl) {
-                    <img
-                      [src]="imageUrl"
-                      [alt]="ship.shipName"
-                      class="wikelo-table-image"
-                      loading="lazy"
-                      />
-                  } @else {
-                    <div class="wikelo-table-image-fallback">N/A</div>
-                  }
+    <div aria-live="polite">
+      @if (selectedView !== 'ships') {
+        @if (equipmentLoading) { <app-async-state kind="loading" title="Chargement des équipements…" /> }
+        @else if (equipmentError) { <app-async-state kind="error" [title]="equipmentError" actionLabel="Réessayer" (action)="loadEquipment()" /> }
+        @else if (!categoryEquipment.length) { <app-async-state kind="empty" title="Aucune fiche publiée dans cette catégorie" /> }
+        @else {
+          <div class="results-heading"><h2>{{ equipmentCategoryLabel }}</h2><span>{{ filteredEquipment.length }} fiche(s)</span></div>
+          @if (!filteredEquipment.length) { <app-async-state kind="empty" title="Aucun équipement trouvé" actionLabel="Effacer la recherche" (action)="clearSearch()" /> }
+          <div class="offer-grid">
+            @for (item of filteredEquipment; track item.id) {
+              <article class="offer equipment-offer" [class.offer-expanded]="expandedEquipmentId === item.id" (click)="onEquipmentClick($event, item.id)">
+                <div class="offer-media">
+                  @if (equipmentImage(item); as image) { <img [src]="image" [alt]="item.name" loading="lazy" (error)="imageFailed(image)"> }
+                  @else { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
                 </div>
-                <div class="wikelo-card-body">
-                  <div class="wikelo-ship-head">
-                    <h3>{{ ship.shipName }}</h3>
-                    <span class="wikelo-rep-tag">Tier {{ getReputationTier(ship.reputationText) }}</span>
-                  </div>
-                  <ul class="wikelo-preview-list">
-                    @for (component of getPreviewComponents(ship.componentsText); track component) {
-                      <li>
-                        {{ component }}
-                      </li>
-                    }
-                  </ul>
-                  @if (!getPreviewComponents(ship.componentsText).length) {
-                    <p class="wikelo-empty">Aucun composant.</p>
-                  }
-                  @if (getRemainingComponentCount(ship.componentsText) > 0) {
-                    <p class="wikelo-more">
-                      + {{ getRemainingComponentCount(ship.componentsText) }} autre(s) composant(s)
-                    </p>
-                  }
-                  <div class="wikelo-actions">
-                    <button
-                      type="button"
-                      (click)="toggleDetails(ship.shipName)"
-                      class="wikelo-toggle"
-                      >
-                      {{ isExpanded(ship.shipName) ? 'Masquer les details' : 'Voir plus' }}
-                    </button>
-                    @if (canRescrape) {
-                      <button
-                        type="button"
-                        (click)="openGoalModal(ship)"
-                        class="wikelo-toggle wikelo-toggle--goal"
-                        >
-                        Ajouter objectif
-                      </button>
-                    }
-                  </div>
+                <div class="offer-body">
+                  <p class="manufacturer">{{ item.family === 'FPS_WEAPON' ? 'Arme' : item.family === 'ARMOR' ? 'Armure' : 'Vêtement' }} @if (item.manufacturer) { · {{ item.manufacturer }} }</p>
+                  <h3>{{ item.name }}</h3>
+                  @if (!item.recipes?.length) { <p class="conditions-unavailable">Conditions d’échange indisponibles</p> }
+                  <button type="button" class="primary details-toggle" [class.collapse-toggle]="expandedEquipmentId === item.id" [attr.aria-label]="expandedEquipmentId === item.id ? 'Réduire la fiche de ' + item.name : null" [attr.aria-expanded]="expandedEquipmentId === item.id" [attr.aria-controls]="'equipment-details-' + item.id" (click)="toggleEquipment(item.id)">@if (expandedEquipmentId !== item.id) { {{ item.recipes?.length ? 'Voir l’échange' : 'Voir la fiche' }} } <span aria-hidden="true">{{ expandedEquipmentId === item.id ? '−' : '+' }}</span></button>
                 </div>
-                @if (isExpanded(ship.shipName)) {
-                  <div class="wikelo-row-details" @detailsExpand>
-                    <div class="wikelo-detail-grid">
-                      <section>
-                        <h4>Cout</h4>
-                        <ul>
-                          @for (part of toCommaParts(ship.costText); track part) {
-                            <li>{{ part }}</li>
-                          }
-                        </ul>
-                        @if (!toCommaParts(ship.costText).length) {
-                          <p class="wikelo-empty">Non renseigne.</p>
+                @if (expandedEquipmentId === item.id) {
+                  <div class="offer-details equipment-description" [id]="'equipment-details-' + item.id" @detailsExpand>
+                    @if (item.recipes?.length) {
+                      <section class="equipment-recipes" aria-label="Conditions d’échange">
+                        @for (recipe of item.recipes; track recipe.id) {
+                          <article class="equipment-recipe">
+                            <header class="recipe-heading"><h4>{{ recipe.name }}</h4>@if (equipmentReputation(recipe.reputation); as reputation) { <span class="recipe-reputation">Réputation : {{ reputation }}</span> }</header>
+                            <div class="recipe-columns">
+                              <section><h5>À fournir</h5><ul class="recipe-items recipe-cost">@for (ingredient of recipe.ingredients; track $index) { <li>@if (ingredient.quantity) { <strong>{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> } @empty { <li>Ingrédients non renseignés.</li> }</ul></section>
+                              <section><h5>Récompenses de l’échange</h5><ul class="recipe-items recipe-rewards">@for (reward of recipe.rewards; track $index) { <li>@if (reward.quantity) { <strong>{{ reward.quantity }}</strong> }<span>{{ reward.name }}</span></li> } @empty { <li>Récompenses non renseignées.</li> }</ul></section>
+                            </div>
+                          </article>
                         }
                       </section>
-                      <section>
-                        <h4>Fiche base</h4>
-                        @if (getCatalogShip(ship.shipName); as catalog) {
-                          <ul>
-                            <li><strong>Nom base:</strong> {{ catalog.name }}</li>
-                            <li><strong>Fabricant:</strong> {{ catalog.brand.name || 'Non renseigne' }}</li>
-                            <li><strong>Focus:</strong> {{ catalog.focus || 'Non renseigne' }}</li>
-                            <li><strong>Taille:</strong> {{ catalog.size || 'Non renseigne' }}</li>
-                            <li><strong>Crew:</strong> {{ catalog.crew || 'Non renseigne' }}</li>
-                            <li><strong>SCU:</strong> {{ catalog.scu ?? 'Non renseigne' }}</li>
-                          </ul>
-                        } @else {
-                          <p class="wikelo-empty">Aucune donnee base disponible pour ce vaisseau.</p>
-                        }
+                    }
+                    @let presentation = equipmentPresentation(item);
+                    @if (presentation.characteristics.length) {
+                      <section class="equipment-characteristics" aria-label="Caractéristiques">
+                        <h4>Caractéristiques</h4>
+                        <dl class="equipment-spec-grid">@for (feature of presentation.characteristics; track $index) { <div [attr.data-tone]="feature.tone"><dt>{{ feature.label }}</dt><dd>{{ feature.value }}</dd></div> }</dl>
                       </section>
-                    </div>
+                    }
+                    @if (presentation.paragraphs.length) {
+                      <section class="equipment-prose" aria-label="Description"><h4>Description</h4>@for (paragraph of presentation.paragraphs; track $index) { <p>{{ paragraph }}</p> }</section>
+                    } @else if (!presentation.characteristics.length) { <p class="muted">Description non renseignée.</p> }
                   </div>
                 }
               </article>
             }
           </div>
-          @if (!filteredShips.length) {
-            <p class="wikelo-empty wikelo-empty--global">
-              Aucun resultat pour cette recherche.
-            </p>
-          }
-        </section>
+        }
+      } @else {
+        @if (isLoading) { <app-async-state kind="loading" title="Chargement des échanges…" /> }
+        @else if (errorMessage) { <app-async-state kind="error" title="Catalogue indisponible" [description]="errorMessage" actionLabel="Réessayer" (action)="loadShips()" /> }
+        @else if (!ships.length) { <app-async-state kind="empty" title="Aucun échange publié" actionLabel="Actualiser" (action)="loadShips()" /> }
+        @else {
+          <div class="results-heading"><h2>Vaisseaux</h2><span>{{ filteredShips.length }} échange(s)</span></div>
+          @if (catalogUnavailable) { <p class="notice">Fiches techniques momentanément indisponibles.</p> }
+          @if (!filteredShips.length) { <app-async-state kind="empty" title="Aucun échange trouvé" actionLabel="Effacer la recherche" (action)="clearSearch()" /> }
+          <div class="offer-grid">
+            @for (ship of filteredShips; track ship.id) {
+              <article class="offer" [class.offer-expanded]="isExpanded(ship.shipName)" (click)="onCardClick($event, ship.shipName)">
+                <div class="offer-media">
+                  @if (getShipImage(ship.shipName); as image) { <img [src]="image" [alt]="ship.shipName" loading="lazy" (error)="imageFailed(image)"> }
+                  @else { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
+                </div>
+                <div class="offer-body">
+                  @if (getCatalogShip(ship.shipName)?.brand; as brand) { <p class="manufacturer ship-manufacturer">@if (brand.imageUrl && !failedImages.has(brand.imageUrl)) { <img [src]="brand.imageUrl" alt="" loading="lazy" (error)="imageFailed(brand.imageUrl)"> }<span>{{ brand.name }}</span></p> }
+                  <h3>{{ ship.shipName }}</h3>
+                  @if (getCatalogShip(ship.shipName); as catalog) {
+                    <dl class="specs"><div><dt>Rôle</dt><dd>{{ catalog.focus || 'Non renseigné' }}</dd></div><div><dt>Équipage</dt><dd>{{ catalog.crew || 'Non renseigné' }}</dd></div><div><dt>Soute cargo</dt><dd>{{ catalog.scu === null || catalog.scu === undefined ? 'Non renseignée' : catalog.scu + ' SCU' }}</dd></div>@if ((catalog.oreCapacity ?? 0) > 0) { <div><dt>Minerai</dt><dd>{{ catalog.oreCapacity }} SCU</dd></div> }<div><dt>Taille</dt><dd>{{ catalog.size || 'Non renseignée' }}</dd></div></dl>
+                  }
+                  <button type="button" class="primary details-toggle" [class.collapse-toggle]="isExpanded(ship.shipName)" [attr.aria-label]="isExpanded(ship.shipName) ? 'Réduire la fiche de ' + ship.shipName : null" [attr.aria-expanded]="isExpanded(ship.shipName)" [attr.aria-controls]="'offer-details-' + ship.id" (click)="toggleDetails(ship.shipName)">@if (!isExpanded(ship.shipName)) { Voir l’échange } <span aria-hidden="true">{{ isExpanded(ship.shipName) ? '−' : '+' }}</span></button>
+                </div>
+                @if (isExpanded(ship.shipName)) {
+                  <div class="offer-details" [id]="'offer-details-' + ship.id" @detailsExpand>
+                    <section class="ingredients-section"><h4>Ingrédients <span>{{ ingredientDetails(ship).length }}</span></h4>
+                      @if (ingredientDetails(ship).length) { <ul class="item-grid ingredient-list">@for (ingredient of ingredientDetails(ship); track $index) { <li>@if (ingredient.quantity) { <strong class="quantity">{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> }</ul> }
+                      @else { <p class="muted">Non renseignés.</p> }
+                    </section>
+                    @if (equipmentDetails(ship).length) {
+                      <section class="equipment-section"><h4>Équipement inclus <span>{{ equipmentDetails(ship).length }}</span></h4>
+                        <ul class="item-grid equipment-list">@for (component of equipmentDetails(ship); track $index) { <li><div class="item-heading">@if (component.category) { <span class="component-category">{{ component.category }}</span> }@if (component.quantity) { <strong class="quantity">{{ component.quantity }}</strong> }</div><span class="component-name">{{ component.name }}</span>@if (component.grade) { <span class="component-grade">{{ component.grade }}</span> }</li> }</ul>
+                      </section>
+                    }
+                    <footer class="exchange-footer">
+                      <dl class="mission-meta"><div><dt>Mission</dt><dd>{{ missionName(ship) }}</dd></div>@if (ship.reputationText) { <div><dt>Réputation</dt><dd>{{ ship.reputationText }}</dd></div> }</dl>
+                      @if (canCreateGoals) { <button type="button" class="secondary create-goal" (click)="openGoalModal(ship)"><span aria-hidden="true">＋</span> Créer un objectif</button> }
+                    </footer>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        }
       }
+      @if (goalCreateStatus && !isGoalModalOpen) { <p class="notice" role="status">{{ goalCreateStatus }}</p> }
     </div>
   </div>
-
-  @if (isGoalModalOpen && selectedGoalShip) {
-    <div
-      class="wikelo-modal-backdrop"
-      (click)="closeGoalModal()"
-      >
-      <div class="wikelo-modal" (click)="$event.stopPropagation()">
-        <h3 class="wikelo-modal-title">Confirmer l ajout d objectif</h3>
-        <p class="wikelo-modal-subtitle">Objectif parent: <strong>Wikelo - {{ selectedGoalShip.shipName }}</strong></p>
-        <label class="wikelo-label">Attribuer a un joueur (optionnel)</label>
-        <input
-          [(ngModel)]="goalAssignUserInput"
-          (input)="onGoalUserInputChange()"
-          list="wikelo-goal-users"
-          placeholder="Pseudo joueur"
-          class="wikelo-input"
-          />
-          <datalist id="wikelo-goal-users">
-            @for (user of users; track user) {
-              <option [value]="user.username"></option>
-            }
-          </datalist>
-          <div class="wikelo-modal-preview">
-            <div class="wikelo-modal-ship-preview">
-              @if (getShipImage(selectedGoalShip.shipName); as modalImageUrl) {
-                <img
-                  [src]="modalImageUrl"
-                  [alt]="selectedGoalShip.shipName"
-                  class="wikelo-modal-image"
-                  loading="lazy"
-                  />
-              } @else {
-                <div class="wikelo-modal-image-fallback">N/A</div>
-              }
-              <div class="wikelo-modal-ship-name">{{ selectedGoalShip.shipName }}</div>
-            </div>
-            <h4>Sous-objectifs (ingredients)</h4>
-            <ul>
-              @for (ingredient of getGoalPreviewIngredients(); track ingredient) {
-                <li>
-                  {{ ingredient.name }} <span>x{{ ingredient.target }}</span>
-                </li>
-              }
-            </ul>
-            @if (!getGoalPreviewIngredients().length) {
-              <p class="wikelo-empty">Aucun ingredient detecte.</p>
-            }
-          </div>
-          <div class="wikelo-modal-actions">
-            <button type="button" class="wikelo-btn wikelo-btn-cancel" (click)="closeGoalModal()">Annuler</button>
-            <button
-              type="button"
-              class="wikelo-btn wikelo-btn-confirm"
-              [disabled]="isCreatingGoal"
-              (click)="confirmCreateGoal()"
-              >
-              {{ isCreatingGoal ? 'Creation...' : 'Confirmer et creer' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
+</div>
+@if (isGoalModalOpen && selectedGoalShip) {
+  <div class="modal-backdrop" (click)="closeGoalModal()">
+    <section cdkTrapFocus [cdkTrapFocusAutoCapture]="true" class="goal-modal" role="dialog" aria-modal="true" aria-labelledby="goal-title" (click)="$event.stopPropagation()" (keydown.escape)="closeGoalModal()">
+      <p class="eyebrow">OBJECTIF</p><h2 id="goal-title">{{ selectedGoalShip.shipName }}</h2>
+      <label for="goal-user">Joueur (facultatif)</label><input cdkFocusInitial id="goal-user" [(ngModel)]="goalAssignUserInput" (input)="onGoalUserInputChange()" list="wikelo-goal-users" placeholder="Choisir un pseudo" [disabled]="isCreatingGoal">
+      <datalist id="wikelo-goal-users">@for (user of users; track user.id) { <option [value]="user.username"></option> }</datalist>
+      <h3>Ingrédients</h3><ul class="ingredient-list">@for (ingredient of getGoalPreviewIngredients(); track $index) { <li><strong class="quantity">{{ ingredient.target }} ×</strong> {{ ingredient.name }}</li> }</ul>
+      @if (goalCreateStatus) { <p role="alert" class="notice">{{ goalCreateStatus }}</p> }
+      <div class="modal-actions"><button type="button" class="secondary" (click)="closeGoalModal()" [disabled]="isCreatingGoal">Annuler</button><button type="button" class="primary" [disabled]="isCreatingGoal" (click)="confirmCreateGoal()">{{ isCreatingGoal ? 'Création…' : 'Créer l’objectif' }}</button></div>
+    </section>
+  </div>
+}

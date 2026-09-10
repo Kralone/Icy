@@ -8,8 +8,6 @@ import com.icy.icy_backend.config.UexProperties;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.front.UexRefineryDatasetsDTO;
 import com.icy.icy_backend.controller.dto.response.front.UexResourceSaleDTO;
-import com.icy.icy_backend.controller.dto.response.front.UexVehiclePurchaseDTO;
-import com.icy.icy_backend.controller.dto.response.front.UexVehicleRentalDTO;
 import com.icy.icy_backend.controller.dto.response.front.UexVehicleTerminalDTO;
 import com.icy.icy_backend.controller.dto.utils.UexDatasetDetailDTO;
 import com.icy.icy_backend.controller.dto.utils.UexDatasetSummaryDTO;
@@ -56,11 +54,6 @@ public class UexDatasetService {
             Map.entry("quantanium", "Quantainium"),
             Map.entry("ice", "Raw Ice")
     );
-    private static final Map<String, String> VEHICLE_NAME_ALIASES = Map.ofEntries(
-            Map.entry("mole", "Argo MOLE"),
-            Map.entry("roc", "Greycat ROC")
-    );
-
     private final UexDatasetCacheRepository cacheRepository;
     private final MessageService messageService;
     private final UexProperties uexProperties;
@@ -389,62 +382,6 @@ public class UexDatasetService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<MessageResponse<List<UexVehiclePurchaseDTO>>> listVehiclePurchases() {
-        Optional<UexDatasetCache> purchasesCache = cacheRepository.findById("vehicles_purchases_prices");
-        if (purchasesCache.isEmpty()) {
-            return messageService.buildResponse("uex.vehicles.purchases.list", List.of(), 0);
-        }
-
-        JsonNode payload = purchasesCache.get().getPayload();
-        if (payload == null || !payload.isArray()) {
-            return messageService.buildResponse("uex.vehicles.purchases.list", List.of(), 0);
-        }
-
-        List<UexVehiclePurchaseDTO> rows = new ArrayList<>();
-        for (JsonNode row : payload) {
-            String vehicleName = normalizeVehicleName(row.path("vehicle_name").asText(""));
-            String terminalName = row.path("terminal_name").asText("").trim();
-            int buyPrice = row.path("price_buy").asInt(0);
-
-            if (vehicleName.isBlank() || terminalName.isBlank() || buyPrice <= 0) {
-                continue;
-            }
-
-            rows.add(new UexVehiclePurchaseDTO(vehicleName, terminalName, buyPrice));
-        }
-
-        return messageService.buildResponse("uex.vehicles.purchases.list", rows, rows.size());
-    }
-
-    @Transactional(readOnly = true)
-    public ResponseEntity<MessageResponse<List<UexVehicleRentalDTO>>> listVehicleRentals() {
-        Optional<UexDatasetCache> rentalsCache = cacheRepository.findById("vehicles_rentals_prices");
-        if (rentalsCache.isEmpty()) {
-            return messageService.buildResponse("uex.vehicles.rentals.list", List.of(), 0);
-        }
-
-        JsonNode payload = rentalsCache.get().getPayload();
-        if (payload == null || !payload.isArray()) {
-            return messageService.buildResponse("uex.vehicles.rentals.list", List.of(), 0);
-        }
-
-        List<UexVehicleRentalDTO> rows = new ArrayList<>();
-        for (JsonNode row : payload) {
-            String vehicleName = normalizeVehicleName(row.path("vehicle_name").asText(""));
-            String terminalName = row.path("terminal_name").asText("").trim();
-            int rentPrice = row.path("price_rent").asInt(0);
-
-            if (vehicleName.isBlank() || terminalName.isBlank() || rentPrice <= 0) {
-                continue;
-            }
-
-            rows.add(new UexVehicleRentalDTO(vehicleName, terminalName, rentPrice));
-        }
-
-        return messageService.buildResponse("uex.vehicles.rentals.list", rows, rows.size());
-    }
-
-    @Transactional(readOnly = true)
     public ResponseEntity<MessageResponse<List<UexVehicleTerminalDTO>>> listVehicleTerminals() {
         Optional<UexDatasetCache> terminalsCache = cacheRepository.findById("terminals");
         if (terminalsCache.isEmpty()) {
@@ -581,15 +518,6 @@ public class UexDatasetService {
         String normalized = normalizeKey(rawName).replace(" ", "");
         String alias = RESOURCE_ALIASES.get(normalized);
         return alias != null ? alias : rawName;
-    }
-
-    private String normalizeVehicleName(String rawName) {
-        String trimmed = rawName == null ? "" : rawName.trim();
-        if (trimmed.isBlank()) {
-            return "";
-        }
-        String alias = VEHICLE_NAME_ALIASES.get(normalizeKey(trimmed));
-        return alias != null ? alias : trimmed;
     }
 
     private String emptyToNull(String value) {

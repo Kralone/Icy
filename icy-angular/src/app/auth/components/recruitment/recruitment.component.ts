@@ -1,8 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Recruitment } from './recruitment.model';
-import {Router, RouterLink} from '@angular/router';
+import {RouterLink} from '@angular/router';
 import {RecruitmentService} from '../../../core/services/recruitment/recruitment.service';
 
 @Component({
@@ -20,8 +19,7 @@ export class RecruitmentComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private recruitmentService: RecruitmentService,
-    private router: Router
+    private recruitmentService: RecruitmentService
   ) {}
 
   ngOnInit() {
@@ -37,7 +35,8 @@ export class RecruitmentComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('🚀 onSubmit() déclenché');
+    if (this.loading || this.successMessage) return;
+    this.recruitmentForm.markAllAsTouched();
     if (this.recruitmentForm.invalid) return;
 
     this.loading = true;
@@ -57,11 +56,7 @@ export class RecruitmentComponent implements OnInit {
     this.recruitmentService.create(recruitmentData).subscribe({
       next: () => {
         this.loading = false;
-        this.successMessage = '✅ Candidature envoyée avec succès !';
-        this.recruitmentForm.reset();
-
-        // Redirection automatique après 3 secondes
-        setTimeout(() => this.router.navigate(['/auth/login']), 3000);
+        this.successMessage = 'Candidature envoyée avec succès !';
       },
       error: (err) => {
         console.error('Erreur création candidature :', err);

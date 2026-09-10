@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { roleGuard } from './auth/guards/role.guard';
 import { authGuard } from './auth/guards/auth.guard';
 
@@ -308,11 +309,11 @@ export const routes: Routes = [
           },
           {
             path: 'ships',
-            loadComponent: () => import('./features/admin/ship-management/ship-management.component').then(m => m.ShipManagementComponent)
+            redirectTo: () => inject(Router).createUrlTree(['/icy/admin/catalog'], {queryParams: {family: 'SHIP', catalogGroup: 'STANDARD'}}), pathMatch: 'full'
           },
           {
             path: 'items',
-            loadComponent: () => import('./features/admin/item-management/item-management.component').then(m => m.ItemManagementComponent)
+            redirectTo: () => inject(Router).createUrlTree(['/icy/admin/catalog'], {queryParams: {family: 'ITEM', catalogGroup: 'STANDARD'}}), pathMatch: 'full'
           },
           {
             path: 'data',
@@ -320,11 +321,11 @@ export const routes: Routes = [
           },
           {
             path: 'planets',
-            loadComponent: () => import('./features/admin/planet-management/planet-management.component').then(m => m.PlanetManagementComponent)
+            redirectTo: () => inject(Router).createUrlTree(['/icy/admin/catalog'], {queryParams: {family: 'PLANET', catalogGroup: 'STANDARD'}}), pathMatch: 'full'
           },
           {
             path: 'stations',
-            loadComponent: () => import('./features/admin/station-management/station-management.component').then(m => m.StationManagementComponent)
+            redirectTo: () => inject(Router).createUrlTree(['/icy/admin/catalog'], {queryParams: {family: 'STATION', catalogGroup: 'STANDARD'}}), pathMatch: 'full'
           },
           {
             path: 'recrutement',

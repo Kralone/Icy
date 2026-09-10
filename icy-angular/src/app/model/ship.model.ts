@@ -17,6 +17,7 @@ export interface Ship {
   name: string;
   brand: {
     name: string;
+    imageUrl?: string;
   };
   imageUrl: string;
   focus: string;
@@ -24,7 +25,8 @@ export interface Ship {
   catalogGroup?: ShipCatalogGroup;
   notes?: string;
   size?: string;
-  scu?: number;
+  scu?: number | null;
+  oreCapacity?: number | null;
   flightReady?: boolean;
   inGamePurchase?: boolean;
   rewardInGame?: boolean;

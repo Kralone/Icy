@@ -126,12 +126,13 @@ public class WikeloService {
         String spreadsheetId = wikeloProperties.getSpreadsheetId();
         Long gid = wikeloProperties.getShipsGid();
         if (gid != null && gid > 0) {
-            return "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/gviz/tq?tqx=out:csv&gid=" + gid;
+            // Disable Google's inferred headers: it otherwise merges credit rows into ship names.
+            return "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/gviz/tq?tqx=out:csv&headers=0&gid=" + gid;
         }
 
         String sheetName = wikeloProperties.getShipsSheetName();
         String encodedSheetName = UriUtils.encodePathSegment(sheetName, StandardCharsets.UTF_8);
-        return "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/gviz/tq?tqx=out:csv&sheet=" + encodedSheetName;
+        return "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/gviz/tq?tqx=out:csv&headers=0&sheet=" + encodedSheetName;
     }
 
     private List<List<String>> parseCsv(String csvContent) {

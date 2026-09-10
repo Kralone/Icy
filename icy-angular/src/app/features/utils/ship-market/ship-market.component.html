@@ -1,4 +1,4 @@
-<div class="ship-market-page min-h-screen w-full text-white px-6 py-10">
+<div class="ship-market-page min-h-screen w-full text-white px-4 sm:px-6 py-8 sm:py-10">
   <div
     class="ship-market-bg ship-market-bg--layer"
     [class.ship-market-bg--active]="isPrimaryLayerVisible"
@@ -9,7 +9,7 @@
     [class.ship-market-bg--active]="!isPrimaryLayerVisible"
     [style.background]="secondaryBackground"
   ></div>
-  <div class="ship-market-content max-w-7xl mx-auto space-y-8">
+  <div class="ship-market-content space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <a
         [routerLink]="[backToMenuLink]"
@@ -19,32 +19,40 @@
       </a>
     </div>
 
-    <section class="ship-market-hero rounded-2xl border border-white/10 p-6">
+    <section class="ship-market-hero rounded-2xl border border-white/10 p-6 sm:p-8">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p class="text-xs uppercase tracking-[0.28em] text-slate-300">Utilitaire</p>
-          <h1 class="text-3xl font-semibold text-cyan-100">Acheter Un Vaisseau</h1>
-          <span class="text-xs">Votre prochain vaisseau de rêve vous attend...</span>
-        </div>
+<h1 class="text-3xl sm:text-4xl font-semibold text-cyan-100">Acheter ou louer un vaisseau</h1>
+</div>
+
       </div>
     </section>
 
-    <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-5">
+    <section class="ship-market-catalog-panel rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-4 sm:p-6">
       @if (isLoading) {
-        <p class="text-slate-300">Chargement du catalogue achat/location...</p>
+        <div class="ship-market-loading" role="status" aria-live="polite">
+          <span class="ship-market-loading-spinner" aria-hidden="true"></span>
+          <div>
+            <strong>Chargement du catalogue</strong>
+            <p>Récupération des offres d’achat et de location…</p>
+          </div>
+        </div>
       }
       @if (errorMessage) {
-        <p class="text-red-300">{{ errorMessage }}</p>
+        <div class="ship-market-error" role="alert">
+          <strong>Catalogue indisponible</strong>
+          <p>{{ errorMessage }}</p>
+        </div>
       }
 
       @if (!isLoading && !errorMessage) {
-        <div class="ship-market-mode-wrap" role="tablist" aria-label="Mode d'offres">
-          <div class="ship-market-mode-slider" [class.ship-market-mode-slider--location]="selectedOfferMode === 'LOCATION'">
-            <span class="ship-market-mode-thumb" aria-hidden="true"></span>
+        <div class="ship-market-toolbar">
+          <div class="ship-market-mode-wrap" role="group" aria-label="Mode d'offres">
             <button
               type="button"
               class="ship-market-mode-btn"
               [class.ship-market-mode-btn--active]="selectedOfferMode === 'ACHAT'"
+              [attr.aria-pressed]="selectedOfferMode === 'ACHAT'"
               (click)="setOfferMode('ACHAT')"
               >
               Achat
@@ -53,23 +61,37 @@
               type="button"
               class="ship-market-mode-btn"
               [class.ship-market-mode-btn--active]="selectedOfferMode === 'LOCATION'"
+              [attr.aria-pressed]="selectedOfferMode === 'LOCATION'"
               (click)="setOfferMode('LOCATION')"
               >
               Location
             </button>
           </div>
+          <label class="ship-market-search-wrap">
+            <span class="ship-market-search-label">Rechercher</span>
+            <span class="ship-market-search-field">
+              <span class="ship-market-search-icon" aria-hidden="true">⌕</span>
+              <input
+                type="search"
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearchTermChange(true)"
+                maxlength="200"
+                placeholder="Vaisseau, planète, lieu, constructeur…"
+                class="ship-market-search"
+                />
+            </span>
+          </label>
+          <label class="manufacturer-filter"><span>Constructeur</span><select [(ngModel)]="selectedManufacturer" (ngModelChange)="onSearchTermChange()"><option value="">Tous les constructeurs</option>@for (name of manufacturerOptions; track name) { <option [value]="name">{{ name }}</option> }</select></label>
         </div>
-        <div class="ship-market-search-wrap">
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchTermChange()"
-            placeholder="Rechercher un vaisseau, fabricant, role..."
-            class="ship-market-search"
-            />
-          </div>
-          <div class="location-row-title">Locations majeures</div>
-          <div class="location-card-grid location-card-grid--major">
+        <div class="share-search"><button type="button" (click)="copySearchLink()">Copier le lien</button>@if (shareMessage) { <span role="status" [class.share-error]="shareFailed">{{ shareMessage }}</span> }@if (shareFailed) { <label>Lien de la recherche<input readonly [value]="shareUrl" (focus)="$any($event.target).select()" /></label> }</div>
+        <fieldset class="gameplay-filters"><legend>Gameplay</legend><div class="gameplay-options">
+          @for (filter of gameplayFilters; track filter.id) {
+            <label class="gameplay-option" [class.checked]="selectedGameplays.includes(filter.id)"><input type="checkbox" [checked]="selectedGameplays.includes(filter.id)" (change)="toggleGameplay(filter.id)" /><span>{{ filter.label }}</span></label>
+          }
+          @if (searchTerm || selectedManufacturer || selectedGameplays.length) { <button type="button" class="filters-reset" (click)="resetFilters()">Effacer les filtres</button> }
+        </div></fieldset>
+<h2 class="location-section-title">Planètes</h2>
+<div class="location-card-grid location-card-grid--major" role="group" aria-label="Planètes et lieux hors planète">
             @for (major of majorLocationCards; track trackByMajorLocation($index, major)) {
               <button
                 type="button"
@@ -79,12 +101,12 @@
                 [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.76), rgba(15, 23, 42, 0.48)), url(' + major.majorImageUrl + ')'"
                 >
                 <span class="location-card-title">{{ major.majorLabel }}</span>
-                <span class="location-card-tail">{{ major.cards.length }} sous-locations</span>
+                @if (major.systemName) { <span class="location-card-system">{{ major.systemName }}</span> }
               </button>
             }
           </div>
-          <div class="location-row-title mt-4">Sous-locations</div>
-          <div
+<h2 class="location-section-title">Lieux</h2>
+<div
             class="location-card-grid location-card-grid--sub"
             [class.location-card-grid--sub-transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
             >
@@ -97,39 +119,38 @@
                 [style.backgroundImage]="'linear-gradient(160deg, rgba(2, 6, 23, 0.7), rgba(15, 23, 42, 0.35)), url(' + card.imageUrl + ')'"
                 >
                 <span class="location-card-title">{{ card.titleLine }}</span>
-                <span class="location-card-tail">{{ card.bodyLine1 }}</span>
-                <span class="location-card-system">{{ card.bodyLine2 }}</span>
-                @if (card.promoLabel) {
-                  <span class="location-card-promo">{{ card.promoLabel }}</span>
-                }
+                @if (card.bodyLine1) { <span class="location-card-tail">{{ card.bodyLine1 }}</span> }
+                @if (card.bodyLine2) { <span class="location-card-system">{{ card.bodyLine2 }}</span> }
               </button>
             }
           </div>
           @if (selectedLocationShips.length) {
-            <div
-              class="ship-market-grid mt-6"
+<div
+              class="ship-market-grid"
               [class.ship-market-grid--transitioning]="isSwitchingMajor || isSwitchingOfferMode || isSwitchingLocation"
               >
               @for (item of selectedLocationShips; track trackByShip($index, item)) {
                 <article
-                  class="ship-market-card"
+                  class="ship-market-card" [class.ship-market-card--rental]="item.offerType === 'LOCATION'"
+                  role="button"
+                  tabindex="0"
+                  (click)="openShipDetails(item)"
+                  (keydown.enter)="openShipDetails(item)"
+                  (keydown.space)="openShipDetailsFromSpace($event, item)"
+                  [attr.aria-label]="'Voir les détails de ' + item.ship.name"
                   >
                   <div class="ship-market-card-main">
                     <div class="ship-market-image-wrap">
-                      <img
-                        [src]="item.ship.imageUrl"
-                        [alt]="item.ship.name"
-                        class="ship-market-image"
-                        loading="lazy"
-                        />
-                        <button
-                          type="button"
-                          class="ship-market-zoom-btn"
-                          (click)="openShipZoom(item.ship)"
-                          aria-label="Zoom image vaisseau"
-                          >
-                          Zoom
-                        </button>
+                      @if (item.ship.imageUrl) {
+                        <img
+                          [src]="item.ship.imageUrl"
+                          [alt]="item.ship.name"
+                          class="ship-market-image"
+                          loading="lazy"
+                          />
+                      } @else {
+                        <div class="ship-market-image ship-market-image--empty">Image indisponible</div>
+                      }
                         @if (getBrandLogo(item.ship.brand.name); as brandLogo) {
                           <img
                             [src]="brandLogo"
@@ -141,28 +162,35 @@
                       </div>
                       <div class="ship-market-main-info">
                         <h2 class="ship-market-ship-name">{{ item.ship.name }}</h2>
-                        <p>Fabricant: <span>{{ item.ship.brand.name || '-' }}</span></p>
-                        <p>Role: <span>{{ item.ship.focus || '-' }}</span></p>
-                        <p>Equipage: <span>{{ item.ship.crew || '-' }}</span></p>
+                        <p class="ship-market-manufacturer">{{ item.ship.brand.name || 'Constructeur non renseigné' }}</p>
+                        <div class="ship-market-quick-stats">
+                          <span><small>Rôle</small>{{ roleLabel(item.ship.focus) }}</span>
+                          <span><small>Équipage</small>{{ item.ship.crew || 'Non renseigné' }}</span>
+                        </div>
                       </div>
                     </div>
                     <aside class="ship-market-side">
+                      <span class="ship-market-price-label">{{ item.offerType === 'ACHAT' ? 'Prix d’achat' : 'Prix de location' }}</span>
                       <div class="ship-market-price">{{ item.price | number:'1.0-2' }} aUEC</div>
+                      <p class="ship-market-location">{{ item.location }}</p>
                       <div class="ship-market-stats">
-                        <p><span>Taille</span><strong>{{ item.ship.size || '-' }}</strong></p>
-                        <p><span>SCU</span><strong>{{ item.ship.scu ?? '-' }}</strong></p>
-                        <p><span>Flight Ready</span><strong>{{ item.ship.flightReady ? 'Oui' : 'Non' }}</strong></p>
+                        <p><span>Taille</span><strong>{{ sizeLabel(item.ship.size) }}</strong></p>
+                        <p><span>Soute · SCU</span><strong>{{ item.ship.scu ?? 'Non renseignée' }}</strong></p>
+                        @if (item.ship.oreCapacity != null && item.ship.oreCapacity! > 0) { <p><span>Minerai · SCU</span><strong>{{ item.ship.oreCapacity }}</strong></p> }
                       </div>
+                      <span class="ship-market-card-cta">Voir la fiche <span aria-hidden="true">→</span></span>
                     </aside>
-                  </article>
+                </article>
                 }
               </div>
             } @else {
               @if (!(isSwitchingLocation || isSwitchingMajor || isSwitchingOfferMode)) {
                 <div
-                  class="text-slate-300 mt-6 ship-market-empty-state"
+                  class="ship-market-empty-state"
                   >
-                  Aucun vaisseau ne correspond a la recherche pour cette location.
+                  <span aria-hidden="true">◇</span>
+                  <strong>Aucun vaisseau trouvé</strong>
+                  <p>Essayez un autre terme ou sélectionnez un autre point de vente.</p>
                 </div>
               }
             }
@@ -171,27 +199,40 @@
         </section>
       </div>
 
-      @if (zoomedShip; as ship) {
-        <div
-          class="ship-market-zoom-backdrop"
-          (click)="closeShipZoom()"
-          >
-          <div class="ship-market-zoom-panel" (click)="$event.stopPropagation()">
-            <button
-              type="button"
-              class="ship-market-zoom-close"
-              (click)="closeShipZoom()"
-              aria-label="Fermer le zoom"
-              >
-              ×
-            </button>
-            <img
-              [src]="ship.imageUrl"
-              [alt]="ship.name"
-              class="ship-market-zoom-image"
-              />
-              <div class="ship-market-zoom-caption">{{ ship.name }}</div>
+      @if (selectedShipOffer; as offer) {
+        <div class="ship-market-details-backdrop" (click)="closeShipDetails()">
+          <section class="ship-market-details-panel" [class.ship-market-card--rental]="offer.offerType === 'LOCATION'" role="dialog" aria-modal="true" aria-labelledby="ship-details-title" cdkTrapFocus (click)="$event.stopPropagation()">
+            <header class="ship-details-heading">
+              <div><h2 id="ship-details-title">{{ offer.ship.name }}</h2><p>{{ offer.ship.brand.name || 'Constructeur non renseigné' }}</p></div>
+              <button type="button" class="ship-market-details-close" #detailsClose (click)="closeShipDetails()" aria-label="Fermer les détails du vaisseau" cdkFocusInitial>×</button>
+            </header>
+            <div class="ship-details-banner">
+              @if (offer.ship.imageUrl) { <img [src]="offer.ship.imageUrl" [alt]="offer.ship.name" class="ship-market-details-image" /> }
+              @else { <div class="ship-market-details-image ship-market-image--empty">Image indisponible</div> }
+              @if (offer.ship.brand.imageUrl || getBrandLogo(offer.ship.brand.name); as logo) { <img [src]="logo" [alt]="offer.ship.brand.name" class="ship-details-logo" /> }
             </div>
-          </div>
-        }
-      </div>
+            <div class="ship-market-details-content">
+              <div class="ship-details-summary">
+                <div class="ship-market-details-offer">
+                  <span>{{ offer.offerType === 'ACHAT' ? 'Prix d’achat' : 'Prix de location' }}</span>
+                  <strong>{{ offer.price | number:'1.0-2' }} aUEC</strong>
+                  <small>{{ offer.location }}@if (offer.locationName || offer.planetName || offer.systemName) { <span>{{ offer.locationName }}{{ offer.planetName ? ' · ' + offer.planetName : '' }}{{ offer.systemName ? ' · ' + offer.systemName : '' }}</span> }</small>
+                </div>
+                <dl>
+                  <div class="ship-stat-role"><dt>Rôle</dt><dd>{{ roleLabel(offer.ship.focus) }}</dd></div>
+                  <div><dt>Équipage</dt><dd>{{ offer.ship.crew || 'Non renseigné' }}</dd></div>
+                  <div><dt>Taille</dt><dd>{{ sizeLabel(offer.ship.size) }}</dd></div>
+                  <div><dt>Soute cargo</dt><dd>{{ offer.ship.scu != null ? offer.ship.scu + ' SCU' : 'Non renseignée' }}</dd></div>
+                  @if (offer.ship.oreCapacity != null && offer.ship.oreCapacity! > 0) { <div><dt>Stockage de minerai</dt><dd>{{ offer.ship.oreCapacity }} SCU</dd></div> }
+                  @if (offer.ship.flightReady !== undefined && offer.ship.flightReady !== null) { <div><dt>Disponibilité</dt><dd>{{ offer.ship.flightReady ? 'Prêt à voler' : 'En développement' }}</dd></div> }
+                </dl>
+              </div>
+              @if (offer.ship.cargoGrids?.length) {
+                <section class="ship-market-extra"><h3>Grilles cargo</h3><div class="ship-market-cargo-grids">@for (grid of offer.ship.cargoGrids; track $index) { <span>{{ grid.sizeX }} × {{ grid.sizeY }} × {{ grid.sizeZ }}</span> }</div></section>
+              }
+              @if (shipDescription(offer.ship); as description) { <section class="ship-market-extra"><h3>Description</h3><p>{{ description }}</p></section> }
+            </div>
+          </section>
+        </div>
+      }
+</div>

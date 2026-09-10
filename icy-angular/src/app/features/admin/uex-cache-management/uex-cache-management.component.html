@@ -72,6 +72,11 @@
             <strong>{{ catalogConflicts.length }} conflit{{ catalogConflicts.length > 1 ? 's' : '' }}</strong>
           </div>
 
+          @if (conflictsError) {
+            <p role="alert" class="run-error">{{ conflictsError }}</p>
+            <button type="button" class="refresh-list" (click)="loadCatalogConflicts()" [disabled]="loadingConflicts || resolvingConflictId !== null">Réessayer le chargement des variantes</button>
+          }
+
           @for (conflict of catalogConflicts; track conflict.id) {
             <article class="conflict-group">
               <header>
@@ -118,7 +123,11 @@
               </footer>
             </article>
           } @empty {
-            <div class="conflict-loading">Chargement des variantes...</div>
+            @if (loadingConflicts) {
+              <div class="conflict-loading" role="status">Chargement des variantes...</div>
+            } @else if (!conflictsError) {
+              <p>Aucune variante à afficher.</p>
+            }
           }
         </section>
       }

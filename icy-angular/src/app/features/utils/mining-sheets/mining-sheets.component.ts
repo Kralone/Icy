@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription, forkJoin, catchError, map, of, tap } from 'rxjs';
 import {
   MiningJobType,
   MiningSheet,
@@ -123,11 +123,12 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
 
   showCreateModal = false;
   showAdminSettingsModal = false;
-  activeDetailTab: 'JOBS' | 'LOGISTICS' | 'SALES' = 'JOBS';
+  activeDetailTab: 'JOBS' | 'COSTS' | 'LOGISTICS' | 'SALES' | 'SUMMARY' = 'JOBS';
   createForm: SheetFormState = this.createEmptySheetForm();
   sheetEditForm: SheetFormState | null = null;
   saleLocationSuggestions: string[] = [];
   salesDeclarationVersion = 0;
+  completedSaleEntries: { sheetId: string; creditAuec: number }[] = [];
   private saleLocationSearchHandle?: ReturnType<typeof setTimeout>;
 
   expandedJobIds = new Set<string>();
@@ -551,8 +552,23 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
     this.saleLocationSuggestions = [];
   }
 
-  setDetailTab(tab: 'JOBS' | 'LOGISTICS' | 'SALES'): void {
+  setDetailTab(tab: 'JOBS' | 'COSTS' | 'LOGISTICS' | 'SALES' | 'SUMMARY'): void {
     this.activeDetailTab = tab;
+    this.jobTypeFilter = 'ALL';
+    this.currentJobPage = 1;
+  }
+
+  get visibleJobDraft(): JobDraft | null {
+    if (!this.newJobDraft) return null;
+    return (this.activeDetailTab === 'JOBS') === (this.newJobDraft.type === 'REFINERY') ? this.newJobDraft : null;
+  }
+
+  refineryCount(sheet: MiningSheet): number {
+    return (sheet.jobs ?? []).filter(job => job.type === 'REFINERY').length;
+  }
+
+  costCount(sheet: MiningSheet): number {
+    return (sheet.jobs ?? []).filter(job => job.type !== 'REFINERY').length;
   }
 
   canDeclareSale(sheet: MiningSheet): boolean {
@@ -594,19 +610,24 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.actionError = '';
-    const requests = safeEntries.map((entry) => this.miningSheetService.declareSale(entry.sheetId, entry.creditAuec));
-    forkJoin(requests).subscribe({
-      next: (updatedSheets) => {
-        for (const updated of updatedSheets) {
-          this.applySheetUpdate(updated);
-        }
+    this.completedSaleEntries = [];
+    const requests = safeEntries.map(entry => this.miningSheetService.declareSale(entry.sheetId, entry.creditAuec).pipe(
+      tap(updated => this.applySheetUpdate(updated)),
+      map(() => ({entry, error: null as unknown})),
+      catchError((error: unknown) => of({entry, error}))
+    ));
+    // Each POST is additive and independent: retain every confirmed success even if another fails.
+    forkJoin(requests).subscribe(results => {
+      this.completedSaleEntries = results.filter(result => !result.error).map(result => result.entry);
+      const failed = results.filter(result => !!result.error);
+      if (!failed.length) {
         this.salesDeclarationVersion += 1;
-        this.saving = false;
-      },
-      error: (error) => {
-        this.actionError = this.extractError(error, 'Déclaration de vente impossible.');
-        this.saving = false;
+      } else {
+        const names = failed.map(result => this.sheets.find(sheet => sheet.id === result.entry.sheetId)?.sheetName ?? result.entry.sheetId);
+        this.actionError = `${this.completedSaleEntries.length} fiche(s) enregistrée(s). Échec pour : ${names.join(', ')}. `
+          + 'Les ventes confirmées sont conservées. En cas de réponse réseau manquante, vérifiez l’historique après actualisation avant tout nouvel essai.';
       }
+      this.saving = false;
     });
   }
 
@@ -718,7 +739,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   }
 
   filteredJobs(sheet: MiningSheet): MiningSheetJob[] {
-    const jobs = [...(sheet.jobs ?? [])];
+    const jobs = (sheet.jobs ?? []).filter(job => this.activeDetailTab === 'COSTS' ? job.type !== 'REFINERY' : job.type === 'REFINERY');
     const typeFiltered = this.jobTypeFilter === 'ALL'
       ? jobs
       : jobs.filter((job) => job.type === this.jobTypeFilter);

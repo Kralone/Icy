@@ -134,9 +134,24 @@
               </select>
             </div>
           }
-          @if (filteredShipsSearch.length === 0) {
+          @if (isShipCatalogLoading) {
+            <div class="mb-4 text-sm text-cyan-200" role="status">
+              Chargement des vaisseaux…
+            </div>
+          } @else if (shipCatalogLoadError) {
+            <div class="mb-4 flex flex-wrap items-center gap-3 text-sm text-amber-200" role="alert">
+              <span>Impossible de charger les vaisseaux.</span>
+              <button
+                type="button"
+                (click)="retryLoadShips()"
+                class="rounded-lg border border-amber-300/40 px-3 py-1.5 font-semibold hover:bg-amber-300/10 transition"
+              >
+                Réessayer
+              </button>
+            </div>
+          } @else if (filteredShipsSearch.length === 0) {
             <div class="mb-4 text-sm text-gray-400">
-              Aucun vaisseau ne correspond a la recherche.
+              Aucun vaisseau ne correspond à la recherche.
             </div>
           }
         }

@@ -65,4 +65,15 @@ export class NewsComponent implements OnInit {
     if (this.currentPage > 1) this.currentPage--;
   }
 
+  private failedImages = new Set<string>();
+
+  newsImage(news: News): string | null {
+    return [news.imageUrl, news.type?.imageUrl].find(url => !!url?.trim() && !this.failedImages.has(url)) ?? null;
+  }
+
+  imageFailed(news: News): void {
+    const url = this.newsImage(news);
+    if (url) this.failedImages.add(url);
+  }
+
 }

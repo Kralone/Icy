@@ -16,7 +16,7 @@ done
 [[ $RELEASE_DIR == /opt/iceforge-staging/releases/* && -d $RELEASE_DIR ]] || { echo "Release invalide" >&2; exit 1; }
 COMPOSE=(docker compose -p "$PROJECT" --env-file "$ENV_FILE" -f "$RELEASE_DIR/docker-compose.staging.yml")
 
-required=(db rabbitmq backend frontend)
+required=(db rabbitmq libretranslate backend frontend)
 ((WITH_BOT)) && required+=(bot)
 for service in "${required[@]}"; do
   cid=$("${COMPOSE[@]}" ps -q "$service")

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map, catchError, of } from 'rxjs';
 import { ApiResponse } from '../../../model/api-response.model';
 
 export type CatalogStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -68,6 +68,15 @@ export class CatalogService {
 
   constructor(private readonly http: HttpClient) {}
 
+  canCorrect(): Observable<boolean> { return this.http.get<{data:{roles:string[]}}>('/api/users/me/profile').pipe(map(response=>response.data.roles.includes('ADMIN')),catchError(()=>of(false))); }
+  imageCorrection(id: number) { return this.http.get<CatalogImageCorrection>(`/api/admin/catalog/corrections/entries/${id}/image`); }
+  saveImageCorrection(id: number, url: string) { return this.http.put<CatalogImageCorrection>(`/api/admin/catalog/corrections/entries/${id}/image`, {url}); }
+  resetImageCorrection(id: number) { return this.http.delete<CatalogImageCorrection>(`/api/admin/catalog/corrections/entries/${id}/image`); }
+  correctionOffers(corrected: boolean, query: string, page: number) { return this.http.get<CorrectionOfferPage>('/api/admin/catalog/corrections/offers', {params: {corrected, query, page}}); }
+  associationCandidates(id: number, query: string) { return this.http.get<AssociationCandidate[]>(`/api/admin/catalog/corrections/offers/${id}/candidates`, {params: {query}}); }
+  saveAssociation(id: number, entryId: number) { return this.http.put<void>(`/api/admin/catalog/corrections/offers/${id}/association`, {entryId}); }
+  resetAssociation(id: number) { return this.http.delete<void>(`/api/admin/catalog/corrections/offers/${id}/association`); }
+
   browse(query: CatalogQuery): Observable<ApiResponse<CatalogPage>> {
     let params = new HttpParams()
       .set('status', query.status)
@@ -84,3 +93,8 @@ export class CatalogService {
     return this.http.get<ApiResponse<CatalogPage>>(this.baseUrl, { params });
   }
 }
+
+export interface CatalogImageCorrection { id: number; name: string; sourceImageUrl: string | null; overrideImageUrl: string | null; imageUrl: string | null; fallbackImage: boolean; }
+export interface UnassociatedOffer { id: number; name: string; location: string; type: string; price: number; currency: string; overrideEntryId: number | null; linkedName: string | null; }
+export interface CorrectionOfferPage { items: UnassociatedOffer[]; totalElements: number; page: number; }
+export interface AssociationCandidate { id: number; name: string; family: string; imageUrl: string; reason: string; }

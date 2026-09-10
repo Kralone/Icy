@@ -1,4 +1,4 @@
-import {Component, HostListener, ChangeDetectionStrategy} from '@angular/core';
+import {Component, ChangeDetectionStrategy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {ShipService} from '../../core/services/ship/ship.service';
@@ -77,6 +77,7 @@ export class DashboardComponent {
   currentPage = 1;
   readonly pageSize = 5;
   private readonly destroy$ = new Subject<void>();
+  private onlineRequestPending = false;
 
   statusStyles: Record<OnlineStatus, StatusStyle> = {
     connecte: { label: 'Connecté', badgeClass: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' },
@@ -105,7 +106,13 @@ export class DashboardComponent {
     this.loadEvents();
     this.loadOnlineUsers();
 
-    interval(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+    this.userService.profile$.pipe(takeUntil(this.destroy$)).subscribe(profile => {
+      if (!profile) return;
+      this.onlineUsers = this.onlineUsers.map(member => member.username === profile.username
+        ? {...member, status: (profile.status || member.status) as UserOnline['status'], avatarUrl: profile.avatarUrl ?? member.avatarUrl}
+        : member);
+    });
+    interval(10000).pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.loadOnlineUsers();
     });
   }
@@ -266,13 +273,16 @@ export class DashboardComponent {
   }
 
   loadOnlineUsers(): void {
-    this.isOnlineLoading = true;
-    this.userService.getOnlineUsers().subscribe((response) => {
+    if (this.onlineRequestPending) return;
+    this.onlineRequestPending = true;
+    this.userService.getOnlineUsers().pipe(takeUntil(this.destroy$)).subscribe((response) => {
       this.onlineUsers = response.data ?? [];
-      this.currentPage = 1;
+      this.currentPage = Math.min(this.currentPage, this.totalPages);
       this.isOnlineLoading = false;
+      this.onlineRequestPending = false;
     }, () => {
       this.isOnlineLoading = false;
+      this.onlineRequestPending = false;
     });
   }
 
@@ -328,33 +338,4 @@ export class DashboardComponent {
     this.destroy$.complete();
     this.wsService.disconnectFleetUpdate();
   }
-
-
-  installPromptEvent: any; // stockera l’événement PWA
-
-  @HostListener('window:beforeinstallprompt', ['$event'])
-  onBeforeInstallPrompt(e: Event) {
-    e.preventDefault();
-    this.installPromptEvent = e;
-    console.log('📱 beforeinstallprompt détecté ✅');
-  }
-
-  installApp() {
-    if (this.installPromptEvent) {
-      this.installPromptEvent.prompt();
-      this.installPromptEvent.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('✅ Iceforge installée');
-        } else {
-          console.log('❌ Installation annulée');
-        }
-        this.installPromptEvent = null;
-      });
-    } else {
-      alert('💡 Pour installer Iceforge : utilisez le menu du navigateur → “Installer l’application”');
-    }
-  }
-
-
-
 }

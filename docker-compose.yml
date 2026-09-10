@@ -47,6 +47,9 @@ services:
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-http://localhost:8088/images/}
       JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_LOCAL_JWT_SECRET_32_CHARS_MINIMUM}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CIG_WATCH_PUBLISHING_ENABLED: ${CIG_WATCH_PUBLISHING_ENABLED:-true}
+      CIG_WATCH_DISCORD_ENABLED: ${CIG_WATCH_DISCORD_ENABLED:-false}
+      CIG_WATCH_TRANSLATION_URL: ${CIG_WATCH_TRANSLATION_URL:-http://libretranslate:5000}
       UEX_API_KEY: ${UEX_API_KEY:-}
       BOT_API_KEY: ${BOT_API_KEY:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
@@ -80,6 +83,30 @@ services:
       retries: 12
       start_period: 60s
     networks: [internal]
+
+  libretranslate:
+    image: libretranslate/libretranslate:v1.9.6@sha256:1de2d7056bb8ad607a412f4563d9abe324ff632b43b5be9428bcc8e213aebb32
+    restart: unless-stopped
+    environment:
+      LT_LOAD_ONLY: en,fr
+      LT_DISABLE_WEB_UI: "true"
+      LT_THREADS: "2"
+      OMP_NUM_THREADS: "2"
+    volumes:
+      - libretranslate_models:/home/libretranslate/.local
+    expose: ["5000"]
+    mem_limit: 2g
+    cpus: "2.0"
+    pids_limit: 200
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+    networks: [internal, external]
 
   bot:
     image: iceforge/bot:local
@@ -148,6 +175,7 @@ volumes:
   postgres18_data:
   rabbitmq_data:
   backend_logs:
+  libretranslate_models:
   bot_config:
   icy_images_data:
     name: icy_images_data

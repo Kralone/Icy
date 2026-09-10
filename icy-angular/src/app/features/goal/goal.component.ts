@@ -6,16 +6,16 @@ import { Subscription } from 'rxjs';
 import { Goal } from '../../model/goal.model';
 import { GoalService } from '../../core/services/goal/goal.service';
 import { GoalSubComponent } from './goal-sub/goal-sub.component';
-import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 
 @Component({
   selector: 'app-goal',
   standalone: true,
-  imports: [CommonModule, FormsModule, GoalSubComponent, LoadingOverlayComponent],
+  imports: [CommonModule, FormsModule, GoalSubComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal.component.html',
+  styleUrl: './goal.component.css',
 })
 export class GoalComponent implements OnInit, OnDestroy {
 
@@ -25,6 +25,7 @@ export class GoalComponent implements OnInit, OnDestroy {
 
   isAdmin = false;
   isLoading = true;
+  loadError = '';
 
   // UI
   search = '';
@@ -60,6 +61,7 @@ export class GoalComponent implements OnInit, OnDestroy {
   }
 
   reloadGoals(showLoader = true): void {
+    this.loadError = '';
     if (showLoader) {
       this.isLoading = true;
     }
@@ -70,6 +72,7 @@ export class GoalComponent implements OnInit, OnDestroy {
       }
       this.recomputeDisplay();
     }, () => {
+      this.loadError = 'Impossible de charger les objectifs.';
       if (showLoader) {
         this.isLoading = false;
       }

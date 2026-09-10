@@ -15,6 +15,34 @@ import java.util.Optional;
 @Repository
 public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Long> {
 
+    @Modifying
+    @Query("update CigWatchEntry e set e.deliveryStatus = 'DELIVERED', e.deliveryRetryAt = null, e.lastError = null where e.newsId = :newsId")
+    void markDeliveredByNewsId(@Param("newsId") Long newsId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "INSERT INTO news.cig_watch_fetch_state(source_id, last_fetched_at) VALUES (:sourceId, :fetchedAt) ON CONFLICT (source_id) DO UPDATE SET last_fetched_at = EXCLUDED.last_fetched_at", nativeQuery = true)
+    void recordFetch(@Param("sourceId") Long sourceId, @Param("fetchedAt") java.time.OffsetDateTime fetchedAt);
+
+    @Query(value = "SELECT MAX(last_fetched_at) FROM news.cig_watch_fetch_state", nativeQuery = true)
+    Optional<java.time.Instant> findLatestSourceFetchAt();
+
+    @Query("select e from CigWatchEntry e where e.newsId in (select n.id from News n where n.imageUrl is null) order by e.id desc")
+    List<CigWatchEntry> findImageCandidates(Pageable pageable);
+
+    boolean existsBySourceId(Long sourceId);
+    Optional<CigWatchEntry> findFirstBySourceIdOrderByRankHintDesc(Long sourceId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from CigWatchEntry e where e.id = :id")
+    Optional<CigWatchEntry> findForProcessing(@Param("id") Long id);
+
+    @Query("select e.id from CigWatchEntry e where (e.translationStatus <> 'TRANSLATED' or (e.autoPublish = true and e.newsId is null)) and (e.nextRetryAt is null or e.nextRetryAt <= :now) order by e.autoPublish desc, e.fetchedAt desc, e.id desc")
+    List<Long> findProcessingCandidates(@Param("now") java.time.OffsetDateTime now, Pageable pageable);
+
+    @Query("select e.id from CigWatchEntry e where e.newsId is not null and e.deliveryStatus = 'PENDING' and (e.deliveryRetryAt is null or e.deliveryRetryAt <= :now) order by e.id asc")
+    List<Long> findDeliveryCandidates(@Param("now") java.time.OffsetDateTime now, Pageable pageable);
+
     Optional<CigWatchEntry> findBySourceIdAndLink(Long sourceId, String link);
     boolean existsBySourceIdAndLink(Long sourceId, String link);
 
@@ -43,7 +71,8 @@ public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Lo
                         raw_payload_fr,
                         fetched_at,
                         created_at,
-                        updated_at
+                        updated_at,
+                        auto_publish
                     ) VALUES (
                         :sourceId,
                         :sourceLabel,
@@ -61,7 +90,8 @@ public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Lo
                         :rawPayloadFr,
                         :fetchedAt,
                         :createdAt,
-                        :updatedAt
+                        :updatedAt,
+                        :autoPublish
                     )
                     ON CONFLICT (source_id, link) DO NOTHING
                     """,
@@ -84,6 +114,7 @@ public interface CigWatchEntryRepository extends JpaRepository<CigWatchEntry, Lo
             @Param("rawPayloadFr") String rawPayloadFr,
             @Param("fetchedAt") java.time.OffsetDateTime fetchedAt,
             @Param("createdAt") java.time.OffsetDateTime createdAt,
-            @Param("updatedAt") java.time.OffsetDateTime updatedAt
+            @Param("updatedAt") java.time.OffsetDateTime updatedAt,
+            @Param("autoPublish") boolean autoPublish
     );
 }

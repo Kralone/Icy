@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import unittest
@@ -107,6 +108,25 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             linked = rabbit.publish.await_args.args[1]
             self.assertEqual(654, linked["messageId"])
             self.assertEqual(321, linked["channelId"])
+
+    @patch.dict(os.environ, {"DISCORD_NEWS_CHANNEL_ID": "123"}, clear=False)
+    async def test_concurrent_news_deliveries_send_only_one_message(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            bot = MagicMock()
+            channel = MagicMock()
+            async def delayed_send(**kwargs):
+                await asyncio.sleep(0)
+                return self._message(654, 321)
+            channel.send = AsyncMock(side_effect=delayed_send)
+            bot.get_channel.return_value = channel
+            rabbit = MagicMock()
+            rabbit.publish = AsyncMock()
+            handler = NewsHandler(bot, rabbit, store)
+            payload = {"id": "news-concurrent", "type": {}}
+            await asyncio.gather(handler._created(payload), handler._created(payload))
+            channel.send.assert_awaited_once()
+            self.assertEqual(2, rabbit.publish.await_count)
 
 
 if __name__ == "__main__":

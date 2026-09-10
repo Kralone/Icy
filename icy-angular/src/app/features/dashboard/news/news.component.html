@@ -27,12 +27,14 @@
           >
           <!-- IMAGE GAUCHE -->
           <div class="relative md:w-1/3 w-full h-32 md:h-auto overflow-hidden">
+            @if (newsImage(n); as image) {
             <img
-              [src]="$safeNavigationMigration(n.type?.imageUrl)"
-              alt="Image"
+              [src]="image" (error)="imageFailed(n)"
+              alt=""
           class="absolute inset-0 w-full h-full object-cover transform transition-transform duration-[2000ms]
                  group-hover:scale-110 group-hover:translate-x-1"
               />
+            }
               <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/60 via-transparent to-transparent"></div>
               <!-- Badge type -->
               <div
@@ -118,9 +120,9 @@
         (click)="$event.stopPropagation()"
         >
         <div class="relative h-56">
-          @if (n.type?.imageUrl) {
+          @if (newsImage(n); as image) {
             <img
-              [src]="$safeNavigationMigration(n.type?.imageUrl)"
+              [src]="image" (error)="imageFailed(n)"
               alt="Illustration"
               class="absolute inset-0 w-full h-full object-cover"
               />

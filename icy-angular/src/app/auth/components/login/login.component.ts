@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   passwordForm: FormGroup;
   errorMessage: string = '';
+  submitting = false;
   showResetModal: boolean = false;
   private passwordResetToken: string | null = null;
   private returnUrl = '/icy/dashboard';
@@ -53,6 +54,8 @@ export class LoginComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
+    if (this.submitting) return;
+
     this.errorMessage = '';
 
     if (this.loginForm.invalid) {
@@ -61,6 +64,7 @@ export class LoginComponent implements OnInit {
     }
 
     const { username, password } = this.loginForm.value;
+    this.submitting = true;
 
     try {
       const response = await firstValueFrom(this.authService.login(username, password));
@@ -81,6 +85,8 @@ export class LoginComponent implements OnInit {
     } catch (error) {
       console.error('Erreur de login', error);
       this.errorMessage = 'Nom d’utilisateur ou mot de passe incorrect.';
+    } finally {
+      this.submitting = false;
     }
   }
 

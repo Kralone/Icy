@@ -1,0 +1,35 @@
+<section class="corrections">
+@if (error) { <p class="error" role="alert">{{ error }}</p> }
+@if (success) { <p class="success" role="status">{{ success }}</p> }
+@if (entry) {
+  <h3>Image de cette variante</h3>
+  @if (loading) { <p role="status">Chargement…</p> }
+  @if (image) {
+    @if (image.sourceImageUrl) { <details><summary>Image source</summary><img class="preview" [src]="image.sourceImageUrl" alt="Image fournie par la source pour cette fiche" /></details> }
+    <p>La correction reste prioritaire après synchronisation.</p>
+    @if (image.overrideImageUrl) { <p class="success">Image corrigée</p> }
+    <label>URL de l’image exacte<input [(ngModel)]="imageUrl" [disabled]="busy" placeholder="https://… ou /images/…" /></label>
+    <div class="actions"><button (click)="preview()" [disabled]="busy || !validImageUrl">Prévisualiser</button>@if (image.overrideImageUrl) { <button (click)="saveImage(true)" [disabled]="busy">Revenir à la source</button> }</div>
+    @if (previewUrl) { <img class="preview" [src]="previewUrl" alt="Aperçu de la correction" (error)="previewFailed=true" (load)="previewLoaded=true" />@if (previewFailed) { <p class="error">Image inaccessible.</p> }<button class="primary" (click)="saveImage()" [disabled]="busy || previewFailed || !previewLoaded || previewUrl !== imageUrl.trim()">Valider pour {{ entry.name }}</button> }
+  } @else if (!loading) { <button (click)="loadImage()">Réessayer</button> }
+} @else {
+  <h2>Associations des offres</h2>
+  <div class="toolbar"><label>Afficher<select [(ngModel)]="corrected" (change)="loadOffers()" [disabled]="busy"><option [ngValue]="false">Offres non associées</option><option [ngValue]="true">Associations corrigées</option></select></label><label>Nom ou lieu<input [(ngModel)]="query" (keydown.enter)="loadOffers()" [disabled]="busy" /></label><button (click)="loadOffers()" [disabled]="busy">Rechercher</button></div>
+  @if (loading) { <p role="status">Chargement des offres…</p> }
+  @if (!loading && offers) {
+    <div class="workspace"><div class="offer-list">
+    @for (offer of offers.items; track offer.id) { <button class="offer" [class.selected]="selectedOffer?.id===offer.id" (click)="chooseOffer(offer)" [disabled]="busy"><strong>{{ offer.name }}</strong><span>{{ offer.location }}</span><small>{{ offer.type === 'RENT' ? 'Location' : offer.type === 'SELL' ? 'Vente' : 'Achat' }} · {{ offer.price | number }} {{ offer.currency }}</small>@if(offer.linkedName) { <span>→ {{ offer.linkedName }}</span> }</button> } @empty { <p>Aucune offre dans cette liste.</p> }
+    </div>
+    @if (selectedOffer) { <section class="association"><h3>{{ selectedOffer.name }}</h3><p>{{ selectedOffer.location }}</p><p>Vérifiez le modèle et sa variante. Aucune proposition n’est appliquée automatiquement.</p><div class="search"><input [(ngModel)]="candidateQuery" placeholder="Chercher une fiche (2 caractères minimum)" (keydown.enter)="findCandidates()" [disabled]="busy" /><button (click)="findCandidates()" [disabled]="busy">Chercher</button></div>
+      @if (candidateLoading) { <p role="status">Recherche…</p> }
+      @if (candidateError) { <p class="error" role="alert">{{ candidateError }}</p> }
+      @for (candidate of candidates; track candidate.id) { <button class="candidate" [class.selected]="selectedCandidate?.id===candidate.id" [attr.aria-pressed]="selectedCandidate?.id===candidate.id" (click)="selectedCandidate=candidate" [disabled]="busy"><img [src]="candidate.imageUrl" alt="" /><span><strong>{{ candidate.name }}</strong><small>{{ candidate.reason }}</small></span></button> }
+      @if (!candidateLoading && !candidateError && !candidates.length) { <p>Aucune correspondance. Recherchez une fiche pour la choisir explicitement.</p> }
+      @if (selectedCandidate) { <div class="confirmation"><p>{{ selectedOffer.name }} → <strong>{{ selectedCandidate.name }}</strong></p><button class="primary" (click)="associate()" [disabled]="busy">Valider cette association</button></div> }
+      @if (selectedOffer.overrideEntryId) { <button (click)="associate(true)" [disabled]="busy">Revenir à l’association source</button> }
+    </section> }
+    </div>
+    <nav class="actions" aria-label="Pagination des offres"><button (click)="loadOffers(page-1)" [disabled]="busy || page===0">Précédente</button><span>{{ page+1 }} · {{ offers.totalElements }} offres</span><button (click)="loadOffers(page+1)" [disabled]="busy || (page+1)*30 >= offers.totalElements">Suivante</button></nav>
+  }
+}
+</section>

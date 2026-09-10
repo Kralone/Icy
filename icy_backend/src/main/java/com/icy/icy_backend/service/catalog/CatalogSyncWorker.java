@@ -10,6 +10,7 @@ import com.icy.icy_backend.db.entity.utils.WikeloShip;
 import com.icy.icy_backend.db.repository.catalog.CatalogSyncRunRepository;
 import com.icy.icy_backend.service.uex.UexDatasetService;
 import com.icy.icy_backend.service.wikelo.WikeloService;
+import com.icy.icy_backend.service.wikelo.WikeloEquipmentRecipeStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class CatalogSyncWorker {
     private final CatalogRawStore rawStore;
     private final UexDatasetService uexDatasetService;
     private final WikeloService wikeloService;
+    private final WikeloEquipmentRecipeStore equipmentRecipes;
     private final CatalogSyncProperties properties;
     private final ObjectMapper objectMapper;
 
@@ -44,6 +46,7 @@ public class CatalogSyncWorker {
             CatalogRawStore rawStore,
             UexDatasetService uexDatasetService,
             WikeloService wikeloService,
+            WikeloEquipmentRecipeStore equipmentRecipes,
             CatalogSyncProperties properties,
             ObjectMapper objectMapper
     ) {
@@ -54,6 +57,7 @@ public class CatalogSyncWorker {
         this.rawStore = rawStore;
         this.uexDatasetService = uexDatasetService;
         this.wikeloService = wikeloService;
+        this.equipmentRecipes = equipmentRecipes;
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
@@ -147,6 +151,8 @@ public class CatalogSyncWorker {
         List<WikeloShip> wikeloRows = scrapeWikeloRaw(run.getId());
         advance(run, "Wikelo : " + wikeloRows.size() + " offres brutes");
 
+        int recipeCount = equipmentRecipes.scrapeAndStore(run.getId());
+        advance(run, "Wikelo : " + recipeCount + " recettes d’équipement brutes");
         mapAll(run, wikeloRows);
     }
 
@@ -166,6 +172,8 @@ public class CatalogSyncWorker {
         advance(run, "Mapping economie : " + offerCount + " offres");
         wikeloService.publishScrapedShips(wikeloRows);
         advance(run, "Mapping Wikelo : " + wikeloRows.size() + " offres publiees");
+        int recipes = equipmentRecipes.publish(run.getId());
+        advance(run, "Mapping Wikelo : " + recipes + " recettes d’équipement publiées");
     }
 
     private WikeloShip wikeloShip(JsonNode node) {
@@ -213,8 +221,12 @@ public class CatalogSyncWorker {
 
         List<WikeloShip> rows = scrapeWikeloRaw(run.getId());
         advance(run, "Scrape Wikelo : " + rows.size() + " offres");
+        int recipeCount = equipmentRecipes.scrapeAndStore(run.getId());
+        advance(run, "Wikelo : " + recipeCount + " recettes d’équipement brutes");
         wikeloService.publishScrapedShips(rows);
         advance(run, "Mapping Wikelo : " + rows.size() + " offres publiees");
+        int recipes = equipmentRecipes.publish(run.getId());
+        advance(run, "Mapping Wikelo : " + recipes + " recettes d’équipement publiées");
     }
 
     private List<WikeloShip> scrapeWikeloRaw(long runId) {
@@ -250,12 +262,12 @@ public class CatalogSyncWorker {
     private int totalSteps(String operation, CatalogSyncScope scope) {
         if (SCRAPE_ALL.equals(operation)) {
             int wikiDatasetCount = wikiScraper.datasets().size();
-            return (wikiDatasetCount * 2) + uexDatasetService.supportedDatasetKeys().size() + 3;
+            return (wikiDatasetCount * 2) + uexDatasetService.supportedDatasetKeys().size() + 5;
         }
         if (scope == CatalogSyncScope.ECONOMY) {
             return economyMapper.requiredDatasets().size() + 1;
         }
-        return 2;
+        return scope == CatalogSyncScope.WIKELO ? 4 : 2;
     }
 
     private void advance(CatalogSyncRun run, String message) {

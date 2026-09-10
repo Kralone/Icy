@@ -12,6 +12,7 @@ import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.front.UexResourceSaleDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
 import com.icy.icy_backend.db.entity.item.Item;
+import com.icy.icy_backend.service.catalog.CatalogVehicleMarketService;
 import com.icy.icy_backend.service.event.EventService;
 import com.icy.icy_backend.service.item.ItemCatalogService;
 import com.icy.icy_backend.service.universe.CelestialBodyService;
@@ -38,6 +39,7 @@ public class FrontSiteController {
     private final OrbitalStationService orbitalStationService;
     private final OreLocationService oreLocationService;
     private final ItemCatalogService itemCatalogService;
+    private final CatalogVehicleMarketService catalogVehicleMarketService;
 
     public FrontSiteController(
             UserService userService,
@@ -46,7 +48,8 @@ public class FrontSiteController {
             CelestialBodyService celestialBodyService,
             OrbitalStationService orbitalStationService,
             OreLocationService oreLocationService,
-            ItemCatalogService itemCatalogService
+            ItemCatalogService itemCatalogService,
+            CatalogVehicleMarketService catalogVehicleMarketService
     ) {
         this.userService = userService;
         this.eventService = eventService;
@@ -55,6 +58,7 @@ public class FrontSiteController {
         this.orbitalStationService = orbitalStationService;
         this.oreLocationService = oreLocationService;
         this.itemCatalogService = itemCatalogService;
+        this.catalogVehicleMarketService = catalogVehicleMarketService;
     }
 
     @GetMapping("/members")
@@ -81,12 +85,12 @@ public class FrontSiteController {
 
     @GetMapping("/vehicles/purchases")
     public ResponseEntity<MessageResponse<List<UexVehiclePurchaseDTO>>> listVehiclePurchases() {
-        return uexDatasetService.listVehiclePurchases();
+        return catalogVehicleMarketService.listPurchases();
     }
 
     @GetMapping("/vehicles/rentals")
     public ResponseEntity<MessageResponse<List<UexVehicleRentalDTO>>> listVehicleRentals() {
-        return uexDatasetService.listVehicleRentals();
+        return catalogVehicleMarketService.listRentals();
     }
 
     @GetMapping("/vehicles/terminals")

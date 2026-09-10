@@ -356,9 +356,11 @@ public class UserService {
             }
 
             if (lastSeen != null && isAutoStatus(user.getStatus())) {
-                if (lastSeen.isBefore(offlineCutoff) && user.getStatus() != UserStatus.HORS_LIGNE) {
-                    user.setStatus(UserStatus.HORS_LIGNE);
-                    changed = true;
+                if (lastSeen.isBefore(offlineCutoff)) {
+                    if (user.getStatus() != UserStatus.HORS_LIGNE) {
+                        user.setStatus(UserStatus.HORS_LIGNE);
+                        changed = true;
+                    }
                 } else if (lastSeen.isBefore(absentCutoff) && user.getStatus() != UserStatus.ABSENT) {
                     user.setStatus(UserStatus.ABSENT);
                     changed = true;
@@ -371,6 +373,11 @@ public class UserService {
         }
 
         List<UserOnlineResponseDTO> online = users.stream()
+                .filter(user -> user.getStatus() != UserStatus.HORS_LIGNE)
+                .filter(user -> {
+                    LocalDateTime seen = user.getLastSeenAt() != null ? user.getLastSeenAt() : user.getCreatedAt();
+                    return seen != null && !seen.isBefore(offlineCutoff);
+                })
                 .map(UserOnlineResponseDTO::new)
                 .toList();
 

@@ -1,4 +1,7 @@
 @if (sheet.summary; as summary) {
+  <app-mining-settlement [summary]="summary"></app-mining-settlement>
+  <details>
+    <summary class="summary-title">Détails des minerais et estimations</summary>
   <section class="section-block">
     <div class="section-head">
       <h3 class="section-title">Synthèse</h3>
@@ -70,7 +73,7 @@
       </div>
     }
     <div class="summary-card summary-card--full">
-      <h4 class="summary-title">Répartition</h4>
+      <h4 class="summary-title">Répartition estimée</h4>
       @if (summary.settlements.length) {
         <div class="table-wrap table-wrap--full">
           <table>
@@ -81,7 +84,7 @@
                 <th>Coûts payés</th>
                 <th>Part coûts</th>
                 <th>Compensation</th>
-                <th>Payout</th>
+                <th>Droit estimé</th>
               </tr>
             </thead>
             <tbody>
@@ -192,4 +195,5 @@
       }
     </div>
   </section>
+  </details>
 }

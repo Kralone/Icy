@@ -1,10 +1,12 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, PLATFORM_ID, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user/user.service';
 import { ExecutiveHangarApiService } from '../../../core/services/utils/executive-hangar-api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ExecutiveHangarShipsComponent } from './executive-hangar-ships.component';
 import { utilityRouteFor } from '../utility-route-context';
 
 type HangarStatus = 'ONLINE' | 'OFFLINE';
@@ -25,7 +27,7 @@ type ScheduleRow = {
 @Component({
   standalone: true,
   selector: 'app-executive-hangar',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ExecutiveHangarShipsComponent],
   templateUrl: './executive-hangar.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './executive-hangar.component.css'
@@ -33,6 +35,9 @@ type ScheduleRow = {
 export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   private readonly defaultInitialOpenIso = '2026-02-01T17:09:54.775-05:00';
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  selectedTab: 'status' | 'ships' = 'status';
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   readonly openDuration = 3900338;
@@ -76,6 +81,9 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.selectedTab = params.get('view') === 'ships' ? 'ships' : 'status';
+    });
     this.loadPermissions();
     this.loadConfigAndStart();
   }
@@ -85,6 +93,11 @@ export class ExecutiveHangarComponent implements OnInit, OnDestroy {
       clearInterval(this.tickTimer);
       this.tickTimer = null;
     }
+  }
+
+  setTab(tab: 'status' | 'ships'): void {
+    this.selectedTab = tab;
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { view: tab === 'ships' ? tab : null }, queryParamsHandling: 'merge' });
   }
 
   get isOnline(): boolean {

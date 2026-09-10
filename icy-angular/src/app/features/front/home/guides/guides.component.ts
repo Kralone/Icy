@@ -6,9 +6,9 @@ interface FrontGuideCard {
   title: string;
   summary: string;
   category: string;
-  route?: string;
+  route: string;
   imageUrl?: string;
-  type: 'live' | 'écriture' | 'soon';
+  type: 'live' | 'écriture';
 }
 
 @Component({
@@ -37,34 +37,6 @@ export class GuidesComponent {
       route: '/guides/hathor',
       imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png',
       type: 'écriture'
-    },
-    {
-      id: 3,
-      title: 'Prochain Guide',
-      summary: 'En travaux, coming soon.',
-      category: '',
-      type: 'soon'
-    },
-    {
-      id: 4,
-      title: 'Coming Soon',
-      summary: 'En travaux, coming soon.',
-      category: '',
-      type: 'soon'
-    },
-    {
-      id: 5,
-      title: 'Coming Soon',
-      summary: 'En travaux, coming soon.',
-      category: '',
-      type: 'soon'
-    },
-    {
-      id: 6,
-      title: 'Coming Soon',
-      summary: 'En travaux, coming soon.',
-      category: '',
-      type: 'soon'
     }
   ];
 }

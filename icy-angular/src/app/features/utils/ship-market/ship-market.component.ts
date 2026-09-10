@@ -1,19 +1,32 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { A11yModule } from '@angular/cdk/a11y';
+import { Component, OnDestroy, ChangeDetectionStrategy, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { catchError, finalize, forkJoin, map, of } from 'rxjs';
-import { CelestialBody, CelestialBodyService } from '../../../core/services/celestial/celestial-body.service';
-import { OrbitalStation, OrbitalStationService } from '../../../core/services/station/orbital-station.service';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
+import { CelestialBodyService } from '../../../core/services/celestial/celestial-body.service';
+import { OrbitalStationService } from '../../../core/services/station/orbital-station.service';
 import { ShipService } from '../../../core/services/ship/ship.service';
-import { UexDatasetService, UexVehiclePurchase, UexVehicleRental, UexVehicleTerminal } from '../../../core/services/uex/uex-dataset.service';
+import { UexDatasetService, UexVehiclePurchase, UexVehicleRental } from '../../../core/services/uex/uex-dataset.service';
 import { Ship } from '../../../model/ship.model';
+
+type MarketLocation = {
+  terminalId?: string | null;
+  terminalName: string;
+  planetName?: string | null;
+  locationName?: string | null;
+  systemName?: string | null;
+};
 
 type ShipByLocationCard = {
   ship: Ship;
   location: string;
   price: number;
   offerType: 'ACHAT' | 'LOCATION';
+  terminalId?: string | null;
+  planetName?: string | null;
+  locationName?: string | null;
+  systemName?: string | null;
 };
 
 type LocationCardView = {
@@ -23,15 +36,15 @@ type LocationCardView = {
   bodyLine2: string;
   imageUrl: string;
   count: number;
-  promoLabel: string;
-  stationName: string;
   planetName: string;
+  systemName: string;
   majorKey: string;
   majorLabel: string;
   majorImageUrl: string;
 };
 
 type MajorLocationCardView = {
+  systemName: string;
   majorKey: string;
   majorLabel: string;
   majorImageUrl: string;
@@ -39,26 +52,85 @@ type MajorLocationCardView = {
   cards: LocationCardView[];
 };
 
-type TerminalMapping = {
-  planetName: string | null;
-  cityName: string | null;
-  stationName: string | null;
-  screenshot: string | null;
-};
-
 @Component({
   standalone: true,
   selector: 'app-ship-market',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, A11yModule],
   templateUrl: './ship-market.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './ship-market.component.css'
 })
 export class ShipMarketComponent implements OnDestroy {
+  roleLabel(value?: string): string {
+    const roles: Record<string, string> = {
+      'exploration': 'Exploration', 'mining': 'Minage', 'salvage': 'Récupération',
+      'cargo': 'Transport de fret', 'freight': 'Transport de fret', 'cargo transport': 'Transport de fret',
+      'light freight': 'Fret léger', 'medium freight': 'Fret moyen', 'heavy freight': 'Fret lourd',
+      'light fighter': 'Chasseur léger', 'medium fighter': 'Chasseur moyen', 'heavy fighter': 'Chasseur lourd',
+      'fighter': 'Chasseur', 'combat': 'Combat', 'bomber': 'Bombardier', 'medical': 'Médical',
+      'racing': 'Course', 'racer': 'Course', 'multi-role': 'Polyvalent', 'multi role': 'Polyvalent',
+      'starter': 'Débutant', 'refueling': 'Ravitaillement', 'touring': 'Tourisme', 'transport': 'Transport',
+      'prospecting': 'Prospection', 'pathfinder': 'Éclaireur', 'luxury': 'Luxe', 'generalist': 'Polyvalent',
+      'gunship': 'Canonnière', 'gun ship': 'Canonnière', 'frigate': 'Frégate', 'dropship': 'Transport de troupes',
+      'refinery': 'Raffinage', 'heavy salvage': 'Récupération lourde', 'medium salvage': 'Récupération moyenne'
+    };
+    return value?.split('/').map(part => roles[part.trim().toLowerCase()] || part.trim()).join(' / ') || 'Non renseigné';
+  }
+
+  sizeLabel(value?: string): string {
+    const sizes: Record<string, string> = { small: 'Petit', medium: 'Moyen', large: 'Grand', capital: 'Capital', snub: 'Auxiliaire', vehicle: 'Véhicule' };
+    return sizes[value?.trim().toLowerCase() || ''] || value?.trim() || 'Non renseignée';
+  }
   readonly offerModes: Array<'ACHAT' | 'LOCATION'> = ['ACHAT', 'LOCATION'];
   isLoading = true;
   errorMessage = '';
   searchTerm = '';
+  shareMessage = '';
+  shareFailed = false;
+  shareUrl = '';
+  private readonly ownFilterNavigation = {};
+  private querySubscription?: Subscription;
+  private urlSearchTimer?: ReturnType<typeof setTimeout>;
+  private marketLoaded = false;
+  private queryParams: ParamMap | null = null;
+  private detailsTrigger: HTMLElement | null = null;
+  selectedManufacturer = '';
+  selectedGameplays: string[] = [];
+  readonly gameplayFilters = [
+    { id: 'combat', label: 'Combat', pattern: /combat|fighter|chasseur|bomber|bombard|gunship|canonni|interdict|intercept|frigate|fregate|corvette|destroyer|military/ },
+    { id: 'cargo', label: 'Fret', pattern: /cargo|freight|fret|hauling/ },
+    { id: 'mining', label: 'Minage', pattern: /mining|minage|prospect/ },
+    { id: 'salvage', label: 'Récupération', pattern: /salvage|recuperation|recycl/ },
+    { id: 'medical', label: 'Médical', pattern: /medical|medecine|rescue|sauvetage/ },
+    { id: 'exploration', label: 'Exploration', pattern: /explor|expedition|pathfind|scout|recon/ },
+    { id: 'racing', label: 'Course', pattern: /racing|racer|course/ },
+    { id: 'transport', label: 'Transport', pattern: /transport|touring|tourism|tourisme|passenger|passager|luxury|luxe|dropship/ },
+    { id: 'support', label: 'Soutien', pattern: /refuel|ravitail|repair|repar|refin|raffin|construction|support|soutien/ },
+    { id: 'multi', label: 'Polyvalent', pattern: /multi.?role|polyvalent|starter|debutant|generalist/ }
+  ];
+
+  get manufacturerOptions(): string[] {
+    return [...new Set(Object.values(this.groupedShips).flat().map(row => row.ship.brand?.name).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }
+
+  toggleGameplay(id: string): void {
+    this.selectedGameplays = this.selectedGameplays.includes(id)
+      ? this.selectedGameplays.filter(value => value !== id) : [...this.selectedGameplays, id];
+    this.onSearchTermChange();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.selectedManufacturer = '';
+    this.selectedGameplays = [];
+    this.onSearchTermChange();
+  }
+
+  shipDescription(ship: Ship): string {
+    return (ship.notes ?? '').split(/\r?\n/)
+      .filter(line => !/^\s*(fabricant|constructeur|manufacturer|focus|role|rôle|type)\s*:/i.test(line))
+      .join('\n').trim();
+  }
   selectedOfferMode: 'ACHAT' | 'LOCATION' = 'ACHAT';
   listVisible = false;
   isSwitchingLocation = false;
@@ -72,7 +144,7 @@ export class ShipMarketComponent implements OnDestroy {
   groupedShips: Record<string, ShipByLocationCard[]> = {};
   groupedShipsByMode: Record<string, { ACHAT: ShipByLocationCard[]; LOCATION: ShipByLocationCard[] }> = {};
   brands: { name: string; imageUrl: string }[] = [];
-  zoomedShip: Ship | null = null;
+  selectedShipOffer: ShipByLocationCard | null = null;
   filteredLocationCards: LocationCardView[] = [];
   majorLocationCards: MajorLocationCardView[] = [];
   subLocationCards: LocationCardView[] = [];
@@ -82,74 +154,9 @@ export class ShipMarketComponent implements OnDestroy {
   private majorSwitchTimer?: ReturnType<typeof setTimeout>;
   private offerModeSwitchTimer?: ReturnType<typeof setTimeout>;
 
-  private planets: CelestialBody[] = [];
-  private stations: OrbitalStation[] = [];
-  private terminals: UexVehicleTerminal[] = [];
+  private locationMetadata: Record<string, MarketLocation> = {};
   private planetImageByKey: Record<string, string> = {};
   private stationImageByKey: Record<string, string> = {};
-  private terminalsByLookupKey: Record<string, TerminalMapping> = {};
-
-  private readonly planetAliases: Record<string, string> = {
-    'area 18': 'ArcCorp',
-    'area18': 'ArcCorp',
-    arcorp: 'ArcCorp',
-    arccorp: 'ArcCorp',
-    lorville: 'Hurston',
-    hurston: 'Hurston',
-    crusader: 'Crusader',
-    orison: 'Crusader',
-    microtech: 'microTech',
-    'new babbage': 'microTech'
-  };
-
-  private readonly placeAliases: Record<string, string> = {
-    'area 18': 'Area 18',
-    'area18': 'Area 18',
-    nbis: 'New Babbage',
-    lorville: 'Lorville',
-    crusader: 'Crusader',
-    orison: 'Orison',
-    'new babbage': 'New Babbage',
-    arcl1: 'ARC-L1',
-    arcl2: 'ARC-L2',
-    arcl4: 'ARC-L4',
-    crul1: 'CRU-L1',
-    hurl1: 'HUR-L1',
-    hurl2: 'HUR-L2',
-    micl1: 'MIC-L1',
-    micl2: 'MIC-L2',
-    micl5: 'MIC-L5',
-    checkmate: 'Checkmate',
-    orbituary: 'Orbituary',
-    'ruin station': 'Ruin Station',
-    seraphim: 'Seraphim Station',
-    everus: 'Everus Harbor',
-    tressler: 'Port Tressler',
-    baijini: 'Baijini Point',
-    bajini: 'Baijini Point',
-    grim: 'Grim HEX'
-  };
-
-  private readonly stationAliases: Record<string, string> = {
-    nbis: 'New Babbage',
-    arcl1: 'ARC-L1',
-    arcl2: 'ARC-L2',
-    arcl4: 'ARC-L4',
-    crul1: 'CRU-L1',
-    hurl1: 'HUR-L1',
-    hurl2: 'HUR-L2',
-    micl1: 'MIC-L1',
-    micl2: 'MIC-L2',
-    micl5: 'MIC-L5',
-    checkmate: 'Checkmate',
-    orbituary: 'Orbituary',
-    seraphim: 'Seraphim Station',
-    everus: 'Everus Harbor',
-    tressler: 'Port Tressler',
-    baijini: 'Baijini Point',
-    bajini: 'Baijini Point',
-    grim: 'Grim HEX'
-  };
 
   private readonly backgroundByPlanet: Record<string, [string, string, string]> = {
     arccorp: ['#12263a', '#184e77', '#1a759f'],
@@ -168,11 +175,19 @@ export class ShipMarketComponent implements OnDestroy {
   };
 
   private readonly defaultBackgroundPalette: [string, string, string] = ['#0a111c', '#0f172a', '#1b3145'];
-  private readonly rentalFallbackShipImageUrl = 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
   private readonly fallbackLocationImageUrl = 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
   private readonly rentalVehicleAliases: Record<string, string> = {
     mole: 'Argo MOLE',
-    roc: 'Greycat ROC'
+    roc: 'Greycat ROC',
+    prospector: 'MISC Prospector',
+    fortune: 'MISC Fortune',
+    'hull a': 'MISC Hull A',
+    'freelancer max': 'MISC Freelancer MAX',
+    'dragonfly black': 'Dragonfly',
+    '600i explorer': '600i',
+    freelancer: 'MISC Freelancer',
+    m50: 'M50 Interceptor',
+    'reliant kore': 'MISC Reliant Kore'
   };
 
   constructor(
@@ -180,10 +195,22 @@ export class ShipMarketComponent implements OnDestroy {
     private uexDatasetService: UexDatasetService,
     private celestialBodyService: CelestialBodyService,
     private orbitalStationService: OrbitalStationService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private locationStrategy: Location
   ) {}
 
   ngOnInit(): void {
+    this.marketLoaded = false;
+    this.querySubscription?.unsubscribe();
+    this.querySubscription = this.route.queryParamMap.subscribe(params => {
+      this.queryParams = params;
+      // An in-flight URL write must not overwrite a newer checkbox or typed search.
+      // Browser back/forward has no origin token and still restores the complete state.
+      if (this.router.currentNavigation()?.extras.info === this.ownFilterNavigation) return;
+      this.cancelTransitions();
+      this.applyUrlFilters(params);
+    });
     const initialBackground = this.composeBackgroundStyle(this.defaultBackgroundPalette);
     this.primaryBackground = initialBackground;
     this.secondaryBackground = initialBackground;
@@ -193,6 +220,16 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.querySubscription?.unsubscribe();
+    this.cancelTransitions();
+  }
+
+  private cancelTransitions(): void {
+    if (this.urlSearchTimer) clearTimeout(this.urlSearchTimer);
+    this.urlSearchTimer = undefined;
+    this.isSwitchingLocation = false;
+    this.isSwitchingMajor = false;
+    this.isSwitchingOfferMode = false;
     if (this.locationSwitchTimer) {
       clearTimeout(this.locationSwitchTimer);
       this.locationSwitchTimer = undefined;
@@ -226,18 +263,20 @@ export class ShipMarketComponent implements OnDestroy {
 
     this.locationSwitchTimer = setTimeout(() => {
       this.setSelectedLocation(location);
+      this.updateFilterUrl();
       this.isSwitchingLocation = false;
       this.locationSwitchTimer = undefined;
     }, 180);
   }
 
-  onSearchTermChange(): void {
+  onSearchTermChange(debounce = false): void {
     this.refreshFilteredViews();
     const visibleLocations = this.subLocationCards.map((card) => card.location);
     if (!visibleLocations.includes(this.selectedLocation)) {
       this.setSelectedLocation(visibleLocations[0] ?? '');
     }
     this.updateBackgroundForSelection();
+    this.updateFilterUrl(debounce);
   }
 
   setSelectedMajorLocation(majorKey: string): void {
@@ -254,6 +293,7 @@ export class ShipMarketComponent implements OnDestroy {
       this.refreshMajorAndSubLocations();
       const nextLocation = this.subLocationCards[0]?.location ?? '';
       this.setSelectedLocation(nextLocation);
+      this.updateFilterUrl();
       this.isSwitchingMajor = false;
       this.isSwitchingLocation = false;
       this.majorSwitchTimer = undefined;
@@ -282,7 +322,7 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   trackByShip(_: number, item: ShipByLocationCard): string {
-    return `${item.location}-${item.ship.id}-${item.offerType}`;
+    return `${item.terminalId ?? item.location}-${item.ship.id}-${item.offerType}-${item.price}`;
   }
 
   trackByLocation(_: number, item: LocationCardView): string {
@@ -293,12 +333,109 @@ export class ShipMarketComponent implements OnDestroy {
     return item.majorKey;
   }
 
-  openShipZoom(ship: Ship): void {
-    this.zoomedShip = ship;
+  @ViewChild('detailsClose') set detailsClose(button: ElementRef<HTMLButtonElement> | undefined) {
+    if (button) queueMicrotask(() => {
+      if (this.selectedShipOffer) button.nativeElement.focus();
+    });
   }
 
-  closeShipZoom(): void {
-    this.zoomedShip = null;
+  openShipDetails(offer: ShipByLocationCard): void {
+    this.detailsTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    this.selectedShipOffer = offer;
+  }
+
+  openShipDetailsFromSpace(event: Event, offer: ShipByLocationCard): void {
+    event.preventDefault();
+    this.openShipDetails(offer);
+  }
+
+  closeShipDetails(): void {
+    this.selectedShipOffer = null;
+    this.detailsTrigger?.focus();
+    this.detailsTrigger = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  closeShipDetailsOnEscape(): void {
+    if (this.selectedShipOffer) {
+      this.closeShipDetails();
+    }
+  }
+
+
+  private applyUrlFilters(params: ParamMap): void {
+    this.searchTerm = (params.get('q') ?? '').slice(0, 200);
+    const manufacturer = (params.get('manufacturer') ?? '').slice(0, 160);
+    this.selectedManufacturer = !this.marketLoaded || this.manufacturerOptions.includes(manufacturer) ? manufacturer : '';
+    const requestedGameplays = params.getAll('gameplay').flatMap(value => value.split(','));
+    this.selectedGameplays = this.gameplayFilters.filter(filter => requestedGameplays.includes(filter.id)).map(filter => filter.id);
+    this.selectedOfferMode = params.get('mode')?.toLowerCase() === 'location' ? 'LOCATION' : 'ACHAT';
+    this.selectedMajorKey = (params.get('planet') ?? '').slice(0, 1000);
+    this.selectedLocation = (params.get('location') ?? '').slice(0, 1000);
+    if (this.marketLoaded) {
+      // A location identifies its parent unambiguously, even across systems.
+      if (this.locations.includes(this.selectedLocation)) {
+        this.selectedMajorKey = this.buildLocationCard(this.selectedLocation).majorKey;
+      }
+      this.refreshFilteredViews();
+      this.updateBackgroundForSelection();
+    }
+    this.shareMessage = '';
+    this.shareFailed = false;
+  }
+
+  private filterUrlTree() {
+    return this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParamsHandling: 'merge',
+      queryParams: {
+        q: this.searchTerm || null,
+        manufacturer: this.selectedManufacturer || null,
+        gameplay: this.gameplayFilters.filter(filter => this.selectedGameplays.includes(filter.id)).map(filter => filter.id).join(',') || null,
+        mode: this.selectedOfferMode === 'LOCATION' ? 'location' : null,
+        planet: this.selectedMajorKey || null,
+        location: this.selectedLocation || null,
+      }
+    });
+  }
+
+  private updateFilterUrl(debounce = false): void {
+    if (!this.marketLoaded) return;
+    this.shareMessage = '';
+    this.shareFailed = false;
+    if (this.urlSearchTimer) clearTimeout(this.urlSearchTimer);
+    this.urlSearchTimer = undefined;
+    const write = () => {
+      this.urlSearchTimer = undefined;
+      const tree = this.filterUrlTree();
+      if (this.router.serializeUrl(tree) !== this.router.url) {
+        void this.router.navigateByUrl(tree, {info: this.ownFilterNavigation}).catch(() => {
+          this.shareMessage = 'Le lien n’a pas pu être actualisé.';
+          this.shareFailed = true;
+          this.shareUrl = this.buildShareUrl();
+        });
+      }
+    };
+    if (debounce) this.urlSearchTimer = setTimeout(write, 300);
+    else write();
+  }
+
+  private buildShareUrl(): string {
+    const path = this.locationStrategy.prepareExternalUrl(this.router.serializeUrl(this.filterUrlTree()));
+    return new URL(path, document.baseURI).href;
+  }
+
+  async copySearchLink(): Promise<void> {
+    this.shareUrl = this.buildShareUrl();
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(this.shareUrl);
+      this.shareFailed = false;
+      this.shareMessage = 'Lien copié.';
+    } catch {
+      this.shareFailed = true;
+      this.shareMessage = 'Copie automatique indisponible. Vous pouvez copier le lien ci-dessous.';
+    }
   }
 
   private loadBrands(): void {
@@ -313,34 +450,32 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   private loadUniverseImages(): void {
-    this.celestialBodyService.listFrontBodies().subscribe({
-      next: (response) => {
-        this.planets = (response?.data ?? []).filter((body) => body.bodyType === 'PLANET');
-        this.planetImageByKey = {};
-        for (const planet of this.planets) {
-          this.planetImageByKey[this.normalizeText(planet.name)] = planet.imageUrl;
-        }
-        this.updateBackgroundForSelection();
-      },
-      error: () => {
-        this.planets = [];
-        this.planetImageByKey = {};
+    forkJoin({
+      bodies: this.celestialBodyService.listFrontBodies().pipe(
+        map(response => response?.data ?? []), catchError(() => of([]))
+      ),
+      stations: this.orbitalStationService.listFrontStations().pipe(
+        map(response => response?.data ?? []), catchError(() => of([]))
+      ),
+      catalog: this.celestialBodyService.listFrontLocationImages().pipe(
+        map(response => response?.data ?? []), catchError(() => of([]))
+      )
+    }).subscribe(({ bodies, stations, catalog }) => {
+      this.planetImageByKey = {};
+      this.stationImageByKey = {};
+      for (const planet of bodies.filter(body => body.bodyType === 'PLANET')) {
+        if (planet.imageUrl) this.planetImageByKey[this.locationImageKey(planet.systemName, planet.name)] = planet.imageUrl;
       }
-    });
-
-    this.orbitalStationService.listFrontStations().subscribe({
-      next: (response) => {
-        this.stations = response?.data ?? [];
-        this.stationImageByKey = {};
-        for (const station of this.stations) {
-          this.stationImageByKey[this.normalizeText(station.name)] = station.imageUrl;
-        }
-        this.updateBackgroundForSelection();
-      },
-      error: () => {
-        this.stations = [];
-        this.stationImageByKey = {};
+      for (const station of stations) {
+        if (station.imageUrl) this.stationImageByKey[this.locationImageKey(station.systemName, station.name)] = station.imageUrl;
       }
+      for (const location of catalog) {
+        if (!location.name?.trim() || !location.imageUrl?.trim()) continue;
+        const images = location.family === 'PLANET' ? this.planetImageByKey : this.stationImageByKey;
+        images[this.locationImageKey(location.systemName ?? '', location.name)] = location.imageUrl;
+      }
+      this.refreshFilteredViews();
+      this.updateBackgroundForSelection();
     });
   }
 
@@ -360,23 +495,17 @@ export class ShipMarketComponent implements OnDestroy {
       rentals: this.uexDatasetService.listVehicleRentals().pipe(
         map((response) => response?.data ?? []),
         catchError(() => of([] as UexVehicleRental[]))
-      ),
-      terminals: this.uexDatasetService.listVehicleTerminals().pipe(
-        map((response) => response?.data ?? []),
-        catchError(() => of([] as UexVehicleTerminal[]))
       )
     })
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: ({ ships, purchases, rentals, terminals }) => {
-          this.terminals = terminals;
-          this.buildTerminalsLookup();
+        next: ({ ships, purchases, rentals }) => {
           this.groupedShips = this.groupShipsByLocation(ships, purchases, rentals);
           this.groupedShipsByMode = this.buildGroupedShipsByMode(this.groupedShips);
           this.locations = Object.keys(this.groupedShips).sort((left, right) => left.localeCompare(right));
-          this.selectedLocation = this.locations[0] ?? '';
-          this.refreshFilteredViews();
-          this.onSearchTermChange();
+          this.marketLoaded = true;
+          if (this.queryParams) this.applyUrlFilters(this.queryParams);
+          else this.refreshFilteredViews();
           this.updateBackgroundForSelection();
           this.listVisible = true;
         },
@@ -401,35 +530,30 @@ export class ShipMarketComponent implements OnDestroy {
     rentals: UexVehicleRental[]
   ): Record<string, ShipByLocationCard[]> {
     const grouped: Record<string, ShipByLocationCard[]> = {};
+    this.locationMetadata = {};
     const shipsByNormalizedName = this.buildShipNameIndex(ships);
-
-    for (const purchase of purchases) {
-      const location = (purchase?.terminalName ?? '').trim();
-      const price = Number(purchase?.buyPrice);
-      if (!location || !Number.isFinite(price) || price <= 0) {
-        continue;
-      }
-
-      const ship = this.resolveShipForVehicleName(purchase?.vehicleName, purchase?.terminalName, 'Achat', shipsByNormalizedName);
-      if (!grouped[location]) {
-        grouped[location] = [];
-      }
-      grouped[location].push({ ship, location, price, offerType: 'ACHAT' });
-    }
-
-    for (const rental of rentals) {
-      const location = (rental?.terminalName ?? '').trim();
-      const price = Number(rental?.rentPrice);
-      if (!location || !Number.isFinite(price) || price <= 0) {
-        continue;
-      }
-
-      const ship = this.resolveShipForVehicleName(rental?.vehicleName, rental?.terminalName, 'Location', shipsByNormalizedName);
-      if (!grouped[location]) {
-        grouped[location] = [];
-      }
-      grouped[location].push({ ship, location, price, offerType: 'LOCATION' });
-    }
+    const addOffer = (offer: MarketLocation & {vehicleName: string}, price: number, offerType: 'ACHAT' | 'LOCATION') => {
+      const vehicleName = (offer.vehicleName ?? '').trim();
+      const terminalName = (offer.terminalName ?? '').trim();
+      if (!vehicleName || !terminalName || !Number.isFinite(price) || price <= 0) return;
+      const ship = this.resolveShipForVehicleName(vehicleName, shipsByNormalizedName);
+      if (!ship) return;
+      const metadata: MarketLocation = {
+        terminalName, terminalId: offer.terminalId ?? null,
+        locationName: offer.locationName?.trim() || null,
+        planetName: offer.planetName?.trim() || null,
+        systemName: offer.systemName?.trim() || null
+      };
+      // Physical places share a card; terminals without a known place stay distinct.
+      const key = JSON.stringify([this.normalizeText(metadata.systemName ?? ''), this.normalizeText(metadata.planetName ?? ''),
+        metadata.locationName ? 'place:' + this.normalizeText(metadata.locationName) : 'terminal:' + (metadata.terminalId ?? terminalName)]);
+      this.locationMetadata[key] = metadata;
+      (grouped[key] ??= []).push({ship, location: terminalName, price, offerType,
+        terminalId: metadata.terminalId, locationName: metadata.locationName,
+        planetName: metadata.planetName, systemName: metadata.systemName});
+    };
+    for (const purchase of purchases) addOffer(purchase, Number(purchase.buyPrice), 'ACHAT');
+    for (const rental of rentals) addOffer(rental, Number(rental.rentPrice), 'LOCATION');
 
     for (const location of Object.keys(grouped)) {
       grouped[location] = grouped[location].sort((left, right) => {
@@ -471,28 +595,12 @@ export class ShipMarketComponent implements OnDestroy {
 
   private resolveShipForVehicleName(
     vehicleName: string | null | undefined,
-    terminalName: string | null | undefined,
-    fallbackFocus: string,
     shipsByName: Record<string, Ship>
-  ): Ship {
+  ): Ship | null {
     const rawName = (vehicleName ?? '').trim();
     const normalized = this.normalizeVehicleName(rawName);
     const found = normalized ? shipsByName[normalized] : undefined;
-    if (found) {
-      return found;
-    }
-
-    return {
-      id: -Math.abs(this.stableHash(`${rawName}-${terminalName ?? ''}`)),
-      name: rawName || 'Vaisseau inconnu',
-      brand: { name: 'UEX' },
-      imageUrl: this.rentalFallbackShipImageUrl,
-      focus: fallbackFocus,
-      crew: '-',
-      size: '-',
-      scu: undefined,
-      flightReady: true
-    };
+    return found ?? null;
   }
 
   private normalizeVehicleName(name: string): string {
@@ -503,73 +611,22 @@ export class ShipMarketComponent implements OnDestroy {
     return this.rentalVehicleAliases[base] ? this.normalizeText(this.rentalVehicleAliases[base]) : base;
   }
 
-  private stableHash(text: string): number {
-    let hash = 0;
-    for (let index = 0; index < text.length; index++) {
-      hash = (hash << 5) - hash + text.charCodeAt(index);
-      hash |= 0;
-    }
-    return hash;
-  }
-
   private buildLocationCard(location: string): LocationCardView {
-    const parsed = this.parseLocationLabel(location);
-    const terminal = this.resolveTerminalMapping(location);
-    const placeKey = this.normalizeText(parsed.place);
-    const promoLabel = placeKey.includes('lorville') ? '-15%' : '';
-    const stationName = terminal?.stationName || parsed.station || null;
-    const cityName = terminal?.cityName || (!stationName ? parsed.place : null);
-    const planetName = terminal?.planetName || parsed.planet || parsed.tailPrimary;
-    const gatewayMajorLabel = this.resolveGatewayMajorLabel(location, stationName, cityName, parsed.place);
-    const majorLabel = gatewayMajorLabel || planetName || stationName || cityName || 'Autres';
-    const majorKey = this.normalizeText(majorLabel) || 'autres';
-    const majorImageUrl = gatewayMajorLabel
-      ? (this.resolveStationImage(gatewayMajorLabel) || this.resolvePlaceImage(stationName, cityName, planetName))
-      : (this.resolvePlanetImage(majorLabel) || this.fallbackLocationImageUrl);
-    const imageUrl = this.resolvePlaceImage(stationName, cityName, planetName);
+    const metadata = this.locationMetadata[location];
+    const planetName = metadata?.planetName ?? '';
+    const systemName = metadata?.systemName ?? '';
+    const placeName = metadata?.locationName ?? '';
+    const majorLabel = planetName || 'Lieux hors planète';
+    const majorKey = JSON.stringify([this.normalizeText(systemName), planetName ? 'planet:' + this.normalizeText(planetName) : 'unassigned']);
+    const majorImageUrl = this.planetImageByKey[this.locationImageKey(systemName, planetName)] || this.fallbackLocationImageUrl;
+    const imageUrl = this.stationImageByKey[this.locationImageKey(systemName, placeName)] || majorImageUrl;
+    const terminalNames = [...new Set(this.getFilteredShipsForLocation(location).map(offer => offer.location))];
     return {
-      location,
-      titleLine: `${parsed.shop} - ${parsed.place}`,
-      bodyLine1: parsed.tailPrimary,
-      bodyLine2: parsed.tailSecondary,
-      imageUrl,
-      count: this.getFilteredShipsForLocation(location).length,
-      promoLabel,
-      stationName: stationName || cityName || parsed.place,
-      planetName,
-      majorKey,
-      majorLabel,
-      majorImageUrl
+      location, titleLine: placeName || metadata?.terminalName || 'Lieu non renseigné',
+      bodyLine1: placeName ? terminalNames.join(' · ') : 'Lieu non renseigné',
+      bodyLine2: '', imageUrl, count: this.getFilteredShipsForLocation(location).length,
+      planetName, systemName, majorKey, majorLabel, majorImageUrl
     };
-  }
-
-  private resolveGatewayMajorLabel(
-    location: string,
-    stationName: string | null,
-    cityName: string | null,
-    parsedPlace: string
-  ): string | null {
-    const candidates = [stationName, cityName, parsedPlace, location].filter((value): value is string => !!value && !!value.trim());
-    for (const candidate of candidates) {
-      const candidateKey = this.normalizeText(candidate);
-      if (!candidateKey.includes('gateway')) {
-        continue;
-      }
-
-      const stationMatch = this.stations.find((station) => {
-        const stationKey = this.normalizeText(station.name);
-        return stationKey.includes('gateway') && (candidateKey.includes(stationKey) || stationKey.includes(candidateKey));
-      });
-      if (stationMatch) {
-        return stationMatch.name;
-      }
-
-      const inlineGateway = candidate.match(/([a-z0-9' -]*gateway\s*\([^)]+\))/i);
-      if (inlineGateway?.[1]) {
-        return inlineGateway[1].trim().replace(/\s+/g, ' ');
-      }
-    }
-    return null;
   }
 
   private refreshFilteredViews(): void {
@@ -588,15 +645,13 @@ export class ShipMarketComponent implements OnDestroy {
     for (const card of this.filteredLocationCards) {
       if (!byMajor[card.majorKey]) {
         byMajor[card.majorKey] = {
+          systemName: card.systemName,
           majorKey: card.majorKey,
           majorLabel: card.majorLabel,
           majorImageUrl: card.majorImageUrl,
           count: 0,
           cards: []
         };
-      }
-      if (this.isFallbackLocationImage(byMajor[card.majorKey].majorImageUrl) && !this.isFallbackLocationImage(card.imageUrl)) {
-        byMajor[card.majorKey].majorImageUrl = card.imageUrl;
       }
       byMajor[card.majorKey].cards.push(card);
       byMajor[card.majorKey].count += card.count;
@@ -625,338 +680,19 @@ export class ShipMarketComponent implements OnDestroy {
   private getFilteredShipsForLocation(location: string): ShipByLocationCard[] {
     const rows = this.groupedShipsByMode[location]?.[this.selectedOfferMode] ?? [];
     const query = this.normalizeText(this.searchTerm);
-    if (!query) return rows;
-
     return rows.filter((row) => {
+      if (this.selectedManufacturer && row.ship.brand?.name !== this.selectedManufacturer) return false;
+      if (this.selectedGameplays.length && !this.gameplayFilters.some(filter =>
+        this.selectedGameplays.includes(filter.id) && filter.pattern.test(this.normalizeText(row.ship.focus ?? '')))) return false;
       const text = this.normalizeText(
-        `${row.ship.name} ${row.ship.brand?.name ?? ''} ${row.ship.focus ?? ''} ${row.ship.crew ?? ''} ${row.location}`
+        `${row.ship.name} ${row.ship.brand?.name ?? ''} ${row.ship.focus ?? ''} ${row.ship.crew ?? ''} ${row.location} ${row.locationName ?? ''} ${row.planetName ?? ''} ${row.systemName ?? ''}`
       );
       return text.includes(query);
     });
   }
 
-  private parseLocationLabel(location: string): {
-    shop: string;
-    place: string;
-    tailPrimary: string;
-    tailSecondary: string;
-    station: string | null;
-    planet: string | null;
-  } {
-    const raw = (location ?? '').trim();
-    const split = raw.split(/\s*-\s*/).map((part) => part.trim()).filter((part) => part.length > 0);
-    const splitParts = this.resolveShopAndPlace(raw, split);
-
-    const shopPart = splitParts.shop;
-    const placePart = splitParts.place;
-
-    const station = this.resolveStationName(placePart);
-    const planet = this.resolvePlanetName(placePart, placePart);
-    const stationRow = station
-      ? this.stations.find((row) => this.normalizeText(row.name) === this.normalizeText(station))
-      : null;
-    const planetRow = planet
-      ? this.planets.find((row) => this.normalizeText(row.name) === this.normalizeText(planet))
-      : null;
-
-    const tailPrimary = stationRow?.orbitTarget || planetRow?.name || planet || 'N/A';
-    const tailSecondary = stationRow?.systemName || planetRow?.systemName || 'N/A';
-
-    return {
-      shop: shopPart || raw || 'N/A',
-      place: placePart || 'N/A',
-      tailPrimary,
-      tailSecondary,
-      station,
-      planet: planetRow?.name || planet
-    };
-  }
-
-  private extractShopFallback(raw: string): string {
-    const parts = raw.split(/[>/]/).map((part) => part.trim()).filter((part) => part.length > 0);
-    if (parts.length > 1) {
-      return parts[parts.length - 1];
-    }
-    return raw;
-  }
-
-  private resolveShopAndPlace(raw: string, split: string[]): { shop: string; place: string } {
-    if (split.length >= 2) {
-      const left = split[0];
-      const right = split.slice(1).join(' - ');
-      const leftNorm = this.normalizeText(left);
-      const rightNorm = this.normalizeText(right);
-
-      if (leftNorm !== rightNorm) {
-        const leftScore = this.scorePlaceLikelihood(left);
-        const rightScore = this.scorePlaceLikelihood(right);
-
-        if (leftScore > rightScore) {
-          return { shop: right, place: this.canonicalizePlace(left) };
-        }
-        if (rightScore > leftScore) {
-          return { shop: left, place: this.canonicalizePlace(right) };
-        }
-
-        return { shop: left, place: this.canonicalizePlace(right) };
-      }
-    }
-
-    const inferredPlace = this.inferPlaceFromRaw(raw);
-    if (inferredPlace) {
-      const shop = this.removePlaceFromText(raw, inferredPlace.source).trim();
-      if (shop.length) {
-        return { shop, place: inferredPlace.display };
-      }
-    }
-
-    const fallbackShop = this.extractShopFallback(raw);
-    return { shop: fallbackShop, place: this.canonicalizePlace(raw) };
-  }
-
-  private canonicalizePlace(value: string): string {
-    const key = this.normalizeText(value);
-    for (const aliasKey of Object.keys(this.placeAliases)) {
-      if (key.includes(aliasKey)) {
-        return this.placeAliases[aliasKey];
-      }
-    }
-
-    const matchedStation = this.stations.find((station) => key.includes(this.normalizeText(station.name)));
-    if (matchedStation) return matchedStation.name;
-
-    const matchedPlanet = this.planets.find((planet) => key.includes(this.normalizeText(planet.name)));
-    if (matchedPlanet) return matchedPlanet.name;
-
-    return value.trim() || 'N/A';
-  }
-
-  private inferPlaceFromRaw(raw: string): { source: string; display: string } | null {
-    const lowered = this.normalizeText(raw);
-    const candidates: Array<{ source: string; display: string }> = [];
-
-    for (const aliasKey of Object.keys(this.placeAliases)) {
-      if (lowered.includes(aliasKey)) {
-        candidates.push({ source: aliasKey, display: this.placeAliases[aliasKey] });
-      }
-    }
-    for (const station of this.stations) {
-      const normalized = this.normalizeText(station.name);
-      if (lowered.includes(normalized)) {
-        candidates.push({ source: normalized, display: station.name });
-      }
-    }
-    for (const planet of this.planets) {
-      const normalized = this.normalizeText(planet.name);
-      if (lowered.includes(normalized)) {
-        candidates.push({ source: normalized, display: planet.name });
-      }
-    }
-
-    if (!candidates.length) return null;
-
-    candidates.sort((a, b) => b.source.length - a.source.length);
-    return candidates[0];
-  }
-
-  private removePlaceFromText(raw: string, placeSource: string): string {
-    const parts = raw.split(/\s+/);
-    const target = placeSource.split(/\s+/);
-    if (!target.length) return raw;
-
-    for (let start = 0; start <= parts.length - target.length; start++) {
-      const chunk = parts.slice(start, start + target.length).join(' ');
-      if (this.normalizeText(chunk) === placeSource) {
-        const next = [...parts.slice(0, start), ...parts.slice(start + target.length)];
-        return next.join(' ').replace(/\s*-\s*/g, ' ').trim();
-      }
-    }
-
-    return raw.replace(new RegExp(placeSource, 'i'), '').replace(/\s*-\s*/g, ' ').trim();
-  }
-
-  private scorePlaceLikelihood(value: string): number {
-    const key = this.normalizeText(value);
-    let score = 0;
-
-    for (const aliasKey of Object.keys(this.stationAliases)) {
-      if (key.includes(aliasKey)) score += 3;
-    }
-    for (const aliasKey of Object.keys(this.planetAliases)) {
-      if (key.includes(aliasKey)) score += 2;
-    }
-    if (this.stations.some((station) => key.includes(this.normalizeText(station.name)))) score += 3;
-    if (this.planets.some((planet) => key.includes(this.normalizeText(planet.name)))) score += 2;
-
-    return score;
-  }
-
-  private resolveStationName(locationText: string): string | null {
-    const key = this.normalizeText(locationText);
-    for (const aliasKey of Object.keys(this.stationAliases)) {
-      if (key.includes(aliasKey)) {
-        const aliased = this.stationAliases[aliasKey];
-        const aliasedKey = this.normalizeText(aliased);
-        const fromDb = this.stations.find((station) => {
-          const stationKey = this.normalizeText(station.name);
-          return stationKey.includes(aliasedKey) || aliasedKey.includes(stationKey);
-        });
-        return fromDb?.name ?? aliased;
-      }
-    }
-    const matched = this.stations.find((station) => {
-      const stationKey = this.normalizeText(station.name);
-      return key.includes(stationKey) || stationKey.includes(key);
-    });
-    return matched?.name ?? null;
-  }
-
-  private resolvePlanetName(locationText: string, placePart: string): string {
-    const placeKey = this.normalizeText(placePart);
-    const fullKey = this.normalizeText(locationText);
-
-    for (const aliasKey of Object.keys(this.planetAliases)) {
-      if (placeKey.includes(aliasKey) || fullKey.includes(aliasKey)) {
-        return this.planetAliases[aliasKey];
-      }
-    }
-
-    const matchedPlanet = this.planets.find((planet) =>
-      placeKey.includes(this.normalizeText(planet.name)) || fullKey.includes(this.normalizeText(planet.name))
-    );
-    if (matchedPlanet) {
-      return matchedPlanet.name;
-    }
-
-    return placePart || locationText;
-  }
-
-  private resolveLocationImage(parsed: { station: string | null; planet: string | null }): string {
-    if (parsed.station) {
-      const stationImage = this.stationImageByKey[this.normalizeText(parsed.station)];
-      if (stationImage) return stationImage;
-    }
-
-    if (parsed.planet) {
-      const planetImage = this.planetImageByKey[this.normalizeText(parsed.planet)];
-      if (planetImage) return planetImage;
-    }
-
-    return 'https://media.starcitizen.tools/thumb/0/04/Stanton_system_overview.jpg/1200px-Stanton_system_overview.jpg.webp';
-  }
-
-  private resolvePlaceImage(stationName: string | null, cityName: string | null, planetName: string): string {
-    const stationImage = stationName ? this.resolveStationImage(stationName) : null;
-    if (stationImage) {
-      return stationImage;
-    }
-    const cityImage = cityName ? this.resolveStationImage(cityName) : null;
-    if (cityImage) {
-      return cityImage;
-    }
-    return this.resolvePlanetImage(planetName) || this.fallbackLocationImageUrl;
-  }
-
-  private resolveStationImage(stationName: string): string | null {
-    const direct = this.stationImageByKey[this.normalizeText(stationName)];
-    if (direct) {
-      return direct;
-    }
-    const target = this.normalizeText(stationName);
-    const fuzzy = this.stations.find((station) => {
-      const key = this.normalizeText(station.name);
-      return key.includes(target) || target.includes(key);
-    });
-    return fuzzy?.imageUrl || null;
-  }
-
-  private resolvePlanetImage(planetName: string): string | null {
-    const direct = this.planetImageByKey[this.normalizeText(planetName)];
-    if (direct) {
-      return direct;
-    }
-    const target = this.normalizeText(planetName);
-    const fuzzy = this.planets.find((planet) => {
-      const key = this.normalizeText(planet.name);
-      return key.includes(target) || target.includes(key);
-    });
-    return fuzzy?.imageUrl || null;
-  }
-
-  private isFallbackLocationImage(url: string | null | undefined): boolean {
-    return !url || url === this.fallbackLocationImageUrl;
-  }
-
-  private buildTerminalsLookup(): void {
-    this.terminalsByLookupKey = {};
-    for (const terminal of this.terminals) {
-      const mapping: TerminalMapping = {
-        planetName: terminal.planetName ?? null,
-        cityName: terminal.cityName ?? null,
-        stationName: terminal.spaceStationName ?? null,
-        screenshot: terminal.screenshot ?? null
-      };
-
-      const candidates = [
-        terminal.name,
-        terminal.nickname,
-        terminal.displayName,
-        terminal.code,
-        terminal.spaceStationName,
-        terminal.cityName
-      ];
-
-      for (const candidate of candidates) {
-        const key = this.normalizeLookupText(candidate ?? '');
-        if (!key) {
-          continue;
-        }
-        const existing = this.terminalsByLookupKey[key];
-        this.terminalsByLookupKey[key] = existing ? this.mergeTerminalMappings(existing, mapping) : mapping;
-      }
-    }
-  }
-
-  private resolveTerminalMapping(location: string): TerminalMapping | null {
-    const key = this.normalizeLookupText(location);
-    if (!key) {
-      return null;
-    }
-    const direct = this.terminalsByLookupKey[key];
-    if (direct?.screenshot) {
-      return direct;
-    }
-
-    let best: { score: number; mapping: TerminalMapping } | null = null;
-    for (const lookupKey of Object.keys(this.terminalsByLookupKey)) {
-      if (lookupKey.length < 4) {
-        continue;
-      }
-      if (key.includes(lookupKey) || lookupKey.includes(key)) {
-        const score = lookupKey.length;
-        if (!best || score > best.score) {
-          best = { score, mapping: this.terminalsByLookupKey[lookupKey] };
-        }
-      }
-    }
-    const fuzzy = best?.mapping ?? null;
-    if (direct && fuzzy) {
-      return this.mergeTerminalMappings(direct, fuzzy);
-    }
-    return direct ?? fuzzy;
-  }
-
-  private mergeTerminalMappings(primary: TerminalMapping, secondary: TerminalMapping): TerminalMapping {
-    return {
-      planetName: primary.planetName || secondary.planetName || null,
-      cityName: primary.cityName || secondary.cityName || null,
-      stationName: primary.stationName || secondary.stationName || null,
-      screenshot: primary.screenshot || secondary.screenshot || null
-    };
-  }
-
-  private normalizeLookupText(value: string): string {
-    return this.normalizeText(value).replace(/[^a-z0-9]/g, '');
+  private locationImageKey(systemName: string, name: string): string {
+    return JSON.stringify([this.normalizeText(systemName), this.normalizeText(name).replace(/\s+/g, '')]);
   }
 
   private normalizeText(value: string): string {
@@ -993,8 +729,8 @@ export class ShipMarketComponent implements OnDestroy {
   }
 
   private resolvePaletteForCard(card: LocationCardView): [string, string, string] {
-    const planetKey = this.normalizeText(card.bodyLine1);
-    const systemKey = this.normalizeText(card.bodyLine2);
+    const planetKey = this.normalizeText(card.planetName);
+    const systemKey = this.normalizeText(card.systemName);
 
     for (const key of Object.keys(this.backgroundByPlanet)) {
       if (planetKey.includes(key)) {

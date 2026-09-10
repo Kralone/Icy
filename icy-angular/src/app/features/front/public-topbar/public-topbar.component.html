@@ -1,15 +1,22 @@
-<header class="public-topbar">
+<header class="public-topbar" (keydown.escape)="closeMenu(menuToggle)">
   <div class="public-topbar__inner">
-    <a [routerLink]="['/']" class="public-topbar__brand">IceForge</a>
+    <a [routerLink]="['/']" class="public-topbar__brand" (click)="closeMenu()">IceForge</a>
 
-    <nav class="public-topbar__nav">
+    <button #menuToggle type="button" class="public-topbar__menu-toggle"
+      aria-controls="public-navigation" [attr.aria-expanded]="mobileMenuOpen"
+      (click)="mobileMenuOpen = !mobileMenuOpen">
+      {{ mobileMenuOpen ? 'Fermer' : 'Menu' }}
+    </button>
+
+    <nav id="public-navigation" class="public-topbar__nav" aria-label="Navigation principale"
+      [class.public-topbar__nav--open]="mobileMenuOpen" (click)="closeMenu()">
       <a [routerLink]="['/utilitaires']" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Utilitaires</a>
 
       <div class="public-topbar__dropdown">
         <a [routerLink]="['/']" fragment="guides">Guides</a>
-        <div class="public-topbar__dropdown-menu" role="menu" aria-label="Liste des guides">
+        <div class="public-topbar__dropdown-menu">
           @for (item of guideItems; track item.label) {
-            <a [routerLink]="[item.route]" role="menuitem">{{ item.label }}</a>
+            <a [routerLink]="[item.route]">{{ item.label }}</a>
           }
         </div>
       </div>
@@ -21,6 +28,7 @@
 
     <a
       [routerLink]="[memberSpaceLink]"
+      (click)="closeMenu()"
       class="public-topbar__login"
       [class.public-topbar__login--connected]="isConnected"
       >

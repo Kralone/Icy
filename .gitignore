@@ -22,3 +22,8 @@
 /.codex-tmp/
 /.pnpm-store/
 /.angular/
+
+# Local validation output
+/ops/testing/*-current-*.log
+/ops/testing/cig-*-qa.json
+/ops/testing/cig-delivery-e2e.json

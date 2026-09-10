@@ -28,6 +28,8 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
   allShipsModal: Ship[] = [];
   filteredShipsSearch: Ship[] = [];
   private allShipsLoaded = false;
+  isShipCatalogLoading = false;
+  shipCatalogLoadError = false;
 
   brands: { name: string; imageUrl: string }[] = [];
   brandShipsModal: Ship[] = [];
@@ -78,7 +80,12 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
       this.applyShipSearch();
       return;
     }
+    if (this.isShipCatalogLoading) return;
     this.loadAllShipsForModal();
+  }
+
+  retryLoadShips(): void {
+    this.ensureShipsLoaded();
   }
 
   closeModal(): void {
@@ -162,10 +169,19 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
   }
 
   private loadAllShipsForModal(): void {
-    this.shipService.getAllShips().subscribe((response) => {
-      this.allShipsModal = response.data || [];
-      this.allShipsLoaded = true;
-      this.applyShipSearch();
+    this.isShipCatalogLoading = true;
+    this.shipCatalogLoadError = false;
+    this.shipService.getAllShips().subscribe({
+      next: (response) => {
+        this.allShipsModal = response.data || [];
+        this.allShipsLoaded = true;
+        this.applyShipSearch();
+        this.isShipCatalogLoading = false;
+      },
+      error: () => {
+        this.isShipCatalogLoading = false;
+        this.shipCatalogLoadError = true;
+      }
     });
   }
 

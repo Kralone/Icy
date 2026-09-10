@@ -22,4 +22,13 @@ describe('SidebarComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('only shows SC World Events when an event is active', () => {
+    component.hasActiveScEvent = false;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/icy/scwe"]')).toBeNull();
+    component.hasActiveScEvent = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/icy/scwe"]')).not.toBeNull();
+  });
 });

@@ -203,7 +203,7 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     return ship.brand?.name ?? 'Marque inconnue';
   }
 
-  formatScu(value: number | undefined): string {
+  formatScu(value: number | null | undefined): string {
     if (value === null || value === undefined || Number.isNaN(value)) {
       return '-';
     }

@@ -9,6 +9,7 @@ import com.icy.icy_backend.db.entity.utils.WikeloShip;
 import com.icy.icy_backend.db.repository.catalog.CatalogSyncRunRepository;
 import com.icy.icy_backend.service.uex.UexDatasetService;
 import com.icy.icy_backend.service.wikelo.WikeloService;
+import com.icy.icy_backend.service.wikelo.WikeloEquipmentRecipeStore;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ class CatalogSyncWorkerTest {
         CatalogRawStore rawStore = mock(CatalogRawStore.class);
         UexDatasetService uexDatasetService = mock(UexDatasetService.class);
         WikeloService wikeloService = mock(WikeloService.class);
+        WikeloEquipmentRecipeStore recipes = mock(WikeloEquipmentRecipeStore.class);
         CatalogSyncProperties properties = new CatalogSyncProperties();
 
         CatalogSyncRun run = new CatalogSyncRun();
@@ -67,27 +69,31 @@ class CatalogSyncWorkerTest {
                 rawStore,
                 uexDatasetService,
                 wikeloService,
+                recipes,
                 properties,
                 new ObjectMapper().findAndRegisterModules()
         );
 
         worker.run(42L, "SCRAPE_ALL", null);
 
-        InOrder order = inOrder(wikiScraper, uexDatasetService, wikeloService, catalogMapper, economyMapper);
+        InOrder order = inOrder(wikiScraper, uexDatasetService, wikeloService, recipes, catalogMapper, economyMapper);
         order.verify(wikiScraper).scrape("vehicles", 42L);
         order.verify(wikiScraper).scrape("items", 42L);
         order.verify(wikiScraper).scrape("locations", 42L);
         order.verify(uexDatasetService).refreshDataset("vehicles_prices");
         order.verify(wikeloService).scrapeShips();
+        order.verify(recipes).scrapeAndStore(42L);
         order.verify(catalogMapper).mapWikiDataset("vehicles", 42L);
         order.verify(catalogMapper).mapWikiDataset("items", 42L);
         order.verify(catalogMapper).mapWikiDataset("locations", 42L);
         order.verify(economyMapper).map(42L);
         order.verify(wikeloService).publishScrapedShips(List.of(wikeloShip));
 
+        order.verify(recipes).publish(42L);
+
         assertThat(run.getStatus()).isEqualTo("SUCCEEDED");
-        assertThat(run.getCurrentStep()).isEqualTo(10);
-        assertThat(run.getTotalSteps()).isEqualTo(10);
+        assertThat(run.getCurrentStep()).isEqualTo(12);
+        assertThat(run.getTotalSteps()).isEqualTo(12);
         assertThat(run.getMessage()).contains("tout le catalogue");
     }
 }

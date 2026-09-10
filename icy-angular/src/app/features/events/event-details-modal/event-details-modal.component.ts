@@ -1,4 +1,6 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
+import { eventColor, eventImage } from '../event-appearance';
 import { CommonModule } from '@angular/common';
 import { SafeHtml } from '@angular/platform-browser';
 import { FleetMiniCardComponent } from '../../../shared/fleet-mini-card/fleet-mini-card.component';
@@ -12,11 +14,14 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-event-details-modal',
   standalone: true,
-  imports: [CommonModule, FleetMiniCardComponent],
+  imports: [CommonModule, A11yModule, FleetMiniCardComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
-  templateUrl: './event-details-modal.component.html'
+  templateUrl: './event-details-modal.component.html',
+  styleUrl: './event-details-modal.component.css'
 })
 export class EventDetailsModalComponent {
+  readonly eventColor = eventColor;
+  readonly eventImage = eventImage;
   @Input() selectedEvent: any;
   @Input() descriptionHtml?: SafeHtml;
   @Input() participationsByStatus: {
@@ -32,8 +37,20 @@ export class EventDetailsModalComponent {
   @Input() isFleetLoading = false;
   @Input() fleetByBrand: Record<string, FleetMiniShip[]> = {};
   @Input() fleetBrandKeys: string[] = [];
+  @Input() participationError = '';
+  @Input() isParticipationLoading = false;
+  @Input() isParticipationSaving = false;
+  @Input() selectedParticipationStatus: number | null = null;
+
+  @Output() retryParticipations = new EventEmitter<void>();
 
   @Output() requestClose = new EventEmitter<void>();
   @Output() participationChange = new EventEmitter<number>();
   @Output() toggleFleets = new EventEmitter<void>();
+
+  @HostListener('document:keydown.escape', ['$event'])
+  closeOnEscape(event: Event): void {
+    event.preventDefault();
+    this.requestClose.emit();
+  }
 }

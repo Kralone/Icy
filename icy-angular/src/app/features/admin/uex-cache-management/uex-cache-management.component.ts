@@ -92,6 +92,8 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
   selectedMapScope: CatalogMapScope = 'VEHICLES';
   catalogRun: CatalogSyncRun | null = null;
   catalogConflicts: CatalogConflict[] = [];
+  loadingConflicts = false;
+  conflictsError = '';
   conflictSelections = new Map<number, Set<string>>();
   resolvingConflictId: number | null = null;
   startingCatalogAction = false;
@@ -428,10 +430,13 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
     }, 2500);
   }
 
-  private loadCatalogConflicts(): void {
-    if (!this.catalogRun) return;
+  loadCatalogConflicts(): void {
+    if (!this.catalogRun || this.loadingConflicts || this.resolvingConflictId !== null) return;
+    this.loadingConflicts = true;
+    this.conflictsError = '';
     this.uexDatasetService.getCatalogConflicts(this.catalogRun.id).subscribe({
       next: (response) => {
+        this.loadingConflicts = false;
         this.catalogConflicts = response?.data ?? [];
         const refreshedSelections = new Map<number, Set<string>>();
         for (const conflict of this.catalogConflicts) {
@@ -443,7 +448,8 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
         this.conflictSelections = refreshedSelections;
       },
       error: (error: HttpErrorResponse) => {
-        this.error = this.extractHttpErrorMessage('Impossible de charger les variantes a comparer.', error);
+        this.loadingConflicts = false;
+        this.conflictsError = this.extractHttpErrorMessage('Impossible de charger les variantes à comparer.', error);
       }
     });
   }

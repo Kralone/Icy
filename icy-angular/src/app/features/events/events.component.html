@@ -1,62 +1,105 @@
-<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-
-  <!-- Titre -->
-  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-    <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-      <span class="text-cyan-400 text-xl sm:text-2xl">❄️</span>
-      Calendrier des Événements
-    </h1>
-
-    @if (isAdmin) {
-      <button
-        routerLink="/icy/admin/events"
-      class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
-             bg-white/10 backdrop-blur-md border border-cyan-400/30
-             text-cyan-200 font-semibold text-sm shadow-lg
-             hover:bg-cyan-500/20 hover:scale-105 transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-          stroke="currentColor" class="w-5 h-5 text-cyan-300">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M3 7h18M3 12h18M3 17h18"/>
-          </svg>
-          Gérer les events
-        </button>
-      }
+<section class="events-page">
+  <header class="events-header">
+    <div>
+      <h1>Calendrier</h1>
     </div>
+    @if (isAdmin) {
+      <a routerLink="/icy/admin/events" class="events-button">Gérer les événements <span aria-hidden="true">↗</span></a>
+    }
+  </header>
 
-    <!-- Conteneur calendrier -->
-    <div
-    class="relative loading-reveal flex-1 p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl
-         overflow-y-auto flex flex-col"
-      [attr.data-loading]="isLoading"
-      >
-      <app-loading-overlay
-        [isLoading]="isLoading"
-        [minDurationMs]="0"
-        [fadeOutMs]="500"
-        [softFade]="true"
-      ></app-loading-overlay>
-      <full-calendar
-        [options]="calendarOptions"
-        class="flex-1 min-h-[420px] sm:min-h-[640px] w-full text-gray-100"
-      ></full-calendar>
+  <div class="events-toolbar">
+    <div class="events-switch" role="group" aria-label="Affichage des événements">
+      <button type="button" [attr.aria-pressed]="viewMode === 'upcoming'" (click)="setView('upcoming')">À venir</button>
+      <button type="button" [attr.aria-pressed]="viewMode === 'calendar'" (click)="setView('calendar')">Calendrier</button>
     </div>
   </div>
 
-  <!-- MODAL DETAILS -->
-  @if (showDetailsModal) {
-    <app-event-details-modal
-      [selectedEvent]="selectedEvent"
-      [descriptionHtml]="formatEventDescription($safeNavigationMigration(selectedEvent?.description))"
-      [participationsByStatus]="participationsByStatus"
-      [showConfirmedFleets]="showConfirmedFleets"
-      [isFleetLoading]="isFleetLoading"
-      [fleetByBrand]="fleetByBrand"
-      [fleetBrandKeys]="fleetBrandKeys"
-      (requestClose)="showDetailsModal = false"
-      (participationChange)="setParticipationStatus($event)"
-      (toggleFleets)="toggleConfirmedFleets()"
-    ></app-event-details-modal>
+  @if (isLoading) {
+    <app-async-state kind="loading" title="Chargement des événements…" />
+  } @else if (loadError) {
+    <app-async-state kind="error" title="Les événements sont indisponibles" [description]="loadError" actionLabel="Réessayer" (action)="reloadEvents()" />
+  } @else if (viewMode === 'upcoming') {
+    <div class="events-agenda">
+      @for (event of upcomingEvents; track event.id) {
+        <button type="button" class="agenda-event" (click)="openEventModal(event)"
+          [style.--event-accent]="eventColor(event.type?.backgroundColor)" [style.--event-label]="eventColor(event.type?.textColor, '#e3f4fb')">
+          @if (eventImage(event.type?.imageUrl); as image) {
+            <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+          }
+          <time class="agenda-date" [attr.datetime]="event.startDateTime">
+            <span>{{ event.startDateTime | date:'dd' }}</span>
+            <span>{{ event.startDateTime | date:'MMM yyyy':'':'fr' }}</span>
+          </time>
+          <div class="agenda-content">
+            <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
+            <h2>{{ event.title }}</h2>
+            <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
+              @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
+            </p>
+            @if (participationLabels[event.id]) {
+              <span class="agenda-participation">{{ participationLabels[event.id] }}</span>
+            }
+          </div>
+          <span class="agenda-open">Détails <span aria-hidden="true">↗</span></span>
+        </button>
+      } @empty {
+        <div class="events-state">
+          <h2>Aucun événement à venir</h2>
+          <button type="button" class="events-button" (click)="setView('calendar')">Voir le calendrier</button>
+        </div>
+      }
+    </div>
   }
 
+  <div class="events-calendar" [hidden]="viewMode !== 'calendar' || isLoading || !!loadError">
+    <div class="calendar-navigation">
+      <div class="calendar-period">
+        <div class="calendar-arrows">
+          <button type="button" aria-label="Période précédente" (click)="moveCalendar('prev')">‹</button>
+          <button type="button" aria-label="Période suivante" (click)="moveCalendar('next')">›</button>
+        </div>
+        <h2 aria-live="polite">{{ calendarTitle }}</h2>
+        <button type="button" class="calendar-today" (click)="moveCalendar('today')">Aujourd’hui</button>
+      </div>
+      <div class="calendar-range" role="group" aria-label="Durée affichée">
+        <button type="button" [attr.aria-pressed]="calendarView === 'threeDay'" (click)="changeCalendarView('threeDay')">3 jours</button>
+        <button type="button" [attr.aria-pressed]="calendarView === 'dayGridWeek'" (click)="changeCalendarView('dayGridWeek')">Semaine</button>
+        <button type="button" [attr.aria-pressed]="calendarView === 'dayGridMonth'" (click)="changeCalendarView('dayGridMonth')">Mois</button>
+      </div>
+    </div>
+    <full-calendar [options]="calendarOptions">
+      <ng-template #eventContent let-arg>
+        <div class="calendar-event-card" [class.calendar-event-card--finished]="arg.event.extendedProps.finished"
+          [style.--event-accent]="eventColor(arg.event.extendedProps.type?.backgroundColor)" [style.--event-label]="eventColor(arg.event.extendedProps.type?.textColor, '#e3f4fb')">
+          @if (eventImage(arg.event.extendedProps.type?.imageUrl); as image) {
+            <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+          }
+          <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
+          <strong>{{ arg.event.title }}</strong>
+          <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>
+        </div>
+      </ng-template>
+    </full-calendar>
+  </div>
+</section>
 
+@if (showDetailsModal) {
+  <app-event-details-modal
+    [selectedEvent]="selectedEvent"
+    [descriptionHtml]="formatEventDescription($safeNavigationMigration(selectedEvent?.description))"
+    [participationsByStatus]="participationsByStatus"
+    [showConfirmedFleets]="showConfirmedFleets"
+    [isFleetLoading]="isFleetLoading"
+    [fleetByBrand]="fleetByBrand"
+    [fleetBrandKeys]="fleetBrandKeys"
+    [participationError]="participationError"
+    [isParticipationLoading]="isParticipationLoading"
+    [isParticipationSaving]="isParticipationSaving"
+    [selectedParticipationStatus]="selectedParticipationStatus"
+    (retryParticipations)="initializeParticipationData()"
+    (requestClose)="showDetailsModal = false"
+    (participationChange)="setParticipationStatus($event)"
+    (toggleFleets)="toggleConfirmedFleets()"
+  ></app-event-details-modal>
+}

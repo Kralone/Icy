@@ -5,6 +5,7 @@ import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.news.News;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.news.NewsRepository;
+import com.icy.icy_backend.db.repository.news.CigWatchEntryRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class DiscordEventListener {
 
     private final NewsRepository newsRepository;
     private final EventRepository eventRepository;
+    private final CigWatchEntryRepository cigWatchEntryRepository;
 
     /**
      * 🔔 Écoute tous les événements de lien Discord → BDD (news, events, etc.)
@@ -43,7 +45,11 @@ public class DiscordEventListener {
                 log.warn("⚠️ Message Discord non reconnu : {}", message);
             }
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lien Discord : {}", e.getMessage(), e);
+            log.error("Échec de confirmation Discord ({})", e.getClass().getSimpleName());
+            if (e instanceof IllegalArgumentException || e instanceof ResourceNotFoundException) {
+                throw new org.springframework.amqp.AmqpRejectAndDontRequeueException("Confirmation Discord invalide", e);
+            }
+            throw new IllegalStateException("Confirmation Discord à réessayer", e);
         }
     }
 
@@ -52,6 +58,9 @@ public class DiscordEventListener {
         Long newsId = Long.valueOf(message.get("newsId").toString());
         Long messageId = Long.valueOf(message.get("messageId").toString());
         Long channelId = Long.valueOf(message.get("channelId").toString());
+        if (newsId <= 0 || messageId <= 0 || channelId <= 0) {
+            throw new IllegalArgumentException("Identifiants de confirmation Discord invalides");
+        }
 
         News news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new ResourceNotFoundException("News introuvable (id=" + newsId + ")"));
@@ -59,6 +68,7 @@ public class DiscordEventListener {
         news.setDiscordMessageId(messageId);
         news.setDiscordChannelId(channelId);
         newsRepository.save(news);
+        cigWatchEntryRepository.markDeliveredByNewsId(newsId);
 
         log.info("✅ News #{} liée à Discord (msg={}, channel={})", newsId, messageId, channelId);
     }

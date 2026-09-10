@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import discord
 import os
+from urllib.parse import urlparse
 from utils.html_to_discord import html_to_discord
 
 logger = logging.getLogger("icy.news_handler")
@@ -10,11 +12,25 @@ class NewsHandler:
     """Gère la logique métier liée aux actualités (news.*)."""
 
     def __init__(self, bot, rabbit=None, discord_link_store=None):
+        self._creation_lock = asyncio.Lock()
         self.bot = bot
         self.rabbit = rabbit
         self.discord_link_store = discord_link_store
         self.news_channel_id = self._read_channel_id("DISCORD_NEWS_CHANNEL_ID")
         self.notifications_channel_id = self._read_channel_id("DISCORD_NOTIFICATIONS_CHANNEL_ID")
+
+    @staticmethod
+    def _image_url(payload: dict):
+        for value in (payload.get("imageUrl"), (payload.get("type") or {}).get("imageUrl")):
+            if not isinstance(value, str) or not value.strip():
+                continue
+            try:
+                parsed = urlparse(value.strip())
+                if parsed.scheme in ("http", "https") and parsed.hostname and not parsed.username:
+                    return value.strip()
+            except ValueError:
+                pass
+        return None
 
     @staticmethod
     def _read_channel_id(env_var: str) -> int:
@@ -43,6 +59,11 @@ class NewsHandler:
     # 🧊 NEWS.CREATED
     # -----------------------------------------------------------------------
     async def _created(self, payload: dict):
+        # Concurrent Rabbit retries must not both observe a missing durable link.
+        async with self._creation_lock:
+            await self._created_serial(payload)
+
+    async def _created_serial(self, payload: dict):
         news_id = payload.get("id")
         if not news_id:
             raise ValueError("News id is required")
@@ -50,7 +71,7 @@ class NewsHandler:
         author = payload.get("author", "Inconnu")
         content = html_to_discord(payload.get("content", "Aucun contenu"))
         type_info = payload.get("type", {})
-        image_url = type_info.get("imageUrl")
+        image_url = self._image_url(payload)
         type_name = type_info.get("name")
         type_color = type_info.get("color")
 
@@ -146,7 +167,7 @@ class NewsHandler:
         author = payload.get("author", "Inconnu")
         content = html_to_discord(payload.get("content", ""))
         type_info = payload.get("type", {})
-        image_url = type_info.get("imageUrl")
+        image_url = self._image_url(payload)
         type_name = type_info.get("name")
         type_color = type_info.get("color")
 

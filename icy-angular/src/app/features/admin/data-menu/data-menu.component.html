@@ -1,42 +1,27 @@
-<div class="data-menu min-h-screen w-full bg-gradient-to-b from-[#09111e] via-[#0f172a] to-[#121c2e] text-white px-6 py-12">
-  <div class="max-w-7xl mx-auto space-y-7">
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-      <div>
-        <h1 class="text-3xl sm:text-4xl font-semibold tracking-[0.2em] uppercase text-cyan-200">Data Brute</h1>
-        <p class="text-sm text-slate-400 mt-2">Gestion des ressources brutes: vaisseaux, images, planetes, stations et ore locations.</p>
-      </div>
-      <a
-        [routerLink]="['/icy/admin']"
-        class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-        >
-        <span class="text-base leading-none">←</span>
-        <span>Retour Admin</span>
-      </a>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (item of menuItems; track item) {
-        <a
-          [routerLink]="[item.route]"
-        class="data-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
-               shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
-               hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
-               cursor-pointer overflow-hidden"
-          >
-          <div class="relative h-52 w-full overflow-hidden">
-            <img
-              [src]="item.imageUrl"
-              [alt]="item.label"
-              class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-500"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
-            </div>
-            <div class="flex items-center justify-between px-5 py-4 bg-[#0b1324]/80 border-t border-white/10">
-              <span class="text-sm uppercase tracking-[0.25em] text-slate-300">Section</span>
-              <span class="text-lg font-semibold text-white">{{ item.label }}</span>
-            </div>
-          </a>
+<section class="data-menu">
+  <header class="data-menu-heading">
+    <h1>Catalogue</h1>
+    <nav aria-label="Navigation du catalogue">
+      <a routerLink="/icy/admin">← Administration</a>
+      <a routerLink="/icy/admin/catalog">Tout le catalogue</a>
+      <a routerLink="/icy/admin/uex-cache">Synchronisation</a>
+    </nav>
+  </header>
+  <div class="data-menu-grid">
+    @for (item of menuItems; track item.label) {
+      <section class="data-menu-card">
+        <a class="data-menu-card-main" [routerLink]="item.route" [queryParams]="item.queryParams">
+          <img [src]="item.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+          <h2>{{ item.label }}</h2><span aria-hidden="true">↗</span>
+        </a>
+        @if (item.shortcuts?.length) {
+          <nav class="data-menu-shortcuts" [attr.aria-label]="item.label">
+            @for (shortcut of item.shortcuts; track shortcut.label) {
+              <a routerLink="/icy/admin/catalog" [queryParams]="{family: shortcut.family, catalogGroup: shortcut.catalogGroup || 'STANDARD'}">{{ shortcut.label }}</a>
+            }
+          </nav>
         }
-      </div>
-    </div>
+      </section>
+    }
   </div>
+</section>

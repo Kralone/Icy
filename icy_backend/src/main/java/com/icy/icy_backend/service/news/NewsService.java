@@ -46,6 +46,7 @@ public class NewsService {
                 .id(news.getId())
                 .title(news.getTitle())
                 .content(news.getContent())
+                .imageUrl(news.getImageUrl())
                 .createdAt(news.getCreatedAt())
                 .author(news.getAuthor() != null ? news.getAuthor() : null)
                 .type(news.getType() != null ?

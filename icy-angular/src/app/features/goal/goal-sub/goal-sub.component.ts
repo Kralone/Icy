@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, AfterViewInit, DoCheck, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, DoCheck, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
@@ -11,8 +11,9 @@ import { GoalParticipationSummary } from '../../../model/goal-participation-summ
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-sub.component.html',
+  styleUrl: './goal-sub.component.css',
 })
-export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
+export class GoalSubComponent implements OnChanges, DoCheck {
   @Input() goal!: Goal;
   @Input() isAdmin = false;
   @Input() depth: number = 0;
@@ -25,12 +26,11 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   @Output() progressChange = new EventEmitter<{ goalId: number; current: number; delta: number }>();
 
   loading = false;
+  actionError = '';
+  participationsError = '';
+  combinedError = '';
   progressWidth = '0%';
   progressValue = 0;
-  progressLabelLeft = 0;
-  progressLabelAlign: 'left' | 'center' | 'right' = 'center';
-  progressLabelLeftValue = '0%';
-  progressLabelTransform = 'translateX(0)';
   participations: GoalParticipation[] = [];
   participationsLoaded = false;
   participationsLoading = false;
@@ -41,14 +41,6 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   combinedLoading = false;
   showCombinedStack = false;
   combinedTotalDelta = 0;
-  hoveredCombinedIndex: number | null = null;
-  tooltipVisible = false;
-  tooltipX = 0;
-  tooltipLeftPercent = 0;
-  tooltipUser: GoalParticipationSummary | null = null;
-  tooltipColor = '#22d3ee';
-  @ViewChild('combinedTooltip') combinedTooltipRef?: ElementRef<HTMLDivElement>;
-  private hasAnimated = false;
   private lastGoalId: number | null = null;
   private lastTotals: { current: number; target: number } | null = null;
 
@@ -57,7 +49,6 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   ngOnChanges(): void {
     if (this.goal?.id !== this.lastGoalId) {
       this.lastGoalId = this.goal?.id ?? null;
-      this.hasAnimated = false;
       this.participations = [];
       this.participationsLoaded = false;
       this.showParticipations = false;
@@ -72,10 +63,6 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
     this.updateProgressBar();
   }
 
-  ngAfterViewInit(): void {
-    this.updateProgressBar();
-  }
-
   ngDoCheck(): void {
     if (!this.goal) return;
     const totals = this.getTotalProgress(this.goal);
@@ -86,58 +73,10 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
 
   private updateProgressBar(): void {
     const totals = this.getTotalProgress(this.goal);
-    this.lastTotals = { current: totals.current, target: totals.target };
+    this.lastTotals = totals;
     const progress = totals.target === 0 ? 0 : (totals.current / totals.target) * 100;
-    const clamped = Math.min(100, Math.max(0, progress));
-    const labelLeft = clamped <= 6 ? 0 : clamped >= 94 ? 100 : clamped;
-    this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
-    const widthValue = clamped.toFixed(2) + '%';
-    if (this.depth > 0) {
-      this.progressLabelLeftValue = clamped <= 0 ? '2%' : widthValue;
-      this.progressLabelTransform = 'translateX(-100%)';
-    } else {
-      this.progressLabelLeftValue = `${labelLeft}%`;
-      this.progressLabelTransform = this.getLabelTransform();
-    }
-
-    if (this.disableAnimation) {
-      this.progressWidth = widthValue;
-      this.progressValue = clamped;
-      this.progressLabelLeft = labelLeft;
-      this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
-      this.hasAnimated = true;
-      return;
-    }
-
-    if (!this.hasAnimated) {
-      this.progressWidth = '0%';
-      this.progressValue = 0;
-      this.progressLabelLeft = 4;
-      this.progressLabelLeftValue = '0%';
-      this.progressLabelTransform = 'translateX(0)';
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          this.progressWidth = widthValue;
-          this.progressValue = clamped;
-          this.progressLabelLeft = labelLeft;
-          this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
-          if (this.depth > 0) {
-            this.progressLabelLeftValue = clamped <= 0 ? '2%' : widthValue;
-            this.progressLabelTransform = 'translateX(-100%)';
-          } else {
-            this.progressLabelLeftValue = `${labelLeft}%`;
-            this.progressLabelTransform = this.getLabelTransform();
-          }
-          this.hasAnimated = true;
-        }, 350);
-      });
-      return;
-    }
-
-    this.progressWidth = widthValue;
-    this.progressValue = clamped;
-    this.progressLabelLeft = labelLeft;
-    this.progressLabelAlign = clamped <= 6 ? 'left' : clamped >= 94 ? 'right' : 'center';
+    this.progressValue = Math.min(100, Math.max(0, progress));
+    this.progressWidth = this.progressValue.toFixed(2) + '%';
   }
 
   isDone(goal: Goal): boolean {
@@ -173,7 +112,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   }
 
   isLeaf(goal: Goal): boolean {
-    return !goal?.subGoals || goal.subGoals.length === 0;
+    return !(goal?.__allSubGoals ?? goal?.subGoals)?.length;
   }
 
   getInitial(value?: string | null): string {
@@ -198,15 +137,28 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   }
 
   togglePinned(): void {
-    this.goalService.togglePinned(this.goal.id).subscribe(() => this.refresh.emit());
+    if (!this.isAdmin || this.loading || this.goal.pinned) return;
+    this.actionError = '';
+    this.loading = true;
+    this.goalService.togglePinned(this.goal.id).subscribe({
+      next: () => { this.loading = false; this.refresh.emit(); },
+      error: () => { this.loading = false; this.actionError = 'Impossible d’épingler cet objectif.'; },
+    });
   }
 
   deleteGoal(): void {
-    this.goalService.deleteGoal(this.goal.id).subscribe(() => this.refresh.emit());
+    if (!this.isAdmin || this.loading || !confirm('Supprimer « ' + this.goal.name + ' » et ses sous-objectifs ?')) return;
+    this.actionError = '';
+    this.loading = true;
+    this.goalService.deleteGoal(this.goal.id).subscribe({
+      next: () => { this.loading = false; this.refresh.emit(); },
+      error: () => { this.loading = false; this.actionError = 'Impossible de supprimer cet objectif.'; },
+    });
   }
 
   increment(goalId: number, delta: number): void {
-    if (this.loading) return;
+    if (this.loading || (!this.isAdmin && this.parentCompleted)) return;
+    this.actionError = '';
     this.loading = true;
 
     this.goalService.incrementGoal(goalId, delta).subscribe({
@@ -224,7 +176,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
         }
       },
       error: (err) => {
-        console.error('Erreur de mise à jour :', err);
+        this.actionError = 'La contribution n’a pas été enregistrée. Réessayez.';
         this.loading = false;
       },
     });
@@ -258,6 +210,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   loadParticipations(): void {
     if (!this.goal?.id) return;
     this.participationsLoading = true;
+    this.participationsError = '';
     this.goalService.getParticipations(this.goal.id).subscribe({
       next: (participations) => {
         this.participations = participations ?? [];
@@ -265,7 +218,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
         this.participationsLoading = false;
       },
       error: (err) => {
-        console.error('Erreur de chargement des participations :', err);
+        this.participationsError = 'Impossible de charger les participations.';
         this.participationsLoading = false;
       },
     });
@@ -281,6 +234,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   loadCombinedParticipations(): void {
     if (!this.goal?.id) return;
     this.combinedLoading = true;
+    this.combinedError = '';
     this.goalService.getCombinedParticipations(this.goal.id).subscribe({
       next: (participations) => {
         this.combinedParticipations = participations ?? [];
@@ -293,7 +247,7 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
         this.combinedLoading = false;
       },
       error: (err) => {
-        console.error('Erreur de chargement des participations globales :', err);
+        this.combinedError = 'Impossible de charger les contributions.';
         this.combinedLoading = false;
       },
     });
@@ -302,36 +256,6 @@ export class GoalSubComponent implements OnChanges, AfterViewInit, DoCheck {
   formatPercent(value: number): string {
     if (!Number.isFinite(value)) return '0%';
     return `${Math.max(0, value).toFixed(0)}%`;
-  }
-
-  getLabelTransform(): string {
-    if (this.progressLabelAlign === 'center') return 'translateX(-50%)';
-    if (this.progressLabelAlign === 'right') return 'translateX(-100%)';
-    return 'translateX(0)';
-  }
-
-  setCombinedHover(index: number | null): void {
-    this.hoveredCombinedIndex = index;
-  }
-
-  showCombinedTooltip(user: GoalParticipationSummary, color: string, index: number): void {
-    this.tooltipVisible = true;
-    this.tooltipUser = user;
-    this.tooltipColor = color;
-    const width = this.getCombinedPercent(user);
-    const start = this.getCombinedStartPercent(index);
-    const center = start + width / 2;
-    this.tooltipLeftPercent = Math.max(0, Math.min(100, (this.progressValue * center) / 100));
-  }
-
-  moveCombinedTooltip(event: MouseEvent): void {
-    return;
-  }
-
-  hideCombinedTooltip(): void {
-    this.tooltipVisible = false;
-    this.tooltipUser = null;
-    this.tooltipColor = '#22d3ee';
   }
 
   getSegmentColor(index: number): string {

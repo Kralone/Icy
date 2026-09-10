@@ -102,3 +102,12 @@
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.4);
 }
+
+.executive-hangar-page-content { max-width: 1800px; }
+.executive-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px; }
+.executive-heading h1 { margin: 0; color: #a5f3fc; font-size: clamp(26px, 3vw, 36px); font-weight: 600; }
+.executive-tabs { display: flex; gap: 8px; }
+.executive-tabs button { padding: 10px 18px; min-height: 44px; border: 1px solid #39516b; border-radius: 8px; background: #0c1728; color: #cbd5e1; font-size: 14px; cursor: pointer; }
+.executive-tabs button.active { border-color: #67e8f9; color: #cffafe; background: #164358; }
+.executive-tabs button:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 3px; }
+@media (max-width: 640px) { .executive-hangar-page { padding: 24px 16px; } }

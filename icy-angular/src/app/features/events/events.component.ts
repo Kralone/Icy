@@ -1,7 +1,8 @@
-import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { CalendarOptions, DatesSetArg, ViewApi } from '@fullcalendar/core';
+import { DatePipe } from '@angular/common';
+import { CalendarOptions, DatesSetArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { EventService, EventDTO } from '../../core/services/event/event.service';
@@ -13,7 +14,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
-import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
+import { AsyncStateComponent } from '../../shared/async-state/async-state.component';
+import { eventColor, eventImage } from './event-appearance';
 
 type FleetMiniShip = {
   name: string;
@@ -25,11 +27,14 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [FormsModule, FullCalendarModule, RouterLink, EventDetailsModalComponent, LoadingOverlayComponent],
+  imports: [FormsModule, DatePipe, FullCalendarModule, RouterLink, EventDetailsModalComponent, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
-  templateUrl: './events.component.html'
+  templateUrl: './events.component.html',
+  styleUrl: './events.component.css'
 })
 export class EventsComponent implements AfterViewInit, OnDestroy {
+  readonly eventColor = eventColor;
+  readonly eventImage = eventImage;
   @ViewChild(FullCalendarComponent) calendarComponent?: FullCalendarComponent;
 
   calendarEvents: any[] = [];
@@ -38,6 +43,20 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   showDetailsModal = false;
   isLoading = true;
   isAdmin = false;
+  viewMode: 'upcoming' | 'calendar' = 'upcoming';
+  loadError = '';
+  upcomingEvents: EventDTO[] = [];
+  participationLabels: Record<string, string> = {};
+  participationError = '';
+  isParticipationLoading = false;
+  isParticipationSaving = false;
+  selectedParticipationStatus: number | null = null;
+  private participationSubscription?: Subscription;
+  private httpSubscription?: Subscription;
+  private routeSubscription?: Subscription;
+  private snapshotRevision = 0;
+  private eventSnapshot: EventDTO[] = [];
+  private pendingUpdates: { action: string; events: EventDTO[] }[] = [];
 
   participationsByStatus = {
     confirmed: [] as any[],
@@ -51,35 +70,28 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   fleetBrandKeys: string[] = [];
   private userFleetCache: Record<string, FleetMiniShip[]> = {};
   private lastIsMobile: boolean | null = null;
-  private desktopPreferredView: ViewApi['type'] = 'dayGridWeek';
-  private mobilePreferredView: ViewApi['type'] = 'threeDay';
+  calendarTitle = '';
+  calendarView = 'dayGridMonth';
   private eventUpdatesSubscription?: Subscription;
+  private destroyed = false;
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin],
     locale: 'fr',
     firstDay: 1,
     fixedWeekCount: false,
-    initialView: 'dayGridWeek',
-    height: '100%',
-    expandRows: true,
-    contentHeight: '100%',
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    expandRows: false,
+    contentHeight: 'auto',
     handleWindowResize: true,
 
-    // ✅ Important: laisse nos cartes prendre leur place
     eventDisplay: 'block',
-
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'threeDay,dayGridWeek,dayGridMonth'
-    },
-    buttonText: {
-      today: 'Aujourd\'hui',
-      month: 'Mois',
-      week: 'Semaine',
-      threeDay: '3 jours'
-    },
+    headerToolbar: false,
+    dayMaxEvents: 3,
+    moreLinkText: count => '+' + count + ' autres',
+    dayHeaderFormat: { weekday: 'short' },
+    eventOrder: 'start,title',
     views: {
       dayGridWeek: {
         type: 'dayGrid',
@@ -93,12 +105,15 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
       }
     },
 
-    eventContent: (arg) => this.renderIcyEvent(arg),
     eventClick: (arg) => this.onEventClick(arg),
     datesSet: (arg) => this.onDatesSet(arg),
-
-    // ✅ Ajoute classes + états (finished, image/no-image) + sécurité affichage
-    eventDidMount: (info) => this.onEventDidMount(info),
+    eventDidMount: ({el}) => {
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+      el.onkeydown = event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); el.click(); }
+      };
+    },
   };
 
   constructor(
@@ -108,16 +123,18 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     private shipService: ShipService,
     private route: ActivatedRoute,
     private router: Router,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private changeDetector: ChangeDetectorRef
   ) {}
 
   ngAfterViewInit() {
-    this.wsService.connectEvent();
     this.authService.isAdmin().subscribe(isAdmin => (this.isAdmin = isAdmin));
 
-    this.loadEvents();
+    this.listenForUpdates();
+    this.wsService.connectEvent();
+    this.reloadEvents();
 
-    this.route.queryParamMap.subscribe(params => {
+    this.routeSubscription = this.route.queryParamMap.subscribe(params => {
       const eventId = params.get('eventId');
       if (eventId) {
         this.pendingEventId = eventId;
@@ -128,7 +145,11 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.eventUpdatesSubscription?.unsubscribe();
+    this.httpSubscription?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
+    this.participationSubscription?.unsubscribe();
     this.wsService.disconnectEvent();
   }
 
@@ -138,94 +159,114 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateResponsiveCalendarLayout(force = false) {
-    const calendarApi = this.calendarComponent?.getApi();
-    if (!calendarApi) return;
-
-    const isMobile = window.innerWidth < 640;
-    if (isMobile) {
-      // Mobile is intentionally locked to the 3-day view.
-      this.mobilePreferredView = 'threeDay';
+    const api = this.calendarComponent?.getApi();
+    if (!api) return;
+    const mobile = window.innerWidth < 640;
+    if (this.lastIsMobile !== mobile) {
+      this.changeCalendarView(mobile ? 'threeDay' : 'dayGridMonth');
+      this.lastIsMobile = mobile;
     }
-    if (!force && this.lastIsMobile === isMobile) {
-      calendarApi.updateSize();
-      return;
-    }
-
-    const targetView = isMobile ? this.mobilePreferredView : this.desktopPreferredView;
-
-    calendarApi.setOption('headerToolbar', isMobile
-      ? { left: 'prev,next', center: 'title', right: 'today' }
-      : { left: 'prev,next today', center: 'title', right: 'threeDay,dayGridWeek,dayGridMonth' });
-    calendarApi.setOption('footerToolbar', isMobile
-      ? { left: 'threeDay', center: '', right: '' }
-      : false);
-
-    if (calendarApi.view.type !== targetView) {
-      calendarApi.changeView(targetView);
-    }
-
-    calendarApi.updateSize();
-    this.lastIsMobile = isMobile;
+    api.updateSize();
   }
 
   private onDatesSet(arg: DatesSetArg): void {
-    const type = arg.view.type as ViewApi['type'];
-    if (window.innerWidth < 640 && type !== 'threeDay') {
-      this.mobilePreferredView = 'threeDay';
-      this.calendarComponent?.getApi().changeView('threeDay');
-      return;
-    }
-
-    if (type === 'threeDay') {
-      this.mobilePreferredView = type;
-      return;
-    }
-    if (type === 'dayGridWeek' || type === 'dayGridMonth') {
-      this.desktopPreferredView = type;
-    }
+    const { title, type } = arg.view;
+    // FullCalendar emits synchronously while Angular creates/checks its child view.
+    // Publish the heading after that pass and notify zoneless change detection too.
+    queueMicrotask(() => {
+      if (this.destroyed) return;
+      this.calendarTitle = title;
+      this.calendarView = type;
+      this.changeDetector.markForCheck();
+    });
   }
 
-  private loadEvents() {
+  changeCalendarView(view: string): void {
+    this.calendarComponent?.getApi().changeView(view);
+  }
+
+  moveCalendar(direction: 'prev' | 'next' | 'today'): void {
+    this.calendarComponent?.getApi()[direction]();
+  }
+
+  setView(mode: 'upcoming' | 'calendar'): void {
+    this.viewMode = mode;
+    if (mode === 'calendar') setTimeout(() => this.updateResponsiveCalendarLayout(true));
+  }
+
+  reloadEvents(): void {
+    this.httpSubscription?.unsubscribe();
+    this.isLoading = true;
+    this.loadError = '';
+    this.pendingUpdates = [];
+    const revision = this.snapshotRevision;
+    this.httpSubscription = this.eventService.getAll().subscribe({
+      next: events => {
+        // A live snapshot received during HTTP loading is more recent.
+        if (revision === this.snapshotRevision) {
+          const merged = this.pendingUpdates.reduce((snapshot, update) => this.mergeUpdate(snapshot, update), events);
+          this.applyEvents(merged);
+        }
+        this.pendingUpdates = [];
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        if (revision === this.snapshotRevision) {
+          this.loadError = 'Impossible de charger les événements. Veuillez réessayer.';
+        }
+      }
+    });
+  }
+
+  private applyEvents(events: EventDTO[]): void {
+    this.eventSnapshot = events;
+    this.calendarEvents = events.map(event => ({
+      id: event.id, title: event.title, start: event.startDateTime, end: event.endDateTime,
+      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event) }
+    }));
+    this.upcomingEvents = events.filter(event => !this.isEventFinished(event))
+      .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+    this.calendarOptions = { ...this.calendarOptions, events: this.calendarEvents };
+    this.isLoading = false;
+    this.loadError = '';
+    this.tryOpenEventFromQuery();
+    if (this.viewMode === 'calendar') setTimeout(() => this.updateResponsiveCalendarLayout());
+  }
+
+  private listenForUpdates() {
     this.eventUpdatesSubscription = this.eventService.listenForEventUpdate().subscribe((message) => {
       try {
-        const parsed = JSON.parse(message);
+        const parsed = typeof message === 'string' ? JSON.parse(message) : message;
         if (parsed.action === 'INIT' && Array.isArray(parsed.events)) {
-          this.calendarEvents = parsed.events.map((event: EventDTO) => ({
-            id: event.id,
-            title: event.title,
-            start: event.startDateTime,
-            end: event.endDateTime,
-
-            // on stocke tout dans extendedProps
-            extendedProps: {
-              type: event.type,
-              description: event.description,
-              finished: this.isEventFinished(event)
-            }
-          }));
-
-          this.calendarOptions.events = this.calendarEvents;
-          this.isLoading = false;
-          this.updateResponsiveCalendarLayout(true);
-          this.tryOpenEventFromQuery();
+          this.snapshotRevision++;
+          this.applyEvents(parsed.events);
+        } else if (['ADD', 'UPDATE', 'DELETE'].includes(parsed.action) && Array.isArray(parsed.events)) {
+          if (this.isLoading) {
+            this.pendingUpdates.push(parsed);
+          } else {
+            this.applyEvents(this.mergeUpdate(this.eventSnapshot, parsed));
+          }
         }
       } catch {
-        console.warn('Erreur de parsing', message);
+        // Ignore malformed realtime messages; the HTTP snapshot stays usable.
       }
     });
 
-    this.eventService.getAllTypes().subscribe(res => (this.types = res));
+  }
+
+  private mergeUpdate(snapshot: EventDTO[], update: { action: string; events: EventDTO[] }): EventDTO[] {
+    const affected = new Set(update.events.map(event => String(event.id)));
+    const remaining = snapshot.filter(event => !affected.has(String(event.id)));
+    return update.action === 'DELETE' ? remaining : [...remaining, ...update.events];
   }
 
   private isEventFinished(event: any): boolean {
     const raw = event?.finished ?? event?.isFinished;
-    if (typeof raw === 'boolean') {
-      return raw;
-    }
+    if (raw === true) return true;
     if (typeof raw === 'string') {
       const normalized = raw.trim().toLowerCase();
       if (['true', '1', 'yes', 'finished'].includes(normalized)) return true;
-      if (['false', '0', 'no', 'ongoing'].includes(normalized)) return false;
     }
 
     const endValue = event?.endDateTime ?? event?.end;
@@ -247,30 +288,6 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
       .replaceAll("'", '&#039;');
   }
 
-  private safeCssColor(value: string | null | undefined, fallback: string): string {
-    const normalized = value?.trim() ?? '';
-    return /^(#[0-9a-f]{3}|#[0-9a-f]{6}|#[0-9a-f]{8})$/i.test(normalized)
-      ? normalized
-      : fallback;
-  }
-
-  private safeImageUrl(value: string | null | undefined): string | null {
-    const normalized = value?.trim();
-    if (!normalized) return null;
-
-    try {
-      const url = new URL(normalized, 'https://iceforge.fr');
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-      return url.href
-        .replaceAll("'", '%27')
-        .replaceAll('"', '%22')
-        .replaceAll('(', '%28')
-        .replaceAll(')', '%29');
-    } catch {
-      return null;
-    }
-  }
-
   formatEventDescription(description?: string | null): SafeHtml {
     if (!description) {
       return '';
@@ -279,97 +296,6 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     const withBold = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     const withLineBreaks = withBold.replace(/\r?\n/g, '<br>');
     return this.sanitizer.bypassSecurityTrustHtml(withLineBreaks);
-  }
-
-// ✅ Rendu “carte” ICY : image en haut + pill en bas
-  renderIcyEvent(arg: any): { html: string } {
-    const type = arg.event.extendedProps?.type as EventType | undefined;
-
-    const img = this.safeImageUrl(type?.imageUrl);
-    const hasImg = !!img;
-
-    const pillBg = this.safeCssColor(type?.backgroundColor, '#0ea5e9');
-    const pillText = this.safeCssColor(type?.textColor, '#e0f2ff');
-
-    const finished = this.isEventFinished({
-      finished: arg.event.extendedProps?.finished,
-      end: arg.event.end
-    });
-
-    // ✅ startTime défini
-    const startTime = arg.event.start
-      ? new Date(arg.event.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      : '';
-
-    // (optionnel) sécurité HTML si tu veux éviter les titres “bizarres”
-    const safeTitle = this.escapeHtml(arg.event.title || '');
-    const safeTime = this.escapeHtml(startTime);
-
-    const typeName = (type?.name || '').trim();
-    const safeType = this.escapeHtml(typeName || '');
-
-// si tu veux que le spacer existe même sans image (layout stable)
-    const spacerStyle = hasImg ? `background-image: url('${img}')` : `background-image: none`;
-
-    return {
-      html: `
-    <div class="icy-event-host ${finished ? 'icy-event-host--finished' : ''}">
-      <div class="icy-event__inner">
-
-        ${typeName ? `
-          <div class="icy-event__type"
-               style="
-                 background: ${pillBg};
-                 color: ${pillText};
-                 border-color: ${pillBg};
-               ">
-            ${safeType}
-          </div>
-        ` : ''}
-
-        <div class="icy-event__spacer" style="${spacerStyle}"></div>
-
-        <div class="icy-pill"
-             style="
-               background: ${pillBg};
-               border-color: ${pillBg};
-               color: ${pillText};
-             ">
-          <span class="icy-pill__time">${safeTime}</span>
-          <span class="icy-pill__sep">|</span>
-          <span class="icy-pill__title">${safeTitle}</span>
-        </div>
-
-      </div>
-    </div>
-  `
-    };
-
-
-  }
-
-
-  private onEventDidMount(info: any) {
-    const type = info.event.extendedProps?.type as EventType | undefined;
-    const finished = this.isEventFinished({
-      finished: info.event.extendedProps?.finished,
-      end: info.event.end
-    });
-    const hasImg = !!type?.imageUrl?.trim();
-
-    info.el.classList.add('icy-event'); // hook global
-    info.el.classList.add('icy-event--enter');
-    if (finished) info.el.classList.add('icy-event--finished');
-    if (hasImg) info.el.classList.add('icy-event--has-image');
-    else info.el.classList.add('icy-event--no-image');
-
-    // le <a> FullCalendar a parfois des styles, on neutralise un peu
-    info.el.style.background = 'transparent';
-    info.el.style.border = 'none';
-
-    requestAnimationFrame(() => {
-      info.el.classList.add('icy-event--enter-visible');
-    });
   }
 
   onEventClick(arg: any): void {
@@ -385,9 +311,22 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private initializeParticipationData() {
-    this.eventService.getParticipations(this.selectedEvent.id).subscribe((response: any) => {
-      const participations = response.data;
+  initializeParticipationData() {
+    this.participationSubscription?.unsubscribe();
+    const eventId = this.selectedEvent.id;
+    this.isParticipationLoading = true;
+    this.participationError = '';
+    this.participationSubscription = this.eventService.getParticipations(eventId).subscribe({next: (response: any) => {
+      if (this.selectedEvent?.id !== eventId) return;
+      this.isParticipationLoading = false;
+      const participations = response.data || [];
+      try {
+        const userId = this.authService.getUserIdFromToken();
+        const own = participations.find((p: any) => String(p.user?.id) === userId);
+        this.selectedParticipationStatus = own?.status ?? null;
+        this.participationLabels[eventId] = own?.status === 1 ? 'Participation confirmée'
+          : own?.status === 0 ? 'Peut-être' : own?.status === -1 ? 'Indisponible' : 'Sans réponse';
+      } catch { /* No participation label without an identified user. */ }
       this.participationsByStatus = {
         confirmed: participations.filter((p: any) => p.status === 1),
         maybe: participations.filter((p: any) => p.status === 0),
@@ -397,14 +336,30 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
       if (this.showConfirmedFleets) {
         this.loadConfirmedFleets();
       }
-    });
+    }, error: () => {
+      if (this.selectedEvent?.id !== eventId) return;
+      this.isParticipationLoading = false;
+      this.participationError = 'Impossible de charger les participations.';
+    }});
   }
 
   setParticipationStatus(status: number) {
-    if (!this.selectedEvent) return;
-    this.eventService.setParticipationStatus(this.selectedEvent.id, status).subscribe({
-      next: () => this.initializeParticipationData(),
-      error: (err) => console.error('Erreur lors de la participation', err)
+    if (!this.selectedEvent || this.isParticipationSaving || this.isEventFinished(this.selectedEvent)) return;
+    const eventId = this.selectedEvent.id;
+    this.isParticipationSaving = true;
+    this.participationError = '';
+    this.eventService.setParticipationStatus(eventId, status).subscribe({
+      next: () => {
+        if (this.selectedEvent?.id !== eventId) return;
+        this.isParticipationSaving = false;
+        this.selectedParticipationStatus = status;
+        this.initializeParticipationData();
+      },
+      error: () => {
+        if (this.selectedEvent?.id !== eventId) return;
+        this.isParticipationSaving = false;
+        this.participationError = 'Votre réponse n’a pas été enregistrée. Veuillez réessayer.';
+      }
     });
   }
 
@@ -433,13 +388,16 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     this.router.navigate([], { queryParams: { eventId: null }, queryParamsHandling: 'merge' });
   }
 
-  private openEventModal(payload: any): void {
-    this.selectedEvent = payload;
+  openEventModal(payload: any): void {
+    this.selectedEvent = { ...payload, finished: this.isEventFinished(payload) };
     this.showDetailsModal = true;
     this.showConfirmedFleets = false;
     this.isFleetLoading = false;
     this.fleetByBrand = {};
     this.fleetBrandKeys = [];
+    this.participationsByStatus = { confirmed: [], maybe: [], refused: [] };
+    this.selectedParticipationStatus = null;
+    this.isParticipationSaving = false;
     this.initializeParticipationData();
   }
 

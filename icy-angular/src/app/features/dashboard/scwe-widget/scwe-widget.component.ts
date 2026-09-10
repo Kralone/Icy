@@ -12,6 +12,7 @@ import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading
   imports: [CommonModule, LoadingOverlayComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-widget.component.html',
+  host: {'[style.display]': "event ? 'block' : 'none'"},
 })
 export class ScweWidgetComponent implements OnInit {
   loadingEvent = true;
@@ -82,8 +83,6 @@ export class ScweWidgetComponent implements OnInit {
 
   openInCalendar(): void {
     if (!this.event?.id) return;
-    this.router.navigate(['/icy/events'], {
-      queryParams: { eventId: this.event.id }
-    });
+    this.router.navigate(['/icy/scwe']);
   }
 }

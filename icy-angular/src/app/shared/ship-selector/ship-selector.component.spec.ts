@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Ship } from '../../model/ship.model';
@@ -76,5 +76,49 @@ describe('ShipSelectorComponent catalog groups', () => {
     expect(component.shipSearchQuery).toBe('');
     expect(component.selectedCatalogGroup).toBe('STANDARD');
     expect(component.selectedShip?.id).toBe(1);
+  });
+
+  it('exposes an accurate loading state and ignores duplicate catalog requests', () => {
+    const catalogResponse = new Subject<{ data: Ship[] }>();
+    const shipService = {
+      getAllBrandsWithImages: vi.fn(() => of({ data: [] })),
+      getAllShips: vi.fn(() => catalogResponse)
+    };
+    const component = new ShipSelectorComponent(shipService as never);
+
+    component.ngOnChanges({ isOpen: new SimpleChange(false, true, false) });
+    component.retryLoadShips();
+
+    expect(component.isShipCatalogLoading).toBe(true);
+    expect(component.shipCatalogLoadError).toBe(false);
+    expect(shipService.getAllShips).toHaveBeenCalledTimes(1);
+
+    catalogResponse.next({ data: [ship(1, 'F7C Hornet Mk II')] });
+    catalogResponse.complete();
+
+    expect(component.isShipCatalogLoading).toBe(false);
+    expect(component.selectedShip?.id).toBe(1);
+  });
+
+  it('allows retrying the catalog load after an error', () => {
+    const shipService = {
+      getAllBrandsWithImages: vi.fn(() => of({ data: [] })),
+      getAllShips: vi
+        .fn()
+        .mockReturnValueOnce(throwError(() => new Error('network error')))
+        .mockReturnValueOnce(of({ data: [ship(2, 'Gladius')] }))
+    };
+    const component = new ShipSelectorComponent(shipService as never);
+
+    component.ngOnChanges({ isOpen: new SimpleChange(false, true, false) });
+
+    expect(component.isShipCatalogLoading).toBe(false);
+    expect(component.shipCatalogLoadError).toBe(true);
+
+    component.retryLoadShips();
+
+    expect(shipService.getAllShips).toHaveBeenCalledTimes(2);
+    expect(component.shipCatalogLoadError).toBe(false);
+    expect(component.selectedShip?.id).toBe(2);
   });
 });

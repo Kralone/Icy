@@ -74,7 +74,7 @@ public class CigWatchService {
             "<div\\s+class=\"type\\s+(?<type>[^\"]+)\"",
             Pattern.CASE_INSENSITIVE
     );
-    private static final Pattern COMM_LINK_ID_PATTERN = Pattern.compile("/comm-link/transmission/(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern COMM_LINK_ID_PATTERN = Pattern.compile("/comm-link/[^/]+/(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern RELATIVE_TIME_PATTERN = Pattern.compile(
             "(\\d+)\\s+(minute|hour|day|week|month|year)s?\\s+ago",
             Pattern.CASE_INSENSITIVE
@@ -104,19 +104,25 @@ public class CigWatchService {
     private final CigWatchEntryRepository cigWatchEntryRepository;
     private final CigWatchFetchErrorRepository cigWatchFetchErrorRepository;
     private final CigWatchTranslationService cigWatchTranslationService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = sourceClient();
+    private final CigWatchPublicationService publicationService;
     private final ReentrantLock refreshLock = new ReentrantLock();
+    private final java.util.concurrent.atomic.AtomicBoolean refreshQueued = new java.util.concurrent.atomic.AtomicBoolean();
+    private final java.util.concurrent.ExecutorService refreshExecutor = java.util.concurrent.Executors.newSingleThreadExecutor(
+            runnable -> { Thread thread = new Thread(runnable, "cig-watch-refresh"); thread.setDaemon(true); return thread; });
 
     public CigWatchService(
             MessageService messageService,
             CigWatchEntryRepository cigWatchEntryRepository,
             CigWatchFetchErrorRepository cigWatchFetchErrorRepository,
-            CigWatchTranslationService cigWatchTranslationService
+            CigWatchTranslationService cigWatchTranslationService,
+            CigWatchPublicationService publicationService
     ) {
         this.messageService = messageService;
         this.cigWatchEntryRepository = cigWatchEntryRepository;
         this.cigWatchFetchErrorRepository = cigWatchFetchErrorRepository;
         this.cigWatchTranslationService = cigWatchTranslationService;
+        this.publicationService = publicationService;
     }
 
     @Transactional(readOnly = true)
@@ -131,20 +137,26 @@ public class CigWatchService {
 
     @PostConstruct
     public void bootstrapInitialFetch() {
-        Thread bootstrapThread = new Thread(() -> {
-            try {
-                refreshCigFeedSafely();
-            } catch (Exception ex) {
-                logger.warn("Refresh bootstrap CIG ignore (contexte redemarrage/devtools): {}", ex.getMessage());
-            }
-        }, "cig-watch-bootstrap-refresh");
-        bootstrapThread.setDaemon(true);
-        bootstrapThread.start();
+        queueRefresh();
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void stop() { refreshExecutor.shutdownNow(); }
+
+    private void queueRefresh() {
+        if (!refreshQueued.compareAndSet(false, true)) return;
+        try {
+            refreshExecutor.execute(() -> {
+                try { refreshCigFeedSafely(); }
+                catch (Exception ex) { logger.warn("Collecte CIG interrompue ({})", ex.getClass().getSimpleName()); }
+                finally { refreshQueued.set(false); }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ex) { refreshQueued.set(false); }
     }
 
     @Scheduled(cron = "0 */5 * * * *", zone = "UTC")
     public void scheduledRefresh() {
-        refreshCigFeedSafely();
+        queueRefresh();
     }
 
     @Transactional(readOnly = true)
@@ -154,13 +166,13 @@ public class CigWatchService {
     }
 
     public ResponseEntity<MessageResponse<CigFeedResponseDTO>> forceRefreshAndLoadFeed(Integer requestedLimit) {
-        refreshCigFeedSafely();
+        queueRefresh();
         CigFeedResponseDTO response = buildFeedResponse(sanitizeLimit(requestedLimit));
         return messageService.buildResponse("cig.feed.get", response, response.itemCount(), response.errors().size());
     }
 
     private void refreshCigFeedSafely() {
-        refreshLock.lock();
+        if (!refreshLock.tryLock()) return;
         try {
             refreshCigFeed();
         } finally {
@@ -184,6 +196,7 @@ public class CigWatchService {
                         .sorted(this::compareEntriesDesc)
                         .limit(MAX_ENTRIES_PER_SOURCE_REFRESH)
                         .toList();
+                if (sourceEntries.isEmpty()) throw new IllegalStateException("Aucune entrée trouvée dans la source ; structure à vérifier");
                 entries.addAll(sourceEntries);
             } catch (Exception ex) {
                 errors.add(new CigSourceFetchErrorDTO(
@@ -192,11 +205,14 @@ public class CigWatchService {
                         source.getSourceUrl(),
                         sanitizeErrorMessage(ex.getMessage())
                 ));
+            } finally {
+                cigWatchEntryRepository.recordFetch(source.getId(), OffsetDateTime.now(ZoneOffset.UTC));
             }
         }
 
         persistEntries(entries);
         replacePersistedErrors(errors);
+        publicationService.processPending();
     }
 
     @Transactional(readOnly = true)
@@ -217,7 +233,11 @@ public class CigWatchService {
                 sources.size(),
                 entries.size(),
                 entries,
-                errors
+                errors,
+                cigWatchTranslationService.isConfigured(),
+                publicationService.isPublishingEnabled(),
+                publicationService.isDiscordRelayEnabled(),
+                refreshQueued.get() || refreshLock.isLocked()
         );
 
         return response;
@@ -225,19 +245,28 @@ public class CigWatchService {
 
     private void persistEntries(List<CigRawEntryDTO> entries) {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        Set<Long> initializedSources = new java.util.HashSet<>();
+        java.util.Map<Long, Long> highestRanks = new java.util.HashMap<>();
+        for (WatchSource source : WATCHED_SOURCES) {
+            if (cigWatchEntryRepository.existsBySourceId(source.getId())) initializedSources.add(source.getId());
+            highestRanks.put(source.getId(), cigWatchEntryRepository.findFirstBySourceIdOrderByRankHintDesc(source.getId())
+                    .map(CigWatchEntry::getRankHint).orElse(0L));
+        }
         for (CigRawEntryDTO dto : entries) {
             if (dto == null || dto.sourceId() == null || dto.link() == null || dto.link().isBlank()) {
                 continue;
             }
 
-            if (cigWatchEntryRepository.existsBySourceIdAndLink(dto.sourceId(), dto.link())) {
+            if (cigWatchEntryRepository.existsBySourceIdAndLink(dto.sourceId(), dto.link())
+                    || cigWatchEntryRepository.existsBySourceIdAndLink(dto.sourceId(), dto.link().replace("/comm-link/", "/en/comm-link/"))) {
                 continue;
             }
             String title = trimToLength(firstNonBlank(dto.title(), "Entree CIG"), 300);
             String rawExcerpt = dto.rawExcerpt();
             String rawPayload = dto.rawPayload();
-            CigWatchTranslationService.TranslationResult translated =
-                    cigWatchTranslationService.translateToFrench(title, rawExcerpt, rawPayload);
+            boolean recent = dto.publishedAt() != null
+                    ? !dto.publishedAt().isBefore(now.minusHours(24)) && !dto.publishedAt().isAfter(now.plusMinutes(10))
+                    : dto.rankHint() != null && dto.rankHint() > highestRanks.getOrDefault(dto.sourceId(), 0L);
 
             cigWatchEntryRepository.insertIfAbsent(
                     dto.sourceId(),
@@ -245,18 +274,19 @@ public class CigWatchService {
                     firstNonBlank(dto.sourceUrl(), ""),
                     trimToLength(dto.externalId(), 255),
                     title,
-                    trimToLength(translated.titleFr(), 300),
+                    null,
                     dto.link(),
                     trimToLength(firstNonBlank(dto.entryType(), "raw"), 120),
                     dto.publishedAt(),
                     dto.rankHint(),
                     rawExcerpt,
-                    translated.excerptFr(),
+                    null,
                     rawPayload,
-                    translated.payloadFr(),
+                    null,
                     dto.fetchedAt() == null ? now : dto.fetchedAt(),
                     now,
-                    now
+                    now,
+                    initializedSources.contains(dto.sourceId()) && recent
             );
         }
     }
@@ -290,14 +320,17 @@ public class CigWatchService {
                         entity.getSourceLabel(),
                         entity.getSourceUrl(),
                         entity.getExternalId(),
-                        firstNonBlank(entity.getTitleFr(), entity.getTitle()),
+                        "TRANSLATED".equals(entity.getTranslationStatus()) ? entity.getTitleFr() : entity.getTitle(),
                         entity.getLink(),
                         entity.getEntryType(),
                         entity.getPublishedAt(),
                         entity.getRankHint(),
-                        firstNonBlank(entity.getRawExcerptFr(), entity.getRawExcerpt()),
-                        firstNonBlank(entity.getRawPayloadFr(), entity.getRawPayload()),
-                        entity.getFetchedAt()
+                        "TRANSLATED".equals(entity.getTranslationStatus()) ? entity.getRawExcerptFr() : entity.getRawExcerpt(),
+                        "TRANSLATED".equals(entity.getTranslationStatus()) ? entity.getRawPayloadFr() : entity.getRawPayload(),
+                        entity.getFetchedAt(), entity.getId(), entity.getTranslationStatus(),
+                        entity.getNewsId() != null ? "PUBLISHED" : entity.isAutoPublish() ? "PENDING" : "ARCHIVED",
+                        entity.getNewsId(), entity.getDeliveryStatus(), entity.getLastError(),
+                        entity.getNextRetryAt() != null ? entity.getNextRetryAt() : entity.getDeliveryRetryAt()
                 ))
                 .sorted(this::compareEntriesDesc)
                 .limit(limit)
@@ -316,6 +349,9 @@ public class CigWatchService {
     }
 
     private Optional<OffsetDateTime> findLatestFetchAt() {
+        Optional<OffsetDateTime> sourceFetch = cigWatchEntryRepository.findLatestSourceFetchAt()
+                .map(instant -> instant.atOffset(ZoneOffset.UTC));
+        if (sourceFetch.isPresent()) return sourceFetch;
         Optional<OffsetDateTime> latestEntry = cigWatchEntryRepository.findFirstByOrderByFetchedAtDesc()
                 .map(CigWatchEntry::getFetchedAt);
         Optional<OffsetDateTime> latestError = cigWatchFetchErrorRepository.findFirstByOrderByFetchedAtDesc()
@@ -430,7 +466,7 @@ public class CigWatchService {
         Set<String> seenLinks = new LinkedHashSet<>();
         OffsetDateTime fetchedAt = OffsetDateTime.now(ZoneOffset.UTC);
 
-        for (Element anchor : document.select("a[href*=/comm-link/transmission/]")) {
+        for (Element anchor : document.select("a[href*=/comm-link/]")) {
             String href = normalizeWhitespace(anchor.attr("href"));
             if (href == null || href.isBlank()) {
                 continue;
@@ -446,12 +482,12 @@ public class CigWatchService {
                 continue;
             }
 
-            Element card = anchor.closest("article, li, .hub-grid-item, .comm-link-item, .transmission");
+            Element card = anchor.closest("article, li, .hub-block, .hub-grid-item, .comm-link-item, .transmission");
             String rawPayload = trimToLength(card == null ? anchor.outerHtml() : card.outerHtml(), MAX_RAW_LENGTH);
 
             String title = firstNonBlank(
-                    selectNormalizedText(anchor, ".title"),
-                    selectNormalizedText(card, ".title"),
+                    selectNormalizedText(anchor, ".title, h2, h3, h4"),
+                    selectNormalizedText(card, ".title, h2, h3, h4"),
                     normalizeWhitespace(anchor.attr("title")),
                     normalizeWhitespace(anchor.text())
             );
@@ -465,7 +501,9 @@ public class CigWatchService {
                     selectNormalizedText(card, ".category"),
                     "transmission"
             );
-            String excerpt = buildExcerpt(card == null ? anchor.text() : card.text());
+            String excerpt = buildExcerpt(firstNonBlank(selectNormalizedText(anchor, ".body, .description"),
+                    selectNormalizedText(card, ".body, .description"), card == null ? anchor.text() : card.text()));
+            OffsetDateTime publishedAt = parseRelativeTime(selectNormalizedText(anchor, ".time_ago .value"), fetchedAt);
 
             entries.add(new CigRawEntryDTO(
                     source.getId(),
@@ -475,7 +513,7 @@ public class CigWatchService {
                     title,
                     link,
                     category.toLowerCase(Locale.ROOT),
-                    null,
+                    publishedAt,
                     transmissionId,
                     excerpt,
                     rawPayload,
@@ -739,6 +777,13 @@ public class CigWatchService {
             }
         }
         return null;
+    }
+
+    private static RestTemplate sourceClient() {
+        var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(20000);
+        return new RestTemplate(factory);
     }
 
     private String fetchPayload(String sourceUrl) {
@@ -1058,6 +1103,7 @@ public class CigWatchService {
 
     private String absolutizeRsiUrl(String link) {
         String normalized = normalizeWhitespace(link);
+        if (normalized != null) normalized = normalized.replace("/en/comm-link/", "/comm-link/");
         if (normalized == null || normalized.isBlank()) {
             return RSI_BASE_URL;
         }

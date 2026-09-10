@@ -1,0 +1,41 @@
+<section class="hangar-ships" aria-labelledby="hangar-ships-title">
+  <div class="ships-header">
+    <h2 id="hangar-ships-title">Vaisseaux</h2>
+    <div class="ships-search">
+      <label for="exec-ship-search">Rechercher</label>
+      <div><input id="exec-ship-search" type="search" [(ngModel)]="searchTerm" placeholder="Vaisseau ou fabricant">@if (searchTerm) { <button type="button" (click)="searchTerm = ''">Effacer</button> }</div>
+    </div>
+  </div>
+  @if (isLoading) {
+    <app-async-state kind="loading" title="Chargement des vaisseaux…" />
+  } @else if (errorMessage) {
+    <app-async-state kind="error" [title]="errorMessage" actionLabel="Réessayer" (action)="loadShips()" />
+  } @else if (!ships.length) {
+    <app-async-state kind="empty" title="Aucun vaisseau PYAM publié" description="Le catalogue ne contient pas encore de variante attribuée à ces hangars." actionLabel="Actualiser" (action)="loadShips()" />
+  } @else if (!filteredShips.length) {
+    <app-async-state kind="empty" title="Aucun vaisseau trouvé" actionLabel="Effacer la recherche" (action)="searchTerm = ''" />
+  } @else {
+    <div class="ships-grid">
+      @for (ship of filteredShips; track ship.id) {
+        <article class="ship-card">
+          <div class="ship-media">
+            @if (imageFor(ship); as image) { <img [src]="image" [alt]="ship.name" loading="lazy" (error)="imageFailed(image)"> }
+            @else { <div class="ship-placeholder"><span aria-hidden="true">◇</span><span>Visuel de cette variante indisponible</span></div> }
+          </div>
+          <div class="ship-info">
+            @if (ship.brand?.name) { <p class="ship-manufacturer">{{ ship.brand.name }}</p> }
+            <h3>{{ ship.name }}</h3>
+            @if (ship.crew || (ship.scu !== null && ship.scu !== undefined && ship.scu > 0)) {
+              <dl class="ship-specs">
+                @if (ship.crew) { <div><dt>Équipage</dt><dd>{{ ship.crew }}</dd></div> }
+                @if (ship.scu !== null && ship.scu !== undefined && ship.scu > 0) { <div><dt>Soute</dt><dd>{{ ship.scu }} SCU</dd></div> }
+              </dl>
+            }
+            @if (ship.notes) { <p class="ship-description">{{ ship.notes }}</p> }
+            @else { <p class="ship-missing">Description non renseignée.</p> }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

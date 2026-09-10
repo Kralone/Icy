@@ -8,7 +8,7 @@
         <span class="text-lg">←</span> Retour aux utilitaires
       </a>
 
-      @if (canManageTiming) {
+      @if (canManageTiming && selectedTab === 'status') {
         <button
           type="button"
           (click)="openTimingModal()"
@@ -16,19 +16,29 @@
                bg-white/5 text-slate-200 text-xs tracking-wide
                hover:border-cyan-300/40 hover:text-cyan-100 transition"
           >
-          🛡️ Admin
+          Régler le cycle
         </button>
       }
     </div>
 
+    <header class="executive-heading">
+      <h1>Hangar exécutif</h1>
+      <div class="executive-tabs" role="group" aria-label="Vue du hangar">
+        <button type="button" [class.active]="selectedTab === 'status'" [attr.aria-pressed]="selectedTab === 'status'" (click)="setTab('status')">Statut</button>
+        <button type="button" [class.active]="selectedTab === 'ships'" [attr.aria-pressed]="selectedTab === 'ships'" (click)="setTab('ships')">Vaisseaux</button>
+      </div>
+    </header>
+    @if (selectedTab === 'ships') {
+      <app-executive-hangar-ships />
+    } @else {
     <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
       @if (configError) {
         <p class="mb-4 text-sm text-amber-200">{{ configError }}</p>
       }
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Suivi PYAM</p>
-          <h1 class="text-3xl font-semibold text-cyan-200">Statut du hangar executif</h1>
+
+          <h2 class="text-2xl font-semibold text-cyan-200">Statut</h2>
         </div>
         <div class="status-pill" [class.status-pill--online]="isOnline" [class.status-pill--offline]="!isOnline">
           {{ statusLabelFr }}
@@ -41,7 +51,7 @@
       </p>
 
       <div class="progress-indicator mt-5">
-        @for (color of circles; track color) {
+        @for (color of circles; track $index) {
           <div
             class="indicator-segment"
             [class.indicator-segment--green]="color === 'green'"
@@ -70,7 +80,7 @@
                  shadow-[0_0_30px_rgba(34,211,238,0.45)] hover:bg-cyan-200/35 hover:scale-[1.03]
                  transition"
           >
-          Voir les maps →
+          Voir les cartes →
         </a>
       </div>
     </section>
@@ -101,6 +111,7 @@
         </table>
       </div>
     </section>
+    }
   </div>
 </div>
 

@@ -351,6 +351,10 @@ class UserServiceTest {
 
         ResponseEntity<MessageResponse<List<UserOnlineResponseDTO>>> actual = userService.getOnlineUsers();
         assertThat(actual).isEqualTo(response);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.HORS_LIGNE);
+        userService.getOnlineUsers();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.HORS_LIGNE);
+        verify(messageService, Mockito.times(2)).buildResponse(eq("user.online.list"), eq(List.of()));
         verify(userRepository).saveAll(any());
     }
 

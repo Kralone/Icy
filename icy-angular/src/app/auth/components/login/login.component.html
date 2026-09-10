@@ -53,9 +53,10 @@
             placeholder="Mot de passe" />
 
             <button type="submit"
-              [disabled]="loginForm.invalid"
+              [disabled]="loginForm.invalid || submitting"
+              [attr.aria-busy]="submitting"
               class="relative mt-2 bg-gradient-to-r from-cyan-600 to-blue-700 text-white font-semibold py-2 rounded-lg overflow-hidden shadow-lg hover:scale-[1.02] transition disabled:opacity-50">
-              Se connecter
+              {{ submitting ? 'Connexion…' : 'Se connecter' }}
             </button>
 
             @if (errorMessage) {

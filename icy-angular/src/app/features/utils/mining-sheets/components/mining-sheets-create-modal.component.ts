@@ -1,12 +1,13 @@
 
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../model/user.model';
 
 @Component({
   standalone: true,
   selector: 'app-mining-sheets-create-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, A11yModule],
   templateUrl: './mining-sheets-create-modal.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './mining-sheets-create-modal.component.css'

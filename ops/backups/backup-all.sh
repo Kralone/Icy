@@ -8,7 +8,7 @@ usage() {
   cat >&2 <<'EOF'
 Usage: backup-all.sh --output-dir /sauvegardes --vault-token-file /run/token
                      [--age-recipient age1...] [--allow-plaintext]
-                     [--offline-rabbitmq] [--images] [--bot-config]
+                     [--offline-rabbitmq] [--images] [--bot-config] [--verify-postgres]
                      [--config-root /racine --config-list /liste]
                      [--runtime-image-service service ...]
                      -- [options docker compose]
@@ -23,6 +23,7 @@ TOKEN_FILE=
 AGE_RECIPIENT=
 ALLOW_PLAINTEXT=false
 OFFLINE_RABBITMQ=false
+VERIFY_POSTGRES=false
 BACKUP_IMAGES=false
 BACKUP_BOT_CONFIG=false
 CONFIG_ROOT=
@@ -35,6 +36,7 @@ while (($#)); do
     --age-recipient) AGE_RECIPIENT=${2:?}; shift 2 ;;
     --allow-plaintext) ALLOW_PLAINTEXT=true; shift ;;
     --offline-rabbitmq) OFFLINE_RABBITMQ=true; shift ;;
+    --verify-postgres) VERIFY_POSTGRES=true; shift ;;
     --images) BACKUP_IMAGES=true; shift ;;
     --bot-config) BACKUP_BOT_CONFIG=true; shift ;;
     --config-root) CONFIG_ROOT=${2:?}; shift 2 ;;
@@ -102,6 +104,9 @@ trap cleanup EXIT
 
 compose_passthrough=(-- "${COMPOSE_ARGS[@]}")
 "$SCRIPT_DIR/postgres.sh" --output-dir "$staging" "${compose_passthrough[@]}"
+if [[ "$VERIFY_POSTGRES" == true ]]; then
+  bash "$SCRIPT_DIR/verify-postgres-isolated.sh" --backup-dir "$staging" "${compose_passthrough[@]}"
+fi
 
 rabbit_args=(--output-dir "$staging")
 [[ "$OFFLINE_RABBITMQ" == true ]] && rabbit_args+=(--offline-volume)

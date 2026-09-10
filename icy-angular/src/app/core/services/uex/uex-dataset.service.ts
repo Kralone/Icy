@@ -44,12 +44,20 @@ export interface UexRefineryDatasets {
 }
 
 export interface UexVehicleRental {
+  terminalId?: string | null;
+  planetName?: string | null;
+  locationName?: string | null;
+  systemName?: string | null;
   vehicleName: string;
   terminalName: string;
   rentPrice: number;
 }
 
 export interface UexVehiclePurchase {
+  terminalId?: string | null;
+  planetName?: string | null;
+  locationName?: string | null;
+  systemName?: string | null;
   vehicleName: string;
   terminalName: string;
   buyPrice: number;

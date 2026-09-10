@@ -103,6 +103,7 @@ marker=$(mktemp "$RUNTIME_DIR/pre-deploy.XXXXXX")
   --output-dir "$BACKUP_DIR" \
   --vault-token-file "$TOKEN_FILE" \
   --age-recipient "$AGE_RECIPIENT" \
+  --verify-postgres \
   --offline-rabbitmq \
   --images --bot-config \
   --config-root "$ROOT_DIR" \

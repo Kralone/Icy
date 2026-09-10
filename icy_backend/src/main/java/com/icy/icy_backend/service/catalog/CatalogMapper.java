@@ -23,12 +23,12 @@ public class CatalogMapper {
     private static final String UPSERT_ENTRY_SQL = """
             INSERT INTO catalog.entries (
                 source, dataset_key, external_id, family, catalog_group, name, slug, manufacturer,
-                description, image_url, image_is_fallback, source_url, source_version,
+                description, image_url, image_is_fallback, source_image_url, source_image_is_fallback, source_url, source_version,
                 source_updated_at, source_payload, focus, scu, size, crew, flight_ready,
                 active, last_seen_at, last_seen_run_id
             ) VALUES (
                 :source, :datasetKey, :externalId, :family, :catalogGroup, :name, :slug, :manufacturer,
-                :description, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
+                :description, :imageUrl, :imageIsFallback, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
                 :sourceUpdatedAt, CAST(:sourcePayload AS jsonb), :focus, :scu, :size, :crew,
                 :flightReady, TRUE, NOW(), :runId
             )
@@ -40,8 +40,10 @@ public class CatalogMapper {
                 slug = EXCLUDED.slug,
                 manufacturer = EXCLUDED.manufacturer,
                 description = EXCLUDED.description,
-                image_url = EXCLUDED.image_url,
-                image_is_fallback = EXCLUDED.image_is_fallback,
+                source_image_url = EXCLUDED.source_image_url,
+                source_image_is_fallback = EXCLUDED.source_image_is_fallback,
+                image_url = COALESCE(catalog.entries.image_override_url, EXCLUDED.image_url),
+                image_is_fallback = CASE WHEN catalog.entries.image_override_url IS NOT NULL THEN FALSE ELSE EXCLUDED.image_is_fallback END,
                 source_url = EXCLUDED.source_url,
                 source_version = EXCLUDED.source_version,
                 source_updated_at = EXCLUDED.source_updated_at,
@@ -197,15 +199,32 @@ public class CatalogMapper {
     }
 
     private String locationFamily(JsonNode node) {
-        String type = lower(firstText(node.path("type"), "classification", "name"));
-        if (type.contains("jump") && type.contains("point")) return "JUMP_POINT";
-        if (type.contains("space station") || type.equals("station")) return "STATION";
-        if (type.contains("landing zone") || type.equals("city")) return "CITY";
-        if (type.equals("planet")) return "PLANET";
-        if (type.equals("moon")) return "MOON";
-        if (type.equals("system") || type.equals("star")) return "SYSTEM";
-        if (type.contains("outpost")) return "OUTPOST";
+        // The source uses generic classifications (Manmade, Settlement) even for stations/cities.
+        // Prefer the explicit type, then the radar marker; never infer a family from the place name.
+        for (String value : new String[] {
+                text(node.path("type"), "name"),
+                text(node.path("radar_contact_type"), "name"),
+                text(node.path("radar_contact_type"), "tag_name"),
+                text(node.path("type"), "classification")
+        }) {
+            String family = locationTypeFamily(value);
+            if (family != null) return family;
+        }
         return "LOCATION";
+    }
+
+    private String locationTypeFamily(String value) {
+        String normalized = lower(value).replaceAll("[\\s_-]+", "");
+        return switch (normalized) {
+            case "jumppoint" -> "JUMP_POINT";
+            case "spacestation", "station" -> "STATION";
+            case "landingzone", "city" -> "CITY";
+            case "planet" -> "PLANET";
+            case "moon" -> "MOON";
+            case "solarsystem", "system", "star" -> "SYSTEM";
+            case "outpost", "outpostinvalidqt" -> "OUTPOST";
+            default -> null;
+        };
     }
 
     private String description(String datasetKey, JsonNode node) {
@@ -246,7 +265,12 @@ public class CatalogMapper {
         if (!"vehicles".equals(datasetKey)) return null;
         JsonNode value = node.path("cargo_capacity");
         if (!value.isNumber()) return null;
-        return Math.max(0, (int) Math.floor(value.asDouble()));
+        try {
+            int capacity = value.decimalValue().intValueExact();
+            return capacity >= 0 ? capacity : null;
+        } catch (ArithmeticException invalidCapacity) {
+            return null;
+        }
     }
 
     String vehicleSize(String datasetKey, JsonNode node) {

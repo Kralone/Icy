@@ -18,6 +18,13 @@ export interface CelestialBody {
   sortOrder: number;
 }
 
+export interface CatalogLocationImage {
+  name: string;
+  systemName: string | null;
+  family: string;
+  imageUrl: string;
+}
+
 export interface PlanetUpsertPayload {
   name: string;
   systemName: string;
@@ -34,6 +41,10 @@ export class CelestialBodyService {
 
   listFrontBodies(): Observable<ApiResponse<CelestialBody[]>> {
     return this.http.get<ApiResponse<CelestialBody[]>>('/api/front/celestial-bodies');
+  }
+
+  listFrontLocationImages(): Observable<ApiResponse<CatalogLocationImage[]>> {
+    return this.http.get<ApiResponse<CatalogLocationImage[]>>('/api/front/location-images');
   }
 
   listPlanetsAdmin(): Observable<ApiResponse<CelestialBody[]>> {

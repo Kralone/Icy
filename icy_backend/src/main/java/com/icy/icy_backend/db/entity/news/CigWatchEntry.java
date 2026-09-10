@@ -74,4 +74,33 @@ public class CigWatchEntry {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Column(name = "translation_status", nullable = false)
+    @Builder.Default
+    private String translationStatus = "PENDING";
+
+    @Column(name = "auto_publish", nullable = false)
+    private boolean autoPublish;
+
+    @Column(name = "processing_attempts", nullable = false)
+    private int processingAttempts;
+
+    @Column(name = "next_retry_at")
+    private OffsetDateTime nextRetryAt;
+
+    @Column(name = "last_error", length = 300)
+    private String lastError;
+
+    @Column(name = "news_id")
+    private Long newsId;
+
+    @Column(name = "delivery_status", nullable = false)
+    @Builder.Default
+    private String deliveryStatus = "DISABLED";
+
+    @Column(name = "delivery_attempts", nullable = false)
+    private int deliveryAttempts;
+
+    @Column(name = "delivery_retry_at")
+    private OffsetDateTime deliveryRetryAt;
 }

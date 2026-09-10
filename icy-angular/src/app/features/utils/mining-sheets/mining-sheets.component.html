@@ -2,9 +2,7 @@
   <div class="mining-wrap">
     <header class="hero">
       <div>
-        <p class="hero-kicker">Utilitaire interne</p>
-        <h1>Fiches de minage</h1>
-        <p class="hero-sub">Création, suivi des jobs de raffinage et répartition des coûts entre participants.</p>
+        <h1>Minage</h1>
       </div>
       @if (isAdmin) {
         <button
@@ -12,7 +10,7 @@
           class="btn btn-primary"
           (click)="openCreateModal()"
           >
-          Nouvelle fiche
+          + Créer une opération
         </button>
       }
     </header>
@@ -34,19 +32,16 @@
           <div class="empty">Aucune fiche active pour le moment.</div>
         }
         @if (activeSheets.length) {
-          <label class="active-sheet-picker">
-            Fiche active
-            <select
-              [ngModel]="selectedActiveSheetId"
-              (ngModelChange)="selectActiveSheet($event)"
-              >
-              @for (sheet of activeSheets; track trackSheet($index, sheet)) {
-                <option [ngValue]="sheet.id">
-                  {{ sheet.sheetName }} • {{ toDisplayDate(sheet.operationDate) }} • {{ sheet.refineryLocation }}
-                </option>
-              }
-            </select>
-          </label>
+          <div class="operation-picker" role="group" aria-label="Choisir une opération">
+            @for (operation of activeSheets; track operation.id) {
+              <button type="button" class="operation-choice" [class.is-selected]="operation.id === selectedActiveSheetId" [attr.aria-pressed]="operation.id === selectedActiveSheetId" (click)="selectActiveSheet(operation.id)">
+                <span class="operation-choice__date">{{ toDisplayDate(operation.operationDate) }}</span>
+                <strong>{{ operation.sheetName }}</strong>
+                <span>{{ operation.refineryLocation }}</span>
+                <small>{{ operation.members.length }} participants · {{ refineryCount(operation) }} raffinages</small>
+              </button>
+            }
+          </div>
         }
         @if (selectedSheet; as sheet) {
           <ng-container
@@ -91,13 +86,13 @@
           @if (sheet.saleLocation) {
             <span> • Vente : {{ sheet.saleLocation }}</span>
           }
-          • Créée : {{ toDisplayDateTime(sheet.createdAt) }}
+
         </p>
       </div>
       <div class="modal-head-actions">
         <span class="status-pill" [attr.data-status]="sheet.status">{{ statusLabel(sheet.status) }}</span>
         @if (isAdmin) {
-          <button type="button" class="btn btn-ghost" (click)="openAdminSettingsModal()">Paramètres admin</button>
+          <button type="button" class="btn btn-ghost" (click)="openAdminSettingsModal()">Gérer l’opération</button>
         }
       </div>
     </div>
@@ -106,65 +101,33 @@
       <div class="state-card state-card--error">{{ actionError }}</div>
     }
 
-    <div class="detail-tabs-wrap">
-      <p class="detail-tabs-caption">Onglets de la fiche</p>
-      <div class="detail-tabs" role="tablist" aria-label="Onglets de la fiche">
-        <button
-          id="sheet-tab-jobs"
-          type="button"
-          role="tab"
-          class="detail-tab"
-          [class.is-active]="activeDetailTab === 'JOBS'"
-          [attr.aria-controls]="'sheet-panel-jobs'"
-          [attr.aria-selected]="activeDetailTab === 'JOBS'"
-          [attr.tabindex]="activeDetailTab === 'JOBS' ? 0 : -1"
-          (click)="setDetailTab('JOBS')"
-          >
-          Opérations
-        </button>
-        <button
-          id="sheet-tab-logistics"
-          type="button"
-          role="tab"
-          class="detail-tab"
-          [class.is-active]="activeDetailTab === 'LOGISTICS'"
-          [attr.aria-controls]="'sheet-panel-logistics'"
-          [attr.aria-selected]="activeDetailTab === 'LOGISTICS'"
-          [attr.tabindex]="activeDetailTab === 'LOGISTICS' ? 0 : -1"
-          (click)="setDetailTab('LOGISTICS')"
-          >
-          Logistique
-        </button>
-        <button
-          id="sheet-tab-sales"
-          type="button"
-          role="tab"
-          class="detail-tab"
-          [class.is-active]="activeDetailTab === 'SALES'"
-          [attr.aria-controls]="'sheet-panel-sales'"
-          [attr.aria-selected]="activeDetailTab === 'SALES'"
-          [attr.tabindex]="activeDetailTab === 'SALES' ? 0 : -1"
-          (click)="setDetailTab('SALES')"
-          >
-          Vente
-        </button>
-      </div>
+    <div class="operation-pulse" aria-label="En un coup d’œil">
+      <div><span>Équipe</span><strong>{{ sheet.members.length }} <small>participants</small></strong></div>
+      <div><span>Minerais destinés à la vente</span><strong>{{ sheet.summary.ores.length }} <small>{{ sheet.summary.ores.length > 1 ? 'ressources' : 'ressource' }}</small></strong></div>
+      <div><span>Frais avancés</span><strong>{{ formatNumber(sheet.summary.totalCostsAuec) }} <small>aUEC</small></strong></div>
+      <div><span>Ventes encaissées</span><strong>{{ formatNumber(sheet.summary.totalDeclaredSalesAuec) }} <small>aUEC</small></strong></div>
     </div>
+    <nav class="journey" aria-label="Étapes de l’opération">
+      <button type="button" [class.is-active]="activeDetailTab === 'JOBS'" [attr.aria-pressed]="activeDetailTab === 'JOBS'" (click)="setDetailTab('JOBS')"><span>01</span><strong>Minerais</strong><small>{{ refineryCount(sheet) }} raffinages</small></button>
+      <button type="button" [class.is-active]="activeDetailTab === 'COSTS'" [attr.aria-pressed]="activeDetailTab === 'COSTS'" (click)="setDetailTab('COSTS')"><span>02</span><strong>Frais</strong><small>Carburant, réparation, matériel</small></button>
+      <button type="button" [class.is-active]="activeDetailTab === 'SALES'" [attr.aria-pressed]="activeDetailTab === 'SALES'" (click)="setDetailTab('SALES')"><span>03</span><strong>Vente</strong><small>Déclarer un encaissement</small></button>
+      <button type="button" [class.is-active]="activeDetailTab === 'SUMMARY'" [attr.aria-pressed]="activeDetailTab === 'SUMMARY'" (click)="setDetailTab('SUMMARY')"><span>04</span><strong>Bilan</strong><small>Gains et versements</small></button>
+    </nav>
 
-    @if (activeDetailTab === 'JOBS') {
+    @if (activeDetailTab === 'JOBS' || activeDetailTab === 'COSTS') {
       <div
         id="sheet-panel-jobs"
-        role="tabpanel"
-        [attr.aria-labelledby]="'sheet-tab-jobs'"
+        role="region"
+        [attr.aria-label]="activeDetailTab === 'COSTS' ? 'Frais de l’opération' : 'Minerais et raffinage'"
         class="detail-tab-panel"
         >
         <section class="section-block">
           <div class="section-head">
-            <h3>Jobs</h3>
+            <div><h3>{{ activeDetailTab === 'COSTS' ? 'Frais' : 'Minerais' }}</h3><p class="section-description">{{ activeDetailTab === 'COSTS' ? 'Les avances sont remboursées dans la répartition. Ajoutez ici les frais hors raffinage.' : 'Renseignez le rendement raffiné prévu, le coût et la durée de chaque ordre.' }}</p></div>
             <div class="section-head-actions">
               <button
                 type="button"
-                class="btn btn-job-cta btn-job-cta--refinery"
+                class="btn btn-job-cta btn-job-cta--refinery" [hidden]="activeDetailTab !== 'JOBS'"
                 [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
                 (click)="startNewJob('REFINERY')"
                 >
@@ -172,7 +135,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-job-cta btn-job-cta--fuel"
+                class="btn btn-job-cta btn-job-cta--fuel" [hidden]="activeDetailTab !== 'COSTS'"
                 [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
                 (click)="startNewJob('FUEL')"
                 >
@@ -180,7 +143,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-job-cta btn-job-cta--repair"
+                class="btn btn-job-cta btn-job-cta--repair" [hidden]="activeDetailTab !== 'COSTS'"
                 [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
                 (click)="startNewJob('REPAIR')"
                 >
@@ -188,7 +151,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-job-cta btn-job-cta--material"
+                class="btn btn-job-cta btn-job-cta--material" [hidden]="activeDetailTab !== 'COSTS'"
                 [disabled]="saving || !sheet.editableByCurrentUser || sheet.status !== 'OPEN'"
                 (click)="startNewJob('MATERIAL')"
                 >
@@ -197,9 +160,8 @@
             </div>
           </div>
           <div class="jobs-toolbar">
-            <div class="job-type-filters" aria-label="Filtrer par type">
+            <div class="job-type-filters" aria-label="Filtrer les frais" [hidden]="activeDetailTab !== 'COSTS'">
               <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'ALL'" (click)="setJobTypeFilter('ALL')">Tous</button>
-              <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REFINERY'" (click)="setJobTypeFilter('REFINERY')">Raffinage</button>
               <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'FUEL'" (click)="setJobTypeFilter('FUEL')">Carburant</button>
               <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'REPAIR'" (click)="setJobTypeFilter('REPAIR')">Réparation</button>
               <button type="button" class="job-type-filter" [class.is-active]="jobTypeFilter === 'MATERIAL'" (click)="setJobTypeFilter('MATERIAL')">Matériel</button>
@@ -214,10 +176,10 @@
               </select>
             </label>
           </div>
-          @if (newJobDraft; as draft) {
+          @if (visibleJobDraft; as draft) {
             <article class="job-card job-card--new">
               <div class="job-card__head">
-                <strong>Nouveau job {{ jobTypeLabel(draft.type) }}</strong>
+                <strong>{{ draft.type === 'REFINERY' ? 'Nouvel ordre de raffinage' : 'Nouvelle dépense · ' + jobTypeLabel(draft.type) }}</strong>
                 <button type="button" class="btn btn-ghost" (click)="cancelNewJob()">Fermer</button>
               </div>
               <div class="job-form-grid">
@@ -226,7 +188,7 @@
                   <input type="text" [value]="currentUserId ? memberName(currentUserId) : 'Utilisateur connecté'" disabled />
                 </label>
                 <label>
-                  Cout (aUEC)
+                  Frais avancés (aUEC)
                   <input
                     type="text"
                     inputmode="numeric"
@@ -246,7 +208,7 @@
                   }
                   @if (draft.type === 'REFINERY') {
                     <label>
-                      Durée (HHhmm)
+                      Durée restante (heures / minutes)
                       <input
                         #newDurationInput
                         type="text"
@@ -273,9 +235,9 @@
                       </datalist>
                       @for (ore of draft.ores; track ore; let i = $index) {
                         <div class="ore-row">
-                          <input type="search" list="ore-options-list" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" />
+                          <input type="search" list="ore-options-list" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" aria-label="Nom du minerai" />
                           <div class="cscu-field">
-                            <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" placeholder="cSCU" />
+                            <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" aria-label="Rendement raffiné en cSCU" placeholder="cSCU" />
                             <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
                             <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
                           </div>
@@ -293,41 +255,53 @@
                     </div>
                   }
                   <div class="job-actions">
-                    <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveNewJob()">Publier le job</button>
+                    <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveNewJob()">Enregistrer</button>
                   </div>
                 </article>
               }
               @if (!sheet.jobs.length) {
-                <div class="empty">Aucun job pour cette fiche.</div>
+                <div class="empty">Aucun enregistrement. Ajoutez votre premier raffinage ou vos premiers frais à l’aide des boutons ci-dessus.</div>
               }
               @if (sheet.jobs.length && !filteredJobCount(sheet)) {
-                <div class="empty">Aucun job avec ces filtres.</div>
+                <div class="empty">Aucun enregistrement dans cette catégorie pour ce participant.</div>
               }
+              <div class="job-grid">
               @for (job of paginatedJobs(sheet); track trackJob($index, job)) {
-                <article class="job-card">
-                  <button type="button" class="job-card__toggle" (click)="toggleJob(job)">
+                <article class="job-card job-card--entry" [attr.data-type]="job.type" [class.job-card--expanded]="isJobExpanded(job.id)">
+                  <button type="button" class="job-card__toggle" [attr.aria-expanded]="isJobExpanded(job.id)" (click)="toggleJob(job)">
+                    <span class="job-entry-head">
+                      <span class="job-kind">{{ jobTypeLabel(job.type) }}</span>
+                      <span class="job-expand" aria-hidden="true">{{ isJobExpanded(job.id) ? '−' : '+' }}</span>
+                    </span>
                     <div class="job-card__title">
+                      <span>{{ job.type === 'REFINERY' ? 'Raffiné par' : 'Avancé par' }}</span>
                       <strong>{{ job.owner.username }}</strong>
-                      <span>{{ jobTypeLabel(job.type) }}</span>
                     </div>
-                    <div class="job-card__summary">
-                      <div class="job-summary-metrics">
                         @if (job.type === 'REFINERY') {
+                          <span class="ore-preview-list">
                           @for (ore of job.ores; track ore) {
                             <span
-                              class="job-chip"
+                              class="ore-preview"
                               [attr.data-keep]="ore.includeInSale ? 'sale' : 'keep'"
                               >
-                              {{ ore.oreName }} • {{ formatNumber(ore.quantityScu) }} SCU • {{ ore.includeInSale ? 'À vendre' : 'Conservé' }}
+                              <strong>{{ ore.oreName }}</strong>
+                              <span class="ore-volume">{{ formatNumber(ore.quantityScu) }} <small>SCU</small></span>
+                              <span class="ore-destination">{{ ore.includeInSale ? 'À vendre' : 'Conservé' }}</span>
                             </span>
                           }
+                          </span>
+                          <span class="job-entry-footer">
+                            <span class="refining-state" [class.refining-state--ready]="jobRemainingSeconds(job) === 0">
+                              {{ jobRemainingSeconds(job) === null ? 'Durée non renseignée' : jobRemainingSeconds(job) === 0 ? 'Raffinage terminé' : 'Prêt dans ' + formatDuration(jobRemainingSeconds(job)) }}
+                            </span>
+                            @if (job.refineryMethod) { <span>{{ job.refineryMethod }}</span> }
+                            <span>Frais avancés <strong>{{ formatNumber(job.costAuec) }} aUEC</strong></span>
+                          </span>
                         }
                         @if (job.type !== 'REFINERY') {
-                          <span class="job-chip">{{ formatNumber(job.costAuec) }} aUEC</span>
+                          <span class="expense-amount">{{ formatNumber(job.costAuec) }} <small>aUEC</small></span>
+                          <span class="expense-note">Remboursés dans le bilan</span>
                         }
-                        <span class="job-timer">{{ job.finishAt ? formatDuration(jobRemainingSeconds(job)) : '-' }}</span>
-                      </div>
-                    </div>
                   </button>
                   @if (isJobExpanded(job.id) && draftForJob(job.id); as draft) {
                     <div class="job-card__body">
@@ -343,7 +317,7 @@
                           </select>
                         </label>
                         <label>
-                          Cout (aUEC)
+                          Frais avancés (aUEC)
                           <input
                             type="text"
                             inputmode="numeric"
@@ -364,7 +338,7 @@
                           }
                           @if (draft.type === 'REFINERY') {
                             <label>
-                              Durée (HHhmm)
+                              Durée restante (heures / minutes)
                               <input
                                 #editDurationInput
                                 type="text"
@@ -385,16 +359,16 @@
                                 <strong>Minerais</strong>
                                 <button type="button" class="btn btn-ghost" [disabled]="!job.editableByCurrentUser" (click)="addOreRow(draft)">+ Minerai</button>
                               </div>
-                              <datalist id="ore-options-list-edit">
+                              <datalist [id]="'ore-options-' + job.id">
                                 @for (oreName of availableOreNames(sheet); track oreName) {
                                   <option [value]="oreName"></option>
                                 }
                               </datalist>
                               @for (ore of draft.ores; track ore; let i = $index) {
                                 <div class="ore-row">
-                                  <input type="search" list="ore-options-list-edit" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" [disabled]="!job.editableByCurrentUser" />
+                                  <input type="search" [attr.list]="'ore-options-' + job.id" [(ngModel)]="ore.oreName" placeholder="Rechercher un minerai" aria-label="Nom du minerai" [disabled]="!job.editableByCurrentUser" />
                                   <div class="cscu-field">
-                                    <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" [disabled]="!job.editableByCurrentUser" />
+                                    <input type="number" min="0" step="0.01" [(ngModel)]="ore.quantityCscu" aria-label="Rendement raffiné en cSCU" [disabled]="!job.editableByCurrentUser" />
                                     <button type="button" class="hint-dot" aria-label="Aide cSCU">?</button>
                                     <div class="hint-bubble">Renseigne le rendement raffiné (cSCU), pas la quantité brute non raffinée.</div>
                                   </div>
@@ -421,6 +395,7 @@
                       }
                     </article>
                   }
+              </div>
                   @if (filteredJobCount(sheet)) {
                     <div class="jobs-pagination">
                       <span>Affichage {{ displayedJobCount(sheet) }} / {{ filteredJobCount(sheet) }}</span>
@@ -432,15 +407,18 @@
                     </div>
                   }
                 </section>
-                <app-mining-sheets-summary [sheet]="sheet"></app-mining-sheets-summary>
+
               </div>
             }
 
+            @if (activeDetailTab === 'SUMMARY') {
+              <section class="detail-tab-panel" aria-label="Bilan de l’opération"><app-mining-sheets-summary [sheet]="sheet"></app-mining-sheets-summary></section>
+            }
             @if (activeDetailTab === 'LOGISTICS') {
               <div
                 id="sheet-panel-logistics"
-                role="tabpanel"
-                [attr.aria-labelledby]="'sheet-tab-logistics'"
+                role="region"
+                aria-label="Logistique"
                 class="detail-tab-panel"
                 >
                 <app-mining-sheets-logistics
@@ -456,8 +434,8 @@
             @if (activeDetailTab === 'SALES') {
               <div
                 id="sheet-panel-sales"
-                role="tabpanel"
-                [attr.aria-labelledby]="'sheet-tab-sales'"
+                role="region"
+                aria-label="Déclaration des ventes"
                 class="detail-tab-panel"
                 >
                 <app-mining-sheets-sales
@@ -468,6 +446,7 @@
                   [currentUserId]="currentUserId"
                   [currentUsername]="currentUsername"
                   [declarationVersion]="salesDeclarationVersion"
+                  [completedSaleEntries]="completedSaleEntries"
                   (declareSales)="declareSales($event)"
                 ></app-mining-sheets-sales>
               </div>

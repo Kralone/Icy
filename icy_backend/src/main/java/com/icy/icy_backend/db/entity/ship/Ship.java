@@ -32,6 +32,9 @@ public class Ship {
     @Column
     private Integer scu;
 
+    @Column(name = "ore_capacity", insertable = false, updatable = false)
+    private Integer oreCapacity;
+
     @Column
     private String size;
 

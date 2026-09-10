@@ -100,6 +100,23 @@ class ShipControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void exposesOreCapacitySeparatelyFromCargoAndKeepsUnknownNullable() throws Exception {
+        Ship miner = new Ship();
+        miner.setName("Prospector");
+        miner.setScu(0);
+        miner.setOreCapacity(32);
+        Ship unknown = new Ship();
+        unknown.setName("Unknown");
+        when(shipService.getAllShips()).thenReturn(okResponse(List.of(miner, unknown)));
+        mockMvc.perform(get("/api/ships"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data[0].scu").value(0))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data[0].oreCapacity").value(32))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data[1].scu").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data[1].oreCapacity").value(org.hamcrest.Matchers.nullValue()));
+    }
+
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {
         MessageResponse<T> body = new MessageResponse<>(HttpStatus.OK, "title", "message", 0, data);
         return ResponseEntity.ok(body);

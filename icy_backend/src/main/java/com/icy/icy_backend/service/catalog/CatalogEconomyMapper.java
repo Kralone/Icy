@@ -21,11 +21,11 @@ import java.util.List;
 public class CatalogEconomyMapper {
     private static final String SOURCE = "UEX";
     private static final List<String> REQUIRED_DATASETS = List.of(
-            "items_prices", "vehicles_purchases_prices", "vehicles_rentals_prices"
+            "terminals", "items_prices", "vehicles_purchases_prices", "vehicles_rentals_prices"
     );
     private static final String UPSERT_SQL = """
             INSERT INTO catalog.offers (
-                source, external_id, entry_id, entity_external_id, entity_name,
+                source, external_id, entry_id, source_entry_id, entity_external_id, entity_name,
                 offer_type, location_name, price, currency, source_version,
                 source_updated_at, source_payload, active, last_seen_at, last_seen_run_id
             ) VALUES (
@@ -37,14 +37,36 @@ public class CatalogEconomyMapper {
                     (SELECT id FROM catalog.entries
                      WHERE LOWER(name) = LOWER(:entityName) AND active = TRUE
                      ORDER BY CASE WHEN family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
-                     LIMIT 1)
+                     LIMIT 1),
+                    (SELECT MIN(id) FROM catalog.entries
+                     WHERE :vehicleOffer = TRUE
+                       AND source = 'STAR_CITIZEN_WIKI' AND active = TRUE AND family = 'SHIP'
+                       AND manufacturer = 'Musashi Industrial and Starflight Concern'
+                       AND LOWER(name) = LOWER('MISC ' || :entityName)
+                     HAVING COUNT(*) = 1)
+                ),
+                COALESCE(
+                    (SELECT id FROM catalog.entries
+                     WHERE source = 'STAR_CITIZEN_WIKI' AND external_id = :entityExternalId
+                     LIMIT 1),
+                    (SELECT id FROM catalog.entries
+                     WHERE LOWER(name) = LOWER(:entityName) AND active = TRUE
+                     ORDER BY CASE WHEN family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
+                     LIMIT 1),
+                    (SELECT MIN(id) FROM catalog.entries
+                     WHERE :vehicleOffer = TRUE
+                       AND source = 'STAR_CITIZEN_WIKI' AND active = TRUE AND family = 'SHIP'
+                       AND manufacturer = 'Musashi Industrial and Starflight Concern'
+                       AND LOWER(name) = LOWER('MISC ' || :entityName)
+                     HAVING COUNT(*) = 1)
                 ),
                 :entityExternalId, :entityName, :offerType, :locationName, :price,
                 'aUEC', :sourceVersion, :sourceUpdatedAt, CAST(:sourcePayload AS jsonb),
                 TRUE, NOW(), :runId
             )
             ON CONFLICT (source, external_id) DO UPDATE SET
-                entry_id = EXCLUDED.entry_id,
+                entry_id = COALESCE(catalog.offers.entry_override_id, EXCLUDED.entry_id),
+                source_entry_id = EXCLUDED.source_entry_id,
                 entity_external_id = EXCLUDED.entity_external_id,
                 entity_name = EXCLUDED.entity_name,
                 offer_type = EXCLUDED.offer_type,
@@ -151,6 +173,7 @@ public class CatalogEconomyMapper {
                 .addValue("externalId", externalId)
                 .addValue("entityExternalId", text(node, uuidField))
                 .addValue("entityName", name)
+                .addValue("vehicleOffer", "vehicle_uuid".equals(uuidField))
                 .addValue("offerType", offerType)
                 .addValue("locationName", location)
                 .addValue("price", price)

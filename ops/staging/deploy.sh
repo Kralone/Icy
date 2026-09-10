@@ -41,7 +41,7 @@ if ((!WITH_BOT)); then
   "${COMPOSE[@]}" --profile discord rm --stop --force bot >/dev/null 2>&1 || true
 fi
 
-"${COMPOSE[@]}" up -d --wait db rabbitmq backend frontend
+"${COMPOSE[@]}" up -d --wait --wait-timeout 900 db rabbitmq libretranslate backend frontend
 
 if ((SEED)); then
   marker=$RELEASE_DIR/.seeded

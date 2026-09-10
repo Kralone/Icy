@@ -6,6 +6,7 @@ import { User } from '../../../model/user.model';
 import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -28,6 +29,7 @@ export class AdminDashboardComponent implements OnInit {
   itemsPerPage: number = 10;
 
   isLoading = true;
+  loadError: string | null = null;
   searchTerm: string = '';
   showInactive = false;
 
@@ -73,12 +75,17 @@ export class AdminDashboardComponent implements OnInit {
 
   loadUsers(): void {
     this.isLoading = true;
+    this.loadError = null;
 
     const usersRequest = this.showInactive
       ? this.userService.getInactiveUsers()
       : this.userService.getAllUsers();
 
-    usersRequest.subscribe({
+    usersRequest.pipe(
+      finalize(() => {
+        this.isLoading = false;
+      })
+    ).subscribe({
       next: (response) => {
         this.users = response.data ?? [];
         this.filteredUsers = [...this.users];
@@ -87,9 +94,10 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erreur de chargement des utilisateurs :', err);
-      },
-      complete: () => {
-        this.isLoading = false;
+        this.users = [];
+        this.filteredUsers = [];
+        this.updatePagination();
+        this.loadError = 'Impossible de charger les membres pour le moment.';
       }
     });
   }

@@ -21,6 +21,7 @@ services:
   bot:
     # Discord is opt-in so the local web stack can run without a real token.
     profiles: ["dev-discord"]
+    networks: [internal, external]
     environment:
       VAULT_ENABLED: "false"
       ENV_MODE: development
@@ -39,6 +40,8 @@ volumes:
     name: iceforge_dev_rabbitmq
   backend_logs:
     name: iceforge_dev_backend_logs
+  libretranslate_models:
+    name: iceforge_dev_libretranslate_models
   bot_config:
     name: iceforge_dev_bot_config
   icy_images_data:

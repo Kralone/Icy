@@ -17,6 +17,13 @@ type PublicMenuItem = {
   styleUrl: './public-topbar.component.css'
 })
 export class PublicTopbarComponent {
+  mobileMenuOpen = false;
+
+  closeMenu(toggle?: HTMLButtonElement): void {
+    this.mobileMenuOpen = false;
+    toggle?.focus();
+  }
+
   constructor(private authService: AuthService) {}
 
   readonly guideItems: readonly PublicMenuItem[] = [

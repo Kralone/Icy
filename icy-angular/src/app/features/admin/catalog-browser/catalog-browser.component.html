@@ -1,24 +1,18 @@
 <main class="catalog-shell" #catalogTop>
   <header class="catalog-header">
     <div class="catalog-header__topline">
-      <a routerLink="/icy/admin/data" class="back-link" aria-label="Retour aux données">
+      <a routerLink="/icy/admin/data" class="back-link" aria-label="Retour à l’administration des données">
         <span aria-hidden="true">←</span>
-        Data
+        Administration
       </a>
       <a routerLink="/icy/admin/uex-cache" class="sync-link">
-        <span class="sync-link__dot"></span>
-        Centre de synchronisation
+          Synchronisation
       </a>
     </div>
 
     <div class="catalog-hero">
       <div>
-        <p class="eyebrow">IceForge · Universal index</p>
-        <h1>Le catalogue du <span>’Verse</span></h1>
-        <p class="catalog-hero__copy">
-          Une vue unifiée des vaisseaux, équipements et destinations connus de la base.
-          Chaque fiche conserve sa provenance et ses offres disponibles.
-        </p>
+        <h1>Catalogue</h1>
       </div>
 
       <div class="catalog-vitals" aria-label="Résumé du catalogue">
@@ -38,6 +32,7 @@
     </div>
   </header>
 
+  @if (canCorrect) { <div class="catalog-results"><button type="button" class="sync-link" (click)="correctionsOpen = !correctionsOpen" [attr.aria-expanded]="correctionsOpen">{{ correctionsOpen ? 'Masquer les associations' : 'Associations des offres' }}</button>@if (correctionsOpen) { <app-catalog-corrections /> }</div> }
   <section class="catalog-controls" aria-label="Filtres du catalogue">
     <label class="search-box">
       <span class="search-box__icon" aria-hidden="true"></span>
@@ -95,6 +90,7 @@
       type="button"
       class="family-chip"
       [class.family-chip--active]="catalogGroup === 'ALL' && !family"
+      [attr.aria-pressed]="catalogGroup === 'ALL' && !family"
       (click)="selectFamily('')"
     >
       <span>Tout</span>
@@ -104,6 +100,7 @@
       type="button"
       class="family-chip"
       [class.family-chip--active]="family === 'SHIP' && catalogGroup !== 'WIKELO'"
+      [attr.aria-pressed]="family === 'SHIP' && catalogGroup !== 'WIKELO'"
       (click)="selectShipGroup('STANDARD')"
     >
       <span>Vaisseaux</span>
@@ -114,6 +111,7 @@
         type="button"
         class="family-chip"
         [class.family-chip--active]="family === option.value && catalogGroup === 'STANDARD'"
+      [attr.aria-pressed]="family === option.value && catalogGroup === 'STANDARD'"
         (click)="selectFamily(option.value)"
       >
         <span>{{ option.shortLabel }}</span>
@@ -124,6 +122,7 @@
       type="button"
       class="family-chip family-chip--wikelo"
       [class.family-chip--active]="catalogGroup === 'WIKELO'"
+      [attr.aria-pressed]="catalogGroup === 'WIKELO'"
       (click)="selectWikelo()"
     >
       <span>Wikelo</span>
@@ -132,15 +131,18 @@
   </nav>
 
   @if (family === 'SHIP' && catalogGroup !== 'WIKELO') {
-    <nav class="subcategory-rail" aria-label="Collections de vaisseaux">
-      <span>Collections</span>
-      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'STANDARD'" (click)="selectShipGroup('STANDARD')">
+    <nav class="subcategory-rail" aria-label="Variantes de vaisseaux">
+      <span>Variantes</span>
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'STANDARD'"
+      [attr.aria-pressed]="catalogGroup === 'STANDARD'" (click)="selectShipGroup('STANDARD')">
         Standard <strong>{{ groupFamilyCount('STANDARD', 'SHIP') }}</strong>
       </button>
-      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'PYAM_EXEC'" (click)="selectShipGroup('PYAM_EXEC')">
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'PYAM_EXEC'"
+      [attr.aria-pressed]="catalogGroup === 'PYAM_EXEC'" (click)="selectShipGroup('PYAM_EXEC')">
         PYAM Exec <strong>{{ groupFamilyCount('PYAM_EXEC', 'SHIP') }}</strong>
       </button>
-      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'BATTAGLIA'" (click)="selectShipGroup('BATTAGLIA')">
+      <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'BATTAGLIA'"
+      [attr.aria-pressed]="catalogGroup === 'BATTAGLIA'" (click)="selectShipGroup('BATTAGLIA')">
         Battaglia <strong>{{ groupFamilyCount('BATTAGLIA', 'SHIP') }}</strong>
       </button>
     </nav>
@@ -149,11 +151,13 @@
   @if (catalogGroup === 'WIKELO') {
     <nav class="subcategory-rail subcategory-rail--wikelo" aria-label="Catégories Wikelo">
       <span>Wikelo</span>
-      <button type="button" class="family-chip" [class.family-chip--active]="!family" (click)="selectWikelo()">
+      <button type="button" class="family-chip" [class.family-chip--active]="!family"
+      [attr.aria-pressed]="!family" (click)="selectWikelo()">
         Tout <strong>{{ groupCount('WIKELO') }}</strong>
       </button>
       @for (option of wikeloFamilies; track option.value) {
-        <button type="button" class="family-chip" [class.family-chip--active]="family === option.value" (click)="selectWikelo(option.value)">
+        <button type="button" class="family-chip" [class.family-chip--active]="family === option.value"
+      [attr.aria-pressed]="family === option.value" (click)="selectWikelo(option.value)">
           {{ option.shortLabel }} <strong>{{ groupFamilyCount('WIKELO', option.value) }}</strong>
         </button>
       }
@@ -163,20 +167,19 @@
   <section class="catalog-results">
     <div class="results-heading">
       <div>
-        <p class="eyebrow">Résultats indexés</p>
         <h2>{{ resultTitle }}</h2>
       </div>
       <p>
         @if (result) {
           <strong>{{ result.totalElements }}</strong> résultat{{ result.totalElements > 1 ? 's' : '' }}
         } @else {
-          Chargement de l’index…
+          Chargement…
         }
       </p>
     </div>
 
     @if (error) {
-      <div class="state-panel state-panel--error">
+      <div class="state-panel state-panel--error" role="alert">
         <span aria-hidden="true">!</span>
         <div><strong>Connexion au catalogue impossible</strong><p>{{ error }}</p></div>
         <button type="button" (click)="applyFilters()">Réessayer</button>
@@ -184,7 +187,7 @@
     }
 
     @if (loading) {
-      <div class="catalog-grid" aria-label="Chargement">
+      <div class="catalog-grid" role="status" aria-label="Chargement" aria-busy="true">
         @for (placeholder of [1,2,3,4,5,6,7,8]; track placeholder) {
           <div class="catalog-card catalog-card--skeleton">
             <div class="skeleton-image"></div>
@@ -195,7 +198,7 @@
     } @else if (!error && result?.items?.length) {
       <div class="catalog-grid">
         @for (entry of result!.items; track trackEntry($index, entry)) {
-          <button type="button" class="catalog-card" (click)="openDetails(entry)">
+          <button type="button" class="catalog-card" [attr.data-tone]="familyTone(entry.family)" (click)="openDetails(entry)">
             <div class="catalog-card__visual">
               <img [src]="entry.imageUrl" [alt]="entry.name" loading="lazy" (error)="imageError($event)" />
               <div class="catalog-card__shade"></div>
@@ -230,28 +233,27 @@
 
       @if ((result?.totalPages ?? 0) > 1) {
         <nav class="pagination" aria-label="Pagination">
-          <button type="button" (click)="goToPage((result?.page ?? 0) - 1)" [disabled]="result?.page === 0">←</button>
+          <button type="button" aria-label="Page précédente" (click)="goToPage((result?.page ?? 0) - 1)" [disabled]="result?.page === 0">←</button>
           @for (pageNumber of visiblePages; track pageNumber) {
             <button
               type="button"
               [class.pagination__current]="pageNumber === result?.page"
+              [attr.aria-current]="pageNumber === result?.page ? 'page' : null"
               (click)="goToPage(pageNumber)"
             >{{ pageNumber + 1 }}</button>
           }
           <button
             type="button"
-            (click)="goToPage((result?.page ?? 0) + 1)"
+            aria-label="Page suivante" (click)="goToPage((result?.page ?? 0) + 1)"
             [disabled]="(result?.page ?? 0) + 1 >= (result?.totalPages ?? 0)"
           >→</button>
         </nav>
       }
     } @else if (!error) {
       <div class="state-panel state-panel--empty">
-        <div class="empty-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
         <div>
-          <p class="eyebrow">Aucun signal</p>
-          <h3>{{ result?.activeElements ? 'Aucune fiche ne correspond à ces filtres.' : 'Le catalogue attend son premier mapping.' }}</h3>
-          <p>Modifie les filtres ou utilise le centre de synchronisation pour préparer une famille.</p>
+          <h3>{{ result?.activeElements ? 'Aucune fiche ne correspond à ces filtres.' : 'Le catalogue est vide.' }}</h3>
+          <p>Modifiez les filtres ou lancez une synchronisation.</p>
         </div>
         @if (result?.activeElements) {
           <button type="button" (click)="resetFilters()">Réinitialiser les filtres</button>
@@ -285,6 +287,8 @@
         <div><dt>Dernière observation</dt><dd>{{ entry.updatedAt ? (entry.updatedAt | date:'dd/MM/yyyy · HH:mm') : 'Inconnue' }}</dd></div>
       </dl>
 
+      @if (canCorrect) { <button type="button" class="source-button" (click)="imageCorrectionOpen = !imageCorrectionOpen" [attr.aria-expanded]="imageCorrectionOpen">Corriger l’image</button> }
+      @if (imageCorrectionOpen) { <app-catalog-corrections [entry]="entry" (imageChanged)="entry.imageUrl = $event.imageUrl || ''; entry.fallbackImage = $event.fallbackImage; applyFilters()" /> }
       <section class="offers-section">
         <div class="offers-heading"><h3>Disponibilités</h3><span>{{ entry.offers.length }}</span></div>
         @if (entry.offers.length) {

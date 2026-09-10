@@ -29,255 +29,14 @@
       </p>
     }
 
-    <!-- Formulaire d’ajout -->
-    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-        <!-- Nom -->
-        <div>
-          <label class="block text-sm mb-1 text-gray-300">Nom</label>
-          <input
-            [(ngModel)]="newShip.name"
-            placeholder="Nom du vaisseau"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
-          </div>
-
-          <!-- Marque (ICY select) -->
-          <div>
-            <label class="block text-sm mb-1 text-gray-300">Marque</label>
-            <select
-              [(ngModel)]="newShip.brandName"
-            class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-700/30 border border-white/20
-               text-white focus:ring-2 focus:ring-cyan-400 outline-none transition"
-              required
-              >
-              <option value="" disabled selected hidden class="bg-[#1b263b] text-gray-400">Choisir une marque...</option>
-              @for (brand of brands; track brand) {
-                <option [value]="brand.name" class="bg-[#1b263b] text-white">
-                  {{ brand.name }}
-                </option>
-              }
-            </select>
-          </div>
-
-          <!-- Image URL (required en DB) -->
-          <div>
-            <label class="block text-sm mb-1 text-gray-300">Image URL</label>
-            <input
-              [(ngModel)]="newShip.imageUrl"
-              placeholder="URL de l’image"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-            </div>
-
-            <!-- Focus -->
-            <div>
-              <label class="block text-sm mb-1 text-gray-300">Focus</label>
-              <input
-                [(ngModel)]="newShip.focus"
-                placeholder="Ex: Exploration, Combat..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                />
-              </div>
-
-              <!-- SCU (int) -->
-              <div>
-                <label class="block text-sm mb-1 text-gray-300">SCU</label>
-                <input
-                  [(ngModel)]="newShip.scu"
-                  type="number"
-                  min="0"
-                  placeholder="Ex: 64"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                  />
-                </div>
-
-                <!-- Size -->
-                <div>
-                  <label class="block text-sm mb-1 text-gray-300">Taille</label>
-                  <input
-                    [(ngModel)]="newShip.size"
-                    placeholder="Ex: S / M / L / Capital"
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                    />
-                  </div>
-
-                  <!-- Crew -->
-                  <div>
-                    <label class="block text-sm mb-1 text-gray-300">Équipage</label>
-                    <input
-                      [(ngModel)]="newShip.crew"
-                      placeholder="Ex: 1-3, 2, 6-12..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                      />
-                    </div>
-
-                    <div class="sm:col-span-2 lg:col-span-3">
-                      <label class="block text-sm mb-1 text-gray-300">Notes (optionnel)</label>
-                      <textarea
-                        [(ngModel)]="newShip.notes"
-                        rows="3"
-                        placeholder="Notes operationnelles, recommandations de fit, role du vaisseau..."
-            class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-y"
-                      ></textarea>
-                    </div>
-
-                    <!-- Flight Ready (bool) -->
-                    <div class="flex items-center gap-3 pt-6">
-                      <input
-                        id="flightReady"
-                        type="checkbox"
-                        [(ngModel)]="newShip.flightReady"
-            class="h-5 w-5 rounded border border-white/30 bg-white/10
-               accent-cyan-400 focus:ring-2 focus:ring-cyan-400"
-                        />
-                        <label for="flightReady" class="text-sm text-gray-200 select-none">
-                          Flight Ready
-                        </label>
-                      </div>
-
-                      <div class="sm:col-span-2 lg:col-span-3 space-y-3">
-                        <div class="flex items-center justify-between">
-                          <label class="block text-sm text-gray-300">Points de vente</label>
-                          <button
-                            type="button"
-                            (click)="addSalePoint()"
-                            class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
-                            >
-                            + Ajouter un point
-                          </button>
-                        </div>
-
-                        <div class="space-y-3">
-                          @for (salePoint of newShip.salePoints; track salePoint; let i = $index) {
-                            <div
-                              class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
-                              >
-                              <div class="sm:col-span-3">
-                                <label class="block text-xs mb-1 text-gray-400">Lieu</label>
-                                <input
-                                  [(ngModel)]="salePoint.location"
-                                  placeholder="Ex: Area18, New Babbage..."
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                                  />
-                                </div>
-                                <div class="sm:col-span-1">
-                                  <label class="block text-xs mb-1 text-gray-400">Prix</label>
-                                  <input
-                                    [(ngModel)]="salePoint.price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="Ex: 1500000"
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                                    />
-                                  </div>
-                                  <div class="sm:col-span-1 flex sm:justify-end">
-                                    <button
-                                      type="button"
-                                      (click)="removeSalePoint(i)"
-                                      class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
-                                      >
-                                      Supprimer
-                                    </button>
-                                  </div>
-                                </div>
-                              }
-                            </div>
-                          </div>
-
-                          <div class="sm:col-span-2 lg:col-span-3 space-y-3">
-                            <div class="flex items-center justify-between">
-                              <label class="block text-sm text-gray-300">Grilles cargo</label>
-                              <button
-                                type="button"
-                                (click)="addCargoGrid()"
-                                class="px-3 py-1 text-xs font-semibold rounded-md border border-cyan-300/40 text-cyan-200 hover:bg-cyan-400/10 transition"
-                                >
-                                + Ajouter une grille
-                              </button>
-                            </div>
-
-                            <div class="space-y-3">
-                              @for (cargoGrid of newShip.cargoGrids; track cargoGrid; let i = $index) {
-                                <div
-                                  class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end"
-                                  >
-                                  <div class="sm:col-span-1">
-                                    <label class="block text-xs mb-1 text-gray-400">X</label>
-                                    <input
-                                      [(ngModel)]="cargoGrid.sizeX"
-                                      type="number"
-                                      min="1"
-                                      step="1"
-                                      placeholder="Ex: 8"
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                                      />
-                                    </div>
-                                    <div class="sm:col-span-1">
-                                      <label class="block text-xs mb-1 text-gray-400">Y</label>
-                                      <input
-                                        [(ngModel)]="cargoGrid.sizeY"
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        placeholder="Ex: 4"
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                                        />
-                                      </div>
-                                      <div class="sm:col-span-1">
-                                        <label class="block text-xs mb-1 text-gray-400">Z</label>
-                                        <input
-                                          [(ngModel)]="cargoGrid.sizeZ"
-                                          type="number"
-                                          min="1"
-                                          step="1"
-                                          placeholder="Ex: 2"
-                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                                          />
-                                        </div>
-                                        <div class="sm:col-span-1 flex sm:justify-end">
-                                          <button
-                                            type="button"
-                                            (click)="removeCargoGrid(i)"
-                                            class="px-3 py-2 text-xs font-semibold rounded-md border border-red-300/40 text-red-200 hover:bg-red-400/10 transition"
-                                            >
-                                            Supprimer
-                                          </button>
-                                        </div>
-                                      </div>
-                                    }
-                                  </div>
-                                </div>
-
-                              </div>
-
-                              <div class="flex justify-end">
-                                <button
-                                  (click)="createOrUpdateShip()"
-                                  [disabled]="isSubmittingShip"
-          class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-             text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105
-             disabled:opacity-50"
-                                  >
-                                  {{ editingShip ? 'Mettre à jour' : '+ Ajouter un vaisseau' }}
-                                </button>
-                              </div>
-                            </div>
-
+    <div class="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-6 space-y-3">
+      <h3 class="text-lg font-semibold text-cyan-100">Catalogue synchronisé automatiquement</h3>
+      <p>Les vaisseaux se consultent ici. Leur ajout, leur mise à jour et leur retrait sont gérés par la synchronisation des sources.</p>
+      <nav class="flex flex-wrap gap-4" aria-label="Gestion du catalogue">
+        <a routerLink="/icy/admin/catalog" class="underline text-cyan-200">Explorer le catalogue</a>
+        <a routerLink="/icy/admin/uex-cache" class="underline text-cyan-200">Centre de synchronisation</a>
+      </nav>
+    </div>
 
                             <!-- Tableau des vaisseaux -->
                             <div class="flex items-center justify-between gap-3">
@@ -304,7 +63,6 @@
                                       <th class="px-4 py-3 text-left">Image</th>
                                       <th class="px-4 py-3 text-left">Points de vente</th>
                                       <th class="px-4 py-3 text-left">Grilles cargo</th>
-                                      <th class="px-4 py-3 text-right">Actions</th>
                                     </tr>
                                   </thead>
 
@@ -352,20 +110,7 @@
                                             <span class="text-xs text-gray-400">-</span>
                                           }
                                         </td>
-                                        <td class="px-4 py-3 text-right space-x-3">
-                                          <button
-                                            (click)="editShip(ship)"
-                                            class="text-blue-400 hover:text-blue-300 transition font-medium"
-                                            >
-                                            ✏️ Éditer
-                                          </button>
-                                          <button
-                                            (click)="deleteShip(ship.id, ship.name)"
-                                            class="text-red-400 hover:text-red-300 transition font-medium"
-                                            >
-                                            🗑️ Supprimer
-                                          </button>
-                                        </td>
+
                                       </tr>
                                     }
                                     @if (!paginatedShips.length) {

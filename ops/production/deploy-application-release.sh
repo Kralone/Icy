@@ -74,6 +74,7 @@ required_files=(
   "$BACKEND_DIR/verify-v30-readiness.sql"
   "$BACKEND_DIR/verify-flyway-v30.sql"
   "$BACKEND_DIR/verify-flyway-v31.sql"
+  "$BACKEND_DIR/verify-flyway-v32.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -104,6 +105,12 @@ db_psql() {
 }
 
 "${compose[@]}" config --quiet
+translation_image=$("${compose[@]}" config --format json | python3 -c \
+  'import json,sys; print(json.load(sys.stdin)["services"]["libretranslate"]["image"])')
+[[ $translation_image =~ @sha256:[0-9a-f]{64}$ ]] || {
+  echo 'L’image LibreTranslate doit être épinglée par digest.' >&2
+  exit 1
+}
 BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" config
 BOT_ROLLOUT_DIR=$BOT_DIR "$BOT_DIR/verify.sh" config
 FRONTEND_ROLLOUT_DIR=$FRONTEND_DIR "$FRONTEND_DIR/verify.sh" config
@@ -124,12 +131,21 @@ case "$current_version" in
   31)
     db_psql <"$BACKEND_DIR/verify-flyway-v31.sql" >/dev/null
     ;;
+  32)
+    db_psql <"$BACKEND_DIR/verify-flyway-v32.sql" >/dev/null
+    ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
 
 if ((PREFLIGHT_ONLY)); then
   printf 'PRODUCTION-APPLICATION-PREFLIGHT=OK revision=%s flyway=%s\n' "$REVISION" "$current_version"
   exit 0
+fi
+
+# Preload only the pinned dependency, before backup and application changes.
+# Preflight remains read-only; application images must still be preloaded.
+if ! docker image inspect "$translation_image" >/dev/null 2>&1; then
+  "${compose[@]}" pull libretranslate
 fi
 
 declare -A previous
@@ -157,8 +173,10 @@ if [[ -n $BACKUP_ARCHIVE ]]; then
 else
   "$ROOT_DIR/ops/production/backup-before-deploy.sh" --age-recipient "$AGE_RECIPIENT"
 fi
+# Application rollouts with --no-deps do not start a newly added translator.
+# A translation startup failure leaves all three application images untouched.
+"${compose[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 900 libretranslate
 trap rollback ERR
-
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend
 BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" runtime
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait bot

@@ -38,6 +38,11 @@ public class NewsMessagingService {
         log.info("📤 Message 'news.created' envoyé pour la news id={}", news.getId());
     }
 
+    public void sendCigNewsCreated(News news, long ttlMillis) {
+        if (news == null || news.getType() == null) throw new IllegalArgumentException("News type required");
+        publisher.publishExpiring(RabbitConfig.EXCHANGE, MessageTopic.NEWS_CREATED.getRoutingKey(), buildNewsPayload(news), ttlMillis);
+    }
+
     public void sendNewsUpdated(News news) {
         if (news == null || news.getType() == null) {
             log.warn("Impossible d’envoyer un message RabbitMQ : News ou type null");
@@ -53,6 +58,7 @@ public class NewsMessagingService {
         payload.put("id", news.getId());
         payload.put("title", news.getTitle());
         payload.put("content", news.getContent());
+        payload.put("imageUrl", news.getImageUrl());
         payload.put("author", news.getAuthor());
         payload.put("type", typeMap);
         payload.put("channelId", news.getDiscordChannelId());
@@ -105,11 +111,12 @@ public class NewsMessagingService {
                 "id", news.getId(),
                 "title", news.getTitle(),
                 "content", news.getContent(),
+                "imageUrl", news.getImageUrl() == null ? "" : news.getImageUrl(),
                 "author", news.getAuthor(),
                 "type", Map.of(
                         "name", type.getName(),
                         "color", type.getColor(),
-                        "imageUrl", type.getImageUrl()
+                        "imageUrl", type.getImageUrl() == null ? "" : type.getImageUrl()
                 ),
                 "createdAt", news.getCreatedAt().toString()
         );

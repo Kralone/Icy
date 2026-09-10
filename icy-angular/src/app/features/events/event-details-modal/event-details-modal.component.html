@@ -1,143 +1,75 @@
-<div
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl px-4"
-  (click)="requestClose.emit()"
-  >
-  <div
-    class="relative w-full max-w-sm sm:max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20
-           shadow-[0_0_25px_rgba(56,189,248,0.4)] rounded-2xl p-6 sm:p-8 text-white animate-fade-in overflow-y-auto max-h-[90vh]"
-    (click)="$event.stopPropagation()"
-    >
-    <button (click)="requestClose.emit()" class="absolute top-4 right-4 text-gray-300 hover:text-white text-lg sm:text-xl">✖</button>
-
-    @if (selectedEvent?.type?.imageUrl) {
-      <div class="-mt-6 -mx-6 mb-6">
-        <img [src]="selectedEvent.type.imageUrl" alt="Illustration du type d'événement"
-          class="w-full h-40 sm:h-48 object-cover rounded-t-2xl border-b border-white/20" />
-        </div>
+<div class="event-dialog-backdrop" (click)="requestClose.emit()">
+  <section class="event-dialog" role="dialog" aria-modal="true" aria-labelledby="event-dialog-title"
+    cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (click)="$event.stopPropagation()">
+    <header class="event-dialog-header" [style.--event-accent]="eventColor(selectedEvent?.type?.backgroundColor)" [style.--event-label]="eventColor(selectedEvent?.type?.textColor, '#e3f4fb')">
+      @if (eventImage(selectedEvent?.type?.imageUrl); as image) {
+        <img class="dialog-type-image" [src]="image" alt="" (error)="$any($event.target).style.display = 'none'" />
       }
+      <div>
+        <p class="dialog-eyebrow">{{ selectedEvent?.type?.name || 'Événement IceForge' }}</p>
+        <h2 id="event-dialog-title">{{ selectedEvent?.title }}</h2>
+        <span class="event-lifecycle" [class.event-lifecycle--finished]="selectedEvent?.finished">{{ selectedEvent?.finished ? 'Terminé' : 'À venir' }}</span>
+      </div>
+      <button type="button" cdkFocusInitial class="dialog-close" aria-label="Fermer les détails de l’événement" (click)="requestClose.emit()">×</button>
+    </header>
 
-      <h2 class="text-xl sm:text-2xl font-bold mb-4 text-cyan-300 break-words">{{ selectedEvent?.title }}</h2>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        <p><strong>Type :</strong> {{ selectedEvent?.type?.name }}</p>
-        <p><strong>Status :</strong>
-        <span [ngClass]="{ 'text-green-400': !selectedEvent?.finished, 'text-gray-400 italic': $safeNavigationMigration(selectedEvent?.finished) }">
-          {{ selectedEvent?.finished ? 'Terminé' : 'À venir' }}
-        </span>
-      </p>
-      <p><strong>Début :</strong> {{ $safeNavigationMigration(selectedEvent?.startDateTime) | date:'short' }}</p>
-      <p><strong>Fin :</strong> {{ $safeNavigationMigration(selectedEvent?.endDateTime) | date:'short' }}</p>
-    </div>
-
-    <div class="mt-4 text-sm">
-      <p><strong>Description :</strong></p>
-      <p class="mt-1 text-gray-300 break-words" [innerHTML]="descriptionHtml"></p>
-    </div>
-
-    <!-- Participation -->
-    <div class="mt-6 border-t border-white/10 pt-4">
-      <h3 class="text-base sm:text-lg font-semibold mb-3 text-cyan-200">Participation</h3>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 text-sm mb-4 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/20">
-        <div class="py-3 sm:py-0">
-          <p class="font-semibold text-green-400 mb-2">✔ Confirmés</p>
-          @if (participationsByStatus.confirmed.length > 0) {
-            <ul class="space-y-1">
-              @for (p of participationsByStatus.confirmed; track p) {
-                <li>{{ p.user.username }}</li>
-              }
-            </ul>
-          } @else {
-            <p class="italic text-gray-400">Aucun</p>
-          }
-        </div>
-
-        <div class="py-3 sm:py-0">
-          <p class="font-semibold text-yellow-400 mb-2">❔ Indécis</p>
-          @if (participationsByStatus.maybe.length > 0) {
-            <ul class="space-y-1">
-              @for (p of participationsByStatus.maybe; track p) {
-                <li>{{ p.user.username }}</li>
-              }
-            </ul>
-          } @else {
-            <p class="italic text-gray-400">Aucun</p>
-          }
-        </div>
-
-        <div class="py-3 sm:py-0">
-          <p class="font-semibold text-red-400 mb-2">❌ Refusés</p>
-          @if (participationsByStatus.refused.length > 0) {
-            <ul class="space-y-1">
-              @for (p of participationsByStatus.refused; track p) {
-                <li>{{ p.user.username }}</li>
-              }
-            </ul>
-          } @else {
-            <p class="italic text-gray-400">Aucun</p>
-          }
-        </div>
+    <div class="event-dialog-body">
+      <div class="event-schedule">
+        <div><span>Début</span><strong>{{ selectedEvent?.startDateTime | date:'EEEE d MMMM yyyy':'':'fr' }}</strong><time>{{ selectedEvent?.startDateTime | date:'HH:mm' }}</time></div>
+        <span class="schedule-arrow" aria-hidden="true">→</span>
+        <div><span>Fin</span><strong>{{ selectedEvent?.endDateTime | date:'EEEE d MMMM yyyy':'':'fr' }}</strong><time>{{ selectedEvent?.endDateTime | date:'HH:mm' }}</time></div>
       </div>
 
-      <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-        <button
-          (click)="participationChange.emit(1)"
-          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
-          class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
-          Confirmer
-        </button>
+      <section class="dialog-section">
+        <h3>Programme</h3>
+        @if (descriptionHtml) {
+          <div class="event-description" [innerHTML]="descriptionHtml"></div>
+        } @else {
+          <p class="dialog-muted">Aucune description.</p>
+        }
+      </section>
 
-        <button
-          (click)="participationChange.emit(0)"
-          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
-          class="bg-yellow-500 hover:bg-yellow-400 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
-          Peut-être
-        </button>
+      <section class="dialog-section">
+        <div class="section-heading"><h3>Présence</h3>@if (isParticipationSaving) { <span role="status" class="dialog-muted">Enregistrement…</span> }</div>
+        @if (selectedEvent?.finished) { <p class="dialog-muted">Cet événement est terminé. Les réponses sont conservées ci-dessous.</p> }
+        <div class="participation-actions" role="group" aria-label="Votre réponse à cet événement">
+          <button type="button" class="status-confirmed" [attr.aria-pressed]="selectedParticipationStatus === 1" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(1)"><span aria-hidden="true">✓</span> Présent</button>
+          <button type="button" class="status-maybe" [attr.aria-pressed]="selectedParticipationStatus === 0" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(0)"><span aria-hidden="true">?</span> Peut-être</button>
+          <button type="button" class="status-refused" [attr.aria-pressed]="selectedParticipationStatus === -1" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(-1)"><span aria-hidden="true">−</span> Indisponible</button>
+        </div>
+        @if (participationError) { <div class="participation-error" role="alert"><p>{{ participationError }}</p><button type="button" (click)="retryParticipations.emit()">Recharger les participations</button></div> }
+      </section>
 
-        <button
-          (click)="participationChange.emit(-1)"
-          [disabled]="$safeNavigationMigration(selectedEvent?.finished)"
-          class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-40">
-          Refuser
-        </button>
-      </div>
-    </div>
-
-    <!-- Flottes des confirmes -->
-    <div class="mt-6 border-t border-white/10 pt-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-base sm:text-lg font-semibold text-cyan-200">Vaisseaux des confirmés</h3>
-        <button
-          (click)="toggleFleets.emit()"
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.2em]
-                 border border-cyan-400/30 text-cyan-200 bg-white/5 hover:bg-cyan-500/20 transition">
-          {{ showConfirmedFleets ? 'Masquer' : 'Afficher' }}
-        </button>
-      </div>
-
-      @if (showConfirmedFleets) {
-        <div class="mt-4 space-y-4">
-          @if (isFleetLoading) {
-            <div class="text-sm text-slate-400 italic">
-              Chargement des flottes...
-            </div>
-          }
-          @if (!isFleetLoading && fleetBrandKeys.length === 0) {
-            <div class="text-sm text-slate-400 italic">
-              Aucun vaisseau trouvé pour les confirmés.
-            </div>
-          }
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
-            @for (brand of fleetBrandKeys; track brand) {
-              @for (ship of fleetByBrand[brand]; track ship) {
-                <app-fleet-mini-card
-                  [ship]="ship"
-                ></app-fleet-mini-card>
-              }
-            }
+      <section class="dialog-section">
+        <h3>Équipage</h3>
+        @if (isParticipationLoading) { <p class="dialog-muted" role="status">Chargement des participations…</p> }
+        <div class="crew-columns">
+          <div class="crew-group status-confirmed"><h4>Confirmés <span>{{ participationsByStatus.confirmed.length }}</span></h4>
+            @for (p of participationsByStatus.confirmed; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
+          </div>
+          <div class="crew-group status-maybe"><h4>Peut-être <span>{{ participationsByStatus.maybe.length }}</span></h4>
+            @for (p of participationsByStatus.maybe; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
+          </div>
+          <div class="crew-group status-refused"><h4>Indisponibles <span>{{ participationsByStatus.refused.length }}</span></h4>
+            @for (p of participationsByStatus.refused; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
           </div>
         </div>
-      }
+      </section>
+
+      <section class="dialog-section">
+        <div class="section-heading"><div><h3>Flotte</h3></div>
+          <button type="button" class="fleet-toggle" [attr.aria-expanded]="showConfirmedFleets" (click)="toggleFleets.emit()">{{ showConfirmedFleets ? 'Masquer' : 'Voir la flotte' }}</button>
+        </div>
+        @if (showConfirmedFleets) {
+          @if (isFleetLoading) { <p class="dialog-muted" role="status">Chargement des flottes…</p> }
+          @if (!isFleetLoading && fleetBrandKeys.length === 0) { <p class="dialog-muted">Aucun vaisseau renseigné pour les membres confirmés.</p> }
+          <div class="dialog-fleet">
+            @for (brand of fleetBrandKeys; track brand) {
+              @for (ship of fleetByBrand[brand]; track ship) { <app-fleet-mini-card [ship]="ship" /> }
+            }
+          </div>
+        }
+      </section>
     </div>
-  </div>
+  </section>
 </div>

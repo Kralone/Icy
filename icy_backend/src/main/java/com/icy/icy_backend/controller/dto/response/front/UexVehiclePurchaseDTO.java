@@ -1,6 +1,19 @@
 package com.icy.icy_backend.controller.dto.response.front;
 
 public class UexVehiclePurchaseDTO {
+    private String terminalId;
+    private String planetName;
+    private String locationName;
+    private String systemName;
+
+    public String getTerminalId() { return terminalId; }
+    public void setTerminalId(String value) { terminalId = value; }
+    public String getPlanetName() { return planetName; }
+    public void setPlanetName(String value) { planetName = value; }
+    public String getLocationName() { return locationName; }
+    public void setLocationName(String value) { locationName = value; }
+    public String getSystemName() { return systemName; }
+    public void setSystemName(String value) { systemName = value; }
     private String vehicleName;
     private String terminalName;
     private Integer buyPrice;

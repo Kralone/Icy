@@ -3,19 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShipService } from '../../../core/services/ship/ship.service';
-import { ShipCargoGrid, ShipCreateDTO, ShipSalePoint } from '../../../model/ship.model';
-
-interface ShipSalePointFormValue {
-  location: string;
-  price: number | null;
-}
-
-interface ShipCargoGridFormValue {
-  sizeX: number | null;
-  sizeY: number | null;
-  sizeZ: number | null;
-}
-
 @Component({
   selector: 'app-ship-management',
   standalone: true,
@@ -27,22 +14,6 @@ export class ShipManagementComponent implements OnInit {
   // === Ships ===
   ships: any[] = [];
   shipSearch = '';
-  newShip = {
-    name: '',
-    brandName: '',
-    imageUrl: '',
-    focus: '',
-    notes: '',
-    scu: null as number | null,
-    size: '',
-    crew: '',
-    flightReady: false,
-    salePoints: [this.createEmptySalePoint()] as ShipSalePointFormValue[],
-    cargoGrids: [this.createEmptyCargoGrid()] as ShipCargoGridFormValue[],
-  };
-
-  isSubmittingShip = false;
-  editingShip: any | null = null;
   showInGameDeletionDialog = false;
   isDeletingInGameAcquisitions = false;
   inGameDeletionError = '';
@@ -77,93 +48,6 @@ export class ShipManagementComponent implements OnInit {
     });
   }
 
-
-  createOrUpdateShip() {
-    if (this.isSubmittingShip) return;
-
-    // 🔒 Champs requis côté DB
-    if (!this.newShip.name?.trim() || !this.newShip.brandName?.trim() || !this.newShip.imageUrl?.trim()) {
-      console.error('Nom, Marque et Image URL sont requis.');
-      return;
-    }
-
-    this.isSubmittingShip = true;
-
-    // ✅ Payload conforme à Ship entity (Brand en objet + champs DB)
-    const shipPayload: ShipCreateDTO = {
-      name: this.newShip.name.trim(),
-      brand: { name: this.newShip.brandName },
-      imageUrl: this.newShip.imageUrl.trim(),
-      flightReady: this.newShip.flightReady,
-
-      focus: this.newShip.focus?.trim() || undefined,
-      notes: this.newShip.notes?.trim() || undefined,
-      size: this.newShip.size?.trim() || undefined,
-      crew: this.newShip.crew?.trim() || undefined,
-      scu:
-        this.newShip.scu === null || this.newShip.scu === undefined
-          ? undefined
-          : Number(this.newShip.scu),
-    };
-    const salePoints = this.mapSalePointsForPayload();
-    if (salePoints.length > 0) {
-      shipPayload.salePoints = salePoints;
-    }
-    const cargoGrids = this.mapCargoGridsForPayload();
-    if (cargoGrids.length > 0) {
-      shipPayload.cargoGrids = cargoGrids;
-    }
-
-
-
-    const req = this.editingShip
-      ? this.shipService.updateShip(this.editingShip.id, shipPayload)
-      : this.shipService.createShip(shipPayload);
-
-    req.subscribe({
-      next: () => {
-        this.isSubmittingShip = false;
-        this.resetShipForm();
-        this.loadShips();
-      },
-      error: (err) => {
-        console.error('Erreur création/mise à jour vaisseau', err);
-        this.isSubmittingShip = false;
-      },
-    });
-  }
-
-
-  editShip(ship: any) {
-    this.editingShip = ship;
-
-    // ✅ On remplit le form en gardant brandName pour le <select>
-    this.newShip = {
-      name: ship.name ?? '',
-      brandName: ship.brand?.name ?? '',
-      focus: ship.focus ?? '',
-      notes: ship.notes ?? '',
-      scu: ship.scu ?? null,
-      size: ship.size ?? '',
-      crew: ship.crew ?? '',
-      flightReady: !!ship.flightReady,
-      imageUrl: ship.imageUrl ?? '',
-      salePoints: Array.isArray(ship.salePoints) && ship.salePoints.length > 0
-        ? ship.salePoints.map((salePoint: any) => this.toSalePointFormValue(salePoint))
-        : [this.createEmptySalePoint()],
-      cargoGrids: Array.isArray(ship.cargoGrids) && ship.cargoGrids.length > 0
-        ? ship.cargoGrids.map((cargoGrid: any) => this.toCargoGridFormValue(cargoGrid))
-        : [this.createEmptyCargoGrid()],
-    };
-  }
-
-  deleteShip(id: number, name: string) {
-    if (!confirm(`Supprimer le vaisseau "${name}" ?`)) return;
-    this.shipService.deleteShipAdmin(id).subscribe({
-      next: () => this.loadShips(),
-      error: (err) => console.error('Erreur suppression vaisseau', err),
-    });
-  }
 
   openInGameDeletionDialog() {
     this.inGameDeletionError = '';
@@ -202,121 +86,6 @@ export class ShipManagementComponent implements OnInit {
     if (this.showInGameDeletionDialog) {
       this.closeInGameDeletionDialog();
     }
-  }
-
-  resetShipForm() {
-    this.editingShip = null;
-    this.newShip = {
-      name: '',
-      brandName: '',
-      focus: '',
-      notes: '',
-      scu: null,
-      size: '',
-      crew: '',
-      flightReady: false,
-      imageUrl: '',
-      salePoints: [this.createEmptySalePoint()],
-      cargoGrids: [this.createEmptyCargoGrid()],
-    };
-  }
-
-  addSalePoint() {
-    this.newShip.salePoints.push(this.createEmptySalePoint());
-  }
-
-  removeSalePoint(index: number) {
-    if (this.newShip.salePoints.length <= 1) {
-      this.newShip.salePoints[0] = this.createEmptySalePoint();
-      return;
-    }
-    this.newShip.salePoints.splice(index, 1);
-  }
-
-  addCargoGrid() {
-    this.newShip.cargoGrids.push(this.createEmptyCargoGrid());
-  }
-
-  removeCargoGrid(index: number) {
-    if (this.newShip.cargoGrids.length <= 1) {
-      this.newShip.cargoGrids[0] = this.createEmptyCargoGrid();
-      return;
-    }
-    this.newShip.cargoGrids.splice(index, 1);
-  }
-
-  private createEmptySalePoint(): ShipSalePointFormValue {
-    return {
-      location: '',
-      price: null,
-    };
-  }
-
-  private createEmptyCargoGrid(): ShipCargoGridFormValue {
-    return {
-      sizeX: null,
-      sizeY: null,
-      sizeZ: null,
-    };
-  }
-
-  private toSalePointFormValue(salePoint: any): ShipSalePointFormValue {
-    const parsedPrice = Number(salePoint?.price);
-    return {
-      location: salePoint?.location ?? '',
-      price: Number.isFinite(parsedPrice) ? parsedPrice : null,
-    };
-  }
-
-  private toCargoGridFormValue(cargoGrid: any): ShipCargoGridFormValue {
-    const parsedX = Number(cargoGrid?.sizeX);
-    const parsedY = Number(cargoGrid?.sizeY);
-    const parsedZ = Number(cargoGrid?.sizeZ);
-    return {
-      sizeX: Number.isFinite(parsedX) ? parsedX : null,
-      sizeY: Number.isFinite(parsedY) ? parsedY : null,
-      sizeZ: Number.isFinite(parsedZ) ? parsedZ : null,
-    };
-  }
-
-  private mapSalePointsForPayload(): ShipSalePoint[] {
-    return this.newShip.salePoints
-      .map((salePoint) => {
-        const location = salePoint.location?.trim();
-        if (!location || salePoint.price === null || salePoint.price === undefined) {
-          return null;
-        }
-
-        const parsedPrice = Number(salePoint.price);
-        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-          return null;
-        }
-
-        return {
-          location,
-          price: parsedPrice,
-        };
-      })
-      .filter((salePoint): salePoint is ShipSalePoint => salePoint !== null);
-  }
-
-  private mapCargoGridsForPayload(): ShipCargoGrid[] {
-    const payload: ShipCargoGrid[] = [];
-    for (const cargoGrid of this.newShip.cargoGrids) {
-      const sizeX = Number(cargoGrid.sizeX);
-      const sizeY = Number(cargoGrid.sizeY);
-      const sizeZ = Number(cargoGrid.sizeZ);
-      if (!Number.isInteger(sizeX) || sizeX <= 0 || !Number.isInteger(sizeY) || sizeY <= 0 || !Number.isInteger(sizeZ) || sizeZ <= 0) {
-        continue;
-      }
-
-      payload.push({
-        sizeX,
-        sizeY,
-        sizeZ,
-      });
-    }
-    return payload;
   }
 
   // 🏷 Brands

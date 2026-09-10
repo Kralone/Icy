@@ -9,6 +9,10 @@ public record CigFeedResponseDTO(
         int sourceCount,
         int itemCount,
         List<CigRawEntryDTO> items,
-        List<CigSourceFetchErrorDTO> errors
+        List<CigSourceFetchErrorDTO> errors,
+        boolean translationConfigured,
+        boolean publishingEnabled,
+        boolean discordRelayEnabled,
+        boolean refreshing
 ) {
 }

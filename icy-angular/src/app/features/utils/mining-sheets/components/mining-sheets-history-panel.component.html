@@ -1,11 +1,11 @@
 <section class="panel">
   <div class="panel-head">
-    <h2>Historique finalise</h2>
+    <h2>Historique</h2>
     <span>{{ historySheets.length }} fiche(s)</span>
   </div>
 
   @if (!historySheets.length) {
-    <div class="empty">Aucune fiche finalisee.</div>
+    <div class="empty">Aucune fiche finalisée.</div>
   }
 
   @for (sheet of historySheets; track sheet) {

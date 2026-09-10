@@ -16,6 +16,13 @@ export interface CigWatchSource {
 }
 
 export interface CigRawEntry {
+  id?: number;
+  translationStatus?: 'PENDING' | 'FAILED' | 'TRANSLATED';
+  publicationStatus?: 'ARCHIVED' | 'PENDING' | 'PUBLISHED';
+  newsId?: number | null;
+  deliveryStatus?: 'DISABLED' | 'PENDING' | 'DELIVERED' | 'EXPIRED';
+  lastError?: string | null;
+  nextRetryAt?: string | null;
   sourceId: number;
   sourceLabel: string;
   sourceUrl: string;
@@ -38,6 +45,10 @@ export interface CigSourceFetchError {
 }
 
 export interface CigFeedResponse {
+  refreshing?: boolean;
+  translationConfigured?: boolean;
+  publishingEnabled?: boolean;
+  discordRelayEnabled?: boolean;
   generatedAt: string;
   nextScheduledFetchAt: string | null;
   sourceCount: number;
@@ -59,6 +70,14 @@ export class CigWatchService {
   getFeed(limit: number): Observable<ApiResponse<CigFeedResponse>> {
     const normalizedLimit = Number.isFinite(limit) ? limit : 40;
     return this.http.get<ApiResponse<CigFeedResponse>>(`${this.baseUrl}/feed?limit=${normalizedLimit}`);
+  }
+
+  entryAction(id: number, action: 'publish' | 'retry'): Observable<ApiResponse<CigFeedResponse>> {
+    return this.http.post<ApiResponse<CigFeedResponse>>(`${this.baseUrl}/entries/${id}/${action}`, {});
+  }
+
+  correctTranslation(id: number, titleFr: string, excerptFr: string): Observable<ApiResponse<CigFeedResponse>> {
+    return this.http.put<ApiResponse<CigFeedResponse>>(`${this.baseUrl}/entries/${id}/translation`, { titleFr, excerptFr });
   }
 
   forceRefresh(limit: number): Observable<ApiResponse<CigFeedResponse>> {

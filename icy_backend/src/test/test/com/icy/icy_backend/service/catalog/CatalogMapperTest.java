@@ -101,6 +101,67 @@ class CatalogMapperTest {
         assertThat(mapper.vehicleFlightReady("vehicles", basher)).isTrue();
     }
 
+
+    @Test
+    void readsActualStationAndCityMarkersInsteadOfGenericSourceClassification() throws Exception {
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"Manmade","classification":"Manmade"},
+                 "radar_contact_type":{"name":"SpaceStation"}}
+                """))).isEqualTo("STATION");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"Manmade_VisibleOnInteraction","classification":"Manmade"},
+                 "radar_contact_type":{"name":null,"tag_name":"SpaceStation"}}
+                """))).isEqualTo("STATION");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"LandingZone","classification":"Settlement"}}
+                """))).isEqualTo("CITY");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"Manmade","classification":"Manmade"},
+                 "radar_contact_type":{"name":"LandingZone"}}
+                """))).isEqualTo("CITY");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"JumpPoint","classification":"Manmade"}}
+                """))).isEqualTo("JUMP_POINT");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"SolarSystem","classification":"Solar System"}}
+                """))).isEqualTo("SYSTEM");
+    }
+
+    @Test
+    void keepsGenericPlacesAndChildrenDistinctWithoutInferringFromNamesOrParents() throws Exception {
+        assertThat(mapper.family("locations", json("""
+                {"name":"Everus Harbor Clinic","type":{"name":"Outpost","classification":"Outpost"},
+                 "parent":{"name":"Everus Harbor","type_name":"Manmade"},"radar_contact_type":{"name":null}}
+                """))).isEqualTo("OUTPOST");
+        assertThat(mapper.family("locations", json("""
+                {"name":"Space Station City","type":{"name":"Manmade","classification":"Manmade"},
+                 "radar_contact_type":{"name":"CommArray"}}
+                """))).isEqualTo("LOCATION");
+        assertThat(mapper.family("locations", json("{}"))).isEqualTo("LOCATION");
+        assertThat(mapper.family("locations", json("""
+                {"type":{"name":"Unknown","classification":"Outpost"}}
+                """))).isEqualTo("OUTPOST");
+    }
+
+
+    @Test
+    void cargoCapacityComesFromTheExactVehicleAndDistinguishesUnknownFromZero() throws Exception {
+        assertThat(mapper.vehicleScu("vehicles", json("""
+                {"name":"C2 Hercules Starlifter","cargo_capacity":696}
+                """))).isEqualTo(696);
+        assertThat(mapper.vehicleScu("vehicles", json("""
+                {"name":"A2 Hercules Starlifter Wikelo War Special","cargo_capacity":216}
+                """))).isEqualTo(216);
+        assertThat(mapper.vehicleScu("vehicles", json("""
+                {"name":"Golem","cargo_capacity":0,"ore_capacity":32}
+                """))).isZero();
+        for (String value : List.of("null", "-1", "0.5", "2147483648", "\"64\"")) {
+            assertThat(mapper.vehicleScu("vehicles", json("{\"cargo_capacity\":" + value + "}"))).isNull();
+        }
+        assertThat(mapper.vehicleScu("vehicles", json("{}"))).isNull();
+        assertThat(mapper.vehicleScu("items", json("{\"cargo_capacity\":64}"))).isNull();
+    }
+
     private JsonNode location(String classification) throws Exception {
         return json("{\"type\":{\"classification\":\"" + classification + "\"}}");
     }
