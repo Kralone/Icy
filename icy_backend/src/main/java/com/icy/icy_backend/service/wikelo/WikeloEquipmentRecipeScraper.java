@@ -62,7 +62,14 @@ public class WikeloEquipmentRecipeScraper {
         if (!released(mission) || !"Wikelo Emporium".equals(mission.path("faction").path("name").asText())) return null;
         // Multiple reward groups represent alternatives; never present their union as a guaranteed set.
         JsonNode groups = mission.path("reward_groups");
-        if (!groups.isArray() || groups.size() != 1 || groups.get(0).path("weight").asDouble() <= 0) return null;
+        if (!groups.isArray() || groups.size() != 1) return null;
+        // The API leaves weight null for unweighted groups. Only an explicit
+        // nonpositive weight disables this single group; no alternative is merged.
+        JsonNode weight = groups.get(0).path("weight");
+        if (!weight.isMissingNode() && !weight.isNull()) {
+            if (!weight.isNumber()) throw new IllegalStateException("Pondération de récompense invalide");
+            if (weight.asDouble() <= 0) return null;
+        }
         JsonNode orders = mission.path("hauling_orders"), rewards = groups.get(0).path("items");
         if (!orders.isArray() || orders.isEmpty() || !rewards.isArray() || rewards.isEmpty()) return null;
         var ingredients = new ArrayList<WikeloEquipmentRecipe.Ingredient>();

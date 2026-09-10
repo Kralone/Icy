@@ -15,6 +15,7 @@ import { MiningSheet } from '../../../../core/services/mining/mining-sheet.servi
 export class MiningSheetsAdminModalComponent {
   @Input() visible = false;
   @Input() saving = false;
+  @Input() actionError = '';
   @Input() sheet: MiningSheet | null = null;
   @Input() form!: {
     sheetName: string;

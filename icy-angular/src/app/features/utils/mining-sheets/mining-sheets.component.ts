@@ -330,7 +330,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   }
 
   lockSelectedSheet(): void {
-    if (!this.selectedSheet || !this.isAdmin || this.saving) {
+    if (!this.selectedSheet || this.selectedSheet.status !== 'OPEN' || !this.isAdmin || this.saving) {
       return;
     }
     this.saving = true;
@@ -348,7 +348,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   }
 
   unlockSelectedSheet(): void {
-    if (!this.selectedSheet || !this.isAdmin || this.saving) {
+    if (!this.selectedSheet || this.selectedSheet.status !== 'LOCKED' || !this.isAdmin || this.saving) {
       return;
     }
     this.saving = true;
@@ -366,7 +366,7 @@ export class MiningSheetsComponent implements OnInit, OnDestroy {
   }
 
   finalizeSelectedSheet(): void {
-    if (!this.selectedSheet || !this.isAdmin || this.saving) {
+    if (!this.selectedSheet || this.selectedSheet.status !== 'LOCKED' || !this.isAdmin || this.saving) {
       return;
     }
 

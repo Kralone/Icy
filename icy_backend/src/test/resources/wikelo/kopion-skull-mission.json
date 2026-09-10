@@ -1,0 +1,138 @@
+{
+  "data": {
+    "uuid": "31f004c2-9b77-4a0f-a500-89f89b606a96",
+    "title": "Fun Kopion Skull Gun",
+    "released": true,
+    "not_for_release": false,
+    "work_in_progress": false,
+    "faction": {
+      "name": "Wikelo Emporium",
+      "uuid": "5f442fdd-15cc-4f62-bd10-fce2023f4d0c",
+      "faction_type": "Lawful",
+      "lawful": true,
+      "is_npc": false,
+      "has_reputation": true,
+      "headquarters": "Wikelo Emporium Station",
+      "area": "UEE",
+      "focus": "Barter",
+      "founded": "N/A",
+      "leadership": "Wikelo",
+      "link": "https://api.star-citizen.wiki/api/factions/5f442fdd-15cc-4f62-bd10-fce2023f4d0c?version=4.10.0-LIVE.12519617",
+      "reputation_ladder": {
+        "scope_name": "Wikelo",
+        "standings": [
+          {
+            "name": "Wolf",
+            "display_name": "Very Best Customer",
+            "min_reputation": 999
+          },
+          {
+            "name": "Armour",
+            "display_name": "Very Good Customer",
+            "min_reputation": 340
+          },
+          {
+            "name": "Nothing",
+            "display_name": "New Customer",
+            "min_reputation": 0
+          }
+        ]
+      }
+    },
+    "reward_groups": [
+      {
+        "group_index": 0,
+        "weight": null,
+        "award_only_to_mission_owner": true,
+        "items": [
+          {
+            "name": "Parallax \"Fun Kopion Skull\" Energy Assault Rifle",
+            "uuid": "c57281a9-b879-47f5-b7b5-16929d79ee5d",
+            "amount": 1,
+            "send_to_home": false,
+            "link": "https://api.star-citizen.wiki/api/items/c57281a9-b879-47f5-b7b5-16929d79ee5d?version=4.10.0-LIVE.12519617",
+            "web_url": "https://api.star-citizen.wiki/items/parallax-fun-kopion-skull-energy-assault-rifle?version=4.10.0-LIVE.12519617"
+          },
+          {
+            "name": "Parallax Rifle Battery (80 Cap)",
+            "uuid": "3efb1be1-8935-4124-8bf0-aec410297785",
+            "amount": 20,
+            "send_to_home": false,
+            "link": "https://api.star-citizen.wiki/api/items/3efb1be1-8935-4124-8bf0-aec410297785?version=4.10.0-LIVE.12519617",
+            "web_url": "https://api.star-citizen.wiki/items/parallax-rifle-battery-80-cap?version=4.10.0-LIVE.12519617"
+          }
+        ]
+      }
+    ],
+    "hauling_orders": [
+      {
+        "kind": "Entity",
+        "name": "Carinite",
+        "uuid": "0b83f4b2-1d15-4843-aa94-29f2b40a5cbe",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 10,
+        "min_amount": 10,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/0b83f4b2-1d15-4843-aa94-29f2b40a5cbe?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/0b83f4b2-1d15-4843-aa94-29f2b40a5cbe?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Saldynium (Ore)",
+        "uuid": "ee704f52-8794-434d-bcd7-47fec365ffbd",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 15,
+        "min_amount": 15,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/ee704f52-8794-434d-bcd7-47fec365ffbd?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/ee704f52-8794-434d-bcd7-47fec365ffbd?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Parallax Energy Assault Rifle",
+        "uuid": "b144a16c-bba4-427e-9f78-bd379f9509f8",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 1,
+        "min_amount": null,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/b144a16c-bba4-427e-9f78-bd379f9509f8?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/b144a16c-bba4-427e-9f78-bd379f9509f8?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Tundra Kopion Horn",
+        "uuid": "31033547-e451-44d2-85df-ab16b9d083d9",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 20,
+        "min_amount": 20,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/31033547-e451-44d2-85df-ab16b9d083d9?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/31033547-e451-44d2-85df-ab16b9d083d9?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Jaclium (Ore)",
+        "uuid": "118652a7-cc27-44ea-b362-96fcfeef8774",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 20,
+        "min_amount": 20,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/118652a7-cc27-44ea-b362-96fcfeef8774?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/118652a7-cc27-44ea-b362-96fcfeef8774?version=4.10.0-LIVE.12519617"
+      }
+    ],
+    "min_standing": null,
+    "web_url": "https://api.star-citizen.wiki/missions/fun-kopion-skull-gun?version=4.10.0-LIVE.12519617",
+    "game_version": "4.10.0-LIVE.12519617"
+  }
+}

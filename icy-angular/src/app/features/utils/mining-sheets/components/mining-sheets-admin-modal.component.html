@@ -1,9 +1,9 @@
 @if (visible && sheet && form) {
   <div class="modal-backdrop">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mining-settings-title" [attr.aria-busy]="saving">
       <div class="modal-head">
         <div>
-          <h2>Parametres de la fiche</h2>
+          <h2 id="mining-settings-title">Paramètres de la fiche</h2>
           <p>{{ toDisplayDate(sheet.operationDate) }} • {{ sheet.refineryLocation }}@if (sheet.saleLocation) {
             <span> • Vente: {{ sheet.saleLocation }}</span>
           }</p>
@@ -12,14 +12,26 @@
       </div>
       <section class="section-block">
         <div class="section-head">
-          <h3>Gestion admin</h3>
+          <h3>État de la fiche</h3>
           <div class="section-head-actions">
-            <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'OPEN'" (click)="save.emit()">Enregistrer</button>
-            <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'OPEN'" (click)="lock.emit()">Verrouiller</button>
-            <button type="button" class="btn btn-ghost" [disabled]="saving || sheet.status !== 'LOCKED'" (click)="unlock.emit()">Deverrouiller</button>
-            <button type="button" class="btn btn-danger" [disabled]="saving || sheet.status !== 'LOCKED'" (click)="finalize.emit()">Finaliser</button>
+            @if (sheet.status === 'OPEN') {
+              <button type="button" class="btn btn-ghost" [disabled]="saving" (click)="save.emit()">Enregistrer</button>
+              <button type="button" class="btn btn-lock" [disabled]="saving" (click)="lock.emit()"><span aria-hidden="true">1</span> Verrouiller</button>
+            } @else if (sheet.status === 'LOCKED') {
+              <button type="button" class="btn btn-ghost" [disabled]="saving" (click)="unlock.emit()">Déverrouiller</button>
+              <button type="button" class="btn btn-finalize" [disabled]="saving" (click)="finalize.emit()"><span aria-hidden="true">2</span> Finaliser</button>
+            } @else if (sheet.status === 'FINALIZED') {
+              <span class="sheet-complete" role="status">✓ Fiche finalisée</span>
+            }
           </div>
         </div>
+        @if (sheet.status === 'OPEN') {
+          <p class="workflow-hint">Le verrouillage bloque les modifications. La finalisation devient ensuite disponible.</p>
+        } @else if (sheet.status === 'LOCKED') {
+          <p class="workflow-hint">Fiche verrouillée. Finalisez pour la clôturer définitivement, ou déverrouillez pour la modifier.</p>
+        }
+        @if (saving) { <p class="workflow-hint" role="status">Enregistrement en cours…</p> }
+        @if (actionError) { <p class="workflow-error" role="alert">{{ actionError }}</p> }
         <div class="form-grid">
           <label>
             Nom de fiche

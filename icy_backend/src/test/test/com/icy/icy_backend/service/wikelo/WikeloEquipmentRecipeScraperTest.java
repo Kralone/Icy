@@ -34,4 +34,33 @@ class WikeloEquipmentRecipeScraperTest {
         var alternative = ana(); ((ObjectNode)alternative.path("hauling_orders").get(0)).putArray("or_options").addArray().add("choice");
         assertNull(scraper.parseMission(alternative));
     }
+
+    @Test void importsReleasedUnweightedYormandiContractFromSource() throws Exception {
+        try (var input = getClass().getResourceAsStream("/wikelo/yormandi-mission.json")) {
+            var recipe = scraper.parseMission(mapper.readTree(input).path("data"));
+            assertNotNull(recipe);
+            assertEquals("Yormandi Gun", recipe.name());
+            assertEquals("Fresnel \"Yormandi\" Energy LMG", recipe.rewards().get(0).name());
+            assertEquals(java.util.List.of("6", "3", "1"), recipe.ingredients().stream().map(WikeloEquipmentRecipe.Ingredient::quantity).toList());
+        }
+    }
+    @Test void keepsCompleteUnweightedKopionBundleIncludingAmmunition() throws Exception {
+        try (var input = getClass().getResourceAsStream("/wikelo/kopion-skull-mission.json")) {
+            var recipe = scraper.parseMission(mapper.readTree(input).path("data"));
+            assertNotNull(recipe);
+            assertEquals(5, recipe.ingredients().size());
+            assertEquals(2, recipe.rewards().size());
+            assertEquals("20", recipe.rewards().get(1).quantity());
+        }
+    }
+    @Test void distinguishesUnspecifiedWeightFromDisabledAndMalformedWeight() throws Exception {
+        var missing = ana(); ((ObjectNode)missing.path("reward_groups").get(0)).remove("weight");
+        assertNotNull(scraper.parseMission(missing));
+        var disabled = ana(); ((ObjectNode)disabled.path("reward_groups").get(0)).put("weight", 0);
+        assertNull(scraper.parseMission(disabled));
+        var malformed = ana(); ((ObjectNode)malformed.path("reward_groups").get(0)).put("weight", "invalid");
+        assertThrows(IllegalStateException.class, () -> scraper.parseMission(malformed));
+        missing.withArray("reward_groups").add(missing.path("reward_groups").get(0).deepCopy());
+        assertNull(scraper.parseMission(missing));
+    }
 }

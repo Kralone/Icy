@@ -1,0 +1,104 @@
+{
+  "data": {
+    "uuid": "8df7d9a9-c887-4302-b93c-863788bdca01",
+    "title": "Yormandi Gun",
+    "released": true,
+    "not_for_release": false,
+    "work_in_progress": false,
+    "faction": {
+      "name": "Wikelo Emporium",
+      "uuid": "5f442fdd-15cc-4f62-bd10-fce2023f4d0c",
+      "faction_type": "Lawful",
+      "lawful": true,
+      "is_npc": false,
+      "has_reputation": true,
+      "headquarters": "Wikelo Emporium Station",
+      "area": "UEE",
+      "focus": "Barter",
+      "founded": "N/A",
+      "leadership": "Wikelo",
+      "link": "https://api.star-citizen.wiki/api/factions/5f442fdd-15cc-4f62-bd10-fce2023f4d0c?version=4.10.0-LIVE.12519617",
+      "reputation_ladder": {
+        "scope_name": "Wikelo",
+        "standings": [
+          {
+            "name": "Wolf",
+            "display_name": "Very Best Customer",
+            "min_reputation": 999
+          },
+          {
+            "name": "Armour",
+            "display_name": "Very Good Customer",
+            "min_reputation": 340
+          },
+          {
+            "name": "Nothing",
+            "display_name": "New Customer",
+            "min_reputation": 0
+          }
+        ]
+      }
+    },
+    "reward_groups": [
+      {
+        "group_index": 0,
+        "weight": null,
+        "award_only_to_mission_owner": true,
+        "items": [
+          {
+            "name": "Fresnel \"Yormandi\" Energy LMG",
+            "uuid": "1e860b7b-cfcc-4b94-9e87-f4052a5f68f6",
+            "amount": 1,
+            "send_to_home": false,
+            "link": "https://api.star-citizen.wiki/api/items/1e860b7b-cfcc-4b94-9e87-f4052a5f68f6?version=4.10.0-LIVE.12519617",
+            "web_url": "https://api.star-citizen.wiki/items/fresnel-yormandi-energy-lmg?version=4.10.0-LIVE.12519617"
+          }
+        ]
+      }
+    ],
+    "hauling_orders": [
+      {
+        "kind": "Entity",
+        "name": "Yormandi Eye",
+        "uuid": "124da32f-de8f-45f6-a2f1-81fd47752b2d",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 6,
+        "min_amount": null,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/124da32f-de8f-45f6-a2f1-81fd47752b2d?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/124da32f-de8f-45f6-a2f1-81fd47752b2d?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Yormandi Tongue",
+        "uuid": "2845e7ee-2f52-471b-a0a7-05ca11908fe6",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 3,
+        "min_amount": null,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/2845e7ee-2f52-471b-a0a7-05ca11908fe6?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/2845e7ee-2f52-471b-a0a7-05ca11908fe6?version=4.10.0-LIVE.12519617"
+      },
+      {
+        "kind": "Entity",
+        "name": "Fresnel Energy LMG",
+        "uuid": "af55f514-d7fd-49fd-89c8-6aee01f25859",
+        "items": [],
+        "max_scu": null,
+        "min_scu": null,
+        "max_amount": 1,
+        "min_amount": null,
+        "max_container_size": -1,
+        "link": "https://api.star-citizen.wiki/api/items/af55f514-d7fd-49fd-89c8-6aee01f25859?version=4.10.0-LIVE.12519617",
+        "web_url": "https://api.star-citizen.wiki/items/af55f514-d7fd-49fd-89c8-6aee01f25859?version=4.10.0-LIVE.12519617"
+      }
+    ],
+    "min_standing": null,
+    "web_url": "https://api.star-citizen.wiki/missions/yormandi-gun?version=4.10.0-LIVE.12519617",
+    "game_version": "4.10.0-LIVE.12519617"
+  }
+}
