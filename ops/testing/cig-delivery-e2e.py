@@ -2,10 +2,11 @@
 import json
 import time
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 BASE = "http://127.0.0.1:18080"
-ENTRY_ID = 33
+ENTRY_ID = 31
 
 def request(path, payload=None, token=None):
     headers = {"Content-Type": "application/json"}
@@ -23,8 +24,13 @@ def main():
     before = feed()
     assert before["discordRelayEnabled"], "Local relay must be enabled explicitly before running this test"
     selected = next(item for item in before["items"] if item["id"] == ENTRY_ID)
-    assert selected["newsId"] == 2 and selected["translationStatus"] == "TRANSLATED"
+    assert selected["newsId"] == 1 and selected["translationStatus"] == "TRANSLATED"
     assert selected["deliveryStatus"] != "DELIVERED", "This test was already delivered; do not send another item"
+    try:
+        request("/api/news/cig/entries/33/retry", {}, token)
+        raise AssertionError("Devtracker retry must be refused")
+    except urllib.error.HTTPError as error:
+        assert error.code == 409, error.code
     request(f"/api/news/cig/entries/{ENTRY_ID}/retry", {}, token)
     after = None
     for _ in range(20):
@@ -40,7 +46,7 @@ def main():
     changes = [{"id": item["id"], "before": old_statuses.get(item["id"]), "after": item["deliveryStatus"]}
                for item in final["items"] if old_statuses.get(item["id"]) != item["deliveryStatus"]]
     assert [item["id"] for item in changes] == [ENTRY_ID], changes
-    report = {"entryId": ENTRY_ID, "newsId": 2, "deliveryStatus": current["deliveryStatus"],
+    report = {"entryId": ENTRY_ID, "newsId": 1, "deliveryStatus": current["deliveryStatus"],
               "changedEntries": changes, "entryCountBefore": len(before["items"]),
               "entryCountAfter": len(final["items"]), "secondRetry": "completed without status change"}
     Path("ops/testing/cig-delivery-e2e.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

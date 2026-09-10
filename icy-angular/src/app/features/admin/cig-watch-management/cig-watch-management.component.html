@@ -76,6 +76,7 @@
           <div class="entry-top"><span>{{ entry.sourceLabel }}</span><time>{{ formatDate(entry.publishedAt) }}</time></div>
           <h2><a [href]="entry.link" target="_blank" rel="noopener noreferrer">{{ entry.title }} ↗</a></h2>
           <div class="statuses">
+            @if (!isOfficialNews(entry)) { <span class="badge muted">Veille uniquement · aucune publication</span> }
             @if (entry.translationStatus === 'TRANSLATED') { <span class="badge good">Traduit en français</span> }
             @else if (entry.translationStatus === 'FAILED') { <span class="badge warning">Traduction à reprendre</span> }
             @else if (entry.translationStatus === 'PENDING') { <span class="badge">Traduction en attente</span> }

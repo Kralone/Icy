@@ -58,7 +58,7 @@ describe('CIG Watch publication states', () => {
     const entryAction = vi.fn(() => pending);
     const component = new CigWatchManagementComponent({entryAction} as unknown as CigWatchService);
     component.feed = {publishingEnabled: true} as any;
-    const entry = {id: 7, translationStatus: 'TRANSLATED', fetchedAt: new Date().toISOString()} as CigRawEntry;
+    const entry = {id: 7, sourceId: 1, sourceUrl: 'https://robertsspaceindustries.com/comm-link/rss', link: 'https://robertsspaceindustries.com/en/comm-link/transmission/123', translationStatus: 'TRANSLATED', fetchedAt: new Date().toISOString()} as CigRawEntry;
     component.runEntryAction(entry, 'publish');
     component.runEntryAction(entry, 'publish');
     expect(entryAction).toHaveBeenCalledTimes(1);
@@ -87,5 +87,14 @@ describe('CIG Watch publication states', () => {
     component.feed = {publishingEnabled: true, discordRelayEnabled: true} as any;
     expect(component.canPublish({id: 7, translationStatus: 'TRANSLATED', fetchedAt: '2020-01-01'} as CigRawEntry)).toBe(false);
     expect(component.canRetry({id: 7, newsId: 2, deliveryStatus: 'DELIVERED'} as CigRawEntry)).toBe(false);
+  });
+  it('never offers publication or Discord retry for developer discussions', () => {
+    const component = new CigWatchManagementComponent({} as CigWatchService);
+    component.feed = {publishingEnabled: true, discordRelayEnabled: true} as any;
+    const entry = {id: 33, sourceId: 2, sourceUrl: 'https://robertsspaceindustries.com/en/community/devtracker',
+      link: 'https://robertsspaceindustries.com/spectrum/community/SC/forum/3/thread/update',
+      fetchedAt: new Date().toISOString(), translationStatus: 'TRANSLATED'} as CigRawEntry;
+    expect(component.canPublish(entry)).toBe(false);
+    expect(component.canRetry({...entry, newsId: 2, deliveryStatus: 'PENDING'})).toBe(false);
   });
 });

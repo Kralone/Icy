@@ -28,7 +28,7 @@ class CigWatchPublicationServiceTest {
                 mock(PlatformTransactionManager.class), true, discord);
     }
     CigWatchEntry entry(boolean eligible) {
-        return CigWatchEntry.builder().id(1L).sourceId(1L).sourceLabel("RSI").link("https://robertsspaceindustries.com/comm-link/transmission/1")
+        return CigWatchEntry.builder().id(1L).sourceId(1L).sourceLabel("RSI").sourceUrl("https://robertsspaceindustries.com/comm-link/rss").link("https://robertsspaceindustries.com/comm-link/transmission/1")
                 .title("Mining update").rawExcerpt("New mining changes").rawPayload("Mining details")
                 .fetchedAt(now).createdAt(now).autoPublish(eligible).build();
     }
@@ -147,5 +147,37 @@ class CigWatchPublicationServiceTest {
         assertThatThrownBy(() -> service(true).correctTranslation(1L, "Titre", "Contenu"))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
         verify(entries, never()).save(any());
+    }
+    @Test void devtrackerIsTranslatedButNeverAutomaticallyPublished() {
+        translated();
+        var entry = entry(true);
+        entry.setSourceId(2L);
+        entry.setLink("https://robertsspaceindustries.com/spectrum/community/SC/forum/3/thread/update");
+        service(true).processEntry(entry, now);
+        assertThat(entry.isAutoPublish()).isFalse();
+        verify(news, never()).saveAndFlush(any());
+        verifyNoInteractions(messaging);
+    }
+
+    @Test void alreadyPublishedDevtrackerCannotBeManuallyRetriedOrRelayed() {
+        var entry = entry(false);
+        entry.setSourceId(2L);
+        entry.setNewsId(20L);
+        entry.setDeliveryStatus("PENDING");
+        when(entries.findForProcessing(1L)).thenReturn(Optional.of(entry));
+        assertThatThrownBy(() -> service(true).requestAction(1L, false))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+        assertThatThrownBy(() -> service(true).requestAction(1L, true))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+        service(true).relay(entry, now);
+        assertThat(entry.getDeliveryStatus()).isEqualTo("EXPIRED");
+        verifyNoInteractions(news, messaging);
+    }
+
+    @Test void sourceAllowlistRejectsRedditAndFalseCommLinkHosts() {
+        assertThat(CigWatchPublicationService.isOfficialNews(1L, "https://robertsspaceindustries.com/comm-link/rss",
+                "https://reddit.com/r/starcitizen/comm-link/transmission/1")).isFalse();
+        assertThat(CigWatchPublicationService.isOfficialNews(1L, "https://robertsspaceindustries.com/comm-link/rss",
+                "https://robertsspaceindustries.com.evil.test/comm-link/transmission/1")).isFalse();
     }
 }

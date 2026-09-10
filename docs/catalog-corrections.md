@@ -10,7 +10,7 @@ Une correction d’image concerne l’identifiant exact de la fiche. L’URL est
 
 ## Persistance
 
-Le fragment ops/testing/catalog-overrides-schema.sql est intégré dans la migration unique V32__interface_catalogue_and_publication.sql, après la V31 déployée. Ne pas l’exécuter séparément. Les champs source_image_url/source_image_is_fallback et source_entry_id conservent la dernière valeur importée. Les champs image_override_url et entry_override_id conservent le choix manuel. Les colonnes historiques image_url/image_is_fallback et entry_id restent les valeurs effectives : toutes les lectures publiques, administratives et vues de compatibilité continuent de les utiliser. Les deux mappers appliquent la correction à chaque upsert, sans écraser le choix manuel. Le retour à la source reprend sa dernière valeur, même si elle a changé depuis la correction.
+La migration unique V32__interface_catalogue_and_publication.sql ajoute les corrections après la V31 déployée. Les champs source_image_url/source_image_is_fallback et source_entry_id conservent la dernière valeur importée. Les champs image_override_url et entry_override_id conservent le choix manuel. Les colonnes historiques image_url/image_is_fallback et entry_id restent les valeurs effectives : toutes les lectures publiques, administratives et vues de compatibilité continuent de les utiliser. Les deux mappers appliquent la correction à chaque upsert, sans écraser le choix manuel. Le retour à la source reprend sa dernière valeur, même si elle a changé depuis la correction.
 
 ## Validation SQL
 

@@ -287,6 +287,7 @@ public class CigWatchService {
                     now,
                     now,
                     initializedSources.contains(dto.sourceId()) && recent
+                            && CigWatchPublicationService.isOfficialNews(dto.sourceId(), dto.sourceUrl(), dto.link())
             );
         }
     }

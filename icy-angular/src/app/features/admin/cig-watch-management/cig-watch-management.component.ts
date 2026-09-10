@@ -153,14 +153,24 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
   draftTitle = '';
   draftExcerpt = '';
 
+  isOfficialNews(entry: CigRawEntry): boolean {
+    try {
+      const url = new URL(entry.link);
+      return entry.sourceId === 1 && entry.sourceUrl === 'https://robertsspaceindustries.com/comm-link/rss'
+        && url.protocol === 'https:' && url.hostname === 'robertsspaceindustries.com'
+        && !url.username && !url.password && (!url.port || url.port === '443')
+        && /^\/(en\/)?comm-link\/[^/]+\/[^/]+$/.test(url.pathname);
+    } catch { return false; }
+  }
+
   canPublish(entry: CigRawEntry): boolean {
-    return !!entry.id && !entry.newsId && entry.translationStatus === 'TRANSLATED'
+    return this.isOfficialNews(entry) && !!entry.id && !entry.newsId && entry.translationStatus === 'TRANSLATED'
       && this.feed?.publishingEnabled === true
       && Date.parse(entry.fetchedAt) >= Date.now() - 86_400_000;
   }
 
   canRetry(entry: CigRawEntry): boolean {
-    if (!entry.id || entry.deliveryStatus === 'DELIVERED' || entry.deliveryStatus === 'EXPIRED') return false;
+    if (!this.isOfficialNews(entry) || !entry.id || entry.deliveryStatus === 'DELIVERED' || entry.deliveryStatus === 'EXPIRED') return false;
     return entry.translationStatus !== 'TRANSLATED'
       || (!!entry.newsId && this.feed?.discordRelayEnabled === true);
   }

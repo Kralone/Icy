@@ -49,6 +49,12 @@ public class CigWatchController {
         return cigWatchService.loadLatestFeed(40);
     }
 
+    @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<java.util.Map<String, String>> rejectedAction(org.springframework.web.server.ResponseStatusException exception) {
+        return ResponseEntity.status(exception.getStatusCode()).body(java.util.Map.of(
+                "message", exception.getReason() == null ? "Action impossible" : exception.getReason()));
+    }
+
     @GetMapping("/sources")
     public ResponseEntity<MessageResponse<List<CigWatchSourceDTO>>> listSources() {
         return cigWatchService.listSources();

@@ -44,6 +44,22 @@ public class CigWatchPublicationService {
         this.discordRelayEnabled = discordRelayEnabled;
     }
 
+    /** The configured Comm-Link feed uses RSS; entryType is article metadata, not source identity. */
+    public static boolean isOfficialNews(Long sourceId, String sourceUrl, String link) {
+        if (!Long.valueOf(1L).equals(sourceId)
+                || !"https://robertsspaceindustries.com/comm-link/rss".equals(sourceUrl) || link == null) return false;
+        try {
+            var uri = java.net.URI.create(link);
+            return "https".equals(uri.getScheme()) && "robertsspaceindustries.com".equals(uri.getHost())
+                    && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443)
+                    && uri.getPath().matches("/(en/)?comm-link/[^/]+/[^/]+");
+        } catch (IllegalArgumentException ex) { return false; }
+    }
+
+    private static boolean isOfficialNews(CigWatchEntry entry) {
+        return isOfficialNews(entry.getSourceId(), entry.getSourceUrl(), entry.getLink());
+    }
+
     public boolean isPublishingEnabled() { return publishingEnabled; }
     public boolean isDiscordRelayEnabled() { return discordRelayEnabled; }
 
@@ -76,6 +92,8 @@ public class CigWatchPublicationService {
             var entry = entries.findForProcessing(id).orElseThrow(() ->
                     new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Entrée introuvable"));
             var now = OffsetDateTime.now(ZoneOffset.UTC);
+            if (!isOfficialNews(entry)) throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Veille uniquement : seules les actualités officielles Comm-Link sont publiables.");
             if (publish) {
                 if (entry.getNewsId() != null) return;
                 if (!publishingEnabled || !"TRANSLATED".equals(entry.getTranslationStatus())
@@ -128,6 +146,7 @@ public class CigWatchPublicationService {
     }
 
     void processEntry(CigWatchEntry entry, OffsetDateTime now) {
+        if (!isOfficialNews(entry)) entry.setAutoPublish(false);
         if (entry.getNextRetryAt() != null && entry.getNextRetryAt().isAfter(now)) return;
         // Recovery after a long outage must not announce yesterday's backlog.
         if (entry.isAutoPublish() && entry.getFetchedAt().isBefore(now.minusHours(24))) entry.setAutoPublish(false);
@@ -178,6 +197,15 @@ public class CigWatchPublicationService {
     }
 
     void relay(CigWatchEntry entry, OffsetDateTime now) {
+        if (!isOfficialNews(entry)) {
+            if (!"DELIVERED".equals(entry.getDeliveryStatus())) {
+                entry.setDeliveryStatus("EXPIRED");
+                entry.setDeliveryRetryAt(null);
+                entry.setLastError("Veille uniquement : cette source ne peut pas être relayée.");
+                entries.save(entry);
+            }
+            return;
+        }
         if (!discordRelayEnabled || entry.getNewsId() == null || ("DELIVERED".equals(entry.getDeliveryStatus()) || "EXPIRED".equals(entry.getDeliveryStatus()))) return;
         if (entry.getDeliveryRetryAt() != null && entry.getDeliveryRetryAt().isAfter(now)) return;
         News published = news.findById(entry.getNewsId()).orElse(null);
