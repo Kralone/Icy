@@ -1,5 +1,6 @@
 services:
   bot:
+    container_name: iceforge_bot
     image: ${BOT_IMAGE:?BOT_IMAGE must reference the immutable redacted bot image tag}
     build: !reset null
     user: "10001:10001"

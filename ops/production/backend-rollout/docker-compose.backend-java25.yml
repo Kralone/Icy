@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: iceforge_backend
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE must reference the immutable Java 25 image tag}
     build: !reset null
     user: "10001:101"

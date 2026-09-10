@@ -1,5 +1,6 @@
 services:
   frontend:
+    container_name: iceforge_frontend
     image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE must reference the immutable Angular 22 image tag}
     build: !reset null
     # The host Let's Encrypt private key is root:root 0600. The nginx master
