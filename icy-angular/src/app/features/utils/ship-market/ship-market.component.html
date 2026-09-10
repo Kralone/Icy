@@ -46,6 +46,7 @@
       }
 
       @if (!isLoading && !errorMessage) {
+        <div class="market-filters">
         <div class="ship-market-toolbar">
           <div class="ship-market-mode-wrap" role="group" aria-label="Mode d'offres">
             <button
@@ -82,14 +83,15 @@
             </span>
           </label>
           <label class="manufacturer-filter"><span>Constructeur</span><select [(ngModel)]="selectedManufacturer" (ngModelChange)="onSearchTermChange()"><option value="">Tous les constructeurs</option>@for (name of manufacturerOptions; track name) { <option [value]="name">{{ name }}</option> }</select></label>
-        </div>
         <div class="share-search"><button type="button" (click)="copySearchLink()">Copier le lien</button>@if (shareMessage) { <span role="status" [class.share-error]="shareFailed">{{ shareMessage }}</span> }@if (shareFailed) { <label>Lien de la recherche<input readonly [value]="shareUrl" (focus)="$any($event.target).select()" /></label> }</div>
+        </div>
         <fieldset class="gameplay-filters"><legend>Gameplay</legend><div class="gameplay-options">
           @for (filter of gameplayFilters; track filter.id) {
-            <label class="gameplay-option" [class.checked]="selectedGameplays.includes(filter.id)"><input type="checkbox" [checked]="selectedGameplays.includes(filter.id)" (change)="toggleGameplay(filter.id)" /><span>{{ filter.label }}</span></label>
+            <label class="gameplay-option" [class.checked]="selectedGameplays.includes(filter.id)"><input type="checkbox" [checked]="selectedGameplays.includes(filter.id)" (change)="toggleGameplay(filter.id)" /><span class="gameplay-check" aria-hidden="true"></span><span>{{ filter.label }}</span></label>
           }
           @if (searchTerm || selectedManufacturer || selectedGameplays.length) { <button type="button" class="filters-reset" (click)="resetFilters()">Effacer les filtres</button> }
         </div></fieldset>
+        </div>
 <h2 class="location-section-title">Planètes</h2>
 <div class="location-card-grid location-card-grid--major" role="group" aria-label="Planètes et lieux hors planète">
             @for (major of majorLocationCards; track trackByMajorLocation($index, major)) {

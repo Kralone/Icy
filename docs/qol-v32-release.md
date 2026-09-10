@@ -33,7 +33,7 @@ précédée d’une sauvegarde chiffrée et d’une restauration PostgreSQL de c
 - Sauvegarde chiffrée : `/var/backups/iceforge/iceforge-20260910T144356Z.tar.gz.age`, checksum vérifié ; dump restauré avec inventaire comparé avant chiffrement.
 - CIG : publication et relais activés, uniquement Comm-Link officiel ; ancien rapport Spectrum/Reddit désactivé. Aucun contenu non officiel marqué pour publication automatique lors du contrôle final.
 - Staging : synchronisation Wikelo 8 réussie, 34 vaisseaux et 86 équipements.
-- Production : actualisation du catalogue encore en attente d’une session administrateur normale. Le contrôle final trouve 34 vaisseaux, 73 équipements et aucune recette publiée. La synchronisation admin Wikelo doit être exécutée pour publier les nouvelles recettes ; aucune donnée de démonstration locale n’a été copiée en production.
+- Production : import Wikelo lancé par le propriétaire et confirmé en lecture seule : traitement 7 réussi, 4/4 étapes, terminé le 10 septembre à 17 h 51 (Paris), 18 recettes actives. Aucune donnée de démonstration locale copiée en production.
 
 Le premier essai de promotion a déclenché un retour applicatif après détection
 de noms de conteneurs différents de ceux attendus par les contrôles. Les noms

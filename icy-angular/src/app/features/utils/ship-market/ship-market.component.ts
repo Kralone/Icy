@@ -58,7 +58,7 @@ type MajorLocationCardView = {
   imports: [CommonModule, FormsModule, RouterLink, A11yModule],
   templateUrl: './ship-market.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './ship-market.component.css'
+  styleUrls: ['./ship-market.component.css', './ship-market-filters.css']
 })
 export class ShipMarketComponent implements OnDestroy {
   roleLabel(value?: string): string {

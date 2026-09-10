@@ -236,23 +236,18 @@
 .ship-market-content { width: 100%; max-width: none; }
 .ship-market-hero { padding: 1.25rem 0; border: 0; background: transparent; }
 .ship-market-hero h1 { font-size: clamp(1.7rem, 2.1vw, 2.4rem); }
-.ship-market-toolbar { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; padding: 1rem; border: 1px solid #365365; border-radius: 1rem; background: #0b1926; }
-.ship-market-search-wrap { display: flex; flex-direction: column; gap: .4rem; flex: 2 1 290px; min-width: 0; }
-.ship-market-mode-wrap { display: flex; gap: .4rem; align-self: flex-end; }
-.ship-market-mode-btn { min-height: 46px; padding: .7rem 1.2rem; border: 1px solid #365365; border-radius: .6rem; color: #bcd0df; background: #132838; font-weight: 650; }
-.ship-market-mode-btn--active { color: #06282b; background: #72dfd3; border-color: #b9f5e6; }
-.ship-market-mode-btn:hover { border-color: #72dfd3; }
-.manufacturer-filter { display: grid; gap: .4rem; flex: 1 1 220px; min-width: 0; font-size: .75rem; color: #bdd0df; }
-.manufacturer-filter select { min-height: 46px; width: 100%; border: 1px solid #426175; border-radius: .65rem; padding: .65rem; color: #e5f2fa; background: #0c1b29; font-size: .9rem; }
-.gameplay-filters { padding: 1rem 0; border: 0; min-width: 0; }
-.gameplay-filters legend { padding-top: 1rem; color: #bdd0df; font-size: .8rem; }
-.gameplay-options { display: flex; flex-wrap: wrap; gap: .5rem; }
-.gameplay-option { display: flex; align-items: center; gap: .5rem; cursor: pointer; padding: .6rem .8rem; border: 1px solid #365365; border-radius: .6rem; background: #102534; color: #bcd0df; font-size: .85rem; }
-.gameplay-option.checked { border-color: #7edecb; background: #173e3d; color: #d0fff1; }
-.gameplay-option input { accent-color: #70dfbe; width: 16px; height: 16px; }
-.filters-reset { color: #9bdbea; padding: .5rem; text-decoration: underline; font-size: .8rem; }
+.ship-market-search-wrap { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.ship-market-mode-wrap { display: flex; align-self: flex-end; }
+.ship-market-mode-btn { color: #bcd0df; font-weight: 650; }
+.ship-market-mode-btn:hover { color: #d9fff6; background: #26524f; }
+.manufacturer-filter { display: grid; gap: .4rem; min-width: 0; }
+.manufacturer-filter select { width: 100%; border: 1px solid; color: #e5f2fa; font-size: .9rem; }
+.gameplay-filters { min-width: 0; }
+.gameplay-options { display: flex; flex-wrap: wrap; }
+.gameplay-option { display: flex; align-items: center; cursor: pointer; border: 1px solid; }
+.filters-reset { padding: .5rem; font-size: .8rem; }
 .ship-market-toolbar :focus-visible, .gameplay-filters :focus-visible { outline: 2px solid #a9eee2; outline-offset: 3px; }
-@media (max-width: 640px) { .ship-market-search-wrap, .manufacturer-filter { flex: auto; width: 100%; } .ship-market-mode-wrap { align-self: stretch; } .ship-market-mode-btn { flex: 1; } }
+@media (max-width: 640px) { .ship-market-mode-btn { flex: 1; } }
 .ship-market-search-label { color: #bdd0df; font-size: .75rem; }
 .ship-market-search-field { display: flex; align-items: center; gap: .6rem; padding: .55rem .8rem; background: #0c1b29; border: 1px solid #426175; border-radius: .65rem; }
 .ship-market-search-icon { color: #8cd3e3; font-size: 1.3rem; }
@@ -287,7 +282,7 @@
 @media (min-width: 2000px) { .ship-market-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ship-market-image-wrap { width: 32%; min-width: 200px; } }
 @media (max-width: 1100px) { .ship-market-card { grid-template-columns: minmax(0, 1fr) 210px; } .ship-market-image-wrap { width: 220px; min-width: 220px; } .ship-market-main-info { padding: 1rem; } }
 @media (max-width: 800px) { .ship-market-card { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .ship-market-toolbar { align-items: stretch; flex-direction: column; gap: .5rem; } .ship-market-search-wrap { width: 100%; } .ship-market-image-wrap { width: 100%; min-width: 0; min-height: 210px; } .ship-market-image { height: 100%; } .ship-market-card-main { flex-direction: column; } .ship-market-main-info { padding: 1.1rem; } }
+@media (max-width: 640px) { .ship-market-search-wrap { width: 100%; } .ship-market-image-wrap { width: 100%; min-width: 0; min-height: 210px; } .ship-market-image { height: 100%; } .ship-market-card-main { flex-direction: column; } .ship-market-main-info { padding: 1.1rem; } }
 
 .location-section-title { margin: 18px 0 10px; color: #c5e4f1; font-size: 13px; font-weight: 600; }
 .location-card--major .location-card-system { color: #b5c9d8; font-size: 11px; }

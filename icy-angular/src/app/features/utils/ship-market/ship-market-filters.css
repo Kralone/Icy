@@ -1,0 +1,32 @@
+/* Shared filter surface, independent of the selected planet background. */
+.ship-market-catalog-panel { background: #0c1823e8; border-color: #304354; }
+.market-filters { padding: 20px; border: 1px solid #354d60; border-radius: 14px; background: linear-gradient(115deg, #152b3b, #0e1e2d 70%); }
+.ship-market-toolbar { display: grid; grid-template-columns: auto minmax(220px, 1fr) minmax(210px, .6fr) auto; align-items: end; gap: 16px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.ship-market-mode-wrap { padding: 4px; gap: 2px; border: 1px solid #385064; border-radius: 11px; background: #091723; }
+.ship-market-mode-btn { min-height: 40px; padding: 8px 17px; border: 0; border-radius: 7px; background: transparent; font-size: 14px; }
+.ship-market-mode-btn--active { background: #75dfd0; color: #082829; box-shadow: 0 2px 10px #0003; }
+.ship-market-search-label, .manufacturer-filter > span { font-size: 12px; font-weight: 600; color: #a8c0d1; }
+.ship-market-search-field, .manufacturer-filter select { min-height: 50px; box-sizing: border-box; background: #0a1926; border-color: #405d71; border-radius: 9px; }
+.manufacturer-filter select { padding: 10px 12px; }
+.share-search { margin: 0; gap: 6px; max-width: 180px; align-self: end; }
+.share-search button { min-height: 50px; border-color: #405d71; background: transparent; color: #b9d8e5; white-space: nowrap; }
+.share-search > span, .share-search label { overflow-wrap: anywhere; }
+.gameplay-filters { margin: 20px 0 0; padding: 0; border: 0; }
+.gameplay-filters legend { float: left; width: 100%; padding: 15px 0 10px; border-top: 1px solid #314959; font-size: 12px; font-weight: 600; color: #a8c0d1; }
+.gameplay-options { clear: both; gap: 8px; }
+.gameplay-option { position: relative; min-height: 40px; padding: 8px 12px; gap: 8px; box-sizing: border-box; border-radius: 9px; border-color: #354e61; background: #162c3e; color: #d0dfeb; font-size: 13px; font-weight: 500; transition: background 150ms ease, border-color 150ms ease; }
+.gameplay-option:hover { border-color: #7babbf; background: #203e51; }
+.gameplay-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.gameplay-check { display: grid; place-items: center; flex-shrink: 0; width: 16px; height: 16px; border: 1px solid #7594a8; border-radius: 5px; background: #091c2a; }
+.gameplay-option.checked { border-color: #65cdb7; background: #19433f; color: #d7fff3; }
+.gameplay-option.checked .gameplay-check { background: #7de0c7; border-color: #7de0c7; }
+.gameplay-option.checked .gameplay-check::after { content: ''; width: 8px; height: 5px; border-left: 2px solid #10372e; border-bottom: 2px solid #10372e; transform: translateY(-1px) rotate(-45deg); }
+.gameplay-option:has(input:focus-visible) { outline: 2px solid #b9f3e9; outline-offset: 3px; }
+.gameplay-option input:focus-visible { outline: none; }
+.filters-reset { text-decoration: none; color: #c0d5e3; border-radius: 8px; }
+.filters-reset:hover { background: #253d4d; }
+@media (max-width: 1100px) { .ship-market-toolbar { grid-template-columns: auto minmax(0, 1fr); } .manufacturer-filter { width: auto; } .share-search { max-width: none; justify-self: end; } }
+@media (max-width: 640px) { .market-filters { padding: 14px; } .ship-market-toolbar { grid-template-columns: minmax(0, 1fr); gap: 12px; } .ship-market-mode-wrap { width: 100%; box-sizing: border-box; } .share-search { justify-self: stretch; } .share-search button { min-height: 40px; width: 100%; } .gameplay-filters { margin-top: 14px; } .gameplay-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .gameplay-option { padding: 9px; font-size: 12px; } }
+@media (prefers-reduced-motion: reduce) { .gameplay-option { transition: none; } }
+
+
