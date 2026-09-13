@@ -33,6 +33,8 @@ export class EventManagementComponent implements OnInit {
 
   // === Types ===
   types: EventType[] = [];
+  currentPageTypes = 1;
+  itemsPerPageTypes = 8;
   isLoadingTypes = false;
 
   // === État de création / édition ===
@@ -50,6 +52,19 @@ export class EventManagementComponent implements OnInit {
   // === Filtre par type ===
   selectedTypeFilter: string = 'ALL';
   filteredEvents: EventDTO[] = [];
+
+  get paginatedTypes(): EventType[] {
+    const start = (this.currentPageTypes - 1) * this.itemsPerPageTypes;
+    return this.types.slice(start, start + this.itemsPerPageTypes);
+  }
+  get totalPagesTypes(): number { return Math.max(1, Math.ceil(this.types.length / this.itemsPerPageTypes)); }
+  prevPageTypes(): void { if (this.currentPageTypes > 1) this.currentPageTypes--; }
+  nextPageTypes(): void { if (this.currentPageTypes < this.totalPagesTypes) this.currentPageTypes++; }
+  onItemsPerPageTypesChange(): void { this.currentPageTypes = 1; }
+
+  get previewType(): EventType | undefined {
+    return this.types.find(t => t.name === this.newEvent.type);
+  }
 
 
   constructor(private eventService: EventService, private router: Router) {}
@@ -223,7 +238,6 @@ export class EventManagementComponent implements OnInit {
     };
 
     this.cancelEditEvent();
-    alert('Formulaire prérempli. Il ne reste plus qu’à définir les nouvelles dates.');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

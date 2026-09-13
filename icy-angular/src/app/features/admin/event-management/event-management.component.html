@@ -17,6 +17,7 @@
       <h1 class="text-2xl sm:text-3xl font-semibold text-cyan-200">Ajouter un evenement</h1>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-[1.15fr_.85fr] gap-6">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Titre -->
       <div>
@@ -75,17 +76,19 @@
                  focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
             />
           </div>
-
           <div>
             <label class="block text-sm mb-1 text-gray-300">Fin</label>
-            <input
-              [(ngModel)]="newEvent.endDateTime"
-              type="datetime-local"
-          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
-            </div>
+            <input [(ngModel)]="newEvent.endDateTime" type="datetime-local"
+              class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" />
           </div>
+        </div>
+        <aside class="rounded-2xl border border-cyan-300/20 bg-[#071525] overflow-hidden min-h-[260px]">
+            <div class="relative h-28 p-5 flex items-end" [style.backgroundColor]="previewType?.backgroundColor || '#123047'">
+              @if (previewType?.imageUrl) { <img [src]="previewType?.imageUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-55" /> }
+              <div class="relative"><span class="text-xs font-semibold uppercase tracking-wider" [style.color]="previewType?.textColor || '#aeeeff'">{{ newEvent.type || 'Type d’événement' }}</span><h3 class="text-xl font-semibold text-white mt-1">{{ newEvent.title || 'Titre de l’événement' }}</h3></div>
+            </div>
+            <div class="p-5 space-y-3"><div class="text-sm text-slate-300">{{ newEvent.description || 'La description apparaîtra ici.' }}</div><div class="text-sm text-cyan-200">{{ newEvent.startDateTime ? (newEvent.startDateTime | date:'EEEE d MMMM · HH:mm') : 'Date à définir' }}</div></div>
+        </aside>
 
           <div class="flex justify-end mt-6">
             <button
@@ -120,7 +123,7 @@
                  focus:ring-2 focus:ring-cyan-400 outline-none transition"
                 >
                 <option value="ALL" class="bg-[#1b263b] text-white">Tous les types</option>
-                @for (type of types; track type) {
+                          @for (type of paginatedTypes; track type) {
                   <option [value]="type.name" class="bg-[#1b263b] text-white">
                     {{ type.name }}
                   </option>
@@ -337,6 +340,7 @@
                       </tbody>
                     </table>
                   </div>
+                  @if (types.length > itemsPerPageTypes) { <div class="flex justify-end items-center gap-3 pt-3 text-sm text-slate-300"><span>Page {{ currentPageTypes }} / {{ totalPagesTypes }}</span><button (click)="prevPageTypes()" [disabled]="currentPageTypes===1" class="px-3 py-1 rounded-full border border-white/10 disabled:opacity-40">Préc.</button><button (click)="nextPageTypes()" [disabled]="currentPageTypes===totalPagesTypes" class="px-3 py-1 rounded-full border border-white/10 disabled:opacity-40">Suiv.</button></div> }
                 </section>
 
                 <!-- === MODALES === -->
