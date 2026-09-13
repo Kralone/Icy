@@ -30,3 +30,4 @@
 }
 
 .fleet-quantity strong span { font-size: 14px; font-weight: 500; }
+.fleet-brand-logo { border: 1px solid rgba(141, 228, 209, .8); box-shadow: 0 5px 18px rgba(0,0,0,.5), 0 0 0 3px rgba(7,35,43,.7); }
