@@ -4,19 +4,27 @@ import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 
+interface FleetShipGroup {
+  name: string;
+  imageUrl: string;
+  brandImageUrl?: string;
+  count: number;
+}
+
 @Component({
   standalone: true,
   selector: 'app-fleet',
   templateUrl: './fleet.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [LoadingOverlayComponent]
+  imports: [LoadingOverlayComponent],
+  styleUrl: './fleet.component.css'
 })
 export class FleetComponent implements OnInit, OnDestroy {
   private shipService: ShipService;
   private wsService: WebSocketService;
 
   isLoading = true;
-  fleetSummary: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } = {};
+  fleetSummary: Record<string, FleetShipGroup[]> = {};
   private loadingFallback?: ReturnType<typeof setTimeout>;
 
   objectKeys = Object.keys;
@@ -69,8 +77,12 @@ export class FleetComponent implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } {
-    const result: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string; count: number }[] } = {};
+  shipCount(focus: string): number {
+    return (this.fleetSummary[focus] ?? []).reduce((total, ship) => total + ship.count, 0);
+  }
+
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
+    const result: Record<string, FleetShipGroup[]> = {};
 
     for (const ship of fleet) {
       if (!result[ship.focus]) {
@@ -85,15 +97,6 @@ export class FleetComponent implements OnInit, OnDestroy {
       }
     }
 
-    const finalResult: { [focus: string]: { name: string; imageUrl: string; brandImageUrl?: string }[] } = {};
-    for (const focus of Object.keys(result)) {
-      finalResult[focus] = result[focus].map(s => ({
-        name: s.count > 1 ? `${s.name} (${s.count})` : s.name,
-        imageUrl: s.imageUrl,
-        brandImageUrl: s.brandImageUrl
-      }));
-    }
-
-    return finalResult;
+    return result;
   }
 }

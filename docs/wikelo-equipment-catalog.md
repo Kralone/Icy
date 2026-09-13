@@ -53,3 +53,12 @@ Validation du parseur corrigé sur les 87 réponses complètes : **66 contrats a
 Réponses sources : [Yormandi Gun](https://api.star-citizen.wiki/api/missions/8df7d9a9-c887-4302-b93c-863788bdca01?version=4.10.0-LIVE.12519617), [Fun Kopion Skull Gun](https://api.star-citizen.wiki/api/missions/31f004c2-9b77-4a0f-a500-89f89b606a96?version=4.10.0-LIVE.12519617).
 
 L'Animus « Quite Useful » n'apparaît dans aucune récompense des 87 contrats de cette version, y compris ceux non publiés. La [page historique Need Ore. Will give Guns.](https://starcitizen.tools/Need_Ore._Will_give_Guns.) décrit un tirage entre trois armes ; elle ne démontre pas une recette actuelle ni un gain garanti. Ses anciennes conditions ne sont donc pas réinjectées. Le catalogue continue à afficher cet équipement avec conditions indisponibles.
+
+
+### Idris-P : recette multiligne
+
+Vérification du 10 septembre 2026 dans le [tableau source vaisseaux](https://docs.google.com/spreadsheets/d/1ji0q_pp6iW35RG1YyFEsv-lsmZOaCStJXGdIEdLLwhM/edit#gid=481073732) : la cellule C110 contient réputation et cinq ingrédients ; J105 annonce « Idris Costs Continued: », avec quinze ingrédients supplémentaires en J106. Le parseur perdait les retours à la ligne après les faveurs et ignorait la suite latérale. Il sépare maintenant les champs multiligne et rattache uniquement une suite explicitement nommée, sans absorber les notes voisines. Une suite annoncée mais absente, invalide ou ambiguë fait échouer la collecte pour conserver la publication précédente.
+
+La recette complète contient 50 de chacun des éléments suivants : Wikelo Favor, Polaris Bit, DCHS-05 Orbital Positioning Comp-Board, Carinite, Irradiated Valakkar Fang (Apex), MG Scrip, Ace Interceptor Helmet ; 30 de chaque : Irradiated Valakkar Pearl (Grade AAA), UEE 6th Platoon Medal (Pristine), Carinite (Pure), ASD Secure Drive ; puis 5 de chacune des neuf variantes RCMBNT PWL/RGL/XTL, niveaux 1/2/3. Réputation indiquée : Very Best Customer (999 Reputation). Les noms et quantités proviennent du tableau, sans conversion ni substitution.
+
+Le snapshot public complet `ships-current.csv` teste les 34 offres et les vingt ingrédients exacts de l'Idris-P, ainsi que le refus d'une suite non associée. Les champs coût/réputation sont aussi testés dans l'ordre inverse. La publication existante nécessite un nouvel import admin pour bénéficier de la correction.

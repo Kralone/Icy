@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 @Service
 public class WikeloService {
     private static final Logger logger = LoggerFactory.getLogger(WikeloService.class);
-    private static final Pattern COST_PATTERN = Pattern.compile("Cost:\\s*(.*)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern REPUTATION_PATTERN = Pattern.compile("Reputation:\\s*(.*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern COST_PATTERN = Pattern.compile("Cost:\\s*(.*?)(?=Reputation:|Mission:|$)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern REPUTATION_PATTERN = Pattern.compile("Reputation:\\s*(.*?)(?=Cost:|Mission:|$)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     private final WikeloShipRepository wikeloShipRepository;
     private final WikeloProperties wikeloProperties;
@@ -99,6 +99,12 @@ public class WikeloService {
                 String missionText = extractMissionText(rows, row, col);
                 String costText = extractByPattern(missionText, COST_PATTERN);
                 String reputationText = extractByPattern(missionText, REPUTATION_PATTERN);
+                if (costText != null && costText.toLowerCase(Locale.ROOT).contains("continued")) {
+                    costText = costText.replaceFirst("(?is)\\s*Continued.*$", "").trim();
+                    String continuation = extractCostContinuation(rows, row, shipName);
+                    costText += " | " + continuation;
+                }
+                if (costText != null) costText = costText.replaceAll("\\s*\\R\\s*", " | ");
                 String componentsText = extractComponentsText(rows, row, col);
 
                 WikeloShip ship = new WikeloShip();
@@ -215,11 +221,36 @@ public class WikeloService {
         return String.join(" | ", components);
     }
 
+    private String extractCostContinuation(List<List<String>> rows, int headerRow, String shipName) {
+        // The sheet explicitly names the continuation beside the ship header.
+        // Never collect arbitrary neighboring notes or an unrelated recipe.
+        List<String> header = rows.get(headerRow);
+        for (int col = 0; col < header.size(); col++) {
+            String label = clean(header.get(col));
+            Matcher match = Pattern.compile("^(.+?) Costs Continued:\\s*$", Pattern.CASE_INSENSITIVE).matcher(label);
+            if (!match.matches()) continue;
+            String namedShip = match.group(1);
+            if (!shipName.equalsIgnoreCase(namedShip)
+                    && !shipName.toLowerCase(Locale.ROOT).startsWith(namedShip.toLowerCase(Locale.ROOT) + "-")) continue;
+            long matchingHeaders = java.util.stream.IntStream.range(0, header.size())
+                    .filter(c -> isShipHeaderCell(rows, headerRow, c, clean(header.get(c))))
+                    .mapToObj(c -> clean(header.get(c)).toLowerCase(Locale.ROOT))
+                    .filter(name -> name.equals(namedShip.toLowerCase(Locale.ROOT))
+                            || name.startsWith(namedShip.toLowerCase(Locale.ROOT) + "-")).count();
+            if (matchingHeaders != 1) throw new IllegalStateException("Suite de recette Wikelo ambiguë : " + shipName);
+            String continuation = clean(getCell(rows, headerRow + 1, col));
+            if (!continuation.isBlank() && continuation.lines().allMatch(line -> line.trim().matches("[0-9]+x\\s+.+"))) {
+                return continuation;
+            }
+        }
+        throw new IllegalStateException("Suite de recette Wikelo absente ou invalide : " + shipName);
+    }
+
     private String extractByPattern(String text, Pattern pattern) {
         if (text == null || text.isBlank()) return null;
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
-            return clean(matcher.group(1));
+            return clean(matcher.group(1)).replaceFirst("\\s*\\|\\s*$", "");
         }
         return null;
     }

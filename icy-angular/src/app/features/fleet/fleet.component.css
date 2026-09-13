@@ -1,0 +1,32 @@
+.fleet-quantity {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px 7px 7px;
+  border: 1px solid #75d8c8;
+  border-radius: 11px;
+  background: #0c282ef2;
+  box-shadow: 0 4px 14px #0004;
+  color: #d4f4ee;
+  font-size: 12px;
+}
+
+.fleet-quantity strong {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 34px;
+  justify-content: center;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #8de4d1;
+  color: #0a3332;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.fleet-quantity strong span { font-size: 14px; font-weight: 500; }

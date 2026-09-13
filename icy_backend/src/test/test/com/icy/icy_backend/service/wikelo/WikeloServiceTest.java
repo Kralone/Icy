@@ -14,6 +14,47 @@ import static org.mockito.Mockito.verify;
 class WikeloServiceTest {
 
     @Test
+    void importsCompleteIdrisRecipeFromMultilineCellsAndNamedContinuation() throws Exception {
+        String csv = new String(getClass().getResourceAsStream("/wikelo/ships-current.csv").readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8);
+        var ships = sourceService(csv).scrapeShips();
+        assertThat(ships).hasSize(34);
+        var idris = ships.stream().filter(ship -> ship.getShipName().equals("Idris-P")).findFirst().orElseThrow();
+        assertThat(idris.getCostText().split(" \\| ")).containsExactly(
+                "50x Wikelo Favor", "50x Polaris Bit", "50x DCHS-05 Orbital Positioning Comp-Board",
+                "50x Carinite", "50x Irradiated Valakkar Fang (Apex)", "50x MG Scrip",
+                "50x Ace Interceptor Helmet", "30x Irradiated Valakkar Pearl (Grade AAA)",
+                "30x UEE 6th Platoon Medal (Pristine)", "30x Carinite (Pure)", "30x ASD Secure Drive",
+                "5x RCMBNT-PWL-1", "5x RCMBNT-PWL-2", "5x RCMBNT-PWL-3",
+                "5x RCMBNT-RGL-1", "5x RCMBNT-RGL-2", "5x RCMBNT-RGL-3",
+                "5x RCMBNT-XTL-1", "5x RCMBNT-XTL-2", "5x RCMBNT-XTL-3");
+        assertThat(idris.getCostText()).startsWith("50x Wikelo Favor | 50x Polaris Bit")
+                .contains("50x Carinite", "30x Carinite (Pure)", "50x MG Scrip", "30x ASD Secure Drive")
+                .endsWith("5x RCMBNT-XTL-3").doesNotContain("Continued", "Reputation", "15x");
+        assertThat(idris.getReputationText()).startsWith("Very Best Customer (999 Reputation)")
+                .doesNotContain("Cost:", "Polaris");
+        assertThatThrownBy(() -> sourceService(csv.replace("Idris Costs Continued:", "Unrelated Costs Continued:")).scrapeShips())
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Suite de recette Wikelo");
+    }
+
+    @Test
+    void separatesCostAndReputationWithoutIncludingOtherMetadata() {
+        var ship = sourceService("Ship,#,Component\n\"Mission: Test\nCost: 2x Favor\n3x Ore\nReputation: Friend\",,\n")
+                .scrapeShips().getFirst();
+        assertThat(ship.getCostText()).isEqualTo("2x Favor | 3x Ore");
+        assertThat(ship.getReputationText()).isEqualTo("Friend");
+    }
+
+    private WikeloService sourceService(String csv) {
+        var properties = new WikeloProperties();
+        properties.setSpreadsheetId("test");
+        properties.setShipsGid(1L);
+        return new WikeloService(Mockito.mock(WikeloShipRepository.class), properties, Mockito.mock(MessageService.class)) {
+            @Override String fetchCsv(String url) { return csv; }
+        };
+    }
+
+    @Test
     void exportsRawRowsWithoutMergingCreditsIntoShipNames() {
         WikeloProperties properties = new WikeloProperties();
         properties.setSpreadsheetId("sheet-id");

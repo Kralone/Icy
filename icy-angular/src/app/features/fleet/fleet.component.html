@@ -24,11 +24,11 @@
             <h3 class="text-2xl font-semibold text-cyan-200 mt-2">{{ focus }}</h3>
             <div class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
               <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-              {{ fleetSummary[focus].length }} vaisseaux
+              {{ shipCount(focus) }} {{ shipCount(focus) === 1 ? 'vaisseau' : 'vaisseaux' }}
             </div>
           </div>
           <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            @for (ship of fleetSummary[focus]; track ship; let i = $index) {
+            @for (ship of fleetSummary[focus]; track ship.name) {
               <div
                 class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
                 >
@@ -41,9 +41,12 @@
                       />
                   }
                   <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
-                  <div class="absolute top-3 left-3 px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] border border-white/10 bg-[#0b1324] text-slate-300">
-                    {{ i + 1 }}
-                  </div>
+                  @if (ship.count > 1) {
+                    <div class="fleet-quantity" [attr.aria-label]="ship.count + ' exemplaires de ' + ship.name">
+                      <strong><span aria-hidden="true">×</span>{{ ship.count }}</strong>
+                      <span>exemplaires</span>
+                    </div>
+                  }
                   @if (ship.brandImageUrl) {
                     <img
                       [src]="ship.brandImageUrl"
