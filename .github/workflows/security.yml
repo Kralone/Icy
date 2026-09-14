@@ -46,7 +46,7 @@ jobs:
           TRIVY_OFFLINE_SCAN: "true"
           # Build tooling is part of the software supply chain.
           TRIVY_INCLUDE_DEV_DEPS: "true"
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           scan-type: fs
@@ -69,7 +69,7 @@ jobs:
           docker build --file icy-angular/Dockerfile.ssr --tag iceforge/frontend-ssr:ci icy-angular
           docker build --file icy-angular/Dockerfile.proxy --tag iceforge/frontend-proxy:ci icy-angular
       - name: Scan backend runtime image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: iceforge/backend:local
@@ -78,7 +78,7 @@ jobs:
           exit-code: "1"
           format: table
       - name: Scan bot runtime image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: iceforge/bot:local
@@ -87,7 +87,7 @@ jobs:
           exit-code: "1"
           format: table
       - name: Scan frontend runtime image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: iceforge/frontend:local
@@ -96,7 +96,7 @@ jobs:
           exit-code: "1"
           format: table
       - name: Scan frontend SSR runtime image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: iceforge/frontend-ssr:ci
@@ -105,7 +105,7 @@ jobs:
           exit-code: "1"
           format: table
       - name: Scan frontend proxy runtime image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: iceforge/frontend-proxy:ci
@@ -114,7 +114,7 @@ jobs:
           exit-code: "1"
           format: table
       - name: Report PostgreSQL OS vulnerabilities
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
@@ -124,7 +124,7 @@ jobs:
           exit-code: "0"
           format: table
       - name: Block fixable PostgreSQL OS vulnerabilities
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
@@ -136,7 +136,7 @@ jobs:
           format: table
           skip-setup-trivy: true
       - name: Report RabbitMQ OS vulnerabilities
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: rabbitmq:4.3.5-management@sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca
@@ -147,7 +147,7 @@ jobs:
           format: table
           skip-setup-trivy: true
       - name: Block fixable RabbitMQ OS vulnerabilities
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: v0.74.0
           image-ref: rabbitmq:4.3.5-management@sha256:06fb591136a49e861e01aaaf9ce45085839ca23c35913d45a1e83519bb9778ca
