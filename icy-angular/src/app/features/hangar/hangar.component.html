@@ -84,9 +84,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 3.487 3.651 3.651M4 20l4.2-.8L19.7 7.7a2.6 2.6 0 0 0-3.7-3.7L4.5 15.5 4 20Z" /></svg>
               </button>
               @if (getBrandLogo(ship.brand)) {
-                <div class="hangar-brand-badge absolute top-3 right-3" [attr.aria-label]="'Constructeur : ' + ship.brand" [title]="ship.brand">
-                  <img [src]="getBrandLogo(ship.brand)" [alt]="ship.brand" class="hangar-brand-logo" />
-                </div>
+                <app-manufacturer-badge class="absolute top-3 right-3" [imageUrl]="getBrandLogo(ship.brand)" [brand]="ship.brand" />
               }
               <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
               <div class="p-4 space-y-1">

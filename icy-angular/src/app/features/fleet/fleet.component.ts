@@ -1,3 +1,4 @@
+import {ManufacturerBadgeComponent} from '../../shared/manufacturer-badge/manufacturer-badge.component';
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { ShipService } from '../../core/services/ship/ship.service';
@@ -18,7 +19,7 @@ interface FleetShipGroup {
   selector: 'app-fleet',
   templateUrl: './fleet.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [LoadingOverlayComponent, ShipDetailModalComponent],
+  imports: [ManufacturerBadgeComponent,LoadingOverlayComponent, ShipDetailModalComponent],
   styleUrl: './fleet.component.css'
 })
 export class FleetComponent implements OnInit, OnDestroy {

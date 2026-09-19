@@ -1,3 +1,4 @@
+import {ManufacturerBadgeComponent} from '../../shared/manufacturer-badge/manufacturer-badge.component';
 import {Component, ElementRef, HostListener, ChangeDetectionStrategy, OnDestroy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ShipService} from '../../core/services/ship/ship.service';
@@ -17,7 +18,7 @@ import { ShipDetailModalComponent, ShipDetail } from '../../shared/ship-detail-m
 @Component({
   selector: 'app-hangar',
   templateUrl: './hangar.component.html',
-  imports: [
+  imports: [ManufacturerBadgeComponent,
     CommonModule,
     FormsModule,
     LoadingOverlayComponent,

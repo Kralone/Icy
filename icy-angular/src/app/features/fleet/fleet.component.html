@@ -1,19 +1,12 @@
 <!-- ================== FLOTTE - STYLE ICY ================== -->
-<div class="relative loading-reveal min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-8" [attr.data-loading]="isLoading">
+<div class="relative loading-reveal min-h-screen w-full bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white p-4 sm:p-8" [attr.data-loading]="isLoading">
   <app-loading-overlay
     [isLoading]="isLoading"
     [minDurationMs]="0"
     [fadeOutMs]="500"
     [softFade]="true"
   ></app-loading-overlay>
-  <div class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_55%)]"></div>
-    <div class="relative space-y-3">
-      <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte partagée</p>
-      <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Qui possède quoi</h2>
-      <p class="max-w-2xl text-sm text-slate-300">Chaque carte regroupe un modèle et affiche les membres qui le possèdent.</p>
-    </div>
-  </div>
+  <h2 class="mb-6 text-xl font-semibold text-white">Flotte</h2>
 
   <!-- Résumé -->
   @if (!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0) {
@@ -21,12 +14,8 @@
       <div class="mb-12">
         <div class="fleet-focus-section">
           <div class="fleet-focus-heading">
-            <div>
-              <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Catégorie</p>
-              <h3 class="text-xl font-semibold text-cyan-100 mt-1">{{ focus }}</h3>
-            </div>
+            <h3 class="text-sm font-medium text-slate-300">{{ focus }}</h3>
             <div class="fleet-focus-count">
-              <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
               {{ shipCount(focus) }} {{ shipCount(focus) === 1 ? 'vaisseau' : 'vaisseaux' }}
             </div>
           </div>
@@ -47,16 +36,12 @@
                   }
                   <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324]/90 via-transparent"></div>
                   @if (ship.count > 1) {
-                    <div class="fleet-quantity" [attr.aria-label]="ship.count + ' vaisseaux ' + ship.name">
+                    <div class="fleet-quantity" [attr.aria-label]="ship.count + ' exemplaires de ' + ship.name">
                       <strong><span aria-hidden="true">×</span>{{ ship.count }}</strong>
                     </div>
                   }
                   @if (ship.brandImageUrl) {
-                    <img
-                      [src]="ship.brandImageUrl"
-                      alt="Logo marque"
-                      class="fleet-brand-logo absolute top-3 right-3 w-16 h-16 object-contain rounded-full bg-slate-900/85 p-2 shadow-lg"
-                      />
+                    <app-manufacturer-badge class="absolute top-3 right-3" [imageUrl]="ship.brandImageUrl" />
                   }
                 </div>
                 <div class="p-3">
