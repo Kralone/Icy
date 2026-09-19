@@ -126,7 +126,7 @@ public class UexDatasetService {
                     0,
                     null,
                     null,
-                    objectMapper.nullNode(),
+                    null,
                     0,
                     false
             );
@@ -161,12 +161,13 @@ public class UexDatasetService {
 
         int itemCount = resolveItemCount(dataNode);
         UexDatasetCache cache = cacheRepository.findById(normalizedKey).orElseGet(() ->
-                new UexDatasetCache(normalizedKey, sourceUrl, objectMapper.createArrayNode(), 0, OffsetDateTime.now(ZoneOffset.UTC), null)
+                new UexDatasetCache(normalizedKey, sourceUrl, objectMapper.createArrayNode(), 0, OffsetDateTime.now(ZoneOffset.UTC), null, null)
         );
         cache.setSourceUrl(sourceUrl);
         cache.setPayload(dataNode);
         cache.setItemCount(itemCount);
         cache.setFetchedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cache.setGameVersion(extractGameVersion(dataNode));
 
         UexDatasetCache saved = cacheRepository.save(cache);
         UexDatasetDetailDTO dto = toDetailDto(saved);
@@ -196,8 +197,8 @@ public class UexDatasetService {
                     throw new IllegalStateException("UEX a retourne un statut non OK");
                 }
                 JsonNode dataNode = root.path("data");
-                if (dataNode.isMissingNode() || dataNode.isNull()) {
-                    throw new IllegalStateException("Payload data UEX absent");
+                if (!dataNode.isArray() || dataNode.isEmpty()) {
+                    throw new IllegalStateException("Liste UEX absente, vide ou invalide");
                 }
                 return dataNode;
             } catch (Exception exception) {
@@ -280,10 +281,13 @@ public class UexDatasetService {
             if (filterByTerminal && !normalizeKey(terminal).equals(preferredTerminalNormalized)) {
                 continue;
             }
+            OffsetDateTime observedAt = observationDate(priceNode);
+            // Undated and old observations must not drive current revenue estimates.
+            if (terminal.isBlank() || observedAt == null || observedAt.isBefore(OffsetDateTime.now(ZoneOffset.UTC).minusDays(30))) continue;
             if (!terminal.isBlank()) {
                 salePointsByCommodity
                         .computeIfAbsent(normalizedCommodityName, ignored -> new ArrayList<>())
-                        .add(new UexResourceSaleDTO.SalePointDTO(terminal, sellPrice));
+                        .add(new UexResourceSaleDTO.SalePointDTO(terminal, sellPrice, observedAt, extractGameVersion(priceNode)));
             }
             BestSellPrice current = bestSellByCommodity.get(normalizedCommodityName);
             if (current == null || sellPrice > current.value()) {
@@ -298,7 +302,8 @@ public class UexDatasetService {
             BestSellPrice bestSellPrice = bestSellByCommodity.get(normalizeKey(canonicalName));
 
             String kind = commodityNode == null ? "Unknown" : commodityNode.path("kind").asText("Unknown");
-            int baseSell = commodityNode == null ? 0 : commodityNode.path("price_sell").asInt(0);
+            Integer baseSell = commodityNode == null || !commodityNode.path("price_sell").isNumber()
+                    ? null : commodityNode.path("price_sell").asInt();
             Integer bestSell = bestSellPrice == null ? null : bestSellPrice.value();
             String bestSellTerminal = bestSellPrice == null ? null : bestSellPrice.terminal();
             List<UexResourceSaleDTO.SalePointDTO> salePoints = salePointsByCommodity
@@ -307,7 +312,7 @@ public class UexDatasetService {
                     .sorted((left, right) -> Integer.compare(right.getSellPrice(), left.getSellPrice()))
                     .toList();
 
-            rows.add(new UexResourceSaleDTO(
+            UexResourceSaleDTO row = new UexResourceSaleDTO(
                     requestedName,
                     canonicalName,
                     kind,
@@ -315,7 +320,10 @@ public class UexDatasetService {
                     bestSell,
                     bestSellTerminal,
                     salePoints
-            ));
+            );
+            row.setSourceFetchedAt(commodityPricesCache.get().getFetchedAt());
+            row.setSourceGameVersion(commodityPricesCache.get().getGameVersion());
+            rows.add(row);
         }
 
         return messageService.buildResponse("uex.resource.sales.list", rows, rows.size());
@@ -376,8 +384,13 @@ public class UexDatasetService {
                 extractFetchedAt(yieldsCache),
                 extractFetchedAt(auditsCache)
         );
+        dto.setMethodsGameVersion(extractGameVersion(methodsCache));
+        dto.setCapacitiesGameVersion(extractGameVersion(capacitiesCache));
+        dto.setYieldsGameVersion(extractGameVersion(yieldsCache));
+        dto.setAuditsGameVersion(extractGameVersion(auditsCache));
 
-        int totalRows = dto.getMethods().size() + dto.getCapacities().size() + dto.getYields().size() + dto.getAudits().size();
+        int totalRows = arraySize(dto.getMethods()) + arraySize(dto.getCapacities())
+                + arraySize(dto.getYields()) + arraySize(dto.getAudits());
         return messageService.buildResponse("uex.resource.refineries.get", dto, totalRows);
     }
 
@@ -427,16 +440,38 @@ public class UexDatasetService {
         JsonNode payloadNode = cache.getPayload() == null ? objectMapper.nullNode() : cache.getPayload();
 
         PreviewResult preview = buildPreview(payloadNode, PREVIEW_LIMIT);
-        return new UexDatasetDetailDTO(
+        UexDatasetDetailDTO dto = new UexDatasetDetailDTO(
                 cache.getDatasetKey(),
                 cache.getSourceUrl(),
                 cache.getItemCount(),
                 cache.getFetchedAt(),
                 cache.getUpdatedAt(),
-                preview.node(),
+                objectMapper.convertValue(preview.node(), Object.class),
                 preview.previewItemCount(),
                 preview.truncated()
         );
+        dto.setGameVersion(cache.getGameVersion());
+        return dto;
+    }
+
+    /** A dataset version is meaningful only when every row declares the same version. */
+    private String extractGameVersion(JsonNode payload) {
+        if (payload == null || payload.isNull()) return null;
+        if (payload.isObject()) return emptyToNull(payload.path("game_version").asText(""));
+        if (!payload.isArray() || payload.isEmpty()) return null;
+        String common = null;
+        for (JsonNode row : payload) {
+            String version = extractGameVersion(row);
+            if (version == null || (common != null && !common.equals(version))) return null;
+            common = version;
+        }
+        return common;
+    }
+
+    private String extractGameVersion(Optional<UexDatasetCache> cache) {
+        return cache.map(UexDatasetCache::getGameVersion)
+                .filter(version -> version != null && !version.isBlank())
+                .orElseGet(() -> cache.map(UexDatasetCache::getPayload).map(this::extractGameVersion).orElse(null));
     }
 
     private PreviewResult buildPreview(JsonNode payloadNode, int limit) {
@@ -528,19 +563,32 @@ public class UexDatasetService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private JsonNode extractArrayPayload(Optional<UexDatasetCache> cache) {
+    private List<Map<String, Object>> extractArrayPayload(Optional<UexDatasetCache> cache) {
         if (cache.isEmpty()) {
-            return objectMapper.createArrayNode();
+            return List.of();
         }
         JsonNode payload = cache.get().getPayload();
         if (payload == null || !payload.isArray()) {
-            return objectMapper.createArrayNode();
+            return List.of();
         }
-        return payload;
+        return objectMapper.convertValue(payload, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
     }
 
     private OffsetDateTime extractFetchedAt(Optional<UexDatasetCache> cache) {
         return cache.map(UexDatasetCache::getFetchedAt).orElse(null);
+    }
+
+    private OffsetDateTime observationDate(JsonNode row) {
+        long timestamp = row.path("date_modified").asLong(0);
+        if (timestamp <= 0) return null;
+        try {
+            OffsetDateTime date = java.time.Instant.ofEpochSecond(timestamp).atOffset(ZoneOffset.UTC);
+            return date.isAfter(OffsetDateTime.now(ZoneOffset.UTC).plusDays(1)) ? null : date;
+        } catch (java.time.DateTimeException exception) { return null; }
+    }
+
+    private int arraySize(Object value) {
+        return value instanceof List<?> list ? list.size() : 0;
     }
 
     private String buildSourceUrl(String endpointPath) {

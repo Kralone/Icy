@@ -13,6 +13,8 @@ import com.icy.icy_backend.controller.dto.response.front.UexResourceSaleDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
 import com.icy.icy_backend.db.entity.item.Item;
 import com.icy.icy_backend.service.catalog.CatalogVehicleMarketService;
+import com.icy.icy_backend.service.catalog.CatalogBrowseService;
+import com.icy.icy_backend.service.catalog.CatalogMiningService;
 import com.icy.icy_backend.service.event.EventService;
 import com.icy.icy_backend.service.item.ItemCatalogService;
 import com.icy.icy_backend.service.universe.CelestialBodyService;
@@ -40,6 +42,8 @@ public class FrontSiteController {
     private final OreLocationService oreLocationService;
     private final ItemCatalogService itemCatalogService;
     private final CatalogVehicleMarketService catalogVehicleMarketService;
+    private final CatalogBrowseService catalogBrowseService;
+    private final CatalogMiningService catalogMiningService;
 
     public FrontSiteController(
             UserService userService,
@@ -49,7 +53,9 @@ public class FrontSiteController {
             OrbitalStationService orbitalStationService,
             OreLocationService oreLocationService,
             ItemCatalogService itemCatalogService,
-            CatalogVehicleMarketService catalogVehicleMarketService
+            CatalogVehicleMarketService catalogVehicleMarketService,
+            CatalogBrowseService catalogBrowseService,
+            CatalogMiningService catalogMiningService
     ) {
         this.userService = userService;
         this.eventService = eventService;
@@ -59,6 +65,8 @@ public class FrontSiteController {
         this.oreLocationService = oreLocationService;
         this.itemCatalogService = itemCatalogService;
         this.catalogVehicleMarketService = catalogVehicleMarketService;
+        this.catalogBrowseService = catalogBrowseService;
+        this.catalogMiningService = catalogMiningService;
     }
 
     @GetMapping("/members")
@@ -76,6 +84,20 @@ public class FrontSiteController {
             @RequestParam(value = "names", required = false) List<String> names
     ) {
         return uexDatasetService.listResourceSales(names);
+    }
+
+    /** Catalogue unifié utilisé par les onglets Ressources (lecture publique). */
+    @GetMapping("/resources/catalog")
+    public ResponseEntity<?> browseResourceCatalog(
+            @RequestParam(value = "family", required = false) String family,
+            @RequestParam(value = "query", required = false) String query
+    ) {
+        return catalogBrowseService.browse(query, family, "ALL", "ACTIVE", "ALL", null, "name", 0, 60);
+    }
+
+    @GetMapping("/resources/mining-equipment")
+    public ResponseEntity<?> getMiningEquipment() {
+        return ResponseEntity.ok(java.util.Map.of("data", catalogMiningService.list()));
     }
 
     @GetMapping("/resources/refineries")

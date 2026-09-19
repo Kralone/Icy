@@ -31,8 +31,20 @@
                 @if (ship.scu !== null && ship.scu !== undefined && ship.scu > 0) { <div><dt>Soute</dt><dd>{{ ship.scu }} SCU</dd></div> }
               </dl>
             }
-            @if (ship.notes) { <p class="ship-description">{{ ship.notes }}</p> }
-            @else { <p class="ship-missing">Description non renseignée.</p> }
+            @if (ship.components?.length || ship.weapons?.length) {
+              <div class="ship-loadout">
+                @if (ship.components?.length) {
+                  <section><h4>Composants <span>{{ ship.components.length }}</span></h4><ul>
+                    @for (item of ship.components; track item.name) { <li><span>{{ item.name }}</span>@if (item.quantity && item.quantity > 1) { <b>×{{ item.quantity }}</b> }</li> }
+                  </ul></section>
+                }
+                @if (ship.weapons?.length) {
+                  <section><h4>Armes <span>{{ ship.weapons.length }}</span></h4><ul>
+                    @for (item of ship.weapons; track item.name) { <li><span>{{ item.name }}</span>@if (item.quantity && item.quantity > 1) { <b>×{{ item.quantity }}</b> }</li> }
+                  </ul></section>
+                }
+              </div>
+            } @else { <p class="ship-missing">Équipement catalogue non renseigné.</p> }
           </div>
         </article>
       }

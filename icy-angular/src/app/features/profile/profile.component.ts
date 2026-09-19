@@ -51,7 +51,6 @@ interface RankGuideEntry {
 export class ProfileComponent implements OnInit {
   profileTabs: ProfileTabOption[] = [
     { id: 'profile', label: 'Profil', subtitle: 'Identite et stats' },
-    { id: 'ranks', label: 'Guide des rangs', subtitle: 'Hierarchie IceForge' },
     { id: 'settings', label: 'Parametres', subtitle: 'Notifications et options' }
   ];
   activeTab: ProfileTabId = 'profile';

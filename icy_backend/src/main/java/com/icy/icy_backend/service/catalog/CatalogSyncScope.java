@@ -6,6 +6,7 @@ public enum CatalogSyncScope {
     VEHICLES("vehicles"),
     ITEMS("items"),
     LOCATIONS("locations"),
+    COMMODITIES("commodities"),
     ECONOMY(null),
     WIKELO(null);
 

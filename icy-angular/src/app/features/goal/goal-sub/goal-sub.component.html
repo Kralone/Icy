@@ -17,7 +17,7 @@
   </div>
   <div class="card-actions">
     @if (!(goal.parentId === null && goal.target === 1)) {
-      <div class="contribution-actions"><button (click)="increment(goal.id, -1)" [disabled]="goal.current <= 0 || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Retirer une unité à ' + goal.name">−1</button><button class="primary" (click)="increment(goal.id, 1)" [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Ajouter une unité à ' + goal.name">+1</button></div>
+      <div class="contribution-actions"><button (click)="increment(goal.id, -1)" [disabled]="goal.current <= 0 || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Retirer une unité à ' + goal.name">−1</button><div class="batch-contribution"><input type="number" min="1" step="1" [(ngModel)]="batchAmount" [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Quantité à ajouter à ' + goal.name" /><button class="primary" (click)="addBatch()" [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Ajouter la quantité saisie à ' + goal.name">+</button></div></div>
     }
     @if (goal.subGoals.length) { <button class="children-toggle" (click)="toggleChildrenVisibility()" [attr.aria-expanded]="showChildren">{{ showChildren ? 'Masquer les étapes' : 'Voir les étapes' }} <span aria-hidden="true">{{ showChildren ? '−' : '+' }}</span></button> }
     @if (isLeaf(goal)) { <button (click)="toggleParticipations()" [attr.aria-expanded]="showParticipations">Participations</button> }

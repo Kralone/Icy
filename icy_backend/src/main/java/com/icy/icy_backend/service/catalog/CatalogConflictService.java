@@ -327,7 +327,7 @@ public class CatalogConflictService {
     private String firstImage(JsonNode node) {
         if (!node.path("images").isArray()) return null;
         for (JsonNode image : node.path("images")) {
-            String url = firstText(image, "thumbnail_url", "original_url");
+            String url = firstText(image, "original_url", "thumbnail_url");
             if (url != null) return url;
         }
         return null;

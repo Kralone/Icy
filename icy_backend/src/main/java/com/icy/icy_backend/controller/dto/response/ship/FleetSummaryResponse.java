@@ -2,6 +2,7 @@ package com.icy.icy_backend.controller.dto.response.ship;
 
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
 
 @Setter
 @Getter
@@ -11,6 +12,7 @@ public class FleetSummaryResponse {
     private String focus;
     private String brandName;
     private String brandImageUrl;
+    private List<String> owners;
 
     public FleetSummaryResponse(String name, String imageUrl, String focus, String brandName, String brandImageUrl) {
         this.name = name;
@@ -22,6 +24,11 @@ public class FleetSummaryResponse {
 
     public FleetSummaryResponse(String name, String imageUrl, String focus, String brandImageUrl) {
         this(name, imageUrl, focus, null, brandImageUrl);
+    }
+
+    public FleetSummaryResponse(String name, String imageUrl, String focus, String brandName, String brandImageUrl, List<String> owners) {
+        this(name, imageUrl, focus, brandName, brandImageUrl);
+        this.owners = owners;
     }
 }
 

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import java.time.OffsetDateTime;
 
 @RestController
 public class CatalogLocationImageController {
@@ -21,7 +22,7 @@ public class CatalogLocationImageController {
     @Transactional(readOnly = true)
     public ResponseEntity<MessageResponse<List<LocationImage>>> images() {
         List<LocationImage> rows = jdbc.query("""
-                SELECT name, family, image_url,
+                SELECT id, name, family, image_url, source, source_url, source_version, source_updated_at,
                     regexp_replace(COALESCE(NULLIF(source_payload#>>'{star,name}', ''),
                         source_payload->>'system', ''), '\\s+[Ss]ystem$', '') AS system_name
                 FROM catalog.entries
@@ -29,8 +30,12 @@ public class CatalogLocationImageController {
                     AND image_is_fallback=FALSE AND image_url<>''
                 ORDER BY name,id
                 """, (row, index) -> new LocationImage(row.getString("name"), row.getString("system_name"),
-                row.getString("family"), row.getString("image_url")));
+                row.getString("family"), row.getString("image_url"), row.getLong("id"),
+                row.getString("source"), row.getString("source_url"), row.getString("source_version"),
+                row.getObject("source_updated_at", OffsetDateTime.class)));
         return messages.buildResponse("celestial.body.list", rows, rows.size());
     }
-    public record LocationImage(String name, String systemName, String family, String imageUrl) {}
+    public record LocationImage(String name, String systemName, String family, String imageUrl,
+                                long id, String source, String sourceUrl, String sourceVersion,
+                                OffsetDateTime sourceUpdatedAt) {}
 }

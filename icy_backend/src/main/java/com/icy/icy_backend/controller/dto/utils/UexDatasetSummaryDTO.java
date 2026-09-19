@@ -10,6 +10,7 @@ public class UexDatasetSummaryDTO {
     private Integer itemCount;
     private OffsetDateTime fetchedAt;
     private OffsetDateTime updatedAt;
+    private String gameVersion;
 
     public UexDatasetSummaryDTO() {
     }
@@ -20,6 +21,7 @@ public class UexDatasetSummaryDTO {
         this.itemCount = cache.getItemCount();
         this.fetchedAt = cache.getFetchedAt();
         this.updatedAt = cache.getUpdatedAt();
+        this.gameVersion = cache.getGameVersion();
     }
 
     public UexDatasetSummaryDTO(String datasetKey, String sourceUrl, Integer itemCount, OffsetDateTime fetchedAt, OffsetDateTime updatedAt) {
@@ -29,6 +31,9 @@ public class UexDatasetSummaryDTO {
         this.fetchedAt = fetchedAt;
         this.updatedAt = updatedAt;
     }
+
+    public String getGameVersion() { return gameVersion; }
+    public void setGameVersion(String gameVersion) { this.gameVersion = gameVersion; }
 
     public String getDatasetKey() {
         return datasetKey;

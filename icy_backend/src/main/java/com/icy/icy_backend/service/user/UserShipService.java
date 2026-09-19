@@ -71,6 +71,20 @@ public class UserShipService {
         return messageService.buildResponse("user.found", ships);
     }
 
+    @Transactional
+    public ResponseEntity<MessageResponse<UserShip>> updateAcquisition(UUID userId, Long shipId,
+                                                                          boolean inGame, boolean rewardInGame, boolean loaner) {
+        UserShip userShip = userShipRepository.findByUserIdAndShipId(userId, shipId)
+                .orElseThrow(() -> new IllegalArgumentException("Vaisseau absent de la flotte."));
+        userShip.setInGamePurchase(inGame);
+        userShip.setRewardInGame(rewardInGame);
+        userShip.setLoaner(loaner);
+        userShipRepository.save(userShip);
+        userWebSocketService.sendUserShipUpdate(userShip);
+        shipFleetWebSocketService.sendShipFleetUpdate(this.getFleetSummaryAsList());
+        return messageService.buildResponse("user.ship.update.success", userShip);
+    }
+
     public ResponseEntity<MessageResponse<UserShip>> addShipToUser(UUID userId, Long shipId, boolean isInGame, boolean isRewardInGame, boolean isLoaner) {
 
 
@@ -122,13 +136,20 @@ public class UserShipService {
             fleetSummary.add(new FleetSummaryResponse(
                     ship.getName(),
                     ship.getImageUrl(),
-                    ship.getFocus(),
+                    displayFleetFocus(ship),
                     ship.getBrand() != null ? ship.getBrand().getName() : null,
-                    ship.getBrand() != null ? ship.getBrand().getImageUrl() : null
+                    ship.getBrand() != null ? ship.getBrand().getImageUrl() : null,
+                    List.of(userShip.getUser().getUsername())
             ));
         }
 
         return fleetSummary;
+    }
+
+    private String displayFleetFocus(Ship ship) {
+        if (ship.getFocus() != null && !ship.getFocus().isBlank()) return ship.getFocus();
+        String name = ship.getName() == null ? "" : ship.getName();
+        return name.matches("(?i).*\\bpyam(?:\\s+exec)?\\b.*") ? "PYAM" : null;
     }
 
     public ResponseEntity<MessageResponse<List<FleetSummaryResponse>>> getFleetSummary() {

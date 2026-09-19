@@ -56,9 +56,7 @@
               @if (f.max && ((form.controls[f.key].value || 0) / f.max * 100); as itemPercent) {
                 <div
                   class="absolute top-0 left-0 h-3 rounded-full transition-all duration-500 ease-out z-10 pointer-events-none"
-              [ngClass]="itemPercent >= 100
-                      ? 'bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
-                      : 'bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]'"
+              [style.background]="progressBackground(itemPercent, 100)"
                   [style.width.%]="Math.min(100, itemPercent)"
                 ></div>
               }

@@ -56,7 +56,8 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     { value: 'STATION', label: 'Stations', shortLabel: 'Stations' },
     { value: 'JUMP_POINT', label: 'Points de saut', shortLabel: 'Points de saut' },
     { value: 'OUTPOST', label: 'Avant-postes', shortLabel: 'Avant-postes' },
-    { value: 'LOCATION', label: 'Autres lieux', shortLabel: 'Lieux' }
+    { value: 'LOCATION', label: 'Autres lieux', shortLabel: 'Lieux' },
+    { value: 'COMMODITY', label: 'Ressources et minerais', shortLabel: 'Ressources' }
   ];
   readonly wikeloFamilies = this.families.filter((family) => [
     'SHIP', 'GROUND_VEHICLE', 'POWER_SUIT', 'FPS_WEAPON', 'SHIP_WEAPON',

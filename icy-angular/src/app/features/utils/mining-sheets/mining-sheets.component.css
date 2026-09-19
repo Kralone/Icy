@@ -677,6 +677,7 @@ input::placeholder {
   gap:16px;
   align-items:start;
 }
+.workflow-lock-note{display:flex;gap:10px;align-items:baseline;margin:14px 0 20px;padding:12px 14px;border-left:3px solid #d6a756;background:#17283a;color:#d7e5ef;font-size:13px;line-height:1.5}.workflow-lock-note strong{color:#ffe1aa;white-space:nowrap}.workflow-lock-note span{color:#b9cbd9}
 .job-card--entry { --job-accent:#68d7e3; border-top:3px solid var(--job-accent); background:linear-gradient(145deg,#173446,#102330); }
 .job-card--entry[data-type=FUEL] { --job-accent:#f2bf60; background:linear-gradient(145deg,#3c3021,#182733); }
 .job-card--entry[data-type=REPAIR] { --job-accent:#c5a0f4; background:linear-gradient(145deg,#30283f,#182733); }

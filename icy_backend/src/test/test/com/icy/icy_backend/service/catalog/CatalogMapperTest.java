@@ -26,6 +26,28 @@ class CatalogMapperTest {
     );
 
     @Test
+    void recognizesLocalizedWikiFlightReadyStatus() throws Exception {
+        assertThat(mapper.vehicleFlightReady("vehicles", json("""
+                {"production_status":{"en_EN":"flight-ready","fr_FR":"Prêt à voler"}}
+                """))).isTrue();
+    }
+
+    @Test
+    void unnamedWikiPlaceholderDoesNotBlockValidMineralPublication() throws Exception {
+        var jdbc = Mockito.mock(NamedParameterJdbcTemplate.class);
+        var store = Mockito.mock(CatalogRawStore.class);
+        var subject = new CatalogMapper(jdbc, store, objectMapper, Mockito.mock(CatalogConflictService.class));
+        when(store.loadActive(CatalogMapper.WIKI_SOURCE, "commodities")).thenReturn(List.of(
+            json("""
+                {"uuid":"gold","name":"Gold","is_mineable":true,"systems_grouped":[{"name":"Stanton","locations":[{"name":"Daymar","resources":[{"materials":[{"uuid":"gold","min_percentage":2,"max_percentage":10}]}]}]}]}
+                """),
+            json("""
+                {"uuid":"272539c8-e211-4c82-8bd0-6ecaabbc9c10","name":"","is_mineable":true,"description":"<= PLACEHOLDER =>"}
+                """)));
+        assertThat(subject.mapWikiDataset("commodities", 42L)).isEqualTo(1);
+    }
+
+    @Test
     void classifiesThePublicCatalogFamilies() throws Exception {
         assertThat(mapper.family("vehicles", json("{\"is_spaceship\":true}"))).isEqualTo("SHIP");
         assertThat(mapper.family("vehicles", json("{\"is_vehicle\":true}"))).isEqualTo("GROUND_VEHICLE");

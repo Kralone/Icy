@@ -31,6 +31,8 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
   salesLoading = false;
   salesLoaded = false;
   salesError = '';
+  sourceFetchedAt: string | null = null;
+  sourceGameVersion: string | null = null;
   cargoScu = 32;
   readonly locationShortcuts: string[] = ['Orison', 'Area 18', 'New Babbage', 'Lorville', 'Levski', 'Ruin Station'];
   locationSearchTerm = '';
@@ -134,6 +136,14 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
     return Math.max(...partialMatches);
   }
 
+  observationLabel(material: ResourceSaleMaterial, selected = false): string {
+    const price = selected ? this.selectedLocationSell(material) : material.bestSell;
+    const key = this.normalizeSearchKey(this.selectedLocation || '');
+    const point = material.salePoints.find(p => p.sellPrice === price &&
+      (selected ? this.normalizeSearchKey(p.terminalName).includes(key) : p.terminalName === material.bestSellTerminal));
+    return point ? `Relevé ${this.formatSourceDate(point.observedAt ?? null)} · ${point.gameVersion || 'version inconnue'}` : 'Aucun relevé récent';
+  }
+
   selectedLocationDelta(material: ResourceSaleMaterial): number | null {
     const selectedSell = this.selectedLocationSell(material);
     if (selectedSell === null || material.bestSell === null) {
@@ -168,6 +178,9 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
     this.salesError = '';
     this.salesLoadSubscription = this.uexDatasetService.listResourceSales(this.salesResourceNames).subscribe({
       next: (response: ApiResponse<UexResourceSale[]>) => {
+        const source = response?.data?.find((item) => item.sourceFetchedAt || item.sourceGameVersion);
+        this.sourceFetchedAt = source?.sourceFetchedAt ?? null;
+        this.sourceGameVersion = source?.sourceGameVersion ?? null;
         this.salesMaterials = (response?.data ?? []).map((item) => ({
           displayName: item.displayName,
           bestSell: item.bestSell,
@@ -184,6 +197,12 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
         this.salesError = 'Impossible de charger les prix de vente depuis le backend.';
       }
     });
+  }
+
+  formatSourceDate(value: string | null): string {
+    if (!value) return 'date non renseignÃ©e';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString('fr-FR');
   }
 
   private getBestSellScore(bestSell: number | null): number {

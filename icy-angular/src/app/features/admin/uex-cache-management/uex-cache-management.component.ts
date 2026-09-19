@@ -101,6 +101,7 @@ export class UexCacheManagementComponent implements OnInit, OnDestroy {
     { value: 'VEHICLES', label: 'Vaisseaux et vehicules' },
     { value: 'ITEMS', label: 'Armes, armures, modules et outils' },
     { value: 'LOCATIONS', label: 'Systemes, planetes, villes et stations' },
+    { value: 'COMMODITIES', label: 'Ressources et répartition des minerais' },
     { value: 'ECONOMY', label: 'Prix, achats, ventes et locations' },
     { value: 'WIKELO', label: 'Wikelo' }
   ];

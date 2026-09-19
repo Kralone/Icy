@@ -1,7 +1,7 @@
 
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { OrbitalStation, OrbitalStationService } from '../../../../../../core/services/station/orbital-station.service';
+import { CatalogLocationImage, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
 import { UexDatasetService, UexRefineryDatasets } from '../../../../../../core/services/uex/uex-dataset.service';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 
@@ -11,17 +11,20 @@ interface YieldRow {
   stationName: string;
   commodity: string;
   yieldPct: number | null;
+  sourceUpdatedAt: string | null;
 }
 
 interface RefineryCommodityYield {
   commodity: string;
   bestYieldPct: number | null;
+  sourceUpdatedAt: string | null;
 }
 
 interface RefinerySummaryRow {
   key: string;
   stationName: string;
   imageUrl: string | null;
+  imageProvenance: string | null;
   oresCount: number;
   yields: RefineryCommodityYield[];
 }
@@ -42,16 +45,17 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
   searchQuery = '';
   expandedRefineryKey: string | null = null;
   yieldsFetchedAt: string | null = null;
+  yieldsGameVersion: string | null = null;
   searchAnimating = false;
 
   private loadSubscription?: Subscription;
   private stationLoadSubscription?: Subscription;
-  private stationImageByKey = new Map<string, string>();
+  private stationImageByKey = new Map<string, CatalogLocationImage>();
   private searchAnimationTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly uexDatasetService: UexDatasetService,
-    private readonly orbitalStationService: OrbitalStationService
+    private readonly celestialBodyService: CelestialBodyService
   ) {}
 
   ngOnInit(): void {
@@ -156,14 +160,14 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
   }
 
   private loadStationImages(): void {
-    this.stationLoadSubscription = this.orbitalStationService.listFrontStations().subscribe({
-      next: (response: ApiResponse<OrbitalStation[]>) => {
+    this.stationLoadSubscription = this.celestialBodyService.listFrontLocationImages().subscribe({
+      next: (response: ApiResponse<CatalogLocationImage[]>) => {
         this.stationImageByKey.clear();
         for (const station of response?.data ?? []) {
           if (!station?.name || !station?.imageUrl) {
             continue;
           }
-          this.stationImageByKey.set(this.normalizeKey(station.name), station.imageUrl);
+          this.stationImageByKey.set(this.normalizeKey(station.name), station);
         }
         this.applyStationImages();
       },
@@ -186,6 +190,7 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
         this.applyStationImages();
         this.expandedRefineryKey = null;
         this.yieldsFetchedAt = data?.yieldsFetchedAt ?? null;
+        this.yieldsGameVersion = data?.yieldsGameVersion ?? null;
         this.loading = false;
       },
       error: () => {
@@ -200,7 +205,8 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
       .map((row) => ({
         stationName: this.extractStationName(row),
         commodity: this.sanitizeCommodity(this.pickString(row, ['commodity_name', 'commodity', 'resource', 'ore'])),
-        yieldPct: this.pickNumber(row, ['value', 'yield', 'yield_pct', 'yield_percent', 'recovery'])
+        yieldPct: this.pickNumber(row, ['value', 'yield', 'yield_pct', 'yield_percent', 'recovery']),
+        sourceUpdatedAt: this.sourceDate(row)
       }))
       .filter((row) => !!row.stationName && !!row.commodity);
   }
@@ -221,6 +227,7 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
           key: refineryKey,
           stationName,
           imageUrl: null,
+          imageProvenance: null,
           oresCount: 0,
           yields: []
         });
@@ -238,15 +245,17 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
       if (!existing) {
         commodityMap.set(commodityKey, {
           commodity: row.commodity,
-          bestYieldPct: row.yieldPct
+          bestYieldPct: row.yieldPct,
+          sourceUpdatedAt: row.sourceUpdatedAt
         });
         continue;
       }
 
-      const existingValue = existing.bestYieldPct ?? -999;
-      const candidateValue = row.yieldPct ?? -999;
-      if (candidateValue > existingValue) {
+      const existingDate = Date.parse(existing.sourceUpdatedAt ?? '') || 0;
+      const candidateDate = Date.parse(row.sourceUpdatedAt ?? '') || 0;
+      if (candidateDate > existingDate) {
         existing.bestYieldPct = row.yieldPct;
+        existing.sourceUpdatedAt = row.sourceUpdatedAt;
       }
     }
 
@@ -267,24 +276,41 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
     if (!this.refineries.length || !this.stationImageByKey.size) {
       return;
     }
-    this.refineries = this.refineries.map((row) => ({
-      ...row,
-      imageUrl: this.findStationImage(row.stationName)
-    }));
+    this.refineries = this.refineries.map((row) => {
+      const location = this.findStationLocation(row.stationName);
+      return {
+        ...row,
+        imageUrl: location?.imageUrl ?? null,
+        imageProvenance: location ? `Catalogue Star Citizen Wiki · ${location.sourceVersion || 'version non renseignée'} · ${this.formatDate(location.sourceUpdatedAt || '')}` : null
+      };
+    });
   }
 
-  private findStationImage(stationName: string): string | null {
+  private findStationLocation(stationName: string): CatalogLocationImage | null {
     const exact = this.stationImageByKey.get(this.normalizeKey(stationName));
     if (exact) {
       return exact;
     }
     const target = this.normalizeKey(stationName);
-    for (const [nameKey, imageUrl] of this.stationImageByKey.entries()) {
-      if (nameKey.includes(target) || target.includes(nameKey)) {
-        return imageUrl;
-      }
-    }
-    return null;
+    const candidates = [...this.stationImageByKey.entries()]
+      .filter(([key, location]) => location.family === 'STATION' && target.length > 4 && key.length > 4
+        && (target.startsWith(key) || key.startsWith(target)))
+      .map(([, location]) => location);
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  yieldFreshness(row: RefineryCommodityYield): string {
+    const date = Date.parse(row.sourceUpdatedAt ?? '');
+    if (!Number.isFinite(date)) return 'Date source inconnue';
+    return Date.now() - date > 30 * 86400000 ? 'Relevé ancien' : '';
+  }
+
+  private sourceDate(row: RawRow): string | null {
+    const raw = this.pickString(row, ['date_modified', 'date_added']);
+    if (!raw) return null;
+    const numeric = Number(raw);
+    const timestamp = Number.isFinite(numeric) ? numeric * 1000 : Date.parse(raw);
+    return Number.isFinite(timestamp) && timestamp > 0 ? new Date(timestamp).toISOString() : null;
   }
 
   private extractStationName(row: RawRow): string {

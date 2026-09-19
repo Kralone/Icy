@@ -39,6 +39,10 @@ public class UexDatasetCache {
     @Column(name = "fetched_at", nullable = false)
     private OffsetDateTime fetchedAt;
 
+    /** Version du jeu fournie par la source, quand elle est disponible. */
+    @Column(name = "game_version", length = 20)
+    private String gameVersion;
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;

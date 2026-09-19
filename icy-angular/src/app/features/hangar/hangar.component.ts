@@ -12,6 +12,7 @@ import {AuthService} from '../../core/services/auth/auth.service';
 import {ShipSelectorComponent} from '../../shared/ship-selector/ship-selector.component';
 import {AcquisitionType} from '../../shared/ship-selector/ship-selector.component';
 import { Subscription } from 'rxjs';
+import { ShipDetailModalComponent, ShipDetail } from '../../shared/ship-detail-modal/ship-detail-modal.component';
 
 @Component({
   selector: 'app-hangar',
@@ -22,6 +23,7 @@ import { Subscription } from 'rxjs';
     LoadingOverlayComponent,
     ClickOutsideDirective,
     ShipSelectorComponent
+    ,ShipDetailModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./hangar.component.css']
@@ -46,6 +48,9 @@ export class HangarComponent implements OnDestroy {
   userId: string = "";
   private shipUpdatesSubscription?: Subscription;
   private loadingFallback?: ReturnType<typeof setTimeout>;
+  selectedShipDetail: ShipDetail | null = null;
+  editingShip: ShipListDTO | null = null;
+  editAcquisitionType: AcquisitionType = 'rsi';
 
   constructor(private shipService: ShipService, private wsService: WebSocketService,
               private eRef: ElementRef, private toast: HotToastService, private authService: AuthService) {}
@@ -117,6 +122,27 @@ export class HangarComponent implements OnDestroy {
 
   closeModal() {
     this.isModalOpen = false;
+  }
+
+  openShipDetail(ship: ShipListDTO): void {
+    this.selectedShipDetail = { name: ship.name, brand: ship.brand, brandImageUrl: ship.brandImageUrl, imageUrl: ship.imageUrl, focus: ship.focus, crew: ship.crew, cargo: ship.scu != null ? `${ship.scu} SCU` : undefined, description: ship.notes };
+  }
+
+  closeShipDetail(): void { this.selectedShipDetail = null; }
+
+  openEdit(ship: ShipListDTO, event?: Event): void {
+    event?.stopPropagation();
+    this.editingShip = ship;
+    this.editAcquisitionType = ship.loaner ? 'loaner' : ship.rewardInGame ? 'reward_ingame' : ship.inGamePurchase ? 'ingame' : 'rsi';
+  }
+  closeEdit(): void { this.editingShip = null; }
+  saveEdit(): void {
+    if (!this.editingShip) return;
+    const ship = this.editingShip;
+    this.shipService.updateUserShipAcquisition(ship.shipId, this.editAcquisitionType).subscribe({
+      next: () => { ship.inGamePurchase = this.editAcquisitionType === 'ingame'; ship.rewardInGame = this.editAcquisitionType === 'reward_ingame'; ship.loaner = this.editAcquisitionType === 'loaner'; this.closeEdit(); },
+      error: () => this.toast.error('Impossible de modifier le type d’acquisition')
+    });
   }
 
   loadBrands() {

@@ -44,11 +44,13 @@ final class CatalogCanonicalizer {
 
     static String catalogGroup(String family, String name) {
         String normalized = normalize(name);
-        if (normalized.matches(".*\\bwikelo\\b.*")) return "WIKELO";
         if (family == null || "ship".equals(normalize(family))) {
-            if (normalized.matches(".*\\bpyam\\s+exec$")) return "PYAM_EXEC";
+            // PYAM variants can also carry the Wikelo suffix. Keep them in the
+            // PYAM group so the selector does not hide shared offers.
+            if (normalized.matches(".*\\bpyam(?:\\s+exec)?\\b.*")) return "PYAM_EXEC";
             if (normalized.matches(".*\\salliance$")) return "BATTAGLIA";
         }
+        if (normalized.matches(".*\\bwikelo\\b.*")) return "WIKELO";
         return "STANDARD";
     }
 

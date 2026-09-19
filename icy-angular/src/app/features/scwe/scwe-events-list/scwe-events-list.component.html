@@ -66,7 +66,7 @@
                 <div class="relative w-full bg-white/10 rounded-full h-3 md:h-3 shadow-inner overflow-visible transition-all duration-300">
                   @if ((it.participation ? ((it.participation.total || 0) / globalMax * 100) : 0); as percent) {
                     <div class="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out z-10 pointer-events-none"
-                      [ngClass]="{'bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]': percent >= 100, 'bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_12px_rgba(34,211,238,0.3)]': percent < 100}"
+                      [style.background]="progressBackground(percent, 100)"
                       [style.width.%]="Math.min(100, percent)">
                     </div>
                   }

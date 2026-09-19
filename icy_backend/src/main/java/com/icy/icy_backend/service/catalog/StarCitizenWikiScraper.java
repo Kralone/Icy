@@ -20,7 +20,7 @@ import java.util.List;
 
 @Service
 public class StarCitizenWikiScraper {
-    private static final List<String> DATASETS = List.of("vehicles", "items", "locations");
+    private static final List<String> DATASETS = List.of("vehicles", "items", "locations", "commodities");
 
     private final CatalogSyncProperties properties;
     private final CatalogRawStore rawStore;
@@ -68,7 +68,25 @@ public class StarCitizenWikiScraper {
             }
 
             List<JsonNode> records = new ArrayList<>(data.size());
-            data.forEach(records::add);
+            for (JsonNode record : data) {
+                if ("commodities".equals(datasetKey) && record.path("is_mineable").asBoolean(false)) {
+                    String uuid = record.path("uuid").asText("");
+                    if (!uuid.matches("[0-9a-fA-F-]{36}")) throw new IllegalStateException("UUID minerai invalide");
+                    JsonNode detail = fetchPage("commodities/" + uuid, 1);
+                    record = detail.path("data");
+                    if (!record.isObject() || !uuid.equals(record.path("uuid").asText())) {
+                        throw new IllegalStateException("Fiche minerai invalide : " + uuid);
+                    }
+                    String processed = detail.path("meta").path("processed_at").asText("");
+                    if (!processed.isBlank()) ((com.fasterxml.jackson.databind.node.ObjectNode) record)
+                            .put("updated_at", processed.replace(' ', 'T') + "Z");
+                }
+                if ("commodities".equals(datasetKey) && properties.getWikiVersion() != null
+                        && !properties.getWikiVersion().isBlank()) {
+                    ((com.fasterxml.jackson.databind.node.ObjectNode) record).put("version", properties.getWikiVersion());
+                }
+                records.add(record);
+            }
             imported += rawStore.upsert(CatalogMapper.WIKI_SOURCE, datasetKey, records, runId);
             lastPage = Math.max(1, root.path("meta").path("last_page").asInt(1));
             page++;
@@ -84,10 +102,12 @@ public class StarCitizenWikiScraper {
     private JsonNode fetchPage(String datasetKey, int page) {
         String baseUrl = properties.getWikiBaseUrl().replaceAll("/+$", "");
         int pageSize = Math.max(1, Math.min(200, properties.getPageSize()));
-        URI url = UriComponentsBuilder.fromUriString(baseUrl + "/" + datasetKey)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl + "/" + datasetKey)
                 .queryParam("page[number]", page)
-                .queryParam("page[size]", pageSize)
-                .build()
+                .queryParam("page[size]", pageSize);
+        if (properties.getWikiVersion() != null && !properties.getWikiVersion().isBlank())
+            builder.queryParam("version", properties.getWikiVersion());
+        URI url = builder.build()
                 .encode()
                 .toUri();
 

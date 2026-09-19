@@ -42,6 +42,7 @@ class CatalogCanonicalizerTest {
         assertThat(pyam).isEqualTo(CatalogCanonicalizer.vehicleKey("SHIP", "Anvil", "F8C Lightning PYAM Exec"));
         assertThat(CatalogCanonicalizer.catalogGroup("F7 Hornet Mk Wikelo")).isEqualTo("WIKELO");
         assertThat(CatalogCanonicalizer.catalogGroup("Corsair PYAM Exec")).isEqualTo("PYAM_EXEC");
+        assertThat(CatalogCanonicalizer.catalogGroup("F7C Hornet PYAM Exec Wikelo Special")).isEqualTo("PYAM_EXEC");
         assertThat(CatalogCanonicalizer.catalogGroup("MOLE Alliance")).isEqualTo("BATTAGLIA");
         assertThat(CatalogCanonicalizer.catalogGroup("ARMOR", "Alliance Heavy Armor")).isEqualTo("STANDARD");
     }

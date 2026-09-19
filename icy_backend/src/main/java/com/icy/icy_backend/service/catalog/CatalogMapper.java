@@ -84,6 +84,14 @@ public class CatalogMapper {
         Set<String> suppressedExternalIds = "vehicles".equals(datasetKey)
                 ? conflictService.prepareVehicleMapping(records, runId)
                 : Set.of();
+        if ("commodities".equals(datasetKey)) {
+            var distribution = new java.util.TreeMap<String, CatalogOreDistributionService.Location>();
+            records.stream().filter(record -> record.path("is_mineable").asBoolean(false))
+                    .filter(record -> text(record, "uuid") != null && text(record, "name") != null
+                            && !isPlaceholder(text(record, "name")))
+                    .forEach(record -> CatalogOreDistributionService.add(distribution, record, 0L, null, null, null));
+            if (distribution.isEmpty()) throw new IllegalStateException("Aucune distribution de minerai exploitable : publication annulée");
+        }
 
         List<MapSqlParameterSource> batch = new ArrayList<>(BATCH_SIZE);
         int mappedCount = 0;
@@ -96,6 +104,13 @@ public class CatalogMapper {
             }
 
             String imageUrl = firstImage(record);
+            if (imageUrl == null && "commodities".equals(datasetKey)) {
+                String refinedId = text(record.path("refined_version"), "uuid");
+                if (refinedId != null) {
+                    imageUrl = records.stream().filter(other -> refinedId.equals(text(other, "uuid")))
+                            .map(this::firstImage).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+                }
+            }
             String family = family(datasetKey, record);
             batch.add(new MapSqlParameterSource()
                     .addValue("source", WIKI_SOURCE)
@@ -155,6 +170,7 @@ public class CatalogMapper {
             case "vehicles" -> vehicleFamily(record);
             case "items" -> itemFamily(record);
             case "locations" -> locationFamily(record);
+            case "commodities" -> "COMMODITY";
             default -> throw new IllegalArgumentException("Dataset Wiki non mappable: " + datasetKey);
         };
     }
@@ -294,7 +310,11 @@ public class CatalogMapper {
         if (node.hasNonNull("is_flight_ready")) {
             return node.path("is_flight_ready").asBoolean(false);
         }
-        String status = lower(firstText(node, "production_status", "production_status_label"));
+        JsonNode productionStatus = node.path("production_status");
+        String canonicalStatus = productionStatus.isObject()
+                ? firstText(productionStatus, "en_EN", "en", "fr_FR", "fr")
+                : text(node, "production_status");
+        String status = lower(canonicalStatus == null ? localizedText(node, "production_status_label") : canonicalStatus);
         return !status.isEmpty() && (status.contains("flight ready") || status.contains("flight-ready"));
     }
 
@@ -317,7 +337,9 @@ public class CatalogMapper {
             return null;
         }
         for (JsonNode image : images) {
-            String url = firstText(image, "thumbnail_url", "original_url");
+            // Keep the full-resolution source when it is available. The Wiki
+            // thumbnail is often only 400px wide (notably Starlancer TAC).
+            String url = firstText(image, "original_url", "thumbnail_url");
             if (url != null) {
                 return url;
             }

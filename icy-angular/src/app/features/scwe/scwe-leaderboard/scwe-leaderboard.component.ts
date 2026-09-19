@@ -1,3 +1,4 @@
+import { scweGlobalTarget, scweProgressBackground } from '../scwe-progress.utils';
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventDto, ScWorldEventParticipationDto, ScweScoreSchema } from '../../../model/scwe-player.model';
@@ -20,18 +21,8 @@ export class ScweLeaderboardComponent {
     this.expanded[id] = !this.expanded[id];
   }
 
-  getGlobalMax(schema: any): number {
-    const s = schema as ScweScoreSchema;
-    if (!s?.fields) return 10000;
-
-    let sumMax = s.fields.reduce((acc, f) => acc + (f.max || 0), 0);
-
-    if (s.total?.milestones?.length) {
-      const maxMilestone = Math.max(...s.total.milestones.map(m => m.at));
-      if (maxMilestone > sumMax) return maxMilestone;
-    }
-    return sumMax || 10000;
-  }
+  readonly getGlobalMax = scweGlobalTarget;
+  readonly progressBackground = scweProgressBackground;
 
   getFieldValue(p: ScWorldEventParticipationDto, key: string): number {
     return p.points ? (p.points[key] || 0) : 0;

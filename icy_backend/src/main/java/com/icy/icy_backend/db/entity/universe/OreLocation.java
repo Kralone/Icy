@@ -34,49 +34,55 @@ public class OreLocation {
     @Column(name = "location_code", nullable = false, unique = true, length = 120)
     private String locationCode;
 
-    @Column(name = "users_count", nullable = false)
+    @Column(name = "source_url")
+    private String sourceUrl;
+
+    @Column(name = "game_version", length = 20)
+    private String gameVersion;
+
+    @Column(name = "users_count")
     private Integer usersCount;
 
-    @Column(name = "scans_count", nullable = false)
+    @Column(name = "scans_count")
     private Integer scansCount;
 
-    @Column(name = "clusters_count", nullable = false)
+    @Column(name = "clusters_count")
     private Integer clustersCount;
 
-    @Column(name = "cluster_count_min", nullable = false)
+    @Column(name = "cluster_count_min")
     private Double clusterCountMin;
 
-    @Column(name = "cluster_count_max", nullable = false)
+    @Column(name = "cluster_count_max")
     private Double clusterCountMax;
 
-    @Column(name = "cluster_count_med", nullable = false)
+    @Column(name = "cluster_count_med")
     private Double clusterCountMed;
 
-    @Column(name = "mass_min", nullable = false)
+    @Column(name = "mass_min")
     private Double massMin;
 
-    @Column(name = "mass_max", nullable = false)
+    @Column(name = "mass_max")
     private Double massMax;
 
-    @Column(name = "mass_med", nullable = false)
+    @Column(name = "mass_med")
     private Double massMed;
 
-    @Column(name = "inst_min", nullable = false)
+    @Column(name = "inst_min")
     private Double instMin;
 
-    @Column(name = "inst_max", nullable = false)
+    @Column(name = "inst_max")
     private Double instMax;
 
-    @Column(name = "inst_med", nullable = false)
+    @Column(name = "inst_med")
     private Double instMed;
 
-    @Column(name = "res_min", nullable = false)
+    @Column(name = "res_min")
     private Double resMin;
 
-    @Column(name = "res_max", nullable = false)
+    @Column(name = "res_max")
     private Double resMax;
 
-    @Column(name = "res_med", nullable = false)
+    @Column(name = "res_med")
     private Double resMed;
 
     @OneToMany(mappedBy = "oreLocation", cascade = CascadeType.ALL, orphanRemoval = true)

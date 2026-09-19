@@ -41,7 +41,7 @@ public class UserShipDTO {
         this.brand = ship.getBrand().getName();
         this.brandImageUrl = ship.getBrand().getImageUrl();
         this.imageUrl = ship.getImageUrl();
-        this.focus = ship.getFocus();
+        this.focus = displayFocus(ship);
         this.crew = ship.getCrew();
         this.inGamePurchase = userShip.getInGamePurchase();
         this.rewardInGame = userShip.getRewardInGame();
@@ -56,12 +56,19 @@ public class UserShipDTO {
                 ship.getBrand().getName(),
                 ship.getBrand().getImageUrl(),
                 ship.getImageUrl(),
-                ship.getFocus(),
+                displayFocus(ship),
                 ship.getCrew(),
                 userShip.getInGamePurchase(),
                 userShip.getRewardInGame(),
                 userShip.getLoaner()
         );
+    }
+
+    /** Legacy PYAM rows predate the focus column; keep them grouped in fleet views. */
+    private static String displayFocus(Ship ship) {
+        if (ship.getFocus() != null && !ship.getFocus().isBlank()) return ship.getFocus();
+        String name = ship.getName() == null ? "" : ship.getName();
+        return name.matches("(?i).*\\bpyam(?:\\s+exec)?\\b.*") ? "PYAM" : null;
     }
 }
 

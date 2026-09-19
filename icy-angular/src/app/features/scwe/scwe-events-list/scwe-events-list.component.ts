@@ -1,3 +1,4 @@
+import { scweGlobalTarget, scweProgressBackground } from '../scwe-progress.utils';
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventParticipationViewDto, ScWorldEventParticipationDto } from '../../../model/scwe-player.model';
@@ -60,12 +61,6 @@ export class ScweEventsListComponent {
     return now <= new Date(end).getTime();
   }
 
-  getGlobalMax(schema: any): number {
-    if (!schema || !schema.total) return 1000;
-    if (schema.total.milestones && Array.isArray(schema.total.milestones) && schema.total.milestones.length > 0) {
-      const last = schema.total.milestones[schema.total.milestones.length - 1];
-      return last.at || 1000;
-    }
-    return schema.total.max || 1000;
-  }
+  readonly getGlobalMax = scweGlobalTarget;
+  readonly progressBackground = scweProgressBackground;
 }

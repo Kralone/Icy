@@ -499,3 +499,8 @@
     font-size: 0.74rem;
   }
 }
+.mining-source-note {
+  margin: 0 0 0.7rem;
+  color: rgba(191, 219, 254, 0.58);
+  font-size: 0.72rem;
+}

@@ -12,6 +12,7 @@ import com.icy.icy_backend.db.entity.universe.OreLocationOre;
 import com.icy.icy_backend.db.repository.universe.OreLocationRepository;
 import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.service.common.MessageService;
+import com.icy.icy_backend.service.catalog.CatalogOreDistributionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,23 +30,34 @@ public class OreLocationService {
     private final OreLocationRepository oreLocationRepository;
     private final MessageService messageService;
     private final ObjectMapper objectMapper;
+    private final CatalogOreDistributionService catalogOreDistributionService;
 
     public OreLocationService(
             OreLocationRepository oreLocationRepository,
             MessageService messageService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            CatalogOreDistributionService catalogOreDistributionService
     ) {
         this.oreLocationRepository = oreLocationRepository;
         this.messageService = messageService;
         this.objectMapper = objectMapper;
+        this.catalogOreDistributionService = catalogOreDistributionService;
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<MessageResponse<List<OreLocationDTO>>> listLocations() {
-        List<OreLocationDTO> rows = oreLocationRepository.findAllByOrderByLocationCodeAsc()
+        Map<String, OreLocationDTO> byLocation = new java.util.LinkedHashMap<>();
+        java.util.Set<String> catalogCodes = new java.util.HashSet<>();
+        catalogOreDistributionService.listLocations().forEach(row -> {
+            byLocation.put(row.locationKey(), row);
+            catalogCodes.add(normalizeCode(row.locationCode()));
+        });
+        oreLocationRepository.findAllByOrderByLocationCodeAsc()
                 .stream()
                 .map(this::toDto)
-                .toList();
+                .filter(row -> !catalogCodes.contains(normalizeCode(row.locationCode())))
+                .forEach(row -> byLocation.putIfAbsent(row.locationKey(), row));
+        List<OreLocationDTO> rows = new ArrayList<>(byLocation.values());
         return messageService.buildResponse("ore.locations.list", rows, rows.size());
     }
 
@@ -56,8 +68,18 @@ public class OreLocationService {
         }
 
         JsonNode root = readRoot(file);
-        if (!root.isObject()) {
+        if (root == null || !root.isObject()) {
             throw new BadRequestException("Le JSON doit etre un objet de locations.");
+        }
+
+        String sourceUrl = text(root, "source_url", "sourceUrl");
+        String gameVersion = text(root, "game_version", "gameVersion");
+        if (gameVersion != null && gameVersion.length() > 20) throw new BadRequestException("Version trop longue.");
+        if (sourceUrl != null && !sourceUrl.matches("https?://[^\\s]+")) throw new BadRequestException("URL de source invalide.");
+        JsonNode locationsNode = root.path("locations");
+        if (root.has("locations")) {
+            if (!locationsNode.isObject()) throw new BadRequestException("locations doit être un objet.");
+            root = locationsNode;
         }
 
         List<OreLocation> parsedLocations = new ArrayList<>();
@@ -67,18 +89,25 @@ public class OreLocationService {
         while (entries.hasNext()) {
             Map.Entry<String, JsonNode> entry = entries.next();
             String rawCode = entry.getKey();
+            if (java.util.Set.of("source_url", "sourceUrl", "game_version", "gameVersion").contains(rawCode)) continue;
             JsonNode locationNode = entry.getValue();
-            if (locationNode == null || !locationNode.isObject()) {
-                continue;
+            if (locationNode == null || !locationNode.isObject() || !locationNode.path("ores").isObject()) {
+                throw new BadRequestException("Localisation invalide : " + rawCode);
             }
 
             String locationCode = normalizeCode(rawCode);
-            if (locationCode == null) {
-                continue;
+            if (locationCode == null || locationCode.length() > 120 || parsedLocations.stream().anyMatch(row -> row.getLocationCode().equals(locationCode))) {
+                throw new BadRequestException("Code de localisation invalide ou dupliqué : " + rawCode);
+            }
+
+            for (String metric : List.of("clusterCount", "mass", "inst", "res")) {
+                validateRange(locationNode, metric);
             }
 
             OreLocation location = new OreLocation();
             location.setLocationCode(locationCode);
+            location.setSourceUrl(sourceUrl);
+            location.setGameVersion(gameVersion);
             location.setUsersCount(readInt(locationNode, "users"));
             location.setScansCount(readInt(locationNode, "scans"));
             location.setClustersCount(readInt(locationNode, "clusters"));
@@ -114,6 +143,9 @@ public class OreLocationService {
                         continue;
                     }
                     JsonNode oreNode = oreEntry.getValue();
+                    if (!oreNode.isObject() || oreCode.length() > 80 || ores.stream().anyMatch(row -> row.getOreCode().equals(oreCode))) {
+                        throw new BadRequestException("Minerai invalide ou dupliqué : " + oreCode);
+                    }
                     OreLocationOre ore = new OreLocationOre();
                     ore.setOreLocation(location);
                     ore.setOreCode(oreCode);
@@ -121,6 +153,14 @@ public class OreLocationService {
                     ore.setMinPct(readDouble(oreNode, "minPct"));
                     ore.setMaxPct(readDouble(oreNode, "maxPct"));
                     ore.setMedPct(readDouble(oreNode, "medPct"));
+                    for (Double fraction : new Double[] {ore.getProbability(), ore.getMinPct(), ore.getMaxPct(), ore.getMedPct()}) {
+                        if (fraction != null && fraction > 1) throw new BadRequestException("Les proportions doivent être comprises entre 0 et 1.");
+                    }
+                    if ((ore.getMinPct() != null && ore.getMaxPct() != null && ore.getMinPct() > ore.getMaxPct())
+                            || (ore.getMedPct() != null && ore.getMinPct() != null && ore.getMedPct() < ore.getMinPct())
+                            || (ore.getMedPct() != null && ore.getMaxPct() != null && ore.getMedPct() > ore.getMaxPct())) {
+                        throw new BadRequestException("Concentrations incohérentes pour " + oreCode);
+                    }
                     ores.add(ore);
                     oreEntryCount++;
                 }
@@ -129,6 +169,9 @@ public class OreLocationService {
             parsedLocations.add(location);
         }
 
+        if (parsedLocations.isEmpty() || oreEntryCount == 0) {
+            throw new BadRequestException("Import vide : les données existantes sont conservées.");
+        }
         oreLocationRepository.deleteAllInBatch();
         if (!parsedLocations.isEmpty()) {
             oreLocationRepository.saveAll(parsedLocations);
@@ -161,6 +204,9 @@ public class OreLocationService {
         return new OreLocationDTO(
                 location.getId(),
                 location.getLocationCode(),
+                location.getSourceUrl(),
+                location.getGameVersion(),
+                location.getUpdatedAt(),
                 location.getUsersCount(),
                 location.getScansCount(),
                 location.getClustersCount(),
@@ -174,24 +220,26 @@ public class OreLocationService {
 
     private Integer readInt(JsonNode source, String fieldName) {
         if (source == null || source.isMissingNode()) {
-            return 0;
+            return null;
         }
         JsonNode value = source.path(fieldName);
-        if (value.isNumber()) {
+        if (value.isIntegralNumber() && value.canConvertToInt() && value.asInt() >= 0) {
             return value.asInt();
         }
-        return 0;
+        if (value.isMissingNode() || value.isNull()) return null;
+        throw new BadRequestException("Nombre entier invalide : " + fieldName);
     }
 
     private Double readDouble(JsonNode source, String fieldName) {
         if (source == null || source.isMissingNode()) {
-            return 0d;
+            return null;
         }
         JsonNode value = source.path(fieldName);
-        if (value.isNumber()) {
+        if (value.isNumber() && Double.isFinite(value.asDouble()) && value.asDouble() >= 0) {
             return value.asDouble();
         }
-        return 0d;
+        if (value.isMissingNode() || value.isNull()) return null;
+        throw new BadRequestException("Valeur numérique invalide : " + fieldName);
     }
 
     private String normalizeCode(String rawCode) {
@@ -203,5 +251,27 @@ public class OreLocationService {
             return null;
         }
         return trimmed.toUpperCase(Locale.ROOT);
+    }
+
+    private void validateRange(JsonNode location, String field) {
+        JsonNode range = location.get(field);
+        if (range == null || range.isNull()) return;
+        if (!range.isObject()) throw new BadRequestException("Plage invalide : " + field);
+        Double min = readDouble(range, "min");
+        Double max = readDouble(range, "max");
+        Double med = readDouble(range, "med");
+        if ((min != null && max != null && min > max)
+                || (med != null && min != null && med < min)
+                || (med != null && max != null && med > max)) {
+            throw new BadRequestException("Plage incohérente : " + field);
+        }
+    }
+
+    private String text(JsonNode source, String... fields) {
+        for (String field : fields) {
+            String value = source.path(field).asText("").trim();
+            if (!value.isEmpty()) return value;
+        }
+        return null;
     }
 }

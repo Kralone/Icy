@@ -163,6 +163,18 @@ export class CigWatchManagementComponent implements OnInit, OnDestroy {
     } catch { return false; }
   }
 
+  isSneakPeek(entry: CigRawEntry): boolean {
+    return entry.entryType === 'rss:sneak-peek' || /sneak\s*peek|aperçu|apercu/i.test(`${entry.title} ${entry.rawExcerpt ?? ''}`);
+  }
+
+  entryImage(entry: CigRawEntry): string | null {
+    const raw = entry.rawPayload ?? '';
+    const match = raw.match(/(?:src|data-src)\s*=\s*["'](https:\/\/[^"']+)["']/i)
+      ?? raw.match(/url\(\s*["']?(https:\/\/[^\)"']+)["']?\s*\)/i);
+    const url = match?.[1]?.trim() ?? '';
+    return /^https:\/\/(?:media\.)?robertsspaceindustries\.com\//i.test(url) ? url : null;
+  }
+
   canPublish(entry: CigRawEntry): boolean {
     return this.isOfficialNews(entry) && !!entry.id && !entry.newsId && entry.translationStatus === 'TRANSLATED'
       && this.feed?.publishingEnabled === true

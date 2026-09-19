@@ -735,3 +735,9 @@
     max-height: calc(100dvh - 0.8rem);
   }
 }
+.catalog-freshness {
+  margin: 0 0 0.9rem;
+  color: rgba(191, 219, 254, 0.58);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}

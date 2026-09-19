@@ -33,6 +33,16 @@ export interface Ship {
   loaner?: boolean;
   salePoints?: ShipSalePoint[];
   cargoGrids?: ShipCargoGrid[];
+  /** Catalogue enrichment used by Executive/PYAM detail views. */
+  components?: ShipLoadoutItem[];
+  weapons?: ShipLoadoutItem[];
+}
+
+export interface ShipLoadoutItem {
+  name: string;
+  quantity?: number;
+  imageUrl?: string;
+  manufacturer?: string;
 }
 
 export interface ShipCreateDTO {

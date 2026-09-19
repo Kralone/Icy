@@ -193,7 +193,11 @@ export class WikeloComponent implements OnInit {
     return this.categoryEquipment.filter(item => !search || [item.name, item.manufacturer ?? '', item.description ?? '',
       ...(item.recipes ?? []).flatMap(recipe => [recipe.name, ...recipe.ingredients.map(ingredient => ingredient.name),
         ...recipe.rewards.map(reward => reward.name)])]
-      .some(value => this.normalizeName(value).includes(search)));
+      .some(value => this.normalizeName(value).includes(search)))
+      .sort((left, right) => {
+        const availability = Number((right.recipes?.length ?? 0) > 0) - Number((left.recipes?.length ?? 0) > 0);
+        return availability || left.name.localeCompare(right.name, 'fr', {sensitivity: 'base'});
+      });
   }
 
   equipmentPresentation(item: WikeloEquipment): EquipmentPresentation {

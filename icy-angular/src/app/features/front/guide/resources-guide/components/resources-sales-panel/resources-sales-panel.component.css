@@ -214,3 +214,8 @@
     font-size: 0.78rem;
   }
 }
+.resource-source-note {
+  margin: 0.55rem 0 0;
+  color: rgba(191, 219, 254, 0.58);
+  font-size: 0.72rem;
+}

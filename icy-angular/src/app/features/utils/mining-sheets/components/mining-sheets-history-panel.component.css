@@ -134,3 +134,7 @@
     grid-template-columns: 1fr;
   }
 }
+.panel-head { width: 100%; cursor: pointer; }
+.history-pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin-top:16px; }
+.history-pagination button { border:1px solid #3b6079; border-radius:8px; background:#122c40; color:#c9f7ff; padding:6px 12px; cursor:pointer; }
+.history-pagination button:disabled { opacity:.4; cursor:not-allowed; }

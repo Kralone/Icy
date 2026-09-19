@@ -3,12 +3,14 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
+import {ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
 
 interface FleetShipGroup {
   name: string;
   imageUrl: string;
   brandImageUrl?: string;
   count: number;
+  owners?: string[];
 }
 
 @Component({
@@ -16,7 +18,7 @@ interface FleetShipGroup {
   selector: 'app-fleet',
   templateUrl: './fleet.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [LoadingOverlayComponent],
+  imports: [LoadingOverlayComponent, ShipDetailModalComponent],
   styleUrl: './fleet.component.css'
 })
 export class FleetComponent implements OnInit, OnDestroy {
@@ -28,6 +30,9 @@ export class FleetComponent implements OnInit, OnDestroy {
   private loadingFallback?: ReturnType<typeof setTimeout>;
 
   objectKeys = Object.keys;
+  selectedShip: FleetShipGroup | null = null;
+  openShip(ship: FleetShipGroup){ this.selectedShip = ship; }
+  closeShip(){ this.selectedShip = null; }
 
   constructor(shipService: ShipService, wsService: WebSocketService) {
     this.shipService = shipService;
@@ -53,7 +58,8 @@ export class FleetComponent implements OnInit, OnDestroy {
     this.shipService.getFleetSummary().subscribe({
       next: (response) => {
         try {
-          const rawFleet = JSON.parse(response)?.fleet;
+          const payload = typeof response === 'string' ? JSON.parse(response) : response;
+          const rawFleet = payload?.fleet ?? payload?.data ?? [];
           this.fleetSummary = this.groupShipsByFocus(Array.isArray(rawFleet) ? rawFleet : []);
         } catch (error) {
           console.error('Erreur de lecture du résumé de flotte', error);
@@ -85,15 +91,19 @@ export class FleetComponent implements OnInit, OnDestroy {
     const result: Record<string, FleetShipGroup[]> = {};
 
     for (const ship of fleet) {
-      if (!result[ship.focus]) {
-        result[ship.focus] = [];
+      const focus = ship.focus?.trim() || 'Non classé';
+      if (!result[focus]) {
+        result[focus] = [];
       }
 
-      const existing = result[ship.focus].find(s => s.name === ship.name);
+      const existing = result[focus].find(s => s.name === ship.name);
       if (existing) {
         existing.count++;
+        for (const owner of ((ship as any).owners ?? [])) {
+          if (!existing.owners?.includes(owner)) existing.owners?.push(owner);
+        }
       } else {
-        result[ship.focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, count: 1 });
+        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, count: 1, owners: (ship as any).owners ?? [] });
       }
     }
 

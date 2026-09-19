@@ -13,6 +13,17 @@ import { MiningSheet } from '../../../../core/services/mining/mining-sheet.servi
 export class MiningSheetsHistoryPanelComponent {
   @Input() historySheets: MiningSheet[] = [];
   expandedSheetId: string | null = null;
+  panelExpanded = false;
+  page = 1;
+  readonly pageSize = 5;
+
+  get pagedSheets(): MiningSheet[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.historySheets.slice(start, start + this.pageSize);
+  }
+  get pageCount(): number { return Math.max(1, Math.ceil(this.historySheets.length / this.pageSize)); }
+  togglePanel(): void { this.panelExpanded = !this.panelExpanded; if (!this.panelExpanded) this.expandedSheetId = null; }
+  setPage(page: number): void { this.page = Math.min(Math.max(1, page), this.pageCount); this.expandedSheetId = null; }
 
   toDisplayDate(isoDate: string): string {
     if (!isoDate) {

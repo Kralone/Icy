@@ -4,25 +4,31 @@ import { Observable } from 'rxjs';
 import { ApiResponse } from '../../../model/api-response.model';
 
 export interface OreMetricRange {
-  min: number;
-  max: number;
-  med: number;
+  min: number | null;
+  max: number | null;
+  med: number | null;
 }
 
 export interface OreMix {
+  imageUrl?: string | null;
+  catalogEntryId?: number | null;
   oreCode: string;
-  probability: number;
-  minPct: number;
-  maxPct: number;
-  medPct: number;
+  probability: number | null;
+  minPct: number | null;
+  maxPct: number | null;
+  medPct: number | null;
 }
 
 export interface OreLocation {
-  id: number;
+  id: number | null;
+  locationKey?: string | null;
   locationCode: string;
-  users: number;
-  scans: number;
-  clusters: number;
+  sourceUrl?: string | null;
+  gameVersion?: string | null;
+  updatedAt?: string | null;
+  users: number | null;
+  scans: number | null;
+  clusters: number | null;
   clusterCount: OreMetricRange;
   mass: OreMetricRange;
   inst: OreMetricRange;

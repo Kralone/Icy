@@ -1,6 +1,6 @@
 package com.icy.icy_backend.controller.dto.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
+
 
 import java.time.OffsetDateTime;
 
@@ -10,7 +10,8 @@ public class UexDatasetDetailDTO {
     private Integer itemCount;
     private OffsetDateTime fetchedAt;
     private OffsetDateTime updatedAt;
-    private JsonNode previewPayload;
+    private String gameVersion;
+    private Object previewPayload;
     private Integer previewItemCount;
     private boolean truncated;
 
@@ -23,7 +24,7 @@ public class UexDatasetDetailDTO {
             Integer itemCount,
             OffsetDateTime fetchedAt,
             OffsetDateTime updatedAt,
-            JsonNode previewPayload,
+            Object previewPayload,
             Integer previewItemCount,
             boolean truncated
     ) {
@@ -77,11 +78,14 @@ public class UexDatasetDetailDTO {
         this.updatedAt = updatedAt;
     }
 
-    public JsonNode getPreviewPayload() {
+    public String getGameVersion() { return gameVersion; }
+    public void setGameVersion(String gameVersion) { this.gameVersion = gameVersion; }
+
+    public Object getPreviewPayload() {
         return previewPayload;
     }
 
-    public void setPreviewPayload(JsonNode previewPayload) {
+    public void setPreviewPayload(Object previewPayload) {
         this.previewPayload = previewPayload;
     }
 

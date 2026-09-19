@@ -3,20 +3,23 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
 import { ApiResponse } from '../../../../../../model/api-response.model';
-import { CelestialBody, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
+import { CatalogLocationImage, CelestialBody, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
 
 interface ParsedOreLocation {
-  id: number;
+  key: string;
   displayLabel: string;
   visibilityKind: 'PLANET' | 'LAGRANGE' | 'OTHER';
   groupPlanet: string;
   ores: ParsedOreEntry[];
   oresText: string;
+  sourceUrl: string | null;
+  gameVersion: string | null;
+  updatedAt: string | null;
 }
 
-interface ParsedOreEntry {
+interface ParsedOreEntry extends OreMix {
   oreCode: string;
-  probability: number;
+  probability: number | null;
 }
 
 interface PlanetGroupCard {
@@ -27,11 +30,11 @@ interface PlanetGroupCard {
 }
 
 interface OreLocationResult {
-  locationId: number;
+  locationKey: string;
   displayLabel: string;
   groupPlanet: string;
   visibilityKind: 'PLANET' | 'LAGRANGE' | 'OTHER';
-  probability: number;
+  probability: number | null;
 }
 
 @Component({
@@ -45,6 +48,7 @@ interface OreLocationResult {
 export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   parsedLocations: ParsedOreLocation[] = [];
   planets: CelestialBody[] = [];
+  catalogLocations: CatalogLocationImage[] = [];
 
   miningLoading = false;
   miningLoaded = false;
@@ -53,7 +57,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   selectedOreCode: string | null = null;
 
   selectedPlanetKey: string | null = null;
-  selectedLocationId: number | null = null;
+  selectedLocationKey: string | null = null;
   isLocationDetailAnimating = false;
   currentPlanetPage = 1;
   readonly planetPageSize = 12;
@@ -63,6 +67,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
 
   private miningLoadSubscription?: Subscription;
   private celestialLoadSubscription?: Subscription;
+  private catalogLoadSubscription?: Subscription;
   private miningSearchDebounceTimer?: ReturnType<typeof setTimeout>;
   private locationSwitchTimer?: ReturnType<typeof setTimeout>;
 
@@ -72,11 +77,16 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.catalogLoadSubscription = this.celestialBodyService.listFrontLocationImages().subscribe({
+      next: response => this.catalogLocations = response.data ?? [],
+      error: () => this.catalogLocations = []
+    });
     this.loadCelestialBodies();
     this.loadMiningLocations();
   }
 
   ngOnDestroy(): void {
+    this.catalogLoadSubscription?.unsubscribe();
     if (this.miningLoadSubscription) {
       this.miningLoadSubscription.unsubscribe();
       this.miningLoadSubscription = undefined;
@@ -99,16 +109,16 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     return group.key;
   }
 
-  trackLocation(_: number, location: ParsedOreLocation): number {
-    return location.id;
+  trackLocation(_: number, location: ParsedOreLocation): string {
+    return location.key;
   }
 
   trackOreResult(_: number, row: OreLocationResult): string {
-    return `${row.locationId}-${row.probability}`;
+    return `${row.locationKey}-${row.probability}`;
   }
 
   get sortedPlanetGroups(): PlanetGroupCard[] {
-    const visibleLocations = this.parsedLocations.filter((location) => location.visibilityKind !== 'OTHER');
+    const visibleLocations = this.parsedLocations;
     const planetMap = new Map<string, PlanetGroupCard>();
 
     for (const planet of this.planets.filter((body) => body.bodyType === 'PLANET')) {
@@ -116,7 +126,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       planetMap.set(key, {
         key,
         planetName: planet.name,
-        imageUrl: planet.imageUrl ?? null,
+        imageUrl: this.findImageForPlanet(planet.name),
         locations: []
       });
     }
@@ -180,10 +190,10 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     if (!currentGroup || currentGroup.locations.length === 0) {
       return null;
     }
-    if (this.selectedLocationId === null) {
+    if (this.selectedLocationKey === null) {
       return currentGroup.locations[0];
     }
-    return currentGroup.locations.find((location) => location.id === this.selectedLocationId) ?? currentGroup.locations[0];
+    return currentGroup.locations.find((location) => location.key === this.selectedLocationKey) ?? currentGroup.locations[0];
   }
 
   get selectedLocationOres(): ParsedOreEntry[] {
@@ -234,12 +244,19 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   get maxActiveOreProbability(): number {
-    return this.activeOreResults.length ? this.activeOreResults[0].probability : 0;
+    return this.activeOreResults.length ? (this.activeOreResults[0].probability ?? 0) : 0;
   }
 
   formatPercent(value: number | null | undefined): string {
-    const safeValue = Number(value ?? 0);
-    return `${Math.round(safeValue * 100)}%`;
+    if (value == null || !Number.isFinite(value)) return 'Non renseigné';
+    const safeValue = value;
+    return `${(safeValue * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
+  }
+
+  formatSourceDate(value: string | null): string {
+    if (!value) return 'date non renseignée';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString('fr-FR');
   }
 
   oreResultCount(oreCode: string): number {
@@ -268,8 +285,8 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     this.syncSelectedPlanet();
   }
 
-  probabilityBarWidth(probability: number): string {
-    if (!Number.isFinite(probability) || probability <= 0 || this.maxActiveOreProbability <= 0) {
+  probabilityBarWidth(probability: number | null): string {
+    if (probability == null || !Number.isFinite(probability) || probability <= 0 || this.maxActiveOreProbability <= 0) {
       return '0%';
     }
     const raw = (probability / this.maxActiveOreProbability) * 100;
@@ -278,7 +295,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   focusOreResult(result: OreLocationResult): void {
-    const targetGroup = this.filteredPlanetGroups.find((group) => group.locations.some((location) => location.id === result.locationId));
+    const targetGroup = this.filteredPlanetGroups.find((group) => group.locations.some((location) => location.key === result.locationKey));
     if (!targetGroup) {
       return;
     }
@@ -287,7 +304,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       this.currentPlanetPage = Math.floor(groupIndex / this.planetPageSize) + 1;
     }
     this.selectedPlanetKey = targetGroup.key;
-    this.selectedLocationId = result.locationId;
+    this.selectedLocationKey = result.locationKey;
   }
 
   updateMiningSearch(rawValue: string): void {
@@ -306,15 +323,15 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   selectPlanet(groupKey: string): void {
     if (this.selectedPlanetKey === groupKey) {
       this.selectedPlanetKey = null;
-      this.selectedLocationId = null;
+      this.selectedLocationKey = null;
       return;
     }
     this.selectedPlanetKey = groupKey;
     this.syncSelectedLocation();
   }
 
-  selectLocation(locationId: number): void {
-    if (this.selectedLocationId === locationId) {
+  selectLocation(locationKey: string): void {
+    if (this.selectedLocationKey === locationKey) {
       return;
     }
     if (this.locationSwitchTimer) {
@@ -323,7 +340,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     }
     this.isLocationDetailAnimating = true;
     this.locationSwitchTimer = setTimeout(() => {
-      this.selectedLocationId = locationId;
+      this.selectedLocationKey = locationKey;
       this.isLocationDetailAnimating = false;
       this.locationSwitchTimer = undefined;
     }, 140);
@@ -350,7 +367,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const stillVisible = this.filteredPlanetGroups.find((group) => group.key === this.selectedPlanetKey);
     if (!stillVisible) {
       this.selectedPlanetKey = null;
-      this.selectedLocationId = null;
+      this.selectedLocationKey = null;
       return;
     }
     this.syncSelectedLocation();
@@ -359,16 +376,16 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   private syncSelectedLocation(): void {
     const currentGroup = this.selectedPlanetGroup;
     if (!currentGroup || currentGroup.locations.length === 0) {
-      this.selectedLocationId = null;
+      this.selectedLocationKey = null;
       return;
     }
-    const currentLocation = this.selectedLocationId
-      ? currentGroup.locations.find((location) => location.id === this.selectedLocationId)
+    const currentLocation = this.selectedLocationKey
+      ? currentGroup.locations.find((location) => location.key === this.selectedLocationKey)
       : null;
     if (currentLocation) {
       return;
     }
-    this.selectedLocationId = currentGroup.locations[0].id;
+    this.selectedLocationKey = currentGroup.locations[0].key;
   }
 
   private loadMiningLocations(): void {
@@ -379,7 +396,8 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     this.miningError = '';
     this.miningLoadSubscription = this.oreLocationService.listFrontLocations().subscribe({
       next: (response: ApiResponse<OreLocation[]>) => {
-        this.parsedLocations = (response?.data ?? []).map((location) => this.toParsedLocation(location));
+        const rows = response?.data ?? [];
+        this.parsedLocations = rows.map((location) => this.toParsedLocation(location));
         this.rebuildOreSearchIndex();
         this.miningLoaded = true;
         this.miningLoading = false;
@@ -409,12 +427,15 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const oresText = parsedOres.map((ore) => ore.oreCode).join(' | ');
 
     return {
-      id: location.id,
+      key: location.locationKey ?? (location.id != null ? `manual:${location.id}` : `legacy:${location.sourceUrl ?? ''}:${location.locationCode}`),
       displayLabel: parsed.displayLabel,
       visibilityKind: parsed.visibilityKind,
       groupPlanet: parsed.groupPlanet,
       ores: parsedOres,
-      oresText
+      oresText,
+      sourceUrl: location.sourceUrl ?? null,
+      gameVersion: location.gameVersion ?? null,
+      updatedAt: location.updatedAt ?? null
     };
   }
 
@@ -426,14 +447,14 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
         continue;
       }
       const existing = oreMap.get(code);
-      const probability = Number(ore.probability ?? 0);
-      if (!existing || probability > existing.probability) {
-        oreMap.set(code, { oreCode: code, probability });
+      const probability = ore.probability ?? null;
+      if (!existing || (probability ?? -1) > (existing.probability ?? -1)) {
+        oreMap.set(code, { ...ore, oreCode: code, probability });
       }
     }
     return Array.from(oreMap.values()).sort((left, right) => {
       if (left.probability !== right.probability) {
-        return right.probability - left.probability;
+        return (right.probability ?? -1) - (left.probability ?? -1);
       }
       return left.oreCode.localeCompare(right.oreCode, undefined, { sensitivity: 'base' });
     });
@@ -480,7 +501,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   private findImageForPlanet(planetName: string): string | null {
     const key = this.normalizeText(planetName);
     const match = this.planets.find((planet) => this.normalizeText(planet.name) === key);
-    return match?.imageUrl ?? null;
+    return this.catalogLocations.find(row => this.normalizeText(row.name) === key)?.imageUrl || match?.imageUrl || null;
   }
 
   private filterGroupBySearch(group: PlanetGroupCard, search: string): PlanetGroupCard | null {
@@ -542,11 +563,11 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
           oreResults.set(normalized, []);
         }
         oreResults.get(normalized)?.push({
-          locationId: location.id,
+          locationKey: location.key,
           displayLabel: location.displayLabel,
           groupPlanet: location.groupPlanet,
           visibilityKind: location.visibilityKind,
-          probability: Number(ore.probability ?? 0)
+          probability: ore.probability
         });
       }
     }
@@ -554,7 +575,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     for (const rows of oreResults.values()) {
       rows.sort((left, right) => {
         if (left.probability !== right.probability) {
-          return right.probability - left.probability;
+          return (right.probability ?? -1) - (left.probability ?? -1);
         }
         const planetSort = left.groupPlanet.localeCompare(right.groupPlanet, undefined, { sensitivity: 'base' });
         if (planetSort !== 0) {

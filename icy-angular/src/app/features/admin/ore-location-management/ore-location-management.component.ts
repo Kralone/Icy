@@ -132,7 +132,7 @@ export class OreLocationManagementComponent implements OnInit {
     return [...(location.ores ?? [])]
       .sort((left, right) => {
         if (left.probability !== right.probability) {
-          return right.probability - left.probability;
+          return (right.probability ?? -1) - (left.probability ?? -1);
         }
         return left.oreCode.localeCompare(right.oreCode);
       })
@@ -140,7 +140,8 @@ export class OreLocationManagementComponent implements OnInit {
   }
 
   formatPercent(value: number | null | undefined): string {
-    const safeValue = Number(value ?? 0);
+    if (value == null || !Number.isFinite(value)) return 'Non renseigné';
+    const safeValue = value;
     return `${Math.round(safeValue * 100)}%`;
   }
 

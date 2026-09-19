@@ -45,6 +45,20 @@ class WikeloServiceTest {
         assertThat(ship.getReputationText()).isEqualTo("Friend");
     }
 
+    @Test
+    void keepsAllInternalModulesWhenExecutiveFitExceedsFourteenRows() {
+        StringBuilder csv = new StringBuilder("PYAM Exec,#,Component,,,,\n");
+        for (int i = 1; i <= 16; i++) {
+            csv.append("Module:,1x,Internal-").append(i).append(",1,Civilian,A\n");
+        }
+        csv.append("Mission: PYAM - Cost: 1x Favor,,,,,,\n");
+        csv.append("Next ship,#,Component,,,,\n");
+        var ship = sourceService(csv.toString()).scrapeShips().stream()
+                .filter(value -> value.getShipName().equals("PYAM Exec")).findFirst().orElseThrow();
+        assertThat(ship.getComponentsText()).contains("Internal-1", "Internal-16")
+                .doesNotContain("Next ship");
+    }
+
     private WikeloService sourceService(String csv) {
         var properties = new WikeloProperties();
         properties.setSpreadsheetId("test");

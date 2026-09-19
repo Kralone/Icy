@@ -415,3 +415,9 @@
     font-size: 0.66rem;
   }
 }
+.refining-source {
+  display: block;
+  margin-top: .3rem;
+  color: #a9b6c5;
+  font-size: .7rem;
+}

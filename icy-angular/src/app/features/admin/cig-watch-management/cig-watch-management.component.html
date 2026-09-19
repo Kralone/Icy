@@ -76,6 +76,7 @@
           <div class="entry-top"><span>{{ entry.sourceLabel }}</span><time>{{ formatDate(entry.publishedAt) }}</time></div>
           <h2><a [href]="entry.link" target="_blank" rel="noopener noreferrer">{{ entry.title }} ↗</a></h2>
           <div class="statuses">
+            @if (isSneakPeek(entry)) { <span class="badge sneak-peek">Sneak peek de la semaine</span> }
             @if (!isOfficialNews(entry)) { <span class="badge muted">Veille uniquement · aucune publication</span> }
             @if (entry.translationStatus === 'TRANSLATED') { <span class="badge good">Traduit en français</span> }
             @else if (entry.translationStatus === 'FAILED') { <span class="badge warning">Traduction à reprendre</span> }
@@ -88,6 +89,7 @@
             @else if (entry.deliveryStatus === 'DISABLED') { <span class="badge muted">Relais Discord désactivé</span> }
             @else if (entry.deliveryStatus === 'EXPIRED') { <span class="badge warning">Délai d’envoi Discord dépassé</span> }
           </div>
+          @if (isSneakPeek(entry) && entryImage(entry); as image) { <div class="sneak-peek-image"><img [src]="image" [alt]="entry.title" loading="lazy" /></div> }
           @if (entry.rawExcerpt) { <p class="excerpt">{{ entry.rawExcerpt }}</p> }
           @if (entry.lastError) { <p class="notice error">{{ entry.lastError }}</p> }
           @if (entry.nextRetryAt) { <p class="retry">Nouvelle tentative : {{ formatDate(entry.nextRetryAt) }}</p> }

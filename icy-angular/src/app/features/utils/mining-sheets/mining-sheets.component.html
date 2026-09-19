@@ -113,6 +113,10 @@
       <button type="button" [class.is-active]="activeDetailTab === 'SALES'" [attr.aria-pressed]="activeDetailTab === 'SALES'" (click)="setDetailTab('SALES')"><span>03</span><strong>Vente</strong><small>Déclarer un encaissement</small></button>
       <button type="button" [class.is-active]="activeDetailTab === 'SUMMARY'" [attr.aria-pressed]="activeDetailTab === 'SUMMARY'" (click)="setDetailTab('SUMMARY')"><span>04</span><strong>Bilan</strong><small>Gains et versements</small></button>
     </nav>
+    <div class="workflow-lock-note" role="note">
+      <strong>Verrouillage avant finalisation</strong>
+      <span>Quand toutes les déclarations sont terminées, un administrateur verrouille la fiche depuis « Gérer l’opération ». La finalisation devient disponible uniquement après ce verrouillage.</span>
+    </div>
 
     @if (activeDetailTab === 'JOBS' || activeDetailTab === 'COSTS') {
       <div

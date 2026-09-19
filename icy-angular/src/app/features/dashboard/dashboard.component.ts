@@ -120,7 +120,7 @@ export class DashboardComponent {
   loadFleetSummary() {
     this.shipService.getFleetSummary().subscribe(response => {
       const payload = typeof response === 'string' ? JSON.parse(response) : response;
-      const rawFleet = (payload?.fleet ?? []) as FleetSummaryEntry[];
+      const rawFleet = (payload?.fleet ?? payload?.data ?? []) as FleetSummaryEntry[];
       this.fleetSummary = this.groupShipsByFocus(rawFleet);
       this.isLoading = false;
     }, () => {

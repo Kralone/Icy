@@ -646,7 +646,7 @@ public class CigWatchService {
                         externalId,
                         title,
                         link,
-                        atomFeed ? "atom" : "rss",
+                        classifyRssEntry(title, summary, atomFeed),
                         publishedAt,
                         rankHint,
                         excerpt,
@@ -674,6 +674,12 @@ public class CigWatchService {
             }
             return jsoupRssEntries;
         }
+    }
+
+    private String classifyRssEntry(String title, String summary, boolean atomFeed) {
+        String haystack = (title + " " + (summary == null ? "" : summary)).toLowerCase(Locale.ROOT);
+        if (haystack.matches("(?s).*\\b(sneak\\s*peek|aperçu|apercu)\\b.*")) return "rss:sneak-peek";
+        return atomFeed ? "atom" : "rss";
     }
 
     private boolean looksLikeHtmlPayload(String payload) {
@@ -733,7 +739,7 @@ public class CigWatchService {
                     externalId,
                     title,
                     link,
-                    atomFeed ? "atom" : "rss",
+                    classifyRssEntry(title, summary, atomFeed),
                     publishedAt,
                     rankHint,
                     excerpt,

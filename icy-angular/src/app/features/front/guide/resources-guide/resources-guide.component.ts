@@ -40,7 +40,7 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       ribbon: 'Prix de vente',
       title: 'Prix de vente',
       description: 'Reference rapide des valeurs de vente pour prioriser les materiaux les plus rentables.',
-      imageUrl: 'https://i.redd.it/thfwwhr9m4a71.png',
+      imageUrl: 'assets/images/home/activities/cargo.jpg',
       imagePosition: 'center 20%',
       bandHeight: 176
     },
@@ -49,7 +49,7 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       ribbon: 'Raffinage',
       title: 'Raffinage',
       description: 'Tableaux informatifs sur les methodes, rendements, capacites et audits des raffineries.',
-      imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
+      imageUrl: 'https://media.starcitizen.tools/thumb/6/64/Refinery_01_V2-Min.jpg/1200px-Refinery_01_V2-Min.jpg.webp?b5eg9',
       imagePosition: 'center 40%',
       bandHeight: 176
     },
@@ -58,7 +58,7 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       ribbon: 'Planètes et minerais',
       title: 'Planètes et minerais',
       description: 'Vue par ore location pour le minage. Recherche par code location ou minerai, puis clique pour ouvrir le detail.',
-      imageUrl: 'https://i.imgur.com/OOjqT8P.jpg',
+      imageUrl: 'assets/images/home/activities/space-combat.jpg',
       imagePosition: 'center 40%',
       bandHeight: 176
     },

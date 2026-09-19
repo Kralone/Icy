@@ -52,6 +52,7 @@ export interface ScweFieldDefinition {
 }
 
 export interface ScweTotalDefinition {
+  max?: number;
   mode: string;
   keys: string[];
   milestones?: ScweMilestone[];

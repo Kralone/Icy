@@ -10,4 +10,6 @@ export interface ShipListDTO {
   inGamePurchase: boolean;
   rewardInGame: boolean;
   loaner: boolean;
+  scu?: number | null;
+  notes?: string;
 }

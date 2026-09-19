@@ -1,6 +1,7 @@
 package com.icy.icy_backend.controller.dto.response.front;
 
 import java.util.List;
+import java.time.OffsetDateTime;
 
 public class UexResourceSaleDTO {
     private String displayName;
@@ -10,6 +11,8 @@ public class UexResourceSaleDTO {
     private Integer bestSell;
     private String bestSellTerminal;
     private List<SalePointDTO> salePoints;
+    private OffsetDateTime sourceFetchedAt;
+    private String sourceGameVersion;
 
     public UexResourceSaleDTO() {
     }
@@ -88,9 +91,25 @@ public class UexResourceSaleDTO {
         this.salePoints = salePoints;
     }
 
+    public OffsetDateTime getSourceFetchedAt() { return sourceFetchedAt; }
+    public void setSourceFetchedAt(OffsetDateTime sourceFetchedAt) { this.sourceFetchedAt = sourceFetchedAt; }
+    public String getSourceGameVersion() { return sourceGameVersion; }
+    public void setSourceGameVersion(String sourceGameVersion) { this.sourceGameVersion = sourceGameVersion; }
+
     public static class SalePointDTO {
         private String terminalName;
         private Integer sellPrice;
+        private OffsetDateTime observedAt;
+        private String gameVersion;
+
+        public OffsetDateTime getObservedAt() { return observedAt; }
+        public String getGameVersion() { return gameVersion; }
+
+        public SalePointDTO(String terminalName, Integer sellPrice, OffsetDateTime observedAt, String gameVersion) {
+            this(terminalName, sellPrice);
+            this.observedAt = observedAt;
+            this.gameVersion = gameVersion;
+        }
 
         public SalePointDTO() {
         }

@@ -70,6 +70,13 @@ public class UserShipController {
         return userShipService.deleteAllInGameAcquisitions();
     }
 
+    @PutMapping("/acquisition")
+    public ResponseEntity<MessageResponse<UserShip>> updateAcquisition(@RequestParam Long shipId,
+                                                                        @RequestBody AddShipDTO dto) {
+        return userShipService.updateAcquisition(AuthUtils.getCurrentUserId(), shipId,
+                dto.isInGame(), dto.isRewardInGame(), dto.isLoaner());
+    }
+
     @GetMapping("/member")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<UserShipDTO>>> getMemberShips(@RequestParam UUID eventId,

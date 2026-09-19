@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, OnChanges, DoCheck, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
 import { GoalParticipation } from '../../../model/goal-participation.model';
@@ -8,7 +9,7 @@ import { GoalParticipationSummary } from '../../../model/goal-participation-summ
 @Component({
   selector: 'app-goal-sub',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-sub.component.html',
   styleUrl: './goal-sub.component.css',
@@ -41,6 +42,7 @@ export class GoalSubComponent implements OnChanges, DoCheck {
   combinedLoading = false;
   showCombinedStack = false;
   combinedTotalDelta = 0;
+  batchAmount = 1;
   private lastGoalId: number | null = null;
   private lastTotals: { current: number; target: number } | null = null;
 
@@ -180,6 +182,17 @@ export class GoalSubComponent implements OnChanges, DoCheck {
         this.loading = false;
       },
     });
+  }
+
+  addBatch(): void {
+    const amount = Math.floor(Number(this.batchAmount));
+    if (!Number.isFinite(amount) || amount < 1) {
+      this.batchAmount = 1;
+      return;
+    }
+    const remaining = Math.max(0, (this.goal.target ?? 0) - (this.goal.current ?? 0));
+    this.increment(this.goal.id, Math.min(amount, remaining));
+    this.batchAmount = 1;
   }
 
   toggleChildrenVisibility(): void {

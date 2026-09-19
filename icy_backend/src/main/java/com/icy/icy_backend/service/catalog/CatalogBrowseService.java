@@ -45,7 +45,7 @@ public class CatalogBrowseService {
     private static final Set<String> FAMILIES = Set.of(
             "SHIP", "GROUND_VEHICLE", "POWER_SUIT", "FPS_WEAPON", "SHIP_WEAPON",
             "ARMOR", "SHIP_COMPONENT", "MODULE", "TOOL", "ITEM", "SYSTEM",
-            "PLANET", "MOON", "CITY", "STATION", "JUMP_POINT", "OUTPOST", "LOCATION"
+            "PLANET", "MOON", "CITY", "STATION", "JUMP_POINT", "OUTPOST", "LOCATION", "COMMODITY"
     );
     private static final Set<String> CATALOG_GROUPS = Set.of(
             "STANDARD", "WIKELO", "PYAM_EXEC", "BATTAGLIA"

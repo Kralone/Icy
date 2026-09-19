@@ -2,9 +2,11 @@
 import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ItemCatalogItem, ItemCatalogService } from '../../../../../../core/services/item/item-catalog.service';
-import { ShipService } from '../../../../../../core/services/ship/ship.service';
+import { ItemCatalogItem } from '../../../../../../core/services/item/item-catalog.service';
+import { HttpClient } from '@angular/common/http';
 import { Ship } from '../../../../../../model/ship.model';
+
+
 import {
   FitTabId,
   ModuleFilterId,
@@ -19,10 +21,12 @@ interface FitTabOption {
   imageUrl: string;
 }
 
-interface MockToolRow {
-  name: string;
-  role: string;
-  note: string;
+interface MiningCatalogRow {
+  id: number; name: string; manufacturer: string | null; description: string | null;
+  imageUrl: string | null; focus: string | null; scu: number | null;
+  size: string | null; crew: string | null; flightReady: boolean | null;
+  sourceImageUrl: string | null; sourceUrl: string | null; gameVersion: string | null; updatedAt: string | null;
+  kind: 'ship' | 'gadget' | 'mining_laser' | 'module' | 'cargo_pod';
 }
 
 interface ParsedStatLine {
@@ -73,6 +77,7 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
   shipsLoading = false;
   shipsError = '';
   miningShips: Ship[] = [];
+
   private shipsSubscription?: Subscription;
 
   modulesLoading = false;
@@ -87,32 +92,56 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
   toolsLoading = false;
   toolsError = '';
   miningGadgetItems: ItemCatalogItem[] = [];
+  private catalogMetadata = new Map<number, MiningCatalogRow>();
   selectedGadget: ItemCatalogItem | null = null;
   private toolsSubscription?: Subscription;
   private routeQuerySubscription?: Subscription;
 
-  readonly toolRows: MockToolRow[] = [
-    { name: 'Multitool + OreBit', role: 'Minage FPS', note: 'Essentiel pour extraction grottes et avant-postes' },
-    { name: 'TruHold Tractor Beam', role: 'Manutention', note: 'Manipulation caisses et cargo en sortie de run' },
-    { name: 'Pyro RYT / medpen', role: 'Survie', note: 'Gestion oxygene, blessures et mobilite terrain' },
-    { name: 'Armure avec sac', role: 'Logistique perso', note: 'Capacite de transport durant les sorties FPS' }
-  ];
 
   constructor(
-    private readonly shipService: ShipService,
-    private readonly itemCatalogService: ItemCatalogService,
+    private readonly http: HttpClient,
+
+
     private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.loadMiningShips();
-    this.loadMiningTools();
+
+    this.loadUnifiedCatalog();
+
     this.applyRequestedState();
     this.routeQuerySubscription = this.route.queryParamMap.subscribe((queryMap) => {
       this.applyRequestedState(queryMap);
     });
   }
 
+  private loadUnifiedCatalog(): void {
+    this.shipsLoading = this.modulesLoading = this.toolsLoading = true;
+    this.shipsError = this.modulesError = this.toolsError = '';
+    this.shipsSubscription = this.http.get<{data: MiningCatalogRow[]}>('/api/front/resources/mining-equipment').subscribe({
+      next: ({data}) => {
+        const rows = data ?? [];
+        this.catalogMetadata = new Map(rows.map(row => [row.id, row]));
+        this.miningShips = rows.filter(row => row.kind === 'ship').map(row => ({
+          id: row.id, name: row.name, brand: {name: row.manufacturer ?? ''},
+          imageUrl: row.imageUrl ?? '', focus: row.focus ?? '', scu: row.scu,
+          size: row.size ?? undefined, crew: row.crew ?? '', notes: row.description ?? undefined
+        }));
+        const item = (row: MiningCatalogRow): ItemCatalogItem => ({
+          id: row.id, name: row.name, manufacturer: row.manufacturer, imageUrl: row.imageUrl,
+          description: row.description, stats: null,
+          category: {id: row.id, name: ({gadget: 'Gadget de minage', mining_laser: 'Tête de minage', module: 'Module de minage', cargo_pod: 'Sac cargo', ship: 'Vaisseau'})[row.kind]}
+        });
+        this.miningModuleItems = rows.filter(row => ['mining_laser', 'module', 'cargo_pod'].includes(row.kind)).map(item);
+        this.miningGadgetItems = rows.filter(row => row.kind === 'gadget').map(item);
+        this.shipsLoading = this.modulesLoading = this.toolsLoading = false;
+      },
+      error: () => {
+        this.shipsLoading = this.modulesLoading = this.toolsLoading = false;
+        this.shipsError = this.modulesError = this.toolsError = 'Impossible de charger le catalogue de minage.';
+      }
+    });
+  }
   ngOnDestroy(): void {
     if (this.shipsSubscription) {
       this.shipsSubscription.unsubscribe();
@@ -141,10 +170,6 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
 
   trackShip(_: number, ship: Ship): string {
     return `${ship.id}-${ship.name}`;
-  }
-
-  trackName(_: number, row: { name: string }): string {
-    return row.name;
   }
 
   trackTab(_: number, tab: FitTabOption): FitTabId {
@@ -203,6 +228,17 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     return ship.brand?.name ?? 'Marque inconnue';
   }
 
+  itemProvenance(id: number | undefined): string {
+    const row = id === undefined ? undefined : this.catalogMetadata.get(id);
+    return `${row?.gameVersion || 'Version non renseignée'} · ${row?.updatedAt ? this.formatDate(row.updatedAt) : 'Date source inconnue'}`;
+  }
+
+  formatDate(value: string | null): string {
+    if (!value) return 'date non renseignée';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString('fr-FR');
+  }
+
   formatScu(value: number | null | undefined): string {
     if (value === null || value === undefined || Number.isNaN(value)) {
       return '-';
@@ -230,73 +266,12 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
       });
   }
 
-  private loadMiningShips(): void {
-    this.shipsLoading = true;
-    this.shipsError = '';
-
-    this.shipsSubscription = this.shipService.getAllShips().subscribe({
-      next: (response) => {
-        const ships = response?.data ?? [];
-        this.miningShips = ships
-          .filter((ship) => this.isMiningShip(ship) && ship.flightReady === true)
-          .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
-        this.shipsLoading = false;
-      },
-      error: () => {
-        this.shipsLoading = false;
-        this.shipsError = 'Impossible de charger les vaisseaux de minage depuis le backend.';
-      }
-    });
-  }
-
-  private loadMiningTools(): void {
-    this.modulesLoading = true;
-    this.toolsLoading = true;
-    this.modulesError = '';
-    this.toolsError = '';
-
-    this.toolsSubscription = this.itemCatalogService.listFrontItems().subscribe({
-      next: (response) => {
-        const items = response?.data ?? [];
-        this.miningModuleItems = items
-          .filter((item) => this.isMiningModule(item))
-          .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
-        this.miningGadgetItems = items
-          .filter((item) => this.isMiningGadget(item))
-          .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
-        this.modulesLoading = false;
-        this.toolsLoading = false;
-      },
-      error: () => {
-        this.modulesLoading = false;
-        this.toolsLoading = false;
-        this.modulesError = 'Impossible de charger les modules de minage depuis le backend.';
-        this.toolsError = 'Impossible de charger les outils de minage depuis le backend.';
-      }
-    });
-  }
-
-  private isMiningShip(ship: Ship): boolean {
-    const focus = (ship.focus ?? '').toLowerCase();
-    return focus.includes('mining') || focus.includes('mine') || focus.includes('minage') || focus.includes('extract');
-  }
-
-  private isMiningGadget(item: ItemCatalogItem): boolean {
-    const category = (item.category?.name ?? '').toLowerCase();
-    return category.includes('gadget') && category.includes('mining');
-  }
-
-  private isMiningModule(item: ItemCatalogItem): boolean {
-    const category = (item.category?.name ?? '').toLowerCase();
-    return category.includes('mining laser') || category.includes('cargo pod');
-  }
-
   private moduleType(item: ItemCatalogItem): ModuleFilterId | null {
     const category = (item.category?.name ?? '').toLowerCase();
-    if (category.includes('mining laser')) {
+    if (category.includes('tête de minage')) {
       return 'mining_laser';
     }
-    if (category.includes('cargo pod')) {
+    if (category.includes('sac cargo')) {
       return 'cargo_pod';
     }
     return null;

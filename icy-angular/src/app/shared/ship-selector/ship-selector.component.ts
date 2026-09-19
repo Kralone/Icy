@@ -220,8 +220,8 @@ export class ShipSelectorComponent implements OnInit, OnChanges {
     if (ship.catalogGroup) return ship.catalogGroup;
 
     const normalizedName = ship.name?.trim().toLowerCase() ?? '';
+    if (/\bpyam(?:\s+exec)?\b/.test(normalizedName)) return 'PYAM_EXEC';
     if (/\bwikelo\b/.test(normalizedName)) return 'WIKELO';
-    if (/\bpyam\s+exec$/.test(normalizedName)) return 'PYAM_EXEC';
     if (/\salliance$/.test(normalizedName)) return 'BATTAGLIA';
     return 'STANDARD';
   }

@@ -175,9 +175,7 @@ public class WikeloService {
 
     private String extractMissionText(List<List<String>> rows, int startRow, int col) {
         List<String> lines = new ArrayList<>();
-        for (int offset = 1; offset <= 14; offset++) {
-            int row = startRow + offset;
-            if (row >= rows.size()) break;
+        for (int row = startRow + 1; row < rows.size(); row++) {
             String value = clean(getCell(rows, row, col));
             if (value.isBlank()) continue;
             if (value.startsWith("Credit:")) continue;
@@ -191,9 +189,10 @@ public class WikeloService {
 
     private String extractComponentsText(List<List<String>> rows, int startRow, int col) {
         List<String> components = new ArrayList<>();
-        for (int offset = 1; offset <= 14; offset++) {
-            int row = startRow + offset;
-            if (row >= rows.size()) break;
+        // Do not impose a fixed number of rows here. PYAM/Executive ships can
+        // list a long internal fit; stopping at fourteen rows silently drops
+        // the last modules. The next ship header is the unambiguous boundary.
+        for (int row = startRow + 1; row < rows.size(); row++) {
 
             String type = clean(getCell(rows, row, col));
             if (isShipHeaderCell(rows, row, col, type)) break;

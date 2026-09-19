@@ -106,3 +106,9 @@ La rotation du mot de passe du compte RabbitMQ existant est coordonnÃ©e avec les
 deux chemins Vault par `rotate-rabbitmq-password.sh`. Le secret est gÃ©nÃ©rÃ© sur
 le VPS, n'est jamais affichÃ© et l'ancien Ã©tat est restaurÃ© automatiquement si
 la recrÃ©ation ou les contrÃ´les du backend/bot Ã©chouent.
+
+## Catalogue ressources V33
+
+La release ressources regroupe les anciennes migrations de développement V33 à V37 dans `V33__resources_catalogue.sql`. La production reste en V32 avant promotion et applique une seule migration transactionnelle PostgreSQL. Le précontrôle accepte V32 ou V33 ; le contrôle runtime vérifie V1–V33 et les structures ressources.
+
+Le staging anciennement V37 fait l’objet d’une réconciliation explicite et sauvegardée de son historique ; cette opération est interdite sur la production. La base de développement V32 migre normalement. Aucun `repair` aveugle ni suppression de données métier.

@@ -19,6 +19,11 @@ export interface CelestialBody {
 }
 
 export interface CatalogLocationImage {
+  id?: number;
+  source?: string | null;
+  sourceUrl?: string | null;
+  sourceVersion?: string | null;
+  sourceUpdatedAt?: string | null;
   name: string;
   systemName: string | null;
   family: string;

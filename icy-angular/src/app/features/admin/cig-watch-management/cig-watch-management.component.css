@@ -4,6 +4,9 @@
 .entry-actions button { padding: .55rem .85rem; border: 1px solid #397b91; border-radius: .5rem; color: #e3f9ff; background: #173b4a; cursor: pointer; }
 .entry-actions button:disabled { opacity: .5; cursor: wait; }
 .entry-actions a { color: #8bdaf2; }
+.badge.sneak-peek { background:#4a3159; border-color:#ad79c7; color:#f0d8ff; font-weight:700; }
+.sneak-peek-image { margin: 16px 0; overflow:hidden; border:1px solid #ad79c766; border-radius:12px; background:#09131f; }
+.sneak-peek-image img { display:block; width:100%; max-height:420px; object-fit:cover; }
 .translation-editor { display: grid; gap: .6rem; padding: 1rem; border: 1px solid #397b91; border-radius: .6rem; }
 .translation-editor input, .translation-editor textarea { box-sizing: border-box; width: 100%; min-width: 0; color: #e3f9ff; background: #0c202c; border: 1px solid #397b91; border-radius: .35rem; padding: .7rem; font: inherit; }
 .translation-editor p { color: #adbfcb; font-size: .9rem; margin: 0; }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { WebSocketService } from '../websocket/websocket.service';
-import { Observable } from 'rxjs';
+import { merge, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {Ship, ShipCreateDTO} from '../../../model/ship.model';
 import { ShipListDTO } from '../../../model/ShipListDTO.model';
@@ -72,7 +72,21 @@ export class ShipService {
    * Écoute les mises à jour globales de la flotte (résumé).
    */
   getFleetSummary(): Observable<any> {
-    return this.wsService.listenForFleetUpdate();
+    // L’API fournit l’état initial ; le WebSocket ne diffuse ensuite que les changements.
+    // S’abonner uniquement au WebSocket laissait l’écran vide jusqu’à une nouvelle mutation.
+    return merge(
+      this.http.get('/api/user-ships/fleet-summary'),
+      this.wsService.listenForFleetUpdate()
+    );
+  }
+
+  updateUserShipAcquisition(shipId: number, acquisitionType: 'rsi' | 'ingame' | 'reward_ingame' | 'loaner'): Observable<any> {
+    return this.http.put('/api/user-ships/acquisition', {
+      shipId,
+      inGamePurchase: acquisitionType === 'ingame',
+      rewardInGame: acquisitionType === 'reward_ingame',
+      loaner: acquisitionType === 'loaner'
+    }, { params: { shipId } });
   }
 
   // ======================================================

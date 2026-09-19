@@ -44,7 +44,7 @@
                 </div>
                 <div class="relative w-full bg-white/10 rounded-full h-3 shadow-inner">
                   <div class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-                  [style.width.%]="Math.min(100, ((p.total || 0) / globalMax) * 100)"></div>
+                  [style.background]="progressBackground(p.total || 0, globalMax)" [style.width.%]="Math.min(100, ((p.total || 0) / globalMax) * 100)"></div>
                   @if (event.scoreSchema?.total?.milestones; as milestones) {
                     @for (m of milestones; track m) {
                       <div class="absolute top-0 bottom-0 w-0.5 bg-white/20 z-10" [style.left.%]="(m.at / globalMax) * 100">

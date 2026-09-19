@@ -202,6 +202,15 @@ describe('Wikelo catalogue', () => {
     expect(component.filteredEquipment).toEqual([weapon]);
   });
 
+  it('places equipment with a current recipe before unavailable entries', () => {
+    const available = {id: 3, name: 'Zeta Weapon', family: 'FPS_WEAPON', recipes: [{id: 'zeta', name: 'Zeta trade',
+      reputation: null, sourceUrl: '', sourceVersion: '4.10', ingredients: [], rewards: []}]} as unknown as WikeloEquipment;
+    const unavailable = {id: 4, name: 'Alpha Weapon', family: 'FPS_WEAPON'} as WikeloEquipment;
+    component.equipment = [unavailable, available];
+    component.selectedView = 'weapons';
+    expect(component.filteredEquipment).toEqual([available, unavailable]);
+  });
+
   it('extracts armor specifications without changing units or discarding descriptive prose', () => {
     const armor = {id: 1, family: 'ARMOR', manufacturer: null,
       description: "Type d'article : Armure Lourde\nRéduction des dégâts : 40%\nTempérature de fonctionnement : -95 / 120 °C\nProtection contre les radiations : 52800 REM\nNeutralisation des radiations : 251,1 REM/s\n\nCette armure comporte des crocs.\nDes os sont fixés à l’ensemble.\n\nCouleur : sombre."

@@ -21,7 +21,8 @@ import java.util.List;
 public class CatalogEconomyMapper {
     private static final String SOURCE = "UEX";
     private static final List<String> REQUIRED_DATASETS = List.of(
-            "terminals", "items_prices", "vehicles_purchases_prices", "vehicles_rentals_prices"
+            "terminals", "items_prices", "vehicles_purchases_prices", "vehicles_rentals_prices",
+            "commodities", "commodities_prices", "refineries_methods", "refineries_capacities", "refineries_yields", "refineries_audits"
     );
     private static final String UPSERT_SQL = """
             INSERT INTO catalog.offers (

@@ -16,6 +16,7 @@
   }
 </section>
 
+
 @if (activeTab === 'ships') {
   <section class="fit-panel">
     @if (shipsLoading) {
@@ -32,10 +33,15 @@
         @for (ship of miningShips; track trackShip($index, ship)) {
           <article class="ship-card">
             <div class="ship-card__visual">
-              <img class="ship-card__image" [src]="ship.imageUrl" [alt]="ship.name" loading="lazy" decoding="async" />
+              @if (ship.imageUrl) {
+                <img class="ship-card__image" [src]="ship.imageUrl" [alt]="ship.name" loading="lazy" decoding="async" />
+              } @else {
+                <div class="module-card__placeholder">Image indisponible</div>
+              }
             </div>
             <div class="ship-card__body">
               <h3>{{ ship.name }}</h3>
+              <small class="catalog-freshness">{{ itemProvenance(ship.id) }}</small>
               <p>{{ brandName(ship) }} · {{ ship.focus || 'Focus non renseigne' }}</p>
               <dl class="ship-card__stats">
                 <div>
@@ -90,7 +96,7 @@
     }
     @if (!modulesLoading && !modulesError && filteredMiningModuleItems().length) {
       <div class="module-grid">
-        @for (item of filteredMiningModuleItems(); track trackName($index, item)) {
+        @for (item of filteredMiningModuleItems(); track item.id) {
           <article class="module-card module-card--clickable" (click)="openGadgetDetails(item)">
             <div class="module-card__visual module-card__visual--image">
               @if (item.imageUrl) {
@@ -103,6 +109,7 @@
             </div>
             <div class="module-card__body">
               <h3>{{ item.name }}</h3>
+              <small class="catalog-freshness">{{ itemProvenance(item.id) }}</small>
               <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
               <section class="module-card__notes">
                 <h4>Description</h4>
@@ -129,7 +136,7 @@
     }
     @if (!toolsLoading && !toolsError && miningGadgetItems.length) {
       <div class="module-grid">
-        @for (item of miningGadgetItems; track trackName($index, item)) {
+        @for (item of miningGadgetItems; track item.id) {
           <article class="module-card module-card--clickable" (click)="openGadgetDetails(item)">
             <div class="module-card__visual module-card__visual--image">
               @if (item.imageUrl) {
@@ -142,6 +149,7 @@
             </div>
             <div class="module-card__body">
               <h3>{{ item.name }}</h3>
+              <small class="catalog-freshness">{{ itemProvenance(item.id) }}</small>
               <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
               <section class="module-card__notes">
                 <h4>Description</h4>
@@ -162,6 +170,7 @@
         <div>
           <span class="module-modal__eyebrow">Fiche gadget</span>
           <h3>{{ selectedGadget.name }}</h3>
+          <small class="catalog-freshness">{{ itemProvenance(selectedGadget.id) }}</small>
           <p class="module-modal__manufacturer">
             Manufacturer: <strong>{{ selectedGadget.manufacturer || 'Manufacturer non renseigne' }}</strong>
           </p>

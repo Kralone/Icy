@@ -22,6 +22,14 @@ h3 { margin: 0 0 18px; font-size: 22px; font-weight: 600; line-height: 1.2; colo
 .ship-specs dd { margin: 0; color: #e0f2fe; font-size: 14px; }
 .ship-description { color: #bdcddd; font-size: 13px; line-height: 1.65; margin: 0; white-space: pre-line; }
 .ship-missing { color: #92a8bb; font-size: 13px; }
+.ship-loadout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px; }
+.ship-loadout section { background:#101f31; border:1px solid #29465d; border-radius:10px; padding:12px; }
+.ship-loadout h4 { margin:0 0 8px; color:#a5f3fc; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+.ship-loadout h4 span { color:#8faec4; font-weight:400; margin-left:4px; }
+.ship-loadout ul { list-style:none; padding:0; margin:0; display:grid; gap:5px; }
+.ship-loadout li { display:flex; justify-content:space-between; gap:8px; color:#d8e8f3; font-size:12px; }
+.ship-loadout b { color:#6ee7d3; font-weight:600; }
+@media (max-width:640px) { .ship-loadout { grid-template-columns:1fr; } }
 @media (min-width: 1800px) { .ships-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 640px) {
   .hangar-ships { padding: 16px; }

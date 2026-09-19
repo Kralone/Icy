@@ -69,28 +69,29 @@
           @for (ship of filteredShips; track ship) {
             <div
               class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg overflow-hidden transition transform hover:scale-105 hover:border-cyan-400"
+              role="button" tabindex="0" (click)="openShipDetail(ship)" (keydown.enter)="openShipDetail(ship)"
               >
               <button
-                (click)="deleteShip(ship.shipId)"
+                (click)="deleteShip(ship.shipId); $event.stopPropagation()"
                 class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
                 title="Supprimer"
                 >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7V4h6v3m-9 0 1 13h8l1-13" />
                 </svg>
               </button>
+              <button type="button" (click)="openEdit(ship, $event)" class="absolute top-3 left-14 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 hover:bg-cyan-600 text-white rounded-full p-2 shadow-lg" title="Modifier l’acquisition" aria-label="Modifier l’acquisition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 3.487 3.651 3.651M4 20l4.2-.8L19.7 7.7a2.6 2.6 0 0 0-3.7-3.7L4.5 15.5 4 20Z" /></svg>
+              </button>
               @if (getBrandLogo(ship.brand)) {
-                <img
-                  [src]="getBrandLogo(ship.brand)"
-                  alt="Logo marque"
-                  class="hangar-brand-logo absolute top-3 right-3 w-16 h-16 object-contain bg-slate-900/90 rounded-xl p-2 shadow-lg"
-                  />
+                <div class="hangar-brand-badge absolute top-3 right-3" [attr.aria-label]="'Constructeur : ' + ship.brand" [title]="ship.brand">
+                  <img [src]="getBrandLogo(ship.brand)" [alt]="ship.brand" class="hangar-brand-logo" />
+                </div>
               }
               <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
               <div class="p-4 space-y-1">
                 <h2 class="text-lg font-semibold text-white">{{ ship.name }}</h2>
-                <p class="text-sm text-gray-300">Fabricant : {{ ship.brand }}</p>
-                <p class="text-sm text-gray-300">Rôle : {{ ship.focus }}</p>
+                <p class="text-sm text-gray-300">Rôle : {{ ship.focus || 'Non classé' }}</p>
                 <p class="text-sm text-gray-300">Équipage : {{ ship.crew }}</p>
               </div>
               <div
@@ -129,5 +130,18 @@
       (close)="closeModal()"
       (confirmSelection)="onShipSelected($event)"
     ></app-ship-selector>
+
+    <app-ship-detail-modal [ship]="selectedShipDetail" (closed)="closeShipDetail()"></app-ship-detail-modal>
+
+    @if (editingShip) {
+      <div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4" (click)="closeEdit()">
+        <section class="w-full max-w-md rounded-2xl border border-cyan-300/40 bg-slate-900 p-6 shadow-2xl" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between"><h2 class="text-lg font-semibold text-cyan-100">Modifier l’acquisition</h2><button type="button" class="text-slate-400 hover:text-white" (click)="closeEdit()" aria-label="Fermer">×</button></div>
+          <p class="mt-2 text-sm text-slate-300">{{ editingShip.name }}</p>
+          <label class="mt-5 block text-sm text-slate-300">Type de possession<select [(ngModel)]="editAcquisitionType" class="mt-2 w-full rounded-lg border border-white/20 bg-slate-800 px-3 py-2 text-white"><option value="rsi">RSI</option><option value="ingame">Achat In Game</option><option value="reward_ingame">Récompense In Game</option><option value="loaner">Loaner</option></select></label>
+          <div class="mt-6 flex justify-end gap-2"><button type="button" class="rounded-lg border border-white/20 px-4 py-2 text-sm" (click)="closeEdit()">Annuler</button><button type="button" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950" (click)="saveEdit()">Enregistrer</button></div>
+        </section>
+      </div>
+    }
 
 

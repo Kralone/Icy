@@ -9,6 +9,7 @@
 }
 
 @if (!miningLoading && !miningError && sortedPlanetGroups.length) {
+  <p class="mining-source-note">Les fréquences observées et concentrations dépendent de la source et de la version du jeu. Une valeur absente reste non renseignée.</p>
   <div class="mining-search-wrap">
     <div class="mining-search-row">
       <input
@@ -57,10 +58,10 @@
                 class="ore-ranking-item"
                 (click)="focusOreResult(result)"
                 >
-                <span class="ore-ranking-item__rank">#{{ idx + 1 }}</span>
+                <span class="ore-ranking-item__rank">{{ result.probability == null ? '—' : '#' + (idx + 1) }}</span>
                 <div class="ore-ranking-item__meta">
                   <span class="ore-ranking-item__location">{{ result.displayLabel }}</span>
-                  <span class="ore-ranking-item__planet">{{ result.groupPlanet }} · {{ result.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Planete' }}</span>
+                  <span class="ore-ranking-item__planet">{{ result.groupPlanet }} · {{ result.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Site' }}</span>
                 </div>
                 <div class="ore-ranking-item__bar">
                   <span class="ore-ranking-item__fill" [style.width]="probabilityBarWidth(result.probability)"></span>
@@ -110,11 +111,11 @@
                 <button
                   type="button"
                   class="mining-location-menu__item"
-                  [class.mining-location-menu__item--active]="selectedLocation?.id === location.id"
-                  (click)="selectLocation(location.id)"
+                  [class.mining-location-menu__item--active]="selectedLocation?.key === location.key"
+                  (click)="selectLocation(location.key)"
                   >
                   <span class="mining-location-menu__label">{{ location.displayLabel }}</span>
-                  <span class="mining-location-menu__type">{{ location.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Planete' }}</span>
+                  <span class="mining-location-menu__type">{{ location.visibilityKind === 'LAGRANGE' ? 'Lx' : 'Site' }}</span>
                 </button>
               }
               @if (!selectedGroup.locations.length) {
@@ -125,13 +126,20 @@
             </aside>
             <div class="mining-location-content" [class.mining-location-content--animating]="isLocationDetailAnimating">
               @if (selectedLocation; as location) {
+                <p class="mining-source-note">
+                  {{ location.gameVersion || 'Version non renseignée' }} · mise à jour {{ formatSourceDate(location.updatedAt) }}
+                  @if (location.sourceUrl) { · <a [href]="location.sourceUrl" target="_blank" rel="noopener noreferrer">Source</a> }
+                </p>
                 <div class="mining-card__table-wrap">
                   <table class="mining-table">
                     <thead>
                       <tr>
                         <th>Location</th>
-                        <th>Ore</th>
-                        <th>%</th>
+                        <th>Minerai</th>
+                        <th>Fréquence</th>
+                        <th>Concentration min.</th>
+                        <th>Médiane</th>
+                        <th>Concentration max.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -140,13 +148,20 @@
                           <td>{{ location.displayLabel }}</td>
                           <td>-</td>
                           <td>-</td>
+                          <td>-</td><td>-</td><td>-</td>
                         </tr>
                       }
                       @for (ore of selectedLocationOres; track ore; let idx = $index) {
                         <tr>
                           <td>{{ idx === 0 ? location.displayLabel : '' }}</td>
-                          <td class="mining-table__ores">{{ ore.oreCode }}</td>
+                          <td class="mining-table__ores">
+                            @if (ore.imageUrl) { <img [src]="ore.imageUrl" alt="" loading="lazy" width="32" height="32" style="object-fit: contain; vertical-align: middle; margin-right: 8px" /> }
+                            {{ ore.oreCode }}
+                          </td>
                           <td>{{ formatPercent(ore.probability) }}</td>
+                          <td>{{ formatPercent(ore.minPct) }}</td>
+                          <td>{{ formatPercent(ore.medPct) }}</td>
+                          <td>{{ formatPercent(ore.maxPct) }}</td>
                         </tr>
                       }
                     </tbody>

@@ -9,8 +9,9 @@
   <div class="relative mb-10 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_55%)]"></div>
     <div class="relative space-y-3">
-      <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte</p>
-      <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Atlas des vaisseaux</h2>
+      <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Flotte partagée</p>
+      <h2 class="text-3xl sm:text-4xl font-semibold text-cyan-200">Qui possède quoi</h2>
+      <p class="max-w-2xl text-sm text-slate-300">Chaque carte regroupe un modèle et affiche les membres qui le possèdent.</p>
     </div>
   </div>
 
@@ -18,19 +19,23 @@
   @if (!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0) {
     @for (focus of objectKeys(fleetSummary); track focus) {
       <div class="mb-12">
-        <div class="flex flex-col lg:flex-row gap-6">
-          <div class="lg:w-1/4 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Focus</p>
-            <h3 class="text-2xl font-semibold text-cyan-200 mt-2">{{ focus }}</h3>
-            <div class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+        <div class="fleet-focus-section">
+          <div class="fleet-focus-heading">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Catégorie</p>
+              <h3 class="text-xl font-semibold text-cyan-100 mt-1">{{ focus }}</h3>
+            </div>
+            <div class="fleet-focus-count">
               <span class="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
               {{ shipCount(focus) }} {{ shipCount(focus) === 1 ? 'vaisseau' : 'vaisseaux' }}
             </div>
           </div>
-          <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div class="fleet-ship-grid">
             @for (ship of fleetSummary[focus]; track ship.name) {
               <div
-                class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
+                class="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
+                role="button" tabindex="0" (click)="openShip(ship)" (keydown.enter)="openShip(ship)"
+                [title]="ship.owners?.length ? 'Propriétaires : ' + ship.owners.join(', ') : 'Propriétaire non renseigné'"
                 >
                 <div class="relative w-full" style="aspect-ratio: 16 / 10;">
                   @if (ship.imageUrl) {
@@ -50,18 +55,18 @@
                     <img
                       [src]="ship.brandImageUrl"
                       alt="Logo marque"
-                      class="fleet-brand-logo absolute top-3 right-3 w-16 h-16 object-contain rounded-xl bg-slate-900/85 p-2 shadow-lg"
+                      class="fleet-brand-logo absolute top-3 right-3 w-16 h-16 object-contain rounded-full bg-slate-900/85 p-2 shadow-lg"
                       />
                   }
                 </div>
-                <div class="p-3 space-y-1.5">
+                <div class="p-3">
                   <div class="text-base font-semibold text-white truncate" [title]="ship.name">
                     {{ ship.name }}
                   </div>
-                  <div class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
-                    <span class="h-2 w-2 rounded-full bg-cyan-400/80"></span>
-                    {{ focus }}
-                  </div>
+                </div>
+                <div class="fleet-owner-popover" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="0" [attr.aria-label]="ship.owners?.length ? 'Afficher les propriétaires' : 'Propriétaire non renseigné'">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 4 18.5V20m6-10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm10 10v-1.5a4.5 4.5 0 0 0-3.2-4.3m-1.8-4.2a3 3 0 0 0 0-6"/></svg>
+                  <div class="fleet-owner-tooltip">@if (ship.owners?.length) { @for (owner of ship.owners; track owner) { <span>{{ owner }}</span> } } @else { <span>Propriétaire non renseigné</span> }</div>
                 </div>
               </div>
             }
@@ -79,7 +84,5 @@
       </div>
     }
 
-    <!-- Aucun vaisseau -->
+  <app-ship-detail-modal [ship]="selectedShip" [owners]="selectedShip?.owners || []" (closed)="closeShip()"></app-ship-detail-modal>
   </div>
-
-

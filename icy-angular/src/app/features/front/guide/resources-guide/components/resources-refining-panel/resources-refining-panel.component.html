@@ -7,7 +7,7 @@
 
 @if (!loading && !error) {
   <section class="refining-summary">
-    <span>Rendements UEX: {{ formatDate(yieldsFetchedAt || '') }}</span>
+    <span>Rendements UEX · {{ yieldsGameVersion || 'version non renseignée' }} · relevé {{ formatDate(yieldsFetchedAt || '') }}</span>
   </section>
   @if (refineries.length) {
     <section class="refining-block">
@@ -54,6 +54,7 @@
                         class="refinery-thumb"
                         [src]="row.imageUrl"
                         [alt]="row.stationName"
+                        [title]="row.imageProvenance || ''"
                         loading="lazy"
                         decoding="async"
                         />
@@ -71,13 +72,13 @@
                 <tr class="refining-expand">
                   <td colspan="2">
                     <div class="refining-expand__inner" [class.refining-expand__inner--open]="isExpanded(row)">
-                      <div class="refining-expand__head">Rendements a {{ row.stationName }}</div>
+                      <div class="refining-expand__head">Bonus et malus à {{ row.stationName }}</div>
                       @if (row.yields.length) {
                         <table class="refining-table refining-table--nested">
                           <thead>
                             <tr>
                               <th>Minerai</th>
-                              <th>Rendement</th>
+                              <th>Bonus / malus</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -96,6 +97,10 @@
                                     ></span>
                                     <span class="yield-meter__label">{{ formatNumber(yieldRow.bestYieldPct, '%') }}</span>
                                   </div>
+                                  <small class="refining-source" [title]="'UEX · ' + (yieldsGameVersion || 'version non renseignée')">
+                                    {{ yieldRow.sourceUpdatedAt ? formatDate(yieldRow.sourceUpdatedAt) : 'Date source inconnue' }}
+                                    @if (yieldFreshness(yieldRow) === 'Relevé ancien') { · Relevé ancien }
+                                  </small>
                                 </td>
                               </tr>
                             }

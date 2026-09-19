@@ -21,15 +21,19 @@ export interface UexResourceSale {
   displayName: string;
   canonicalName: string;
   kind: string;
-  baseSell: number;
+  baseSell: number | null;
   bestSell: number | null;
   bestSellTerminal: string | null;
   salePoints: UexResourceSalePoint[];
+  sourceFetchedAt?: string | null;
+  sourceGameVersion?: string | null;
 }
 
 export interface UexResourceSalePoint {
   terminalName: string;
   sellPrice: number;
+  observedAt?: string | null;
+  gameVersion?: string | null;
 }
 
 export interface UexRefineryDatasets {
@@ -41,6 +45,10 @@ export interface UexRefineryDatasets {
   capacitiesFetchedAt: string | null;
   yieldsFetchedAt: string | null;
   auditsFetchedAt: string | null;
+  methodsGameVersion?: string | null;
+  capacitiesGameVersion?: string | null;
+  yieldsGameVersion?: string | null;
+  auditsGameVersion?: string | null;
 }
 
 export interface UexVehicleRental {
@@ -74,7 +82,7 @@ export interface UexVehicleTerminal {
   screenshot: string | null;
 }
 
-export type CatalogMapScope = 'VEHICLES' | 'ITEMS' | 'LOCATIONS' | 'ECONOMY' | 'WIKELO';
+export type CatalogMapScope = 'VEHICLES' | 'ITEMS' | 'LOCATIONS' | 'COMMODITIES' | 'ECONOMY' | 'WIKELO';
 
 export interface CatalogSyncRun {
   id: number;

@@ -1,3 +1,4 @@
+import { scweProgressBackground } from '../scwe-progress.utils';
 import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ type ProgressForm = FormGroup<Record<string, FormControl<number>>>;
   templateUrl: './scwe-progress-editor.component.html',
 })
 export class ScweProgressEditorComponent implements OnChanges {
+  readonly progressBackground = scweProgressBackground;
   @Input() event!: ScWorldEventDto;
   @Input() participation: ScWorldEventParticipationDto | null = null;
   @Input() readonly = false;

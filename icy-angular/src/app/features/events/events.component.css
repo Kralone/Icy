@@ -25,6 +25,15 @@ h1 { font-size: clamp(1.65rem, 3vw, 2.4rem); font-weight: 700; line-height: 1.2;
 .events-spinner { width: 1.5rem; height: 1.5rem; border: 2px solid #365366; border-top-color: #aee8f2; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .events-calendar { max-width: none; margin: auto; border: 1px solid #294455; border-radius: 1rem; padding: 1.2rem; background: #102234; min-height: 660px; }
+.events-state--empty { position: relative; overflow: hidden; display: grid; justify-items: center; gap: 1.1rem; min-height: 340px; padding: 3.5rem 1.5rem; border: 1px solid #2d5269; border-radius: 1.2rem; background: radial-gradient(circle at 50% 15%, #2b718133, transparent 42%), linear-gradient(145deg, #132b3d, #0b1a2a 72%); box-shadow: inset 0 1px #ffffff0b, 0 18px 45px #06111b66; text-align: center; }
+.events-state--empty::before, .events-state--empty::after { content: ''; position: absolute; border: 1px solid #65d8ed2b; border-radius: 50%; pointer-events: none; }
+.events-state--empty::before { width: 280px; height: 280px; top: -165px; right: -55px; }
+.events-state--empty::after { width: 180px; height: 180px; bottom: -115px; left: -40px; }
+.events-state-orbit { display: grid; place-items: center; width: 84px; height: 84px; border: 1px solid #73d8e577; border-radius: 50%; background: #0b2232; box-shadow: 0 0 0 9px #56cde814, 0 0 32px #45d6ed2b; }
+.events-state-orbit svg { width: 42px; height: 42px; fill: none; stroke: #8ae9f5; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.events-state-kicker { color: #79dceb; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+.events-state--empty h2 { margin: .45rem 0 .35rem; color: #f0fbff; font-size: clamp(1.3rem, 2.4vw, 1.85rem); }
+.events-state--empty p { max-width: 34rem; margin: 0 auto; color: #a6c3d2; line-height: 1.65; }
 .events-calendar[hidden] { display: none; }
 .events-calendar full-calendar { display: block; }
 button:focus-visible, a:focus-visible { outline: 2px solid #aee8f2; outline-offset: 4px; }

@@ -1,12 +1,10 @@
 package com.icy.icy_backend.websocket.listener;
 
-import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
 import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.service.user.UserShipService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icy.icy_backend.websocket.dto.FleetWebSocketMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -56,17 +54,9 @@ public class UserShipWebSocketListener {
             }
 
         } else if ( destination != null && destination.equals("/topic/fleet/update")) {
-            try {
-                List<FleetSummaryResponse> fleetSummary = userShipService.getFleetSummaryAsList();
-                String message = "Fleet connected";
-                FleetWebSocketMessage payload = new FleetWebSocketMessage(message, fleetSummary);
-
-
-                messagingTemplate.convertAndSend(destination, payload);
-                log.info("💬 Flotte update envoyés via WebSocket");
-            } catch (Exception e) {
-                log.error("❌ Erreur d'envoi de fleet initial");
-            }
+            // L'état initial est chargé via GET /api/user-ships/fleet-summary.
+            // Le WebSocket reste réservé aux changements après ajout/suppression.
+            log.debug("Abonnement flotte établi; état initial fourni par l'API HTTP");
 
         }
     }

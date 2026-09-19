@@ -1,27 +1,31 @@
 package com.icy.icy_backend.controller.dto.response.front;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
 
 public class UexRefineryDatasetsDTO {
-    private JsonNode methods;
-    private JsonNode capacities;
-    private JsonNode yields;
-    private JsonNode audits;
+    private List<Map<String, Object>> methods;
+    private List<Map<String, Object>> capacities;
+    private List<Map<String, Object>> yields;
+    private List<Map<String, Object>> audits;
     private OffsetDateTime methodsFetchedAt;
     private OffsetDateTime capacitiesFetchedAt;
     private OffsetDateTime yieldsFetchedAt;
     private OffsetDateTime auditsFetchedAt;
+    private String methodsGameVersion;
+    private String capacitiesGameVersion;
+    private String yieldsGameVersion;
+    private String auditsGameVersion;
 
     public UexRefineryDatasetsDTO() {
     }
 
     public UexRefineryDatasetsDTO(
-            JsonNode methods,
-            JsonNode capacities,
-            JsonNode yields,
-            JsonNode audits,
+            List<Map<String, Object>> methods,
+            List<Map<String, Object>> capacities,
+            List<Map<String, Object>> yields,
+            List<Map<String, Object>> audits,
             OffsetDateTime methodsFetchedAt,
             OffsetDateTime capacitiesFetchedAt,
             OffsetDateTime yieldsFetchedAt,
@@ -37,35 +41,35 @@ public class UexRefineryDatasetsDTO {
         this.auditsFetchedAt = auditsFetchedAt;
     }
 
-    public JsonNode getMethods() {
+    public List<Map<String, Object>> getMethods() {
         return methods;
     }
 
-    public void setMethods(JsonNode methods) {
+    public void setMethods(List<Map<String, Object>> methods) {
         this.methods = methods;
     }
 
-    public JsonNode getCapacities() {
+    public List<Map<String, Object>> getCapacities() {
         return capacities;
     }
 
-    public void setCapacities(JsonNode capacities) {
+    public void setCapacities(List<Map<String, Object>> capacities) {
         this.capacities = capacities;
     }
 
-    public JsonNode getYields() {
+    public List<Map<String, Object>> getYields() {
         return yields;
     }
 
-    public void setYields(JsonNode yields) {
+    public void setYields(List<Map<String, Object>> yields) {
         this.yields = yields;
     }
 
-    public JsonNode getAudits() {
+    public List<Map<String, Object>> getAudits() {
         return audits;
     }
 
-    public void setAudits(JsonNode audits) {
+    public void setAudits(List<Map<String, Object>> audits) {
         this.audits = audits;
     }
 
@@ -100,4 +104,13 @@ public class UexRefineryDatasetsDTO {
     public void setAuditsFetchedAt(OffsetDateTime auditsFetchedAt) {
         this.auditsFetchedAt = auditsFetchedAt;
     }
+
+    public String getMethodsGameVersion() { return methodsGameVersion; }
+    public void setMethodsGameVersion(String value) { this.methodsGameVersion = value; }
+    public String getCapacitiesGameVersion() { return capacitiesGameVersion; }
+    public void setCapacitiesGameVersion(String value) { this.capacitiesGameVersion = value; }
+    public String getYieldsGameVersion() { return yieldsGameVersion; }
+    public void setYieldsGameVersion(String value) { this.yieldsGameVersion = value; }
+    public String getAuditsGameVersion() { return auditsGameVersion; }
+    public void setAuditsGameVersion(String value) { this.auditsGameVersion = value; }
 }

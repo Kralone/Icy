@@ -72,7 +72,7 @@
                   @for (location of pagedLocations(); track location) {
                     <tr
                       class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition cursor-pointer"
-                      [class.ore-row-selected]="selectedLocation?.id === location.id"
+                      [class.ore-row-selected]="selectedLocation === location"
                       (click)="selectLocation(location)"
                       >
                       <td class="px-4 py-3 font-semibold text-cyan-100">{{ location.locationCode }}</td>

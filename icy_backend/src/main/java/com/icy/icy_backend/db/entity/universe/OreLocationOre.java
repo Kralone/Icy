@@ -36,16 +36,16 @@ public class OreLocationOre {
     @Column(name = "ore_code", nullable = false, length = 80)
     private String oreCode;
 
-    @Column(name = "probability", nullable = false)
+    @Column(name = "probability")
     private Double probability;
 
-    @Column(name = "min_pct", nullable = false)
+    @Column(name = "min_pct")
     private Double minPct;
 
-    @Column(name = "max_pct", nullable = false)
+    @Column(name = "max_pct")
     private Double maxPct;
 
-    @Column(name = "med_pct", nullable = false)
+    @Column(name = "med_pct")
     private Double medPct;
 
     @CreationTimestamp
