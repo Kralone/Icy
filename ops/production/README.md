@@ -47,7 +47,7 @@ Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des
 opérations stateful distinctes. Elles ne doivent pas être ajoutées à cette
 commande applicative.
 
-La release de l’interface applique une seule migration, V32. Le contrôle
+La précédente release interface appliquait V32. Ce paragraphe est historique ; la procédure actuelle est décrite dans « Catalogue ressources V33 » ci-dessous.
 préalable accepte V31 ou une V32 déjà appliquée, en conservant les chemins de
 mise à niveau antérieurs. Après le démarrage du backend,
 `backend-rollout/verify-flyway-v32.sql` contrôle en lecture seule l’historique
@@ -109,6 +109,6 @@ la recréation ou les contrôles du backend/bot échouent.
 
 ## Catalogue ressources V33
 
-La release ressources regroupe les anciennes migrations de d�veloppement V33 � V37 dans `V33__resources_catalogue.sql`. La production reste en V32 avant promotion et applique une seule migration transactionnelle PostgreSQL. Le pr�contr�le accepte V32 ou V33 ; le contr�le runtime v�rifie V1�V33 et les structures ressources.
+La release ressources regroupe les anciennes migrations de développement V33 à V37 dans `V33__resources_catalogue.sql`. La production reste en V32 avant promotion et applique une seule migration transactionnelle PostgreSQL. Le précontrôle accepte V32 ou V33 ; le contrôle runtime vérifie V1–V33 et les structures ressources.
 
-Le staging anciennement V37 fait l�objet d�une r�conciliation explicite et sauvegard�e de son historique ; cette op�ration est interdite sur la production. La base de d�veloppement V32 migre normalement. Aucun `repair` aveugle ni suppression de donn�es m�tier.
+Le staging anciennement V37 fait l’objet d’une réconciliation explicite et sauvegardée de son historique ; cette opération est interdite sur la production. La base de développement V32 migre normalement. Aucun `repair` aveugle ni suppression de données métier.

@@ -28,7 +28,7 @@ class CatalogMapperTest {
     @Test
     void recognizesLocalizedWikiFlightReadyStatus() throws Exception {
         assertThat(mapper.vehicleFlightReady("vehicles", json("""
-                {"production_status":{"en_EN":"flight-ready","fr_FR":"Prêt à voler"}}
+                {"production_status":{"en_EN":"flight-ready","fr_FR":"PrÃªt Ã  voler"}}
                 """))).isTrue();
     }
 

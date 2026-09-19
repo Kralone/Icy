@@ -26,7 +26,7 @@
     @if (sourceFetchedAt || sourceGameVersion) {
       <p class="resource-source-note">Prix UEX · {{ sourceGameVersion || 'version non renseignée' }} · relevé {{ formatSourceDate(sourceFetchedAt) }}</p>
     }
-    <p class="resource-source-note">Prix par SCU, relev�s depuis moins de 30 jours. Les prix anciens ou sans date sont exclus des estimations.</p>
+    <p class="resource-source-note">Prix par SCU, relevés depuis moins de 30 jours. Les prix anciens ou sans date sont exclus des estimations.</p>
     <div class="resource-sales-table-wrap" aria-label="Tableau des prix de vente">
       <table class="resource-sales-table">
         <thead>
@@ -100,7 +100,7 @@
                   </span>
                   @if (selectedLocation) {
                     <div class="resource-sales-table__subline">
-                      {{ observationLabel(material, true) }}<br>�cart : {{ formatUecWithUnit(selectedLocationDelta(material)) }}
+                      {{ observationLabel(material, true) }}<br>Écart : {{ formatUecWithUnit(selectedLocationDelta(material)) }}
                     </div>
                   }
                 </td>

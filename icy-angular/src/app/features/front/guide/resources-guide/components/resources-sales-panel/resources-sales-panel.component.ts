@@ -141,7 +141,7 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
     const key = this.normalizeSearchKey(this.selectedLocation || '');
     const point = material.salePoints.find(p => p.sellPrice === price &&
       (selected ? this.normalizeSearchKey(p.terminalName).includes(key) : p.terminalName === material.bestSellTerminal));
-    return point ? `Relevé ${this.formatSourceDate(point.observedAt ?? null)} · ${point.gameVersion || 'version inconnue'}` : 'Aucun relevé récent';
+    return point ? `RelevÃ© ${this.formatSourceDate(point.observedAt ?? null)} Â· ${point.gameVersion || 'version inconnue'}` : 'Aucun relevÃ© rÃ©cent';
   }
 
   selectedLocationDelta(material: ResourceSaleMaterial): number | null {

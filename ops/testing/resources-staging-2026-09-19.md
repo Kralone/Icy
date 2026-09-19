@@ -30,16 +30,16 @@
 - Les concentrations sont l'enveloppe min/max des gisements fournis par Wiki, pas une probabilité de présence ni une moyenne de scans joueurs.
 - Le run VEHICLES 11 attend 29 choix de variantes dans l'administration avant publication. Ces choix n'ont pas été résolus arbitrairement.
 - Vérification visuelle desktop/mobile du staging non effectuée : le compte SSH interdit le transfert TCP. Les tests de composants et les contrôles API ne remplacent pas cette vérification.
-- Aucune mise en production effectuée. Les images staging sont des candidates construites depuis l'arbre de travail ; elles ne constituent pas encore une release Git immuable.
-- V36 déjà appliquée a été conservée ; l'ajout du scope COMMODITIES est isolé dans V37.
+- Historique initial des essais : images candidates de travail. La release immuable 81c2de99b2a5e663ae5c1706e38b231c687d9324 a ensuite été construite et validée sur staging.
+- Historique initial des essais : V33 à V37 séparées. Elles sont maintenant regroupées dans une unique V33, après réconciliation explicite du staging.
 
-Images candidates staging : `iceforge/backend:staging-resources-release` et `iceforge/frontend:staging-resources-reviewed`.
+Images finales staging : backend, bot et frontend étiquetés 81c2de99b2a5e663ae5c1706e38b231c687d9324 (bot désactivé sur staging).
 
 ## Regroupement final
 
-- Historique local et staging : V1�V33, checksum V33 `377288752`.
-- Contr�le `verify-flyway-v33.sql` r�ussi sur les deux bases ; backends sains.
-- JAR inspect� : une seule V33, aucune V34�V37. Build : 247 tests, z�ro �chec, 3 ignor�s.
+- Historique local et staging : V1–V33, checksum V33 `377288752`.
+- Contrôle `verify-flyway-v33.sql` réussi sur les deux bases ; backends sains.
+- JAR inspecté : une seule V33, aucune V34–V37. Build : 247 tests, zéro échec, 3 ignorés.
 - Sauvegarde locale : `.codex-tmp/resources-v33/local-before.dump`.
-- Sauvegarde staging et historique pr�c�dent : `/var/backups/iceforge-staging/resources-v33-20260919T160334Z/`.
-- Retour arri�re du regroupement staging : restaurer ensemble l�historique sauvegard� et l�ancienne image, backend arr�t�. Un simple retour � l�ancienne image ne suffit pas.
+- Sauvegarde staging et historique précédent : `/var/backups/iceforge-staging/resources-v33-20260919T160334Z/`.
+- Retour arrière du regroupement staging : restaurer ensemble l’historique sauvegardé et l’ancienne image, backend arrêté. Un simple retour à l’ancienne image ne suffit pas.
