@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Tuple, Optional
 import re
 from urllib.parse import urlsplit
+from messaging.discord_link_store import DiscordLink
 
 logger = logging.getLogger("icy.event_handler")
 EVENT_BUTTON_CUSTOM_ID_RE = re.compile(r"^event:([0-9a-fA-F-]{36}):(-?1|0|1)$")
@@ -171,15 +172,9 @@ class EventHandler:
             else None
         )
         if link is None:
-            message = await channel.send(embed=embed, view=view)
+            link = await self._publish_event_in_order(channel, event_id, payload, embed, view)
+            message = None
             logger.info(f"✅ Événement '{title}' publié dans #{channel.name}")
-            if self.discord_link_store:
-                link = self.discord_link_store.save(
-                    "event", event_id, message.channel.id, message.id
-                )
-            else:
-                channel_id = message.channel.id
-                message_id = message.id
         else:
             logger.info(
                 "♻️ Message Discord existant réutilisé pour eventId=%s", event_id
@@ -196,6 +191,70 @@ class EventHandler:
                 "channelId": channel_id,
             },
         )
+
+    @staticmethod
+    def _event_sort_key(value: object) -> str | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        try:
+            return datetime.fromisoformat(value.strip().replace("Z", "+00:00")).astimezone().isoformat()
+        except ValueError:
+            return None
+
+    async def _publish_event_in_order(self, channel, event_id, payload, embed, view):
+        """Publish a new event and rebuild the channel order when it is inserted earlier.
+
+        Discord messages cannot be moved. Existing embeds are copied before their
+        messages are deleted, so participant fields and event details remain intact.
+        """
+        sort_key = self._event_sort_key(payload.get("date"))
+        if not self.discord_link_store:
+            message = await channel.send(embed=embed, view=view)
+            return DiscordLink(message.channel.id, message.id)
+        channel_id = getattr(channel, "id", None)
+        if not isinstance(channel_id, int):
+            channel_id = self.channel_id
+        existing = self.discord_link_store.list_events(channel_id)
+        needs_reorder = bool(sort_key and any(old_key and sort_key < old_key for _, _, old_key in existing))
+        if not needs_reorder:
+            message = await channel.send(embed=embed, view=view)
+            return self.discord_link_store.save("event", event_id, message.channel.id, message.id, sort_key)
+
+        records = []
+        for old_event_id, old_link, old_key in existing:
+            try:
+                old_message = await channel.fetch_message(old_link.message_id)
+            except discord.NotFound:
+                continue
+            old_embed = old_message.embeds[0] if old_message.embeds else None
+            if old_embed is not None:
+                old_embed = discord.Embed.from_dict(old_embed.to_dict())
+            records.append((old_key or "9999", old_event_id, old_embed))
+        records.append((sort_key or "9999", str(event_id), embed))
+        records.sort(key=lambda record: (record[0], record[1]))
+        old_messages = [link.message_id for _, link, _ in existing]
+        new_links = {}
+        for key, current_event_id, current_embed in records:
+            if current_embed is None:
+                continue
+            current_message = await channel.send(
+                embed=current_embed,
+                view=EventParticipationView(self.rabbit, current_event_id),
+            )
+            saved = self.discord_link_store.save("event", current_event_id, current_message.channel.id, current_message.id, key)
+            new_links[current_event_id] = saved
+        for message_id in old_messages:
+            try:
+                await channel.fetch_message(message_id)
+                await channel.get_partial_message(message_id).delete()
+            except discord.NotFound:
+                pass
+        for current_event_id, saved in new_links.items():
+            if current_event_id != str(event_id):
+                await self.rabbit.publish("event.discordLinked", {
+                    "eventId": current_event_id, "messageId": saved.message_id, "channelId": saved.channel_id,
+                })
+        return new_links[str(event_id)]
 
     async def handle_event_updated(self, payload: dict):
         event_id = payload.get("id")
@@ -253,6 +312,8 @@ class EventHandler:
 
         view = EventParticipationView(self.rabbit, event_id)
         await message.edit(embed=embed, view=view)
+        if self.discord_link_store:
+            self.discord_link_store.save("event", event_id, message.channel.id, message.id, self._event_sort_key(payload.get("date")))
         logger.info(f"✏️ Événement mis à jour dans #{channel.name} ({title})")
 
 

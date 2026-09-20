@@ -2,6 +2,7 @@ import asyncio
 import os
 import tempfile
 import unittest
+import discord
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from messaging.discord_link_store import DiscordLinkStore
@@ -126,6 +127,37 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             payload = {"id": "news-concurrent", "type": {}}
             await asyncio.gather(handler._created(payload), handler._created(payload))
             channel.send.assert_awaited_once()
+            self.assertEqual(2, rabbit.publish.await_count)
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_earlier_event_rebuilds_channel_in_chronological_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            store.save("event", "later", 123, 456, "2026-10-02T12:00:00+00:00")
+            bot = MagicMock()
+            channel = MagicMock()
+            channel.id = 123
+            old = self._message(456, 123)
+            old.embeds = [discord.Embed(title="Later")]
+            channel.fetch_message = AsyncMock(return_value=old)
+            deleted = MagicMock()
+            deleted.delete = AsyncMock()
+            channel.get_partial_message.return_value = deleted
+            first = self._message(900, 123)
+            second = self._message(901, 123)
+            channel.send = AsyncMock(side_effect=[first, second])
+            bot.get_channel.return_value = channel
+            rabbit = MagicMock()
+            rabbit.publish = AsyncMock()
+            handler = EventHandler(bot, rabbit, store)
+
+            await handler.handle_event_created({
+                "id": "earlier", "title": "Earlier", "date": "2026-10-01T12:00:00Z",
+                "participants": [], "type": {},
+            })
+
+            self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
+            deleted.delete.assert_awaited_once()
             self.assertEqual(2, rabbit.publish.await_count)
 
 

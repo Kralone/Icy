@@ -40,6 +40,9 @@ class DiscordLinkStore:
                     )
                     """
                 )
+                columns = {row[1] for row in connection.execute("PRAGMA table_info(discord_links)")}
+                if "sort_key" not in columns:
+                    connection.execute("ALTER TABLE discord_links ADD COLUMN sort_key TEXT")
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS discord_message_refs (
@@ -71,6 +74,7 @@ class DiscordLinkStore:
         resource_id: object,
         channel_id: int,
         message_id: int,
+        sort_key: str | None = None,
     ) -> DiscordLink:
         link = DiscordLink(int(channel_id), int(message_id))
         with closing(self._connect()) as connection:
@@ -78,15 +82,27 @@ class DiscordLinkStore:
                 connection.execute(
                     """
                     INSERT INTO discord_links (
-                        resource_type, resource_id, channel_id, message_id
-                    ) VALUES (?, ?, ?, ?)
+                        resource_type, resource_id, channel_id, message_id, sort_key
+                    ) VALUES (?, ?, ?, ?, ?)
                     ON CONFLICT(resource_type, resource_id) DO UPDATE SET
                         channel_id = excluded.channel_id,
-                        message_id = excluded.message_id
+                        message_id = excluded.message_id,
+                        sort_key = excluded.sort_key
                     """,
-                    (resource_type, str(resource_id), link.channel_id, link.message_id),
+                    (resource_type, str(resource_id), link.channel_id, link.message_id, sort_key),
                 )
         return link
+
+    def list_events(self, channel_id: int) -> list[tuple[str, DiscordLink, str | None]]:
+        """Return event messages in their persisted chronological order metadata."""
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """SELECT resource_id, channel_id, message_id, sort_key
+                   FROM discord_links WHERE resource_type = 'event' AND channel_id = ?
+                   ORDER BY CASE WHEN sort_key IS NULL THEN 1 ELSE 0 END, sort_key, message_id""",
+                (int(channel_id),),
+            ).fetchall()
+        return [(str(row[0]), DiscordLink(int(row[1]), int(row[2])), row[3]) for row in rows]
 
     def delete(self, resource_type: str, resource_id: object):
         with closing(self._connect()) as connection:
