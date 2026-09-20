@@ -291,7 +291,10 @@ public class CatalogMapper {
 
     String vehicleSize(String datasetKey, JsonNode node) {
         if (!"vehicles".equals(datasetKey)) return null;
-        return firstText(node, "size_label", "size");
+        String label = firstText(node, "size_label", "size");
+        if (label != null) return label;
+        JsonNode size = node.path("size");
+        return size.isObject() ? firstText(size, "fr_FR", "fr", "en_EN", "en") : null;
     }
 
     String vehicleCrew(String datasetKey, JsonNode node) {
@@ -302,6 +305,12 @@ public class CatalogMapper {
             return minimum.equals(maximum) ? minimum.toString() : minimum + "-" + maximum;
         }
         Integer crew = integer(node, "crew");
+        JsonNode crewObject = node.path("crew");
+        if (crew == null && crewObject.isObject()) {
+            minimum = integer(crewObject, "min");
+            maximum = integer(crewObject, "max");
+            if (minimum != null && maximum != null) return minimum.equals(maximum) ? minimum.toString() : minimum + "-" + maximum;
+        }
         return crew == null ? null : crew.toString();
     }
 

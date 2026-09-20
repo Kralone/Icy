@@ -8,13 +8,13 @@ h2 { margin: 0; color: #a5f3fc; font-size: 22px; font-weight: 600; }
 .ships-search input { flex: 1; min-width: 0; padding: 11px 13px; background: #071221; border: 1px solid #3c516a; border-radius: 8px; color: #fff; }
 .ships-search button { border: 1px solid #57738b; border-radius: 8px; padding: 10px 13px; color: #cffafe; background: #173448; font-size: 12px; cursor: pointer; }
 .ships-search input:focus-visible, .ships-search button:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 3px; }
-.ships-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; align-items: start; }
-.ship-card { border: 1px solid #2b4055; border-radius: 12px; overflow: hidden; background: #0c1828; }
+.ships-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; align-items: stretch; }
+.ship-card { display: flex; flex-direction: column; border: 1px solid #2b4055; border-radius: 12px; overflow: hidden; background: #0c1828; }
 .ship-media { height: 210px; background: #102235; }
 .ship-media img { width: 100%; height: 100%; object-fit: cover; }
 .ship-placeholder { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; color: #9db3c8; font-size: 12px; }
 .ship-placeholder > span:first-child { font-size: 44px; color: #7c9db7; }
-.ship-info { padding: 20px; }
+.ship-info { display: flex; flex: 1; flex-direction: column; padding: 20px; }
 .ship-manufacturer { color: #a5f3fc; font-size: 11px; margin: 0 0 9px; }
 h3 { margin: 0 0 18px; font-size: 22px; font-weight: 600; line-height: 1.2; color: #edf6ff; }
 .ship-specs { display: flex; flex-wrap: wrap; gap: 20px; margin: 0 0 16px; }
@@ -22,7 +22,7 @@ h3 { margin: 0 0 18px; font-size: 22px; font-weight: 600; line-height: 1.2; colo
 .ship-specs dd { margin: 0; color: #e0f2fe; font-size: 14px; }
 .ship-description { color: #bdcddd; font-size: 13px; line-height: 1.65; margin: 0; white-space: pre-line; }
 .ship-missing { color: #92a8bb; font-size: 13px; }
-.ship-loadout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px; }
+.ship-loadout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:auto; padding-top:18px; }
 .ship-loadout section { background:#101f31; border:1px solid #29465d; border-radius:10px; padding:12px; }
 .ship-loadout h4 { margin:0 0 8px; color:#a5f3fc; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
 .ship-loadout h4 span { color:#8faec4; font-weight:400; margin-left:4px; }
@@ -38,4 +38,3 @@ h3 { margin: 0 0 18px; font-size: 22px; font-weight: 600; line-height: 1.2; colo
   .ship-info { padding: 17px; }
   .ship-media { height: 190px; }
 }
-.ship-media:has(.ship-placeholder) { height: 120px; }
