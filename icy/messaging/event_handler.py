@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import discord
 from discord import ui, ButtonStyle
@@ -197,7 +197,10 @@ class EventHandler:
         if not isinstance(value, str) or not value.strip():
             return None
         try:
-            return datetime.fromisoformat(value.strip().replace("Z", "+00:00")).astimezone().isoformat()
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).isoformat()
         except ValueError:
             return None
 
@@ -215,7 +218,9 @@ class EventHandler:
         if not isinstance(channel_id, int):
             channel_id = self.channel_id
         existing = self.discord_link_store.list_events(channel_id)
-        needs_reorder = bool(sort_key and any(old_key and sort_key < old_key for _, _, old_key in existing))
+        # Older bot installations have no persisted sort key. Rebuild once when
+        # such a message is present so the real Discord order matches the ledger.
+        needs_reorder = bool(sort_key and any(old_key is None or sort_key < old_key for _, _, old_key in existing))
         if not needs_reorder:
             message = await channel.send(embed=embed, view=view)
             return self.discord_link_store.save("event", event_id, message.channel.id, message.id, sort_key)
