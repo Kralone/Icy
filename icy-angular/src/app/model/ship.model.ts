@@ -20,9 +20,15 @@ export interface Ship {
     imageUrl?: string;
   };
   imageUrl: string;
+  imageIsBase?: boolean;
   focus: string;
   crew: string;
   catalogGroup?: ShipCatalogGroup;
+  executiveHangar?: boolean;
+  sourceUrl?: string;
+  sourceVersion?: string;
+  sourceUpdatedAt?: string;
+  catalogFetchedAt?: string;
   notes?: string;
   size?: string;
   scu?: number | null;

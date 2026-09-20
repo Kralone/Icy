@@ -11,7 +11,7 @@
   } @else if (errorMessage) {
     <app-async-state kind="error" [title]="errorMessage" actionLabel="Réessayer" (action)="loadShips()" />
   } @else if (!ships.length) {
-    <app-async-state kind="empty" title="Aucun vaisseau PYAM publié" description="Le catalogue ne contient pas encore de variante attribuée à ces hangars." actionLabel="Actualiser" (action)="loadShips()" />
+    <app-async-state kind="empty" title="Aucune récompense publiée" description="Le catalogue ne contient pas encore de vaisseau attribué à ces hangars." actionLabel="Actualiser" (action)="loadShips()" />
   } @else if (!filteredShips.length) {
     <app-async-state kind="empty" title="Aucun vaisseau trouvé" actionLabel="Effacer la recherche" (action)="searchTerm = ''" />
   } @else {
@@ -25,6 +25,7 @@
           <div class="ship-info">
             @if (ship.brand?.name) { <p class="ship-manufacturer">{{ ship.brand.name }}</p> }
             <h3>{{ ship.name }}</h3>
+            @if (ship.imageIsBase && imageFor(ship)) { <p class="ship-missing">Visuel du modèle de base</p> }
             @if (ship.crew || (ship.scu !== null && ship.scu !== undefined && ship.scu > 0)) {
               <dl class="ship-specs">
                 @if (ship.crew) { <div><dt>Équipage</dt><dd>{{ ship.crew }}</dd></div> }

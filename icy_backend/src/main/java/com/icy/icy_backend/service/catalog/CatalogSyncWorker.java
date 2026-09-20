@@ -102,6 +102,10 @@ public class CatalogSyncWorker {
             } else if (scope == CatalogSyncScope.VEHICLES) {
                 int mappedCount = catalogMapper.mapWikiDataset("vehicles", run.getId());
                 advance(run, "Mapping vehicles : " + mappedCount + " fiches");
+            } else if (scope == CatalogSyncScope.WIKELO) {
+                int mappedCount = catalogMapper.mapWikiDataset("vehicles", run.getId());
+                advance(run, "Mapping vehicles : " + mappedCount + " fiches");
+                publishStoredWikelo(run);
             } else {
                 throw new IllegalStateException("Ce traitement ne peut pas etre repris apres validation");
             }
@@ -219,10 +223,27 @@ public class CatalogSyncWorker {
             return;
         }
 
+        int vehicleCount = wikiScraper.scrape("vehicles", run.getId());
+        advance(run, "Scrape vehicles : " + vehicleCount + " lignes");
         List<WikeloShip> rows = scrapeWikeloRaw(run.getId());
         advance(run, "Scrape Wikelo : " + rows.size() + " offres");
         int recipeCount = equipmentRecipes.scrapeAndStore(run.getId());
         advance(run, "Wikelo : " + recipeCount + " recettes d’équipement brutes");
+        int mappedVehicles = catalogMapper.mapWikiDataset("vehicles", run.getId());
+        advance(run, "Mapping vehicles : " + mappedVehicles + " fiches");
+        wikeloService.publishScrapedShips(rows);
+        advance(run, "Mapping Wikelo : " + rows.size() + " offres publiees");
+        int recipes = equipmentRecipes.publish(run.getId());
+        advance(run, "Mapping Wikelo : " + recipes + " recettes d’équipement publiées");
+    }
+
+    private void publishStoredWikelo(CatalogSyncRun run) {
+        List<WikeloShip> rows = rawStore.loadActive("WIKELO", "offers").stream()
+                .map(this::wikeloShip)
+                .toList();
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("Offres Wikelo brutes introuvables pour la reprise");
+        }
         wikeloService.publishScrapedShips(rows);
         advance(run, "Mapping Wikelo : " + rows.size() + " offres publiees");
         int recipes = equipmentRecipes.publish(run.getId());
@@ -267,7 +288,7 @@ public class CatalogSyncWorker {
         if (scope == CatalogSyncScope.ECONOMY) {
             return economyMapper.requiredDatasets().size() + 1;
         }
-        return scope == CatalogSyncScope.WIKELO ? 4 : 2;
+        return scope == CatalogSyncScope.WIKELO ? 6 : 2;
     }
 
     private void advance(CatalogSyncRun run, String message) {

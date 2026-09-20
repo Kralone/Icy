@@ -9,6 +9,11 @@ const exec = {
 const standard = {id: 75, name: 'F7A Hornet Mk II', imageUrl: '/standard.png', scu: 16} as Ship;
 
 describe('Executive hangar ships', () => {
+  it('includes rewards shared with Wikelo using the collected hangar membership', () => {
+    expect(isExecutiveHangarShip({...standard, name: 'Guardian MX Wikelo War Special', catalogGroup: 'WIKELO', executiveHangar: true})).toBe(true);
+    expect(isExecutiveHangarShip({...standard, name: 'Scorpius Wikelo Sneak Special', catalogGroup: 'WIKELO', executiveHangar: true})).toBe(true);
+    expect(isExecutiveHangarShip({...exec, executiveHangar: false})).toBe(false);
+  });
   it('includes only the explicit PYAM variant, not generic Executive or Wikelo editions', () => {
     expect(isExecutiveHangarShip(exec)).toBe(true);
     expect(isExecutiveHangarShip({...exec, name: 'Syulen PYAM   Exec '})).toBe(true);

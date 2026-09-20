@@ -24,16 +24,20 @@ public class ShipService {
     private final ShipRepository shipRepository;
     private final BrandRepository brandRepository;
     private final MessageService messageService;
+    private final ShipCatalogEnrichment enrichment;
 
-    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService) {
+    public ShipService(ShipRepository shipRepository, BrandRepository brandRepository, MessageService messageService,
+                       ShipCatalogEnrichment enrichment) {
         this.shipRepository = shipRepository;
         this.brandRepository = brandRepository;
         this.messageService = messageService;
+        this.enrichment = enrichment;
     }
 
     public ResponseEntity<MessageResponse<List<Ship>>> getAllShips() {
         logger.info("Récupération de tous les vaisseaux");
         List<Ship> ships = shipRepository.findAll();
+        enrichment.enrich(ships);
         return messageService.buildResponse("ship.found", ships);
     }
 
@@ -43,6 +47,7 @@ public class ShipService {
             logger.warn("Aucun vaisseau trouvé avec le nom: {}", name);
             return new ResourceNotFoundException("Aucun vaisseau trouvé avec le nom: " + name);
         });
+        enrichment.enrich(List.of(ship));
         return messageService.buildResponse("ship.found", ship, ship.getName());
     }
 
@@ -65,15 +70,18 @@ public class ShipService {
                 .orElseThrow(() -> new ResourceNotFoundException("Marque introuvable : " + brandName));
 
         List<Ship> ships = shipRepository.findByBrand(brand);
+        enrichment.enrich(ships);
         return messageService.buildResponse("ship.found", ships);
     }
 
     public Ship findShipById(Long shipId) {
-        return shipRepository.findById(shipId)
+        Ship ship = shipRepository.findById(shipId)
                 .orElseThrow(() -> {
                     logger.warn("Vaisseau introuvable avec ID: {}", shipId);
                     return new ResourceNotFoundException("Aucun vaisseau trouvé avec l'ID: " + shipId);
                 });
+        enrichment.enrich(List.of(ship));
+        return ship;
     }
 
     private ResponseStatusException catalogManagedException() {

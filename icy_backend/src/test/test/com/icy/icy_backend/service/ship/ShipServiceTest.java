@@ -27,7 +27,7 @@ class ShipServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         BrandRepository brandRepository = Mockito.mock(BrandRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);
-        ShipService service = new ShipService(shipRepository, brandRepository, messageService);
+        ShipService service = new ShipService(shipRepository, brandRepository, messageService, Mockito.mock(ShipCatalogEnrichment.class));
 
         Ship ship = new Ship();
         ship.setName("Gladius");
@@ -45,7 +45,7 @@ class ShipServiceTest {
         ShipRepository shipRepository = Mockito.mock(ShipRepository.class);
         BrandRepository brandRepository = Mockito.mock(BrandRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);
-        ShipService service = new ShipService(shipRepository, brandRepository, messageService);
+        ShipService service = new ShipService(shipRepository, brandRepository, messageService, Mockito.mock(ShipCatalogEnrichment.class));
         when(shipRepository.findByName("Ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getShipByName("Ghost"))

@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.OffsetDateTime;
 
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -57,6 +58,27 @@ public class Ship {
     @OneToMany(mappedBy = "ship", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("id ASC")
     private List<ShipCargoGrid> cargoGrids = new ArrayList<>();
+
+    @Transient
+    private String catalogGroup;
+    @Transient
+    private Boolean executiveHangar;
+    @Transient
+    private Boolean imageIsBase;
+    @Transient
+    private List<LoadoutItem> components = List.of();
+    @Transient
+    private List<LoadoutItem> weapons = List.of();
+    @Transient
+    private String sourceUrl;
+    @Transient
+    private String sourceVersion;
+    @Transient
+    private OffsetDateTime sourceUpdatedAt;
+    @Transient
+    private OffsetDateTime catalogFetchedAt;
+
+    public record LoadoutItem(String name, Integer quantity, String imageUrl, String manufacturer) {}
 
     public void setSalePoints(List<ShipSalePoint> salePoints) {
         List<ShipSalePoint> nextSalePoints = salePoints == null ? List.of() : new ArrayList<>(salePoints);

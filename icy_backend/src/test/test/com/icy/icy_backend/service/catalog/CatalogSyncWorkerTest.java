@@ -23,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 class CatalogSyncWorkerTest {
 
@@ -95,5 +97,73 @@ class CatalogSyncWorkerTest {
         assertThat(run.getCurrentStep()).isEqualTo(12);
         assertThat(run.getTotalSteps()).isEqualTo(12);
         assertThat(run.getMessage()).contains("tout le catalogue");
+    }
+
+    @Test
+    void wikeloScopeRefreshesVehiclesBeforePublishingOffers() {
+        CatalogSyncRunRepository runs = mock(CatalogSyncRunRepository.class);
+        StarCitizenWikiScraper wiki = mock(StarCitizenWikiScraper.class);
+        CatalogMapper mapper = mock(CatalogMapper.class);
+        CatalogEconomyMapper economy = mock(CatalogEconomyMapper.class);
+        CatalogRawStore raw = mock(CatalogRawStore.class);
+        UexDatasetService uex = mock(UexDatasetService.class);
+        WikeloService wikelo = mock(WikeloService.class);
+        WikeloEquipmentRecipeStore recipes = mock(WikeloEquipmentRecipeStore.class);
+        CatalogSyncRun run = new CatalogSyncRun(); run.setId(7L);
+        when(runs.findById(7L)).thenReturn(Optional.of(run));
+        when(wiki.scrape("vehicles", 7L)).thenReturn(11);
+        WikeloShip ship = new WikeloShip(null, "Polaris", "Mission", "Cost", null, null,
+                "Ships", "https://example.test", LocalDateTime.now(), null);
+        when(wikelo.scrapeShips()).thenReturn(List.of(ship));
+        when(recipes.scrapeAndStore(7L)).thenReturn(2);
+        when(mapper.mapWikiDataset("vehicles", 7L)).thenReturn(11);
+        when(recipes.publish(7L)).thenReturn(2);
+        CatalogSyncWorker worker = new CatalogSyncWorker(runs, wiki, mapper, economy, raw, uex,
+                wikelo, recipes, new CatalogSyncProperties(), new ObjectMapper().findAndRegisterModules());
+
+        worker.run(7L, "SCRAPE", CatalogSyncScope.WIKELO);
+
+        InOrder order = inOrder(wiki, wikelo, recipes, mapper);
+        order.verify(wiki).scrape("vehicles", 7L);
+        order.verify(wikelo).scrapeShips();
+        order.verify(recipes).scrapeAndStore(7L);
+        order.verify(mapper).mapWikiDataset("vehicles", 7L);
+        order.verify(wikelo).publishScrapedShips(List.of(ship));
+        order.verify(recipes).publish(7L);
+        assertThat(run.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(run.getCurrentStep()).isEqualTo(6);
+        assertThat(run.getTotalSteps()).isEqualTo(6);
+    }
+
+    @Test
+    void wikeloReviewResumeUsesStoredSourcesWithoutRescraping() {
+        CatalogSyncRunRepository runs = mock(CatalogSyncRunRepository.class);
+        StarCitizenWikiScraper wiki = mock(StarCitizenWikiScraper.class);
+        CatalogMapper mapper = mock(CatalogMapper.class);
+        CatalogRawStore raw = mock(CatalogRawStore.class);
+        WikeloService wikelo = mock(WikeloService.class);
+        WikeloEquipmentRecipeStore recipes = mock(WikeloEquipmentRecipeStore.class);
+        CatalogSyncRun run = new CatalogSyncRun(); run.setId(8L);
+        when(runs.findById(8L)).thenReturn(Optional.of(run));
+        when(wiki.scrape("vehicles", 8L)).thenReturn(1);
+        WikeloShip ship = new WikeloShip(null, "Polaris", "Mission", "Cost", null, null,
+                "Ships", "https://example.test", LocalDateTime.now(), null);
+        when(wikelo.scrapeShips()).thenReturn(List.of(ship));
+        when(recipes.scrapeAndStore(8L)).thenReturn(1);
+        when(mapper.mapWikiDataset("vehicles", 8L)).thenThrow(new CatalogReviewRequiredException(1)).thenReturn(1);
+        ObjectMapper testMapper = new ObjectMapper().findAndRegisterModules();
+        when(raw.loadActive("WIKELO", "offers")).thenReturn(List.of(testMapper.valueToTree(ship)));
+        when(recipes.publish(8L)).thenReturn(1);
+        CatalogSyncWorker worker = new CatalogSyncWorker(runs, wiki, mapper, mock(CatalogEconomyMapper.class), raw,
+                mock(UexDatasetService.class), wikelo, recipes, new CatalogSyncProperties(), new ObjectMapper().findAndRegisterModules());
+
+        worker.run(8L, "SCRAPE", CatalogSyncScope.WIKELO);
+        assertThat(run.getStatus()).isEqualTo("WAITING_FOR_REVIEW");
+        worker.resumeAfterReview(8L, "SCRAPE", CatalogSyncScope.WIKELO);
+
+        verify(wiki).scrape("vehicles", 8L);
+        verify(wikelo).scrapeShips();
+        verify(wikelo).publishScrapedShips(org.mockito.ArgumentMatchers.anyList());
+        assertThat(run.getStatus()).isEqualTo("SUCCEEDED");
     }
 }

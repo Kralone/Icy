@@ -18,7 +18,7 @@ class WikeloServiceTest {
         String csv = new String(getClass().getResourceAsStream("/wikelo/ships-current.csv").readAllBytes(),
                 java.nio.charset.StandardCharsets.UTF_8);
         var ships = sourceService(csv).scrapeShips();
-        assertThat(ships).hasSize(34);
+        assertThat(ships).hasSize(35);
         var idris = ships.stream().filter(ship -> ship.getShipName().equals("Idris-P")).findFirst().orElseThrow();
         assertThat(idris.getCostText().split(" \\| ")).containsExactly(
                 "50x Wikelo Favor", "50x Polaris Bit", "50x DCHS-05 Orbital Positioning Comp-Board",
@@ -35,6 +35,30 @@ class WikeloServiceTest {
                 .doesNotContain("Cost:", "Polaris");
         assertThatThrownBy(() -> sourceService(csv.replace("Idris Costs Continued:", "Unrelated Costs Continued:")).scrapeShips())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("Suite de recette Wikelo");
+    }
+
+    @Test
+    void importsPolarisSeparateMissionWithoutMixingIdrisOrMaterialExplanations() throws Exception {
+        String csv = new String(getClass().getResourceAsStream("/wikelo/ships-current.csv").readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8);
+        var polaris = sourceService(csv).scrapeShips().stream()
+                .filter(ship -> ship.getShipName().equals("Polaris")).findFirst().orElseThrow();
+        assertThat(polaris.getCostText().split(" \\| ")).containsExactlyInAnyOrder(
+                "50x Wikelo Favors", "15x Polaris Bits", "10x DCHS-05 Comp-Board", "20x Carinite",
+                "20x Irradiated Valakkar Fang (Apex)", "20x MG Scrip", "15x Ace Interceptor Helmet",
+                "15x Irradiated Valakkar Pearl (Grade AAA)", "15x UEE 6th Platoon Medal (Pristine)",
+                "15x Carinite (Pure)", "15x ASD Secure Drive", "1x RCMBNT-PWL-2", "1x RCMBNT-RGL-2",
+                "1x RCMBNT-XTL-2", "1x RCMBNT-PWL-3", "1x RCMBNT-RGL-3", "1x RCMBNT-XTL-3",
+                "1x RCMBNT-PWL-1", "1x RCMBNT-RGL-1", "1x RCMBNT-XTL-1");
+        assertThat(polaris.getMissionText()).contains("Short Time Deal");
+        assertThat(polaris.getComponentsText()).isNull();
+        assertThat(polaris.getReputationText()).isNull();
+        assertThat(sourceService(csv.replace("Mission: Now make Polaris. Short Time Deal.", "")).scrapeShips())
+                .noneMatch(ship -> ship.getShipName().equals("Polaris"));
+        assertThatThrownBy(() -> sourceService(csv.replace("15x Polaris Bits", "?x Polaris Bits")).scrapeShips())
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Polaris Wikelo invalide");
+        assertThatThrownBy(() -> sourceService(csv.replace("Where to Source Materials", "")).scrapeShips())
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

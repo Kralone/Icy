@@ -86,6 +86,7 @@
                   @if (getCatalogShip(ship.shipName)?.brand; as brand) { <p class="manufacturer ship-manufacturer">@if (brand.imageUrl && !failedImages.has(brand.imageUrl)) { <img [src]="brand.imageUrl" alt="" loading="lazy" (error)="imageFailed(brand.imageUrl)"> }<span>{{ brand.name }}</span></p> }
                   <h3>{{ ship.shipName }}</h3>
                   @if (getCatalogShip(ship.shipName); as catalog) {
+                    @if (catalog.imageIsBase && getShipImage(ship.shipName)) { <p class="notice">Visuel du modèle de base</p> }
                     <dl class="specs"><div><dt>Rôle</dt><dd>{{ catalog.focus || 'Non renseigné' }}</dd></div><div><dt>Équipage</dt><dd>{{ catalog.crew || 'Non renseigné' }}</dd></div><div><dt>Soute cargo</dt><dd>{{ catalog.scu === null || catalog.scu === undefined ? 'Non renseignée' : catalog.scu + ' SCU' }}</dd></div>@if ((catalog.oreCapacity ?? 0) > 0) { <div><dt>Minerai</dt><dd>{{ catalog.oreCapacity }} SCU</dd></div> }<div><dt>Taille</dt><dd>{{ catalog.size || 'Non renseignée' }}</dd></div></dl>
                   }
                   <button type="button" class="primary details-toggle" [class.collapse-toggle]="isExpanded(ship.shipName)" [attr.aria-label]="isExpanded(ship.shipName) ? 'Réduire la fiche de ' + ship.shipName : null" [attr.aria-expanded]="isExpanded(ship.shipName)" [attr.aria-controls]="'offer-details-' + ship.id" (click)="toggleDetails(ship.shipName)">@if (!isExpanded(ship.shipName)) { Voir l’échange } <span aria-hidden="true">{{ isExpanded(ship.shipName) ? '−' : '+' }}</span></button>

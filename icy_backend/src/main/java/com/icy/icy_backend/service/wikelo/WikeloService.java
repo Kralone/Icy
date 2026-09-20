@@ -121,7 +121,56 @@ public class WikeloService {
             }
         }
 
+        importPolarisMission(rows, dedup, csvUrl, now);
         return new ArrayList<>(dedup.values());
+    }
+
+    private void importPolarisMission(List<List<String>> rows, Map<String, WikeloShip> ships,
+                                     String sourceUrl, LocalDateTime scrapedAt) {
+        // This offer has no component table: the source gives a separate mission
+        // and a three-column turn-in list. Only import that explicitly named block.
+        for (int row = 0; row < rows.size(); row++) {
+            for (int col = 0; col < rows.get(row).size(); col++) {
+                String mission = clean(getCell(rows, row, col));
+                if (!mission.matches("(?i)^Mission:\\s*Now make Polaris\\.(?:\\s*Short Time Deal\\.)?$")) continue;
+                boolean materials = false;
+                boolean ended = false;
+                List<String> costs = new ArrayList<>();
+                for (int next = row + 1; next < rows.size(); next++) {
+                    String label = clean(getCell(rows, next, col));
+                    if (label.equalsIgnoreCase("Where to Source Materials")) {
+                        ended = true;
+                        break;
+                    }
+                    if (label.startsWith("Mission:") || isShipHeaderCell(rows, next, col, label)) break;
+                    if (label.equalsIgnoreCase("Mission Turn-In Materials/Items")) {
+                        materials = true;
+                        continue;
+                    }
+                    if (!materials) continue;
+                    for (String cell : rows.get(next)) {
+                        String ingredient = clean(cell);
+                        if (ingredient.isBlank()) continue;
+                        if (!ingredient.matches("[1-9][0-9]*x\\s+.+")) {
+                            throw new IllegalStateException("Recette Polaris Wikelo invalide : " + ingredient);
+                        }
+                        costs.add(ingredient);
+                    }
+                }
+                if (!materials || !ended || costs.isEmpty()) {
+                    throw new IllegalStateException("Recette Polaris Wikelo incomplete; publication annulee");
+                }
+                WikeloShip ship = new WikeloShip();
+                ship.setShipName("Polaris");
+                ship.setMissionText(mission);
+                ship.setCostText(String.join(" | ", costs));
+                // The source does not publish a fit or a reputation for this offer.
+                ship.setSourceSheet(resolveSourceSheetLabel());
+                ship.setSourceUrl(sourceUrl);
+                ship.setScrapedAt(scrapedAt);
+                ships.put("polaris", ship);
+            }
+        }
     }
 
     String fetchCsv(String csvUrl) {

@@ -81,7 +81,7 @@ class StarCitizenWikiScraperTest {
                 .andExpect(header("User-Agent", "IceForge-Test/1.0"))
                 .andRespond(withSuccess("""
                         {
-                          "data": [{"uuid": "ship-1", "name": "Test Ship"}],
+                          "data": [{"uuid": "ship-1", "name": "Test Ship", "images":[{"original_url":"https://images.test/ship.jpg"}]}],
                           "meta": {"last_page": 1}
                         }
                         """, org.springframework.http.MediaType.APPLICATION_JSON));

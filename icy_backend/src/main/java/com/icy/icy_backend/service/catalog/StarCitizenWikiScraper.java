@@ -60,6 +60,7 @@ public class StarCitizenWikiScraper {
         int page = 1;
         int lastPage = 1;
         int imported = 0;
+        List<JsonNode> vehicles = new ArrayList<>();
         do {
             JsonNode root = fetchPage(datasetKey, page);
             JsonNode data = root.path("data");
@@ -87,10 +88,28 @@ public class StarCitizenWikiScraper {
                 }
                 records.add(record);
             }
-            imported += rawStore.upsert(CatalogMapper.WIKI_SOURCE, datasetKey, records, runId);
+            if ("vehicles".equals(datasetKey)) vehicles.addAll(records);
+            else imported += rawStore.upsert(CatalogMapper.WIKI_SOURCE, datasetKey, records, runId);
             lastPage = Math.max(1, root.path("meta").path("last_page").asInt(1));
             page++;
         } while (page <= lastPage);
+
+        if ("vehicles".equals(datasetKey)) {
+            var enrichment = new WikiVehicleEnrichment(restTemplate, properties.getUserAgent());
+            for (int i = 0; i < vehicles.size(); i++) {
+                JsonNode vehicle = vehicles.get(i);
+                if (WikiVehicleEnrichment.isSpecial(vehicle)) {
+                    String uuid = vehicle.path("uuid").asText();
+                    if (!uuid.matches("[0-9a-fA-F-]{36}")) throw new IllegalStateException("UUID véhicule invalide");
+                    JsonNode detail = fetchPage("vehicles/" + uuid, 1).path("data");
+                    if (!detail.isObject() || !uuid.equals(detail.path("uuid").asText()))
+                        throw new IllegalStateException("Fiche véhicule invalide : " + uuid);
+                    vehicles.set(i, detail);
+                }
+            }
+            enrichment.enrich(vehicles);
+            imported = rawStore.upsert(CatalogMapper.WIKI_SOURCE, datasetKey, vehicles, runId);
+        }
 
         if (imported == 0) {
             throw new IllegalStateException("Le scan Wiki n'a importe aucun record pour " + datasetKey);

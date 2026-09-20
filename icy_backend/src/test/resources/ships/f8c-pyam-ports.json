@@ -1,0 +1,413 @@
+{
+  "ports": [
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-28 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2365f40c-fbd3-4859-ad80-f5cfbc305c83"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S2 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "7fedca61-dfeb-4ecb-b421-e7c3ba55a584"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-30 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2f9fad1d-f591-4e69-ae64-af5ba0a883f7"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S3 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-28 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2365f40c-fbd3-4859-ad80-f5cfbc305c83"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S2 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "7fedca61-dfeb-4ecb-b421-e7c3ba55a584"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-30 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2f9fad1d-f591-4e69-ae64-af5ba0a883f7"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S3 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-30 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2f9fad1d-f591-4e69-ae64-af5ba0a883f7"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S3 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-30 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2f9fad1d-f591-4e69-ae64-af5ba0a883f7"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "VariPuck S3 Gimbal Mount",
+        "manufacturer": {
+          "name": "Flashfire Systems"
+        },
+        "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "Radar",
+        "name": "Ecouter",
+        "manufacturer": {
+          "name": "Groupe Nouveau Paradigme"
+        },
+        "uuid": "b0ccd135-4424-417c-95e4-594a88d9b72f"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-28 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2365f40c-fbd3-4859-ad80-f5cfbc305c83"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "WeaponGun",
+            "name": "NDB-28 Repeater",
+            "manufacturer": {
+              "name": "MaxOx"
+            },
+            "uuid": "2365f40c-fbd3-4859-ad80-f5cfbc305c83"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "Turret",
+        "name": "Anvil Lightning F8C Turret",
+        "manufacturer": {
+          "name": "Anvil Aerospace"
+        },
+        "uuid": "537e8385-4679-41e1-9fe3-b5cfc0f48a93"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "MissileLauncher",
+        "name": "MSD-442 Missile Rack",
+        "manufacturer": {
+          "name": "Behring Applied Technology"
+        },
+        "uuid": "899a64a6-bc36-4b5b-8167-64218e376337"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        },
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "Missile",
+            "name": "Ignite II Missile",
+            "manufacturer": {
+              "name": "FireStorm Kinetics"
+            },
+            "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "MissileLauncher",
+        "name": "MSD-442 Missile Rack",
+        "manufacturer": {
+          "name": "Behring Applied Technology"
+        },
+        "uuid": "899a64a6-bc36-4b5b-8167-64218e376337"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "Shield",
+        "name": "Umbra",
+        "manufacturer": {
+          "name": "Ascension Astro"
+        },
+        "uuid": "6bec0a0a-9214-448c-96ea-272fc9302a27"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "Shield",
+        "name": "Umbra",
+        "manufacturer": {
+          "name": "Ascension Astro"
+        },
+        "uuid": "6bec0a0a-9214-448c-96ea-272fc9302a27"
+      }
+    },
+    {
+      "ports": [
+        {
+          "ports": [],
+          "equipped_item": {
+            "type": "JumpDrive",
+            "name": "Explorer",
+            "manufacturer": {
+              "name": "Tarsus"
+            },
+            "uuid": "c8797bce-6220-4d1e-bc6d-23da4a366a6d"
+          }
+        }
+      ],
+      "equipped_item": {
+        "type": "QuantumDrive",
+        "name": "Colossus",
+        "manufacturer": {
+          "name": "Juno Starwerk"
+        },
+        "uuid": "e61d58d6-3ffd-4d7b-ad19-64ae9d27efb1"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "PowerPlant",
+        "name": "Eclipse",
+        "manufacturer": {
+          "name": "Tyler Design & Tech"
+        },
+        "uuid": "277e2f9c-d899-442d-a999-23368b3bdb6c"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "WeaponDefensive",
+        "name": "Anvil Noise Launcher",
+        "manufacturer": {
+          "name": "Anvil Aerospace"
+        },
+        "uuid": "b98f31ac-b050-4e5e-9719-8b8d2a832dcd"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "WeaponDefensive",
+        "name": "Anvil Decoy Launcher",
+        "manufacturer": {
+          "name": "Anvil Aerospace"
+        },
+        "uuid": "5a9e0874-ec5e-4ef2-84f0-6f8cb8444176"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "Cooler",
+        "name": "SnowBlind",
+        "manufacturer": {
+          "name": "Tyler Design & Tech"
+        },
+        "uuid": "f50cc3fd-dd83-4aec-b74a-270428f22797"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "Cooler",
+        "name": "SnowBlind",
+        "manufacturer": {
+          "name": "Tyler Design & Tech"
+        },
+        "uuid": "f50cc3fd-dd83-4aec-b74a-270428f22797"
+      }
+    },
+    {
+      "ports": [],
+      "equipped_item": {
+        "type": "LifeSupportGenerator",
+        "name": "ComfortAir",
+        "manufacturer": {
+          "name": "Tyler Design & Tech"
+        },
+        "uuid": "e947b002-e65e-4637-90b7-c894925d6625"
+      }
+    }
+  ],
+  "name": "F8C Lightning PYAM Exec",
+  "uuid": "49e65480-0ab3-bead-8207-2da32c2e00ab",
+  "executive_hangar": true
+}
