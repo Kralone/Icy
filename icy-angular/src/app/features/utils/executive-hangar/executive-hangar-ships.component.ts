@@ -1,4 +1,5 @@
-import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';\nimport { CommonModule } from '@angular/common';
+import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ShipService } from '../../../core/services/ship/ship.service';
