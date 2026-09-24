@@ -71,7 +71,7 @@ export class UtilsMenuComponent {
   menuItems: UtilityMenuItem[] = [
     {
       label: 'Ressources minage',
-      imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
+      imageUrl: 'https://media.starcitizen.tools/thumb/6/64/Refinery_01_V2-Min.jpg/1200px-Refinery_01_V2-Min.jpg.webp?b5eg9',
       path: 'ressources-minage',
       scope: 'Public' as UtilityScope,
     },
