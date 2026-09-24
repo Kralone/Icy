@@ -259,7 +259,9 @@ BEGIN
               AND actual.column_default IS NULL)
     ) THEN RAISE EXCEPTION 'Unknown mining values cannot remain NULL'; END IF;
 
-    IF to_regclass('content_guides') IS NULL THEN RAISE EXCEPTION 'V38 guides table is missing'; END IF;\r\n\r\n    IF to_regclass('utils.idx_uex_dataset_cache_game_version') IS NULL THEN
+    IF to_regclass('content_guides') IS NULL THEN RAISE EXCEPTION 'V38 guides table is missing'; END IF;
+
+    IF to_regclass('utils.idx_uex_dataset_cache_game_version') IS NULL THEN
         RAISE EXCEPTION 'UEX game version index missing';
     END IF;
 
