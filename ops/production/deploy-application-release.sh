@@ -135,7 +135,7 @@ case "$current_version" in
   32)
     db_psql <"$BACKEND_DIR/verify-flyway-v32.sql" >/dev/null
     ;;
-  33)
+  33|34|35|36|37|38)
     db_psql <"$BACKEND_DIR/verify-flyway-v33.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
@@ -190,3 +190,5 @@ FRONTEND_ROLLOUT_DIR=$FRONTEND_DIR "$FRONTEND_DIR/verify.sh" runtime
 
 trap - ERR
 printf 'PRODUCTION-APPLICATION-DEPLOY=OK revision=%s rollback=%s\n' "$REVISION" "$rollback_file"
+
+
