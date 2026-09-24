@@ -4,6 +4,7 @@ import { eventColor, eventImage } from '../event-appearance';
 import { CommonModule } from '@angular/common';
 import { SafeHtml } from '@angular/platform-browser';
 import { FleetMiniCardComponent } from '../../../shared/fleet-mini-card/fleet-mini-card.component';
+import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 
 type FleetMiniShip = {
   name: string;
@@ -14,7 +15,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-event-details-modal',
   standalone: true,
-  imports: [CommonModule, A11yModule, FleetMiniCardComponent],
+  imports: [CommonModule, A11yModule, FleetMiniCardComponent, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-details-modal.component.html',
   styleUrl: './event-details-modal.component.css'

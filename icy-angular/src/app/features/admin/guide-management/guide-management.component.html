@@ -1,0 +1,22 @@
+<main class="min-h-screen bg-slate-950 px-6 py-10 text-white">
+  <div class="mx-auto max-w-6xl">
+    <a routerLink="/icy/admin" class="text-sm text-cyan-300">← Retour à l’administration</a>
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div><p class="text-sm uppercase tracking-[0.22em] text-cyan-200/60">Contenu</p><h1 class="text-3xl font-bold text-cyan-200">Guides</h1></div>
+      <button type="button" (click)="open()" class="rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950">Nouveau guide</button>
+    </div>
+    @if (error) { <p class="mt-4 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-rose-200">{{ error }}</p> }
+    <div class="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <table class="w-full text-left text-sm"><thead class="border-b border-white/10 text-cyan-100/70"><tr><th class="p-4">Guide</th><th class="p-4">Version</th><th class="p-4">Statut</th><th class="p-4">Publication</th><th class="p-4"></th></tr></thead>
+        <tbody>@for (guide of guides; track guide.id) { <tr class="border-b border-white/5"><td class="p-4"><strong>{{ guide.title }}</strong><br><span class="text-xs text-slate-400">/{{ guide.slug }}</span></td><td class="p-4">{{ guide.gameVersion || '—' }}</td><td class="p-4">{{ guide.status }}</td><td class="p-4"><span [class]="guide.published ? 'text-emerald-300' : 'text-amber-300'">{{ guide.published ? 'Publié' : 'Brouillon' }}</span></td><td class="p-4 text-right"><button (click)="open(guide)" class="mr-3 text-cyan-300">Modifier</button><button (click)="remove(guide)" class="text-rose-300">Supprimer</button></td></tr> }</tbody>
+      </table>
+    </div>
+    @if (showForm) {
+      <section class="mt-6 rounded-2xl border border-cyan-400/20 bg-slate-900 p-6"><h2 class="text-xl font-semibold text-cyan-200">{{ editing ? 'Modifier le guide' : 'Nouveau guide' }}</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2"><label>Slug<input [(ngModel)]="form.slug" class="mt-1 w-full rounded-lg bg-white/10 p-2"></label><label>Titre<input [(ngModel)]="form.title" class="mt-1 w-full rounded-lg bg-white/10 p-2"></label><label>Version du jeu<input [(ngModel)]="form.gameVersion" placeholder="Alpha 4.9" class="mt-1 w-full rounded-lg bg-white/10 p-2"></label><label>Statut<input [(ngModel)]="form.status" placeholder="DRAFT / LIVE" class="mt-1 w-full rounded-lg bg-white/10 p-2"></label></div>
+        <label class="mt-4 block">Résumé<textarea [(ngModel)]="form.summary" rows="2" class="mt-1 w-full rounded-lg bg-white/10 p-2"></textarea></label><label class="mt-4 block">Contenu JSON du guide<textarea [(ngModel)]="form.content" rows="16" class="mt-1 w-full rounded-lg bg-white/10 p-2 font-mono text-xs"></textarea></label>
+        <label class="mt-4 flex items-center gap-2"><input type="checkbox" [(ngModel)]="form.published"> Publier ce guide</label><div class="mt-5 flex gap-3"><button (click)="save()" [disabled]="saving" class="rounded-lg bg-cyan-400 px-4 py-2 font-semibold text-slate-950">Enregistrer</button><button (click)="close()" class="rounded-lg border border-white/20 px-4 py-2">Annuler</button></div>
+      </section>
+    }
+  </div>
+</main>

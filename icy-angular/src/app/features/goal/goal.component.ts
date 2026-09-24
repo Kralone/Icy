@@ -8,11 +8,12 @@ import { GoalService } from '../../core/services/goal/goal.service';
 import { GoalSubComponent } from './goal-sub/goal-sub.component';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
+import { AsyncStateComponent } from '../../shared/async-state/async-state.component';
 
 @Component({
   selector: 'app-goal',
   standalone: true,
-  imports: [CommonModule, FormsModule, GoalSubComponent],
+  imports: [CommonModule, FormsModule, GoalSubComponent, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal.component.html',
   styleUrl: './goal.component.css',

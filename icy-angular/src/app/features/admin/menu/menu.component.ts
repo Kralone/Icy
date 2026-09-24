@@ -103,6 +103,11 @@ export class AdminMenuComponent {
       route: '/icy/admin/news',
     },
     {
+      label: 'Guides',
+      imageUrl: 'assets/images/home/activities/mining.jpg',
+      route: '/icy/admin/guides',
+    },
+    {
       label: 'IceLink Builder',
       imageUrl: 'https://media.starcitizen.tools/9/9c/Microtech-new-babbage-cityscape-01.jpg',
       route: '/icy/admin/icelinkBuilder',

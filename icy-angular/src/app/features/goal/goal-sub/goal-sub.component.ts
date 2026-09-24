@@ -5,11 +5,12 @@ import { GoalService } from '../../../core/services/goal/goal.service';
 import { Goal } from '../../../model/goal.model';
 import { GoalParticipation } from '../../../model/goal-participation.model';
 import { GoalParticipationSummary } from '../../../model/goal-participation-summary.model';
+import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 
 @Component({
   selector: 'app-goal-sub',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-sub.component.html',
   styleUrl: './goal-sub.component.css',

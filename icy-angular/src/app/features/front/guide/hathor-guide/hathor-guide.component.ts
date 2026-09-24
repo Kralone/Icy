@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
+import { GuideService } from '../../../../core/services/guide/guide.service';
+import { hideUnpublishedGuide, mergePublishedGuide } from '../guide-published.utils';
 
 @Component({
   selector: 'front-hathor-guide',
@@ -9,13 +11,14 @@ import { GuideDocument } from '../guide-template/guide-template.types';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `<front-guide-template [guide]="guide"></front-guide-template>`
 })
-export class HathorGuideComponent {
-  readonly guide: GuideDocument = {
+export class HathorGuideComponent implements OnInit {
+  guide: GuideDocument = {
     slug: 'operation-hathor',
     title: 'Hathor Guide Star Citizen FR',
     subtitle: 'Guide complet de l\'opération Hathor sur Star Citizen: PAF, OLP, extraction de Carinite et stratégie PvP.',
     showTopbarTabs: false,
     updatedAt: '27 fév. 2026',
+    gameVersion: 'Alpha 4.9',
     readTime: '12-15 min',
     difficulty: 'Confirmé',
     status: { label: 'Disponible', tone: 'live' },
@@ -223,4 +226,6 @@ export class HathorGuideComponent {
       }
     ]
   };
+  constructor(private readonly guideService: GuideService) {}
+  ngOnInit(): void { this.guideService.getPublished('hathor').subscribe({ next: remote => this.guide = mergePublishedGuide(this.guide, remote), error: error => this.guide = hideUnpublishedGuide(this.guide, error) }); }
 }

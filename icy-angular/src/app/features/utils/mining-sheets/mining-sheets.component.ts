@@ -14,6 +14,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { User } from '../../../model/user.model';
 import { ApiResponse } from '../../../model/api-response.model';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 import { WebSocketService } from '../../../core/services/websocket/websocket.service';
 import { MiningSheetsHistoryPanelComponent } from './components/mining-sheets-history-panel.component';
 import { MiningSheetsCreateModalComponent } from './components/mining-sheets-create-modal.component';
@@ -52,6 +53,7 @@ interface JobDraft {
   selector: 'app-mining-sheets',
   imports: [
     CommonModule,
+    AsyncStateComponent,
     FormsModule,
     MiningSheetsHistoryPanelComponent,
     MiningSheetsCreateModalComponent,

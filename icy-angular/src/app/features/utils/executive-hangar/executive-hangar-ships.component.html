@@ -11,7 +11,7 @@
   } @else if (errorMessage) {
     <app-async-state kind="error" [title]="errorMessage" actionLabel="Réessayer" (action)="loadShips()" />
   } @else if (!ships.length) {
-    <app-async-state kind="empty" title="Aucune récompense publiée" description="Le catalogue ne contient pas encore de vaisseau attribué à ces hangars." actionLabel="Actualiser" (action)="loadShips()" />
+    <app-async-state kind="empty" title="Aucune récompense publiée" actionLabel="Actualiser" (action)="loadShips()" />
   } @else if (!filteredShips.length) {
     <app-async-state kind="empty" title="Aucun vaisseau trouvé" actionLabel="Effacer la recherche" (action)="searchTerm = ''" />
   } @else {

@@ -1,4 +1,4 @@
-<div class="layout-container flex min-h-screen w-screen bg-[#0d1b2a] text-white relative overflow-x-hidden">
+<div class="layout-container flex min-h-screen w-screen bg-[#0d1b2a] text-white relative overflow-x-hidden" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd($event)" (touchcancel)="onTouchCancel()">
 
 
 <!-- ✅ Overlay sombre -->

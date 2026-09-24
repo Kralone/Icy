@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { UexDatasetService, UexResourceSale, UexResourceSalePoint } from '../../../../../../core/services/uex/uex-dataset.service';
+import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 
 interface ResourceSaleMaterial {
@@ -14,7 +15,7 @@ interface ResourceSaleMaterial {
 @Component({
   selector: 'front-resources-sales-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AsyncStateComponent],
   templateUrl: './resources-sales-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-sales-panel.component.css'
@@ -258,3 +259,4 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
     return (value || '').trim().toLowerCase();
   }
 }
+

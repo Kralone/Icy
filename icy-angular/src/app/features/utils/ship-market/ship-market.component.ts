@@ -9,6 +9,7 @@ import { OrbitalStationService } from '../../../core/services/station/orbital-st
 import { ShipService } from '../../../core/services/ship/ship.service';
 import { UexDatasetService, UexVehiclePurchase, UexVehicleRental } from '../../../core/services/uex/uex-dataset.service';
 import { Ship } from '../../../model/ship.model';
+import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 
 type MarketLocation = {
   terminalId?: string | null;
@@ -55,7 +56,7 @@ type MajorLocationCardView = {
 @Component({
   standalone: true,
   selector: 'app-ship-market',
-  imports: [CommonModule, FormsModule, RouterLink, A11yModule],
+  imports: [CommonModule, FormsModule, RouterLink, A11yModule, AsyncStateComponent],
   templateUrl: './ship-market.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./ship-market.component.css', './ship-market-filters.css']

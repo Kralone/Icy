@@ -7,11 +7,9 @@
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
-
     <div class="flex items-center justify-between gap-4 flex-wrap">
       <div>
         <h2 class="text-3xl font-semibold tracking-[0.08em] uppercase text-cyan-200">Planetes et lunes</h2>
-        <p class="text-sm text-cyan-100/70 mt-1">Edition des planetes et lecture des lunes (tri croissant, dataset 4.6).</p>
       </div>
       <div class="flex items-center gap-3">
         <label for="system-filter" class="text-xs uppercase tracking-[0.14em] text-cyan-100/70">Systeme</label>
@@ -35,14 +33,12 @@
         </button>
       </div>
     </div>
-
     <div class="planet-form rounded-2xl border border-cyan-300/20 bg-[#071324]/70 p-6 shadow-2xl space-y-5">
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Nom</label>
           <input [(ngModel)]="newPlanet.name" type="text" class="planet-input" placeholder="Ex: Hurston" />
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Systeme</label>
           <select [(ngModel)]="newPlanet.systemName" (ngModelChange)="onFormSystemChange()" class="planet-input">
@@ -51,7 +47,6 @@
             }
           </select>
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Planete parente (optionnel)</label>
           <select [(ngModel)]="newPlanet.parentPlanet" class="planet-input">
@@ -61,22 +56,18 @@
             }
           </select>
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Version</label>
           <input [(ngModel)]="newPlanet.gameVersion" type="text" class="planet-input" placeholder="4.6" />
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Image URL</label>
           <input [(ngModel)]="newPlanet.imageUrl" type="text" class="planet-input" placeholder="https://..." />
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">Wiki URL</label>
           <input [(ngModel)]="newPlanet.wikiUrl" type="text" class="planet-input" placeholder="https://starcitizen.tools/..." />
         </div>
-
         <div>
           <label class="block text-xs uppercase tracking-[0.16em] text-cyan-100/70 mb-1">
             Priorite
@@ -93,7 +84,6 @@
           </select>
         </div>
       </div>
-
       <div class="flex items-center justify-between gap-4 flex-wrap">
         @if (errorMessage) {
           <div class="text-sm text-red-300">{{ errorMessage }}</div>
@@ -118,7 +108,6 @@
         </div>
       </div>
     </div>
-
     <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
       <div class="overflow-auto">
         <table class="min-w-full text-sm">
@@ -174,7 +163,6 @@
           </table>
         </div>
       </div>
-
       <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
         <button type="button" (click)="prevPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
           Precedent

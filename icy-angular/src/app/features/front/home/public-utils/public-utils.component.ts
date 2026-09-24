@@ -22,7 +22,7 @@ export class PublicUtilsComponent {
     {
       label: 'Outils et Ressources de Minage',
       description: 'Toutes les ressources dont vous avez besoin pour miner.',
-      imageUrl: 'https://sibyllasc.fr/wp-content/uploads/2025/09/Refinery_01_V2-Min.jpg.webp',
+      imageUrl: 'https://media.starcitizen.tools/thumb/6/64/Refinery_01_V2-Min.jpg/1200px-Refinery_01_V2-Min.jpg.webp?b5eg9',
       route: '/utilitaires/ressources-minage'
     },
     {

@@ -1,7 +1,9 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
 import { buildResourcesGuideLink } from '../resources-guide/resources-guide-link.utils';
+import { GuideService } from '../../../../core/services/guide/guide.service';
+import { hideUnpublishedGuide, mergePublishedGuide } from '../guide-published.utils';
 
 const MINING_HEADS_DATABASE_LINK = buildResourcesGuideLink({
   line: 'fit',
@@ -24,12 +26,13 @@ const MINING_GADGET_DATABASE_LINK = buildResourcesGuideLink({
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `<front-guide-template [guide]="guide"></front-guide-template>`
 })
-export class MiningGuideComponent {
-  readonly guide: GuideDocument = {
+export class MiningGuideComponent implements OnInit {
+  guide: GuideDocument = {
     slug: 'minage',
     title: 'Guide Minage Star Citizen',
     subtitle: 'Guide complet du minage Star Citizen : de la roche brute a la vente, avec extraction, raffinage et logistique.',
     updatedAt: '22 fév. 2026',
+    gameVersion: 'Alpha 4.9',
     readTime: '15-20 min',
     difficulty: 'Débutant à Confirmé',
     status: { label: 'En pause', tone: 'writing' },
@@ -394,4 +397,6 @@ export class MiningGuideComponent {
       }
     ]
   };
+  constructor(private readonly guideService: GuideService) {}
+  ngOnInit(): void { this.guideService.getPublished('minage-star-citizen').subscribe({ next: remote => this.guide = mergePublishedGuide(this.guide, remote), error: error => this.guide = hideUnpublishedGuide(this.guide, error) }); }
 }

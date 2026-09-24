@@ -331,10 +331,14 @@ export const routes: Routes = [
             path: 'recrutement',
             loadComponent: () => import('./features/admin/recruitment-management/recruitment-management.component').then(m => m.RecruitmentManagementComponent)
           },
-          {
-            path: 'news',
-            loadComponent: () => import('./features/admin/news-management/news-management.component').then(m => m.NewsManagementComponent)
-          },
+      {
+        path: 'news',
+        loadComponent: () => import('./features/admin/news-management/news-management.component').then(m => m.NewsManagementComponent)
+      },
+      {
+        path: 'guides',
+        loadComponent: () => import('./features/admin/guide-management/guide-management.component').then(m => m.GuideManagementComponent)
+      },
           {
             path: 'icelinkBuilder',
             loadComponent: () => import('./features/admin/icelink-builder/icelink-builder.component').then(m => m.IceLinkBuilderComponent)

@@ -5,7 +5,7 @@
     <label class="completed-toggle"><input type="checkbox" [(ngModel)]="showCompleted" (change)="onShowCompletedToggle()" />Afficher les terminés</label>
     <div class="toolbar-actions"><button (click)="expandAll()">Tout déplier</button><button (click)="collapseAll()">Tout replier</button><button (click)="clearSearch()">Réinitialiser</button></div>
   </div>
-  @if (isLoading) { <div class="page-state" role="status">Chargement des objectifs…</div> }
+  @if (isLoading) { <app-async-state kind="loading" title="Chargement des objectifs…" /> }
   @if (loadError) { <div class="page-state error" role="alert">{{ loadError }}<button (click)="reloadGoals()">Réessayer</button></div> }
   @if (!isLoading && !loadError && displayGoals.length === 0 && (!showCompleted || historyGoals.length === 0)) {
     <div class="page-state">{{ search ? 'Aucun objectif ne correspond à cette recherche.' : 'Aucun objectif à afficher.' }}</div>

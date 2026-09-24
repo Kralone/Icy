@@ -31,7 +31,7 @@
 
       <section class="dialog-section">
         <div class="section-heading"><h3>Présence</h3>@if (isParticipationSaving) { <span role="status" class="dialog-muted">Enregistrement…</span> }</div>
-        @if (selectedEvent?.finished) { <p class="dialog-muted">Cet événement est terminé. Les réponses sont conservées ci-dessous.</p> }
+        @if (selectedEvent?.finished) { <p class="dialog-muted">Événement terminé.</p> }
         <div class="participation-actions" role="group" aria-label="Votre réponse à cet événement">
           <button type="button" class="status-confirmed" [attr.aria-pressed]="selectedParticipationStatus === 1" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(1)"><span aria-hidden="true">✓</span> Présent</button>
           <button type="button" class="status-maybe" [attr.aria-pressed]="selectedParticipationStatus === 0" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(0)"><span aria-hidden="true">?</span> Peut-être</button>
@@ -42,7 +42,7 @@
 
       <section class="dialog-section">
         <h3>Équipage</h3>
-        @if (isParticipationLoading) { <p class="dialog-muted" role="status">Chargement des participations…</p> }
+        @if (isParticipationLoading) { <app-async-state kind="loading" title="Chargement des participations…" /> }
         <div class="crew-columns">
           <div class="crew-group status-confirmed"><h4>Confirmés <span>{{ participationsByStatus.confirmed.length }}</span></h4>
             @for (p of participationsByStatus.confirmed; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
@@ -61,7 +61,7 @@
           <button type="button" class="fleet-toggle" [attr.aria-expanded]="showConfirmedFleets" (click)="toggleFleets.emit()">{{ showConfirmedFleets ? 'Masquer' : 'Voir la flotte' }}</button>
         </div>
         @if (showConfirmedFleets) {
-          @if (isFleetLoading) { <p class="dialog-muted" role="status">Chargement des flottes…</p> }
+          @if (isFleetLoading) { <app-async-state kind="loading" title="Chargement des flottes…" /> }
           @if (!isFleetLoading && fleetBrandKeys.length === 0) { <p class="dialog-muted">Aucun vaisseau renseigné pour les membres confirmés.</p> }
           <div class="dialog-fleet">
             @for (brand of fleetBrandKeys; track brand) {

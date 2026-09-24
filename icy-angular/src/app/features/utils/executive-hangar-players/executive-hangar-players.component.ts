@@ -8,6 +8,7 @@ import { ExecutiveHangarApiService } from '../../../core/services/utils/executiv
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { utilityRouteFor } from '../utility-route-context';
+import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 
 type PlayerRow = {
   id: string;
@@ -19,7 +20,7 @@ type PlayerRow = {
 @Component({
   standalone: true,
   selector: 'app-executive-hangar-players',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AsyncStateComponent],
   templateUrl: './executive-hangar-players.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './executive-hangar-players.component.css'

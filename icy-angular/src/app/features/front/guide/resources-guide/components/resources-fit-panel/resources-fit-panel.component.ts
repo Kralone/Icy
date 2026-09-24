@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { ItemCatalogItem } from '../../../../../../core/services/item/item-catalog.service';
 import { HttpClient } from '@angular/common/http';
 import { Ship } from '../../../../../../model/ship.model';
+import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 
 
 import {
@@ -42,7 +43,7 @@ interface ModuleFilterOption {
 @Component({
   selector: 'front-resources-fit-panel',
   standalone: true,
-  imports: [],
+  imports: [AsyncStateComponent],
   templateUrl: './resources-fit-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-fit-panel.component.css'
@@ -92,7 +93,6 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
   toolsLoading = false;
   toolsError = '';
   miningGadgetItems: ItemCatalogItem[] = [];
-  private catalogMetadata = new Map<number, MiningCatalogRow>();
   selectedGadget: ItemCatalogItem | null = null;
   private toolsSubscription?: Subscription;
   private routeQuerySubscription?: Subscription;
@@ -121,7 +121,6 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     this.shipsSubscription = this.http.get<{data: MiningCatalogRow[]}>('/api/front/resources/mining-equipment').subscribe({
       next: ({data}) => {
         const rows = data ?? [];
-        this.catalogMetadata = new Map(rows.map(row => [row.id, row]));
         this.miningShips = rows.filter(row => row.kind === 'ship').map(row => ({
           id: row.id, name: row.name, brand: {name: row.manufacturer ?? ''},
           imageUrl: row.imageUrl ?? '', focus: row.focus ?? '', scu: row.scu,
@@ -228,16 +227,6 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     return ship.brand?.name ?? 'Marque inconnue';
   }
 
-  itemProvenance(id: number | undefined): string {
-    const row = id === undefined ? undefined : this.catalogMetadata.get(id);
-    return `${row?.gameVersion || 'Version non renseignée'} · ${row?.updatedAt ? this.formatDate(row.updatedAt) : 'Date source inconnue'}`;
-  }
-
-  formatDate(value: string | null): string {
-    if (!value) return 'date non renseignée';
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString('fr-FR');
-  }
 
   formatScu(value: number | null | undefined): string {
     if (value === null || value === undefined || Number.isNaN(value)) {
@@ -246,6 +235,19 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     return new Intl.NumberFormat('fr-FR').format(value);
   }
 
+  descriptionHighlights(description: string | null | undefined): string[] {
+    if (!description) {
+      return [];
+    }
+    const lines = description
+      .split(/\r?\n|\|/)
+      .map((line) => line.replace(/\s+/g, ' ').trim())
+      .filter((line) => line.length > 0);
+    const highlights = lines.filter((line) => line.includes(':'));
+    return (highlights.length ? highlights : lines)
+      .slice(0, 3)
+      .map((line) => line.length > 96 ? line.slice(0, 93) + '…' : line);
+  }
   formatStatLines(stats: string | null | undefined): ParsedStatLine[] {
     if (!stats) {
       return [];

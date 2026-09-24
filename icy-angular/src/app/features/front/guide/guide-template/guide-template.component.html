@@ -1,6 +1,14 @@
 <section class="guide-page">
   <div class="guide-page__bg"></div>
 
+  @if (!guide.sections.length) {
+    <div class="mx-auto max-w-3xl px-6 py-24 text-center text-white">
+      <h1 class="text-3xl font-bold">Guide non publié</h1>
+      <p class="mt-3 text-white/70">Ce guide n’est pas disponible pour le moment.</p>
+    </div>
+  }
+
+  @if (guide.sections.length) {
   <div class="guide-layout">
     <header class="guide-hero">
       <front-guide-topbar
@@ -10,6 +18,7 @@
         [statusLabel]="guide.status.label"
         [statusTone]="guide.status.tone"
         [updatedAt]="guide.updatedAt"
+        [gameVersion]="guide.gameVersion || ''"
         [readTime]="guide.readTime"
         [difficulty]="guide.difficulty"
         [tags]="guide.tags"
@@ -215,4 +224,5 @@
       </main>
     </div>
   </div>
+  }
 </section>

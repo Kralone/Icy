@@ -8,11 +8,7 @@
           <span class="text-lg">←</span> Retour aux collections
         </a>
         <h1 class="text-3xl sm:text-4xl font-bold text-white">Administration des templates</h1>
-        <p class="text-sm text-slate-300 max-w-2xl">
-          Gestion des axes, creation et maintenance des grilles de reference.
-        </p>
       </div>
-
       <button
         (click)="createTemplate()"
         [disabled]="!canCreate || isSubmitting"
@@ -22,7 +18,6 @@
         {{ isSubmitting ? 'Creation…' : '+ Creer un template' }}
       </button>
     </header>
-
     <!-- Creation -->
     <section class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-4 sm:p-8 space-y-8">
       <div class="flex items-center justify-between">
@@ -31,7 +26,6 @@
           Champs obligatoires
         </span>
       </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label class="block mb-2 text-sm text-gray-300">Nom du template</label>
@@ -43,7 +37,6 @@
                    focus:ring-2 focus:ring-cyan-400 outline-none transition"
             />
           </div>
-
           <div>
             <label class="block mb-2 text-sm text-gray-300">Archetype</label>
             <input
@@ -55,7 +48,6 @@
               />
             </div>
           </div>
-
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <div class="flex items-center justify-between mb-3">
@@ -67,7 +59,6 @@
                   + Ajouter
                 </button>
               </div>
-
               <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
                 @for (val of newTemplate.axisX; track val; let i = $index) {
                   <div
@@ -86,7 +77,6 @@
                   }
                 </div>
               </div>
-
               <div>
                 <div class="flex items-center justify-between mb-3">
                   <h4 class="text-lg font-semibold text-cyan-200">Axe Y</h4>
@@ -97,7 +87,6 @@
                     + Ajouter
                   </button>
                 </div>
-
                 <div class="space-y-2 max-h-56 overflow-y-auto bg-white/5 border border-white/20 rounded-lg p-3 icy-scrollbar">
                   @for (val of newTemplate.axisY; track val; let i = $index) {
                     <div
@@ -117,10 +106,8 @@
                   </div>
                 </div>
               </div>
-
               <section class="space-y-4">
                 <h3 class="text-cyan-200 font-semibold text-lg">Apercu du tableau</h3>
-
                 <div class="overflow-x-auto border border-white/20 rounded-xl bg-white/5 backdrop-blur-md icy-scrollbar">
                   <table class="min-w-[600px] w-full text-sm text-gray-200">
                     <thead class="bg-white/10 text-cyan-300 uppercase border-b border-white/10">
@@ -146,7 +133,6 @@
                 </div>
               </section>
             </section>
-
             <!-- Templates -->
             <section class="space-y-6">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -175,20 +161,17 @@
                     </span>
                   </div>
                 </div>
-
                 @if (isLoadingTemplates) {
                   <div class="text-center py-6 text-gray-300 animate-pulse">
                     Chargement des templates...
                   </div>
                 }
-
                 @if (!isLoadingTemplates && filteredTemplates.length === 0) {
                   <div
                     class="text-center italic text-gray-400 py-6">
                     Aucun template enregistre.
                   </div>
                 }
-
                 @if (!isLoadingTemplates && filteredTemplates.length > 0) {
                   <div
                     class="overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-xl icy-scrollbar">
@@ -225,7 +208,6 @@
                     </table>
                   </div>
                 }
-
                 @if (!isLoadingTemplates && filteredTemplates.length > 0) {
                   <div
                     class="mt-6 flex items-center justify-between text-xs text-slate-300">
@@ -248,7 +230,6 @@
                 }
               </section>
             </div>
-
             <!-- Modal d’edition -->
             @if (editingTemplate) {
               <div

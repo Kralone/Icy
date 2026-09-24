@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
+import { GuideService } from '../../../../core/services/guide/guide.service';
+import { hideUnpublishedGuide, mergePublishedGuide } from '../guide-published.utils';
 
 @Component({
   selector: 'front-salvage-guide',
@@ -9,12 +11,14 @@ import { GuideDocument } from '../guide-template/guide-template.types';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `<front-guide-template [guide]="guide"></front-guide-template>`
 })
-export class SalvageGuideComponent {
-  readonly guide: GuideDocument = {
+export class SalvageGuideComponent implements OnInit {
+  guide: GuideDocument = {
     slug: 'salvage',
     title: 'Guide Salvage - IceForge',
+    showTopbarTabs: false,
     subtitle: 'Workflow stylise type wiki pour une boucle salvage propre et rentable.',
     updatedAt: '22 fev. 2026',
+    gameVersion: 'Alpha 4.9',
     readTime: '6-8 min',
     difficulty: 'Debutant a Intermediaire',
     status: { label: 'Disponible', tone: 'live' },
@@ -61,5 +65,7 @@ export class SalvageGuideComponent {
       }
     ]
   };
+  constructor(private readonly guideService: GuideService) {}
+  ngOnInit(): void { this.guideService.getPublished('salvage').subscribe({ next: remote => this.guide = mergePublishedGuide(this.guide, remote), error: error => this.guide = hideUnpublishedGuide(this.guide, error) }); }
 }
 

@@ -2,6 +2,7 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
+import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 import { CatalogLocationImage, CelestialBody, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
 
@@ -40,7 +41,7 @@ interface OreLocationResult {
 @Component({
   selector: 'front-resources-mining-panel',
   standalone: true,
-  imports: [],
+  imports: [AsyncStateComponent],
   templateUrl: './resources-mining-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-mining-panel.component.css'

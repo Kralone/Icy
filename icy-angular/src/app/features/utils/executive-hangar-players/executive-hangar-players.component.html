@@ -20,7 +20,7 @@
 
     <section class="rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6">
       @if (isLoading) {
-        <div class="text-slate-300">Chargement des joueurs...</div>
+        <app-async-state kind="loading" title="Chargement des joueurs…" />
       }
       @if (errorMessage) {
         <div class="text-red-300">{{ errorMessage }}</div>

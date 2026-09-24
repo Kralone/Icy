@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/auth/logout",
                                 "/api/auth/reset-password",
                                 "/api/front/**",
+                                "/api/guides/**",
                                 "/api/wikelo/ships",
                                 "/api/utils/executive-hangar/config",
                                 "/ws/**"

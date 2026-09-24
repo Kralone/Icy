@@ -70,6 +70,7 @@ export interface GuideDocument {
   subtitle: string;
   showTopbarTabs?: boolean;
   updatedAt: string;
+  gameVersion?: string;
   readTime: string;
   difficulty: string;
   status: GuideStatusBadge;

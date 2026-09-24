@@ -25,6 +25,7 @@ export class GuideTopbarComponent {
   @Input() statusLabel = '';
   @Input() statusTone: GuideBadgeTone | '' = '';
   @Input() updatedAt = '';
+  @Input() gameVersion = '';
   @Input() readTime = '';
   @Input() difficulty = '';
   @Input() tags: readonly string[] = [];
@@ -41,7 +42,7 @@ export class GuideTopbarComponent {
   }
 
   get hasMeta(): boolean {
-    return !!(this.updatedAt || this.readTime || this.difficulty);
+    return !!(this.updatedAt || this.gameVersion || this.readTime || this.difficulty);
   }
 
   get hasTags(): boolean {

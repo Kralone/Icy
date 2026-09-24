@@ -88,6 +88,19 @@ export class FleetComponent implements OnInit, OnDestroy {
     return (this.fleetSummary[focus] ?? []).reduce((total, ship) => total + ship.count, 0);
   }
 
+  totalModels(): number {
+    return Object.values(this.fleetSummary).reduce((total, ships) => total + ships.length, 0);
+  }
+
+  totalShips(): number {
+    return Object.values(this.fleetSummary).reduce((total, ships) => total + ships.reduce((count, ship) => count + ship.count, 0), 0);
+  }
+
+  totalOwners(): number {
+    const owners = new Set<string>();
+    Object.values(this.fleetSummary).forEach(ships => ships.forEach(ship => ship.owners?.forEach(owner => owners.add(owner))));
+    return owners.size;
+  }
   private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
     const result: Record<string, FleetShipGroup[]> = {};
 

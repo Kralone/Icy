@@ -20,7 +20,7 @@
 @if (activeTab === 'ships') {
   <section class="fit-panel">
     @if (shipsLoading) {
-      <div class="fit-state">Chargement des vaisseaux de minage...</div>
+      <app-async-state kind="loading" title="Chargement des vaisseaux de minage…" />
     }
     @if (!shipsLoading && shipsError) {
       <div class="fit-state fit-state--error">{{ shipsError }}</div>
@@ -41,7 +41,6 @@
             </div>
             <div class="ship-card__body">
               <h3>{{ ship.name }}</h3>
-              <small class="catalog-freshness">{{ itemProvenance(ship.id) }}</small>
               <p>{{ brandName(ship) }} · {{ ship.focus || 'Focus non renseigne' }}</p>
               <dl class="ship-card__stats">
                 <div>
@@ -86,7 +85,7 @@
       </div>
     }
     @if (modulesLoading) {
-      <div class="fit-state">Chargement des modules de minage...</div>
+      <app-async-state kind="loading" title="Chargement des modules de minage…" />
     }
     @if (!modulesLoading && modulesError) {
       <div class="fit-state fit-state--error">{{ modulesError }}</div>
@@ -97,7 +96,7 @@
     @if (!modulesLoading && !modulesError && filteredMiningModuleItems().length) {
       <div class="module-grid">
         @for (item of filteredMiningModuleItems(); track item.id) {
-          <article class="module-card module-card--clickable" (click)="openGadgetDetails(item)">
+          <article class="module-card module-card--clickable" role="button" tabindex="0" (click)="openGadgetDetails(item)" (keydown.enter)="openGadgetDetails(item)" (keydown.space)="openGadgetDetails(item); $event.preventDefault()">
             <div class="module-card__visual module-card__visual--image">
               @if (item.imageUrl) {
                 <img [src]="item.imageUrl" [alt]="item.name" loading="lazy" decoding="async" />
@@ -109,12 +108,15 @@
             </div>
             <div class="module-card__body">
               <h3>{{ item.name }}</h3>
-              <small class="catalog-freshness">{{ itemProvenance(item.id) }}</small>
               <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
-              <section class="module-card__notes">
-                <h4>Description</h4>
-                <p>{{ item.description || 'Description non renseignee.' }}</p>
-              </section>
+              <div class="module-card__highlights">
+                @for (stat of descriptionHighlights(item.description); track stat) {
+                  <span>{{ stat }}</span>
+                } @empty {
+                  <span>Fiche détaillée disponible</span>
+                }
+              </div>
+              <span class="module-card__open">Ouvrir la fiche <span aria-hidden="true">↗</span></span>
             </div>
           </article>
         }
@@ -126,7 +128,7 @@
 @if (activeTab === 'tools') {
   <section class="fit-panel">
     @if (toolsLoading) {
-      <div class="fit-state">Chargement des outils de minage...</div>
+      <app-async-state kind="loading" title="Chargement des outils de minage…" />
     }
     @if (!toolsLoading && toolsError) {
       <div class="fit-state fit-state--error">{{ toolsError }}</div>
@@ -137,7 +139,7 @@
     @if (!toolsLoading && !toolsError && miningGadgetItems.length) {
       <div class="module-grid">
         @for (item of miningGadgetItems; track item.id) {
-          <article class="module-card module-card--clickable" (click)="openGadgetDetails(item)">
+          <article class="module-card module-card--clickable" role="button" tabindex="0" (click)="openGadgetDetails(item)" (keydown.enter)="openGadgetDetails(item)" (keydown.space)="openGadgetDetails(item); $event.preventDefault()">
             <div class="module-card__visual module-card__visual--image">
               @if (item.imageUrl) {
                 <img [src]="item.imageUrl" [alt]="item.name" loading="lazy" decoding="async" />
@@ -149,12 +151,15 @@
             </div>
             <div class="module-card__body">
               <h3>{{ item.name }}</h3>
-              <small class="catalog-freshness">{{ itemProvenance(item.id) }}</small>
               <p>{{ item.manufacturer || 'Manufacturer non renseigne' }}</p>
-              <section class="module-card__notes">
-                <h4>Description</h4>
-                <p>{{ item.description || 'Description non renseignee.' }}</p>
-              </section>
+              <div class="module-card__highlights">
+                @for (stat of descriptionHighlights(item.description); track stat) {
+                  <span>{{ stat }}</span>
+                } @empty {
+                  <span>Fiche détaillée disponible</span>
+                }
+              </div>
+              <span class="module-card__open">Ouvrir la fiche <span aria-hidden="true">↗</span></span>
             </div>
           </article>
         }
@@ -170,7 +175,6 @@
         <div>
           <span class="module-modal__eyebrow">Fiche gadget</span>
           <h3>{{ selectedGadget.name }}</h3>
-          <small class="catalog-freshness">{{ itemProvenance(selectedGadget.id) }}</small>
           <p class="module-modal__manufacturer">
             Manufacturer: <strong>{{ selectedGadget.manufacturer || 'Manufacturer non renseigne' }}</strong>
           </p>

@@ -1,5 +1,5 @@
 @if (miningLoading) {
-  <div class="resource-state">Chargement des ore locations depuis le backend...</div>
+  <app-async-state kind="loading" title="Chargement des ressources minières…" />
 }
 @if (!miningLoading && miningError) {
   <div class="resource-state resource-state--error">{{ miningError }}</div>
@@ -7,9 +7,8 @@
 @if (!miningLoading && !miningError && !sortedPlanetGroups.length) {
   <div class="resource-state">Aucune donnee exploitable.</div>
 }
-
 @if (!miningLoading && !miningError && sortedPlanetGroups.length) {
-  <p class="mining-source-note">Les fréquences observées et concentrations dépendent de la source et de la version du jeu. Une valeur absente reste non renseignée.</p>
+  <p class="mining-source-note">Fréquences et concentrations observées selon la source et la version du jeu. Une valeur absente reste non renseignée.</p>
   <div class="mining-search-wrap">
     <div class="mining-search-row">
       <input

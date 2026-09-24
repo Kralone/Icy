@@ -30,13 +30,8 @@
 
     <section class="ship-market-catalog-panel rounded-2xl border border-white/10 bg-white/5 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-4 sm:p-6">
       @if (isLoading) {
-        <div class="ship-market-loading" role="status" aria-live="polite">
-          <span class="ship-market-loading-spinner" aria-hidden="true"></span>
-          <div>
-            <strong>Chargement du catalogue</strong>
-            <p>Récupération des offres d’achat et de location…</p>
-          </div>
-        </div>
+        <app-async-state kind="loading" title="Chargement du marché des vaisseaux…" />
+        
       }
       @if (errorMessage) {
         <div class="ship-market-error" role="alert">
@@ -192,7 +187,6 @@
                   >
                   <span aria-hidden="true">◇</span>
                   <strong>Aucun vaisseau trouvé</strong>
-                  <p>Essayez un autre terme ou sélectionnez un autre point de vente.</p>
                 </div>
               }
             }
@@ -238,3 +232,5 @@
         </div>
       }
 </div>
+
+

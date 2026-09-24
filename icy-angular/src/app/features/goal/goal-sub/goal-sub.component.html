@@ -39,7 +39,7 @@
   }
   @if (isLeaf(goal) && showParticipations) {
     <section class="participations" aria-label="Participations récentes">
-      @if (participationsLoading) { <p role="status">Chargement des participations…</p> }
+      @if (participationsLoading) { <app-async-state kind="loading" title="Chargement des participations…" /> }
       @if (participationsError) { <p class="error" role="alert">{{ participationsError }} <button (click)="loadParticipations()">Réessayer</button></p> }
       @if (!participationsLoading && !participationsError && !participations.length) { <p>Aucune participation.</p> }
       @for (p of participations; track p) {

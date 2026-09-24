@@ -13,7 +13,7 @@
   }
 
   @if (salesLoading) {
-    <div class="resource-sales-state">Chargement des prix depuis le backend...</div>
+    <app-async-state kind="loading" title="Chargement des prix…" />
   }
   @if (!salesLoading && salesError) {
     <div class="resource-sales-state resource-sales-state--error">{{ salesError }}</div>

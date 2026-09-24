@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { Subscription } from 'rxjs';
 import { CatalogLocationImage, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
 import { UexDatasetService, UexRefineryDatasets } from '../../../../../../core/services/uex/uex-dataset.service';
+import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 
 type RawRow = Record<string, unknown>;
@@ -32,7 +33,7 @@ interface RefinerySummaryRow {
 @Component({
   selector: 'front-resources-refining-panel',
   standalone: true,
-  imports: [],
+  imports: [AsyncStateComponent],
   templateUrl: './resources-refining-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './resources-refining-panel.component.css'

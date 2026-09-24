@@ -1,7 +1,9 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { GuideTemplateComponent } from '../guide-template/guide-template.component';
 import { GuideDocument } from '../guide-template/guide-template.types';
 import { buildResourcesGuideLink } from '../resources-guide/resources-guide-link.utils';
+import { GuideService } from '../../../../core/services/guide/guide.service';
+import { hideUnpublishedGuide, mergePublishedGuide } from '../guide-published.utils';
 
 const MINING_HEADS_DATABASE_LINK = buildResourcesGuideLink({
   line: 'fit',
@@ -21,12 +23,13 @@ const RESOURCES_PRICE_LINK = buildResourcesGuideLink({ line: 'planning' });
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `<front-guide-template [guide]="guide"></front-guide-template>`
 })
-export class AdvancedMiningGuideComponent {
-  readonly guide: GuideDocument = {
+export class AdvancedMiningGuideComponent implements OnInit {
+  guide: GuideDocument = {
     slug: 'minage-avance',
     title: 'Expertise Minière : L\'Art de l\'Optimisation',
     subtitle: 'Maîtrisez les statistiques, configurez votre laser et dominez le marché des ressources.',
     updatedAt: '27 fév. 2026',
+    gameVersion: 'Alpha 4.9',
     readTime: '30-40 min',
     difficulty: 'Expert',
     status: { label: 'Complet', tone: 'live' },
@@ -184,4 +187,6 @@ export class AdvancedMiningGuideComponent {
       }
     ]
   };
+  constructor(private readonly guideService: GuideService) {}
+  ngOnInit(): void { this.guideService.getPublished('minage-confirmed').subscribe({ next: remote => this.guide = mergePublishedGuide(this.guide, remote), error: error => this.guide = hideUnpublishedGuide(this.guide, error) }); }
 }

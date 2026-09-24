@@ -59,6 +59,7 @@ const knownRoutes = new Set([
   '/icy/admin/stations',
   '/icy/admin/recrutement',
   '/icy/admin/news',
+  '/icy/admin/guides',
   '/icy/admin/icelinkBuilder',
   '/icy/admin/images',
   '/icy/admin/uex-cache',

@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { Ship, ShipCatalogGroup } from '../../model/ship.model';
+import { AsyncStateComponent } from '../async-state/async-state.component';
 
 export type AcquisitionType = 'rsi' | 'ingame' | 'reward_ingame' | 'loaner';
 
 @Component({
   selector: 'app-ship-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AsyncStateComponent],
   templateUrl: './ship-selector.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./ship-selector.component.css']

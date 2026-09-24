@@ -43,7 +43,10 @@ public class CatalogMiningService {
                        OR source_payload->>'classification' = 'Ship.Mining.Gun' THEN 'mining_laser'
                      WHEN source_payload->>'type' = 'MiningModifier'
                        OR source_payload->>'classification' = 'Mining.Module' THEN 'module'
-                     WHEN source_payload->>'type' = 'MiningPod' THEN 'cargo_pod'
+                     WHEN source_payload->>'type' = 'MiningPod'
+                       OR LOWER(COALESCE(source_payload->>'type', '')) IN ('mining_pod', 'cargo_pod')
+                       OR LOWER(COALESCE(source_payload->>'classification', '')) ~ '(mining|cargo).*(pod|bag|sac)'
+                       OR LOWER(CONCAT_WS(' ', name, manufacturer, description)) LIKE '%baliaga%' THEN 'cargo_pod'
                      ELSE NULL
                    END AS kind
             FROM catalog.entries
@@ -53,6 +56,9 @@ public class CatalogMiningService {
                  AND LOWER(COALESCE(focus, source_payload->>'role')) ~ '(mining|minage|prospecting)')
               OR source_payload->>'classification' IN ('Mining.Gadget', 'Mining.Module', 'Ship.Mining.Gun')
               OR source_payload->>'type' IN ('WeaponMining', 'MiningModifier', 'MiningPod')
+              OR LOWER(COALESCE(source_payload->>'type', '')) IN ('mining_pod', 'cargo_pod')
+              OR LOWER(COALESCE(source_payload->>'classification', '')) ~ '(mining|cargo).*(pod|bag|sac)'
+              OR LOWER(CONCAT_WS(' ', name, manufacturer, description)) LIKE '%baliaga%'
             )
             ORDER BY LOWER(name), id
             """.formatted(FLIGHT_READY_SQL, FLIGHT_READY_SQL));

@@ -16,7 +16,7 @@
     </header>
 
     @if (loading) {
-      <div class="state-card">Chargement des fiches...</div>
+      <app-async-state kind="loading" title="Chargement des fiches de minage…" />
     }
     @if (!loading && errorMessage) {
       <div class="state-card state-card--error">{{ errorMessage }}</div>

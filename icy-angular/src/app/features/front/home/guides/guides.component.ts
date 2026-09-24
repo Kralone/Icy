@@ -32,11 +32,29 @@ export class GuidesComponent {
     {
       id: 2,
       title: 'Guide Hathor',
-      summary: 'Structure du guide en place, contenu a venir.',
+      summary: 'Préparation, trajet OLP, extraction de Carinite et sécurisation PvP.',
       category: 'Exploration',
       route: '/guides/hathor',
       imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png',
-      type: 'écriture'
+      type: 'live'
+    },
+    {
+      id: 3,
+      title: 'Guide Salvage',
+      summary: 'Tri des coques, extraction et revente sécurisée.',
+      category: 'Industrie',
+      route: '/guides/salvage',
+      imageUrl: 'assets/images/home/activities/salvage.jpg',
+      type: 'live'
+    },
+    {
+      id: 4,
+      title: 'Guide Minage avancé',
+      summary: 'Réglages experts, gadgets, risques et pipeline de production.',
+      category: 'Industrie',
+      route: '/guides/minage/confirmed',
+      imageUrl: 'assets/images/home/activities/mining.jpg',
+      type: 'live'
     }
   ];
 }

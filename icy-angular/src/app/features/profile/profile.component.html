@@ -17,7 +17,6 @@
       </div>
     }
   </div>
-
   <app-loading-overlay
     [isLoading]="!dataReady"
     [minDurationMs]="700"
@@ -25,7 +24,6 @@
     [softFade]="true"
     (hidden)="profileLoaded = true"
   ></app-loading-overlay>
-
   <div class="relative z-10">
     <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>
@@ -33,7 +31,6 @@
         <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300">CMDR {{ profile.username }}</h1>
       </div>
     </header>
-
     <section class="mb-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
         @for (tab of profileTabs; track tab) {
@@ -53,7 +50,6 @@
         }
       </div>
     </section>
-
     @if (activeTab === 'profile') {
       <section class="grid grid-cols-1 gap-6">
         <div class="space-y-6">
@@ -198,7 +194,6 @@
                             Aucun vaisseau prefere renseigne
                           </p>
                         }
-                        <p class="text-xs text-cyan-100/60">Selection actuelle</p>
                       </div>
                     </div>
                     <button
@@ -239,7 +234,6 @@
           </div>
         </section>
       }
-
       @if (activeTab === 'settings') {
         <section id="settings" class="mt-2">
           <h2 class="text-lg font-semibold text-cyan-300 mb-4">Parametres</h2>
@@ -251,7 +245,6 @@
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <p class="font-semibold text-white">Notifications globales</p>
-                  <p class="text-xs text-cyan-100/60">Activer ou couper toutes les alertes.</p>
                 </div>
                 <label class="relative inline-flex items-center">
                   <input
@@ -275,7 +268,6 @@
                 <div class="flex items-center justify-between gap-4">
                   <div>
                     <p class="font-semibold text-white">Events et missions</p>
-                    <p class="text-xs text-cyan-100/60">Recevoir les updates pour les events.</p>
                   </div>
                   <label class="relative inline-flex items-center">
                     <input
@@ -299,7 +291,6 @@
                   <div class="flex items-center justify-between gap-4">
                     <div>
                       <p class="font-semibold text-white">Flotte</p>
-                      <p class="text-xs text-cyan-100/60">Alertes sur les changements de flotte.</p>
                     </div>
                     <label class="relative inline-flex items-center">
                       <input
@@ -323,7 +314,6 @@
                     <div class="flex items-center justify-between gap-4">
                       <div>
                         <p class="font-semibold text-white">Objectifs</p>
-                        <p class="text-xs text-cyan-100/60">Suivi des objectifs personnels.</p>
                       </div>
                       <label class="relative inline-flex items-center">
                         <input
@@ -372,7 +362,6 @@
                     </div>
                   </section>
                 }
-
                 <app-ship-selector
                   [isOpen]="isShipModalOpen"
                   [showAcquisition]="false"

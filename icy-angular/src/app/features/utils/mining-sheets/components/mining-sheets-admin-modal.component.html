@@ -26,7 +26,6 @@
           </div>
         </div>
         @if (sheet.status === 'OPEN') {
-          <p class="workflow-hint">Le verrouillage bloque les modifications. La finalisation devient ensuite disponible.</p>
         } @else if (sheet.status === 'LOCKED') {
           <p class="workflow-hint">Fiche verrouillée. Finalisez pour la clôturer définitivement, ou déverrouillez pour la modifier.</p>
         }

@@ -63,6 +63,10 @@ import { animate, group, query, style, transition, trigger } from '@angular/anim
 export class LayoutComponent {
   isSidebarOpen = false;
   isDesktop = false;
+  private touchStartX: number | null = null;
+  private touchStartY: number | null = null;
+  private touchCurrentX: number | null = null;
+  private touchCurrentY: number | null = null;
 
   constructor() {
     this.checkViewport();
@@ -76,6 +80,42 @@ export class LayoutComponent {
   private checkViewport(): void {
     this.isDesktop = window.innerWidth >= 1280; // breakpoint XL
     if (this.isDesktop) this.isSidebarOpen = false;
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    if (this.isDesktop || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    this.touchStartX = this.touchCurrentX = touch.clientX;
+    this.touchStartY = this.touchCurrentY = touch.clientY;
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    if (this.isDesktop || this.touchStartX === null || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    this.touchCurrentX = touch.clientX;
+    this.touchCurrentY = touch.clientY;
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - (this.touchStartY ?? touch.clientY);
+    if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      event.preventDefault();
+    }
+  }
+
+  onTouchCancel(): void {
+    this.touchStartX = this.touchStartY = this.touchCurrentX = this.touchCurrentY = null;
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    if (this.isDesktop || this.touchStartX === null) return;
+    const endX = this.touchCurrentX ?? event.changedTouches[0]?.clientX ?? this.touchStartX;
+    const endY = this.touchCurrentY ?? event.changedTouches[0]?.clientY ?? this.touchStartY ?? 0;
+    const deltaX = endX - this.touchStartX;
+    const deltaY = endY - (this.touchStartY ?? endY);
+    if (Math.abs(deltaX) >= 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+      if (deltaX > 0 && !this.isSidebarOpen) this.isSidebarOpen = true;
+      if (deltaX < 0 && this.isSidebarOpen) this.isSidebarOpen = false;
+    }
+    this.touchStartX = this.touchStartY = this.touchCurrentX = this.touchCurrentY = null;
   }
 
   toggleSidebar(): void {

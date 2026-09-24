@@ -2,7 +2,6 @@
   <div class="logistics-head">
     <div>
       <h3>Logistique</h3>
-      <p>Associe les vaisseaux de transport a la fiche et visualise les grilles cargo en 3D.</p>
     </div>
     <button
       type="button"
@@ -13,13 +12,11 @@
       + Ajouter un vaisseau
     </button>
   </div>
-
   @if (!sheet.sheetShips.length) {
     <div class="logistics-empty">
       Aucun vaisseau ajoute pour cette fiche.
     </div>
   }
-
   @if (sheet.sheetShips.length) {
     <div class="sheet-ships-list">
       @for (sheetShip of sheet.sheetShips; track trackSheetShip($index, sheetShip)) {
@@ -236,7 +233,6 @@
     </div>
   }
 </section>
-
 <app-ship-selector
   [isOpen]="isShipSelectorOpen"
   [showAcquisition]="false"

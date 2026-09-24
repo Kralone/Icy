@@ -7,11 +7,9 @@
       <span class="text-base leading-none">←</span>
       <span>Retour Data</span>
     </a>
-
     <div class="flex items-center justify-between gap-4 flex-wrap">
       <div>
         <h2 class="text-3xl font-semibold tracking-[0.08em] uppercase text-cyan-200">Stations</h2>
-        <p class="text-sm text-cyan-100/70 mt-1">Gestion des stations orbitales/lagrange avec donnees wiki 4.6.</p>
       </div>
       <div class="flex items-center gap-3">
         <label class="text-xs uppercase tracking-[0.14em] text-cyan-100/70" for="station-system-filter">Systeme</label>
@@ -26,7 +24,6 @@
         </button>
       </div>
     </div>
-
     <div class="station-form rounded-2xl border border-cyan-300/20 bg-[#071324]/70 p-6 shadow-2xl space-y-5">
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div>
@@ -103,7 +100,6 @@
           <textarea [(ngModel)]="newStation.notes" class="station-input station-input--textarea"></textarea>
         </div>
       </div>
-
       <div class="flex items-center justify-between gap-4 flex-wrap">
         @if (errorMessage) {
           <div class="text-sm text-red-300">{{ errorMessage }}</div>
@@ -119,7 +115,6 @@
         </div>
       </div>
     </div>
-
     <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
       <div class="overflow-auto">
         <table class="min-w-full text-sm">
