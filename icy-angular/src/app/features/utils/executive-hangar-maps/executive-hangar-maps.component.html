@@ -55,7 +55,7 @@
         <button type="button" cdkFocusInitial (click)="closeMap()">Fermer</button>
       </header>
       <div class="map-viewport" tabindex="0" aria-label="Plan interactif : flèches pour déplacer, plus et moins pour zoomer" (keydown)="keyboardNavigate($event)" (wheel)="wheel($event)"
-        (pointerdown)="pointerDown($event)" (pointermove)="pointerMove($event)"
+        (dragstart)="$event.preventDefault()" (pointerdown)="pointerDown($event)" (pointermove)="pointerMove($event)"
         (pointerup)="pointerUp($event)" (pointercancel)="pointerUp($event)" (lostpointercapture)="pointerUp($event)">
         <div class="map-canvas" [style.width.%]="zoom * 100" [style.height.%]="zoom * 100">
           <img [src]="selectedMap.imageUrl" [alt]="selectedMap.title" draggable="false" />

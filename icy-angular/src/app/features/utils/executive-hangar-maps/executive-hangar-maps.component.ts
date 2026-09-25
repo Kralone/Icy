@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { utilityRouteFor } from '../utility-route-context';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -33,30 +33,49 @@ export class ExecutiveHangarMapsComponent {
   zoom = 1;
   private pointers = new Map<number, {x: number; y: number}>();
 
-  setZoom(value: number): void {
+  setZoom(value: number, viewport: HTMLElement, x = viewport.clientWidth / 2, y = viewport.clientHeight / 2, dx = 0, dy = 0): void {
+    const previousZoom = this.zoom;
+    const left = viewport.scrollLeft;
+    const top = viewport.scrollTop;
     this.zoom = Math.min(6, Math.max(1, Math.round(value * 100) / 100));
+    // Apply the canvas dimensions before scrolling so the browser uses the new bounds.
+    this.changeDetector.detectChanges();
+    const ratio = this.zoom / previousZoom;
+    viewport.scrollLeft = (left + x) * ratio - x + dx;
+    viewport.scrollTop = (top + y) * ratio - y + dy;
   }
 
   wheel(event: WheelEvent): void {
     event.preventDefault();
-    this.setZoom(this.zoom * (event.deltaY < 0 ? 1.15 : 1 / 1.15));
+    if (!event.deltaY) return;
+    const viewport = event.currentTarget as HTMLElement;
+    const bounds = viewport.getBoundingClientRect();
+    this.setZoom(this.zoom * (event.deltaY < 0 ? 1.15 : 1 / 1.15), viewport,
+      event.clientX - bounds.left, event.clientY - bounds.top);
   }
 
   pointerDown(event: PointerEvent): void {
     if (event.button !== 0) return;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.preventDefault();
+    const viewport = event.currentTarget as HTMLElement;
+    viewport.focus({preventScroll: true});
+    viewport.setPointerCapture(event.pointerId);
     this.pointers.set(event.pointerId, {x: event.clientX, y: event.clientY});
   }
 
   pointerMove(event: PointerEvent): void {
     const previous = this.pointers.get(event.pointerId);
     if (!previous) return;
+    event.preventDefault();
     const viewport = event.currentTarget as HTMLElement;
     const other = [...this.pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
     if (other) {
       const before = Math.hypot(previous.x - other.x, previous.y - other.y);
       const after = Math.hypot(event.clientX - other.x, event.clientY - other.y);
-      if (before > 0) this.setZoom(this.zoom * after / before);
+      const bounds = viewport.getBoundingClientRect();
+      if (before > 0) this.setZoom(this.zoom * after / before, viewport,
+        (previous.x + other.x) / 2 - bounds.left, (previous.y + other.y) / 2 - bounds.top,
+        (previous.x - event.clientX) / 2, (previous.y - event.clientY) / 2);
     } else {
       viewport.scrollLeft -= event.clientX - previous.x;
       viewport.scrollTop -= event.clientY - previous.y;
@@ -73,14 +92,14 @@ export class ExecutiveHangarMapsComponent {
       case 'ArrowRight': viewport.scrollLeft += 120; break;
       case 'ArrowUp': viewport.scrollTop -= 120; break;
       case 'ArrowDown': viewport.scrollTop += 120; break;
-      case '+': case '=': this.setZoom(this.zoom * 1.15); break;
-      case '-': this.setZoom(this.zoom / 1.15); break;
+      case '+': case '=': this.setZoom(this.zoom * 1.15, viewport); break;
+      case '-': this.setZoom(this.zoom / 1.15, viewport); break;
       default: return;
     }
     event.preventDefault();
   }
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private changeDetector: ChangeDetectorRef) {}
 
   get backToStatusLink(): string {
     return utilityRouteFor(this.router.url, 'executive-hangar');
