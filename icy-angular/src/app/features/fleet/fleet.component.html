@@ -7,16 +7,16 @@
     [softFade]="true"
   ></app-loading-overlay>
   <header class="fleet-page-heading">
-    <div><p>FLOTTE PARTAGÉE</p><h1>Qui possède quoi</h1></div>
+    <h1>Flotte partagée</h1>
     @if (!isLoading && objectKeys(fleetSummary).length > 0) {
-      <div class="fleet-summary" aria-label="Résumé de la flotte"><span><strong>{{ totalModels() }}</strong> modèles</span><span><strong>{{ totalShips() }}</strong> vaisseaux</span><span><strong>{{ totalOwners() }}</strong> membres</span></div>
+      <div class="fleet-summary" aria-label="Résumé de la flotte"><span><strong>{{ totalModels() }}</strong> modèles</span><span><strong>{{ totalShips() }}</strong> vaisseaux</span></div>
     }
   </header>
 
   <!-- Résumé -->
   @if (!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0) {
     @for (focus of objectKeys(fleetSummary); track focus) {
-      <div class="mb-12">
+      <div class="fleet-category">
         <div class="fleet-focus-section">
           <div class="fleet-focus-heading">
             <h3 class="text-sm font-medium text-slate-300">{{ focus }}</h3>
@@ -27,8 +27,8 @@
           <div class="fleet-ship-grid">
             @for (ship of fleetSummary[focus]; track ship.name) {
               <div
-                class="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
-                role="button" tabindex="0" (click)="openShip(ship)" (keydown.enter)="openShip(ship)"
+                class="fleet-ship-card relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-cyan-400/40"
+                role="button" tabindex="0" (click)="openShip(ship)" (keydown.enter)="openShip(ship)" (keydown.space)="openShip(ship); $event.preventDefault()"
                 [title]="ship.owners?.length ? 'Propriétaires : ' + ship.owners.join(', ') : 'Propriétaire non renseigné'"
                 >
                 <div class="relative w-full" style="aspect-ratio: 16 / 10;">
@@ -65,7 +65,7 @@
         </div>
       </div>
     }
-  } @else {
+  } @else if (!isLoading) {
     <div class="flex flex-col items-center justify-center h-96 text-slate-400">
       <svg class="w-14 h-14 mb-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"

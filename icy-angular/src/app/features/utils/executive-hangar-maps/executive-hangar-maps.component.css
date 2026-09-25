@@ -1,6 +1,16 @@
 :host {
   display: block;
 }
+.map-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:12px; color:#e0faff; }
+.map-toolbar h2 { flex:1; min-width:120px; margin:0; }
+.map-toolbar button { min-width:44px; min-height:44px; padding:8px 12px; background:#123044; border:1px solid #42677c; border-radius:8px; cursor:pointer; }
+.map-toolbar button:disabled { opacity:.4; cursor:default; }
+.map-toolbar output { min-width:58px; text-align:center; font-variant-numeric:tabular-nums; }
+.map-toolbar button:focus-visible,.map-viewport:focus-visible { outline:2px solid #89eef4; outline-offset:-2px; }
+.map-viewport { height:70dvh; overflow:auto; touch-action:none; cursor:grab; overscroll-behavior:contain; }
+.map-viewport:active { cursor:grabbing; }
+.map-canvas { display:flex; align-items:center; justify-content:center; }
+.map-canvas img { width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none; }
 
 .map-modal {
   animation: mapModalFadeIn 190ms ease-out;

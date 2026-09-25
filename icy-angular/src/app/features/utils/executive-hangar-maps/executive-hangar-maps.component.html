@@ -48,20 +48,23 @@
     <div
       class="map-modal-panel relative w-full max-w-6xl max-h-[92vh] rounded-2xl border border-white/20 bg-[#050b17] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       [class.map-modal-panel--closing]="isClosingModal"
-      (click)="$event.stopPropagation()"
+      role="dialog" aria-modal="true" [attr.aria-label]="selectedMap.title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="closeMap(); $event.stopPropagation()" (click)="$event.stopPropagation()"
       >
-      <button
-        type="button"
-        class="absolute top-3 right-3 z-10 px-3 py-1 rounded-full bg-black/60 border border-white/25 text-white hover:bg-black/80 transition"
-        (click)="closeMap()"
-        >
-        Fermer
-      </button>
-      <img
-        [src]="selectedMap.imageUrl"
-        [alt]="selectedMap.title + ' map agrandie'"
-        class="w-full h-[92vh] object-contain cursor-zoom-out"
-        />
+      <header class="map-toolbar">
+        <h2>{{ selectedMap.title }}</h2>
+        <button type="button" (click)="setZoom(zoom / 1.25)" [disabled]="zoom <= 1" aria-label="Dézoomer">−</button>
+        <output aria-live="polite">{{ (zoom * 100).toFixed(0) }} %</output>
+        <button type="button" (click)="setZoom(zoom * 1.25)" [disabled]="zoom >= 6" aria-label="Zoomer">+</button>
+        <button type="button" (click)="setZoom(1)">Ajuster</button>
+        <button type="button" cdkFocusInitial (click)="closeMap()">Fermer</button>
+      </header>
+      <div class="map-viewport" tabindex="0" aria-label="Plan : utiliser les flèches pour déplacer la vue" (keydown)="keyboardPan($event)" (wheel)="wheel($event)"
+        (pointerdown)="pointerDown($event)" (pointermove)="pointerMove($event)"
+        (pointerup)="pointerUp($event)" (pointercancel)="pointerUp($event)" (lostpointercapture)="pointerUp($event)">
+        <div class="map-canvas" [style.width.%]="zoom * 100" [style.height.%]="zoom * 100">
+          <img [src]="selectedMap.imageUrl" [alt]="selectedMap.title" draggable="false" />
+        </div>
+      </div>
       </div>
     </div>
   }

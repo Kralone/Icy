@@ -39,6 +39,18 @@
 .fleet-ship-card { min-height:100%; }
 .fleet-ship-copy { min-height:4.3rem; padding-right:4rem !important; }
 .fleet-owner-summary { margin-top:.35rem; color:#8faebb; font-size:.72rem; }
+.fleet-page-heading { max-width:none; margin-bottom:28px; }
+.fleet-page-heading h1 { font-size:clamp(1.3rem,2vw,1.8rem); }
+.fleet-summary span { border:0; background:none; padding:0; }
+.fleet-summary { gap:20px; }
+.fleet-category { margin-bottom:36px; }
+.fleet-focus-heading { border-left:3px solid #76dfe0; padding-left:12px; }
+.fleet-focus-heading h3 { font-size:1rem; font-weight:600; color:#d8edf4; }
+.fleet-ship-card { height:100%; }
+.fleet-ship-card:focus-visible { outline:2px solid #76dfe0; outline-offset:3px; }
+.fleet-ship-card:focus-visible .fleet-owner-tooltip { opacity:1; transform:none; }
+@media (min-width:1900px) { .fleet-ship-grid { grid-template-columns:repeat(auto-fill,minmax(280px,1fr)) !important; } }
+@media (prefers-reduced-motion:reduce) { .fleet-ship-card,.fleet-owner-tooltip { transition:none; } }
 .fleet-focus-section { display: grid; gap: 14px; }
 .fleet-focus-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .fleet-focus-count { color: #9fb3c3; font-size: 12px; }
