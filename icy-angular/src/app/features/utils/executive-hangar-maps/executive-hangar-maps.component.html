@@ -52,13 +52,9 @@
       >
       <header class="map-toolbar">
         <h2>{{ selectedMap.title }}</h2>
-        <button type="button" (click)="setZoom(zoom / 1.25)" [disabled]="zoom <= 1" aria-label="Dézoomer">−</button>
-        <output aria-live="polite">{{ (zoom * 100).toFixed(0) }} %</output>
-        <button type="button" (click)="setZoom(zoom * 1.25)" [disabled]="zoom >= 6" aria-label="Zoomer">+</button>
-        <button type="button" (click)="setZoom(1)">Ajuster</button>
         <button type="button" cdkFocusInitial (click)="closeMap()">Fermer</button>
       </header>
-      <div class="map-viewport" tabindex="0" aria-label="Plan : utiliser les flèches pour déplacer la vue" (keydown)="keyboardPan($event)" (wheel)="wheel($event)"
+      <div class="map-viewport" aria-label="Plan interactif" (wheel)="wheel($event)"
         (pointerdown)="pointerDown($event)" (pointermove)="pointerMove($event)"
         (pointerup)="pointerUp($event)" (pointercancel)="pointerUp($event)" (lostpointercapture)="pointerUp($event)">
         <div class="map-canvas" [style.width.%]="zoom * 100" [style.height.%]="zoom * 100">

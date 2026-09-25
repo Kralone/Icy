@@ -66,17 +66,6 @@ export class ExecutiveHangarMapsComponent {
 
   pointerUp(event: PointerEvent): void { this.pointers.delete(event.pointerId); }
 
-  keyboardPan(event: KeyboardEvent): void {
-    const viewport = event.currentTarget as HTMLElement;
-    const amount = 120;
-    if (event.key === 'ArrowLeft') viewport.scrollBy({left: -amount, behavior: 'smooth'});
-    else if (event.key === 'ArrowRight') viewport.scrollBy({left: amount, behavior: 'smooth'});
-    else if (event.key === 'ArrowUp') viewport.scrollBy({top: -amount, behavior: 'smooth'});
-    else if (event.key === 'ArrowDown') viewport.scrollBy({top: amount, behavior: 'smooth'});
-    else return;
-    event.preventDefault();
-  }
-
   constructor(private router: Router) {}
 
   get backToStatusLink(): string {
