@@ -66,6 +66,20 @@ export class ExecutiveHangarMapsComponent {
 
   pointerUp(event: PointerEvent): void { this.pointers.delete(event.pointerId); }
 
+  keyboardNavigate(event: KeyboardEvent): void {
+    const viewport = event.currentTarget as HTMLElement;
+    switch (event.key) {
+      case 'ArrowLeft': viewport.scrollLeft -= 120; break;
+      case 'ArrowRight': viewport.scrollLeft += 120; break;
+      case 'ArrowUp': viewport.scrollTop -= 120; break;
+      case 'ArrowDown': viewport.scrollTop += 120; break;
+      case '+': case '=': this.setZoom(this.zoom * 1.15); break;
+      case '-': this.setZoom(this.zoom / 1.15); break;
+      default: return;
+    }
+    event.preventDefault();
+  }
+
   constructor(private router: Router) {}
 
   get backToStatusLink(): string {
