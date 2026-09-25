@@ -21,11 +21,6 @@
           <div class="ship-media">
             @if (imageFor(ship); as image) { <img [src]="image" [alt]="ship.name" loading="lazy" (error)="imageFailed(image)"> }
             @else { <div class="ship-placeholder"><span aria-hidden="true">◇</span><span>Visuel de cette variante indisponible</span></div> }
-            @if (imageFor(ship)) {
-              <button type="button" class="ship-image-zoom" (click)="openImage(ship)" [attr.aria-label]="'Agrandir l’image de ' + ship.name" title="Agrandir l’image">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4m6 0h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4M8 8l8 8m0-8-8 8"/></svg>
-              </button>
-            }
           </div>
           <div class="ship-info">
             @if (ship.brand?.name) { <p class="ship-manufacturer">{{ ship.brand.name }}</p> }
@@ -56,23 +51,3 @@
     </div>
   }
 </section>
-
-@if (zoomedShip; as ship) {
-  <div class="ship-image-lightbox" role="presentation" (click)="closeImage()">
-    <section class="ship-image-dialog" role="dialog" aria-modal="true" [attr.aria-label]="'Image de ' + ship.name" (click)="$event.stopPropagation()">
-      <header>
-        <div><span>{{ ship.brand?.name || 'Vaisseau' }}</span><h2>{{ ship.name }}</h2></div>
-        <button type="button" class="lightbox-close" (click)="closeImage()" aria-label="Fermer">×</button>
-      </header>
-      <div class="ship-image-viewport" (wheel)="$event.deltaY < 0 ? zoomImage(.2) : zoomImage(-.2); $event.preventDefault()">
-        <img [src]="imageFor(ship)" [alt]="ship.name" [style.transform]="'scale(' + imageZoom + ')'" />
-      </div>
-      <footer>
-        <button type="button" (click)="zoomImage(-.25)" [disabled]="imageZoom <= 1" aria-label="Réduire">−</button>
-        <span>{{ imageZoom * 100 | number:'1.0-0' }} %</span>
-        <button type="button" (click)="zoomImage(.25)" [disabled]="imageZoom >= 3.5" aria-label="Agrandir">+</button>
-        <button type="button" class="lightbox-reset" (click)="resetImageZoom()">Réinitialiser</button>
-      </footer>
-    </section>
-  </div>
-}

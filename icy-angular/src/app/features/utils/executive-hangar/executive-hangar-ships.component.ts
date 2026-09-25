@@ -1,5 +1,4 @@
-import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ShipService } from '../../../core/services/ship/ship.service';
@@ -16,7 +15,7 @@ export function isExecutiveHangarShip(ship: Ship): boolean {
 @Component({
   standalone: true,
   selector: 'app-executive-hangar-ships',
-  imports: [CommonModule, FormsModule, AsyncStateComponent],
+  imports: [FormsModule, AsyncStateComponent],
   templateUrl: './executive-hangar-ships.component.html',
   styleUrl: './executive-hangar-ships.component.css',
   changeDetection: ChangeDetectionStrategy.Eager
@@ -27,8 +26,6 @@ export class ExecutiveHangarShipsComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   failedImages = new Set<string>();
-  zoomedShip: Ship | null = null;
-  imageZoom = 1;
 
   constructor(private shipService: ShipService) {}
 
@@ -60,31 +57,8 @@ export class ExecutiveHangarShipsComponent implements OnInit {
 
   imageFailed(image: string): void { this.failedImages.add(image); }
 
-  openImage(ship: Ship): void {
-    if (!this.imageFor(ship)) return;
-    this.zoomedShip = ship;
-    this.imageZoom = 1;
-  }
-
-  closeImage(): void {
-    this.zoomedShip = null;
-    this.imageZoom = 1;
-  }
-
-  zoomImage(delta: number): void {
-    this.imageZoom = Math.min(3.5, Math.max(1, Number((this.imageZoom + delta).toFixed(2))));
-  }
-
-  resetImageZoom(): void { this.imageZoom = 1; }
-
-  @HostListener('document:keydown.escape')
-  closeImageOnEscape(): void {
-    if (this.zoomedShip) this.closeImage();
-  }
-
   private normalize(value: string): string {
     return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   }
 
 }
-
