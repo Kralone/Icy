@@ -6,4 +6,4 @@ python-dotenv==1.2.3
 aio-pika==10.0.1
 
 beautifulsoup4==4.15.0
-soupsieve==2.9.2
+soupsieve==2.10
