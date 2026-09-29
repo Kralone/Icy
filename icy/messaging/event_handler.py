@@ -312,11 +312,16 @@ class EventHandler:
             logger.warning(f"⚠️ Message introuvable pour event {event_id}")
             return
 
-        if self._is_finished_message(message) or (self.discord_link_store and self.discord_link_store.is_event_finished(event_id)):
+        is_finished = bool(payload.get("finished", False))
+        if is_finished:
             if self.discord_link_store:
                 self.discord_link_store.finish_event(event_id)
             await message.edit(view=None)
             return
+        if self.discord_link_store:
+            # Un événement corrigé/reprogrammé redevient actif, même si une
+            # ancienne reconstruction l'avait marqué terminé dans le registre.
+            self.discord_link_store.reopen_event(event_id)
 
         title = payload.get("title", "Sans titre")
         description = html_to_discord(payload.get("description", ""))

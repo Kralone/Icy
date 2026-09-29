@@ -111,6 +111,11 @@ class DiscordLinkStore:
             with connection:
                 connection.execute("UPDATE discord_links SET is_finished = 1 WHERE resource_type = 'event' AND resource_id = ?", (str(event_id),))
 
+    def reopen_event(self, event_id):
+        with closing(self._connect()) as connection:
+            with connection:
+                connection.execute("UPDATE discord_links SET is_finished = 0 WHERE resource_type = 'event' AND resource_id = ?", (str(event_id),))
+
     def is_event_finished(self, event_id):
         with closing(self._connect()) as connection:
             row = connection.execute("SELECT is_finished FROM discord_links WHERE resource_type = 'event' AND resource_id = ?", (str(event_id),)).fetchone()

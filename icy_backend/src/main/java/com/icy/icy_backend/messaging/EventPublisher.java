@@ -45,6 +45,7 @@ public class EventPublisher {
         payload.put("description", event.getDescription());
         payload.put("author", event.getCreator() != null ? event.getCreator().getUsername() : "Inconnu");
         payload.put("date", event.getStartDateTime().toString());
+        payload.put("finished", event.isFinished());
 
         // ✅ Ajout des IDs Discord pour les updates
         payload.put("channelId", event.getDiscordChannelId());
