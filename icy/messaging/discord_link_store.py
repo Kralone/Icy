@@ -43,6 +43,8 @@ class DiscordLinkStore:
                 columns = {row[1] for row in connection.execute("PRAGMA table_info(discord_links)")}
                 if "sort_key" not in columns:
                     connection.execute("ALTER TABLE discord_links ADD COLUMN sort_key TEXT")
+                if "is_finished" not in columns:
+                    connection.execute("ALTER TABLE discord_links ADD COLUMN is_finished INTEGER NOT NULL DEFAULT 0")
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS discord_message_refs (
@@ -98,11 +100,21 @@ class DiscordLinkStore:
         with closing(self._connect()) as connection:
             rows = connection.execute(
                 """SELECT resource_id, channel_id, message_id, sort_key
-                   FROM discord_links WHERE resource_type = 'event' AND channel_id = ?
+                   FROM discord_links WHERE resource_type = 'event' AND channel_id = ? AND is_finished = 0
                    ORDER BY CASE WHEN sort_key IS NULL THEN 1 ELSE 0 END, sort_key, message_id""",
                 (int(channel_id),),
             ).fetchall()
         return [(str(row[0]), DiscordLink(int(row[1]), int(row[2])), row[3]) for row in rows]
+
+    def finish_event(self, event_id):
+        with closing(self._connect()) as connection:
+            with connection:
+                connection.execute("UPDATE discord_links SET is_finished = 1 WHERE resource_type = 'event' AND resource_id = ?", (str(event_id),))
+
+    def is_event_finished(self, event_id):
+        with closing(self._connect()) as connection:
+            row = connection.execute("SELECT is_finished FROM discord_links WHERE resource_type = 'event' AND resource_id = ?", (str(event_id),)).fetchone()
+        return bool(row and row[0])
 
     def delete(self, resource_type: str, resource_id: object):
         with closing(self._connect()) as connection:

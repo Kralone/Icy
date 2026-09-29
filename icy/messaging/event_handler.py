@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import asyncio
 import os
 import discord
 from discord import ui, ButtonStyle
@@ -85,6 +86,7 @@ class EventHandler:
         self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
         self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
         self._registered_message_views = set()
+        self._event_lock = asyncio.Lock()
 
     @staticmethod
     def _read_channel_id(env_var: str) -> int:
@@ -104,15 +106,18 @@ class EventHandler:
             logger.debug("↩️ Ignoré (retour backend).")
             return
 
-        if routing_key == "events.created":
-            await self.handle_event_created(payload)
-        elif routing_key == "events.updated":
-            await self.handle_event_updated(payload)
-        elif routing_key == "events.deleted":
-            await self.handle_event_deleted(payload)
-        elif routing_key == "events.ended":
-            await self.handle_event_ended(payload)
-        elif routing_key == "events.dailyPing":
+        if routing_key in {"events.created", "events.updated", "events.deleted", "events.ended"}:
+            async with self._event_lock:
+                handler = {
+                    "events.created": self.handle_event_created,
+                    "events.updated": self.handle_event_updated,
+                    "events.deleted": self.handle_event_deleted,
+                    "events.ended": self.handle_event_ended,
+                }[routing_key]
+                await handler(payload)
+            return
+
+        if routing_key == "events.dailyPing":
             await self.handle_daily_ping(payload)
         elif routing_key == "events.reminderOneHour":
             await self.handle_reminder_one_hour(payload)
@@ -218,26 +223,33 @@ class EventHandler:
         if not isinstance(channel_id, int):
             channel_id = self.channel_id
         existing = self.discord_link_store.list_events(channel_id)
-        # Older bot installations have no persisted sort key. Rebuild once when
-        # such a message is present so the real Discord order matches the ledger.
-        needs_reorder = bool(sort_key and any(old_key is None or sort_key < old_key for _, _, old_key in existing))
-        if not needs_reorder:
-            message = await channel.send(embed=embed, view=view)
-            return self.discord_link_store.save("event", event_id, message.channel.id, message.id, sort_key)
-
         records = []
+        old_messages = []
         for old_event_id, old_link, old_key in existing:
             try:
                 old_message = await channel.fetch_message(old_link.message_id)
             except discord.NotFound:
                 continue
             old_embed = old_message.embeds[0] if old_message.embeds else None
+            if self._is_finished_message(old_message):
+                self.discord_link_store.finish_event(old_event_id)
+                continue
+            if old_embed is None:
+                continue
+            old_key = old_key or self._legacy_sort_key(old_embed)
+            if old_key is None:
+                logger.warning("Event %s has no reliable date; leaving its message untouched", old_event_id)
+                continue
             if old_embed is not None:
                 old_embed = discord.Embed.from_dict(old_embed.to_dict())
             records.append((old_key or "9999", old_event_id, old_embed))
+            old_messages.append(old_link.message_id)
+        needs_reorder = bool(sort_key and any(sort_key < key for key, _, _ in records))
+        if not needs_reorder:
+            message = await channel.send(embed=embed, view=view)
+            return self.discord_link_store.save("event", event_id, message.channel.id, message.id, sort_key)
         records.append((sort_key or "9999", str(event_id), embed))
         records.sort(key=lambda record: (record[0], record[1]))
-        old_messages = [link.message_id for _, link, _ in existing]
         new_links = {}
         for key, current_event_id, current_embed in records:
             if current_embed is None:
@@ -261,6 +273,25 @@ class EventHandler:
                 })
         return new_links[str(event_id)]
 
+    @staticmethod
+    def _is_finished_message(message):
+        return any("[TERMINÉ]" in (embed.title or "") or any(
+            field.name == "Statut" and "terminé" in field.value.casefold()
+            for field in embed.fields
+        ) for embed in message.embeds)
+
+    @staticmethod
+    def _legacy_sort_key(embed):
+        months = "janvier février mars avril mai juin juillet août septembre octobre novembre décembre".split()
+        match = re.search(r"Date\s*:\*\*\s*\w+\s+(\d{1,2})\s+(\w+)\s+(\d{4})\s+à\s+(\d{2})h(\d{2})", embed.description or "", re.IGNORECASE)
+        if not match:
+            return None
+        day, month, year, hour, minute = match.groups()
+        try:
+            return datetime(int(year), months.index(month.lower()) + 1, int(day), int(hour), int(minute), tzinfo=timezone.utc).isoformat()
+        except ValueError:
+            return None
+
     async def handle_event_updated(self, payload: dict):
         event_id = payload.get("id")
         channel_id = payload.get("channelId")
@@ -279,6 +310,12 @@ class EventHandler:
             message = await channel.fetch_message(int(message_id))
         except discord.NotFound:
             logger.warning(f"⚠️ Message introuvable pour event {event_id}")
+            return
+
+        if self._is_finished_message(message) or (self.discord_link_store and self.discord_link_store.is_event_finished(event_id)):
+            if self.discord_link_store:
+                self.discord_link_store.finish_event(event_id)
+            await message.edit(view=None)
             return
 
         title = payload.get("title", "Sans titre")
@@ -369,6 +406,9 @@ class EventHandler:
 
         # ❌ Retrait des boutons
         await message.edit(embed=embed, view=None)
+        if self.discord_link_store:
+            self.discord_link_store.save("event", event_id, int(channel_id), int(message_id))
+            self.discord_link_store.finish_event(event_id)
         logger.info(f"🏁 Événement terminé et mis à jour sur Discord (eventId={event_id})")
 
     async def cleanup_event_notifications(self, payload: dict):
@@ -646,7 +686,12 @@ class EventHandler:
             if message.id in self._registered_message_views:
                 continue
 
-            if message.embeds and message.embeds[0].title and message.embeds[0].title.startswith("🧊 [TERMINÉ]"):
+            if self._is_finished_message(message):
+                # Nettoie les boutons laissés par une ancienne reconstruction.
+                try:
+                    await message.edit(view=None)
+                except Exception as exc:
+                    logger.warning("Impossible de retirer les boutons d'un événement terminé (%s)", type(exc).__name__)
                 continue
 
             event_id = self._extract_event_id_from_message_components(message)
