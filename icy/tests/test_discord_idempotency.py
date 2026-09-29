@@ -160,6 +160,77 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             deleted.delete.assert_awaited_once()
             self.assertEqual(2, rabbit.publish.await_count)
 
+    def test_finished_event_is_excluded_until_reopened(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            store.save("event", "finished", 123, 456, "2026-09-20T20:00:00+00:00")
+            store.finish_event("finished")
+            self.assertEqual([], store.list_events(123))
+            store.reopen_event("finished")
+            self.assertEqual(["finished"], [event_id for event_id, _, _ in store.list_events(123)])
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_editing_finished_message_as_active_restores_buttons(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            store.save("event", "event-1", 123, 456, "2026-10-01T20:00:00+00:00")
+            store.finish_event("event-1")
+            bot = MagicMock()
+            channel = MagicMock(id=123, name="events")
+            message = self._message(456, 123)
+            async def edit_message(**kwargs):
+                message.embeds = [kwargs["embed"]]
+            message.edit = AsyncMock(side_effect=edit_message)
+            message.embeds = [discord.Embed(title="🧊 [TERMINÉ] Ancien")]
+            channel.fetch_message = AsyncMock(return_value=message)
+            bot.get_channel.return_value = channel
+            rabbit = MagicMock()
+            rabbit.publish = AsyncMock()
+            handler = EventHandler(bot, rabbit, store)
+
+            await handler.handle_event_updated({
+                "id": "event-1", "channelId": 123, "messageId": 456,
+                "title": "Actif", "date": "2026-10-01T20:00:00Z",
+                "finished": False, "participants": [], "type": {},
+            })
+
+            self.assertFalse(store.is_event_finished("event-1"))
+            self.assertIsNotNone(message.edit.await_args.kwargs["view"])
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_editing_event_date_reorders_active_messages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            store.save("event", "earlier", 123, 200, "2026-10-02T20:00:00+00:00")
+            store.save("event", "later", 123, 100, "2026-10-03T20:00:00+00:00")
+            bot = MagicMock()
+            channel = MagicMock(id=123, name="events")
+            edited = self._message(200, 123)
+            async def edit_edited(**kwargs):
+                edited.embeds = [kwargs["embed"]]
+            edited.edit = AsyncMock(side_effect=edit_edited)
+            edited.embeds = [discord.Embed(title="Earlier")]
+            later = self._message(100, 123)
+            later.embeds = [discord.Embed(title="Later")]
+            channel.fetch_message = AsyncMock(side_effect=[edited, edited, later])
+            channel.send = AsyncMock(side_effect=[self._message(300, 123), self._message(301, 123)])
+            partial = MagicMock()
+            partial.delete = AsyncMock()
+            channel.get_partial_message.return_value = partial
+            bot.get_channel.return_value = channel
+            rabbit = MagicMock()
+            rabbit.publish = AsyncMock()
+            handler = EventHandler(bot, rabbit, store)
+
+            await handler.handle_event_updated({
+                "id": "earlier", "channelId": 123, "messageId": 200,
+                "title": "Earlier", "date": "2026-10-01T20:00:00Z",
+                "finished": False, "participants": [], "type": {},
+            })
+
+            self.assertEqual(2, channel.send.await_count)
+            self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
+
 
 if __name__ == "__main__":
     unittest.main()

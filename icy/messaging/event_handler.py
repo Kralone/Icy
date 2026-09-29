@@ -296,6 +296,9 @@ class EventHandler:
         event_id = payload.get("id")
         channel_id = payload.get("channelId")
         message_id = payload.get("messageId")
+        link = self.discord_link_store.get("event", event_id) if self.discord_link_store else None
+        if link:
+            channel_id, message_id = link.channel_id, link.message_id
 
         if not (channel_id and message_id):
             logger.warning(f"⚠️ Données incomplètes pour event.updated ({event_id})")
@@ -361,7 +364,57 @@ class EventHandler:
         await message.edit(embed=embed, view=view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, message.channel.id, message.id, self._event_sort_key(payload.get("date")))
+            if not is_finished:
+                await self._reorder_active_events(channel)
         logger.info(f"✏️ Événement mis à jour dans #{channel.name} ({title})")
+
+    async def _reorder_active_events(self, channel):
+        """Réordonne les événements actifs après une modification de date."""
+        if not self.discord_link_store:
+            return
+        channel_id = getattr(channel, "id", self.channel_id)
+        existing = self.discord_link_store.list_events(channel_id, include_finished=True)
+        records = []
+        last_finished_message = 0
+        for event_id, link, key in existing:
+            if self.discord_link_store.is_event_finished(event_id):
+                last_finished_message = max(last_finished_message, link.message_id)
+                continue
+            try:
+                message = await channel.fetch_message(link.message_id)
+            except discord.NotFound:
+                continue
+            if self._is_finished_message(message):
+                self.discord_link_store.finish_event(event_id)
+                last_finished_message = max(last_finished_message, link.message_id)
+                continue
+            embed = message.embeds[0] if message.embeds else None
+            key = self._event_sort_key(key) or self._legacy_sort_key(embed) if embed else None
+            if embed is None or key is None:
+                continue
+            records.append((key, event_id, link.message_id, discord.Embed.from_dict(embed.to_dict())))
+
+        desired = sorted(records, key=lambda record: (record[0], record[1]))
+        current_ids = [event_id for _, event_id, _, _ in sorted(records, key=lambda record: record[2])]
+        desired_ids = [event_id for _, event_id, _, _ in desired]
+        behind_history = all(message_id > last_finished_message for _, _, message_id, _ in records)
+        if current_ids == desired_ids and behind_history:
+            return
+
+        old_message_ids = [message_id for _, _, message_id, _ in records]
+        new_links = {}
+        for key, event_id, _, embed in desired:
+            sent = await channel.send(embed=embed, view=EventParticipationView(self.rabbit, event_id))
+            new_links[event_id] = self.discord_link_store.save("event", event_id, sent.channel.id, sent.id, key)
+        for message_id in old_message_ids:
+            try:
+                await channel.get_partial_message(message_id).delete()
+            except discord.NotFound:
+                pass
+        for event_id, link in new_links.items():
+            await self.rabbit.publish("event.discordLinked", {
+                "eventId": event_id, "messageId": link.message_id, "channelId": link.channel_id,
+            })
 
 
     async def handle_event_ended(self, payload: dict):
@@ -693,10 +746,13 @@ class EventHandler:
 
             if self._is_finished_message(message):
                 # Nettoie les boutons laissés par une ancienne reconstruction.
+                event_id = self._extract_event_id_from_message_components(message)
                 try:
                     await message.edit(view=None)
                 except Exception as exc:
                     logger.warning("Impossible de retirer les boutons d'un événement terminé (%s)", type(exc).__name__)
+                if event_id and self.discord_link_store:
+                    self.discord_link_store.finish_event(event_id)
                 continue
 
             event_id = self._extract_event_id_from_message_components(message)

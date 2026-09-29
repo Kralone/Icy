@@ -95,14 +95,14 @@ class DiscordLinkStore:
                 )
         return link
 
-    def list_events(self, channel_id: int) -> list[tuple[str, DiscordLink, str | None]]:
+    def list_events(self, channel_id: int, include_finished=False) -> list[tuple[str, DiscordLink, str | None]]:
         """Return event messages in their persisted chronological order metadata."""
         with closing(self._connect()) as connection:
             rows = connection.execute(
                 """SELECT resource_id, channel_id, message_id, sort_key
-                   FROM discord_links WHERE resource_type = 'event' AND channel_id = ? AND is_finished = 0
+                   FROM discord_links WHERE resource_type = 'event' AND channel_id = ? AND (is_finished = 0 OR ?)
                    ORDER BY CASE WHEN sort_key IS NULL THEN 1 ELSE 0 END, sort_key, message_id""",
-                (int(channel_id),),
+                (int(channel_id), int(include_finished)),
             ).fetchall()
         return [(str(row[0]), DiscordLink(int(row[1]), int(row[2])), row[3]) for row in rows]
 
