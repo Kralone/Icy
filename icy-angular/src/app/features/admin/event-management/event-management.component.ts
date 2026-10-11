@@ -170,6 +170,19 @@ export class EventManagementComponent implements OnInit {
     });
   }
 
+  createOperation() {
+    if (this.isFormInvalid) return;
+    this.isSubmitting = true;
+    this.eventService.createOperation(this.newEvent).subscribe({
+      next: operation => {
+        this.isSubmitting = false;
+        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
+        this.router.navigate(['/icy/operations', operation.eventId || operation.id, 'edit']);
+      },
+      error: err => { console.error('Erreur création opération', err); this.isSubmitting = false; }
+    });
+  }
+
   // === Modifier un événement ===
   openEditEventModal(event: EventDTO) {
     this.isViewMode = false;

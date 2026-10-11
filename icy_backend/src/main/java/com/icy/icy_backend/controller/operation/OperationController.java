@@ -10,6 +10,8 @@ import com.icy.icy_backend.service.operation.OperationGroupService;
 import com.icy.icy_backend.db.repository.event.OperationShipProposalRepository;
 import com.icy.icy_backend.controller.dto.response.event.OperationShipProposalResponseDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationGroupRequest;
+import com.icy.icy_backend.controller.dto.event.CreateEventRequest;
+import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
@@ -19,6 +21,7 @@ import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseDTO;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
+import com.icy.icy_backend.service.event.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,6 +51,14 @@ public class OperationController {
     private final OperationShipService shipService;
     private final OperationGroupService groupService;
     private final OperationShipProposalRepository proposalRepository;
+    private final EventService eventService;
+
+    @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
+        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(request.getType(), request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
+        return operationService.convert(created.getBody().getData().getId());
+    }
 
     @GetMapping("/{id}/ships")
     @PreAuthorize("isAuthenticated()")

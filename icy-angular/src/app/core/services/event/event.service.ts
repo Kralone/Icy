@@ -46,6 +46,10 @@ export class EventService {
     );
   }
 
+  createOperation(event: EventCreateRequest): Observable<any> {
+    return this.http.post<any>('/api/operations/create', event).pipe(map(res => res.data));
+  }
+
   updateEvent(event: any): Observable<EventDTO> {
     return this.http.put<any>(`${this.baseUrl}/update`, event).pipe(
       map(res => res.data as EventDTO)
