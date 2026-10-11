@@ -13,8 +13,18 @@
         <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" maxlength="2000"></label>
       } @else if (tab === 'publication') {
         <h2>Publication</h2><p>Statut actuel : {{ operation.publicationStatus }}.</p><button type="button" class="primary" (click)="publish(operation.id)">Publier l’opération</button>
+      } @else if (tab === 'organisation') {
+        <h2>Organisation</h2>
+        @if (groups$ | async) { <div class="editor-groups">@for (group of groups; track group.id) { <div><strong>{{ group.name }}</strong><span>{{ group.capacity ?? '∞' }} · {{ group.assignmentMode }}</span></div> }</div> }
+        <h3>Ajouter un groupe ou sous-groupe</h3>
+        <label>Nom<input [(ngModel)]="groupForm.name" maxlength="120"></label>
+        <label>Description<textarea [(ngModel)]="groupForm.description" rows="3"></textarea></label>
+        <label>Parent<select [(ngModel)]="groupForm.parentId"><option [ngValue]="null">Groupe principal</option>@for (group of groups; track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
+        <label>Capacité<input type="number" min="0" [(ngModel)]="groupForm.capacity"></label>
+        <label>Mode<select [(ngModel)]="groupForm.assignmentMode"><option value="INHERITED">Hérité</option><option value="FREE">Libre</option><option value="VALIDATION">Sur validation</option><option value="MANAGED">Géré</option></select></label>
+        <button type="button" class="primary" (click)="createGroup(operation.id)">Créer le groupe</button>
       } @else {
-        <h2>{{ tab === 'objectifs' ? 'Objectifs' : tab === 'organisation' ? 'Organisation' : 'Inscriptions et permissions' }}</h2><p class="muted">Cette section sera configurée dans l’étape suivante.</p>
+        <h2>{{ tab === 'objectifs' ? 'Objectifs' : 'Inscriptions et permissions' }}</h2><p class="muted">Cette section sera configurée dans l’étape suivante.</p>
       }
       @if (tab !== 'publication') { <button type="button" class="primary" [disabled]="saving" (click)="save(operation.id)">{{ saving ? 'Enregistrement…' : 'Enregistrer le brouillon' }}</button> }
       @if (message) { <p role="status">{{ message }}</p> }

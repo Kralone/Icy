@@ -33,7 +33,7 @@ const commonEngine = new CommonEngine({ allowedHosts });
 /**
  * Serve static files from /browser
  */
-app.get('/{*splat}', (req, res, next) => {
+app.get('/{*splat}', (req: any, res: any, next: any) => {
   const destination = resolveCanonicalRedirect(req.originalUrl);
   if (!destination) {
     next();
@@ -58,7 +58,7 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.get('/{*splat}', (req, res, next) => {
+app.get('/{*splat}', (req: any, res: any, next: any) => {
   const { protocol, originalUrl, baseUrl, headers } = req;
   const isKnownRoute = isKnownAppRoute(originalUrl);
 

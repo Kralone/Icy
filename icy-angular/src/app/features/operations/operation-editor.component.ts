@@ -20,6 +20,9 @@ export class OperationEditorComponent {
     catchError(() => of(null)),
     tap(operation => { if (operation) this.form = { briefing: operation.briefing || '', meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '' }; })
   );
+  readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
+  groups: any[] = [];
+  groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0 };
   form = { briefing: '', meetingPoint: '', imageUrl: '' };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
   saving = false;
@@ -33,5 +36,13 @@ export class OperationEditorComponent {
 
   publish(id: string) {
     this.eventService.publishOperation(id).subscribe({ next: () => this.message = 'Opération publiée.', error: () => this.message = 'Publication impossible.' });
+  }
+
+  createGroup(operationId: string) {
+    this.eventService.createOperationGroup(operationId, this.groupForm).subscribe({ next: () => {
+      this.message = 'Groupe créé.';
+      this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data);
+      this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0 };
+    }, error: error => this.message = error?.error?.message || 'Création impossible.' });
   }
 }
