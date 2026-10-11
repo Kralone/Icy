@@ -6,6 +6,8 @@ import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
 import com.icy.icy_backend.service.operation.OperationService;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
 import com.icy.icy_backend.service.operation.OperationShipService;
+import com.icy.icy_backend.service.operation.OperationGroupService;
+import com.icy.icy_backend.controller.dto.operation.OperationGroupRequest;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.Valid;
 
 import java.util.UUID;
 import java.util.List;
@@ -42,6 +45,13 @@ public class OperationController {
     private final OperationGroupRepository operationGroupRepository;
     private final OperationAssignmentService assignmentService;
     private final OperationShipService shipService;
+    private final OperationGroupService groupService;
+
+    @PostMapping("/{id}/groups")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> createGroup(@PathVariable UUID id, @Valid @RequestBody OperationGroupRequest request) {
+        return groupService.create(id, request);
+    }
 
     @PostMapping("/{id}/ships/proposals")
     @PreAuthorize("isAuthenticated()")
