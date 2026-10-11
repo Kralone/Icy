@@ -3,6 +3,7 @@ package com.icy.icy_backend.controller.operation;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
@@ -31,6 +32,9 @@ public class OperationController {
     public ResponseEntity<MessageResponse<OperationResponseDTO>> get(@PathVariable UUID id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        if (event.getActivityType() != ActivityType.OPERATION) {
+            throw new ResourceNotFoundException("Opération introuvable");
+        }
         Operation operation = operationRepository.findById(id)
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));

@@ -39,6 +39,9 @@ public class Operation {
     @Column(name = "meeting_point", length = 255)
     private String meetingPoint;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "publication_status", nullable = false, length = 20)
     @Builder.Default

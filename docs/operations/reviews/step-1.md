@@ -18,6 +18,8 @@ Commit : `837f79b feat(operations): add operation foundation and participant rou
 - `pnpm exec ng build --configuration production` dans `icy-angular` : succès.
 - Warnings Angular : budgets CSS déjà dépassés sur plusieurs composants existants ; aucun warning ne concerne la page Opération.
 
+Correction après revue indépendante : l’endpoint vérifie désormais `activityType == OPERATION`, et la migration ajoute un trigger PostgreSQL empêchant une extension publiée de référencer un événement classique. Le bouton non disponible a été remplacé par un état informatif contrasté ; l’extension accepte une image de mission pour réutiliser un asset catalogue.
+
 ## Limites connues
 
 - L’éditeur de brouillon, la conversion depuis le formulaire, les groupes, affectations, vaisseaux et Discord ne sont pas encore implémentés.

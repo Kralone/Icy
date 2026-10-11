@@ -17,6 +17,7 @@ public class OperationResponseDTO {
     private boolean finished;
     private String briefing;
     private String meetingPoint;
+    private String imageUrl;
     private Operation.PublicationStatus publicationStatus;
 
     public OperationResponseDTO(Event event, Operation operation) {
@@ -28,6 +29,7 @@ public class OperationResponseDTO {
         this.finished = event.isFinished();
         this.briefing = operation.getBriefing();
         this.meetingPoint = operation.getMeetingPoint();
+        this.imageUrl = operation.getImageUrl();
         this.publicationStatus = operation.getPublicationStatus();
     }
 }

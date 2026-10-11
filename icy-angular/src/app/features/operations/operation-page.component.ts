@@ -10,6 +10,7 @@ interface OperationPageModel {
   description?: string;
   briefing?: string;
   meetingPoint?: string;
+  imageUrl?: string;
   startDateTime: string;
   endDateTime: string;
   finished: boolean;

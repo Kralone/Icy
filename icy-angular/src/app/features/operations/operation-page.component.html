@@ -1,6 +1,6 @@
 <main class="operation-page">
   @if (operation$ | async; as operation) {
-    <header class="operation-hero">
+    <header class="operation-hero" [style.background-image]="operation.imageUrl ? 'linear-gradient(180deg, transparent 28%, rgba(11,18,32,.95)), url(' + operation.imageUrl + ')' : null">
       <div class="operation-hero__veil"></div>
       <div class="operation-hero__content">
         <a routerLink="/icy/events" class="operation-back">← Calendrier</a>
@@ -12,7 +12,7 @@
     <section class="operation-status" aria-label="Situation de l'opération">
       <strong>Situation</strong>
       <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      <button type="button" disabled>Choisir mon affectation</button>
+      <span class="operation-status__placeholder">Les affectations seront disponibles après configuration</span>
     </section>
     <div class="operation-grid">
       <article class="operation-card operation-card--briefing">
