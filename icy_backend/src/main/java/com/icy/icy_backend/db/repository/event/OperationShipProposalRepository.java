@@ -6,4 +6,5 @@ import java.util.UUID;
 public interface OperationShipProposalRepository extends JpaRepository<OperationShipProposal, UUID> {
     List<OperationShipProposal> findByOperationEventIdOrderByCreatedAtAsc(UUID operationEventId);
     java.util.Optional<OperationShipProposal> findByIdAndOperationEventId(UUID id, UUID operationEventId);
+    long countByRequirementIdAndStatusIn(UUID requirementId, List<OperationShipProposal.Status> statuses);
 }

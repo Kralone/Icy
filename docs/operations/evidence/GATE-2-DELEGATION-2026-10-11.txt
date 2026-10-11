@@ -6,7 +6,7 @@ Implementation evidence
 - Assignment request decisions are allowed only for ADMIN, OFFICIER, or the responsible user of the target group.
 - `GET /api/operations/{id}/assignment-requests` and the editor queue expose pending/processed requests to the organizer console.
 - A responsible user on a parent group also has scope over its descendant group requests.
-- Backend Docker build and full verification succeeded: 282 tests, 0 failures, 3 skipped.
+- Backend Docker build and full verification succeeded: 284 tests, 0 failures, 3 skipped.
 
 Runtime proof:
 - The opt-in Spring/PostgreSQL test `OperationAssignmentCapacityIntegrationIT.delegatedResponsibleCanApproveDescendantButNotSibling` seeds a published operation, a validation leaf delegated to `validation_officier`, and a sibling request. It runs `OperationAssignmentService.decide` as that account: the delegated request is approved and the sibling request raises `AccessDeniedException`.
@@ -17,4 +17,4 @@ Read-only editor proof:
  - It displayed `Demandes de groupe : 0` and `Aucune demande en attente.` without a server error.
 - The editor now exposes Approve/Refuse actions for pending requests; the server mutation is covered by the integration proof above.
 
-Régression d’autorisation ajoutée : tests de refus d’un frère et de décision autorisée par un responsable délégué. La suite complète actuelle est documentée à 282 tests, 0 échec, 3 ignorés.
+Régression d’autorisation ajoutée : tests de refus d’un frère et de décision autorisée par un responsable délégué. La suite complète actuelle est documentée à 284 tests, 0 échec, 3 ignorés.

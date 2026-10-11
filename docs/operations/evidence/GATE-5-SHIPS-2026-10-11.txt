@@ -4,17 +4,19 @@
 - API séparée : lecture authentifiée des besoins, mutations admin/officier, contrôle du périmètre opération/groupe.
 - Éditeur opération : création et suppression depuis l’onglet Organisation ; la liste se rafraîchit après mutation.
 - Participant : les besoins ouverts sont visibles dans la carte Ressources, avant les vaisseaux effectivement proposés.
-- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 282 tests, 0 échec, 3 ignorés.
+- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 284 tests, 0 échec, 3 ignorés.
 - V50 : une association explicite besoin↔proposition est persistée et contrôlée côté serveur ; aucune association automatique n’est créée.
 
 Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux non-organisateurs ; ADMIN/OFFICIER conservent l’accès d’édition.
 
-Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 282 tests, 0 échec, 3 ignorés.
+Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 284 tests, 0 échec, 3 ignorés.
 
-Suite backend après tests de scope : 282 tests, 0 échec, 3 ignorés.
+Suite backend après tests de scope : 284 tests, 0 échec, 3 ignorés.
 
-Contrôles de proposition couverts par `OperationShipServiceTest` et inclus dans la vérification Docker (282/0/3) : une opération publiée qui désactive `allowShipProposals` refuse la proposition avant tout accès au hangar ; un vaisseau absent du hangar personnel est refusé et aucune proposition n’est enregistrée.
+Contrôles de proposition couverts par `OperationShipServiceTest` et inclus dans la vérification Docker (284/0/3) : une opération publiée qui désactive `allowShipProposals` refuse la proposition avant tout accès au hangar ; un vaisseau absent du hangar personnel est refusé et aucune proposition n’est enregistrée.
 
 CUA éditeur authentifié : onglet Organisation expose la recherche catalogue « Aurora » et retourne sept modèles nommés ; le groupe se choisit par libellé, sans saisie d’ID brute.
 
 L’éditeur permet maintenant de modifier un besoin existant ; l’API PUT est reliée à l’interface et la liste se rafraîchit après sauvegarde.
+
+Garde-fous ajoutés et testés dans `OperationShipServiceTest` : un besoin `FULFILLED` ou `CANCELLED` n’accepte plus de proposition ; les propositions actives (`PROPOSED`/`ACCEPTED`) sont comptées et ne peuvent pas dépasser `quantity`. Suite Docker : 284 tests, 0 échec, 3 ignorés.

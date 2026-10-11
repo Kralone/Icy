@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.List;
 
 @Service @RequiredArgsConstructor
 public class OperationShipService {
@@ -39,13 +40,18 @@ public class OperationShipService {
         if (requirementId != null) {
             OperationShipRequirement requirement = requirementRepository.findById(requirementId)
                     .filter(value -> operationId.equals(value.getOperationEventId()))
-                    .filter(value -> value.getStatus() != OperationShipRequirement.Status.CANCELLED)
+                    .filter(value -> value.getStatus() == OperationShipRequirement.Status.OPEN)
                     .orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
             if (requirement.getGroupId() != null && groupId != null && !requirement.getGroupId().equals(groupId)) {
                 throw new IllegalArgumentException("Le besoin et le groupe ciblé ne correspondent pas");
             }
             if (requirement.getShipModelId() != null && !requirement.getShipModelId().equals(shipId)) {
                 throw new IllegalArgumentException("Le vaisseau ne correspond pas au modèle requis");
+            }
+            long activeProposals = proposalRepository.countByRequirementIdAndStatusIn(requirementId,
+                    List.of(OperationShipProposal.Status.PROPOSED, OperationShipProposal.Status.ACCEPTED));
+            if (activeProposals >= requirement.getQuantity()) {
+                throw new IllegalStateException("Le besoin de vaisseau est déjà rempli");
             }
             if (groupId == null) groupId = requirement.getGroupId();
         }
