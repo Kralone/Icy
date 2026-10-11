@@ -6,6 +6,9 @@ import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
+import com.icy.icy_backend.db.entity.event.OperationAssignmentRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -25,24 +29,23 @@ public class DiscordEventParticipationListener {
     private final UserRepository userRepository;
     private final EventParticipationRepository participationRepository;
     private final EventPublisher eventPublisher;
+    private final OperationAssignmentRepository operationAssignmentRepository;
+    private final OperationAssignmentRequestRepository operationAssignmentRequestRepository;
 
     /**
      * Écoute les participations envoyées par le bot Discord.
      */
     @RabbitListener(queues = "events.participation.queue")
     public void handleParticipation(@Payload Map<String, Object> payload) {
-        try {
-            log.info("🎯 Participation reçue : {}", payload);
+        log.info("🎯 Participation reçue : {}", payload);
 
-            String eventIdStr = (String) payload.get("eventId");
+            String eventIdStr = String.valueOf(payload.get("eventId"));
             String userIdStr = String.valueOf(payload.get("userId")); // Discord user id
             String username = (String) payload.get("username");
-            int status = (int) payload.get("status");
+            Object rawStatus = payload.get("status");
+            int status = rawStatus instanceof Number number ? number.intValue() : Integer.parseInt(String.valueOf(rawStatus));
 
-            if (eventIdStr == null || userIdStr == null) {
-                log.warn("⚠️ Données incomplètes dans le message RabbitMQ : {}", payload);
-                return;
-            }
+            if (payload.get("eventId") == null || payload.get("userId") == null || !Set.of(-1, 0, 1).contains(status)) throw new IllegalArgumentException("Payload participation Discord invalide");
 
             // 🔹 Trouver l'événement
             Event event = eventRepository.findById(UUID.fromString(eventIdStr))
@@ -65,15 +68,16 @@ public class DiscordEventParticipationListener {
             participation.setUser(user);
             participation.setStatus(status);
             participationRepository.save(participation);
+            if (status != 1) {
+                operationAssignmentRepository.deleteByOperationEventIdAndUserId(event.getId(), user.getId());
+                operationAssignmentRequestRepository.deleteByOperationEventIdAndUserIdAndStatus(event.getId(), user.getId(), OperationAssignmentRequest.Status.PENDING);
+            }
 
             log.info("✅ Participation enregistrée pour {} ({}) : {}", username, userIdStr, status);
 
             // 🔁 Publier la mise à jour complète de l'événement
             eventPublisher.publishEventUpdated(event);
 
-        } catch (Exception e) {
-            log.error("❌ Erreur lors du traitement d'une participation d'événement : ", e);
-        }
     }
 }
 
