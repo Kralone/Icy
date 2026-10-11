@@ -12,6 +12,8 @@
         <label class="wide">Briefing<textarea [(ngModel)]="form.description" rows="5" maxlength="50000" placeholder="Contexte, intention et consignes de préparation"></textarea><small>{{ form.description.length }} / 50000</small></label>
         <label>Début<input type="datetime-local" [(ngModel)]="form.startDateTime"></label>
         <label>Fin<input type="datetime-local" [(ngModel)]="form.endDateTime"></label>
+        <label class="wide">Image de mission (URL autorisée)<input type="url" [(ngModel)]="form.imageUrl" maxlength="2000" placeholder="https://…"><small>Facultative, réutilisée dans l’aperçu et l’éditeur.</small></label>
+        <label class="check wide"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
       </div>
       @if (error) { <p class="error" role="alert">{{ error }}</p> }
       <button type="button" class="primary" [disabled]="invalid" (click)="create()">{{ saving ? 'Création…' : 'Créer le brouillon et ouvrir l’éditeur' }}</button>

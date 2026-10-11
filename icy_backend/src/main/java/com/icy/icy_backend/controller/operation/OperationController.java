@@ -70,7 +70,13 @@ public class OperationController {
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(request.getType(), request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
-        return operationService.convert(created.getBody().getData().getId());
+        UUID eventId = created.getBody().getData().getId();
+        operationService.convert(eventId);
+        OperationUpdateRequest seed = new OperationUpdateRequest();
+        seed.setBriefing(request.getDescription());
+        seed.setImageUrl(request.getImageUrl());
+        seed.setAllowShipProposals(request.getAllowShipProposals());
+        return operationService.update(eventId, seed);
     }
 
     @GetMapping("/{id}/ships")

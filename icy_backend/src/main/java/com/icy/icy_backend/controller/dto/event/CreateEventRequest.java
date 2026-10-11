@@ -11,6 +11,8 @@ public class CreateEventRequest {
     private String description;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
+    private String imageUrl;
+    private Boolean allowShipProposals;
 }
 
 

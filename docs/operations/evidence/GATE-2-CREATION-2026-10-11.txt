@@ -7,6 +7,8 @@ Preuve runtime CUA authentifiée avec `validation_admin` :
 - `/icy/admin/events` affiche le formulaire historique « Ajouter un evenement » sans bouton de création d’opération.
 - `/icy/operations/new` répond directement et affiche « Créer une opération », les étapes « 01 Cadre / 02 Organisation / 03 Publication », l’aperçu de mission et les champs Titre, Type, Briefing, Début et Fin.
 - La page peut être ouverte vide ; le bouton « Créer le brouillon et ouvrir l’éditeur » est désactivé tant que les champs requis sont absents.
+- Le formulaire direct expose aussi « Image de mission (URL autorisée) » et la case « Autoriser les membres présents à proposer un vaisseau depuis leur hangar ». CUA a rempli titre, type, briefing, début, fin, URL et permission : l’aperçu a reflété le titre, le type et le briefing, et le bouton de création est devenu actionnable.
+- Le backend accepte ces deux champs dans `CreateEventRequest` et les recopie dans le brouillon pendant `/api/operations/create`. Le build Docker backend couvre 289 tests, dont la persistance de l’image et de la permission sur une mise à jour d’opération.
 - Le lien d’accès est enregistré dans le panneau admin sous « Nouvelle opération » et pointe vers `/icy/operations/new`.
 
 Limite explicite : ce parcours est une création directe conforme à la décision produit. Le parcours historique de conversion depuis le formulaire événement n’est donc pas déclaré disponible ; CRT-02 reste PARTIEL jusqu’à arbitrage d’un éventuel maintien de conversion.

@@ -81,6 +81,8 @@ class OperationServiceTest {
         OperationUpdateRequest request = new OperationUpdateRequest();
         request.setBriefing("Briefing mis à jour");
         request.setObjectives("[{\"kind\":\"PRINCIPAL\",\"text\":\"Objectif\"}]");
+        request.setImageUrl("https://example.test/mission.webp");
+        request.setAllowShipProposals(true);
 
         ResponseEntity<MessageResponse<OperationResponseDTO>> actual = service.update(operationId, request);
 
@@ -88,6 +90,8 @@ class OperationServiceTest {
         assertThat(operation.getEventId()).isEqualTo(operationId);
         assertThat(operation.getPublicationStatus()).isEqualTo(Operation.PublicationStatus.PUBLISHED);
         assertThat(operation.getBriefing()).isEqualTo("Briefing mis à jour");
+        assertThat(operation.getImageUrl()).isEqualTo("https://example.test/mission.webp");
+        assertThat(operation.isAllowShipProposals()).isTrue();
         verify(operations).save(operation);
     }
 }

@@ -17,7 +17,7 @@ export class OperationCreateComponent implements OnInit {
   types: EventType[] = [];
   saving = false;
   error = '';
-  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
+  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false };
   private readonly platformId = inject(PLATFORM_ID);
 
   ngOnInit(): void {

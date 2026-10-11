@@ -10,6 +10,8 @@ export interface EventCreateRequest {
   description: string;
   startDateTime: string;
   endDateTime: string;
+  imageUrl?: string;
+  allowShipProposals?: boolean;
 }
 
 export interface EventDTO {
