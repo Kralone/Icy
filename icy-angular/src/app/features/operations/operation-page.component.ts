@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, map, of, startWith, Subject, switchMap } from 'rxjs';
+import { catchError, map, of, startWith, Subject, switchMap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -88,12 +88,12 @@ export class OperationPageComponent {
   }
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
-    this.assignmentMessage = '';
-    this.eventService.assignOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Affectation confirmée.', error: error => this.assignmentMessage = error?.error?.message || 'Affectation impossible.' });
+    this.assignmentMessage = 'Vérification de la capacité…';
+    this.eventService.assignOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({ next: () => this.assignmentMessage = 'Affectation confirmée.', error: error => this.assignmentMessage = error?.error?.message || 'Affectation impossible. La vérification a expiré.' });
   }
   requestAssignment(operationId: string, groupId: number) {
-    this.assignmentMessage = '';
-    this.eventService.requestOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Demande envoyée aux responsables.', error: error => this.assignmentMessage = error?.error?.message || 'Demande impossible.' });
+    this.assignmentMessage = 'Envoi de la demande…';
+    this.eventService.requestOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({ next: () => this.assignmentMessage = 'Demande envoyée aux responsables.', error: error => this.assignmentMessage = error?.error?.message || 'Demande impossible. La vérification a expiré.' });
   }
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;

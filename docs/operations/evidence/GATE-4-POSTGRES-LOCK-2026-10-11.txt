@@ -28,4 +28,10 @@ docker run --rm --network iceforge_dev_internal ... mvn -B -ntp -Diceforge.integ
 
 Résultat : **BUILD SUCCESS**, `Tests run: 2, Failures: 0, Errors: 0, Skipped: 0`. Une seule affectation est confirmée sur le parent plein ; l'autre est refusée après le verrouillage hiérarchique.
 
-La preuve couvre désormais le service métier concurrent. Il reste à compléter le parcours runtime authentifié de saturation et de refus pour clôturer SEC-04.
+La preuve couvre désormais le service métier concurrent.
+
+## Parcours runtime authentifié
+
+Avec le compte `validation_admin` sur `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04`, une fixture temporaire a créé le parent `QA Parent plein` (capacité `0`) et la feuille `QA Feuille bloquée`. L’écran affichait bien `0 places · Libre`; le clic sur `Choisir` a déclenché l’état visible `Vérification de la capacité…`. Les logs backend associés contiennent l’exception métier `Groupe complet`. La fixture a ensuite été supprimée (`operation_groups` 20 puis 19).
+
+Le refus serveur est donc reproduit sur le parcours authentifié. Le rendu final du message d’erreur reste à corriger : l’écran conserve l’état de vérification au lieu d’afficher immédiatement `Groupe complet`.
