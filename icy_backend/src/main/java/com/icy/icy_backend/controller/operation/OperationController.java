@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import jakarta.validation.Valid;
 
 import java.util.UUID;
 import java.util.List;
@@ -60,7 +59,7 @@ public class OperationController {
 
     @PostMapping("/{id}/groups")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
-    public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> createGroup(@PathVariable UUID id, @Valid @RequestBody OperationGroupRequest request) {
+    public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> createGroup(@PathVariable UUID id, @RequestBody OperationGroupRequest request) {
         return groupService.create(id, request);
     }
 
