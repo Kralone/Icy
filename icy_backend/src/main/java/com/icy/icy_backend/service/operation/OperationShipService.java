@@ -53,4 +53,25 @@ public class OperationShipService {
         proposalRepository.save(proposal);
         return messageService.buildResponse("operation.ship.proposed", null);
     }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> withdraw(UUID operationId, UUID proposalId) {
+        OperationShipProposal proposal = proposalRepository.findByIdAndOperationEventId(proposalId, operationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposition de vaisseau introuvable"));
+        UUID owner = AuthUtils.getCurrentUserId();
+        if (!owner.equals(proposal.getOwnerUserId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Seul le propriétaire peut retirer cette proposition");
+        }
+        proposalRepository.delete(proposal);
+        return messageService.buildResponse("operation.ship.withdrawn", null);
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> markUnavailable(UUID operationId, UUID proposalId) {
+        OperationShipProposal proposal = proposalRepository.findByIdAndOperationEventId(proposalId, operationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposition de vaisseau introuvable"));
+        proposal.setStatus(OperationShipProposal.Status.UNAVAILABLE);
+        proposalRepository.save(proposal);
+        return messageService.buildResponse("operation.ship.unavailable", null);
+    }
 }

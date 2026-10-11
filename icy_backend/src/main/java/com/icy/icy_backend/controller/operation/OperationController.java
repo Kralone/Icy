@@ -112,6 +112,18 @@ public class OperationController {
         return shipService.propose(id, shipId, groupId, requirementId);
     }
 
+    @DeleteMapping("/{id}/ships/proposals/{proposalId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> withdrawShipProposal(@PathVariable UUID id, @PathVariable UUID proposalId) {
+        return shipService.withdraw(id, proposalId);
+    }
+
+    @PostMapping("/{id}/ships/proposals/{proposalId}/unavailable")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> markShipUnavailable(@PathVariable UUID id, @PathVariable UUID proposalId) {
+        return shipService.markUnavailable(id, proposalId);
+    }
+
     @GetMapping("/{id}/ship-requirements")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationShipRequirementResponseDTO>>> shipRequirements(@PathVariable UUID id) {

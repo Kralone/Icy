@@ -7,6 +7,7 @@ import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.event.OperationShipProposalRepository;
 import com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository;
 import com.icy.icy_backend.db.entity.event.OperationShipRequirement;
+import com.icy.icy_backend.db.entity.event.OperationShipProposal;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.security.AuthUtils;
@@ -91,5 +92,46 @@ class OperationShipServiceTest {
             assertThatThrownBy(() -> service.propose(operationId, 42L, null, requirementId)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("modèle requis");
             Mockito.verifyNoInteractions(proposals);
         }
+    }
+
+    @Test
+    void ownerCanWithdrawProposal() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        UUID proposalId = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        OperationShipProposal proposal = OperationShipProposal.builder().id(proposalId).operationEventId(operationId).ownerUserId(owner).shipId(42L).build();
+        when(proposals.findByIdAndOperationEventId(proposalId, operationId)).thenReturn(Optional.of(proposal));
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+        try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
+            auth.when(AuthUtils::getCurrentUserId).thenReturn(owner);
+            service.withdraw(operationId, proposalId);
+        }
+        Mockito.verify(proposals).delete(proposal);
+    }
+
+    @Test
+    void organizerCanMarkProposalUnavailable() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        UUID proposalId = UUID.randomUUID();
+        OperationShipProposal proposal = OperationShipProposal.builder().id(proposalId).operationEventId(operationId).ownerUserId(UUID.randomUUID()).shipId(42L).build();
+        when(proposals.findByIdAndOperationEventId(proposalId, operationId)).thenReturn(Optional.of(proposal));
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+        service.markUnavailable(operationId, proposalId);
+        org.assertj.core.api.Assertions.assertThat(proposal.getStatus()).isEqualTo(OperationShipProposal.Status.UNAVAILABLE);
+        Mockito.verify(proposals).save(proposal);
     }
 }

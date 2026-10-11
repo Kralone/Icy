@@ -137,6 +137,9 @@ export class EventService {
     if (requirementId) params.requirementId = requirementId;
     return this.http.post(`/api/operations/${operationId}/ships/proposals`, {}, { params });
   }
+  withdrawOperationShipProposal(operationId: string, proposalId: string) {
+    return this.http.delete(`/api/operations/${operationId}/ships/proposals/${proposalId}`);
+  }
   getOperationGroupsForEdit(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/groups/edit`); }
   createOperationGroup(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/groups`, payload); }
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }

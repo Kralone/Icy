@@ -73,6 +73,7 @@ export class OperationPageComponent {
   selectedShipGroupId: number | null = null;
   selectedShipRequirementId: string | null = null;
   participationStatus: number | null = null;
+  readonly currentUserId = this.authService.getUserIdFromToken();
   assignmentMessage = '';
   objectiveItems(value?: string): ObjectiveItem[] {
     if (!value?.trim()) return [];
@@ -94,6 +95,13 @@ export class OperationPageComponent {
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;
     this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
+  }
+
+  withdrawShip(operationId: string, proposalId: string) {
+    this.eventService.withdrawOperationShipProposal(operationId, proposalId).subscribe({
+      next: () => { this.assignmentMessage = 'Proposition de vaisseau retirée.'; },
+      error: error => this.assignmentMessage = error?.error?.message || 'Retrait impossible.'
+    });
   }
 
   effectiveGroupMode(group: any, groups: any[]): string {
