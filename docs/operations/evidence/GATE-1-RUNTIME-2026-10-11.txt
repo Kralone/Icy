@@ -37,3 +37,5 @@ CUA admin/navigation : /icy/admin expose le lien « Nouvelle opération » vers 
 État d’erreur vérifié : le deep-link `/icy/operations/00000000-0000-0000-0000-000000000000` affiche `Opération indisponible`, explique que l’opération n’est pas publiée ou chargeable et propose le retour au calendrier. La page publiée a ensuite été restaurée.
 
 Clavier : après activation de `Présent`, la touche `Tab` déplace le focus accessible sur `Peut-être` ; les actions de participation restent exposées comme boutons nommés.
+
+Deep-links : après correction de la liste SPA Nginx, `GET /icy/operations/new` et `GET /icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04` répondent HTTP 200. Les liens « Calendrier » de la fiche participant et de l’éditeur ont été exposés par AX.

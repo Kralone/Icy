@@ -6,8 +6,8 @@ Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-au
 |---|---|---|---|---|---|---|---|---|
 | NAV-01 | clic opération | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | NAV-02 | clic événement inchangé | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
-| NAV-03 | lien direct rechargement | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
-| NAV-04 | retour calendrier | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
+| NAV-03 | lien direct rechargement | `app.routes.ts` / Nginx `iceforge_known_spa_route` | `curl` local après déploiement : `/icy/operations/new` et `/icy/operations/{uuid}` répondent HTTP 200 ; CUA recharge la fiche publiée et l’éditeur | CONFORME (PROUVÉ) | P1 | Maintenir les routes directes dans Nginx | 1 | `evidence/GATE-1-RUNTIME-2026-10-11.txt` |
+| NAV-04 | retour calendrier | operation-page.component / operation-editor.component | Liens « Calendrier » exposés par AX et retour exécuté depuis la fiche/éditeur | CONFORME (PROUVÉ) | P1 | Maintenir le retour sans perte | 1 | `evidence/GATE-1-RUNTIME-2026-10-11.txt` |
 | NAV-05 | navigation mobile | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | CRT-01 | formulaire commun | event-management.component.html | Bouton conversion present ; formulaire commun partiel | PRESENT | P1 | Ajouter image/options partagees et test E2E | 2 | En attente |
 | CRT-02 | bouton conversion | EventManagementComponent.convertToOperation | createOperation vers /api/operations/create | PRESENT | P1 | Tester conservation et erreur/rollback | 2 | En attente |

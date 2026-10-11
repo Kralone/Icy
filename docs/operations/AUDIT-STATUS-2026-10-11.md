@@ -7,7 +7,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | Gate | État | Preuve actuelle | Écart restant |
 |---|---|---|---|
 | 0 — audit et plan | PASS | Matrice atomique, packs et revues indépendantes | Conclusion historique à maintenir comme archive |
-| 1 — navigation et interface participant | PARTIEL | CUA calendrier, publication, mobile 390×844, desktop 1280×720 et 4K 3840×2160 sans débordement | Captures riches desktop/mobile et états erreur/chargement à archiver |
+| 1 — navigation et interface participant | PARTIEL avancé | CUA calendrier, publication, deep-links HTTP 200, retour calendrier, mobile 390×844, desktop 1280×720 et 4K 3840×2160 sans débordement | Captures riches desktop/mobile et états erreur/chargement à archiver |
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL avancé | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée ; preuve Spring/PostgreSQL d’un responsable autorisé sur sa feuille et refusé sur un frère | Revue UI complète du sélecteur de responsable et états de mutation |
 | 4 — affectations et capacité | PARTIEL — capacité et refus validés | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère ; fixture runtime authentifiée parent plein et message UI `Groupe complet` après HTTP 400 | Maintenir les tests de concurrence et le retour d’erreur visible |
