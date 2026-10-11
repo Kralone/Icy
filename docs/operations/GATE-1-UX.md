@@ -2,7 +2,7 @@
 
 ## Périmètre
 
-Le parcours de création d’une opération part du panneau d’administration. La gestion des événements conserve uniquement la création et la gestion des événements ; elle ne propose plus de conversion visible vers une opération.
+Le parcours de création d’une opération part du panneau d’administration, selon la décision produit [Décision UX Admin](DECISION-UX-ADMIN-CREATION.md). La gestion des événements conserve uniquement la création et la gestion des événements ; elle ne propose plus de conversion visible vers une opération.
 
 ## Parcours validé
 
@@ -21,6 +21,8 @@ Capture CUA réalisée le 11/10/2026 à 14:05 (Docker `127.0.0.1:18088`, viewpor
 - Aide visible : `L’opération sera créée comme brouillon et ouvrira directement son éditeur.`
 - Contrôles accessibles : Titre, Type, Description, Début, Fin, `Créer et ouvrir l’éditeur`.
 - État initial vérifié : l’action est désactivée sans données obligatoires.
+
+Après l’enrichissement UX, une capture CUA réalisée le 11/10/2026 à 14:18 montre une composition en deux zones : formulaire de cadre à gauche, aperçu de mission à droite, étapes `01 Cadre · 02 Organisation · 03 Publication`, compteur de briefing et états vides explicites.
 
 La même session a vérifié `http://127.0.0.1:18088/icy/admin/events` après reconstruction Docker : la zone de création d’événement ne présente plus de bouton `Transformer en opération`.
 
