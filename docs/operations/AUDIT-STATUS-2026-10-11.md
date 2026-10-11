@@ -17,7 +17,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 
 ## Vérifications techniques
 
-- Build Docker backend : **281 tests, 0 échec, 3 ignorés**.
+- Build Docker backend : **282 tests, 0 échec, 3 ignorés**.
 - Build Angular de production réussi ; avertissements CSS historiques conservés.
 - Services locaux actifs : frontend `127.0.0.1:18088`, backend `127.0.0.1:18080`, PostgreSQL `127.0.0.1:15432`.
 - Le bouton de gestion des événements a été retiré du calendrier ; le panneau admin expose `Nouvelle opération` vers `/icy/operations/new`.
