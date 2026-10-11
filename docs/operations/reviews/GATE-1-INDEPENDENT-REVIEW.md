@@ -35,3 +35,9 @@ Le dossier apporte des preuves crédibles pour l’écran desktop de création d
 - `event-management.component.html` ne contient plus de bouton de conversion.
 - `operation-create.component.html` fournit seulement le formulaire direct titre/type/description/début/fin.
 
+## Actualisation sécurité — `fd74f2b`
+
+Le commit `fd74f2b` ajoute `roleGuard` avec `roles: ['ADMIN', 'OFFICIER']` sur `/icy/operations/new` et `/icy/operations/:id/edit`. Le deep-link de création et d’édition est donc correctement filtré côté route pour les rôles organisateurs attendus ; la page participant `/icy/operations/:id` reste accessible sous le garde membre `/icy`. Cette correction retire le blocage d’autorisation côté interface, sous réserve des contrôles serveur déjà prévus dans les gates ultérieures.
+
+Le verdict global reste **BLOCKED** : les gaps du parcours canonique, des preuves mobile et des maquettes premium ne sont pas modifiés par cette correction.
+
