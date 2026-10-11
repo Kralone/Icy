@@ -101,4 +101,20 @@ export class EventService {
   getParticipations(eventId: string): Observable<Object> {
     return this.http.get(`${this.baseUrl}/participation`, { params: { eventId } });
   }
+
+  convertToOperation(eventId: string) {
+    return this.http.post<any>(`/api/operations/${eventId}/convert`, {}).pipe(map(res => res.data));
+  }
+
+  getOperationForEdit(eventId: string) {
+    return this.http.get<any>(`/api/operations/${eventId}/edit`).pipe(map(res => res.data));
+  }
+
+  updateOperation(eventId: string, payload: { briefing?: string; meetingPoint?: string; imageUrl?: string }) {
+    return this.http.put<any>(`/api/operations/${eventId}`, payload).pipe(map(res => res.data));
+  }
+
+  publishOperation(eventId: string) {
+    return this.http.post<any>(`/api/operations/${eventId}/publish`, {}).pipe(map(res => res.data));
+  }
 }

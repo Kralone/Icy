@@ -1,0 +1,23 @@
+<main class="operation-editor">
+  @if (operation$ | async; as operation) {
+    <header><a routerLink="/icy/events">← Calendrier</a><p class="eyebrow">Éditeur d’opération</p><h1>{{ operation.title }}</h1></header>
+    <nav class="tabs" aria-label="Sections de l’éditeur">
+      @for (item of [['briefing','Général / briefing'], ['objectifs','Objectifs'], ['organisation','Organisation'], ['permissions','Inscriptions et permissions'], ['publication','Aperçu / publication']]; track item[0]) {
+        <button type="button" [class.active]="tab === item[0]" (click)="tab = $any(item[0])">{{ item[1] }}</button>
+      }
+    </nav>
+    <section class="editor-card">
+      @if (tab === 'briefing') {
+        <label>Briefing<textarea [(ngModel)]="form.briefing" rows="12" maxlength="50000"></textarea></label>
+        <label>Point de rendez-vous<input [(ngModel)]="form.meetingPoint" maxlength="255"></label>
+        <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" maxlength="2000"></label>
+      } @else if (tab === 'publication') {
+        <h2>Publication</h2><p>Statut actuel : {{ operation.publicationStatus }}.</p><button type="button" class="primary" (click)="publish(operation.id)">Publier l’opération</button>
+      } @else {
+        <h2>{{ tab === 'objectifs' ? 'Objectifs' : tab === 'organisation' ? 'Organisation' : 'Inscriptions et permissions' }}</h2><p class="muted">Cette section sera configurée dans l’étape suivante.</p>
+      }
+      @if (tab !== 'publication') { <button type="button" class="primary" [disabled]="saving" (click)="save(operation.id)">{{ saving ? 'Enregistrement…' : 'Enregistrer le brouillon' }}</button> }
+      @if (message) { <p role="status">{{ message }}</p> }
+    </section>
+  } @else { <section class="editor-error" role="alert"><h1>Impossible de charger le brouillon</h1><a routerLink="/icy/events">Retour au calendrier</a></section> }
+</main>

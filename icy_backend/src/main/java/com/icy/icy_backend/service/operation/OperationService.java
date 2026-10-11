@@ -1,0 +1,68 @@
+package com.icy.icy_backend.service.operation;
+
+import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
+import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
+import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.Operation;
+import com.icy.icy_backend.db.repository.event.EventRepository;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.service.common.MessageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class OperationService {
+    private final EventRepository eventRepository;
+    private final OperationRepository operationRepository;
+    private final MessageService messageService;
+
+    @Transactional
+    public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Événement introuvable"));
+        event.setActivityType(ActivityType.OPERATION);
+        eventRepository.save(event);
+        Operation operation = operationRepository.findById(eventId).orElseGet(() -> Operation.builder()
+                .eventId(eventId).event(event).publicationStatus(Operation.PublicationStatus.DRAFT).build());
+        operation.setEvent(event);
+        operationRepository.save(operation);
+        return messageService.buildResponse("operation.draft.created", new OperationResponseDTO(event, operation));
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<OperationResponseDTO>> update(UUID eventId, OperationUpdateRequest request) {
+        Event event = findOperationEvent(eventId);
+        Operation operation = operationRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        operation.setBriefing(request.getBriefing());
+        operation.setMeetingPoint(request.getMeetingPoint());
+        operation.setImageUrl(request.getImageUrl());
+        operation.setUpdatedAt(LocalDateTime.now());
+        return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, operationRepository.save(operation)));
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<OperationResponseDTO>> publish(UUID eventId) {
+        Event event = findOperationEvent(eventId);
+        Operation operation = operationRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        operation.setPublicationStatus(Operation.PublicationStatus.PUBLISHED);
+        operation.setUpdatedAt(LocalDateTime.now());
+        return messageService.buildResponse("operation.published", new OperationResponseDTO(event, operationRepository.save(operation)));
+    }
+
+    private Event findOperationEvent(UUID id) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        if (event.getActivityType() != ActivityType.OPERATION) throw new ResourceNotFoundException("Opération introuvable");
+        return event;
+    }
+}
