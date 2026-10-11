@@ -7,8 +7,9 @@ Tests backend ciblés dans `OperationAssignmentServiceTest` :
 - `refusesDirectAssignmentOnValidationLeaf` refuse l’affectation directe et impose la demande de validation.
 - `locksLeafAndAncestorsInStableOrderBeforeCapacityRead` couvre l’affectation libre sur une feuille et le verrouillage feuille/ancêtres.
 - `reusesExistingUserAssignmentWhenChangingLeaf` réutilise l’affectation existante de l’utilisateur et vérifie qu’une seule ligne est sauvegardée lors d’un changement de feuille.
+- `refusesSecondPendingRequestForSameUserAndOperation` refuse une seconde demande active pour le même joueur et la même opération, sans écriture.
 
-La suite Docker backend passe à **296 tests, 0 échec, 3 ignorés**.
+La suite Docker backend validée précédemment passe à **296 tests, 0 échec, 3 ignorés** ; le test ciblé d’affectation réexécuté après cet ajout passe à **8 tests, 0 échec**.
 Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification visuelle des contrôles UI/mobile.
 
 Deux validations indépendantes ont confirmé GRP-02, GRP-06 et GRP-07 comme CONFORME (PROUVÉ) dans cette portée serveur. Elles maintiennent séparément ouverts les transferts en attente, la conservation de l’ancienne place et la vérification UI/mobile.

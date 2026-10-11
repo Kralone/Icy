@@ -218,4 +218,35 @@ class OperationAssignmentServiceTest {
         assertThat(current.getGroupId()).isEqualTo(2L);
         verify(assignments).save(current);
     }
+
+    @Test
+    void refusesSecondPendingRequestForSameUserAndOperation() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.VALIDATION).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findLockedById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        when(requests.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(
+                operationId, userId, OperationAssignmentRequest.Status.PENDING))
+                .thenReturn(Optional.of(OperationAssignmentRequest.builder().operationEventId(operationId).userId(userId).build()));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, mock(OperationAssignmentRepository.class),
+                mock(EventRepository.class), participation, mock(MessageService.class), requests);
+
+        assertThatThrownBy(() -> service.request(operationId, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Demande déjà en attente");
+        verify(requests, never()).save(any());
+    }
 }
