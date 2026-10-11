@@ -8,3 +8,5 @@
 - Cette capture live est conservée comme onglet livrable CUA dans la session de validation ; aucun fichier PNG exporté n’est disponible dans le dépôt.
 - À 390×844, la même fiche publiée a été rejouée avec briefing, objectifs, composition, flotte et états vides ; `scrollWidth=bodyScrollWidth=390`. À 1280×720 et 3840×2160, les mesures restent sans débordement (`scrollWidth=bodyScrollWidth=viewport`).
 - Portée : les états erreur, chargement et prêt sont observés en runtime et le replay mobile est maintenant prouvé ; aucune image PNG exportée dans le dépôt. UI-11 reste `PARTIEL avancé` tant que les captures ne sont pas archivées.
+
+Deux validations indépendantes confirment NAV-05 CONFORME (PROUVÉ) et UI-11 PARTIEL avancé. La réserve UI-11 est documentaire : les captures PNG dédiées et leur revue visuelle ne sont pas archivées.
