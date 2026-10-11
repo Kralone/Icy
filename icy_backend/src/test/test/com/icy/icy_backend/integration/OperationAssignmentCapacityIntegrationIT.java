@@ -1,17 +1,20 @@
 package com.icy.icy_backend.integration;
 
 import com.icy.icy_backend.security.UserAuthDetails;
+import com.icy.icy_backend.controller.support.TestAuth;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,10 +27,13 @@ import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** Opt-in end-to-end capacity race against the local PostgreSQL instance. */
 @EnabledIfSystemProperty(named = "iceforge.integration", matches = "true")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
 class OperationAssignmentCapacityIntegrationIT {
     private static final UUID USER_ONE = UUID.fromString("10000000-0000-0000-0000-000000000001");
     private static final UUID USER_TWO = UUID.fromString("10000000-0000-0000-0000-000000000002");
@@ -35,6 +41,7 @@ class OperationAssignmentCapacityIntegrationIT {
 
     @Autowired JdbcTemplate jdbc;
     @Autowired OperationAssignmentService assignments;
+    @Autowired MockMvc mockMvc;
 
     private UUID operationId;
 
@@ -96,6 +103,18 @@ class OperationAssignmentCapacityIntegrationIT {
         } finally {
             SecurityContextHolder.clearContext();
         }
+    }
+
+    @Test
+    void nonOrganizerCannotOpenDraftOperationDeepLink() throws Exception {
+        operationId = UUID.randomUUID();
+        jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'draft deep link', '', ?, ?, 'OPERATION')",
+                operationId, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2));
+        jdbc.update("INSERT INTO events.operations (event_id, briefing, publication_status) VALUES (?, '', 'DRAFT')", operationId);
+
+        mockMvc.perform(get("/api/operations/{id}", operationId)
+                        .with(TestAuth.user(USER_ONE, "USER")))
+                .andExpect(status().isNotFound());
     }
 
     private Callable<Boolean> assign(UUID userId, Long groupId) {
