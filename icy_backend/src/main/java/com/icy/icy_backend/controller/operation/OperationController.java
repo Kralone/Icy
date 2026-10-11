@@ -94,6 +94,12 @@ public class OperationController {
         return groupService.delete(id, groupId);
     }
 
+    @PutMapping("/{id}/groups/reorder")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> reorderGroups(@PathVariable UUID id, @RequestBody List<Long> groupIds) {
+        return groupService.reorder(id, groupIds);
+    }
+
     @PostMapping("/{id}/ships/proposals")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<Void>> proposeShip(@PathVariable UUID id, @RequestParam Long shipId, @RequestParam(required = false) Long groupId) {

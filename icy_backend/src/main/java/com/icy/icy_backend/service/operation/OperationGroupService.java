@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.List;
 @Service @RequiredArgsConstructor
 public class OperationGroupService {
     private final OperationRepository operationRepository;
@@ -59,5 +60,18 @@ public class OperationGroupService {
         if (groupRepository.existsByParentId(groupId)) throw new IllegalStateException("Supprimez d’abord les sous-groupes");
         groupRepository.delete(group);
         return messageService.buildResponse("operation.group.deleted", null);
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> reorder(UUID operationId, List<Long> groupIds) {
+        if (groupIds == null || groupIds.isEmpty() || groupIds.size() > 100 || groupIds.stream().anyMatch(java.util.Objects::isNull) || groupIds.stream().distinct().count() != groupIds.size()) {
+            throw new IllegalArgumentException("Ordre de groupes invalide");
+        }
+        List<OperationGroup> groups = groupIds.stream().map(id -> groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"))).toList();
+        if (groups.stream().anyMatch(group -> !operationId.equals(group.getOperationEventId()))) throw new IllegalArgumentException("Les groupes appartiennent à une autre opération");
+        Long expectedParent = groups.get(0).getParentId();
+        if (groups.stream().anyMatch(group -> !java.util.Objects.equals(expectedParent, group.getParentId()))) throw new IllegalArgumentException("Seuls les groupes frères peuvent être réordonnés");
+        for (int index = 0; index < groups.size(); index++) { groups.get(index).setSortOrder(index); groupRepository.save(groups.get(index)); }
+        return messageService.buildResponse("operation.group.reordered", null);
     }
 }

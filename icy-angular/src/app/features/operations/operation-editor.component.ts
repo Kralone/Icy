@@ -81,7 +81,8 @@ export class OperationEditorComponent {
     const other = this.groups[target];
     const currentOrder = current.sortOrder ?? index;
     const otherOrder = other.sortOrder ?? target;
-    this.eventService.updateOperationGroup(operationId, current.id, { ...current, sortOrder: otherOrder }).subscribe({ next: () => this.eventService.updateOperationGroup(operationId, other.id, { ...other, sortOrder: currentOrder }).subscribe({ next: () => { this.groups = [...this.groups].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' }), error: () => this.message = 'Impossible de réordonner les groupes.' });
+    const ordered = [...this.groups]; [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    this.eventService.reorderOperationGroups(operationId, ordered.map(group => group.id)).subscribe({ next: () => { this.groups = ordered.map((group, order) => ({ ...group, sortOrder: order })); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' });
   }
   deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
 }
