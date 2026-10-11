@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -32,6 +32,7 @@ interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
 })
 export class OperationPageComponent {
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly eventService = inject(EventService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -89,11 +90,19 @@ export class OperationPageComponent {
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
     this.assignmentMessage = 'Vérification de la capacité…';
-    this.eventService.assignOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({ next: () => this.assignmentMessage = 'Affectation confirmée.', error: error => this.assignmentMessage = error?.error?.message || 'Affectation impossible. La vérification a expiré.' });
+    this.changeDetector.markForCheck();
+    this.eventService.assignOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({
+      next: () => { this.assignmentMessage = 'Affectation confirmée.'; this.changeDetector.markForCheck(); },
+      error: error => { this.assignmentMessage = error?.error?.message || 'Affectation impossible. La vérification a expiré.'; this.changeDetector.markForCheck(); }
+    });
   }
   requestAssignment(operationId: string, groupId: number) {
     this.assignmentMessage = 'Envoi de la demande…';
-    this.eventService.requestOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({ next: () => this.assignmentMessage = 'Demande envoyée aux responsables.', error: error => this.assignmentMessage = error?.error?.message || 'Demande impossible. La vérification a expiré.' });
+    this.changeDetector.markForCheck();
+    this.eventService.requestOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({
+      next: () => { this.assignmentMessage = 'Demande envoyée aux responsables.'; this.changeDetector.markForCheck(); },
+      error: error => { this.assignmentMessage = error?.error?.message || 'Demande impossible. La vérification a expiré.'; this.changeDetector.markForCheck(); }
+    });
   }
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;
