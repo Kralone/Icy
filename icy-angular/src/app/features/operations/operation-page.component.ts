@@ -89,6 +89,21 @@ export class OperationPageComponent {
     if (this.selectedShipId == null) return;
     this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
   }
+
+  effectiveGroupMode(group: any, groups: any[]): string {
+    let cursor = group;
+    let depth = 0;
+    while (cursor && depth++ <= 2) {
+      if (cursor.assignmentMode && cursor.assignmentMode !== 'INHERITED') return cursor.assignmentMode;
+      cursor = cursor.parentId == null ? null : groups.find(item => item.id === cursor.parentId);
+    }
+    return 'FREE';
+  }
+
+  groupModeLabel(group: any, groups: any[]): string {
+    const mode = this.effectiveGroupMode(group, groups);
+    return mode === 'VALIDATION' ? 'Sur validation' : mode === 'MANAGED' ? 'Géré par les responsables' : 'Libre';
+  }
   setParticipation(operationId: string, status: number) {
     this.assignmentMessage = '';
     this.eventService.setParticipationStatus(operationId, status).subscribe({

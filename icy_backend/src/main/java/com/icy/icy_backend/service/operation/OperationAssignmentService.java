@@ -31,7 +31,7 @@ public class OperationAssignmentService {
         Operation operation = operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         OperationGroup group = groupRepository.findLockedById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Groupe feuille invalide");
-        if (group.getAssignmentMode() != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
+        if (effectiveMode(operationId, groupId) != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
         UUID user = AuthUtils.getCurrentUserId();
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
         if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
@@ -43,7 +43,7 @@ public class OperationAssignmentService {
     public ResponseEntity<MessageResponse<Void>> decide(UUID requestId, boolean approve) {
         OperationAssignmentRequest request = requestRepository.findById(requestId).orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
         if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
-        OperationGroup group = groupRepository.findLockedById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        OperationGroup group = groupRepository.findById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         UUID currentUser = AuthUtils.getCurrentUserId();
         if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
@@ -100,7 +100,7 @@ public class OperationAssignmentService {
         Operation operation = operationRepository.findById(operationId)
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        OperationGroup group = groupRepository.findLockedById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) {
             throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
         }
@@ -109,8 +109,9 @@ public class OperationAssignmentService {
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) {
             throw new IllegalStateException("La participation Présent est requise");
         }
-        if (group.getAssignmentMode() == OperationGroup.AssignmentMode.MANAGED) throw new IllegalStateException("Groupe géré par les organisateurs");
-        if (group.getAssignmentMode() == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");
+        OperationGroup.AssignmentMode mode = effectiveMode(operationId, groupId);
+        if (mode == OperationGroup.AssignmentMode.MANAGED) throw new IllegalStateException("Groupe géré par les organisateurs");
+        if (mode == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");
         ensureCapacity(operationId, groupId, userId);
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
@@ -125,6 +126,10 @@ public class OperationAssignmentService {
         Set<Long> ancestors = new HashSet<>();
         Long cursor = leafId;
         while (cursor != null && ancestors.add(cursor)) cursor = byId.get(cursor) == null ? null : byId.get(cursor).getParentId();
+        // Lock every group participating in the capacity decision in a stable
+        // order. This serializes sibling assignments through their shared
+        // parent and prevents two transactions from overshooting its limit.
+        ancestors.stream().sorted().forEach(id -> groupRepository.findLockedById(id));
         List<OperationAssignment> assignments = assignmentRepository.findByOperationEventId(operationId);
         for (Long groupId : ancestors) {
             OperationGroup group = byId.get(groupId);
@@ -147,5 +152,17 @@ public class OperationAssignmentService {
             cursor = current == null ? null : current.getParentId();
         }
         return false;
+    }
+
+    private OperationGroup.AssignmentMode effectiveMode(UUID operationId, Long groupId) {
+        List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
+        java.util.Map<Long, OperationGroup> byId = groups.stream().collect(Collectors.toMap(OperationGroup::getId, java.util.function.Function.identity()));
+        OperationGroup cursor = byId.get(groupId);
+        int depth = 0;
+        while (cursor != null && depth++ <= 2) {
+            if (cursor.getAssignmentMode() != OperationGroup.AssignmentMode.INHERITED) return cursor.getAssignmentMode();
+            cursor = cursor.getParentId() == null ? null : byId.get(cursor.getParentId());
+        }
+        return OperationGroup.AssignmentMode.FREE;
     }
 }
