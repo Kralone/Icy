@@ -21,3 +21,5 @@ La relecture indépendante précédente confirmait l’unicité d’une demande 
 Deux validations indépendantes classaient GRP-10 CONFORME (PROUVÉ) dans cette portée et GRP-09 PARTIEL avancé avant l’intégration PostgreSQL.
 
 Intégration PostgreSQL (opt-in, `-Diceforge.integration=true`) : `failedTransferApprovalKeepsPendingRequestAndPreviousAssignment` vérifie qu’un refus de capacité laisse la demande `PENDING` et l’affectation précédente intactes ; `twoConcurrentAssignmentsCannotTakeOneParentPlace` couvre la concurrence sur une capacité parent. Les quatre tests d’intégration passent, 0 échec, build Maven réussi. Cette preuve clôt la réserve de rollback/concurrence de GRP-09 côté serveur.
+
+Deux validations indépendantes confirment GRP-09 CONFORME (PROUVÉ) côté serveur. L’exécution est opt-in locale et ne couvre pas le rendu UI/mobile de la transition.
