@@ -117,7 +117,7 @@ export class OperationEditorComponent {
     this.saving = true;
     this.message = '';
     const payload = { ...this.form, objectives: JSON.stringify(this.form.objectives.filter(item => item.text.trim()).map(item => ({ kind: item.kind, text: item.text.trim() }))) };
-    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Brouillon enregistré.'; }, error: () => { this.saving = false; this.message = 'Impossible d’enregistrer le brouillon.'; } });
+    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: () => { this.saving = false; this.message = 'Impossible d’enregistrer l’opération.'; } });
   }
 
   publish(id: string) {

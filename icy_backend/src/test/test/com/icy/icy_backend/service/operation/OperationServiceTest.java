@@ -1,0 +1,66 @@
+package com.icy.icy_backend.service.operation;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
+import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
+import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
+import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.Operation;
+import com.icy.icy_backend.db.repository.event.EventRepository;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.service.common.MessageService;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class OperationServiceTest {
+
+    @Test
+    void updatesPublishedOperationWithoutChangingItsIdentityOrPublicationStatus() {
+        EventRepository events = Mockito.mock(EventRepository.class);
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        EntityManager entityManager = Mockito.mock(EntityManager.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        OperationService service = new OperationService(events, operations, messages, entityManager, objectMapper);
+
+        UUID operationId = UUID.randomUUID();
+        Event event = new Event();
+        event.setId(operationId);
+        event.setActivityType(ActivityType.OPERATION);
+        Operation operation = Operation.builder()
+                .eventId(operationId)
+                .event(event)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED)
+                .briefing("Briefing initial")
+                .build();
+        when(events.findById(operationId)).thenReturn(Optional.of(event));
+        when(operations.findById(operationId)).thenReturn(Optional.of(operation));
+        when(operations.save(operation)).thenReturn(operation);
+        ResponseEntity<MessageResponse<OperationResponseDTO>> response = ResponseEntity.ok().build();
+        Mockito.doReturn(response).when(messages).buildResponse(eq("operation.updated"), any());
+
+        OperationUpdateRequest request = new OperationUpdateRequest();
+        request.setBriefing("Briefing mis à jour");
+        request.setObjectives("[{\"kind\":\"PRINCIPAL\",\"text\":\"Objectif\"}]");
+
+        ResponseEntity<MessageResponse<OperationResponseDTO>> actual = service.update(operationId, request);
+
+        assertThat(actual).isSameAs(response);
+        assertThat(operation.getEventId()).isEqualTo(operationId);
+        assertThat(operation.getPublicationStatus()).isEqualTo(Operation.PublicationStatus.PUBLISHED);
+        assertThat(operation.getBriefing()).isEqualTo("Briefing mis à jour");
+        verify(operations).save(operation);
+    }
+}
