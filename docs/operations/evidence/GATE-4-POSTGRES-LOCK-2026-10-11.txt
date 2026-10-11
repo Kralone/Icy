@@ -1,0 +1,17 @@
+# Gate 4 — verrouillage PostgreSQL
+
+Date : 2026-10-11
+
+## Preuve exécutable
+
+Le test opt-in `OperationCapacityPostgresLockIT.secondCapacityWriterWaitsUntilFirstTransactionCommits` crée une table de sonde dans la base PostgreSQL de validation, ouvre deux connexions et verrouille la même ligne avec `SELECT ... FOR UPDATE`.
+
+Commande exécutée :
+
+```text
+icy_backend\mvnw.cmd -q -Diceforge.integration=true -Diceforge.jdbc.url=jdbc:postgresql://localhost:15432/iceforgedb -Diceforge.jdbc.user=iceforge -Diceforge.jdbc.password=iceforge -Dtest=OperationCapacityPostgresLockIT test
+```
+
+Résultat : code retour `0`, test réussi. La seconde transaction reste bloquée tant que la première n'a pas validé, puis termine après le `commit`.
+
+Cette preuve confirme le comportement de verrou PostgreSQL utilisé par `findLockedById`. Elle ne remplace pas encore une intégration Spring complète qui appelle `OperationAssignmentService` avec deux affectations concurrentes et un parent réellement plein ; SEC-04 reste donc partiel jusqu'à cette fixture métier.
