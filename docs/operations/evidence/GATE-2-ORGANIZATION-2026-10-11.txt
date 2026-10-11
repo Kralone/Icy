@@ -10,7 +10,7 @@ Implementation evidence
 Validation:
 - Frontend Docker build succeeded after the controls were added.
 - Backend Docker `mvn verify` succeeded: 266 tests, 0 failures, 3 skipped.
-- The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection and cross-operation rejection; the Docker suite now reports 270 tests, 0 failures, 3 skipped.
+- The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection, cross-operation rejection and capacity decrease rejection; the Docker suite now reports 271 tests, 0 failures, 3 skipped.
 - Frontend and backend containers were redeployed and reported healthy.
 
 Runtime CUA check:
