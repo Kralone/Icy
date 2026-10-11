@@ -18,4 +18,6 @@ Deux validations indépendantes ont confirmé GRP-02, GRP-06 et GRP-07 comme CON
 
 La relecture indépendante précédente confirmait l’unicité d’une demande `PENDING`. Les nouveaux tests ajoutent la conservation de l’affectation pendant l’attente et le déplacement à l’approbation ; la transaction complète et son rollback sous erreur restent à vérifier.
 
-Deux validations indépendantes classent GRP-10 CONFORME (PROUVÉ) dans cette portée et GRP-09 PARTIEL avancé : les tests Mockito et `@Transactional` prouvent l’ordre métier, mais pas encore le rollback/concurrentiel réel en base.
+Deux validations indépendantes classaient GRP-10 CONFORME (PROUVÉ) dans cette portée et GRP-09 PARTIEL avancé avant l’intégration PostgreSQL.
+
+Intégration PostgreSQL (opt-in, `-Diceforge.integration=true`) : `failedTransferApprovalKeepsPendingRequestAndPreviousAssignment` vérifie qu’un refus de capacité laisse la demande `PENDING` et l’affectation précédente intactes ; `twoConcurrentAssignmentsCannotTakeOneParentPlace` couvre la concurrence sur une capacité parent. Les quatre tests d’intégration passent, 0 échec, build Maven réussi. Cette preuve clôt la réserve de rollback/concurrence de GRP-09 côté serveur.

@@ -106,6 +106,26 @@ class OperationAssignmentCapacityIntegrationIT {
     }
 
     @Test
+    void failedTransferApprovalKeepsPendingRequestAndPreviousAssignment() {
+        operationId = UUID.randomUUID();
+        jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'transfer rollback', '', ?, ?, 'OPERATION')",
+                operationId, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2));
+        jdbc.update("INSERT INTO events.operations (event_id, briefing, publication_status) VALUES (?, '', 'PUBLISHED')", operationId);
+        Long previousGroup = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, name, assignment_mode, sort_order) VALUES (?, 'Ancienne place', 'FREE', 0) RETURNING id", Long.class, operationId);
+        Long fullParent = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, name, capacity, assignment_mode, sort_order) VALUES (?, 'Cible pleine', 0, 'VALIDATION', 1) RETURNING id", Long.class, operationId);
+        Long targetGroup = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, parent_id, name, assignment_mode, sort_order) VALUES (?, ?, 'Cible', 'INHERITED', 0) RETURNING id", Long.class, operationId, fullParent);
+        UUID requestId = jdbc.queryForObject("INSERT INTO events.operation_assignment_requests (operation_event_id, group_id, user_id) VALUES (?, ?, ?) RETURNING id", UUID.class, operationId, targetGroup, USER_ONE);
+        jdbc.update("INSERT INTO events.operation_assignments (operation_event_id, group_id, user_id, status) VALUES (?, ?, ?, 'CONFIRMED')", operationId, previousGroup, USER_ONE);
+
+        asAdmin();
+        assertThatThrownBy(() -> assignments.decide(requestId, true))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Groupe complet");
+        assertThat(jdbc.queryForObject("SELECT status FROM events.operation_assignment_requests WHERE id = ?", String.class, requestId)).isEqualTo("PENDING");
+        assertThat(jdbc.queryForObject("SELECT group_id FROM events.operation_assignments WHERE operation_event_id = ? AND user_id = ?", Long.class, operationId, USER_ONE)).isEqualTo(previousGroup);
+    }
+
+    @Test
     void nonOrganizerCannotOpenDraftOperationDeepLink() throws Exception {
         operationId = UUID.randomUUID();
         jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'draft deep link', '', ?, ?, 'OPERATION')",
@@ -135,5 +155,10 @@ class OperationAssignmentCapacityIntegrationIT {
     private void asUser(UUID userId) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 new UserAuthDetails(userId, userId.toString(), "password", List.of()), "", List.of()));
+    }
+
+    private void asAdmin() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(USER_ONE, "admin", "password", List.of()), "", List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))));
     }
 }
