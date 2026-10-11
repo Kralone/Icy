@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { EventService, EventDTO } from '../../../core/services/event/event.service';
 import { EventType } from '../../../model/event-type.model';
 
@@ -67,7 +67,7 @@ export class EventManagementComponent implements OnInit {
   }
 
 
-  constructor(private eventService: EventService, private router: Router) {}
+  constructor(private eventService: EventService) {}
 
   ngOnInit() {
     this.loadTypes();
@@ -167,23 +167,6 @@ export class EventManagementComponent implements OnInit {
         console.error('Erreur création événement', err);
         this.isSubmitting = false;
       },
-    });
-  }
-
-  createOperation() {
-    this.router.navigate(['/icy/operations/new']);
-  }
-
-  createOperationFromEvent() {
-    if (this.isFormInvalid) return;
-    this.isSubmitting = true;
-    this.eventService.createOperation(this.newEvent).subscribe({
-      next: operation => {
-        this.isSubmitting = false;
-        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
-        this.router.navigate(['/icy/operations', operation.eventId || operation.id, 'edit']);
-      },
-      error: err => { console.error('Erreur création opération', err); this.isSubmitting = false; }
     });
   }
 
