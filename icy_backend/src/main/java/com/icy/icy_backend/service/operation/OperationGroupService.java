@@ -24,7 +24,6 @@ public class OperationGroupService {
         if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
         if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
-        if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         if (request.getParentId() != null) {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
@@ -43,6 +42,7 @@ public class OperationGroupService {
         if (request.getDescription() != null && request.getDescription().length() > 5000) throw new IllegalArgumentException("Description trop longue");
         if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
+        if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
         if (request.getParentId() != null) {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId()) || groupId.equals(parent.getId()) || parent.getParentId() != null) throw new IllegalArgumentException("Groupe parent invalide");
