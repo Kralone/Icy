@@ -11,7 +11,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée | Sélecteur de responsable et preuve runtime avec compte délégué |
 | 4 — affectations et capacité | PARTIEL | Verrous feuille/ancêtres, capacités hiérarchiques, tests de scope parent/enfant/frère | Test d’intégration de deux transactions et fixture runtime parent plein |
-| 5 — flotte et besoins | PARTIEL | Migration V49, API séparée, éditeur, participant, protection des brouillons, tests | Association besoin↔appareil fourni et sélecteurs catalogue nommés |
+| 5 — flotte et besoins | PARTIEL | Migration V49, API séparée, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé | Association besoin↔appareil fourni et test runtime de bout en bout |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
 | 7 — Discord et historique | NON VERIFIÉ | Sources et tests existants inspectés | Parcours Discord, synchronisation et migrations historiques à exécuter |
 
@@ -26,5 +26,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 Cette branche n’est pas prête à être fusionnée dans `main` tant que les écarts P0 des Gates 3–5 et la revue du Gate 7 ne sont pas levés par preuve indépendante.
 
 - L’éditeur des besoins utilise désormais un sélecteur catalogue nommé avec images et une sélection de groupe par libellé ; preuve CUA Aurora du 11/10/2026.
+
+- L’éditeur permet aussi de modifier un besoin existant ; la liste se rafraîchit après sauvegarde.
 
 - L’éditeur Organisation utilise maintenant une arborescence et une fiche de propriétés en deux panneaux desktop, avec empilement mobile sous 760px.
