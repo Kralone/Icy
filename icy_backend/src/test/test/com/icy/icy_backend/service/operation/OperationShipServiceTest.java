@@ -2,6 +2,7 @@ package com.icy.icy_backend.service.operation;
 
 import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
+import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.event.OperationShipProposalRepository;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
@@ -25,13 +26,17 @@ class OperationShipServiceTest {
         OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
         MessageService messages = Mockito.mock(MessageService.class);
         OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
-        Operation operation = Operation.builder().eventId(UUID.randomUUID()).publicationStatus(Operation.PublicationStatus.PUBLISHED).build();
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        when(participations.existsByEvent_IdAndUser_IdAndStatus(any(), any(), Mockito.eq(1))).thenReturn(true);
+        Operation operation = Operation.builder().eventId(UUID.randomUUID()).publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build();
         when(operations.findById(operation.getEventId())).thenReturn(Optional.of(operation));
         when(hangar.existsByUserIdAndShipId(any(), any())).thenReturn(false);
-        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups);
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations);
         try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
             auth.when(AuthUtils::getCurrentUserId).thenReturn(UUID.randomUUID());
             assertThatThrownBy(() -> service.propose(operation.getEventId(), 42L, null)).isInstanceOf(ResourceNotFoundException.class);
+            Mockito.verify(hangar).existsByUserIdAndShipId(any(), Mockito.eq(42L));
+            Mockito.verifyNoInteractions(proposals);
         }
     }
 }
