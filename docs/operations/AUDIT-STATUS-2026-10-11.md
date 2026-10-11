@@ -11,13 +11,13 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée | Sélecteur de responsable et preuve runtime avec compte délégué |
 | 4 — affectations et capacité | PARTIEL | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère | Fixture runtime authentifiée parent plein et refus visible |
-| 5 — flotte et besoins | PARTIEL | Migrations V49/V50, API séparée, liaison besoin↔proposition, contrôle de modèle, retrait propriétaire et indisponibilité organisateur, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé | Parcours runtime publié avec appareil du hangar, besoin lié, carte associée et retrait/indisponibilité |
+| 5 — flotte et besoins | PARTIEL avancé | Migrations V49/V50, API séparée, liaison besoin↔proposition, contrôle de modèle, retrait propriétaire et indisponibilité organisateur, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait exécuté | Capture runtime du marquage `Indisponible` organisateur et vérification finale sans seconde affectation |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
 | 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **65 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
 
 ## Vérifications techniques
 
-- Build Docker backend : **278 tests, 0 échec, 3 ignorés**.
+- Build Docker backend : **280 tests, 0 échec, 3 ignorés**.
 - Build Angular de production réussi ; avertissements CSS historiques conservés.
 - Services locaux actifs : frontend `127.0.0.1:18088`, backend `127.0.0.1:18080`, PostgreSQL `127.0.0.1:15432`.
 - Le bouton de gestion des événements a été retiré du calendrier ; le panneau admin expose `Nouvelle opération` vers `/icy/operations/new`.

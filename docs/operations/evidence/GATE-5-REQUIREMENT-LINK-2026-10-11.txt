@@ -6,4 +6,17 @@ La migration `V50__link_operation_ship_proposals_to_requirements.sql` ajoute une
 
 Le test `OperationShipServiceTest.associatesProposalWithNonCancelledRequirementAndUsesItsGroup` vérifie l’association persistée et l’absence de seconde affectation du propriétaire.
 
-La preuve runtime UI complète reste à faire : le participant doit encore être testé avec un vaisseau du hangar, un besoin ciblé et l’affichage de la liaison sur une opération publiée.
+## Preuve runtime publiée
+
+Sur `QA Gate 1` (`7ad8823f-d82a-4a43-a157-c867ec47bd04`), avec le compte de validation déjà authentifié, le parcours suivant a été exécuté dans le navigateur local :
+
+1. permission de proposition activée et participation `Présent` ;
+2. sélection de `MISC Prospector` dans le hangar personnel ;
+3. sélection de `1 × modèle à préciser / Poste de soutien pour validation V50` ;
+4. clic `Proposer`, puis rechargement de la page.
+
+Après rechargement, la page affiche l’image et le nom `MISC Prospector`, le propriétaire `validation_admin`, le statut `Proposé` et le libellé `Lié à un besoin annoncé`. La proposition est persistée dans `events.operation_ship_proposals` avec le `requirement_id` attendu.
+
+Le bouton `Retirer ma proposition` a ensuite été utilisé. Après rechargement, la carte disparaît et l’état vide `Aucun vaisseau n’est encore renseigné.` est affiché. Le parcours organisateur `POST .../unavailable` et son statut `UNAVAILABLE` sont couverts par `OperationShipServiceTest`.
+
+Cette preuve clôture le parcours hangar → besoin → carte liée et le retrait participant. La vérification visuelle d’un marquage `Indisponible` par l’organisateur reste à capturer séparément.
