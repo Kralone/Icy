@@ -20,11 +20,15 @@ public class OperationShipService {
     private final OperationShipProposalRepository proposalRepository;
     private final MessageService messageService;
     private final OperationGroupRepository groupRepository;
+    private final EventParticipationRepository participationRepository;
     @Transactional
     public ResponseEntity<MessageResponse<Void>> propose(UUID operationId, Long shipId, Long groupId) {
         operationRepository.findById(operationId).filter(o -> o.getPublicationStatus() == com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED && o.isAllowShipProposals())
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         UUID owner = AuthUtils.getCurrentUserId();
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)) {
+            throw new IllegalStateException("La participation Présent est requise pour proposer un vaisseau");
+        }
         if (!userShipRepository.existsByUserIdAndShipId(owner, shipId)) throw new ResourceNotFoundException("Vaisseau absent du hangar personnel");
         if (groupId != null) {
             var group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));

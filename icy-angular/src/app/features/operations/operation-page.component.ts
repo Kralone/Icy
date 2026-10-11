@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 interface OperationPageModel {
   id: string;
@@ -19,7 +20,7 @@ interface OperationPageModel {
   endDateTime: string;
   finished: boolean;
 }
-interface ParticipationRow { status: number; }
+interface ParticipationRow { status: number; userId?: string; user?: { id?: string }; }
 
 @Component({
   standalone: true,
@@ -31,6 +32,7 @@ interface ParticipationRow { status: number; }
 export class OperationPageComponent {
   private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
+  private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   readonly operation$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
@@ -54,7 +56,12 @@ export class OperationPageComponent {
     catchError(() => of([] as ParticipationRow[]))
   );
   readonly participationSummary$ = this.participation$.pipe(
-    map(participations => ({ total: participations.length, present: participations.filter(item => item.status === 1).length }))
+    map(participations => {
+      const currentUserId = this.authService.getUserIdFromToken();
+      const own = participations.find(item => (item.userId || item.user?.id) === currentUserId);
+      this.participationStatus = own?.status ?? null;
+      return { total: participations.length, present: participations.filter(item => item.status === 1).length };
+    })
   );
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
