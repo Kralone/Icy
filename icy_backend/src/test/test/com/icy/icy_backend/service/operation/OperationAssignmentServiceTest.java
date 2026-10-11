@@ -37,7 +37,7 @@ class OperationAssignmentServiceTest {
         OperationGroup leaf = OperationGroup.builder().id(2L).operationEventId(operationId).parentId(1L).assignmentMode(OperationGroup.AssignmentMode.FREE).build();
         when(operations.findById(operationId)).thenReturn(Optional.of(operation));
         EventRepository events = mock(EventRepository.class);
-        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().eventId(operationId).build()));
+        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().id(operationId).build()));
         when(groups.findById(2L)).thenReturn(Optional.of(leaf));
         when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(parent, leaf));
         when(groups.findLockedById(1L)).thenReturn(Optional.of(parent));
