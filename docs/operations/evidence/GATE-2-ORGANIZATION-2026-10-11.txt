@@ -3,6 +3,7 @@ Implementation evidence
 - PUT /api/operations/{id}/groups/{groupId} validates operation scope, parent scope, depth and sortOrder (0..10000).
 - DELETE /api/operations/{id}/groups/{groupId} refuses a parent with children and checks operation scope.
 - Angular editor exposes Modifier, Supprimer, Monter le groupe and Descendre le groupe.
+- The reorder buttons call one transactional `PUT /api/operations/{id}/groups/reorder` request; the backend rejects mixed-parent lists.
 - Permissions tab exposes the Present prerequisite and the allowShipProposals toggle.
 - Publication tab renders a draft-fed participant preview.
 
