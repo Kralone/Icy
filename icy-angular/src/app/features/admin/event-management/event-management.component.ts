@@ -40,6 +40,7 @@ export class EventManagementComponent implements OnInit {
   // === État de création / édition ===
   isSubmitting = false;
   isConverting = false;
+  conversionError = '';
   editingEvent: EventDTO | null = null;
   isUpdatingEvent = false;
   isViewMode = false;
@@ -174,22 +175,16 @@ export class EventManagementComponent implements OnInit {
   /** Sauvegarde la saisie de l’événement puis ouvre l’éditeur Opération. */
   convertToOperation() {
     if (this.isFormInvalid) return;
+    this.conversionError = '';
     this.isConverting = true;
-    this.eventService.createEvent(this.newEvent).subscribe({
-      next: (event) => {
-        this.eventService.convertToOperation(event.id).subscribe({
-          next: (operation) => {
-            this.isConverting = false;
-            this.router.navigate(['/icy/operations', operation.id, 'edit']);
-          },
-          error: (err) => {
-            console.error('Erreur conversion en opération', err);
-            this.isConverting = false;
-          }
-        });
+    this.eventService.createOperation(this.newEvent).subscribe({
+      next: (operation) => {
+        this.isConverting = false;
+        this.router.navigate(['/icy/operations', operation.id, 'edit']);
       },
       error: (err) => {
-        console.error('Erreur sauvegarde avant conversion', err);
+        console.error('Erreur création opération', err);
+        this.conversionError = 'La création de l’opération a échoué. Aucune opération n’a été publiée.';
         this.isConverting = false;
       }
     });

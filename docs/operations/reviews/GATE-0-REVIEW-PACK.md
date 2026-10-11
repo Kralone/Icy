@@ -3,14 +3,14 @@
 ## Références
 
 - Branche observée : `main`
-- Commit : `3d4e1a2`
+- Commit : `934e360`
 - Base distante connue : `origin/main` local `3e6d216`, non actualisée
 - Cahiers : `ICEFORGE_CODEX_OPERATIONS_V1.md` et `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`
 - Matrice : `docs/operations/CONFORMITY-MATRIX.md`
 
 ## Périmètre observé
 
-Le dépôt est propre. Les routes, contrôleurs, services et migrations Opérations existent. La carte admin « Nouvelle opération » et la page participant existent également. Le parcours historique événement → conversion n’est toutefois pas relié à l’interface de gestion des événements.
+Le dépôt est propre au commit de référence. Les routes, contrôleurs, services et migrations Opérations existent. La carte admin « Nouvelle opération » et la page participant existent également. Le formulaire de gestion des événements contient désormais un bouton de conversion qui sauvegarde l’événement puis ouvre l’éditeur. La transaction complète, le rollback et les preuves UI restent à valider.
 
 ## Preuves reproductibles
 
@@ -21,11 +21,11 @@ Le dépôt est propre. Les routes, contrôleurs, services et migrations Opérati
 
 ## Revue indépendante reçue
 
-Trois chats de validation ont relu le dépôt contre les deux cahiers :
+Trois relecteurs indépendants identifiés par leurs tâches Codex ont relu le dépôt contre les deux cahiers : `/root/review_step0`, `/root/review_step1` et `/root/review_operations_latest`. Leurs retours sont conservés dans les messages de validation de cette tâche ; aucun n’a modifié le dépôt.
 
 | Axe | Statut | Constat |
 |---|---|---|
-| Technique | FAIL | Matrice et preuves initiales manquantes avant sa création ; endpoint de création directe à vérifier, tests E2E absents. |
+| Technique | FAIL | Transaction conversion en deux appels, tests E2E absents et branche dédiée impossible à créer avec les permissions Git. |
 | UI/UX desktop | FAIL | Formulaire CRUD autonome, aucun mockup ni capture réelle. |
 | UI/UX mobile | NON VÉRIFIÉ | CSS présent mais aucune capture 390 px ni test clavier/débordement. |
 | Sécurité | FAIL | Délégation, brouillons privés et permission de proposer un vaisseau incomplets. |
