@@ -22,6 +22,7 @@ public class OperationGroupService {
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         if (request.getParentId() != null) {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
+            if (!operationId.equals(parent.getOperationEventId())) throw new IllegalArgumentException("Le groupe parent appartient à une autre opération");
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
         }
         OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).build();
