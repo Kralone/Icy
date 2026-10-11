@@ -4,11 +4,13 @@ import com.icy.icy_backend.controller.dto.operation.OperationShipRequirementRequ
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.event.OperationShipRequirementResponseDTO;
 import com.icy.icy_backend.db.entity.event.OperationGroup;
+import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.entity.event.OperationShipRequirement;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
+import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.service.common.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +29,11 @@ public class OperationShipRequirementService {
 
     @Transactional(readOnly = true)
     public List<OperationShipRequirementResponseDTO> list(UUID operationId) {
-        operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        if (operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED && !organizer) {
+            throw new ResourceNotFoundException("Opération introuvable");
+        }
         return requirementRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream().map(OperationShipRequirementResponseDTO::new).toList();
     }
 

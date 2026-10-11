@@ -9,7 +9,7 @@ import { EventService, EventDTO } from '../../core/services/event/event.service'
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { EventType } from '../../model/event-type.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
@@ -27,7 +27,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [FormsModule, DatePipe, FullCalendarModule, RouterLink, EventDetailsModalComponent, AsyncStateComponent],
+  imports: [FormsModule, DatePipe, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
