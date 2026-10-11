@@ -20,6 +20,33 @@ public class OperationAssignmentService {
     private final EventRepository eventRepository;
     private final EventParticipationRepository participationRepository;
     private final MessageService messageService;
+    private final OperationAssignmentRequestRepository requestRepository;
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> request(UUID operationId, Long groupId) {
+        Operation operation = operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Groupe feuille invalide");
+        if (group.getAssignmentMode() != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
+        UUID user = AuthUtils.getCurrentUserId();
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
+        if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
+        requestRepository.save(OperationAssignmentRequest.builder().operationEventId(operationId).groupId(groupId).userId(user).build());
+        return messageService.buildResponse("operation.assignment.requested", null);
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> decide(UUID requestId, boolean approve) {
+        OperationAssignmentRequest request = requestRepository.findById(requestId).orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
+        if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
+        if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
+        OperationGroup group = groupRepository.findById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        if (group.getCapacity() != null && assignmentRepository.countByOperationEventIdAndGroupIdAndStatus(request.getOperationEventId(), group.getId(), OperationAssignment.Status.CONFIRMED) >= group.getCapacity()) throw new IllegalStateException("Groupe complet");
+        OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
+        assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
+        request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
+        return messageService.buildResponse("operation.assignment.approved", null);
+    }
 
     @Transactional
     public ResponseEntity<MessageResponse<Void>> assign(UUID operationId, Long groupId) {

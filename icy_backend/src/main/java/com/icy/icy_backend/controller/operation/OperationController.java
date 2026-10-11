@@ -65,6 +65,20 @@ public class OperationController {
         return assignmentService.assign(id, groupId);
     }
 
+    @PostMapping("/{id}/assignment-requests/me/{groupId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> requestAssignment(@PathVariable UUID id, @PathVariable Long groupId) {
+        return assignmentService.request(id, groupId);
+    }
+
+    @PostMapping("/assignment-requests/{requestId}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> approveAssignment(@PathVariable UUID requestId) { return assignmentService.decide(requestId, true); }
+
+    @PostMapping("/assignment-requests/{requestId}/refuse")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> refuseAssignment(@PathVariable UUID requestId) { return assignmentService.decide(requestId, false); }
+
     @GetMapping("/{id}/groups")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationGroupResponseDTO>>> groups(@PathVariable UUID id) {
