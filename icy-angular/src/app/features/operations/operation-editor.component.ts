@@ -75,14 +75,13 @@ export class OperationEditorComponent {
 
   editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0 }; }
   moveGroup(operationId: string, index: number, delta: number): void {
-    const target = index + delta;
-    if (target < 0 || target >= this.groups.length) return;
     const current = this.groups[index];
-    const other = this.groups[target];
-    const currentOrder = current.sortOrder ?? index;
-    const otherOrder = other.sortOrder ?? target;
-    const ordered = [...this.groups]; [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
-    this.eventService.reorderOperationGroups(operationId, ordered.map(group => group.id)).subscribe({ next: () => { this.groups = ordered.map((group, order) => ({ ...group, sortOrder: order })); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' });
+    const siblings = this.groups.filter(group => (group.parentId ?? null) === (current.parentId ?? null)).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    const siblingIndex = siblings.findIndex(group => group.id === current.id);
+    const target = siblingIndex + delta;
+    if (siblingIndex < 0 || target < 0 || target >= siblings.length) return;
+    [siblings[siblingIndex], siblings[target]] = [siblings[target], siblings[siblingIndex]];
+    this.eventService.reorderOperationGroups(operationId, siblings.map(group => group.id)).subscribe({ next: () => { const orderById = new Map(siblings.map((group, order) => [group.id, order])); this.groups = this.groups.map(group => orderById.has(group.id) ? { ...group, sortOrder: orderById.get(group.id) } : group).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' });
   }
   deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
 }
