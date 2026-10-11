@@ -273,6 +273,8 @@ export const routes: Routes = [
       },
       {
         path: 'operations/new',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'OFFICIER'] },
         loadComponent: () => import('./features/operations/operation-create.component').then(m => m.OperationCreateComponent)
       },
       {
@@ -281,6 +283,8 @@ export const routes: Routes = [
       },
       {
         path: 'operations/:id/edit',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'OFFICIER'] },
         loadComponent: () => import('./features/operations/operation-editor.component').then(m => m.OperationEditorComponent)
       },
       {
