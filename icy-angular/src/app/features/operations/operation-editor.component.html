@@ -68,7 +68,7 @@
         @if (ships$ | async; as ships) { <div class="permission-summary"><strong>Propositions de vaisseaux : {{ ships.length }}</strong>@if (!ships.length) { <span>Aucune proposition.</span> } @for (ship of ships; track ship.id) { <span>{{ ship.shipName || ('Vaisseau #' + ship.shipId) }} · propriétaire : {{ ship.ownerUsername || 'membre' }} · {{ ship.status }} @if (ship.requirementId) { · besoin lié } <label>Pilote distinct<select [value]="ship.pilotUserId || ''" (change)="setShipPilot(operation.id, ship.id, $any($event.target).value || null)"><option value="">À affecter</option>@if (members$ | async; as members) { @for (member of members; track member.id) { <option [value]="member.id">{{ member.username }}</option> } }</select></label> @if (ship.status !== 'UNAVAILABLE') { <button type="button" (click)="markShipUnavailable(operation.id, ship.id)">Marquer indisponible</button> }</span> } </div> }
       }
       @if (tab !== 'publication') { <button type="button" class="primary" [disabled]="saving" (click)="save(operation.id)">{{ saving ? 'Enregistrement…' : (operation.publicationStatus === 'PUBLISHED' ? 'Enregistrer les modifications' : 'Enregistrer le brouillon') }}</button> }
-      @if (message) { <p role="status">{{ message }}</p> }
+      @if (message) { <p [attr.role]="saveError ? 'alert' : 'status'">{{ message }} @if (saveError) { <button type="button" (click)="retrySave()">Réessayer</button> }</p> }
     </section>
     }
   }

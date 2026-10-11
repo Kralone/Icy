@@ -101,6 +101,9 @@ export class OperationEditorComponent {
   private readonly messageState = signal('');
   get message(): string { return this.messageState(); }
   set message(value: string) { this.messageState.set(value); }
+  private readonly saveErrorState = signal(false);
+  get saveError(): boolean { return this.saveErrorState(); }
+  private lastSaveId: string | null = null;
 
   parseObjectives(value?: string | null): OperationObjective[] {
     if (!value?.trim()) return [{ kind: 'PRINCIPAL', text: '' }];
@@ -123,8 +126,14 @@ export class OperationEditorComponent {
   save(id: string) {
     this.saving = true;
     this.message = '';
+    this.saveErrorState.set(false);
+    this.lastSaveId = id;
     const payload = { ...this.form, objectives: JSON.stringify(this.form.objectives.filter(item => item.text.trim()).map(item => ({ kind: item.kind, text: item.text.trim() }))) };
-    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: () => { this.saving = false; this.message = 'Impossible d’enregistrer l’opération.'; } });
+    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: () => { this.saving = false; this.saveErrorState.set(true); this.message = 'Impossible d’enregistrer l’opération.'; } });
+  }
+
+  retrySave(): void {
+    if (this.lastSaveId) this.save(this.lastSaveId);
   }
 
   publish(id: string) {
