@@ -6,4 +6,5 @@
 - CUA authentifié sur QA Gate 1 a affiché l’état `READY` avec hero, briefing, objectifs, organisation et flotte.
 - Sur le même deep-link publié, CUA a d’abord exposé `Chargement de l’opération…` avec `role=status`, puis l’état prêt avec métadonnées, actions de participation, briefing, objectifs, organisation et flotte. Une capture live CUA de l’état prêt a été inspectée.
 - Cette capture live est conservée comme onglet livrable CUA dans la session de validation ; aucun fichier PNG exporté n’est disponible dans le dépôt.
-- Portée : les états erreur, chargement et prêt sont maintenant observés en runtime ; aucune image dédiée n’est encore archivée et aucun replay mobile n’est revendiqué. UI-11 reste donc `PARTIEL`.
+- À 390×844, la même fiche publiée a été rejouée avec briefing, objectifs, composition, flotte et états vides ; `scrollWidth=bodyScrollWidth=390`. À 1280×720 et 3840×2160, les mesures restent sans débordement (`scrollWidth=bodyScrollWidth=viewport`).
+- Portée : les états erreur, chargement et prêt sont observés en runtime et le replay mobile est maintenant prouvé ; aucune image PNG exportée dans le dépôt. UI-11 reste `PARTIEL avancé` tant que les captures ne sont pas archivées.

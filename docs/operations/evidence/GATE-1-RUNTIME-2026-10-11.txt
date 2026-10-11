@@ -43,3 +43,5 @@ Deep-links : après correction de la liste SPA Nginx, `GET /icy/operations/new` 
 Navigation calendrier exécutée de nouveau : depuis `/icy/events`, le bouton accessible `12 oct. 2026 VALIDATION QA Gate 1 ... Détails` a été activé ; la navigation a abouti à `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04`. La fiche expose le type `OPÉRATION`, le statut publié et le lien retour `← Calendrier`. L’admin expose également `Nouvelle opération` vers `/icy/operations/new`.
 
 Non-régression événement classique : depuis la vue Calendrier, l’événement `Test` (activité `EVENT`) a été activé. La modale historique est restée sur `/icy/events` et expose `Terminé`, les dates, le programme, les statistiques `Confirmés 0 / Peut-être 0 / Indisponibles 0` et le bouton `Fermer les détails de l’événement`. Aucun routage vers `/icy/operations` n’a été déclenché.
+
+Navigation mobile complémentaire : à 390×844, le lien `← Calendrier` de la fiche a été activé ; la route `/icy/events` s’est affichée avec le calendrier, puis l’activité QA Gate 1 a été retrouvée. La navigation mobile ne déborde pas horizontalement.
