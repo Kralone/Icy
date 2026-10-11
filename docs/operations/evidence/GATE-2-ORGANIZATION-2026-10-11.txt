@@ -17,3 +17,8 @@ Runtime CUA check:
 - Opened the operation editor, selected Organisation and clicked `Descendre le groupe` on Alpha.
 - UI feedback: `Ordre des groupes mis à jour.`
 - PostgreSQL output: `2|Bravo|0` then `1|Alpha|1`.
+
+Capacity implementation:
+- `OperationAssignmentService.ensureCapacity` counts confirmed users across the selected leaf and each capacity-bearing ancestor.
+- `OperationGroupService.update` rejects a capacity lower than confirmed users in the edited group subtree.
+- Parent-capacity and capacity-decrease runtime fixtures remain to be added before these rows can be marked conforming.

@@ -49,7 +49,7 @@ public class OperationAssignmentService {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
-        if (group.getCapacity() != null && assignmentRepository.countByOperationEventIdAndGroupIdAndStatus(request.getOperationEventId(), group.getId(), OperationAssignment.Status.CONFIRMED) >= group.getCapacity()) throw new IllegalStateException("Groupe complet");
+        ensureCapacity(request.getOperationEventId(), group.getId(), request.getUserId());
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
         request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
@@ -111,12 +111,41 @@ public class OperationAssignmentService {
         }
         if (group.getAssignmentMode() == OperationGroup.AssignmentMode.MANAGED) throw new IllegalStateException("Groupe géré par les organisateurs");
         if (group.getAssignmentMode() == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");
-        if (group.getCapacity() != null && assignmentRepository.countByOperationEventIdAndGroupIdAndStatus(operationId, groupId, OperationAssignment.Status.CONFIRMED) >= group.getCapacity()) {
-            throw new IllegalStateException("Groupe complet");
-        }
+        ensureCapacity(operationId, groupId, userId);
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
         assignmentRepository.save(assignment);
         return messageService.buildResponse("operation.assignment.confirmed", null);
+    }
+
+    /** Enforces capacities on the selected leaf and every capacity-bearing ancestor. */
+    private void ensureCapacity(UUID operationId, Long leafId, UUID userId) {
+        List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
+        java.util.Map<Long, OperationGroup> byId = groups.stream().collect(Collectors.toMap(OperationGroup::getId, java.util.function.Function.identity()));
+        Set<Long> ancestors = new HashSet<>();
+        Long cursor = leafId;
+        while (cursor != null && ancestors.add(cursor)) cursor = byId.get(cursor) == null ? null : byId.get(cursor).getParentId();
+        List<OperationAssignment> assignments = assignmentRepository.findByOperationEventId(operationId);
+        for (Long groupId : ancestors) {
+            OperationGroup group = byId.get(groupId);
+            Set<Long> subtree = groups.stream().filter(candidate -> isDescendantOrSelf(candidate, groupId, byId)).map(OperationGroup::getId).collect(Collectors.toSet());
+            Set<UUID> assignedUsers = assignments.stream()
+                    .filter(assignment -> assignment.getStatus() == OperationAssignment.Status.CONFIRMED && subtree.contains(assignment.getGroupId()))
+                    .map(OperationAssignment::getUserId).collect(Collectors.toSet());
+            if (group != null && group.getCapacity() != null && assignedUsers.size() >= group.getCapacity() && !assignedUsers.contains(userId)) {
+                throw new IllegalStateException("Groupe complet");
+            }
+        }
+    }
+
+    private boolean isDescendantOrSelf(OperationGroup candidate, Long ancestorId, java.util.Map<Long, OperationGroup> byId) {
+        Long cursor = candidate.getId();
+        int depth = 0;
+        while (cursor != null && depth++ <= 2) {
+            if (ancestorId.equals(cursor)) return true;
+            OperationGroup current = byId.get(cursor);
+            cursor = current == null ? null : current.getParentId();
+        }
+        return false;
     }
 }

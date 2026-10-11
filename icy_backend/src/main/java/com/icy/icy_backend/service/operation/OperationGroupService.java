@@ -5,6 +5,7 @@ import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseD
 import com.icy.icy_backend.db.entity.event.OperationGroup;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class OperationGroupService {
     private final OperationRepository operationRepository;
     private final OperationGroupRepository groupRepository;
     private final MessageService messageService;
+    private final OperationAssignmentRepository assignmentRepository;
     @Transactional
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> create(UUID operationId, OperationGroupRequest request) {
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
@@ -42,6 +44,7 @@ public class OperationGroupService {
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
         if (request.getDescription() != null && request.getDescription().length() > 5000) throw new IllegalArgumentException("Description trop longue");
         if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
+        if (request.getCapacity() != null && request.getCapacity() < confirmedAssignmentCount(operationId, groupId)) throw new IllegalArgumentException("La capacité ne peut pas être inférieure aux affectations confirmées");
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
         if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
         if (request.getParentId() != null) {
@@ -82,5 +85,27 @@ public class OperationGroupService {
         return groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId).stream()
                 .filter(group -> java.util.Objects.equals(parentId, group.getParentId()))
                 .map(OperationGroup::getId).collect(java.util.stream.Collectors.toSet());
+    }
+
+    private long confirmedAssignmentCount(UUID operationId, Long groupId) {
+        List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
+        java.util.Set<Long> subtree = groups.stream()
+                .filter(candidate -> isDescendantOrSelf(candidate, groupId, groups))
+                .map(OperationGroup::getId).collect(java.util.stream.Collectors.toSet());
+        return assignmentRepository.findByOperationEventId(operationId).stream()
+                .filter(assignment -> assignment.getStatus() == com.icy.icy_backend.db.entity.event.OperationAssignment.Status.CONFIRMED && subtree.contains(assignment.getGroupId()))
+                .map(com.icy.icy_backend.db.entity.event.OperationAssignment::getUserId).distinct().count();
+    }
+
+    private boolean isDescendantOrSelf(OperationGroup candidate, Long ancestorId, List<OperationGroup> groups) {
+        java.util.Map<Long, OperationGroup> byId = groups.stream().collect(java.util.stream.Collectors.toMap(OperationGroup::getId, java.util.function.Function.identity()));
+        Long cursor = candidate.getId();
+        int depth = 0;
+        while (cursor != null && depth++ <= 2) {
+            if (ancestorId.equals(cursor)) return true;
+            OperationGroup current = byId.get(cursor);
+            cursor = current == null ? null : current.getParentId();
+        }
+        return false;
     }
 }

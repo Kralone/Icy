@@ -36,7 +36,7 @@ Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-au
 | GRP-01 | deux niveaux | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-02 | parent avec enfants non assignable | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-03 | capacité facultative | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
-| GRP-04 | capacité parent | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
+| GRP-04 | capacité parent | OperationAssignmentService.ensureCapacity | Affectations comptées sur la feuille et les ancêtres capacitaires ; preuve runtime à produire | PARTIEL | P1 | Ajouter test parent plein et descendance | 3 / 4 | Code inspecté ; runtime en attente |
 | GRP-05 | membres sans doublon | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-06 | une affectation principale | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-07 | 3 modes | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
@@ -46,7 +46,7 @@ Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-au
 | GRP-11 | délégation explicite | OperationGroup / migration V48 / OperationAssignmentService | Responsable UUID persisté ; décisions et file filtrées au groupe et descendants ; runtime d’autorisation non vérifié | PARTIEL | P0 | Ajouter tests parent/enfant/frère et preuve runtime autorisée | 3 / 4 | Revue code PASS partiel ; runtime en attente |
 | GRP-12 | visibilité composition | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-13 | participant sans affectation | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
-| GRP-14 | baisse capacité | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
+| GRP-14 | baisse capacité | OperationGroupService.update | Baisse refusée si elle passe sous les affectations confirmées du sous-arbre | PARTIEL | P1 | Ajouter test de baisse refusée et capture d’erreur | 3 / 4 | Code inspecté ; test dédié à ajouter |
 | GRP-15 | suppression / conversion groupes | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | SHP-01 | proposition seulement si autorisé | OperationShipService + V46 | Permission organisateur false par defaut | PRESENT | P1 | Ajouter test refus/autorisation | 5 | En attente |
 | SHP-02 | provenance hangar personnel uniquement | OperationShipService.propose | Ownership user_ships verifie | PRESENT | P1 | Ajouter test dynamique | 5 | En attente |

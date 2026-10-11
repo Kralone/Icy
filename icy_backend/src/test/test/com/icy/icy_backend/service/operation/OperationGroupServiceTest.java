@@ -3,6 +3,8 @@ package com.icy.icy_backend.service.operation;
 import com.icy.icy_backend.db.entity.event.OperationGroup;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
+import com.icy.icy_backend.db.entity.event.OperationAssignment;
 import com.icy.icy_backend.service.common.MessageService;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -20,12 +22,14 @@ class OperationGroupServiceTest {
         when(groups.findById(10L)).thenReturn(Optional.of(OperationGroup.builder().id(10L).operationEventId(UUID.randomUUID()).build()));
         var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
         request.setName("Enfant"); request.setParentId(10L);
-        var service = new OperationGroupService(operations, groups, mock(MessageService.class));
+        var service = new OperationGroupService(operations, groups, mock(MessageService.class), mock(OperationAssignmentRepository.class));
         assertThatThrownBy(() -> service.create(id, request)).isInstanceOf(IllegalArgumentException.class);
     }
     private final UUID operationId = UUID.randomUUID();
     private final OperationGroupRepository repository = mock(OperationGroupRepository.class);
-    private final OperationGroupService service = new OperationGroupService(mock(OperationRepository.class), repository, mock(MessageService.class));
+    private final OperationAssignmentRepository assignments = mock(OperationAssignmentRepository.class);
+    private final OperationRepository operations = mock(OperationRepository.class);
+    private final OperationGroupService service = new OperationGroupService(operations, repository, mock(MessageService.class), assignments);
 
     private OperationGroup group(long id, Long parent) {
         OperationGroup group = OperationGroup.builder().id(id).operationEventId(operationId).parentId(parent).sortOrder(9).build();
@@ -61,5 +65,18 @@ class OperationGroupServiceTest {
         assertThat(first.getSortOrder()).isEqualTo(1);
         assertThat(child.getSortOrder()).isEqualTo(9);
         verify(repository, never()).save(child);
+    }
+
+    @Test void rejectsCapacityBelowConfirmedSubtreeUsers() {
+        OperationGroup parent = OperationGroup.builder().id(1L).operationEventId(operationId).parentId(null).capacity(5).build();
+        OperationGroup child = OperationGroup.builder().id(2L).operationEventId(operationId).parentId(1L).capacity(3).build();
+        when(repository.findById(1L)).thenReturn(Optional.of(parent));
+        when(repository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(parent, child));
+        UUID user = UUID.randomUUID();
+        when(assignments.findByOperationEventId(operationId)).thenReturn(List.of(OperationAssignment.builder().operationEventId(operationId).groupId(2L).userId(user).status(OperationAssignment.Status.CONFIRMED).build()));
+        var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Parent"); request.setCapacity(0); request.setAssignmentMode(OperationGroup.AssignmentMode.MANAGED);
+        assertThatThrownBy(() -> service.update(operationId, 1L, request)).isInstanceOf(IllegalArgumentException.class);
+        verify(repository, never()).save(any());
     }
 }
