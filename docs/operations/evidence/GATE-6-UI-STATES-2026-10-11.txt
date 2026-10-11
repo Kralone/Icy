@@ -5,4 +5,5 @@
 - Les états vides groupes, flotte, hangar et propositions restent rendus dans l’état `READY`.
 - CUA authentifié sur QA Gate 1 a affiché l’état `READY` avec hero, briefing, objectifs, organisation et flotte.
 - Sur le même deep-link publié, CUA a d’abord exposé `Chargement de l’opération…` avec `role=status`, puis l’état prêt avec métadonnées, actions de participation, briefing, objectifs, organisation et flotte. Une capture live CUA de l’état prêt a été inspectée.
+- Cette capture live est conservée comme onglet livrable CUA dans la session de validation ; aucun fichier PNG exporté n’est disponible dans le dépôt.
 - Portée : les états erreur, chargement et prêt sont maintenant observés en runtime ; aucune image dédiée n’est encore archivée et aucun replay mobile n’est revendiqué. UI-11 reste donc `PARTIEL`.
