@@ -23,6 +23,28 @@ import static org.mockito.Mockito.when;
 
 class OperationShipServiceTest {
     @Test
+    void rejectsProposalWhenOperationDisallowsShipProposals() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder()
+                .eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED)
+                .allowShipProposals(false)
+                .build()));
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+
+        assertThatThrownBy(() -> service.propose(operationId, 42L, null, null))
+                .isInstanceOf(ResourceNotFoundException.class);
+        Mockito.verifyNoInteractions(hangar, participations, proposals);
+    }
+
+    @Test
     void rejectsShipOutsidePersonalHangar() {
         OperationRepository operations = Mockito.mock(OperationRepository.class);
         UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
