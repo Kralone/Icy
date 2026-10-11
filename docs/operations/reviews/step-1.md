@@ -3,6 +3,7 @@
 ## Résumé du diff
 
 - `V40__create_operations_foundation.sql` ajoute `events.events.activity_type` (`EVENT`/`OPERATION`) et l’extension `events.operations` avec statut brouillon/publié.
+- `V41__harden_operations_integrity.sql` ajoute l’image optionnelle et les triggers d’intégrité sans modifier le checksum de V40.
 - `Event`/`EventResponseDTO` exposent le type d’activité sans changer le contrat des événements classiques.
 - `GET /api/operations/{id}` expose uniquement une opération publiée aux utilisateurs authentifiés.
 - Le calendrier et la liste redirigent les opérations vers `/icy/operations/:id`; les événements classiques conservent leur modale.
@@ -18,7 +19,7 @@ Commit : `837f79b feat(operations): add operation foundation and participant rou
 - `pnpm exec ng build --configuration production` dans `icy-angular` : succès.
 - Warnings Angular : budgets CSS déjà dépassés sur plusieurs composants existants ; aucun warning ne concerne la page Opération.
 
-Correction après revue indépendante : l’endpoint vérifie désormais `activityType == OPERATION`, et la migration ajoute un trigger PostgreSQL empêchant une extension publiée de référencer un événement classique. Le bouton non disponible a été remplacé par un état informatif contrasté ; l’extension accepte une image de mission pour réutiliser un asset catalogue.
+Correction après revue indépendante : l’endpoint vérifie désormais `activityType == OPERATION`, et V41 ajoute des triggers PostgreSQL empêchant une extension de référencer un événement classique ou de devenir incohérente lors d’un changement de type. Le bouton non disponible a été remplacé par un état informatif contrasté ; l’extension accepte une image de mission pour réutiliser un asset catalogue, cadrée en couverture.
 
 ## Limites connues
 
