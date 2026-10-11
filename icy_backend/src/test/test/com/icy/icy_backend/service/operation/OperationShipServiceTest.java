@@ -68,4 +68,28 @@ class OperationShipServiceTest {
             org.mockito.Mockito.verify(proposals).save(org.mockito.ArgumentMatchers.argThat(value -> requirementId.equals(value.getRequirementId()) && Long.valueOf(4L).equals(value.getGroupId())));
         }
     }
+
+    @Test
+    void rejectsProposalForAnotherModelThanTheRequirement() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        UUID requirementId = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId).publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build()));
+        when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
+        when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
+        when(requirements.findById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder().id(requirementId).operationEventId(operationId).shipModelId(99L).status(OperationShipRequirement.Status.OPEN).build()));
+        try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
+            auth.when(AuthUtils::getCurrentUserId).thenReturn(owner);
+            OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+            assertThatThrownBy(() -> service.propose(operationId, 42L, null, requirementId)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("modèle requis");
+            Mockito.verifyNoInteractions(proposals);
+        }
+    }
 }

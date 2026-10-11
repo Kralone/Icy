@@ -46,7 +46,7 @@ export class OperationPageComponent {
     catchError(() => of([]))
   );
   readonly ships$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: Array<{ id: string; shipId: number; ownerUserId: string; ownerUsername?: string; shipName?: string; shipImageUrl?: string; groupId?: number; status: string }> }>(`/api/operations/${params.get('id')}/ships`)),
+    switchMap(params => this.http.get<{ data: Array<{ id: string; shipId: number; ownerUserId: string; ownerUsername?: string; shipName?: string; shipImageUrl?: string; groupId?: number; requirementId?: string; status: string }> }>(`/api/operations/${params.get('id')}/ships`)),
     map(response => response.data),
     catchError(() => of([]))
   );

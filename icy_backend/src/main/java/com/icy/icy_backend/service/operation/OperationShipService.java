@@ -44,6 +44,9 @@ public class OperationShipService {
             if (requirement.getGroupId() != null && groupId != null && !requirement.getGroupId().equals(groupId)) {
                 throw new IllegalArgumentException("Le besoin et le groupe ciblé ne correspondent pas");
             }
+            if (requirement.getShipModelId() != null && !requirement.getShipModelId().equals(shipId)) {
+                throw new IllegalArgumentException("Le vaisseau ne correspond pas au modèle requis");
+            }
             if (groupId == null) groupId = requirement.getGroupId();
         }
         OperationShipProposal proposal = OperationShipProposal.builder().operationEventId(operationId).groupId(groupId).requirementId(requirementId).ownerUserId(owner).shipId(shipId).build();
