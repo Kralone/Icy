@@ -1,0 +1,11 @@
+# Gate 3 — règles d’affectation
+
+Tests backend ciblés dans `OperationAssignmentServiceTest` :
+
+- `refusesAssigningToParentWithChildren` refuse une affectation sur un parent qui possède des enfants.
+- `refusesDirectAssignmentOnManagedLeaf` refuse une affectation directe sur un groupe géré par les organisateurs.
+- `refusesDirectAssignmentOnValidationLeaf` refuse l’affectation directe et impose la demande de validation.
+- `locksLeafAndAncestorsInStableOrderBeforeCapacityRead` couvre l’affectation libre sur une feuille et le verrouillage feuille/ancêtres.
+
+La suite Docker backend passe à **295 tests, 0 échec, 3 ignorés**.
+Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification visuelle des contrôles UI/mobile.

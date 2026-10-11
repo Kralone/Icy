@@ -108,4 +108,80 @@ class OperationAssignmentServiceTest {
         assertThatThrownBy(() -> service.decide(requestId, false)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
         verify(requests, never()).save(any());
     }
+
+    @Test
+    void refusesAssigningToParentWithChildren() {
+        UUID operationId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var operation = Operation.builder().eventId(operationId).publicationStatus(Operation.PublicationStatus.PUBLISHED).build();
+        var parent = OperationGroup.builder().id(1L).operationEventId(operationId).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(operation));
+        when(groups.findById(1L)).thenReturn(Optional.of(parent));
+        when(groups.existsByParentId(1L)).thenReturn(true);
+
+        var service = new OperationAssignmentService(operations, groups, mock(OperationAssignmentRepository.class),
+                mock(EventRepository.class), mock(EventParticipationRepository.class), mock(MessageService.class),
+                mock(OperationAssignmentRequestRepository.class));
+
+        assertThatThrownBy(() -> service.assign(operationId, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Affectation possible uniquement sur une feuille");
+    }
+
+    @Test
+    void refusesDirectAssignmentOnManagedLeaf() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.MANAGED).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        var events = mock(EventRepository.class);
+        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().id(operationId).build()));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, mock(OperationAssignmentRepository.class),
+                events, participation, mock(MessageService.class), mock(OperationAssignmentRequestRepository.class));
+
+        assertThatThrownBy(() -> service.assign(operationId, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Groupe géré par les organisateurs");
+    }
+
+    @Test
+    void refusesDirectAssignmentOnValidationLeaf() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.VALIDATION).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        var events = mock(EventRepository.class);
+        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().id(operationId).build()));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, mock(OperationAssignmentRepository.class),
+                events, participation, mock(MessageService.class), mock(OperationAssignmentRequestRepository.class));
+
+        assertThatThrownBy(() -> service.assign(operationId, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Une demande de validation sera disponible dans l’éditeur");
+    }
 }
