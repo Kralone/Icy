@@ -1,0 +1,22 @@
+Scenario: structured objectives on draft operation
+Date: 2026-10-11 Europe/Paris
+Frontend: http://127.0.0.1:18088
+Operation: 7ad8823f-d82a-4a43-a157-c867ec47bd04
+
+UI actions executed through CUA:
+1. Opened /icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit
+2. Selected Objectifs
+3. Clicked + Principal and + Secondaire
+4. Filled three objective inputs
+5. Moved the secondary objective upward
+6. Clicked Enregistrer le brouillon
+
+Database command:
+docker exec iceforge_dev-db-1 psql -U iceforge -d iceforgedb -Atc "select objectives from events.operations where event_id='7ad8823f-d82a-4a43-a157-c867ec47bd04';"
+
+Observed output:
+[{"kind":"PRINCIPAL","text":"Préparer la flotte"},{"kind":"SECONDAIRE","text":"Documenter le retour"},{"kind":"PRINCIPAL","text":"Coordonner le départ"}]
+
+Validation:
+- Angular Docker build succeeded after the structured objective changes.
+- Backend Maven compile succeeded after server-side JSON validation was added.
