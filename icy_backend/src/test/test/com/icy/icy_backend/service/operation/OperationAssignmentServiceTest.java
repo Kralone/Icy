@@ -4,6 +4,7 @@ import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.entity.event.OperationAssignment;
 import com.icy.icy_backend.db.entity.event.OperationGroup;
 import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.OperationAssignmentRequest;
 import com.icy.icy_backend.db.repository.event.*;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import com.icy.icy_backend.service.common.MessageService;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OperationAssignmentServiceTest {
     @AfterEach void clearAuth() { SecurityContextHolder.clearContext(); }
@@ -56,5 +58,54 @@ class OperationAssignmentServiceTest {
         inOrder.verify(groups).findLockedById(2L);
         verify(assignments).save(any(OperationAssignment.class));
         assertThat(operation.isAllowShipProposals()).isFalse();
+    }
+
+    @Test
+    void delegatedParentCanRefuseChildRequest() {
+        UUID operationId = UUID.randomUUID();
+        UUID responsibleId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var assignments = mock(OperationAssignmentRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var events = mock(EventRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var request = OperationAssignmentRequest.builder().id(requestId).operationEventId(operationId).groupId(2L).userId(UUID.randomUUID()).build();
+        var parent = OperationGroup.builder().id(1L).operationEventId(operationId).responsibleUserId(responsibleId).build();
+        var child = OperationGroup.builder().id(2L).operationEventId(operationId).parentId(1L).build();
+        when(requests.findById(requestId)).thenReturn(Optional.of(request));
+        when(groups.findById(2L)).thenReturn(Optional.of(child));
+        when(groups.findById(1L)).thenReturn(Optional.of(parent));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(responsibleId, "responsible", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, events, participation, mock(MessageService.class), requests);
+        service.decide(requestId, false);
+
+        assertThat(request.getStatus()).isEqualTo(OperationAssignmentRequest.Status.REFUSED);
+        verify(requests).save(request);
+    }
+
+    @Test
+    void delegatedParentCannotDecideSiblingRequest() {
+        UUID operationId = UUID.randomUUID();
+        UUID responsibleId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var request = OperationAssignmentRequest.builder().id(requestId).operationEventId(operationId).groupId(3L).userId(UUID.randomUUID()).build();
+        var siblingParent = OperationGroup.builder().id(4L).operationEventId(operationId).responsibleUserId(UUID.randomUUID()).build();
+        var sibling = OperationGroup.builder().id(3L).operationEventId(operationId).parentId(4L).build();
+        when(requests.findById(requestId)).thenReturn(Optional.of(request));
+        when(groups.findById(3L)).thenReturn(Optional.of(sibling));
+        when(groups.findById(4L)).thenReturn(Optional.of(siblingParent));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(responsibleId, "responsible", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, mock(OperationAssignmentRepository.class), mock(EventRepository.class), mock(EventParticipationRepository.class), mock(MessageService.class), requests);
+        assertThatThrownBy(() -> service.decide(requestId, false)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        verify(requests, never()).save(any());
     }
 }
