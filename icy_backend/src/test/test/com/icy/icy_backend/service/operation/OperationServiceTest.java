@@ -27,6 +27,33 @@ import static org.mockito.Mockito.when;
 class OperationServiceTest {
 
     @Test
+    void convertsEventToPrivateDraftWithSameIdentity() {
+        EventRepository events = Mockito.mock(EventRepository.class);
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        EntityManager entityManager = Mockito.mock(EntityManager.class);
+        OperationService service = new OperationService(events, operations, messages, entityManager, new ObjectMapper());
+        UUID eventId = UUID.randomUUID();
+        Event event = new Event();
+        event.setId(eventId);
+        event.setActivityType(ActivityType.EVENT);
+        when(events.findById(eventId)).thenReturn(Optional.of(event));
+        when(operations.findById(eventId)).thenReturn(Optional.empty());
+        ResponseEntity<MessageResponse<OperationResponseDTO>> response = ResponseEntity.ok().build();
+        Mockito.doReturn(response).when(messages).buildResponse(eq("operation.draft.created"), any());
+
+        ResponseEntity<MessageResponse<OperationResponseDTO>> actual = service.convert(eventId);
+
+        assertThat(actual).isSameAs(response);
+        assertThat(event.getActivityType()).isEqualTo(ActivityType.OPERATION);
+        verify(events).save(event);
+        verify(entityManager).flush();
+        verify(entityManager).persist(Mockito.argThat(value -> value instanceof Operation operation
+                && operation.getEventId().equals(eventId)
+                && operation.getPublicationStatus() == Operation.PublicationStatus.DRAFT));
+    }
+
+    @Test
     void updatesPublishedOperationWithoutChangingItsIdentityOrPublicationStatus() {
         EventRepository events = Mockito.mock(EventRepository.class);
         OperationRepository operations = Mockito.mock(OperationRepository.class);

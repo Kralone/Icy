@@ -20,6 +20,7 @@ Observed output:
 Validation:
 - Angular Docker build succeeded after the structured objective changes.
 - Backend Maven compile succeeded after server-side JSON validation was added.
-- Backend Docker `mvn verify` succeeded: 288 tests, 0 failures, 3 skipped on the current branch.
+- Backend Docker `mvn verify` succeeded: 289 tests, 0 failures, 3 skipped on the current branch.
 - `EventService.validateEventDates` now rejects missing start/end values and any end that is not strictly after the start; `EventServiceTest.createEventRejectsMissingOrInvalidDates` covers both guards.
 - `OperationServiceTest.updatesPublishedOperationWithoutChangingItsIdentityOrPublicationStatus` proves that an already published operation can be edited while retaining its UUID and `PUBLISHED` status. The editor labels the action `Enregistrer les modifications` for this state.
+- `OperationServiceTest.convertsEventToPrivateDraftWithSameIdentity` proves that conversion changes the activity type, persists an operation row with the same UUID and `DRAFT` status, and does not publish it.
