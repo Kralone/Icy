@@ -23,3 +23,5 @@ Capacity implementation:
 - `OperationGroupService.update` rejects a capacity lower than confirmed users in the edited group subtree.
 - Parent-capacity and capacity-decrease runtime fixtures remain to be added before these rows can be marked conforming.
 - Capacity decisions now lock the leaf and all ancestors in ascending ID order before reading assignments; `OperationAssignmentServiceTest` verifies the stable lock order. A two-transaction database integration test remains for final SEC-04 evidence.
+
+CUA éditeur authentifié : Organisation rendue en deux panneaux desktop (arborescence à gauche, propriétés à droite) ; CSS passe en une colonne sous 760px. Build Angular Docker réussi.

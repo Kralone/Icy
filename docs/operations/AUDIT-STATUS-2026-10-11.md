@@ -26,3 +26,5 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 Cette branche n’est pas prête à être fusionnée dans `main` tant que les écarts P0 des Gates 3–5 et la revue du Gate 7 ne sont pas levés par preuve indépendante.
 
 - L’éditeur des besoins utilise désormais un sélecteur catalogue nommé avec images et une sélection de groupe par libellé ; preuve CUA Aurora du 11/10/2026.
+
+- L’éditeur Organisation utilise maintenant une arborescence et une fiche de propriétés en deux panneaux desktop, avec empilement mobile sous 760px.
