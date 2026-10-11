@@ -71,6 +71,7 @@ export class OperationPageComponent {
   );
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
+  selectedShipRequirementId: string | null = null;
   participationStatus: number | null = null;
   assignmentMessage = '';
   objectiveItems(value?: string): ObjectiveItem[] {
@@ -92,7 +93,7 @@ export class OperationPageComponent {
   }
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;
-    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
+    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
   }
 
   effectiveGroupMode(group: any, groups: any[]): string {

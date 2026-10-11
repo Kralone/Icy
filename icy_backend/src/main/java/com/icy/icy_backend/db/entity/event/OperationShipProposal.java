@@ -11,6 +11,7 @@ public class OperationShipProposal {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name="operation_event_id", nullable=false) private UUID operationEventId;
     @Column(name="group_id") private Long groupId;
+    @Column(name="requirement_id") private UUID requirementId;
     @Column(name="owner_user_id", nullable=false) private UUID ownerUserId;
     @Column(name="ship_id", nullable=false) private Long shipId;
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20) @Builder.Default private Status status=Status.PROPOSED;

@@ -131,9 +131,10 @@ export class EventService {
   }
 
   getMyHangar() { return this.http.get<{ data: any[] }>('/api/user-ships'); }
-  proposeOperationShip(operationId: string, shipId: number, groupId?: number) {
+  proposeOperationShip(operationId: string, shipId: number, groupId?: number, requirementId?: string) {
     let params: any = { shipId };
     if (groupId != null) params.groupId = groupId;
+    if (requirementId) params.requirementId = requirementId;
     return this.http.post(`/api/operations/${operationId}/ships/proposals`, {}, { params });
   }
   getOperationGroupsForEdit(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/groups/edit`); }

@@ -108,8 +108,8 @@ public class OperationController {
 
     @PostMapping("/{id}/ships/proposals")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MessageResponse<Void>> proposeShip(@PathVariable UUID id, @RequestParam Long shipId, @RequestParam(required = false) Long groupId) {
-        return shipService.propose(id, shipId, groupId);
+    public ResponseEntity<MessageResponse<Void>> proposeShip(@PathVariable UUID id, @RequestParam Long shipId, @RequestParam(required = false) Long groupId, @RequestParam(required = false) UUID requirementId) {
+        return shipService.propose(id, shipId, groupId, requirementId);
     }
 
     @GetMapping("/{id}/ship-requirements")

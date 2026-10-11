@@ -2,6 +2,7 @@ package com.icy.icy_backend.service.operation;
 
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.db.entity.event.OperationShipProposal;
+import com.icy.icy_backend.db.entity.event.OperationShipRequirement;
 import com.icy.icy_backend.db.repository.event.*;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
@@ -21,8 +22,9 @@ public class OperationShipService {
     private final MessageService messageService;
     private final OperationGroupRepository groupRepository;
     private final EventParticipationRepository participationRepository;
+    private final OperationShipRequirementRepository requirementRepository;
     @Transactional
-    public ResponseEntity<MessageResponse<Void>> propose(UUID operationId, Long shipId, Long groupId) {
+    public ResponseEntity<MessageResponse<Void>> propose(UUID operationId, Long shipId, Long groupId, UUID requirementId) {
         operationRepository.findById(operationId).filter(o -> o.getPublicationStatus() == com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED && o.isAllowShipProposals())
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         UUID owner = AuthUtils.getCurrentUserId();
@@ -34,7 +36,17 @@ public class OperationShipService {
             var group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
             if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Groupe feuille invalide pour cette opération");
         }
-        OperationShipProposal proposal = OperationShipProposal.builder().operationEventId(operationId).groupId(groupId).ownerUserId(owner).shipId(shipId).build();
+        if (requirementId != null) {
+            OperationShipRequirement requirement = requirementRepository.findById(requirementId)
+                    .filter(value -> operationId.equals(value.getOperationEventId()))
+                    .filter(value -> value.getStatus() != OperationShipRequirement.Status.CANCELLED)
+                    .orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+            if (requirement.getGroupId() != null && groupId != null && !requirement.getGroupId().equals(groupId)) {
+                throw new IllegalArgumentException("Le besoin et le groupe ciblé ne correspondent pas");
+            }
+            if (groupId == null) groupId = requirement.getGroupId();
+        }
+        OperationShipProposal proposal = OperationShipProposal.builder().operationEventId(operationId).groupId(groupId).requirementId(requirementId).ownerUserId(owner).shipId(shipId).build();
         proposalRepository.save(proposal);
         return messageService.buildResponse("operation.ship.proposed", null);
     }

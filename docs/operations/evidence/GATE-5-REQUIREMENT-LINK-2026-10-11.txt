@@ -1,0 +1,9 @@
+# Gate 5 — liaison besoin / appareil proposé
+
+Date : 2026-10-11
+
+La migration `V50__link_operation_ship_proposals_to_requirements.sql` ajoute une référence nullable `requirement_id` sur les propositions réelles. L’API de proposition accepte cette référence, vérifie qu’elle appartient à la même opération et qu’elle n’est pas annulée ; si le besoin porte déjà un groupe, celui-ci est repris lorsque le participant ne fournit pas de groupe, et un groupe contradictoire est refusé.
+
+Le test `OperationShipServiceTest.associatesProposalWithNonCancelledRequirementAndUsesItsGroup` vérifie l’association persistée et l’absence de seconde affectation du propriétaire.
+
+La preuve runtime UI complète reste à faire : le participant doit encore être testé avec un vaisseau du hangar, un besoin ciblé et l’affichage de la liaison sur une opération publiée.

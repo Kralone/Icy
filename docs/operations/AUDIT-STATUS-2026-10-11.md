@@ -11,7 +11,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée | Sélecteur de responsable et preuve runtime avec compte délégué |
 | 4 — affectations et capacité | PARTIEL | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, capacités hiérarchiques, tests de scope parent/enfant/frère | Intégration Spring complète de deux affectations concurrentes et fixture runtime parent plein |
-| 5 — flotte et besoins | PARTIEL | Migration V49, API séparée, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé | Association besoin↔appareil fourni et test runtime de bout en bout |
+| 5 — flotte et besoins | PARTIEL | Migrations V49/V50, API séparée, liaison besoin↔proposition, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé | Parcours runtime publié avec appareil du hangar et retrait/indisponibilité |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
 | 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **65 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
 
