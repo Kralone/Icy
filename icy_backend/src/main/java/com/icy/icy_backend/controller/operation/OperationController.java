@@ -102,7 +102,7 @@ public class OperationController {
     @GetMapping("/{id}/groups/edit")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<List<OperationGroupResponseDTO>>> groupsForEdit(@PathVariable UUID id) {
-        operationRepository.findById(id).filter(value -> value.getActivityType() == ActivityType.OPERATION).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        operationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         List<OperationGroupResponseDTO> groups = operationGroupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(id).stream().map(OperationGroupResponseDTO::new).toList();
         return messageService.buildResponse("operation.groups.edit", groups);
     }
