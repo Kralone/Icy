@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +80,18 @@ public class OperationController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> createGroup(@PathVariable UUID id, @RequestBody OperationGroupRequest request) {
         return groupService.create(id, request);
+    }
+
+    @PutMapping("/{id}/groups/{groupId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> updateGroup(@PathVariable UUID id, @PathVariable Long groupId, @RequestBody OperationGroupRequest request) {
+        return groupService.update(id, groupId, request);
+    }
+
+    @DeleteMapping("/{id}/groups/{groupId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> deleteGroup(@PathVariable UUID id, @PathVariable Long groupId) {
+        return groupService.delete(id, groupId);
     }
 
     @PostMapping("/{id}/ships/proposals")
