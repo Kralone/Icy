@@ -7,6 +7,7 @@ from utils.html_to_discord import html_to_discord
 import logging
 from typing import Dict, List, Tuple, Optional
 import re
+from os import getenv
 from urllib.parse import urlsplit
 from messaging.discord_link_store import DiscordLink
 
@@ -164,7 +165,11 @@ class EventHandler:
         elif image_url:
             logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
 
-        view = EventParticipationView(self.rabbit, payload["id"])
+        operation_url = None
+        if payload.get("activityType") == "OPERATION":
+            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
+            embed.add_field(name="Opération", value=f"[Voir l'opération sur IceForge]({operation_url})", inline=False)
+        view = EventParticipationView(self.rabbit, payload["id"], operation_url=operation_url)
 
         channel = self.bot.get_channel(self.channel_id)
         if not channel:
@@ -800,7 +805,7 @@ class EventHandler:
 
 # --- Classe View pour les boutons ---
 class EventParticipationView(ui.View):
-    def __init__(self, rabbit, event_id):
+    def __init__(self, rabbit, event_id, operation_url=None):
         super().__init__(timeout=None)
         self.rabbit = rabbit
         self.event_id = str(event_id)
@@ -808,6 +813,8 @@ class EventParticipationView(ui.View):
         self.add_item(self._build_button("Participer ✅", ButtonStyle.success, 1))
         self.add_item(self._build_button("Peut-être ❔", ButtonStyle.secondary, 0))
         self.add_item(self._build_button("Refuser ❌", ButtonStyle.danger, -1))
+        if operation_url:
+            self.add_item(ui.Button(label="Voir l’opération sur IceForge", style=ButtonStyle.link, url=operation_url))
 
     def _build_button(self, label: str, style: ButtonStyle, status: int) -> ui.Button:
         button = ui.Button(
