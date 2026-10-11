@@ -18,7 +18,7 @@ Commandes exécutées et archivées dans l’addendum :
 - Maven direct ciblé : 8 tests, 0 échec, 0 erreur.
 - Maven direct complet : 266 tests, 0 échec, 3 tests ignorés ; build SUCCESS.
 - Build Angular production : terminé avec avertissements de budget CSS existants.
-- Docker : frontend 18088 et backend 18080 healthy, images non reconstruites depuis les derniers commits.
+- Docker : images frontend/backend reconstruites après les derniers commits ; frontend 18088 et backend 18080 healthy. Les migrations 46 et 47 sont appliquées, schéma v47.
 - Serveur UI temporaire : tentative sur 14200 ; navigateur intégré en timeout, aucune capture inventée.
 
 ## Plan accepté
