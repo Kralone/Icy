@@ -1,0 +1,12 @@
+Implementation evidence
+
+- PUT /api/operations/{id}/groups/{groupId} validates operation scope, parent scope, depth and sortOrder (0..10000).
+- DELETE /api/operations/{id}/groups/{groupId} refuses a parent with children and checks operation scope.
+- Angular editor exposes Modifier, Supprimer, Monter le groupe and Descendre le groupe.
+- Permissions tab exposes the Present prerequisite and the allowShipProposals toggle.
+- Publication tab renders a draft-fed participant preview.
+
+Validation:
+- Frontend Docker build succeeded after the controls were added.
+- Backend Docker `mvn verify` succeeded: 266 tests, 0 failures, 3 skipped.
+- Frontend and backend containers were redeployed and reported healthy.
