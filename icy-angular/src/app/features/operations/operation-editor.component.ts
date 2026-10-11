@@ -32,6 +32,10 @@ export class OperationEditorComponent {
   selectedRequirementModel = signal<CatalogEntry | null>(null);
   readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])));
 
+  hasMember(members: User[], id: string | null): boolean {
+    return !!id && members.some(member => member.id === id);
+  }
+
   searchRequirementModels(): void {
     this.catalogLoading.set(true);
     this.catalogError.set('');
