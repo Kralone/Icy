@@ -1,0 +1,5 @@
+# Gate 7 — Discord et historique — 2026-10-11
+
+- Inspection de `icy/messaging/event_handler.py` : les opérations conservent les trois boutons de participation et ajoutent le bouton lien « Voir l’opération sur IceForge ».
+- Tests ciblés `test_event_participation.py`, `test_discord_idempotency.py` et `test_removed_attack_surface.py` compilés avec Python 3.12 Docker (`py_compile` réussi).
+- Limite : le runtime Discord et la synchronisation bidirectionnelle n’ont pas été exécutés dans cette session ; aucun token ni bot réel n’est configuré dans Docker Compose local.

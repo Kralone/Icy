@@ -59,10 +59,10 @@ Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-au
 | CAL-01 | type différencié | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | CAL-02 | colonnes et boutons conservés | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | CAL-03 | stats préservées | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
-| DSC-01 | liste des activités | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
-| DSC-02 | boutons 3 participations | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
+| DSC-01 | liste des activités | icy/messaging/event_handler.py | Flux d’activités commun inspecté ; compilation Python ciblée | PARTIEL | P1 | Exécuter le bot avec RabbitMQ de validation | 7 | Preuve GATE-7 11/10/2026 |
+| DSC-02 | boutons 3 participations | icy/messaging/event_handler.py / EventParticipationView | Boutons Présent/Peut-être/Absent inspectés ; tests ciblés compilés | PARTIEL | P1 | Exécuter les callbacks Discord en environnement de validation | 7 | Preuve GATE-7 11/10/2026 |
 | DSC-03 | embed qui présente l'opération | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
-| DSC-04 | bouton lien direct | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
+| DSC-04 | bouton lien direct | icy/messaging/event_handler.py | Bouton « Voir l’opération sur IceForge » inspecté | PARTIEL | P1 | Vérifier URL et clic sur un message Discord de validation | 7 | Preuve GATE-7 11/10/2026 |
 | DSC-05 | synchronisation bidirectionnelle | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
 | DSC-06 | annulation libère place | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
 | SEC-01 | permissions organisateur serveur | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2-7 | En attente |
