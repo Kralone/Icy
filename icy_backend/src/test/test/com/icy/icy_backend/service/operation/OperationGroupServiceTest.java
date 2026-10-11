@@ -1,31 +1,65 @@
 package com.icy.icy_backend.service.operation;
 
-import com.icy.icy_backend.controller.dto.operation.OperationGroupRequest;
-import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.entity.event.OperationGroup;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.service.common.MessageService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class OperationGroupServiceTest {
-    @Test
-    void rejectsParentFromAnotherOperation() {
-        OperationRepository operations = Mockito.mock(OperationRepository.class);
-        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
-        MessageService messages = Mockito.mock(MessageService.class);
-        UUID operationId = UUID.randomUUID();
-        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId).build()));
-        Long parentId = 10L;
-        when(groups.findById(parentId)).thenReturn(Optional.of(OperationGroup.builder().id(parentId).operationEventId(UUID.randomUUID()).name("Autre").build()));
-        OperationGroupRequest request = new OperationGroupRequest();
-        request.setName("Enfant"); request.setParentId(parentId);
-        OperationGroupService service = new OperationGroupService(operations, groups, messages);
-        assertThatThrownBy(() -> service.create(operationId, request)).isInstanceOf(IllegalArgumentException.class);
+    @Test void rejectsParentFromAnotherOperation() {
+        OperationRepository operations = mock(OperationRepository.class);
+        OperationGroupRepository groups = mock(OperationGroupRepository.class);
+        UUID id = UUID.randomUUID();
+        when(operations.findById(id)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Operation.builder().eventId(id).build()));
+        when(groups.findById(10L)).thenReturn(Optional.of(OperationGroup.builder().id(10L).operationEventId(UUID.randomUUID()).build()));
+        var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Enfant"); request.setParentId(10L);
+        var service = new OperationGroupService(operations, groups, mock(MessageService.class));
+        assertThatThrownBy(() -> service.create(id, request)).isInstanceOf(IllegalArgumentException.class);
+    }
+    private final UUID operationId = UUID.randomUUID();
+    private final OperationGroupRepository repository = mock(OperationGroupRepository.class);
+    private final OperationGroupService service = new OperationGroupService(mock(OperationRepository.class), repository, mock(MessageService.class));
+
+    private OperationGroup group(long id, Long parent) {
+        OperationGroup group = OperationGroup.builder().id(id).operationEventId(operationId).parentId(parent).sortOrder(9).build();
+        when(repository.findById(id)).thenReturn(Optional.of(group));
+        return group;
+    }
+
+    @Test void rejectsPartialSiblingListBeforeWriting() {
+        OperationGroup first = group(1, null), second = group(2, null);
+        when(repository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(first, second));
+        assertThatThrownBy(() -> service.reorder(operationId, List.of(1L))).isInstanceOf(IllegalArgumentException.class);
+        verify(repository, never()).save(any());
+        assertThat(first.getSortOrder()).isEqualTo(9);
+    }
+
+    @Test void rejectsMixedParentsBeforeWriting() {
+        group(1, null); group(2, 3L);
+        assertThatThrownBy(() -> service.reorder(operationId, List.of(1L, 2L))).isInstanceOf(IllegalArgumentException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test void rejectsGroupsFromAnotherOperationBeforeWriting() {
+        group(1, null).setOperationEventId(UUID.randomUUID());
+        assertThatThrownBy(() -> service.reorder(operationId, List.of(1L))).isInstanceOf(IllegalArgumentException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test void reordersCompleteSiblingListWithoutChangingOtherFamilies() {
+        OperationGroup first = group(1, null), second = group(2, null), child = group(3, 1L);
+        when(repository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(first, second, child));
+        service.reorder(operationId, List.of(2L, 1L));
+        assertThat(second.getSortOrder()).isZero();
+        assertThat(first.getSortOrder()).isEqualTo(1);
+        assertThat(child.getSortOrder()).isEqualTo(9);
+        verify(repository, never()).save(child);
     }
 }

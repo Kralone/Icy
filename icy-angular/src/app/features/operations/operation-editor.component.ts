@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, tap } from 'rxjs';
@@ -26,13 +26,19 @@ export class OperationEditorComponent {
     tap(operation => { if (operation) this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false }; })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
-  groups: any[] = [];
+  private readonly groupState = signal<any[]>([]);
+  get groups(): any[] { return this.groupState(); }
+  set groups(value: any[]) { this.groupState.set(value); }
   groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0 };
   editingGroupId: number | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
-  saving = false;
-  message = '';
+  private readonly savingState = signal(false);
+  get saving(): boolean { return this.savingState(); }
+  set saving(value: boolean) { this.savingState.set(value); }
+  private readonly messageState = signal('');
+  get message(): string { return this.messageState(); }
+  set message(value: string) { this.messageState.set(value); }
 
   parseObjectives(value?: string | null): OperationObjective[] {
     if (!value?.trim()) return [{ kind: 'PRINCIPAL', text: '' }];
