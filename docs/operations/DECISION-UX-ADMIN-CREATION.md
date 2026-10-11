@@ -10,4 +10,4 @@ Cette décision remplace le raccourci visuel événement → opération dans l�
 
 ## Conséquence d’audit
 
-Les critères `CRT-02` et `CRT-03` des documents de référence doivent être relus selon cette décision : ils ne peuvent pas être déclarés conformes par la présence d’un bouton retiré à la demande du produit. La conservation des données concerne le modèle de brouillon créé depuis Admin et doit être validée dans Gate 2.
+`CRT-02` reste `PARTIEL` car le parcours historique de conversion n’est plus proposé. `CRT-03` est évalué sur le parcours officiel de création directe : la conservation porte sur tous les champs du formulaire historique qui ont une correspondance dans le formulaire Admin et sur les champs propres à l’opération. L’inventaire et la preuve sont dans `evidence/CRT-03-FIELD-INVENTORY-2026-10-11.txt`.
