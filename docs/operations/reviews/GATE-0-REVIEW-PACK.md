@@ -38,4 +38,4 @@ Chaque passage exige une revue externe sur les axes technique, UI desktop/mobile
 
 ## Verdict indépendant
 
-**Gate 0 : CHANGES REQUIRED.** La matrice, l’addendum et la revue sont maintenant traçables. Le dossier doit encore recevoir la validation finale du relecteur sur cette version et une baseline visuelle reproductible ; les écarts fonctionnels des Gates 1 à 7 restent planifiés dans la matrice et ne sont pas présentés comme conformes.
+**Gate 0 : PASS pour la qualité du dossier**, confirmé dans [GATE-0-REVIEW-ADDENDUM.md](GATE-0-REVIEW-ADDENDUM.md). Les écarts fonctionnels des Gates 1 à 7 restent planifiés dans la matrice et ne sont pas présentés comme conformes.
