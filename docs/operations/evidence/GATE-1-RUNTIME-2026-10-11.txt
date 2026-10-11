@@ -33,3 +33,7 @@ Builds
 Responsive CUA complémentaire : 1280x720 -> client 1280 / scroll 1280 / body 1280 ; 3840x2160 -> client 3840 / scroll 3840 / body 3840. Aucun débordement horizontal observé.
 
 CUA admin/navigation : /icy/admin expose le lien « Nouvelle opération » vers /icy/operations/new (AX link 41) ; /icy/events n’expose plus le bouton « Gérer les événements » dans l’en-tête. Le calendrier conserve l’activité QA Gate 1 et son bouton Détails.
+
+État d’erreur vérifié : le deep-link `/icy/operations/00000000-0000-0000-0000-000000000000` affiche `Opération indisponible`, explique que l’opération n’est pas publiée ou chargeable et propose le retour au calendrier. La page publiée a ensuite été restaurée.
+
+Clavier : après activation de `Présent`, la touche `Tab` déplace le focus accessible sur `Peut-être` ; les actions de participation restent exposées comme boutons nommés.
