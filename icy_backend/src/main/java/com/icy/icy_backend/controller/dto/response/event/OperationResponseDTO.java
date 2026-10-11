@@ -16,6 +16,7 @@ public class OperationResponseDTO {
     private LocalDateTime endDateTime;
     private boolean finished;
     private String briefing;
+    private String objectives;
     private String meetingPoint;
     private String imageUrl;
     private Operation.PublicationStatus publicationStatus;
@@ -29,6 +30,7 @@ public class OperationResponseDTO {
         this.endDateTime = event.getEndDateTime();
         this.finished = event.isFinished();
         this.briefing = operation.getBriefing();
+        this.objectives = operation.getObjectives();
         this.meetingPoint = operation.getMeetingPoint();
         this.imageUrl = operation.getImageUrl();
         this.publicationStatus = operation.getPublicationStatus();

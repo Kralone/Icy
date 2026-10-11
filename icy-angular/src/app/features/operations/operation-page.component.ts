@@ -11,6 +11,7 @@ interface OperationPageModel {
   title: string;
   description?: string;
   briefing?: string;
+  objectives?: string;
   meetingPoint?: string;
   imageUrl?: string;
   allowShipProposals: boolean;

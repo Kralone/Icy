@@ -12,6 +12,8 @@
         <label>Point de rendez-vous<input [(ngModel)]="form.meetingPoint" maxlength="255"></label>
         <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" maxlength="2000"></label>
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> Autoriser les membres présents à proposer un vaisseau de leur hangar</label>
+      } @else if (tab === 'objectifs') {
+        <label>Objectifs de mission<textarea [(ngModel)]="form.objectives" rows="12" maxlength="50000" placeholder="Objectifs principaux, secondaires et critères de réussite"></textarea></label>
       } @else if (tab === 'publication') {
         <h2>Publication</h2><p>Statut actuel : {{ operation.publicationStatus }}.</p><button type="button" class="primary" (click)="publish(operation.id)">Publier l’opération</button>
       } @else if (tab === 'organisation') {
@@ -25,7 +27,7 @@
         <label>Mode<select [(ngModel)]="groupForm.assignmentMode"><option value="INHERITED">Hérité</option><option value="FREE">Libre</option><option value="VALIDATION">Sur validation</option><option value="MANAGED">Géré</option></select></label>
         <button type="button" class="primary" (click)="createGroup(operation.id)">Créer le groupe</button>
       } @else {
-        <h2>{{ tab === 'objectifs' ? 'Objectifs' : 'Inscriptions et permissions' }}</h2><p class="muted">Cette section sera configurée dans l’étape suivante.</p>
+        <h2>Inscriptions et permissions</h2><p class="muted">Cette section sera configurée dans l’étape suivante.</p>
       }
       @if (tab !== 'publication') { <button type="button" class="primary" [disabled]="saving" (click)="save(operation.id)">{{ saving ? 'Enregistrement…' : 'Enregistrer le brouillon' }}</button> }
       @if (message) { <p role="status">{{ message }}</p> }

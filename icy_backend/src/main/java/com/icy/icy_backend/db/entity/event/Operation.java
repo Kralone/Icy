@@ -36,6 +36,9 @@ public class Operation {
     @Column(columnDefinition = "TEXT")
     private String briefing;
 
+    @Column(columnDefinition = "TEXT")
+    private String objectives;
+
     @Column(name = "meeting_point", length = 255)
     private String meetingPoint;
 

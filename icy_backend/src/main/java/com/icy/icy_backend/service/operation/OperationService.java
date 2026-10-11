@@ -51,6 +51,8 @@ public class OperationService {
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
         operation.setBriefing(request.getBriefing());
+        if (request.getObjectives() != null && request.getObjectives().length() > 50000) throw new IllegalArgumentException("Objectifs trop longs");
+        operation.setObjectives(request.getObjectives());
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
         if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());

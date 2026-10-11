@@ -28,6 +28,11 @@
         <p>{{ operation.briefing || operation.description || 'Le briefing sera publié par l’organisateur.' }}</p>
       </article>
       <article class="operation-card">
+        <p class="eyebrow">Objectifs</p>
+        <h2>Mission accomplie si…</h2>
+        <p>{{ operation.objectives || 'Les objectifs seront précisés par l’organisateur.' }}</p>
+      </article>
+      <article class="operation-card">
         <p class="eyebrow">Organisation</p>
         <h2>Composition</h2>
         @if (groups$ | async; as groups) {
