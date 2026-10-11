@@ -174,6 +174,34 @@ class OperationShipServiceTest {
     }
 
     @Test
+    void allowsSeveralProposalsOnTheSameLeafGroup() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build()));
+        when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
+        when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
+        when(hangar.existsByUserIdAndShipId(owner, 43L)).thenReturn(true);
+        when(groups.findById(7L)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.OperationGroup.builder()
+                .id(7L).operationEventId(operationId).build()));
+        when(groups.existsByParentId(7L)).thenReturn(false);
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+        try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
+            auth.when(AuthUtils::getCurrentUserId).thenReturn(owner);
+            service.propose(operationId, 42L, 7L, null);
+            service.propose(operationId, 43L, 7L, null);
+        }
+        Mockito.verify(proposals, Mockito.times(2)).save(any());
+    }
+
+    @Test
     void ownerCanWithdrawProposal() {
         OperationRepository operations = Mockito.mock(OperationRepository.class);
         UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
