@@ -184,4 +184,38 @@ class OperationAssignmentServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Une demande de validation sera disponible dans l’éditeur");
     }
+
+    @Test
+    void reusesExistingUserAssignmentWhenChangingLeaf() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var assignments = mock(OperationAssignmentRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var events = mock(EventRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.FREE).build();
+        var current = OperationAssignment.builder().id(UUID.randomUUID()).operationEventId(operationId)
+                .groupId(1L).userId(userId).status(OperationAssignment.Status.CONFIRMED).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(groups.findLockedById(2L)).thenReturn(Optional.of(leaf));
+        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().id(operationId).build()));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        when(assignments.findByOperationEventId(operationId)).thenReturn(List.of(current));
+        when(assignments.findByOperationEventIdAndUserId(operationId, userId)).thenReturn(Optional.of(current));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, events, participation,
+                mock(MessageService.class), mock(OperationAssignmentRequestRepository.class));
+        service.assign(operationId, 2L);
+
+        assertThat(current.getGroupId()).isEqualTo(2L);
+        verify(assignments).save(current);
+    }
 }

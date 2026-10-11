@@ -6,6 +6,7 @@ Tests backend ciblés dans `OperationAssignmentServiceTest` :
 - `refusesDirectAssignmentOnManagedLeaf` refuse une affectation directe sur un groupe géré par les organisateurs.
 - `refusesDirectAssignmentOnValidationLeaf` refuse l’affectation directe et impose la demande de validation.
 - `locksLeafAndAncestorsInStableOrderBeforeCapacityRead` couvre l’affectation libre sur une feuille et le verrouillage feuille/ancêtres.
+- `reusesExistingUserAssignmentWhenChangingLeaf` réutilise l’affectation existante de l’utilisateur et vérifie qu’une seule ligne est sauvegardée lors d’un changement de feuille.
 
-La suite Docker backend passe à **295 tests, 0 échec, 3 ignorés**.
+La suite Docker backend passe à **296 tests, 0 échec, 3 ignorés**.
 Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification visuelle des contrôles UI/mobile.
