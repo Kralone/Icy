@@ -202,6 +202,28 @@ class OperationShipServiceTest {
     }
 
     @Test
+    void assignsPilotSeparatelyFromProposalOwner() {
+        OperationRepository operations = Mockito.mock(OperationRepository.class);
+        UserShipRepository hangar = Mockito.mock(UserShipRepository.class);
+        OperationShipProposalRepository proposals = Mockito.mock(OperationShipProposalRepository.class);
+        MessageService messages = Mockito.mock(MessageService.class);
+        OperationGroupRepository groups = Mockito.mock(OperationGroupRepository.class);
+        EventParticipationRepository participations = Mockito.mock(EventParticipationRepository.class);
+        OperationShipRequirementRepository requirements = Mockito.mock(OperationShipRequirementRepository.class);
+        UUID operationId = UUID.randomUUID();
+        UUID proposalId = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        UUID pilot = UUID.randomUUID();
+        OperationShipProposal proposal = OperationShipProposal.builder().id(proposalId).operationEventId(operationId).ownerUserId(owner).shipId(42L).build();
+        when(proposals.findByIdAndOperationEventId(proposalId, operationId)).thenReturn(Optional.of(proposal));
+        when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, pilot, 1)).thenReturn(true);
+        OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
+        service.setPilot(operationId, proposalId, pilot);
+        org.assertj.core.api.Assertions.assertThat(proposal.getPilotUserId()).isEqualTo(pilot).isNotEqualTo(owner);
+        Mockito.verify(proposals).save(proposal);
+    }
+
+    @Test
     void ownerCanWithdrawProposal() {
         OperationRepository operations = Mockito.mock(OperationRepository.class);
         UserShipRepository hangar = Mockito.mock(UserShipRepository.class);

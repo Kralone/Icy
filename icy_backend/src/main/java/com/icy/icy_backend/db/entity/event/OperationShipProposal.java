@@ -13,6 +13,7 @@ public class OperationShipProposal {
     @Column(name="group_id") private Long groupId;
     @Column(name="requirement_id") private UUID requirementId;
     @Column(name="owner_user_id", nullable=false) private UUID ownerUserId;
+    @Column(name="pilot_user_id") private UUID pilotUserId;
     @Column(name="ship_id", nullable=false) private Long shipId;
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20) @Builder.Default private Status status=Status.PROPOSED;
     @Column(name="created_at", nullable=false) @Builder.Default private LocalDateTime createdAt=LocalDateTime.now();

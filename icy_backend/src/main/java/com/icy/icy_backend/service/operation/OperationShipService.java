@@ -80,4 +80,16 @@ public class OperationShipService {
         proposalRepository.save(proposal);
         return messageService.buildResponse("operation.ship.unavailable", null);
     }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> setPilot(UUID operationId, UUID proposalId, UUID pilotUserId) {
+        OperationShipProposal proposal = proposalRepository.findByIdAndOperationEventId(proposalId, operationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposition de vaisseau introuvable"));
+        if (pilotUserId != null && !participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, pilotUserId, 1)) {
+            throw new IllegalStateException("Le pilote doit être inscrit Présent à l’opération");
+        }
+        proposal.setPilotUserId(pilotUserId);
+        proposalRepository.save(proposal);
+        return messageService.buildResponse("operation.ship.pilot.updated", null);
+    }
 }

@@ -143,6 +143,11 @@ export class EventService {
   markOperationShipProposalUnavailable(operationId: string, proposalId: string) {
     return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/unavailable`, {});
   }
+  setOperationShipPilot(operationId: string, proposalId: string, pilotUserId: string | null) {
+    let params: any = {};
+    if (pilotUserId) params.pilotUserId = pilotUserId;
+    return this.http.put(`/api/operations/${operationId}/ships/proposals/${proposalId}/pilot`, {}, { params });
+  }
   getOperationShips(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/ships`); }
   getOperationGroupsForEdit(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/groups/edit`); }
   createOperationGroup(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/groups`, payload); }

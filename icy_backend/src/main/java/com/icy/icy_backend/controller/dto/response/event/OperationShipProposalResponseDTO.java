@@ -7,9 +7,9 @@ import com.icy.icy_backend.db.entity.user.UserShip;
 @Value
 @AllArgsConstructor
 public class OperationShipProposalResponseDTO {
- UUID id; Long shipId; UUID ownerUserId; String ownerUsername; Long groupId; UUID requirementId; OperationShipProposal.Status status; String shipName; String shipImageUrl;
- public OperationShipProposalResponseDTO(OperationShipProposal value) { this(value, null); }
- public OperationShipProposalResponseDTO(OperationShipProposal value, UserShip ownedShip) {
-  this(value.getId(), value.getShipId(), value.getOwnerUserId(), ownedShip == null || ownedShip.getUser() == null ? null : ownedShip.getUser().getUsername(), value.getGroupId(), value.getRequirementId(), value.getStatus(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getName(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getImageUrl());
+ UUID id; Long shipId; UUID ownerUserId; String ownerUsername; UUID pilotUserId; String pilotUsername; Long groupId; UUID requirementId; OperationShipProposal.Status status; String shipName; String shipImageUrl;
+ public OperationShipProposalResponseDTO(OperationShipProposal value) { this(value, null, null); }
+ public OperationShipProposalResponseDTO(OperationShipProposal value, UserShip ownedShip, String pilotUsername) {
+  this(value.getId(), value.getShipId(), value.getOwnerUserId(), ownedShip == null || ownedShip.getUser() == null ? null : ownedShip.getUser().getUsername(), value.getPilotUserId(), pilotUsername, value.getGroupId(), value.getRequirementId(), value.getStatus(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getName(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getImageUrl());
  }
 }

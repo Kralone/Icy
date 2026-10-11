@@ -27,6 +27,7 @@ import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.event.EventService;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
+import com.icy.icy_backend.db.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,6 +62,7 @@ public class OperationController {
     private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
     private final UserShipRepository userShipRepository;
+    private final UserRepository userRepository;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
 
     @PostMapping("/create")
@@ -77,7 +79,8 @@ public class OperationController {
         operationRepository.findById(id).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         List<OperationShipProposalResponseDTO> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream()
                 .map(proposal -> new OperationShipProposalResponseDTO(proposal,
-                        userShipRepository.findByUserIdAndShipId(proposal.getOwnerUserId(), proposal.getShipId()).orElse(null)))
+                        userShipRepository.findByUserIdAndShipId(proposal.getOwnerUserId(), proposal.getShipId()).orElse(null),
+                        proposal.getPilotUserId() == null ? null : userRepository.findById(proposal.getPilotUserId()).map(user -> user.getUsername()).orElse(null)))
                 .toList();
         return messageService.buildResponse("operation.ships", proposals);
     }
@@ -122,6 +125,12 @@ public class OperationController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<Void>> markShipUnavailable(@PathVariable UUID id, @PathVariable UUID proposalId) {
         return shipService.markUnavailable(id, proposalId);
+    }
+
+    @PutMapping("/{id}/ships/proposals/{proposalId}/pilot")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> setShipPilot(@PathVariable UUID id, @PathVariable UUID proposalId, @RequestParam(required = false) UUID pilotUserId) {
+        return shipService.setPilot(id, proposalId, pilotUserId);
     }
 
     @GetMapping("/{id}/ship-requirements")

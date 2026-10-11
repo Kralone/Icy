@@ -11,13 +11,13 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL avancé | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée ; preuve Spring/PostgreSQL d’un responsable autorisé sur sa feuille et refusé sur un frère ; sélecteur nommé CUA avec membres actifs et états de mutation visibles | Rejouer les transitions complètes en UI et archiver les états erreur/chargement |
 | 4 — affectations et capacité | PARTIEL — capacité et refus validés | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère ; fixture runtime authentifiée parent plein et message UI `Groupe complet` après HTTP 400 | Maintenir les tests de concurrence et le retour d’erreur visible |
-| 5 — flotte et besoins | PARTIEL — SHP-01/02/04/05/06/07/08 validés | Migrations V49/V50, API séparée, contrôle de permission et ownership hangar par tests, liaison besoin↔proposition, contrôle de modèle et quantité, retrait propriétaire et indisponibilité organisateur, éditeur, participant, protection des brouillons, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait ; marquage admin `UNAVAILABLE` avec retour visible ; requête runtime/DB `owner_assignments = 0` ; deux propositions sur un même groupe feuille | Maintenir la régression sur la liaison et modéliser/prover SHP-03 (pilote distinct) |
+| 5 — flotte et besoins | CONFORME — SHP-01 à SHP-08 validés | Migrations V49/V50/V51, API séparée, contrôle permission/ownership hangar, séparation besoin/proposition, propriétaire/pilote distincts avec pilote Présent, contrôle modèle et quantité, retrait propriétaire et indisponibilité organisateur, éditeur participant/admin, protection des brouillons, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait ; marque admin `UNAVAILABLE` ; requête runtime/DB `owner_assignments = 0` ; plusieurs vaisseaux sur un groupe feuille | Maintenir les régressions de flotte et la migration V51 |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
 | 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **65 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
 
 ## Vérifications techniques
 
-- Build Docker backend : **285 tests, 0 échec, 3 ignorés**.
+- Build Docker backend : **286 tests, 0 échec, 3 ignorés**.
 - Build Angular de production réussi ; avertissements CSS historiques conservés.
 - Services locaux actifs : frontend `127.0.0.1:18088`, backend `127.0.0.1:18080`, PostgreSQL `127.0.0.1:15432`.
 - Le bouton de gestion des événements a été retiré du calendrier ; le panneau admin expose `Nouvelle opération` vers `/icy/operations/new`.

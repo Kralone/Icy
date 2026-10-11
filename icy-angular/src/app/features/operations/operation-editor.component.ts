@@ -162,4 +162,10 @@ export class OperationEditorComponent {
       error: error => this.message = error?.error?.message || 'Impossible de marquer la proposition indisponible.'
     });
   }
+  setShipPilot(operationId: string, proposalId: string, pilotUserId: string | null): void {
+    this.eventService.setOperationShipPilot(operationId, proposalId, pilotUserId).subscribe({
+      next: () => { this.message = pilotUserId ? 'Pilote affecté séparément du propriétaire.' : 'Pilote retiré.'; this.shipRefresh.next(); },
+      error: error => this.message = error?.error?.message || 'Impossible de modifier le pilote.'
+    });
+  }
 }
