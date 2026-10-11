@@ -5,4 +5,5 @@ import java.util.Optional;
 import java.util.UUID;
 public interface OperationAssignmentRequestRepository extends JpaRepository<OperationAssignmentRequest, UUID> {
  Optional<OperationAssignmentRequest> findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(UUID operationId, UUID userId, OperationAssignmentRequest.Status status);
+ void deleteByOperationEventIdAndUserIdAndStatus(UUID operationId, UUID userId, OperationAssignmentRequest.Status status);
 }

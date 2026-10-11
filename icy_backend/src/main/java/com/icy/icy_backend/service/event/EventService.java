@@ -5,6 +5,9 @@ import com.icy.icy_backend.controller.dto.response.event.EventParticipationRespo
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
+import com.icy.icy_backend.db.entity.event.OperationAssignmentRequest;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.EventRepository;
@@ -35,6 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Slf4j
@@ -51,6 +55,14 @@ public class EventService {
     private final AuthService authService;
     private final EventPublisher eventPublisher;
     private final NotificationPushService notificationPushService;
+    private OperationAssignmentRepository operationAssignmentRepository;
+    private OperationAssignmentRequestRepository operationAssignmentRequestRepository;
+
+    @Autowired
+    public void setOperationAssignmentRepositories(OperationAssignmentRepository assignments, OperationAssignmentRequestRepository requests) {
+        this.operationAssignmentRepository = assignments;
+        this.operationAssignmentRequestRepository = requests;
+    }
 
     public EventService(EventRepository eventRepository, MessageService messageService, EventWebSocketService eventWebSocketService, EventTypeRepository eventTypeRepository, EventParticipationRepository participationRepository, UserService userService, AuthService authService, EventPublisher eventPublisher, NotificationPushService notificationPushService) {
         this.eventRepository = eventRepository;
@@ -418,6 +430,14 @@ public class EventService {
         participation.setStatus(status);
 
         participationRepository.save(participation);
+
+        if (status != 1 && operationAssignmentRepository != null) {
+            UUID userId = user.getId();
+            operationAssignmentRepository.deleteByOperationEventIdAndUserId(eventId, userId);
+            if (operationAssignmentRequestRepository != null) {
+                operationAssignmentRequestRepository.deleteByOperationEventIdAndUserIdAndStatus(eventId, userId, OperationAssignmentRequest.Status.PENDING);
+            }
+        }
 
         eventPublisher.publishEventUpdated(event);
 
