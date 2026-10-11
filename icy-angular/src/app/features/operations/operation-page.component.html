@@ -12,7 +12,14 @@
     <section class="operation-status" aria-label="Situation de l'opération">
       <strong>Situation</strong>
       <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      <span class="operation-status__placeholder">Les groupes affichent les places et le mode d’affectation</span>
+      @if (participationSummary$ | async; as participation) {
+        <span class="operation-counts">{{ participation.total }} inscrit(s) · {{ participation.present }} présent(s)</span>
+      }
+      <div class="participation-actions" aria-label="Participation">
+        <button type="button" [class.active]="participationStatus === 1" (click)="setParticipation(operation.id, 1)">Présent</button>
+        <button type="button" [class.active]="participationStatus === 0" (click)="setParticipation(operation.id, 0)">Peut-être</button>
+        <button type="button" [class.active]="participationStatus === -1" (click)="setParticipation(operation.id, -1)">Absent</button>
+      </div>
     </section>
     <div class="operation-grid">
       <article class="operation-card operation-card--briefing">

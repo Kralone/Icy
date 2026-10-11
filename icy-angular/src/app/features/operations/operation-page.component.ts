@@ -17,6 +17,7 @@ interface OperationPageModel {
   endDateTime: string;
   finished: boolean;
 }
+interface ParticipationRow { status: number; }
 
 @Component({
   standalone: true,
@@ -45,8 +46,17 @@ export class OperationPageComponent {
     catchError(() => of([]))
   );
   readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
+  readonly participation$ = this.route.paramMap.pipe(
+    switchMap(params => this.eventService.getParticipations(params.get('id')!)),
+    map((response: any) => (response?.data ?? []) as ParticipationRow[]),
+    catchError(() => of([] as ParticipationRow[]))
+  );
+  readonly participationSummary$ = this.participation$.pipe(
+    map(participations => ({ total: participations.length, present: participations.filter(item => item.status === 1).length }))
+  );
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
+  participationStatus: number | null = null;
   assignmentMessage = '';
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
@@ -60,5 +70,12 @@ export class OperationPageComponent {
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;
     this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
+  }
+  setParticipation(operationId: string, status: number) {
+    this.assignmentMessage = '';
+    this.eventService.setParticipationStatus(operationId, status).subscribe({
+      next: () => { this.participationStatus = status; },
+      error: error => this.assignmentMessage = error?.error?.message || 'Statut impossible à enregistrer.'
+    });
   }
 }
