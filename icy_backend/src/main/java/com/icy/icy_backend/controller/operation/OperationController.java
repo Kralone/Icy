@@ -22,6 +22,7 @@ import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseD
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.event.EventService;
+import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,6 +54,7 @@ public class OperationController {
     private final OperationGroupService groupService;
     private final OperationShipProposalRepository proposalRepository;
     private final EventService eventService;
+    private final UserShipRepository userShipRepository;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -66,7 +68,10 @@ public class OperationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationShipProposalResponseDTO>>> ships(@PathVariable UUID id) {
         operationRepository.findById(id).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        List<OperationShipProposalResponseDTO> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream().map(OperationShipProposalResponseDTO::new).toList();
+        List<OperationShipProposalResponseDTO> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream()
+                .map(proposal -> new OperationShipProposalResponseDTO(proposal,
+                        userShipRepository.findByUserIdAndShipId(proposal.getOwnerUserId(), proposal.getShipId()).orElse(null)))
+                .toList();
         return messageService.buildResponse("operation.ships", proposals);
     }
 
