@@ -9,7 +9,7 @@
 
 Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux non-organisateurs ; ADMIN/OFFICIER conservent l’accès d’édition.
 
-Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 274 tests, 0 échec, 3 ignorés.
+Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 281 tests, 0 échec, 3 ignorés.
 
 Suite backend après tests de scope : 281 tests, 0 échec, 3 ignorés.
 
