@@ -15,3 +15,17 @@ icy_backend\mvnw.cmd -q -Diceforge.integration=true -Diceforge.jdbc.url=jdbc:pos
 Résultat : code retour `0`, test réussi. La seconde transaction reste bloquée tant que la première n'a pas validé, puis termine après le `commit`.
 
 Cette preuve confirme le comportement de verrou PostgreSQL utilisé par `findLockedById`. Elle ne remplace pas encore une intégration Spring complète qui appelle `OperationAssignmentService` avec deux affectations concurrentes et un parent réellement plein ; SEC-04 reste donc partiel jusqu'à cette fixture métier.
+
+## Preuve métier concurrente
+
+Le test opt-in `OperationAssignmentCapacityIntegrationIT.twoConcurrentAssignmentsCannotTakeOneParentPlace` démarre l'application Spring contre la base Docker, crée une opération publiée avec un parent de capacité `1` et deux feuilles, puis lance deux appels concurrents à `OperationAssignmentService.assign` avec deux utilisateurs distincts.
+
+Commande exécutée dans le réseau Docker :
+
+```text
+docker run --rm --network iceforge_dev_internal ... mvn -B -ntp -Diceforge.integration=true -Diceforge.jdbc.url=jdbc:postgresql://db:5432/iceforgedb -Diceforge.jdbc.user=iceforge -Diceforge.jdbc.password=change_me_local_only -Dtest=OperationAssignmentCapacityIntegrationIT test
+```
+
+Résultat : **BUILD SUCCESS**, `Tests run: 1, Failures: 0, Errors: 0, Skipped: 0`. Une seule affectation est confirmée sur le parent plein ; l'autre est refusée après le verrouillage hiérarchique.
+
+La preuve couvre désormais le service métier concurrent. Il reste à compléter le parcours runtime authentifié de saturation et de refus pour clôturer SEC-04.

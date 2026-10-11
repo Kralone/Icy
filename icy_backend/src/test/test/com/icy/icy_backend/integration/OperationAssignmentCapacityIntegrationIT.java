@@ -1,0 +1,90 @@
+package com.icy.icy_backend.integration;
+
+import com.icy.icy_backend.security.UserAuthDetails;
+import com.icy.icy_backend.service.operation.OperationAssignmentService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/** Opt-in end-to-end capacity race against the local PostgreSQL instance. */
+@EnabledIfSystemProperty(named = "iceforge.integration", matches = "true")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+class OperationAssignmentCapacityIntegrationIT {
+    private static final UUID USER_ONE = UUID.fromString("10000000-0000-0000-0000-000000000001");
+    private static final UUID USER_TWO = UUID.fromString("10000000-0000-0000-0000-000000000002");
+
+    @Autowired JdbcTemplate jdbc;
+    @Autowired OperationAssignmentService assignments;
+
+    private UUID operationId;
+
+    @DynamicPropertySource
+    static void database(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", () -> System.getProperty("iceforge.jdbc.url", "jdbc:postgresql://localhost:15432/iceforgedb"));
+        registry.add("spring.datasource.username", () -> System.getProperty("iceforge.jdbc.user", "iceforge"));
+        registry.add("spring.datasource.password", () -> System.getProperty("iceforge.jdbc.password", "iceforge"));
+        registry.add("spring.flyway.enabled", () -> false);
+        registry.add("JWT_SECRET", () -> "CHANGE_ME_LOCAL_JWT_SECRET_32_CHARS_MINIMUM");
+    }
+
+    @AfterEach
+    void cleanup() {
+        SecurityContextHolder.clearContext();
+        if (operationId != null) jdbc.update("DELETE FROM events.events WHERE id = ?", operationId);
+    }
+
+    @Test
+    void twoConcurrentAssignmentsCannotTakeOneParentPlace() throws Exception {
+        operationId = UUID.randomUUID();
+        jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'capacity race', '', ?, ?, 'OPERATION')",
+                operationId, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2));
+        jdbc.update("INSERT INTO events.operations (event_id, briefing, publication_status) VALUES (?, '', 'PUBLISHED')", operationId);
+        jdbc.update("INSERT INTO events.event_participation (event_id, user_id, status) VALUES (?, ?, 1), (?, ?, 1)", operationId, USER_ONE, operationId, USER_TWO);
+        Long parentId = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, name, capacity, assignment_mode, sort_order) VALUES (?, 'Parent plein', 1, 'FREE', 0) RETURNING id", Long.class, operationId);
+        Long leafOne = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, parent_id, name, assignment_mode, sort_order) VALUES (?, ?, 'Alpha', 'INHERITED', 0) RETURNING id", Long.class, operationId, parentId);
+        Long leafTwo = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, parent_id, name, assignment_mode, sort_order) VALUES (?, ?, 'Bravo', 'INHERITED', 1) RETURNING id", Long.class, operationId, parentId);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> first = executor.submit(assign(USER_ONE, leafOne));
+            Future<Boolean> second = executor.submit(assign(USER_TWO, leafTwo));
+            assertThat(List.of(first.get(), second.get())).containsExactlyInAnyOrder(true, false);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM events.operation_assignments WHERE operation_event_id = ? AND status = 'CONFIRMED'", Long.class, operationId)).isEqualTo(1L);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private Callable<Boolean> assign(UUID userId, Long groupId) {
+        return () -> {
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                    new UserAuthDetails(userId, userId.toString(), "password", List.of()), "", List.of()));
+            try {
+                assignments.assign(operationId, groupId);
+                return true;
+            } catch (RuntimeException exception) {
+                return false;
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        };
+    }
+}
