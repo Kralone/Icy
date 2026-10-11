@@ -38,7 +38,7 @@
             <label>Parent<select [(ngModel)]="groupForm.parentId"><option [ngValue]="null">Groupe principal</option>@for (group of groups; track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
             <label>Capacité<input type="number" min="0" [(ngModel)]="groupForm.capacity"></label>
             <label>Mode<select [(ngModel)]="groupForm.assignmentMode"><option value="INHERITED">Hérité</option><option value="FREE">Libre</option><option value="VALIDATION">Sur validation</option><option value="MANAGED">Géré</option></select></label>
-            <label>Responsable délégué (UUID utilisateur)<input [(ngModel)]="groupForm.responsibleUserId" placeholder="Facultatif"></label>
+            <label>Responsable délégué<select [(ngModel)]="groupForm.responsibleUserId"><option [ngValue]="null">Aucun responsable</option>@for (member of members$ | async; track member.id) { <option [ngValue]="member.id">{{ member.username }} · {{ member.id }}</option> }</select></label>
             <div class="property-actions"><button type="button" class="primary" (click)="createGroup(operation.id)">{{ editingGroupId ? 'Mettre à jour le groupe' : 'Créer le groupe' }}</button>@if (editingGroupId) { <button type="button" (click)="editingGroupId = null; groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null }">Nouveau groupe</button> }</div>
           </section>
         </div>

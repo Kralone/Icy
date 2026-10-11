@@ -5,6 +5,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
+import { UserService } from '../../core/services/user/user.service';
+import { User } from '../../model/user.model';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -22,11 +24,13 @@ export class OperationEditorComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly eventService = inject(EventService);
   private readonly catalogService = inject(CatalogService);
+  private readonly userService = inject(UserService);
   readonly catalogResults = signal<CatalogEntry[]>([]);
   readonly catalogLoading = signal(false);
   readonly catalogError = signal('');
   catalogQuery = '';
   selectedRequirementModel = signal<CatalogEntry | null>(null);
+  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])));
 
   searchRequirementModels(): void {
     this.catalogLoading.set(true);
