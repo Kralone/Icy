@@ -141,4 +141,5 @@ export class EventService {
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }
   deleteOperationGroup(operationId: string, groupId: number) { return this.http.delete(`/api/operations/${operationId}/groups/${groupId}`); }
   reorderOperationGroups(operationId: string, groupIds: number[]) { return this.http.put(`/api/operations/${operationId}/groups/reorder`, groupIds); }
+  getOperationAssignmentRequests(operationId: string) { return this.http.get<{ data: Array<{ id: string; groupId: number; userId: string; status: string; createdAt: string }> }>(`/api/operations/${operationId}/assignment-requests`); }
 }
