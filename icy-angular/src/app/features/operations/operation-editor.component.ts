@@ -74,5 +74,5 @@ export class OperationEditorComponent {
   }
 
   editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0 }; }
-  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer le groupe « ${group.name} » ?`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
+  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
 }
