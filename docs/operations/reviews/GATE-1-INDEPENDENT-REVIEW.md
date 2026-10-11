@@ -60,3 +60,18 @@ Les preuves runtime communiquées corrigent la réserve fonctionnelle de créati
 
 Ces éléments permettent de classer le parcours création et la contrainte mobile de largeur **PASS sur preuves rapportées**. Ils ne remplacent pas les artefacts visuels Gate 1 : aucune capture mobile réelle, aucun wireframe/mockup haute fidélité des trois zones et aucune capture de l’éditeur ou de la fiche participant n’est jointe. Le verdict Gate 1 demeure **BLOCKED uniquement pour ces livrables UX manquants**.
 
+## Décision finale — HEAD `b4cf02a`
+
+Les wireframes structurels des trois zones sont maintenant archivés dans `docs/operations/GATE-1-WIREFRAMES.md`. Le scénario Docker de création, l’ouverture de l’éditeur, la persistance `OPERATION/DRAFT` et la mesure 390×844 sont également documentés dans le pack. La décision produit sur l’entrée Admin est explicite ; le retrait du bouton de conversion n’est plus un écart de cette revue.
+
+| Axe | Décision actuelle |
+|---|---|
+| Technique | **PASS sur preuves rapportées** : scénario Docker, migration et builds sont consignés ; les sorties brutes restent à archiver pour audit ultérieur. |
+| UI/UX desktop | **PASS Gate 1 structurel** : écran de création documenté par capture, aperçu/étapes implémentés, wireframes des trois zones joints. |
+| UI/UX mobile | **NON VÉRIFIÉ** : la mesure sans débordement est disponible, mais aucune capture mobile/tactile n’est archivée. |
+| Sécurité | **PASS pour le périmètre Gate 1** : entrée et éditeur protégés par les rôles Admin/Officier ; les tests serveur détaillés restent dans les gates fonctionnelles. |
+| Métier | **PASS pour la décision d’entrée Admin** ; conformité complète des groupes, affectations et publication hors périmètre. |
+| Non-régression | **NON VÉRIFIÉ** : aucune matrice complète des scénarios historiques n’est jointe à ce pack. |
+
+**Verdict Gate 1 : BLOCKED**, car la preuve mobile/tactile exigée n’est pas archivée et la non-régression reste non vérifiée. Les mockups haute fidélité et les captures détaillées de la fiche participant peuvent être explicitement reportés aux Gates 5/6, à condition de ne pas présenter Gate 1 comme une validation visuelle finale.
+
