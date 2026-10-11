@@ -117,4 +117,8 @@ export class EventService {
   publishOperation(eventId: string) {
     return this.http.post<any>(`/api/operations/${eventId}/publish`, {}).pipe(map(res => res.data));
   }
+
+  assignOperationGroup(operationId: string, groupId: number) {
+    return this.http.post(`/api/operations/${operationId}/assignments/me/${groupId}`, {});
+  }
 }

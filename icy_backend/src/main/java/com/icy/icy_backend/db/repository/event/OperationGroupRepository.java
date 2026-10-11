@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface OperationGroupRepository extends CrudRepository<OperationGroup, Long> {
     List<OperationGroup> findByOperationEventIdOrderBySortOrderAscIdAsc(UUID operationEventId);
+    boolean existsByParentId(Long parentId);
 }

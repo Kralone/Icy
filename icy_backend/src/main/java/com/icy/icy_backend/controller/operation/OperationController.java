@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
 import com.icy.icy_backend.service.operation.OperationService;
+import com.icy.icy_backend.service.operation.OperationAssignmentService;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
@@ -37,6 +38,13 @@ public class OperationController {
     private final MessageService messageService;
     private final OperationService operationService;
     private final OperationGroupRepository operationGroupRepository;
+    private final OperationAssignmentService assignmentService;
+
+    @PostMapping("/{id}/assignments/me/{groupId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> assignMe(@PathVariable UUID id, @PathVariable Long groupId) {
+        return assignmentService.assign(id, groupId);
+    }
 
     @GetMapping("/{id}/groups")
     @PreAuthorize("isAuthenticated()")

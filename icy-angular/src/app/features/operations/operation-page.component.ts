@@ -3,6 +3,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { EventService } from '../../core/services/event/event.service';
 
 interface OperationPageModel {
   id: string;
@@ -25,6 +26,7 @@ interface OperationPageModel {
 })
 export class OperationPageComponent {
   private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
   private readonly route = inject(ActivatedRoute);
   readonly operation$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
@@ -36,4 +38,9 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of([]))
   );
+  assignmentMessage = '';
+  assign(operationId: string, groupId: number) {
+    this.assignmentMessage = '';
+    this.eventService.assignOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Affectation confirmée.', error: error => this.assignmentMessage = error?.error?.message || 'Affectation impossible.' });
+  }
 }
