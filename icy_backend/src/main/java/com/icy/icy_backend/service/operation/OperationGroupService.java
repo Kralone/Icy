@@ -71,7 +71,15 @@ public class OperationGroupService {
         if (groups.stream().anyMatch(group -> !operationId.equals(group.getOperationEventId()))) throw new IllegalArgumentException("Les groupes appartiennent à une autre opération");
         Long expectedParent = groups.get(0).getParentId();
         if (groups.stream().anyMatch(group -> !java.util.Objects.equals(expectedParent, group.getParentId()))) throw new IllegalArgumentException("Seuls les groupes frères peuvent être réordonnés");
+        java.util.Set<Long> expectedIds = operationGroupIds(operationId, expectedParent);
+        if (!expectedIds.equals(new java.util.HashSet<>(groupIds))) throw new IllegalArgumentException("La liste doit contenir tous les groupes frères");
         for (int index = 0; index < groups.size(); index++) { groups.get(index).setSortOrder(index); groupRepository.save(groups.get(index)); }
         return messageService.buildResponse("operation.group.reordered", null);
+    }
+
+    private java.util.Set<Long> operationGroupIds(UUID operationId, Long parentId) {
+        return groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId).stream()
+                .filter(group -> java.util.Objects.equals(parentId, group.getParentId()))
+                .map(OperationGroup::getId).collect(java.util.stream.Collectors.toSet());
     }
 }
