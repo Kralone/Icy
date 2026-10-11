@@ -9,9 +9,15 @@ Implementation evidence
 
 Validation:
 - Frontend Docker build succeeded after the controls were added.
-- Backend Docker `mvn verify` succeeded: 289 tests, 0 failures, 3 skipped on the current branch.
+- Backend Docker `mvn verify` succeeded: 292 tests, 0 failures, 3 skipped on the current branch.
 - The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection, cross-operation rejection and capacity decrease rejection; `OperationAssignmentServiceTest` verifies stable ancestor lock order; the Docker suite now reports 289 tests, 0 failures, 3 skipped.
 - Frontend and backend containers were redeployed and reported healthy.
+
+Hierarchy invariants (OperationGroupServiceTest, added on 2026-10-11):
+- `createsLeafWithOptionalCapacityAndInheritedMode` proves a leaf can be created without a capacity and inherits the operation mode.
+- `rejectsThirdLevelGroup` proves the service refuses a child below the supported two-level hierarchy.
+- `refusesDeletingParentWhileChildrenExist` proves a parent cannot be deleted while it still has children.
+- The Docker suite after these tests reports 292 tests, 0 failures, 3 skipped.
 
 Runtime CUA check:
 - Opened the operation editor, selected Organisation and clicked `Descendre le groupe` on Alpha.

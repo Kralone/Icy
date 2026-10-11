@@ -25,6 +25,44 @@ class OperationGroupServiceTest {
         var service = new OperationGroupService(operations, groups, mock(MessageService.class), mock(OperationAssignmentRepository.class));
         assertThatThrownBy(() -> service.create(id, request)).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test void createsLeafWithOptionalCapacityAndInheritedMode() {
+        when(operations.findById(operationId)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Operation.builder().eventId(operationId).build()));
+        when(repository.save(any(OperationGroup.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Équipage Polaris");
+        request.setAssignmentMode(OperationGroup.AssignmentMode.INHERITED);
+        request.setCapacity(null);
+        request.setSortOrder(0);
+
+        service.create(operationId, request);
+
+        verify(repository).save(argThat(group -> group.getParentId() == null
+                && group.getCapacity() == null
+                && group.getAssignmentMode() == OperationGroup.AssignmentMode.INHERITED));
+    }
+
+    @Test void rejectsThirdLevelGroup() {
+        when(operations.findById(operationId)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Operation.builder().eventId(operationId).build()));
+        when(repository.findById(10L)).thenReturn(Optional.of(OperationGroup.builder().id(10L).operationEventId(operationId).parentId(5L).build()));
+        var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Niveau trois");
+        request.setParentId(10L);
+        request.setAssignmentMode(OperationGroup.AssignmentMode.INHERITED);
+        assertThatThrownBy(() -> service.create(operationId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Deux niveaux");
+        verify(repository, never()).save(any());
+    }
+
+    @Test void refusesDeletingParentWhileChildrenExist() {
+        OperationGroup parent = group(1, null);
+        when(repository.existsByParentId(1L)).thenReturn(true);
+        assertThatThrownBy(() -> service.delete(operationId, 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sous-groupes");
+        verify(repository, never()).delete(parent);
+    }
     private final UUID operationId = UUID.randomUUID();
     private final OperationGroupRepository repository = mock(OperationGroupRepository.class);
     private final OperationAssignmentRepository assignments = mock(OperationAssignmentRepository.class);
