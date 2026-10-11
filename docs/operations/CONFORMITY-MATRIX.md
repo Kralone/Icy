@@ -30,7 +30,7 @@ Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-au
 | UI-09 | responsive 3 tailles | operation-page.component.css / CUA | Mesures 390×844, 1280×720 et 3840×2160 sans débordement horizontal | CONFORME (PROUVÉ) | P1 | Conserver les preuves de mesure | 1 / 6 | CUA 11/10/2026 |
 | UI-10 | contrastes et accessibilité | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | UI-11 | états vides/chargement/erreur | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
-| UI-12 | éditeur en zones claires | operation-editor.component | Onglets presents ; organisation deux panneaux absente | PARTIEL | P1 | Gate 3 : refondre editeur | 1 / 6 | En attente |
+| UI-12 | éditeur en zones claires | operation-editor.component | Onglets présents ; organisation en deux panneaux arbre/propriétés, empilement mobile vérifié | CONFORME (PROUVÉ) | P1 | Maintenir la structure et les états vides | 1 / 6 | CUA desktop/mobile 11/10/2026 |
 | UI-13 | icônes/émoticônes | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | UI-14 | cohérence visuelle autres pages | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 1 / 6 | En attente |
 | GRP-01 | deux niveaux | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
