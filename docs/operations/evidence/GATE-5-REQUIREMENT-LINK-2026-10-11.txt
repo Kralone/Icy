@@ -19,4 +19,8 @@ Après rechargement, la page affiche l’image et le nom `MISC Prospector`, le p
 
 Le bouton `Retirer ma proposition` a ensuite été utilisé. Après rechargement, la carte disparaît et l’état vide `Aucun vaisseau n’est encore renseigné.` est affiché. Le parcours organisateur `POST .../unavailable` et son statut `UNAVAILABLE` sont couverts par `OperationShipServiceTest`.
 
-Cette preuve clôture le parcours hangar → besoin → carte liée et le retrait participant. La vérification visuelle d’un marquage `Indisponible` par l’organisateur reste à capturer séparément.
+Cette preuve clôture le parcours hangar → besoin → carte liée et le retrait participant.
+
+## Preuve runtime organisateur
+
+Depuis l’éditeur `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit`, onglet `Inscriptions et permissions`, la proposition est apparue dans `Propositions de vaisseaux : 1` avec le bouton `Marquer indisponible`. Après activation, l’interface a affiché `Proposition marquée indisponible.` et la ligne est passée de `PROPOSED` à `UNAVAILABLE`. La proposition QA a ensuite été supprimée de la base de validation pour ne pas polluer les données de démonstration.
