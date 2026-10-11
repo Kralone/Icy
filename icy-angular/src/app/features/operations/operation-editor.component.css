@@ -21,6 +21,9 @@ header a { color: #a5f3fc; text-decoration: none; } h1 { margin: .5rem 0 2rem; c
 .participant-preview h3 { margin: .45rem 0; font-size: 1.7rem; color: #a5f3fc; }
 .participant-preview h4 { margin: 1rem 0 .25rem; color: #67e8f9; }
 .participant-preview ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.participant-preview .preview-list { list-style: none; padding-left: 0; display: grid; gap: .45rem; }
+.participant-preview .preview-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem .7rem; border: 1px solid rgba(148,163,184,.2); border-radius: .55rem; background: rgba(15,23,42,.55); }
+.participant-preview .preview-list span, .preview-participation { color: #cbd5e1; font-size: .9rem; }
 .permission-summary { display: grid; gap: .45rem; margin-top: 1rem; padding: 1rem; border-left: 3px solid #22d3ee; background: #111827; color: #bae6fd; }
 .objectives-head { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }.objectives-head h2 { margin: 0; }.objective-actions { display: flex; gap: .5rem; flex-wrap: wrap; }.objective-actions button, .objective-order button { border: 1px solid #36546a; border-radius: .4rem; padding: .45rem .65rem; color: #bae6fd; background: #122235; }.objective-list { display: grid; gap: .65rem; }.objective-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; gap: .55rem; align-items: center; padding: .6rem; border: 1px solid rgba(103,232,249,.18); border-radius: .6rem; background: #0b1525; }.objective-row select { border: 1px solid #475569; border-radius: .45rem; padding: .75rem; color: #dffaff; background: #111827; }.objective-order { display: flex; gap: .25rem; }.objective-order button:disabled { opacity: .35; }.objective-order button:last-child { color: #fecaca; }
 @media (max-width: 760px) { .organization-workspace { grid-template-columns: 1fr; } }
