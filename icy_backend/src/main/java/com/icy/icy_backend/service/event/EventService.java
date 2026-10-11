@@ -32,6 +32,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.*;
 import java.util.*;
@@ -76,6 +78,7 @@ public class EventService {
         this.notificationPushService = notificationPushService;
     }
 
+    @Transactional
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
             String type,
             String title,
@@ -105,15 +108,29 @@ public class EventService {
         // 🔹 Persistance
         Event saved = eventRepository.save(event);
 
-        // 🔹 Diffusion temps réel + message RabbitMQ
-        eventWebSocketService.sendEventUpdate(saved, "ADD");
-        eventPublisher.publishEventCreated(saved);
-        notificationPushService.sendBroadcast(
-                "Evenement : cree",
-                saved.getTitle() + " est disponible.",
-                "/icy/events",
-                2
-        );
+        // Une opération est convertie dans la même transaction. Les effets externes
+        // ne doivent partir qu’après le commit, sinon un rollback laisse un événement
+        // visible sur le calendrier, Discord ou les notifications.
+        Runnable publish = () -> {
+            eventWebSocketService.sendEventUpdate(saved, "ADD");
+            eventPublisher.publishEventCreated(saved);
+            notificationPushService.sendBroadcast(
+                    "Evenement : cree",
+                    saved.getTitle() + " est disponible.",
+                    "/icy/events",
+                    2
+            );
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    publish.run();
+                }
+            });
+        } else {
+            publish.run();
+        }
 
         return messageService.buildResponse("event.created", new EventResponseDTO(saved));
     }
