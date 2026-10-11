@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GlobalExceptionHandlerSecurityTest {
 
@@ -31,5 +32,16 @@ class GlobalExceptionHandlerSecurityTest {
         handler.handleAccessDeniedException(response);
 
         verify(response).sendError(403);
+    }
+
+    @Test
+    void exposesBusinessStateErrorsAsBadRequestWithMessage() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(mock(MessageService.class));
+
+        var response = handler.handleIllegalStateException(new IllegalStateException("Groupe complet"));
+
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("Groupe complet", response.getBody().get("message"));
+        assertEquals("Bad Request", response.getBody().get("error"));
     }
 }
