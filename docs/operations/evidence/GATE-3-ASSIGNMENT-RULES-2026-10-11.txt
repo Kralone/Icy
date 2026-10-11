@@ -8,10 +8,12 @@ Tests backend ciblés dans `OperationAssignmentServiceTest` :
 - `locksLeafAndAncestorsInStableOrderBeforeCapacityRead` couvre l’affectation libre sur une feuille et le verrouillage feuille/ancêtres.
 - `reusesExistingUserAssignmentWhenChangingLeaf` réutilise l’affectation existante de l’utilisateur et vérifie qu’une seule ligne est sauvegardée lors d’un changement de feuille.
 - `refusesSecondPendingRequestForSameUserAndOperation` refuse une seconde demande active pour le même joueur et la même opération, sans écriture.
+- `creatingTransferRequestLeavesConfirmedAssignmentUntouched` vérifie qu’une demande de transfert ne touche pas l’affectation confirmée.
+- `approvingTransferMovesExistingAssignmentAndMarksRequestApproved` vérifie qu’une approbation déplace la ligne existante et clôt la demande.
 
-La suite Docker backend validée précédemment passe à **296 tests, 0 échec, 3 ignorés** ; le test ciblé d’affectation réexécuté après cet ajout passe à **8 tests, 0 échec**.
+La suite Docker backend validée précédemment passe à **296 tests, 0 échec, 3 ignorés** ; le test ciblé `OperationAssignmentServiceTest` réexécuté après cet ajout passe à **10 tests, 0 échec** et le build Maven ciblé est réussi.
 Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification visuelle des contrôles UI/mobile.
 
 Deux validations indépendantes ont confirmé GRP-02, GRP-06 et GRP-07 comme CONFORME (PROUVÉ) dans cette portée serveur. Elles maintiennent séparément ouverts les transferts en attente, la conservation de l’ancienne place et la vérification UI/mobile.
 
-La relecture indépendante confirme aussi la portée du nouveau test : il couvre uniquement l’unicité d’une demande `PENDING`. GRP-09 (transition atomique) et GRP-10 (ancienne affectation conservée pendant l’attente) restent NON VÉRIFIÉS.
+La relecture indépendante précédente confirmait l’unicité d’une demande `PENDING`. Les nouveaux tests ajoutent la conservation de l’affectation pendant l’attente et le déplacement à l’approbation ; la transaction complète et son rollback sous erreur restent à vérifier.

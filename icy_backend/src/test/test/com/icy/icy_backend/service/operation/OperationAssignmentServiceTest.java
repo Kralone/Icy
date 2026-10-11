@@ -249,4 +249,68 @@ class OperationAssignmentServiceTest {
                 .hasMessage("Demande déjà en attente");
         verify(requests, never()).save(any());
     }
+
+    @Test
+    void creatingTransferRequestLeavesConfirmedAssignmentUntouched() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var assignments = mock(OperationAssignmentRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.VALIDATION).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findLockedById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, mock(EventRepository.class),
+                participation, mock(MessageService.class), requests);
+        service.request(operationId, 2L);
+
+        verify(requests).save(any(OperationAssignmentRequest.class));
+        verifyNoInteractions(assignments);
+    }
+
+    @Test
+    void approvingTransferMovesExistingAssignmentAndMarksRequestApproved() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var assignments = mock(OperationAssignmentRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var request = OperationAssignmentRequest.builder().id(requestId).operationEventId(operationId)
+                .groupId(2L).userId(userId).build();
+        var target = OperationGroup.builder().id(2L).operationEventId(operationId)
+                .assignmentMode(OperationGroup.AssignmentMode.VALIDATION).build();
+        var current = OperationAssignment.builder().id(UUID.randomUUID()).operationEventId(operationId)
+                .groupId(1L).userId(userId).status(OperationAssignment.Status.CONFIRMED).build();
+        when(requests.findById(requestId)).thenReturn(Optional.of(request));
+        when(groups.findById(2L)).thenReturn(Optional.of(target));
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(target));
+        when(groups.findLockedById(2L)).thenReturn(Optional.of(target));
+        when(assignments.findByOperationEventId(operationId)).thenReturn(List.of(current));
+        when(assignments.findByOperationEventIdAndUserId(operationId, userId)).thenReturn(Optional.of(current));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(UUID.randomUUID(), "admin", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, mock(EventRepository.class),
+                mock(EventParticipationRepository.class), mock(MessageService.class), requests);
+        service.decide(requestId, true);
+
+        assertThat(current.getGroupId()).isEqualTo(2L);
+        assertThat(request.getStatus()).isEqualTo(OperationAssignmentRequest.Status.APPROVED);
+        verify(assignments).save(current);
+        verify(requests).save(request);
+    }
 }
