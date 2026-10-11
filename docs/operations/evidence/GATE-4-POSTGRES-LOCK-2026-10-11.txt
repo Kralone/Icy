@@ -14,7 +14,7 @@ icy_backend\mvnw.cmd -q -Diceforge.integration=true -Diceforge.jdbc.url=jdbc:pos
 
 Résultat : code retour `0`, test réussi. La seconde transaction reste bloquée tant que la première n'a pas validé, puis termine après le `commit`.
 
-Cette preuve confirme le comportement de verrou PostgreSQL utilisé par `findLockedById`. Elle ne remplace pas encore une intégration Spring complète qui appelle `OperationAssignmentService` avec deux affectations concurrentes et un parent réellement plein ; SEC-04 reste donc partiel jusqu'à cette fixture métier.
+Cette preuve confirme le comportement de verrou PostgreSQL utilisé par `findLockedById`. La fixture métier complète ci-dessous couvre désormais les deux appels concurrents ; seul le rendu runtime authentifié du refus reste à archiver.
 
 ## Preuve métier concurrente
 

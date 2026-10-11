@@ -9,8 +9,8 @@ Implementation evidence
 
 Validation:
 - Frontend Docker build succeeded after the controls were added.
-- Backend Docker `mvn verify` succeeded: 266 tests, 0 failures, 3 skipped.
-- The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection, cross-operation rejection and capacity decrease rejection; `OperationAssignmentServiceTest` verifies stable ancestor lock order; the Docker suite now reports 272 tests, 0 failures, 3 skipped.
+- Backend Docker `mvn verify` succeeded: 280 tests, 0 failures, 3 skipped on the current branch.
+- The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection, cross-operation rejection and capacity decrease rejection; `OperationAssignmentServiceTest` verifies stable ancestor lock order; the Docker suite now reports 280 tests, 0 failures, 3 skipped.
 - Frontend and backend containers were redeployed and reported healthy.
 
 Runtime CUA check:
@@ -21,7 +21,7 @@ Runtime CUA check:
 Capacity implementation:
 - `OperationAssignmentService.ensureCapacity` counts confirmed users across the selected leaf and each capacity-bearing ancestor.
 - `OperationGroupService.update` rejects a capacity lower than confirmed users in the edited group subtree.
-- Parent-capacity and capacity-decrease runtime fixtures remain to be added before these rows can be marked conforming.
+- Parent-capacity and capacity-decrease service fixtures are covered by the current integration/unit suite; the remaining runtime gap is the visible participant refusal state.
 - Capacity decisions now lock the leaf and all ancestors in ascending ID order before reading assignments; `OperationAssignmentServiceTest` verifies the stable lock order. A two-transaction database integration test remains for final SEC-04 evidence.
 
 CUA éditeur authentifié : Organisation rendue en deux panneaux desktop (arborescence à gauche, propriétés à droite) ; CSS passe en une colonne sous 760px. Build Angular Docker réussi.

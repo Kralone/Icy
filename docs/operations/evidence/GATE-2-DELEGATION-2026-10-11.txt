@@ -17,4 +17,4 @@ Read-only editor proof:
  - It displayed `Demandes de groupe : 0` and `Aucune demande en attente.` without a server error.
 - The editor now exposes Approve/Refuse actions for pending requests; the server mutation is covered by the integration proof above.
 
-Régression d’autorisation ajoutée : tests de refus d’un frère et de décision autorisée par un responsable parent sur un enfant. Suite backend Docker : 276 tests, 0 échec, 3 ignorés.
+Régression d’autorisation ajoutée : tests de refus d’un frère et de décision autorisée par un responsable délégué. La suite complète actuelle est documentée à 280 tests, 0 échec, 3 ignorés.
