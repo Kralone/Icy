@@ -28,6 +28,7 @@ export class OperationEditorComponent {
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   groups: any[] = [];
   groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0 };
+  editingGroupId: number | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
   saving = false;
@@ -63,10 +64,15 @@ export class OperationEditorComponent {
   }
 
   createGroup(operationId: string) {
-    this.eventService.createOperationGroup(operationId, this.groupForm).subscribe({ next: () => {
-      this.message = 'Groupe créé.';
+    const request = this.editingGroupId ? this.eventService.updateOperationGroup(operationId, this.editingGroupId, this.groupForm) : this.eventService.createOperationGroup(operationId, this.groupForm);
+    request.subscribe({ next: () => {
+      this.message = this.editingGroupId ? 'Groupe mis à jour.' : 'Groupe créé.';
       this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data);
+      this.editingGroupId = null;
       this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0 };
     }, error: error => this.message = error?.error?.message || 'Création impossible.' });
   }
+
+  editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0 }; }
+  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer le groupe « ${group.name} » ?`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
 }
