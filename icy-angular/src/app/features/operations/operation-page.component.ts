@@ -41,11 +41,6 @@ export class OperationPageComponent {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly shipsRefresh$ = new Subject<void>();
-  readonly operation$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
-    map(response => response.data),
-    catchError(() => of(null))
-  );
   readonly operationState$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
     map(response => ({ status: 'READY', data: response.data } as OperationViewState)),

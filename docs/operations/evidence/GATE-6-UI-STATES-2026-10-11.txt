@@ -1,0 +1,6 @@
+# Gate 6 — états UI participant — 2026-10-11
+
+- Build frontend Docker réussi après l’ajout de l’état discriminé `LOADING` / `ERROR` / `READY` dans `OperationPageComponent`.
+- CUA authentifié sur un deep-link inexistant `00000000-0000-0000-0000-000000000000` : l’écran affiche `Opération indisponible`, le message « La fiche n’a pas pu être chargée. Vérifiez votre connexion puis réessayez. » et le lien `Retour au calendrier`.
+- Les états vides groupes, flotte, hangar et propositions restent rendus dans l’état `READY`.
+- Portée : l’état erreur est prouvé runtime ; les états chargement et prêt n’ont pas encore chacun une capture dédiée archivées. UI-11 reste donc `PARTIEL`.
