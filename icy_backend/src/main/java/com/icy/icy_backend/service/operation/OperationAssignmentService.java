@@ -41,7 +41,7 @@ public class OperationAssignmentService {
         if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
         OperationGroup group = groupRepository.findLockedById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         UUID currentUser = AuthUtils.getCurrentUserId();
-        if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !currentUser.equals(group.getResponsibleUserId())) {
+        if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
@@ -50,6 +50,16 @@ public class OperationAssignmentService {
         assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
         request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
         return messageService.buildResponse("operation.assignment.approved", null);
+    }
+
+    private boolean hasResponsibleScope(UUID userId, OperationGroup target) {
+        OperationGroup cursor = target;
+        int depth = 0;
+        while (cursor != null && depth++ < 2) {
+            if (userId.equals(cursor.getResponsibleUserId())) return true;
+            cursor = cursor.getParentId() == null ? null : groupRepository.findById(cursor.getParentId()).orElse(null);
+        }
+        return false;
     }
 
     @Transactional

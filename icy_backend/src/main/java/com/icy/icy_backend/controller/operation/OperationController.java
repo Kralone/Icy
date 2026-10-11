@@ -18,7 +18,9 @@ import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
+import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
 import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.OperationAssignmentRequestResponseDTO;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.event.EventService;
@@ -54,6 +56,7 @@ public class OperationController {
     private final OperationShipService shipService;
     private final OperationGroupService groupService;
     private final OperationShipProposalRepository proposalRepository;
+    private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
     private final UserShipRepository userShipRepository;
 
@@ -125,6 +128,14 @@ public class OperationController {
     @PostMapping("/assignment-requests/{requestId}/refuse")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<Void>> refuseAssignment(@PathVariable UUID requestId) { return assignmentService.decide(requestId, false); }
+
+    @GetMapping("/{id}/assignment-requests")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<List<OperationAssignmentRequestResponseDTO>>> assignmentRequests(@PathVariable UUID id) {
+        operationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        List<OperationAssignmentRequestResponseDTO> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream().map(OperationAssignmentRequestResponseDTO::new).toList();
+        return messageService.buildResponse("operation.assignment.requests", requests);
+    }
 
     @GetMapping("/{id}/groups")
     @PreAuthorize("isAuthenticated()")
