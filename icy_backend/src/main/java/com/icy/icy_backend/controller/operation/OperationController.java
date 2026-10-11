@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.List;
@@ -55,6 +56,7 @@ public class OperationController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(request.getType(), request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
         return operationService.convert(created.getBody().getData().getId());

@@ -3,14 +3,14 @@
 ## Références
 
 - Branche observée : `main`
-- Commit : `934e360`
+- Commit : `6262a36` (audit courant ; l’annotation transactionnelle ajoutée ensuite doit être incluse au prochain commit)
 - Base distante connue : `origin/main` local `3e6d216`, non actualisée
 - Cahiers : `ICEFORGE_CODEX_OPERATIONS_V1.md` et `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`
 - Matrice : `docs/operations/CONFORMITY-MATRIX.md`
 
 ## Périmètre observé
 
-Le dépôt est propre au commit de référence. Les routes, contrôleurs, services et migrations Opérations existent. La carte admin « Nouvelle opération » et la page participant existent également. Le formulaire de gestion des événements contient désormais un bouton de conversion qui sauvegarde l’événement puis ouvre l’éditeur. La transaction complète, le rollback et les preuves UI restent à valider.
+Le dépôt est propre au commit de référence. Les routes, contrôleurs, services et migrations Opérations existent. La carte admin « Nouvelle opération » et la page participant existent également. Le formulaire de gestion des événements contient désormais un bouton de conversion et un feedback d’erreur. L’atomicité serveur, les effets diffusés et les preuves UI restent à valider.
 
 ## Preuves reproductibles
 
@@ -25,7 +25,7 @@ Trois relecteurs indépendants identifiés par leurs tâches Codex ont relu le d
 
 | Axe | Statut | Constat |
 |---|---|---|
-| Technique | FAIL | Transaction conversion en deux appels, tests E2E absents et branche dédiée impossible à créer avec les permissions Git. |
+| Technique | FAIL | Atomicité et effets diffusés à prouver, tests E2E absents et branche dédiée impossible à créer avec les permissions Git. |
 | UI/UX desktop | FAIL | Formulaire CRUD autonome, aucun mockup ni capture réelle. |
 | UI/UX mobile | NON VÉRIFIÉ | CSS présent mais aucune capture 390 px ni test clavier/débordement. |
 | Sécurité | FAIL | Délégation, brouillons privés et permission de proposer un vaisseau incomplets. |
