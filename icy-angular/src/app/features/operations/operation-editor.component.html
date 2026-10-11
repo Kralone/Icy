@@ -30,6 +30,14 @@
         <label>Mode<select [(ngModel)]="groupForm.assignmentMode"><option value="INHERITED">Hérité</option><option value="FREE">Libre</option><option value="VALIDATION">Sur validation</option><option value="MANAGED">Géré</option></select></label>
         <label>Responsable délégué (UUID utilisateur)<input [(ngModel)]="groupForm.responsibleUserId" placeholder="Facultatif"></label>
         <button type="button" class="primary" (click)="createGroup(operation.id)">{{ editingGroupId ? 'Mettre à jour le groupe' : 'Créer le groupe' }}</button>
+        <h3>Besoins de vaisseaux</h3>
+        <p class="muted">Un besoin décrit une ressource attendue ; il reste séparé des appareils proposés par les membres.</p>
+        @if (shipRequirements$ | async; as requirements) { @if (requirements.length) { <div class="permission-summary">@for (requirement of requirements; track requirement.id) { <span>{{ requirement.quantity }} × modèle {{ requirement.shipModelId || 'à préciser' }} · {{ requirement.status }} <button type="button" (click)="deleteShipRequirement(operation.id, requirement.id)">Supprimer</button></span> }</div> } @else { <p class="empty-state">Aucun besoin de vaisseau.</p> } }
+        <label>Modèle catalogue (ID facultatif)<input type="number" [(ngModel)]="requirementForm.shipModelId"></label>
+        <label>Quantité<input type="number" min="1" max="100" [(ngModel)]="requirementForm.quantity"></label>
+        <label>Groupe feuille (ID facultatif)<input type="number" [(ngModel)]="requirementForm.groupId"></label>
+        <label>Notes<textarea [(ngModel)]="requirementForm.notes" maxlength="5000" rows="2"></textarea></label>
+        <button type="button" (click)="createShipRequirement(operation.id)">Ajouter le besoin</button>
       } @else {
         <h2>Inscriptions et permissions</h2><p class="muted">Les membres choisissent Présent, Peut-être ou Absent. Une affectation ou une proposition de vaisseau exige le statut Présent.</p><label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label><div class="permission-summary"><strong>Règles actives</strong><span>Une affectation principale par opération</span><span>Les groupes en validation créent une demande</span><span>Les groupes gérés restent sous contrôle organisateur</span></div>@if (assignmentRequests$ | async; as requests) { <div class="permission-summary"><strong>Demandes de groupe : {{ requests.length }}</strong>@if (!requests.length) { <span>Aucune demande en attente.</span> } @for (request of requests; track request.id) { <span>{{ request.userId }} · groupe {{ request.groupId }} · {{ request.status }} @if (request.status === 'PENDING') { <button type="button" (click)="decideAssignment(request.id, true)">Approuver</button><button type="button" (click)="decideAssignment(request.id, false)">Refuser</button> }</span> } </div> }
       }

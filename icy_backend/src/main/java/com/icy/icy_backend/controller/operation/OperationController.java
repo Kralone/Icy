@@ -21,6 +21,8 @@ import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
 import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
 import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseDTO;
 import com.icy.icy_backend.controller.dto.response.event.OperationAssignmentRequestResponseDTO;
+import com.icy.icy_backend.controller.dto.operation.OperationShipRequirementRequest;
+import com.icy.icy_backend.controller.dto.response.event.OperationShipRequirementResponseDTO;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.event.EventService;
@@ -59,6 +61,7 @@ public class OperationController {
     private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
     private final UserShipRepository userShipRepository;
+    private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -107,6 +110,30 @@ public class OperationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<Void>> proposeShip(@PathVariable UUID id, @RequestParam Long shipId, @RequestParam(required = false) Long groupId) {
         return shipService.propose(id, shipId, groupId);
+    }
+
+    @GetMapping("/{id}/ship-requirements")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<List<OperationShipRequirementResponseDTO>>> shipRequirements(@PathVariable UUID id) {
+        return messageService.buildResponse("operation.ship.requirements", shipRequirementService.list(id));
+    }
+
+    @PostMapping("/{id}/ship-requirements")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> createShipRequirement(@PathVariable UUID id, @RequestBody OperationShipRequirementRequest request) {
+        return shipRequirementService.create(id, request);
+    }
+
+    @PutMapping("/{id}/ship-requirements/{requirementId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> updateShipRequirement(@PathVariable UUID id, @PathVariable UUID requirementId, @RequestBody OperationShipRequirementRequest request) {
+        return shipRequirementService.update(id, requirementId, request);
+    }
+
+    @DeleteMapping("/{id}/ship-requirements/{requirementId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> deleteShipRequirement(@PathVariable UUID id, @PathVariable UUID requirementId) {
+        return shipRequirementService.delete(id, requirementId);
     }
 
     @PostMapping("/{id}/assignments/me/{groupId}")

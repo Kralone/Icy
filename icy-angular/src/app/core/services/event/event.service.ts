@@ -144,4 +144,7 @@ export class EventService {
   getOperationAssignmentRequests(operationId: string) { return this.http.get<{ data: Array<{ id: string; groupId: number; userId: string; status: string; createdAt: string }> }>(`/api/operations/${operationId}/assignment-requests`); }
   approveOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/approve`, {}); }
   refuseOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/refuse`, {}); }
+  getOperationShipRequirements(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/ship-requirements`); }
+  createOperationShipRequirement(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/ship-requirements`, payload); }
+  deleteOperationShipRequirement(operationId: string, requirementId: string) { return this.http.delete(`/api/operations/${operationId}/ship-requirements/${requirementId}`); }
 }
