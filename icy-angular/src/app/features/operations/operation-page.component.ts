@@ -21,6 +21,7 @@ interface OperationPageModel {
   finished: boolean;
 }
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string }; }
+interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
 
 @Component({
   standalone: true,
@@ -67,6 +68,14 @@ export class OperationPageComponent {
   selectedShipGroupId: number | null = null;
   participationStatus: number | null = null;
   assignmentMessage = '';
+  objectiveItems(value?: string): ObjectiveItem[] {
+    if (!value?.trim()) return [];
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(item => item && typeof item.text === 'string').map(item => ({ kind: item.kind === 'SECONDAIRE' ? 'SECONDAIRE' : 'PRINCIPAL', text: item.text }));
+    } catch { /* Legacy plain text remains readable below. */ }
+    return [{ kind: 'PRINCIPAL', text: value }];
+  }
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
     this.assignmentMessage = '';

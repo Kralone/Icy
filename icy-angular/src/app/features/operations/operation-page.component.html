@@ -30,7 +30,7 @@
       <article class="operation-card">
         <p class="eyebrow">Objectifs</p>
         <h2>Mission accomplie si…</h2>
-        <p>{{ operation.objectives || 'Les objectifs seront précisés par l’organisateur.' }}</p>
+        @if (objectiveItems(operation.objectives); as objectives) { @if (objectives.length) { <ul class="objective-display">@for (objective of objectives; track $index) { <li><span>{{ objective.kind === 'PRINCIPAL' ? 'Principal' : 'Secondaire' }}</span>{{ objective.text }}</li> }</ul> } @else { <p>Les objectifs seront précisés par l’organisateur.</p> } }
       </article>
       <article class="operation-card">
         <p class="eyebrow">Organisation</p>

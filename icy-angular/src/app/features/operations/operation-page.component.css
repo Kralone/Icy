@@ -18,6 +18,7 @@ h1 { margin: .6rem 0; font-size: clamp(2.3rem, 6vw, 5.5rem); line-height: .98; c
 .operation-card { grid-column: span 4; padding: clamp(1.2rem, 2vw, 2rem); border: 1px solid rgba(148,163,184,.2); border-radius: .9rem; background: rgba(15,23,42,.82); }
 .operation-card--briefing { grid-column: span 8; }
 .operation-card h2 { margin: .35rem 0 1rem; color: #f8fafc; }
+.objective-display { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }.objective-display li { display: grid; grid-template-columns: 6.5rem 1fr; gap: .7rem; align-items: start; color: #cbd5e1; line-height: 1.5; }.objective-display span { color: #67e8f9; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .operation-card p:not(.eyebrow) { color: #cbd5e1; line-height: 1.7; white-space: pre-wrap; }
 .empty-state { color: #94a3b8 !important; }
 .group-list { display: grid; gap: .55rem; } .group-item { display: flex; justify-content: space-between; gap: .75rem; padding: .7rem; border-left: 3px solid #22d3ee; border-radius: .35rem; background: rgba(30,41,59,.7); } .group-item--child { margin-left: 1rem; border-left-color: #94a3b8; } .group-item span { display: block; color: #bae6fd; font-size: .85rem; } .group-item button { align-self: center; border: 1px solid #22d3ee; border-radius: .35rem; padding: .35rem .55rem; color: #cffafe; background: #164e63; } .group-item button:disabled { opacity: .45; }
