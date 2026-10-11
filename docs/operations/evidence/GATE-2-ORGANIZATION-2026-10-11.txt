@@ -27,3 +27,5 @@ Capacity implementation:
 CUA éditeur authentifié : Organisation rendue en deux panneaux desktop (arborescence à gauche, propriétés à droite) ; CSS passe en une colonne sous 760px. Build Angular Docker réussi.
 
 CUA mobile 390x844 : client 390 / scroll 390 / body 390, sans débordement horizontal dans l’éditeur Organisation.
+
+Après reconstruction du frontend, l’éditeur Organisation expose un sélecteur nommé `Responsable délégué`. Le menu CUA contient `validation_officier`, `validation_user` et `validation_admin` avec leurs UUID, ainsi que `Aucun responsable`; aucune saisie UUID libre n’est nécessaire. Les quatre modes d’affectation (Hérité, Libre, Sur validation, Géré) restent accessibles dans le même écran.
