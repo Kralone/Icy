@@ -20,6 +20,12 @@ Responsive
 - document.body.scrollWidth : 390
 - Débordement horizontal : absent
 
+Fiche participant publiée (retest local)
+- Route : `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04`
+- La vue mobile 390×844 affiche le hero, la situation/participation, le briefing et les objectifs.
+- Mesures : `clientWidth=390`, `scrollWidth=390`, `bodyWidth=390`.
+- Les groupes hérités exposent désormais un bouton `Choisir` actif après résolution du mode effectif.
+
 Builds
 - Backend Docker : mvn verify terminé avec succès dans l’image locale.
 - Frontend Docker : npm run build terminé avec succès ; avertissements de budget CSS existants.
