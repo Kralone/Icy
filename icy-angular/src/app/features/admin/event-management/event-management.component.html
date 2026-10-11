@@ -92,14 +92,6 @@
 
           <div class="flex justify-end mt-6">
             <button
-              type="button"
-              (click)="convertToOperation()"
-              [disabled]="isFormInvalid || isConverting"
-              class="mr-3 px-6 py-2 rounded-full font-semibold border border-cyan-300/50 text-cyan-100 hover:bg-cyan-300/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {{ isConverting ? 'Ouverture de l’éditeur…' : 'Transformer en opération' }}
-            </button>
-            <button
               (click)="createEvent()"
               [disabled]="isFormInvalid"
         class="px-6 py-2 rounded-full font-semibold shadow-[0_18px_40px_rgba(0,255,255,0.2)] bg-gradient-to-r from-cyan-400 to-sky-500
@@ -109,9 +101,6 @@
               {{ isSubmitting ? 'Création…' : 'Ajouter' }}
             </button>
           </div>
-          @if (conversionError) {
-            <p class="mt-3 text-right text-sm text-rose-200" role="alert">{{ conversionError }}</p>
-          }
         </div>
 
         <!-- === SECTION 2 : Événements créés === -->

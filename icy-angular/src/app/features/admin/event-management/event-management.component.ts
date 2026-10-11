@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { EventService, EventDTO } from '../../../core/services/event/event.service';
 import { EventType } from '../../../model/event-type.model';
 
@@ -39,8 +39,6 @@ export class EventManagementComponent implements OnInit {
 
   // === État de création / édition ===
   isSubmitting = false;
-  isConverting = false;
-  conversionError = '';
   editingEvent: EventDTO | null = null;
   isUpdatingEvent = false;
   isViewMode = false;
@@ -69,7 +67,7 @@ export class EventManagementComponent implements OnInit {
   }
 
 
-  constructor(private eventService: EventService, private router: Router) {}
+  constructor(private eventService: EventService) {}
 
   ngOnInit() {
     this.loadTypes();
@@ -169,24 +167,6 @@ export class EventManagementComponent implements OnInit {
         console.error('Erreur création événement', err);
         this.isSubmitting = false;
       },
-    });
-  }
-
-  /** Sauvegarde la saisie de l’événement puis ouvre l’éditeur Opération. */
-  convertToOperation() {
-    if (this.isFormInvalid) return;
-    this.conversionError = '';
-    this.isConverting = true;
-    this.eventService.createOperation(this.newEvent).subscribe({
-      next: (operation) => {
-        this.isConverting = false;
-        this.router.navigate(['/icy/operations', operation.id, 'edit']);
-      },
-      error: (err) => {
-        console.error('Erreur création opération', err);
-        this.conversionError = 'La création de l’opération a échoué. Aucune opération n’a été publiée.';
-        this.isConverting = false;
-      }
     });
   }
 
