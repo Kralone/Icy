@@ -4,26 +4,26 @@
 - API séparée : lecture authentifiée des besoins, mutations admin/officier, contrôle du périmètre opération/groupe.
 - Éditeur opération : création et suppression depuis l’onglet Organisation ; la liste se rafraîchit après mutation.
 - Participant : les besoins ouverts sont visibles dans la carte Ressources, avant les vaisseaux effectivement proposés.
-- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 286 tests, 0 échec, 3 ignorés.
+- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 287 tests, 0 échec, 3 ignorés.
 - V50 : une association explicite besoin↔proposition est persistée et contrôlée côté serveur ; aucune association automatique n’est créée.
 
 Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux non-organisateurs ; ADMIN/OFFICIER conservent l’accès d’édition.
 
-Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 286 tests, 0 échec, 3 ignorés.
+Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 287 tests, 0 échec, 3 ignorés.
 
-Suite backend après tests de scope : 286 tests, 0 échec, 3 ignorés.
+Suite backend après tests de scope : 287 tests, 0 échec, 3 ignorés.
 
-Contrôles de proposition couverts par `OperationShipServiceTest` et inclus dans la vérification Docker (286/0/3) : une opération publiée qui désactive `allowShipProposals` refuse la proposition avant tout accès au hangar ; un vaisseau absent du hangar personnel est refusé et aucune proposition n’est enregistrée.
+Contrôles de proposition couverts par `OperationShipServiceTest` et inclus dans la vérification Docker (287/0/3) : une opération publiée qui désactive `allowShipProposals` refuse la proposition avant tout accès au hangar ; un vaisseau absent du hangar personnel est refusé et aucune proposition n’est enregistrée.
 
 CUA éditeur authentifié : onglet Organisation expose la recherche catalogue « Aurora » et retourne sept modèles nommés ; le groupe se choisit par libellé, sans saisie d’ID brute.
 
 L’éditeur permet maintenant de modifier un besoin existant ; l’API PUT est reliée à l’interface et la liste se rafraîchit après sauvegarde.
 
-Garde-fous ajoutés et testés dans `OperationShipServiceTest` : un besoin `FULFILLED` ou `CANCELLED` n’accepte plus de proposition ; les propositions actives (`PROPOSED`/`ACCEPTED`) sont comptées et ne peuvent pas dépasser `quantity`. Suite Docker : 286 tests, 0 échec, 3 ignorés.
+Garde-fous ajoutés et testés dans `OperationShipServiceTest` : un besoin `FULFILLED` ou `CANCELLED` n’accepte plus de proposition ; les propositions actives (`PROPOSED`/`ACCEPTED`) sont comptées et ne peuvent pas dépasser `quantity`. Suite Docker : 287 tests, 0 échec, 3 ignorés.
 
 Le test `allowsSeveralProposalsOnTheSameLeafGroup` prouve l’association de plusieurs vaisseaux distincts à un même groupe feuille, sans créer de seconde affectation principale.
 
-V51 ajoute `pilot_user_id`, distinct de `owner_user_id`. L’organisateur peut affecter ou retirer le pilote par l’API dédiée ; le serveur exige que le pilote soit inscrit `Présent`. Le test `assignsPilotSeparatelyFromProposalOwner` prouve deux identités distinctes et la suite Docker est à 286 tests, 0 échec, 3 ignorés.
+V51 ajoute `pilot_user_id`, distinct de `owner_user_id`. L’organisateur peut affecter ou retirer le pilote par l’API dédiée ; le serveur exige que le pilote soit inscrit `Présent`. Le test `assignsPilotSeparatelyFromProposalOwner` prouve deux identités distinctes et la suite Docker est à 287 tests, 0 échec, 3 ignorés.
 
 Portée de la preuve SHP-03 : code, test de service et sélecteur éditeur validés indépendamment ; aucune capture CUA dédiée de la mutation pilote n’est présentée comme preuve runtime.
 

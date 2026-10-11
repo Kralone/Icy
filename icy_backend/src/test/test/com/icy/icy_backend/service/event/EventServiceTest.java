@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -74,6 +75,19 @@ class EventServiceTest {
             verify(eventPublisher).publishEventCreated(any(Event.class));
             verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
         }
+    }
+
+    @Test
+    void createEventRejectsMissingOrInvalidDates() {
+        EventService service = new EventService(Mockito.mock(EventRepository.class), Mockito.mock(MessageService.class),
+                Mockito.mock(EventWebSocketService.class), Mockito.mock(EventTypeRepository.class),
+                Mockito.mock(EventParticipationRepository.class), Mockito.mock(UserService.class),
+                Mockito.mock(AuthService.class), Mockito.mock(EventPublisher.class), Mockito.mock(NotificationPushService.class));
+        assertThatThrownBy(() -> service.createEvent("Type", "Title", "Desc", null, LocalDateTime.now()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("obligatoires");
+        LocalDateTime sameDate = LocalDateTime.now();
+        assertThatThrownBy(() -> service.createEvent("Type", "Title", "Desc", sameDate, sameDate))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("postérieure");
     }
 
     @Test

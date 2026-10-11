@@ -86,6 +86,7 @@ public class EventService {
             LocalDateTime start,
             LocalDateTime end
     ) {
+        validateEventDates(start, end);
         // 🔹 Récupération du créateur (user connecté)
         UUID userId = AuthUtils.getCurrentUserId();
         User creator = userService.findUserById(userId);
@@ -146,6 +147,7 @@ public class EventService {
             LocalDateTime end,
             boolean finished
     ) {
+        validateEventDates(start, end);
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
 
@@ -207,6 +209,15 @@ public class EventService {
         }
 
         return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
+    }
+
+    private void validateEventDates(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("La date et l’heure de début et de fin sont obligatoires");
+        }
+        if (!end.isAfter(start)) {
+            throw new IllegalArgumentException("La fin doit être postérieure au début");
+        }
     }
 
 
