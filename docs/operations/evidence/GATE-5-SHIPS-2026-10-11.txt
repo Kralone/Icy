@@ -12,3 +12,5 @@ Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux
 Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 274 tests, 0 échec, 3 ignorés.
 
 Suite backend après tests de scope : 276 tests, 0 échec, 3 ignorés.
+
+CUA éditeur authentifié : onglet Organisation expose la recherche catalogue « Aurora » et retourne sept modèles nommés ; le groupe se choisit par libellé, sans saisie d’ID brute.

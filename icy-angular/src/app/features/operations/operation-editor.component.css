@@ -1,4 +1,13 @@
 .operation-editor { min-height: 100%; padding: clamp(1rem, 4vw, 3rem); color: #e2e8f0; background: #0b1220; }
+.requirement-catalog { min-width: 0; border: 1px solid #475569; border-radius: .5rem; padding: 1rem; }
+.catalog-search { display: flex; align-items: end; gap: .75rem; flex-wrap: wrap; }
+.catalog-search label { flex: 1 1 14rem; }
+.catalog-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .5rem; max-height: 22rem; overflow-y: auto; margin-top: .75rem; }
+.catalog-result { display: flex; align-items: center; gap: .5rem; text-align: left; border: 1px solid #475569; border-radius: .4rem; padding: .5rem; color: #e2e8f0; background: #111827; }
+.catalog-result[aria-pressed="true"] { border-color: #67e8f9; background: #164e63; }
+.catalog-result img { width: 4rem; height: 3rem; object-fit: contain; }
+.catalog-result span { overflow-wrap: anywhere; }
+.catalog-search button { padding: .75rem; border: 1px solid #67e8f9; border-radius: .4rem; color: #cffafe; background: #164e63; }
 header, .tabs, .editor-card { width: min(1100px, 100%); margin-inline: auto; }
 header a { color: #a5f3fc; text-decoration: none; } h1 { margin: .5rem 0 2rem; color: #f8fafc; font-size: clamp(2rem, 5vw, 4rem); }
 .eyebrow { color: #67e8f9; text-transform: uppercase; letter-spacing: .14em; font-size: .75rem; font-weight: 700; margin-top: 2rem; }

@@ -24,3 +24,5 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 - Les besoins d’un brouillon sont invisibles aux participants ; les organisateurs gardent l’accès d’édition.
 
 Cette branche n’est pas prête à être fusionnée dans `main` tant que les écarts P0 des Gates 3–5 et la revue du Gate 7 ne sont pas levés par preuve indépendante.
+
+- L’éditeur des besoins utilise désormais un sélecteur catalogue nommé avec images et une sélection de groupe par libellé ; preuve CUA Aurora du 11/10/2026.

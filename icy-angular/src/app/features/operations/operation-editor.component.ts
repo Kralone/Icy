@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
+import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -20,6 +21,31 @@ export interface OperationObjective {
 export class OperationEditorComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly eventService = inject(EventService);
+  private readonly catalogService = inject(CatalogService);
+  readonly catalogResults = signal<CatalogEntry[]>([]);
+  readonly catalogLoading = signal(false);
+  readonly catalogError = signal('');
+  catalogQuery = '';
+  selectedRequirementModel = signal<CatalogEntry | null>(null);
+
+  searchRequirementModels(): void {
+    this.catalogLoading.set(true);
+    this.catalogError.set('');
+    this.catalogService.browse({ query: this.catalogQuery, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 60 }).subscribe({
+      next: response => { this.catalogResults.set(response.data.items); this.catalogLoading.set(false); },
+      error: () => { this.catalogError.set('Le catalogue ne peut pas être chargé. Réessayez.'); this.catalogLoading.set(false); }
+    });
+  }
+
+  selectRequirementModel(model: CatalogEntry): void {
+    this.requirementForm.shipModelId = model.id;
+    this.selectedRequirementModel.set(model);
+  }
+
+  clearRequirementModel(): void {
+    this.requirementForm.shipModelId = null;
+    this.selectedRequirementModel.set(null);
+  }
   readonly operation$ = this.route.paramMap.pipe(
     switchMap(params => this.eventService.getOperationForEdit(params.get('id')!)),
     catchError(() => of(null)),
@@ -100,7 +126,7 @@ export class OperationEditorComponent {
     action.subscribe({ next: () => { this.message = approve ? 'Demande approuvée.' : 'Demande refusée.'; this.assignmentRefresh.next(); }, error: error => this.message = error?.error?.message || 'Décision impossible.' });
   }
   createShipRequirement(operationId: string): void {
-    this.eventService.createOperationShipRequirement(operationId, this.requirementForm).subscribe({ next: () => { this.message = 'Besoin de vaisseau créé.'; this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' }; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Création du besoin impossible.' });
+    this.eventService.createOperationShipRequirement(operationId, this.requirementForm).subscribe({ next: () => { this.message = 'Besoin de vaisseau créé.'; this.clearRequirementModel(); this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' }; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Création du besoin impossible.' });
   }
   deleteShipRequirement(operationId: string, requirementId: string): void {
     this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.message = 'Besoin de vaisseau supprimé.'; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
