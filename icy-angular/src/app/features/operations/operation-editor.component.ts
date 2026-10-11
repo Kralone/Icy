@@ -67,7 +67,9 @@ export class OperationEditorComponent {
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
   private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
+  private readonly shipRefresh = new BehaviorSubject<void>(undefined);
   readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.eventService.getOperationShipRequirements(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
+  readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.eventService.getOperationShips(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   readonly assignmentRequests$ = this.route.paramMap.pipe(switchMap(params => this.assignmentRefresh.pipe(switchMap(() => this.eventService.getOperationAssignmentRequests(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
@@ -145,5 +147,11 @@ export class OperationEditorComponent {
   }
   deleteShipRequirement(operationId: string, requirementId: string): void {
     this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.message = 'Besoin de vaisseau supprimé.'; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
+  }
+  markShipUnavailable(operationId: string, proposalId: string): void {
+    this.eventService.markOperationShipProposalUnavailable(operationId, proposalId).subscribe({
+      next: () => { this.message = 'Proposition marquée indisponible.'; this.shipRefresh.next(); },
+      error: error => this.message = error?.error?.message || 'Impossible de marquer la proposition indisponible.'
+    });
   }
 }
