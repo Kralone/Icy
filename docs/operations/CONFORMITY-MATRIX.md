@@ -1,6 +1,6 @@
 # Matrice de conformité — Opérations V1
 
-État initial du Gate 0, établi sur `main` au commit `934e360`. `NON AUDITÉ` signifie qu’aucune preuve reproductible n’est disponible. Depuis le commit précédent, CRT-01/CRT-02 sont partiellement réalisés : le bouton de conversion existe, mais la transaction, le rollback et les captures restent à valider.
+État initial du Gate 0, établi sur `main` au commit `b67b518`. `NON AUDITÉ` signifie qu’aucune preuve reproductible n’est disponible. CRT-01/CRT-02 sont partiellement réalisés : le bouton et l’endpoint de conversion existent, une transaction englobante est déclarée, mais les effets diffusés, le rollback effectif et les captures restent à valider.
 
 | Domaine | Exigences atomiques | État initial | Écart principal |
 |---|---|---|---|
