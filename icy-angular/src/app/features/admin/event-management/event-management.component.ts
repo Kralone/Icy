@@ -171,6 +171,10 @@ export class EventManagementComponent implements OnInit {
   }
 
   createOperation() {
+    this.router.navigate(['/icy/operations/new']);
+  }
+
+  createOperationFromEvent() {
     if (this.isFormInvalid) return;
     this.isSubmitting = true;
     this.eventService.createOperation(this.newEvent).subscribe({
