@@ -1,37 +1,41 @@
-# Gate 0 — Pack de revue indépendant
+# Gate 0 — Pack de revue courant
 
-## Références
+## Référence
 
-- Branche observée : `main`
-- Commit : `1e28e34`
-- Base distante connue : `origin/main` local `3e6d216`, non actualisée
-- Cahiers : `ICEFORGE_CODEX_OPERATIONS_V1.md` et `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`
-- Matrice : `docs/operations/CONFORMITY-MATRIX.md`
+- Branche : `codex/operations-reprise-audit`
+- Commit de l’audit : `107d6b7`
+- Revue indépendante : [GATE-0-INDEPENDENT-AUDIT.md](GATE-0-INDEPENDENT-AUDIT.md)
+- Matrice atomique : [CONFORMITY-MATRIX.md](../CONFORMITY-MATRIX.md)
+- Addendum d’exécution : [GATE-0-ADDENDUM.md](../GATE-0-ADDENDUM.md)
+- Références métier : `ICEFORGE_CODEX_OPERATIONS_V1.md` et `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`
 
-## Périmètre observé
+## État Git et preuves
 
-Le dépôt est propre au commit de référence. Les routes, contrôleurs, services et migrations Opérations existent. La carte admin « Nouvelle opération » et la page participant existent également. Le formulaire de gestion des événements contient désormais un bouton de conversion et un feedback d’erreur. La création et la conversion sont encadrées par une transaction ; les effets WebSocket, RabbitMQ et push sont enregistrés après commit. Les propositions de vaisseaux exigent l’activation organisateur, un vaisseau détenu et le statut Présent. Les preuves UI et l’intégration complète restent à valider.
+La branche dédiée a été créée sans réinitialiser `main`. Le remote n’a pas été rafraîchi et aucun push, merge ou contrôle de protection distante n’est déclaré. Le pack ne confond pas cet audit avec une publication.
 
-## Preuves reproductibles
+Commandes exécutées et archivées dans l’addendum :
 
-- `rg -n -i "operation|transformer" icy-angular/src/app/features/admin/event-management`
-- `rg -n "api/operations|@RequestMapping" icy_backend/src/main/java icy-angular/src/app/features/operations`
-- `rg --files docs/operations`
-- `git status --short; git branch --show-current; git log -1 --oneline`
+- Maven direct ciblé : 8 tests, 0 échec, 0 erreur.
+- Maven direct complet : 266 tests, 0 échec, 3 tests ignorés ; build SUCCESS.
+- Build Angular production : terminé avec avertissements de budget CSS existants.
+- Docker : frontend 18088 et backend 18080 healthy, images non reconstruites depuis les derniers commits.
+- Serveur UI temporaire : tentative sur 14200 ; navigateur intégré en timeout, aucune capture inventée.
 
-## Revue indépendante reçue
+## Plan accepté
 
-Trois relecteurs indépendants identifiés par leurs tâches Codex ont relu le dépôt contre les deux cahiers : `/root/review_step0`, `/root/review_step1` et `/root/review_operations_latest`. Leurs retours sont conservés dans les messages de validation de cette tâche ; aucun n’a modifié le dépôt.
+Le plan validé par l’utilisateur est exécuté par gates, avec arrêt et revue indépendante après chaque gate :
 
-| Axe | Statut | Constat |
-|---|---|---|
-| Technique | PARTIEL | Transaction, publication after-commit et contrôle Présent implémentés ; migrations, tests d’intégration et branche dédiée encore absents. |
-| UI/UX desktop | FAIL | Formulaire CRUD autonome, aucun mockup ni capture réelle. |
-| UI/UX mobile | NON VÉRIFIÉ | CSS présent mais aucune capture 390 px ni test clavier/débordement. |
-| Sécurité | FAIL | Délégation, brouillons privés et permission de proposer un vaisseau incomplets. |
-| Règles métier | FAIL | Conversion canonique, objectifs, capacités parent, modes hérités et statuts de participation incomplets. |
-| Non-régression | NON VÉRIFIÉ | Parcours événement, calendrier, hangar et Discord non rejoués de bout en bout. |
+1. Gate 0 : audit atomique, baseline, matrice et plan.
+2. Gate 1 : UX, architecture de l’information, wireframes et captures de référence.
+3. Gate 2 : création, conversion, brouillons, publication et rollback.
+4. Gate 3 : groupes, sous-groupes, capacités et délégation.
+5. Gate 4 : affectations, demandes, transferts et concurrence.
+6. Gate 5 : hangar, besoins vaisseaux et propositions contrôlées.
+7. Gate 6 : page participant immersive, calendrier et responsive.
+8. Gate 7 : Discord, régression, documentation et préparation de livraison.
 
-## Verdict
+Chaque passage exige une revue externe sur les axes technique, UI desktop/mobile, sécurité, métier et non-régression. La matrice atomique contient 79 lignes et relie chaque exigence à son gate et à une preuve attendue.
 
-**Gate 0 : BLOQUÉ.** La matrice est maintenant créée, mais la base distante n’est pas synchronisée, la branche dédiée ne peut pas être créée à cause des permissions Git du checkout, et les écarts fonctionnels/UI listés ci-dessus empêchent tout PASS. Le prochain travail doit corriger le parcours canonique et préparer Gate 1 avant d’implémenter les étapes métier suivantes.
+## Verdict indépendant
+
+**Gate 0 : CHANGES REQUIRED.** La matrice, l’addendum et la revue sont maintenant traçables. Le dossier doit encore recevoir la validation finale du relecteur sur cette version et une baseline visuelle reproductible ; les écarts fonctionnels des Gates 1 à 7 restent planifiés dans la matrice et ne sont pas présentés comme conformes.

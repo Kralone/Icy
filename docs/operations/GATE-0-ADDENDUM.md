@@ -19,6 +19,8 @@ mvn -Denforcer.skip=true -Dtest=OperationShipServiceTest,OperationGroupServiceTe
 
 Résultat après correction du constructeur de `OperationShipServiceTest` : **8 tests, 0 échec, 0 erreur**.
 
+La suite complète avec la même distribution Maven a ensuite donné **266 tests, 0 échec, 3 tests ignorés**, avec `BUILD SUCCESS`.
+
 Commande frontend :
 
 ```text

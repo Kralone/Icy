@@ -1,5 +1,7 @@
 # Audit préalable — module Opérations V1
 
+> Document historique conservé pour traçabilité. Pour l’état courant, utiliser `GATE-0-ADDENDUM.md`, `CONFORMITY-MATRIX.md` et `reviews/GATE-0-REVIEW-PACK.md`. Les informations Git et tests ci-dessous décrivent le premier audit et ne constituent pas une photographie actuelle.
+
 ## Périmètre et état Git
 
 Audit réalisé le 11 octobre 2026 dans `C:\Users\floga\IdeaProjects\IceForge` à partir du dépôt local et du cahier des charges `ICEFORGE_CODEX_OPERATIONS_V1.md`.
