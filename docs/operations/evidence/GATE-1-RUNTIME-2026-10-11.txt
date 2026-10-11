@@ -1,0 +1,25 @@
+Gate 1 — exécution locale du 11/10/2026
+
+Environnement
+- Docker Compose projet : iceforge_dev
+- Frontend : http://127.0.0.1:18088 (healthy)
+- Backend : http://127.0.0.1:18080 (healthy)
+- Compte : validation_admin (rôle ADMIN)
+
+Création réelle
+- Saisie : QA Gate 1 / VALIDATION / briefing / 2026-10-12 18:00–20:00
+- Résultat navigateur : navigation vers
+  /icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit
+- Vérification PostgreSQL :
+  activity_type=OPERATION, publication_status=DRAFT
+
+Responsive
+- Viewport : 390 x 844
+- documentElement.clientWidth : 390
+- documentElement.scrollWidth : 390
+- document.body.scrollWidth : 390
+- Débordement horizontal : absent
+
+Builds
+- Backend Docker : mvn verify terminé avec succès dans l’image locale.
+- Frontend Docker : npm run build terminé avec succès ; avertissements de budget CSS existants.
