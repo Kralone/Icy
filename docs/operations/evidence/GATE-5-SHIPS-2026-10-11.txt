@@ -14,3 +14,5 @@ Régression ajoutée : OperationShipRequirementServiceTest couvre lecture partic
 Suite backend après tests de scope : 276 tests, 0 échec, 3 ignorés.
 
 CUA éditeur authentifié : onglet Organisation expose la recherche catalogue « Aurora » et retourne sept modèles nommés ; le groupe se choisit par libellé, sans saisie d’ID brute.
+
+L’éditeur permet maintenant de modifier un besoin existant ; l’API PUT est reliée à l’interface et la liste se rafraîchit après sauvegarde.

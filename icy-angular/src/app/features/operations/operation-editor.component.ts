@@ -46,6 +46,19 @@ export class OperationEditorComponent {
     this.requirementForm.shipModelId = null;
     this.selectedRequirementModel.set(null);
   }
+
+  editShipRequirement(requirement: any): void {
+    this.editingRequirementId = requirement.id;
+    this.requirementForm = { groupId: requirement.groupId ?? null, shipModelId: requirement.shipModelId ?? null, quantity: requirement.quantity, notes: requirement.notes || '', status: requirement.status || 'OPEN' };
+    this.selectedRequirementModel.set(null);
+    this.catalogQuery = '';
+  }
+
+  cancelShipRequirementEdit(): void {
+    this.editingRequirementId = null;
+    this.clearRequirementModel();
+    this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' };
+  }
   readonly operation$ = this.route.paramMap.pipe(
     switchMap(params => this.eventService.getOperationForEdit(params.get('id')!)),
     catchError(() => of(null)),
@@ -61,6 +74,7 @@ export class OperationEditorComponent {
   set groups(value: any[]) { this.groupState.set(value); }
   groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null as string | null };
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
+  editingRequirementId: string | null = null;
   editingGroupId: number | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
@@ -126,7 +140,8 @@ export class OperationEditorComponent {
     action.subscribe({ next: () => { this.message = approve ? 'Demande approuvée.' : 'Demande refusée.'; this.assignmentRefresh.next(); }, error: error => this.message = error?.error?.message || 'Décision impossible.' });
   }
   createShipRequirement(operationId: string): void {
-    this.eventService.createOperationShipRequirement(operationId, this.requirementForm).subscribe({ next: () => { this.message = 'Besoin de vaisseau créé.'; this.clearRequirementModel(); this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' }; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Création du besoin impossible.' });
+    const request = this.editingRequirementId ? this.eventService.updateOperationShipRequirement(operationId, this.editingRequirementId, this.requirementForm) : this.eventService.createOperationShipRequirement(operationId, this.requirementForm);
+    request.subscribe({ next: () => { this.message = this.editingRequirementId ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.'; this.cancelShipRequirementEdit(); this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Enregistrement du besoin impossible.' });
   }
   deleteShipRequirement(operationId: string, requirementId: string): void {
     this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.message = 'Besoin de vaisseau supprimé.'; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
