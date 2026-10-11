@@ -12,8 +12,8 @@
 | 1 | BLOQUÉ | Navigation et mesures responsive prouvées ; captures mobile/tactile et revue visuelle complète manquantes. |
 | 2 | CHANGES REQUIRED | Objectifs, organisation et builds prouvés ; erreurs de sauvegarde, champs vides, publication/rollback et non-régression événement classique à compléter. |
 | 3 | CHANGES REQUIRED | Délégation et profondeur prouvées par intégration ; transitions d’affectation et validation runtime capacité parent/enfant encore ouvertes. |
-| 4 | PARTIEL | Verrou DB, concurrence métier et portée déléguée prouvés ; refus visible dans le parcours HTTP/UI à archiver. |
-| 5 | PARTIEL AVANCÉ | Parcours publié hangar → besoin → carte liée puis retrait prouvé ; marquage organisateur `Indisponible` et vérification finale d’affectation unique à capturer. |
+| 4 | CONFORME (PROUVÉ) | Verrou DB, concurrence métier, portée déléguée et refus visible HTTP/UI (`Groupe complet`) prouvés sur les commits 0f8881c/421d167. |
+| 5 | CONFORME (PROUVÉ) | Parcours publié hangar → besoin → carte liée, `owner_assignments = 0`, retrait propriétaire et marquage organisateur `UNAVAILABLE` prouvés sur dbd2551/5771a76. |
 | 6 | BLOQUÉ | Builds et mesures disponibles ; captures visuelles archivées, clavier/focus, états non nominaux et accessibilité à vérifier. |
 | 7 | CHANGES REQUIRED / BLOQUÉ | Suite bot et boutons vérifiés ; runtime Discord et synchronisation bidirectionnelle non exécutés faute de configuration réelle. |
 
