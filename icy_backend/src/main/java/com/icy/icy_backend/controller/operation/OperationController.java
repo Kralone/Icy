@@ -5,6 +5,7 @@ import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
 import com.icy.icy_backend.service.operation.OperationService;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
+import com.icy.icy_backend.service.operation.OperationShipService;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 import java.util.List;
@@ -39,6 +41,13 @@ public class OperationController {
     private final OperationService operationService;
     private final OperationGroupRepository operationGroupRepository;
     private final OperationAssignmentService assignmentService;
+    private final OperationShipService shipService;
+
+    @PostMapping("/{id}/ships/proposals")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> proposeShip(@PathVariable UUID id, @RequestParam Long shipId, @RequestParam(required = false) Long groupId) {
+        return shipService.propose(id, shipId, groupId);
+    }
 
     @PostMapping("/{id}/assignments/me/{groupId}")
     @PreAuthorize("isAuthenticated()")
