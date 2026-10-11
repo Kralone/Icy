@@ -18,6 +18,7 @@ public class OperationGroup {
     @Enumerated(EnumType.STRING) @Column(name = "assignment_mode", nullable = false, length = 20)
     @Builder.Default private AssignmentMode assignmentMode = AssignmentMode.INHERITED;
     @Column(name = "sort_order", nullable = false) @Builder.Default private int sortOrder = 0;
+    @Column(name = "responsible_user_id") private UUID responsibleUserId;
 
     public enum AssignmentMode { INHERITED, FREE, VALIDATION, MANAGED }
 }

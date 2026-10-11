@@ -31,7 +31,7 @@ public class OperationGroupService {
             if (!operationId.equals(parent.getOperationEventId())) throw new IllegalArgumentException("Le groupe parent appartient à une autre opération");
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
         }
-        OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).build();
+        OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).responsibleUserId(request.getResponsibleUserId()).build();
         return messageService.buildResponse("operation.group.created", new OperationGroupResponseDTO(groupRepository.save(group)));
     }
 
@@ -50,6 +50,7 @@ public class OperationGroupService {
         }
         group.setName(request.getName().trim()); group.setDescription(request.getDescription()); group.setCapacity(request.getCapacity());
         group.setParentId(request.getParentId()); group.setAssignmentMode(request.getAssignmentMode()); group.setSortOrder(request.getSortOrder());
+        group.setResponsibleUserId(request.getResponsibleUserId());
         return messageService.buildResponse("operation.group.updated", new OperationGroupResponseDTO(groupRepository.save(group)));
     }
 

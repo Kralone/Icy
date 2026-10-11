@@ -39,8 +39,12 @@ public class OperationAssignmentService {
     public ResponseEntity<MessageResponse<Void>> decide(UUID requestId, boolean approve) {
         OperationAssignmentRequest request = requestRepository.findById(requestId).orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
         if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
-        if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
         OperationGroup group = groupRepository.findLockedById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        UUID currentUser = AuthUtils.getCurrentUserId();
+        if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !currentUser.equals(group.getResponsibleUserId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
+        }
+        if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
         if (group.getCapacity() != null && assignmentRepository.countByOperationEventIdAndGroupIdAndStatus(request.getOperationEventId(), group.getId(), OperationAssignment.Status.CONFIRMED) >= group.getCapacity()) throw new IllegalStateException("Groupe complet");
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);

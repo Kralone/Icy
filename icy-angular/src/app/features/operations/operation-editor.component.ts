@@ -29,7 +29,7 @@ export class OperationEditorComponent {
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
   set groups(value: any[]) { this.groupState.set(value); }
-  groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0 };
+  groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null as string | null };
   editingGroupId: number | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
@@ -75,11 +75,11 @@ export class OperationEditorComponent {
       this.message = this.editingGroupId ? 'Groupe mis à jour.' : 'Groupe créé.';
       this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data);
       this.editingGroupId = null;
-      this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0 };
+      this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null };
     }, error: error => this.message = error?.error?.message || 'Création impossible.' });
   }
 
-  editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0 }; }
+  editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0, responsibleUserId: group.responsibleUserId ?? null }; }
   moveGroup(operationId: string, index: number, delta: number): void {
     const current = this.groups[index];
     const siblings = this.groups.filter(group => (group.parentId ?? null) === (current.parentId ?? null)).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));

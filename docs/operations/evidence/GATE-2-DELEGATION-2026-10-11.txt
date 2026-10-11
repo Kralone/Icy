@@ -1,0 +1,10 @@
+Implementation evidence
+
+- Flyway V48 applied successfully in Docker: `48|add operation group responsible|t`.
+- `events.operation_groups.responsible_user_id` exists with a foreign key to `core.users(id)`.
+- Group create/update DTOs and the Angular editor expose the delegated responsible UUID.
+- Assignment request decisions are allowed only for ADMIN, OFFICIER, or the responsible user of the target group.
+- Backend Docker build and full verification succeeded: 270 tests, 0 failures, 3 skipped.
+
+Runtime limitation:
+- A browser mutation assigning responsibility to a named validation account was refused by the desktop auto-review because it grants that account operational authority. No workaround was attempted. The persistence and authorization code remain covered by compilation, migration, and unit/full-suite checks.
