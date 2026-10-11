@@ -31,3 +31,5 @@ Builds
 - Frontend Docker : npm run build terminé avec succès ; avertissements de budget CSS existants.
 
 Responsive CUA complémentaire : 1280x720 -> client 1280 / scroll 1280 / body 1280 ; 3840x2160 -> client 3840 / scroll 3840 / body 3840. Aucun débordement horizontal observé.
+
+CUA admin/navigation : /icy/admin expose le lien « Nouvelle opération » vers /icy/operations/new (AX link 41) ; /icy/events n’expose plus le bouton « Gérer les événements » dans l’en-tête. Le calendrier conserve l’activité QA Gate 1 et son bouton Détails.
