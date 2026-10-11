@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Opt-in end-to-end capacity race against the local PostgreSQL instance. */
 @EnabledIfSystemProperty(named = "iceforge.integration", matches = "true")
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OperationAssignmentCapacityIntegrationIT {
     private static final UUID USER_ONE = UUID.fromString("10000000-0000-0000-0000-000000000001");
     private static final UUID USER_TWO = UUID.fromString("10000000-0000-0000-0000-000000000002");
+    private static final UUID USER_THREE = UUID.fromString("10000000-0000-0000-0000-000000000003");
 
     @Autowired JdbcTemplate jdbc;
     @Autowired OperationAssignmentService assignments;
@@ -73,6 +75,29 @@ class OperationAssignmentCapacityIntegrationIT {
         }
     }
 
+    @Test
+    void delegatedResponsibleCanApproveDescendantButNotSibling() {
+        operationId = UUID.randomUUID();
+        jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'delegation scope', '', ?, ?, 'OPERATION')",
+                operationId, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2));
+        jdbc.update("INSERT INTO events.operations (event_id, briefing, publication_status) VALUES (?, '', 'PUBLISHED')", operationId);
+        jdbc.update("INSERT INTO events.event_participation (event_id, user_id, status) VALUES (?, ?, 1), (?, ?, 1)", operationId, USER_ONE, operationId, USER_THREE);
+        Long parentId = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, name, assignment_mode, sort_order) VALUES (?, 'Delegated parent', 'VALIDATION', 0) RETURNING id", Long.class, operationId);
+        Long childOne = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, parent_id, name, assignment_mode, responsible_user_id, sort_order) VALUES (?, ?, 'Delegated leaf', 'INHERITED', ?, 0) RETURNING id", Long.class, operationId, parentId, USER_TWO);
+        Long childTwo = jdbc.queryForObject("INSERT INTO events.operation_groups (operation_event_id, parent_id, name, assignment_mode, sort_order) VALUES (?, ?, 'Sibling', 'INHERITED', 1) RETURNING id", Long.class, operationId, parentId);
+        UUID descendantRequest = jdbc.queryForObject("INSERT INTO events.operation_assignment_requests (operation_event_id, group_id, user_id) VALUES (?, ?, ?) RETURNING id", UUID.class, operationId, childOne, USER_ONE);
+        UUID siblingRequest = jdbc.queryForObject("INSERT INTO events.operation_assignment_requests (operation_event_id, group_id, user_id) VALUES (?, ?, ?) RETURNING id", UUID.class, operationId, childTwo, USER_THREE);
+        try {
+            asUser(USER_TWO);
+            assignments.decide(descendantRequest, true);
+            assertThat(jdbc.queryForObject("SELECT status FROM events.operation_assignment_requests WHERE id = ?", String.class, descendantRequest)).isEqualTo("APPROVED");
+            assertThatThrownBy(() -> assignments.decide(siblingRequest, true))
+                    .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
     private Callable<Boolean> assign(UUID userId, Long groupId) {
         return () -> {
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
@@ -86,5 +111,10 @@ class OperationAssignmentCapacityIntegrationIT {
                 SecurityContextHolder.clearContext();
             }
         };
+    }
+
+    private void asUser(UUID userId) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, userId.toString(), "password", List.of()), "", List.of()));
     }
 }

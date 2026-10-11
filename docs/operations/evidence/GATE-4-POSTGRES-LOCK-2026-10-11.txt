@@ -18,7 +18,7 @@ Cette preuve confirme le comportement de verrou PostgreSQL utilisé par `findLoc
 
 ## Preuve métier concurrente
 
-Le test opt-in `OperationAssignmentCapacityIntegrationIT.twoConcurrentAssignmentsCannotTakeOneParentPlace` démarre l'application Spring contre la base Docker, crée une opération publiée avec un parent de capacité `1` et deux feuilles, puis lance deux appels concurrents à `OperationAssignmentService.assign` avec deux utilisateurs distincts.
+Les tests opt-in de `OperationAssignmentCapacityIntegrationIT` démarrent l'application Spring contre la base Docker. `twoConcurrentAssignmentsCannotTakeOneParentPlace` crée une opération publiée avec un parent de capacité `1` et deux feuilles, puis lance deux appels concurrents à `OperationAssignmentService.assign` avec deux utilisateurs distincts. Le scénario de délégation voisin vérifie séparément la portée d'autorisation.
 
 Commande exécutée dans le réseau Docker :
 
@@ -26,6 +26,6 @@ Commande exécutée dans le réseau Docker :
 docker run --rm --network iceforge_dev_internal ... mvn -B -ntp -Diceforge.integration=true -Diceforge.jdbc.url=jdbc:postgresql://db:5432/iceforgedb -Diceforge.jdbc.user=iceforge -Diceforge.jdbc.password=change_me_local_only -Dtest=OperationAssignmentCapacityIntegrationIT test
 ```
 
-Résultat : **BUILD SUCCESS**, `Tests run: 1, Failures: 0, Errors: 0, Skipped: 0`. Une seule affectation est confirmée sur le parent plein ; l'autre est refusée après le verrouillage hiérarchique.
+Résultat : **BUILD SUCCESS**, `Tests run: 2, Failures: 0, Errors: 0, Skipped: 0`. Une seule affectation est confirmée sur le parent plein ; l'autre est refusée après le verrouillage hiérarchique.
 
 La preuve couvre désormais le service métier concurrent. Il reste à compléter le parcours runtime authentifié de saturation et de refus pour clôturer SEC-04.
