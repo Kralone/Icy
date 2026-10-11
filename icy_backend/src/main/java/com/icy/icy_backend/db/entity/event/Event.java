@@ -42,6 +42,11 @@ public class Event {
     @Builder.Default
     private boolean finished = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activity_type", nullable = false, length = 20)
+    @Builder.Default
+    private ActivityType activityType = ActivityType.EVENT;
+
     // 🔗 Synchronisation Discord
     @Column(name = "discord_channel_id", length = 50)
     private String discordChannelId;

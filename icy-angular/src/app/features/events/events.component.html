@@ -22,7 +22,7 @@
   } @else if (viewMode === 'upcoming') {
     <div class="events-agenda">
       @for (event of upcomingEvents; track event.id) {
-        <button type="button" class="agenda-event" (click)="openEventModal(event)"
+        <button type="button" class="agenda-event" (click)="openEventOrOperation(event)"
           [style.--event-accent]="eventColor(event.type?.backgroundColor)" [style.--event-label]="eventColor(event.type?.textColor, '#e3f4fb')">
           @if (eventImage(event.type?.imageUrl); as image) {
             <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />

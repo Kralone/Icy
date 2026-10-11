@@ -223,7 +223,7 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     this.eventSnapshot = events;
     this.calendarEvents = events.map(event => ({
       id: event.id, title: event.title, start: event.startDateTime, end: event.endDateTime,
-      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event) }
+      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event), activityType: event.activityType }
     }));
     this.upcomingEvents = events.filter(event => !this.isEventFinished(event))
       .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
@@ -300,6 +300,10 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
 
   onEventClick(arg: any): void {
     const event = arg.event;
+    if (event.extendedProps.activityType === 'OPERATION') {
+      this.router.navigate(['/icy/operations', event.id]);
+      return;
+    }
     this.openEventModal({
       id: event.id,
       title: event.title,
@@ -309,6 +313,14 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
       endDateTime: event.endStr,
       finished: event.extendedProps.finished
     });
+  }
+
+  openEventOrOperation(event: any): void {
+    if (event.activityType === 'OPERATION') {
+      this.router.navigate(['/icy/operations', event.id]);
+      return;
+    }
+    this.openEventModal(event);
   }
 
   initializeParticipationData() {
@@ -371,6 +383,13 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     const match = this.calendarEvents.find(evt => String(evt.id) === String(this.pendingEventId));
     if (!match) {
       this.pendingEventId = null;
+      return;
+    }
+
+    if (match.extendedProps?.activityType === 'OPERATION') {
+      const operationId = match.id;
+      this.pendingEventId = null;
+      this.router.navigate(['/icy/operations', operationId]);
       return;
     }
 

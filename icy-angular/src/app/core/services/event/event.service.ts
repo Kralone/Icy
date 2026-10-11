@@ -21,6 +21,7 @@ export interface EventDTO {
   endDateTime: string;
   createdAt: string;
   finished: boolean;
+  activityType?: 'EVENT' | 'OPERATION';
 }
 
 @Injectable({

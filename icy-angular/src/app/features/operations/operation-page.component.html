@@ -1,0 +1,41 @@
+<main class="operation-page">
+  @if (operation$ | async; as operation) {
+    <header class="operation-hero">
+      <div class="operation-hero__veil"></div>
+      <div class="operation-hero__content">
+        <a routerLink="/icy/events" class="operation-back">← Calendrier</a>
+        <span class="operation-badge">Opération</span>
+        <h1>{{ operation.title }}</h1>
+        <p class="operation-meta">{{ operation.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm' }} · {{ operation.meetingPoint || 'Rendez-vous à préciser' }}</p>
+      </div>
+    </header>
+    <section class="operation-status" aria-label="Situation de l'opération">
+      <strong>Situation</strong>
+      <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
+      <button type="button" disabled>Choisir mon affectation</button>
+    </section>
+    <div class="operation-grid">
+      <article class="operation-card operation-card--briefing">
+        <p class="eyebrow">Briefing</p>
+        <h2>Ordres de mission</h2>
+        <p>{{ operation.briefing || operation.description || 'Le briefing sera publié par l’organisateur.' }}</p>
+      </article>
+      <article class="operation-card">
+        <p class="eyebrow">Organisation</p>
+        <h2>Composition</h2>
+        <p class="empty-state">Les groupes et affectations seront affichés ici.</p>
+      </article>
+      <article class="operation-card">
+        <p class="eyebrow">Flotte</p>
+        <h2>Ressources</h2>
+        <p class="empty-state">Aucun vaisseau n’est encore renseigné.</p>
+      </article>
+    </div>
+  } @else {
+    <section class="operation-error" role="alert">
+      <h1>Opération indisponible</h1>
+      <p>Cette opération n’est pas publiée ou ne peut pas être chargée.</p>
+      <a routerLink="/icy/events">Retour au calendrier</a>
+    </section>
+  }
+</main>

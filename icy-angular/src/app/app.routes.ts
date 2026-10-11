@@ -272,6 +272,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/events/events.component').then(m => m.EventsComponent)
       },
       {
+        path: 'operations/:id',
+        loadComponent: () => import('./features/operations/operation-page.component').then(m => m.OperationPageComponent)
+      },
+      {
         path: 'goals',
         loadComponent: () => import('./features/goal/goal.component').then(m => m.GoalComponent)
       },

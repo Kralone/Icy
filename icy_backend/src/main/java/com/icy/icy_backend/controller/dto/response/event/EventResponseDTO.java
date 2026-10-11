@@ -2,6 +2,7 @@ package com.icy.icy_backend.controller.dto.response.event;
 
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.event.ActivityType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class EventResponseDTO {
     private LocalDateTime endDateTime;
     private LocalDateTime createdAt;
     private boolean finished;
+    private ActivityType activityType;
 
     public EventResponseDTO(Event event) {
         this.id = event.getId();
@@ -27,6 +29,7 @@ public class EventResponseDTO {
         this.endDateTime = event.getEndDateTime();
         this.createdAt = event.getCreatedAt();
         this.finished = event.isFinished();
+        this.activityType = event.getActivityType();
     }
 }
 
