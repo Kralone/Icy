@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
@@ -19,7 +20,7 @@ interface OperationPageModel {
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink],
+  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
   styleUrl: './operation-page.component.css'
@@ -43,6 +44,9 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of([]))
   );
+  readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
+  selectedShipId: number | null = null;
+  selectedShipGroupId: number | null = null;
   assignmentMessage = '';
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
@@ -52,5 +56,9 @@ export class OperationPageComponent {
   requestAssignment(operationId: string, groupId: number) {
     this.assignmentMessage = '';
     this.eventService.requestOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Demande envoyée aux responsables.', error: error => this.assignmentMessage = error?.error?.message || 'Demande impossible.' });
+  }
+  proposeShip(operationId: string) {
+    if (this.selectedShipId == null) return;
+    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
   }
 }
