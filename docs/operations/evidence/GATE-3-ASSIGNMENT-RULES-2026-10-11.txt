@@ -10,3 +10,5 @@ Tests backend ciblés dans `OperationAssignmentServiceTest` :
 
 La suite Docker backend passe à **296 tests, 0 échec, 3 ignorés**.
 Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification visuelle des contrôles UI/mobile.
+
+Deux validations indépendantes ont confirmé GRP-02, GRP-06 et GRP-07 comme CONFORME (PROUVÉ) dans cette portée serveur. Elles maintiennent séparément ouverts les transferts en attente, la conservation de l’ancienne place et la vérification UI/mobile.
