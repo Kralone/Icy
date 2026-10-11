@@ -50,6 +50,11 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of([]))
   );
+  readonly shipRequirements$ = this.route.paramMap.pipe(
+    switchMap(params => this.http.get<{ data: Array<{ id: string; groupId?: number; shipModelId?: number; quantity: number; notes?: string; status: string }> }>(`/api/operations/${params.get('id')}/ship-requirements`)),
+    map(response => response.data),
+    catchError(() => of([]))
+  );
   readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
   readonly participation$ = this.route.paramMap.pipe(
     switchMap(params => this.eventService.getParticipations(params.get('id')!)),

@@ -26,8 +26,9 @@ export class OperationEditorComponent {
     tap(operation => { if (operation) this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false }; })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
-  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationShipRequirements(params.get('id')!)), map(response => response.data), catchError(() => of([])));
   private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
+  private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
+  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.eventService.getOperationShipRequirements(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   readonly assignmentRequests$ = this.route.paramMap.pipe(switchMap(params => this.assignmentRefresh.pipe(switchMap(() => this.eventService.getOperationAssignmentRequests(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
@@ -99,9 +100,9 @@ export class OperationEditorComponent {
     action.subscribe({ next: () => { this.message = approve ? 'Demande approuvée.' : 'Demande refusée.'; this.assignmentRefresh.next(); }, error: error => this.message = error?.error?.message || 'Décision impossible.' });
   }
   createShipRequirement(operationId: string): void {
-    this.eventService.createOperationShipRequirement(operationId, this.requirementForm).subscribe({ next: () => { this.message = 'Besoin de vaisseau créé.'; this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' }; }, error: error => this.message = error?.error?.message || 'Création du besoin impossible.' });
+    this.eventService.createOperationShipRequirement(operationId, this.requirementForm).subscribe({ next: () => { this.message = 'Besoin de vaisseau créé.'; this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' }; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Création du besoin impossible.' });
   }
   deleteShipRequirement(operationId: string, requirementId: string): void {
-    this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => this.message = 'Besoin de vaisseau supprimé.', error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
+    this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.message = 'Besoin de vaisseau supprimé.'; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
   }
 }

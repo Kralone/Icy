@@ -1,0 +1,8 @@
+# Gate 5 — besoins vaisseaux — 2026-10-11
+
+- Migration V49 appliquée : `events.operation_ship_requirements` existe avec quantité, groupe facultatif, modèle facultatif, notes et statut.
+- API séparée : lecture authentifiée des besoins, mutations admin/officier, contrôle du périmètre opération/groupe.
+- Éditeur opération : création et suppression depuis l’onglet Organisation ; la liste se rafraîchit après mutation.
+- Participant : les besoins ouverts sont visibles dans la carte Ressources, avant les vaisseaux effectivement proposés.
+- Validation : image frontend Docker reconstruite avec succès ; backend conservé à 272 tests, 0 échec, 3 ignorés.
+- Limite restante : aucune association automatique entre un besoin et une proposition de vaisseau n’est introduite dans ce lot.
