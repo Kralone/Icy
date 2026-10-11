@@ -23,7 +23,10 @@
       <article class="operation-card">
         <p class="eyebrow">Organisation</p>
         <h2>Composition</h2>
-        <p class="empty-state">Les groupes et affectations seront affichés ici.</p>
+        @if (groups$ | async; as groups) {
+          @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }}</span></div> }</div> }
+          @else { <p class="empty-state">Les groupes seront affichés ici.</p> }
+        }
       </article>
       <article class="operation-card">
         <p class="eyebrow">Flotte</p>

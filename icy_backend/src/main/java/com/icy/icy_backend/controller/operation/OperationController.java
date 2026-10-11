@@ -9,6 +9,8 @@ import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.db.repository.event.OperationGroupRepository;
+import com.icy.icy_backend.controller.dto.response.event.OperationGroupResponseDTO;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/api/operations")
@@ -32,6 +36,17 @@ public class OperationController {
     private final OperationRepository operationRepository;
     private final MessageService messageService;
     private final OperationService operationService;
+    private final OperationGroupRepository operationGroupRepository;
+
+    @GetMapping("/{id}/groups")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<List<OperationGroupResponseDTO>>> groups(@PathVariable UUID id) {
+        operationRepository.findById(id).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        List<OperationGroupResponseDTO> groups = operationGroupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(id)
+                .stream().map(OperationGroupResponseDTO::new).toList();
+        return messageService.buildResponse("operation.groups", groups);
+    }
 
     @PostMapping("/{id}/convert")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")

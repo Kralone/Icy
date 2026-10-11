@@ -31,4 +31,9 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of(null))
   );
+  readonly groups$ = this.route.paramMap.pipe(
+    switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string }> }>(`/api/operations/${params.get('id')}/groups`)),
+    map(response => response.data),
+    catchError(() => of([]))
+  );
 }

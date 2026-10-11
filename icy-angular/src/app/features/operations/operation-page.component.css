@@ -16,6 +16,7 @@ h1 { margin: .6rem 0; font-size: clamp(2.3rem, 6vw, 5.5rem); line-height: .98; c
 .operation-card h2 { margin: .35rem 0 1rem; color: #f8fafc; }
 .operation-card p:not(.eyebrow) { color: #cbd5e1; line-height: 1.7; white-space: pre-wrap; }
 .empty-state { color: #94a3b8 !important; }
+.group-list { display: grid; gap: .55rem; } .group-item { display: flex; justify-content: space-between; gap: .75rem; padding: .7rem; border-left: 3px solid #22d3ee; border-radius: .35rem; background: rgba(30,41,59,.7); } .group-item--child { margin-left: 1rem; border-left-color: #94a3b8; } .group-item span { color: #bae6fd; font-size: .85rem; }
 .operation-error { width: min(720px, calc(100% - 2rem)); margin: 12vh auto; padding: 2rem; border: 1px solid rgba(248,113,113,.35); border-radius: .8rem; background: #111827; }
 .operation-error a { color: #67e8f9; }
 @media (max-width: 700px) { .operation-status { align-items: flex-start; flex-direction: column; } .operation-status__placeholder { margin-left: 0; } .operation-card, .operation-card--briefing { grid-column: 1 / -1; } }
