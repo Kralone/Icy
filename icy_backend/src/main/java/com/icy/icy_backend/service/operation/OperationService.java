@@ -12,6 +12,8 @@ import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import lombok.RequiredArgsConstructor;
 import jakarta.persistence.EntityManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class OperationService {
     private final OperationRepository operationRepository;
     private final MessageService messageService;
     private final EntityManager entityManager;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
@@ -67,7 +70,7 @@ public class OperationService {
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
         operation.setBriefing(request.getBriefing());
-        if (request.getObjectives() != null && request.getObjectives().length() > 50000) throw new IllegalArgumentException("Objectifs trop longs");
+        validateObjectives(request.getObjectives());
         operation.setObjectives(request.getObjectives());
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
@@ -90,5 +93,27 @@ public class OperationService {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         if (event.getActivityType() != ActivityType.OPERATION) throw new ResourceNotFoundException("Opération introuvable");
         return event;
+    }
+
+    private void validateObjectives(String value) {
+        if (value == null) return;
+        if (value.length() > 50000) throw new IllegalArgumentException("Objectifs trop longs");
+        String trimmed = value.trim();
+        if (trimmed.isEmpty() || !trimmed.startsWith("[")) return;
+        try {
+            JsonNode root = objectMapper.readTree(trimmed);
+            if (!root.isArray() || root.size() > 100) throw new IllegalArgumentException("Format d’objectifs invalide");
+            for (JsonNode item : root) {
+                String kind = item.path("kind").asText("");
+                String text = item.path("text").asText("").trim();
+                if (!item.isObject() || !("PRINCIPAL".equals(kind) || "SECONDAIRE".equals(kind)) || text.isEmpty() || text.length() > 1000) {
+                    throw new IllegalArgumentException("Objectif invalide");
+                }
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalArgumentException("Format d’objectifs invalide", exception);
+        }
     }
 }
