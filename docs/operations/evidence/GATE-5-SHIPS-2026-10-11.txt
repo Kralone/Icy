@@ -4,14 +4,14 @@
 - API séparée : lecture authentifiée des besoins, mutations admin/officier, contrôle du périmètre opération/groupe.
 - Éditeur opération : création et suppression depuis l’onglet Organisation ; la liste se rafraîchit après mutation.
 - Participant : les besoins ouverts sont visibles dans la carte Ressources, avant les vaisseaux effectivement proposés.
-- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 280 tests, 0 échec, 3 ignorés.
+- Validation : image frontend Docker reconstruite avec succès ; backend actuel à 281 tests, 0 échec, 3 ignorés.
 - V50 : une association explicite besoin↔proposition est persistée et contrôlée côté serveur ; aucune association automatique n’est créée.
 
 Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux non-organisateurs ; ADMIN/OFFICIER conservent l’accès d’édition.
 
 Régression ajoutée : OperationShipRequirementServiceTest couvre lecture participant interdite sur brouillon et lecture organisateur autorisée. Suite backend : 274 tests, 0 échec, 3 ignorés.
 
-Suite backend après tests de scope : 280 tests, 0 échec, 3 ignorés.
+Suite backend après tests de scope : 281 tests, 0 échec, 3 ignorés.
 
 CUA éditeur authentifié : onglet Organisation expose la recherche catalogue « Aurora » et retourne sept modèles nommés ; le groupe se choisit par libellé, sans saisie d’ID brute.
 
