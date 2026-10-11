@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { catchError, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -35,6 +35,7 @@ export class OperationPageComponent {
   private readonly eventService = inject(EventService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly shipsRefresh$ = new Subject<void>();
   readonly operation$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
     map(response => response.data),
@@ -45,7 +46,9 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of([]))
   );
-  readonly ships$ = this.route.paramMap.pipe(
+  readonly ships$ = this.shipsRefresh$.pipe(
+    startWith(undefined),
+    switchMap(() => this.route.paramMap),
     switchMap(params => this.http.get<{ data: Array<{ id: string; shipId: number; ownerUserId: string; ownerUsername?: string; shipName?: string; shipImageUrl?: string; groupId?: number; requirementId?: string; status: string }> }>(`/api/operations/${params.get('id')}/ships`)),
     map(response => response.data),
     catchError(() => of([]))
@@ -94,12 +97,12 @@ export class OperationPageComponent {
   }
   proposeShip(operationId: string) {
     if (this.selectedShipId == null) return;
-    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined).subscribe({ next: () => this.assignmentMessage = 'Vaisseau proposé à l’opération.', error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
+    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined).subscribe({ next: () => { this.assignmentMessage = 'Vaisseau proposé à l’opération.'; this.shipsRefresh$.next(); }, error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
   }
 
   withdrawShip(operationId: string, proposalId: string) {
     this.eventService.withdrawOperationShipProposal(operationId, proposalId).subscribe({
-      next: () => { this.assignmentMessage = 'Proposition de vaisseau retirée.'; },
+      next: () => { this.assignmentMessage = 'Proposition de vaisseau retirée.'; this.shipsRefresh$.next(); },
       error: error => this.assignmentMessage = error?.error?.message || 'Retrait impossible.'
     });
   }
