@@ -24,3 +24,7 @@ Cette preuve clôture le parcours hangar → besoin → carte liée et le retrai
 ## Preuve runtime organisateur
 
 Depuis l’éditeur `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit`, onglet `Inscriptions et permissions`, la proposition est apparue dans `Propositions de vaisseaux : 1` avec le bouton `Marquer indisponible`. Après activation, l’interface a affiché `Proposition marquée indisponible.` et la ligne est passée de `PROPOSED` à `UNAVAILABLE`. La proposition QA a ensuite été supprimée de la base de validation pour ne pas polluer les données de démonstration.
+
+## Vérification d’absence de seconde affectation
+
+Pendant une nouvelle proposition runtime liée au même besoin, la requête PostgreSQL a retourné `owner_assignments = 0` pour la proposition `4da037a9-1902-40be-acec-25d4b01c7665` : la liaison d’un vaisseau n’a donc créé aucune affectation principale supplémentaire. Le bouton `Retirer ma proposition` a ensuite été utilisé et l’état vide a été restauré.
