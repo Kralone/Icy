@@ -22,6 +22,8 @@ export class OperationCreateComponent {
     this.eventService.getAllTypes().subscribe({ next: types => { this.types = types; }, error: () => this.error = 'Impossible de charger les types d’événement.' });
   }
 
+  get previewType(): EventType | undefined { return this.types.find(type => type.name === this.form.type); }
+
   get invalid(): boolean { return !this.form.title.trim() || !this.form.type || !this.form.startDateTime || !this.form.endDateTime || this.saving; }
 
   create(): void {
