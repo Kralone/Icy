@@ -1,7 +1,7 @@
 Gate 2 / création directe — 11/10/2026
 
 Branche : codex/operations-reprise-audit
-Commit de preuve : 6175687 (matrice), build frontend local déployé dans Docker.
+Commit de preuve : fb41adf (matrice et preuve runtime), build frontend local déployé dans Docker.
 
 Preuve runtime CUA authentifiée avec `validation_admin` :
 - `/icy/admin/events` affiche le formulaire historique « Ajouter un evenement » sans bouton de création d’opération.
