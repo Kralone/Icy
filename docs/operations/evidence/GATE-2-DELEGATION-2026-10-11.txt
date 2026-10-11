@@ -4,6 +4,8 @@ Implementation evidence
 - `events.operation_groups.responsible_user_id` exists with a foreign key to `core.users(id)`.
 - Group create/update DTOs and the Angular editor expose the delegated responsible UUID.
 - Assignment request decisions are allowed only for ADMIN, OFFICIER, or the responsible user of the target group.
+- `GET /api/operations/{id}/assignment-requests` and the editor queue expose pending/processed requests to the organizer console.
+- A responsible user on a parent group also has scope over its descendant group requests.
 - Backend Docker build and full verification succeeded: 270 tests, 0 failures, 3 skipped.
 
 Runtime limitation:
