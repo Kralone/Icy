@@ -17,3 +17,5 @@ Les tests prouvent les règles serveur ; ils ne remplacent pas la vérification 
 Deux validations indépendantes ont confirmé GRP-02, GRP-06 et GRP-07 comme CONFORME (PROUVÉ) dans cette portée serveur. Elles maintiennent séparément ouverts les transferts en attente, la conservation de l’ancienne place et la vérification UI/mobile.
 
 La relecture indépendante précédente confirmait l’unicité d’une demande `PENDING`. Les nouveaux tests ajoutent la conservation de l’affectation pendant l’attente et le déplacement à l’approbation ; la transaction complète et son rollback sous erreur restent à vérifier.
+
+Deux validations indépendantes classent GRP-10 CONFORME (PROUVÉ) dans cette portée et GRP-09 PARTIEL avancé : les tests Mockito et `@Transactional` prouvent l’ordre métier, mais pas encore le rollback/concurrentiel réel en base.
