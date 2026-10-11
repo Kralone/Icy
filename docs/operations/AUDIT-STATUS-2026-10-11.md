@@ -10,8 +10,8 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 1 — navigation et interface participant | PARTIEL | CUA calendrier, publication, mobile 390×844, desktop 1280×720 et 4K 3840×2160 sans débordement | Captures riches desktop/mobile et états erreur/chargement à archiver |
 | 2 — création, objectifs, aperçu | PARTIEL | Création admin, objectifs JSON, aperçu/publication et tests | Conservation exhaustive du parcours événement historique à compléter |
 | 3 — organisation | PARTIEL avancé | Groupes, deux niveaux, modes hérités, réordre et suppression contrôlée ; preuve Spring/PostgreSQL d’un responsable autorisé sur sa feuille et refusé sur un frère | Revue UI complète du sélecteur de responsable et états de mutation |
-| 4 — affectations et capacité | CONFORME (PROUVÉ) | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère ; fixture runtime authentifiée parent plein et message UI `Groupe complet` après HTTP 400 | Maintenir les tests de concurrence et le retour d’erreur visible |
-| 5 — flotte et besoins | CONFORME (PROUVÉ) | Migrations V49/V50, API séparée, liaison besoin↔proposition, contrôle de modèle, retrait propriétaire et indisponibilité organisateur, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait ; marquage admin `UNAVAILABLE` avec retour visible ; requête runtime/DB `owner_assignments = 0` | Maintenir la régression sur la liaison et l’absence d’affectation implicite |
+| 4 — affectations et capacité | PARTIEL — capacité et refus validés | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère ; fixture runtime authentifiée parent plein et message UI `Groupe complet` après HTTP 400 | Maintenir les tests de concurrence et le retour d’erreur visible |
+| 5 — flotte et besoins | PARTIEL — SHP-06/07/08 validés | Migrations V49/V50, API séparée, liaison besoin↔proposition, contrôle de modèle, retrait propriétaire et indisponibilité organisateur, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait ; marquage admin `UNAVAILABLE` avec retour visible ; requête runtime/DB `owner_assignments = 0` | Maintenir la régression sur la liaison et l’absence d’affectation implicite |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
 | 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **65 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
 
@@ -30,3 +30,7 @@ Cette branche n’est pas encore prête à être fusionnée dans `main` tant que
 - L’éditeur permet aussi de modifier un besoin existant ; la liste se rafraîchit après sauvegarde.
 
 - L’éditeur Organisation utilise maintenant une arborescence et une fiche de propriétés en deux panneaux desktop, avec empilement mobile sous 760px.
+
+## Portée des validations du 11 octobre, 19 h 57
+
+Les avis de `review_step1` et `review_operations_latest` valident la capacité hiérarchique et son refus HTTP/UI, ainsi que SHP-06/07/08. Ils ne prouvent pas toutes les autres exigences des étapes 4 et 5. Les étapes globales restent partielles tant que les lignes GRP non vérifiées et SHP-01 à SHP-05 ne sont pas contrôlées. Le passage provisoire des étapes entières à CONFORME dépassait la portée des preuves.

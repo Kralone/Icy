@@ -20,3 +20,9 @@
 ## Conclusion
 
 La branche est techniquement cohérente et le checkout est propre, mais cette revue ne certifie pas encore un merge final. Les verdicts restent attachés à la matrice et aux packs de gate ; toute clôture doit ajouter la preuve manquante, puis faire relire le gate concerné.
+
+## Complément de revue sur 0f8881c et dbd2551
+
+`review_step1` et `review_operations_latest` ont revalidé le refus de capacité : HTTP 400, message « Groupe complet » visible après correction OnPush, fixture nettoyée. Ils ont également validé SHP-06/07/08 : proposition liée, retrait, indisponibilité organisateur et assertion PostgreSQL owner_assignments = 0.
+
+Ces avis concernent les parcours décrits. Les autres lignes GRP et SHP non vérifiées dans la matrice restent ouvertes ; ils ne constituent pas une validation exhaustive des étapes 4 et 5 ni une autorisation de fusion globale.
