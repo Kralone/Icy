@@ -24,3 +24,4 @@ Validation:
 - `EventService.validateEventDates` now rejects missing start/end values and any end that is not strictly after the start; `EventServiceTest.createEventRejectsMissingOrInvalidDates` covers both guards.
 - `OperationServiceTest.updatesPublishedOperationWithoutChangingItsIdentityOrPublicationStatus` proves that an already published operation can be edited while retaining its UUID and `PUBLISHED` status. The editor labels the action `Enregistrer les modifications` for this state.
 - `OperationServiceTest.convertsEventToPrivateDraftWithSameIdentity` proves that conversion changes the activity type, persists an operation row with the same UUID and `DRAFT` status, and does not publish it.
+- L’éditeur Angular distingue maintenant explicitement `LOADING`, `ERROR` et `READY` au chargement du brouillon ; le build Docker frontend passe. La preuve CUA complète du parcours des onglets et des erreurs de sauvegarde reste à archiver.

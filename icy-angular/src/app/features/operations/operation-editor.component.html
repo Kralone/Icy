@@ -1,5 +1,11 @@
 <main class="operation-editor">
-  @if (operation$ | async; as operation) {
+  @if (operationState$ | async; as state) {
+    @if (state.kind === 'LOADING') {
+      <section class="editor-loading" role="status" aria-live="polite">Chargement de l’éditeur…</section>
+    } @else if (state.kind === 'ERROR') {
+      <section class="editor-error" role="alert"><h1>{{ state.message }}</h1><a routerLink="/icy/events">Retour au calendrier</a></section>
+    } @else {
+      @let operation = state.operation;
     <header><a routerLink="/icy/events">← Calendrier</a><p class="eyebrow">Éditeur d’opération</p><h1>{{ operation.title }}</h1></header>
     <nav class="tabs" aria-label="Sections de l’éditeur">
       @for (item of [['briefing','Général / briefing'], ['objectifs','Objectifs'], ['organisation','Organisation'], ['permissions','Inscriptions et permissions'], ['publication','Aperçu / publication']]; track item[0]) {
@@ -64,5 +70,6 @@
       @if (tab !== 'publication') { <button type="button" class="primary" [disabled]="saving" (click)="save(operation.id)">{{ saving ? 'Enregistrement…' : (operation.publicationStatus === 'PUBLISHED' ? 'Enregistrer les modifications' : 'Enregistrer le brouillon') }}</button> }
       @if (message) { <p role="status">{{ message }}</p> }
     </section>
-  } @else { <section class="editor-error" role="alert"><h1>Impossible de charger le brouillon</h1><a routerLink="/icy/events">Retour au calendrier</a></section> }
+    }
+  }
 </main>

@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
@@ -12,6 +12,11 @@ export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
   text: string;
 }
+
+type OperationEditorState =
+  | { kind: 'LOADING' }
+  | { kind: 'ERROR'; message: string }
+  | { kind: 'READY'; operation: any };
 
 @Component({
   standalone: true,
@@ -67,10 +72,12 @@ export class OperationEditorComponent {
     this.clearRequirementModel();
     this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' };
   }
-  readonly operation$ = this.route.paramMap.pipe(
+  readonly operationState$ = this.route.paramMap.pipe(
     switchMap(params => this.eventService.getOperationForEdit(params.get('id')!)),
-    catchError(() => of(null)),
-    tap(operation => { if (operation) this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false }; })
+    map(operation => ({ kind: 'READY', operation } as OperationEditorState)),
+    startWith({ kind: 'LOADING' } as OperationEditorState),
+    catchError(() => of({ kind: 'ERROR', message: 'Impossible de charger le brouillon.' } as OperationEditorState)),
+    tap(state => { if (state.kind === 'READY') this.form = { briefing: state.operation.briefing || '', objectives: this.parseObjectives(state.operation.objectives), meetingPoint: state.operation.meetingPoint || '', imageUrl: state.operation.imageUrl || '', allowShipProposals: state.operation.allowShipProposals ?? false }; })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
