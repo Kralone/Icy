@@ -53,7 +53,7 @@ public class OperationAssignmentService {
         Operation operation = operationRepository.findById(operationId)
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        OperationGroup group = groupRepository.findLockedById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) {
             throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
         }
