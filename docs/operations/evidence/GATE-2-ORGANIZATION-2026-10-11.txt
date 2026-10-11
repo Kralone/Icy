@@ -25,3 +25,5 @@ Capacity implementation:
 - Capacity decisions now lock the leaf and all ancestors in ascending ID order before reading assignments; `OperationAssignmentServiceTest` verifies the stable lock order. A two-transaction database integration test remains for final SEC-04 evidence.
 
 CUA éditeur authentifié : Organisation rendue en deux panneaux desktop (arborescence à gauche, propriétés à droite) ; CSS passe en une colonne sous 760px. Build Angular Docker réussi.
+
+CUA mobile 390x844 : client 390 / scroll 390 / body 390, sans débordement horizontal dans l’éditeur Organisation.
