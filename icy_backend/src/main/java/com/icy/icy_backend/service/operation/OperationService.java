@@ -11,6 +11,7 @@ import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,17 +26,32 @@ public class OperationService {
     private final EventRepository eventRepository;
     private final OperationRepository operationRepository;
     private final MessageService messageService;
+    private final EntityManager entityManager;
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Événement introuvable"));
         event.setActivityType(ActivityType.OPERATION);
+        // The operations table has a database trigger requiring the parent event
+        // to be OPERATION. Flush this transition before inserting the child row.
         eventRepository.save(event);
-        Operation operation = operationRepository.findById(eventId).orElseGet(() -> Operation.builder()
-                .eventId(eventId).event(event).publicationStatus(Operation.PublicationStatus.DRAFT).build());
-        operation.setEvent(event);
-        operationRepository.save(operation);
+        entityManager.flush();
+        Operation operation = operationRepository.findById(eventId).orElse(null);
+        if (operation == null) {
+            operation = Operation.builder()
+                    .eventId(event.getId())
+                    .event(event)
+                    .publicationStatus(Operation.PublicationStatus.DRAFT)
+                    .build();
+            // The operation uses the event UUID as its assigned primary key. Persist
+            // the new row explicitly; merge treats this manually assigned id as a
+            // detached entity and can fail before the transaction is flushed.
+            entityManager.persist(operation);
+        } else {
+            operation.setEvent(event);
+            operationRepository.save(operation);
+        }
         return messageService.buildResponse("operation.draft.created", new OperationResponseDTO(event, operation));
     }
 

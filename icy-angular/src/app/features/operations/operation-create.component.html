@@ -8,7 +8,7 @@
       <div class="steps" aria-label="Étapes de création"><span class="active">01 Cadre</span><span>02 Organisation</span><span>03 Publication</span></div>
       <div class="form-grid">
         <label>Titre<input [(ngModel)]="form.title" maxlength="180" placeholder="Nom de la mission"></label>
-        <label>Type<select [(ngModel)]="form.type"><option value="" disabled>Choisir un type</option>@for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }</select></label>
+        <label>Type<input [(ngModel)]="form.type" list="operation-types" maxlength="120" placeholder="Choisir ou saisir un type"><datalist id="operation-types">@for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }</datalist></label>
         <label class="wide">Briefing<textarea [(ngModel)]="form.description" rows="5" maxlength="50000" placeholder="Contexte, intention et consignes de préparation"></textarea><small>{{ form.description.length }} / 50000</small></label>
         <label>Début<input type="datetime-local" [(ngModel)]="form.startDateTime"></label>
         <label>Fin<input type="datetime-local" [(ngModel)]="form.endDateTime"></label>
