@@ -19,6 +19,10 @@ Hierarchy invariants (OperationGroupServiceTest, added on 2026-10-11):
 - `refusesDeletingParentWhileChildrenExist` proves a parent cannot be deleted while it still has children.
 - The Docker suite after these tests reports 292 tests, 0 failures, 3 skipped.
 
+Independent validation:
+- Two validation chats compared these proofs with `ICEFORGE_CODEX_OPERATIONS_V1.md` and `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`.
+- Both confirm GRP-01 and GRP-03 as CONFORME (PROUVÉ), and GRP-15 as PARTIEL avancé: suppression with children is proven, while member migration and historical conversion remain unproven.
+
 Runtime CUA check:
 - Opened the operation editor, selected Organisation and clicked `Descendre le groupe` on Alpha.
 - UI feedback: `Ordre des groupes mis à jour.`
