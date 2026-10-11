@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.net.URI;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,12 @@ public class OperationService {
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> update(UUID eventId, OperationUpdateRequest request) {
         Event event = findOperationEvent(eventId);
+        if (request.getBriefing() != null && request.getBriefing().length() > 50000) throw new IllegalArgumentException("Briefing trop long");
+        if (request.getMeetingPoint() != null && request.getMeetingPoint().length() > 255) throw new IllegalArgumentException("Lieu trop long");
+        if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
+            URI image = URI.create(request.getImageUrl());
+            if (!("https".equalsIgnoreCase(image.getScheme()) || "http".equalsIgnoreCase(image.getScheme())) || image.getHost() == null) throw new IllegalArgumentException("URL d’image invalide");
+        }
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
         operation.setBriefing(request.getBriefing());
