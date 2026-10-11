@@ -39,3 +39,5 @@ CUA admin/navigation : /icy/admin expose le lien « Nouvelle opération » vers 
 Clavier : après activation de `Présent`, la touche `Tab` déplace le focus accessible sur `Peut-être` ; les actions de participation restent exposées comme boutons nommés.
 
 Deep-links : après correction de la liste SPA Nginx, `GET /icy/operations/new` et `GET /icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04` répondent HTTP 200. Les liens « Calendrier » de la fiche participant et de l’éditeur ont été exposés par AX.
+
+Navigation calendrier exécutée de nouveau : depuis `/icy/events`, le bouton accessible `12 oct. 2026 VALIDATION QA Gate 1 ... Détails` a été activé ; la navigation a abouti à `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04`. La fiche expose le type `OPÉRATION`, le statut publié et le lien retour `← Calendrier`. L’admin expose également `Nouvelle opération` vers `/icy/operations/new`.
