@@ -7,6 +7,8 @@ import com.icy.icy_backend.service.operation.OperationService;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
 import com.icy.icy_backend.service.operation.OperationShipService;
 import com.icy.icy_backend.service.operation.OperationGroupService;
+import com.icy.icy_backend.db.repository.event.OperationShipProposalRepository;
+import com.icy.icy_backend.controller.dto.response.event.OperationShipProposalResponseDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationGroupRequest;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.ActivityType;
@@ -46,6 +48,15 @@ public class OperationController {
     private final OperationAssignmentService assignmentService;
     private final OperationShipService shipService;
     private final OperationGroupService groupService;
+    private final OperationShipProposalRepository proposalRepository;
+
+    @GetMapping("/{id}/ships")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<List<OperationShipProposalResponseDTO>>> ships(@PathVariable UUID id) {
+        operationRepository.findById(id).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        List<OperationShipProposalResponseDTO> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream().map(OperationShipProposalResponseDTO::new).toList();
+        return messageService.buildResponse("operation.ships", proposals);
+    }
 
     @PostMapping("/{id}/groups")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")

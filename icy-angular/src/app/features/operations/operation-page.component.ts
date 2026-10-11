@@ -38,6 +38,11 @@ export class OperationPageComponent {
     map(response => response.data),
     catchError(() => of([]))
   );
+  readonly ships$ = this.route.paramMap.pipe(
+    switchMap(params => this.http.get<{ data: Array<{ id: string; shipId: number; ownerUserId: string; groupId?: number; status: string }> }>(`/api/operations/${params.get('id')}/ships`)),
+    map(response => response.data),
+    catchError(() => of([]))
+  );
   assignmentMessage = '';
   assign(operationId: string, groupId: number) {
     this.assignmentMessage = '';
