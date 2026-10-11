@@ -16,6 +16,22 @@ class DiscordEventImageUrlTest(unittest.TestCase):
 
 
 class EventParticipationViewTest(unittest.IsolatedAsyncioTestCase):
+    def test_operation_view_keeps_three_choices_and_deep_link(self):
+        view = EventParticipationView(
+            AsyncMock(),
+            "operation-id",
+            operation_url="https://iceforge.fr/icy/operations/operation-id",
+        )
+
+        self.assertEqual(
+            ["Présent ✅", "Peut-être ❔", "Absent ❌"],
+            [item.label for item in view.children[:3]],
+        )
+        self.assertEqual(
+            "https://iceforge.fr/icy/operations/operation-id",
+            view.children[3].url,
+        )
+
     async def test_publish_success_is_confirmed_to_user(self):
         rabbit = AsyncMock()
         rabbit.publish.return_value = True

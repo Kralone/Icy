@@ -13,7 +13,7 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 4 — affectations et capacité | PARTIEL | Verrous feuille/ancêtres, capacités hiérarchiques, tests de scope parent/enfant/frère | Test d’intégration de deux transactions et fixture runtime parent plein |
 | 5 — flotte et besoins | PARTIEL | Migration V49, API séparée, éditeur, participant, protection des brouillons, tests, sélecteur catalogue nommé | Association besoin↔appareil fourni et test runtime de bout en bout |
 | 6 — non-régression UI | PARTIEL | Build Angular et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
-| 7 — Discord et historique | PARTIEL | Sources inspectées, bouton lien et trois participations présents, modules/tests ciblés compilés en Python 3.12 Docker | Runtime Discord et synchronisation bidirectionnelle à exécuter |
+| 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **65 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
 
 ## Vérifications techniques
 

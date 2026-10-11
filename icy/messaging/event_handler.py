@@ -810,9 +810,9 @@ class EventParticipationView(ui.View):
         self.rabbit = rabbit
         self.event_id = str(event_id)
 
-        self.add_item(self._build_button("Participer ✅", ButtonStyle.success, 1))
+        self.add_item(self._build_button("Présent ✅", ButtonStyle.success, 1))
         self.add_item(self._build_button("Peut-être ❔", ButtonStyle.secondary, 0))
-        self.add_item(self._build_button("Refuser ❌", ButtonStyle.danger, -1))
+        self.add_item(self._build_button("Absent ❌", ButtonStyle.danger, -1))
         if operation_url:
             self.add_item(ui.Button(label="Voir l’opération sur IceForge", style=ButtonStyle.link, url=operation_url))
 
