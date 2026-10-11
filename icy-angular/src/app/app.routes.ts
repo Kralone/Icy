@@ -272,6 +272,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/events/events.component').then(m => m.EventsComponent)
       },
       {
+        path: 'operations/new',
+        loadComponent: () => import('./features/operations/operation-create.component').then(m => m.OperationCreateComponent)
+      },
+      {
         path: 'operations/:id',
         loadComponent: () => import('./features/operations/operation-page.component').then(m => m.OperationPageComponent)
       },

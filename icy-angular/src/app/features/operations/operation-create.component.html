@@ -1,0 +1,17 @@
+<main class="operation-create">
+  <a routerLink="/icy/events" class="back">← Retour au calendrier</a>
+  <section class="create-card">
+    <p class="eyebrow">Nouvelle opération</p>
+    <h1>Créer une opération</h1>
+    <p class="intro">L’opération sera créée comme brouillon et ouvrira directement son éditeur.</p>
+    <div class="form-grid">
+      <label>Titre<input [(ngModel)]="form.title" maxlength="180" placeholder="Nom de la mission"></label>
+      <label>Type<select [(ngModel)]="form.type"><option value="" disabled>Choisir un type</option>@for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }</select></label>
+      <label class="wide">Description<textarea [(ngModel)]="form.description" rows="5" placeholder="Contexte et objectif"></textarea></label>
+      <label>Début<input type="datetime-local" [(ngModel)]="form.startDateTime"></label>
+      <label>Fin<input type="datetime-local" [(ngModel)]="form.endDateTime"></label>
+    </div>
+    @if (error) { <p class="error" role="alert">{{ error }}</p> }
+    <button type="button" class="primary" [disabled]="invalid" (click)="create()">{{ saving ? 'Création…' : 'Créer et ouvrir l’éditeur' }}</button>
+  </section>
+</main>
