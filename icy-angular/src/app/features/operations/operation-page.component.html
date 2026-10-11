@@ -12,7 +12,7 @@
     <section class="operation-status" aria-label="Situation de l'opération">
       <strong>Situation</strong>
       <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      <span class="operation-status__placeholder">Les affectations seront disponibles après configuration</span>
+      <span class="operation-status__placeholder">Les groupes affichent les places et le mode d’affectation</span>
     </section>
     <div class="operation-grid">
       <article class="operation-card operation-card--briefing">
@@ -24,7 +24,7 @@
         <p class="eyebrow">Organisation</p>
         <h2>Composition</h2>
         @if (groups$ | async; as groups) {
-          @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><div><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }}</span></div><button type="button" (click)="assign(operation.id, group.id)" [disabled]="group.assignmentMode !== 'FREE'">Choisir</button></div> }</div> }
+          @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><div><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }} · {{ group.assignmentMode === 'VALIDATION' ? 'Sur validation' : group.assignmentMode === 'MANAGED' ? 'Géré par les responsables' : 'Libre' }}</span></div>@if (isLeaf(group, groups)) { @if (group.assignmentMode === 'VALIDATION') { <button type="button" (click)="requestAssignment(operation.id, group.id)">Demander</button> } @else { <button type="button" (click)="assign(operation.id, group.id)" [disabled]="group.assignmentMode !== 'FREE'">Choisir</button> } }</div> }</div> }
           @else { <p class="empty-state">Les groupes seront affichés ici.</p> }
         }
         @if (assignmentMessage) { <p role="status">{{ assignmentMessage }}</p> }

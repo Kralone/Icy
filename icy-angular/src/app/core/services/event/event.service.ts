@@ -121,4 +121,8 @@ export class EventService {
   assignOperationGroup(operationId: string, groupId: number) {
     return this.http.post(`/api/operations/${operationId}/assignments/me/${groupId}`, {});
   }
+
+  requestOperationGroup(operationId: string, groupId: number) {
+    return this.http.post(`/api/operations/${operationId}/assignment-requests/me/${groupId}`, {});
+  }
 }

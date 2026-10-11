@@ -44,8 +44,13 @@ export class OperationPageComponent {
     catchError(() => of([]))
   );
   assignmentMessage = '';
+  isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
     this.assignmentMessage = '';
     this.eventService.assignOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Affectation confirmée.', error: error => this.assignmentMessage = error?.error?.message || 'Affectation impossible.' });
+  }
+  requestAssignment(operationId: string, groupId: number) {
+    this.assignmentMessage = '';
+    this.eventService.requestOperationGroup(operationId, groupId).subscribe({ next: () => this.assignmentMessage = 'Demande envoyée aux responsables.', error: error => this.assignmentMessage = error?.error?.message || 'Demande impossible.' });
   }
 }
