@@ -1,0 +1,15 @@
+CRT-03 — inventaire des champs, 11/10/2026
+
+Source historique : `icy-angular/src/app/features/admin/event-management/event-management.component.html` et `CreateEventRequest`.
+
+| Champ historique | Présent dans le formulaire direct | Contrat backend | Décision |
+|---|---|---|---|
+| Titre | Oui | `title` | Conservé dans `events.events.title`. |
+| Type | Oui | `type` | Conservé dans `events.events.event_type`. |
+| Description | Oui, libellé Briefing | `description` puis `Operation.briefing` lors de la création directe | Conservé dans l’événement et initialisé dans le brouillon. |
+| Début | Oui | `startDateTime` | Conservé. |
+| Fin | Oui | `endDateTime` | Conservé. |
+| Image affichée par le formulaire historique | Image du type sélectionné (`EventType.imageUrl`), pas une image propre à l’événement | `type` | Réutilisée par le type ; l’opération ajoute en plus `Operation.imageUrl`. |
+| Options supplémentaires | Aucune autre saisie dans le formulaire historique | `imageUrl`, `allowShipProposals` sont propres à l’opération | Ajoutées au formulaire direct et persistées dans le brouillon. |
+
+Conclusion : les cinq valeurs saisies dans le formulaire événement historique ont une correspondance documentée. Le parcours historique de conversion a toutefois été retiré par décision produit ; cette décision reste suivie séparément par CRT-02 et empêche de déclarer CRT-03 totalement conforme sans arbitrage explicite du périmètre « conversion ».
