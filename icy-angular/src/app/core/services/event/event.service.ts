@@ -114,7 +114,7 @@ export class EventService {
     return this.http.get<any>(`/api/operations/${eventId}/edit`).pipe(map(res => res.data));
   }
 
-  updateOperation(eventId: string, payload: { briefing?: string; meetingPoint?: string; imageUrl?: string }) {
+  updateOperation(eventId: string, payload: { briefing?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean }) {
     return this.http.put<any>(`/api/operations/${eventId}`, payload).pipe(map(res => res.data));
   }
 

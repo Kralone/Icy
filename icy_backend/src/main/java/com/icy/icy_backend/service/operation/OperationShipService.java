@@ -22,7 +22,7 @@ public class OperationShipService {
     private final OperationGroupRepository groupRepository;
     @Transactional
     public ResponseEntity<MessageResponse<Void>> propose(UUID operationId, Long shipId, Long groupId) {
-        operationRepository.findById(operationId).filter(o -> o.getPublicationStatus() == com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED)
+        operationRepository.findById(operationId).filter(o -> o.getPublicationStatus() == com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED && o.isAllowShipProposals())
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         UUID owner = AuthUtils.getCurrentUserId();
         if (!userShipRepository.existsByUserIdAndShipId(owner, shipId)) throw new ResourceNotFoundException("Vaisseau absent du hangar personnel");

@@ -13,6 +13,7 @@ interface OperationPageModel {
   briefing?: string;
   meetingPoint?: string;
   imageUrl?: string;
+  allowShipProposals: boolean;
   startDateTime: string;
   endDateTime: string;
   finished: boolean;

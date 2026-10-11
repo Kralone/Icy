@@ -7,4 +7,5 @@ public class OperationUpdateRequest {
     private String briefing;
     private String meetingPoint;
     private String imageUrl;
+    private Boolean allowShipProposals;
 }

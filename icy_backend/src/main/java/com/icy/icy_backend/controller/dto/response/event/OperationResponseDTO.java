@@ -19,6 +19,7 @@ public class OperationResponseDTO {
     private String meetingPoint;
     private String imageUrl;
     private Operation.PublicationStatus publicationStatus;
+    private boolean allowShipProposals;
 
     public OperationResponseDTO(Event event, Operation operation) {
         this.id = event.getId();
@@ -31,5 +32,6 @@ public class OperationResponseDTO {
         this.meetingPoint = operation.getMeetingPoint();
         this.imageUrl = operation.getImageUrl();
         this.publicationStatus = operation.getPublicationStatus();
+        this.allowShipProposals = operation.isAllowShipProposals();
     }
 }

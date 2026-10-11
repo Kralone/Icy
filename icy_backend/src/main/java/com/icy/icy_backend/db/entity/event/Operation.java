@@ -47,6 +47,10 @@ public class Operation {
     @Builder.Default
     private PublicationStatus publicationStatus = PublicationStatus.DRAFT;
 
+    @Column(name = "allow_ship_proposals", nullable = false)
+    @Builder.Default
+    private boolean allowShipProposals = false;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

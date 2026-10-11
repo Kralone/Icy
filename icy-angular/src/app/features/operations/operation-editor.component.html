@@ -11,6 +11,7 @@
         <label>Briefing<textarea [(ngModel)]="form.briefing" rows="12" maxlength="50000"></textarea></label>
         <label>Point de rendez-vous<input [(ngModel)]="form.meetingPoint" maxlength="255"></label>
         <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" maxlength="2000"></label>
+        <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> Autoriser les membres présents à proposer un vaisseau de leur hangar</label>
       } @else if (tab === 'publication') {
         <h2>Publication</h2><p>Statut actuel : {{ operation.publicationStatus }}.</p><button type="button" class="primary" (click)="publish(operation.id)">Publier l’opération</button>
       } @else if (tab === 'organisation') {

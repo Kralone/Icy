@@ -53,6 +53,7 @@ public class OperationService {
         operation.setBriefing(request.getBriefing());
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
+        if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
         operation.setUpdatedAt(LocalDateTime.now());
         return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, operationRepository.save(operation)));
     }
