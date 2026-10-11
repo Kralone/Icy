@@ -24,3 +24,5 @@ Garde-fous ajoutés et testés dans `OperationShipServiceTest` : un besoin `FULF
 Le test `allowsSeveralProposalsOnTheSameLeafGroup` prouve l’association de plusieurs vaisseaux distincts à un même groupe feuille, sans créer de seconde affectation principale.
 
 V51 ajoute `pilot_user_id`, distinct de `owner_user_id`. L’organisateur peut affecter ou retirer le pilote par l’API dédiée ; le serveur exige que le pilote soit inscrit `Présent`. Le test `assignsPilotSeparatelyFromProposalOwner` prouve deux identités distinctes et la suite Docker est à 286 tests, 0 échec, 3 ignorés.
+
+Portée de la preuve SHP-03 : code, test de service et sélecteur éditeur validés indépendamment ; aucune capture CUA dédiée de la mutation pilote n’est présentée comme preuve runtime.
