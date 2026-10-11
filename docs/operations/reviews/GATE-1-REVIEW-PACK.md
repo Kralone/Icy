@@ -15,6 +15,8 @@
 - Capture CUA desktop de `/icy/admin/events` : le bouton de conversion n’est plus présent.
 - Capture CUA desktop de `/icy/operations/new` : parcours admin accessible, formulaire et état désactivé vérifiés.
 - Capture CUA desktop après enrichissement : aperçu de mission, étapes de progression et briefing borné à 50 000 caractères.
+- Scénario de création Docker exécuté : le brouillon `QA Gate 1` ouvre réellement l’éditeur et est confirmé en base comme `OPERATION/DRAFT`.
+- Responsive vérifié à 390×844 : largeur de contenu et largeur de défilement toutes deux égales à 390 px.
 - Build Angular production terminé avec avertissements de budget CSS préexistants.
 - Maven complet : 266 tests, 0 échec, 3 ignorés.
 
@@ -24,7 +26,7 @@
 - [x] La création est présentée comme un brouillon ouvrant l’éditeur.
 - [x] La gestion des événements ne porte plus l’action de conversion.
 - [x] Les captures desktop sont datées et rattachées à une URL testée.
-- [ ] Capture mobile dédiée et vérification tactile (non disponible dans cette passe CUA).
+- [ ] Capture mobile archivée et vérification tactile (mesure sans débordement déjà réalisée).
 - [ ] Revue indépendante technique, UI, sécurité et métier.
 
 ## Décision

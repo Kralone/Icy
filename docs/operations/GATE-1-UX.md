@@ -24,6 +24,10 @@ Capture CUA réalisée le 11/10/2026 à 14:05 (Docker `127.0.0.1:18088`, viewpor
 
 Après l’enrichissement UX, une capture CUA réalisée le 11/10/2026 à 14:18 montre une composition en deux zones : formulaire de cadre à gauche, aperçu de mission à droite, étapes `01 Cadre · 02 Organisation · 03 Publication`, compteur de briefing et états vides explicites.
 
+Le scénario Docker a ensuite été exécuté le 11/10/2026 : saisie `QA Gate 1`, type `VALIDATION`, briefing et dates, puis clic sur `Créer le brouillon et ouvrir l’éditeur`. La navigation a abouti à `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit` et PostgreSQL confirme `activity_type=OPERATION`, `publication_status=DRAFT`.
+
+Vérification responsive à 390×844 : `clientWidth=390`, `scrollWidth=390`, `bodyWidth=390`. Aucun débordement horizontal n’a été détecté.
+
 La même session a vérifié `http://127.0.0.1:18088/icy/admin/events` après reconstruction Docker : la zone de création d’événement ne présente plus de bouton `Transformer en opération`.
 
 ## Règles d’interface
@@ -36,5 +40,5 @@ La même session a vérifié `http://127.0.0.1:18088/icy/admin/events` après re
 ## Limites à lever aux gates suivants
 
 - Gate 1 ne prononce pas la conformité métier complète de la création ni de la publication.
-- La capture mobile dédiée reste à produire avant le verdict responsive final.
+- La capture mobile dédiée reste à archiver avant le verdict responsive final ; la mesure 390×844 et l’absence de débordement sont vérifiées.
 - Les gates 2 à 7 doivent fournir leurs propres preuves indépendantes.

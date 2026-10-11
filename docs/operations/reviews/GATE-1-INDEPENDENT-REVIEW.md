@@ -41,3 +41,22 @@ Le commit `fd74f2b` ajoute `roleGuard` avec `roles: ['ADMIN', 'OFFICIER']` sur `
 
 Le verdict global reste **BLOCKED** : les gaps du parcours canonique, des preuves mobile et des maquettes premium ne sont pas modifiés par cette correction.
 
+## Actualisation — HEAD `65f4c7d`
+
+La décision produit `docs/operations/DECISION-UX-ADMIN-CREATION.md` arbitre explicitement l’entrée officielle par Admin et le retrait du bouton de conversion. Je considère donc le choix de parcours **accepté comme décision produit documentée** pour ce périmètre, sans le requalifier comme défaut de la présente passe. L’écran `/icy/operations/new` apporte maintenant une hiérarchie plus claire (brouillon, étapes, aperçu mission, briefing borné à 50 000 caractères), avec une grille qui s’empile sous 820 px et un formulaire en une colonne sous 640 px.
+
+Les écarts encore réels sont limités aux preuves et à la couverture UX demandées par Gate 1 :
+
+- aucune capture mobile dédiée ni vérification tactile à 390 px ;
+- aucun wireframe/mockup haute fidélité joint pour les trois zones (création, éditeur organisation, fiche participant) ;
+- aucune capture de l’éditeur ou de la fiche participant permettant d’évaluer leur cohérence visuelle et leur densité ;
+- les builds et Docker sont rapportés dans le pack, mais leurs sorties brutes ne sont pas archivées dans ce dossier.
+
+La décision reste **BLOCKED pour clôturer Gate 1**, pour ces seules lacunes de preuve et de maquettes. Le gap « bouton de conversion supprimé » est clos par la décision produit documentée.
+
+## Actualisation — HEAD `bb17de8`
+
+Les preuves runtime communiquées corrigent la réserve fonctionnelle de création : le test CUA a créé `QA Gate 1`, ouvert `/icy/operations/7ad8823f-d82a-4a43-a157-c867ec47bd04/edit`, et la base confirme `activity_type=OPERATION` et `publication_status=DRAFT`. Le `flush` avant `persist` couvre le trigger parent/enfant ; le type est maintenant saisissable avec une `datalist`, ce qui évite de bloquer la création sur une liste vide. Le test viewport 390×844 rapporte `clientWidth=390`, `scrollWidth=390` et `bodyWidth=390`, sans débordement horizontal.
+
+Ces éléments permettent de classer le parcours création et la contrainte mobile de largeur **PASS sur preuves rapportées**. Ils ne remplacent pas les artefacts visuels Gate 1 : aucune capture mobile réelle, aucun wireframe/mockup haute fidélité des trois zones et aucune capture de l’éditeur ou de la fiche participant n’est jointe. Le verdict Gate 1 demeure **BLOCKED uniquement pour ces livrables UX manquants**.
+
