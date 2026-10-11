@@ -6,6 +6,7 @@
 - Dossier UX : [GATE-1-UX.md](../GATE-1-UX.md)
 - Références métier : `ICEFORGE_CODEX_OPERATIONS_V1.md` et `ICEFORGE_CODEX_REPRISE_AUDIT_UI_OPERATIONS.md`
 - Décision produit sur le parcours : [DECISION-UX-ADMIN-CREATION.md](../DECISION-UX-ADMIN-CREATION.md)
+- Wireframes structurels : [GATE-1-WIREFRAMES.md](../GATE-1-WIREFRAMES.md)
 - Gate précédent : [GATE-0-REVIEW-PACK.md](GATE-0-REVIEW-PACK.md)
 
 ## Preuves disponibles
@@ -27,6 +28,7 @@
 - [x] La gestion des événements ne porte plus l’action de conversion.
 - [x] Les captures desktop sont datées et rattachées à une URL testée.
 - [ ] Capture mobile archivée et vérification tactile (mesure sans débordement déjà réalisée).
+- [x] Wireframes structurels des trois zones joints ; les mockups haute fidélité restent à produire.
 - [ ] Revue indépendante technique, UI, sécurité et métier.
 
 ## Décision
