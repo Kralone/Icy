@@ -1,5 +1,11 @@
 <main class="operation-page">
-  @if (operation$ | async; as operation) {
+  @if (operationState$ | async; as operationState) {
+    @if (operationState.status === 'LOADING') {
+      <section class="operation-loading" role="status" aria-live="polite"><p>Chargement de l’opération…</p></section>
+    } @else if (operationState.status === 'ERROR') {
+      <section class="operation-error" role="alert"><h1>Opération indisponible</h1><p>La fiche n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.</p><a routerLink="/icy/events">Retour au calendrier</a></section>
+    } @else if (operationState.status === 'READY') {
+      @if (operationState.data; as operation) {
     <header class="operation-hero" [style.background-image]="operation.imageUrl ? 'linear-gradient(180deg, transparent 28%, rgba(11,18,32,.95)), url(' + operation.imageUrl + ')' : null">
       <div class="operation-hero__veil"></div>
       <div class="operation-hero__content">
@@ -49,11 +55,7 @@
         @if (operation.allowShipProposals) { @if (hangar$ | async; as hangar) { @if (hangar.length) { <div class="ship-proposal"><label>Proposer un vaisseau du hangar<select [(ngModel)]="selectedShipId"><option [ngValue]="null">Choisir un appareil</option>@for (owned of hangar; track owned.id?.shipId || owned.ship?.id) { <option [ngValue]="owned.id?.shipId || owned.ship?.id">{{ owned.ship?.name || ('Vaisseau #' + (owned.id?.shipId || owned.ship?.id)) }}</option> }</select></label><label>Besoin ou poste (facultatif)<select [(ngModel)]="selectedShipRequirementId"><option [ngValue]="null">Aucun besoin précis</option>@if (shipRequirements$ | async; as requirements) { @for (requirement of requirements; track requirement.id) { @if (requirement.status !== 'CANCELLED') { <option [ngValue]="requirement.id">{{ requirement.quantity }} × {{ requirement.shipModelId ? ('modèle #' + requirement.shipModelId) : 'modèle à préciser' }}</option> } } }</select></label><label>Feuille (facultatif)<input type="number" [(ngModel)]="selectedShipGroupId" placeholder="ID du groupe"></label><button type="button" class="primary" (click)="proposeShip(operation.id)" [disabled]="selectedShipId === null">Proposer</button></div> } @else { <p class="empty-state">Votre hangar ne contient aucun vaisseau proposé.</p> } } } @else { <p class="empty-state">Les propositions de vaisseaux sont désactivées par l’organisateur.</p> }
       </article>
     </div>
-  } @else {
-    <section class="operation-error" role="alert">
-      <h1>Opération indisponible</h1>
-      <p>Cette opération n’est pas publiée ou ne peut pas être chargée.</p>
-      <a routerLink="/icy/events">Retour au calendrier</a>
-    </section>
+      }
+    }
   }
 </main>

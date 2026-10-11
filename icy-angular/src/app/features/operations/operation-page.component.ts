@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, map, of, startWith, Subject, switchMap, timeout } from 'rxjs';
+import { catchError, map, of, shareReplay, startWith, Subject, switchMap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -22,6 +22,10 @@ interface OperationPageModel {
 }
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string }; }
 interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
+type OperationViewState =
+  | { status: 'LOADING' }
+  | { status: 'ERROR' }
+  | { status: 'READY'; data: OperationPageModel };
 
 @Component({
   standalone: true,
@@ -41,6 +45,13 @@ export class OperationPageComponent {
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
     map(response => response.data),
     catchError(() => of(null))
+  );
+  readonly operationState$ = this.route.paramMap.pipe(
+    switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
+    map(response => ({ status: 'READY', data: response.data } as OperationViewState)),
+    startWith({ status: 'LOADING' } as OperationViewState),
+    catchError(() => of({ status: 'ERROR' } as OperationViewState)),
+    shareReplay({ bufferSize: 1, refCount: true })
   );
   readonly groups$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string }> }>(`/api/operations/${params.get('id')}/groups`)),
