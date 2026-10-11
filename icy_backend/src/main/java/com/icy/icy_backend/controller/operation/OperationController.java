@@ -130,10 +130,9 @@ public class OperationController {
     public ResponseEntity<MessageResponse<Void>> refuseAssignment(@PathVariable UUID requestId) { return assignmentService.decide(requestId, false); }
 
     @GetMapping("/{id}/assignment-requests")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationAssignmentRequestResponseDTO>>> assignmentRequests(@PathVariable UUID id) {
-        operationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        List<OperationAssignmentRequestResponseDTO> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream().map(OperationAssignmentRequestResponseDTO::new).toList();
+        List<OperationAssignmentRequestResponseDTO> requests = assignmentService.visibleRequests(id).stream().map(OperationAssignmentRequestResponseDTO::new).toList();
         return messageService.buildResponse("operation.assignment.requests", requests);
     }
 

@@ -1,6 +1,6 @@
 # Matrice de conformite - Operations V1
 
-Source auditee : commit `9206bd2` sur `codex/operations-reprise-audit`. Statuts normalises : PRESENT = inspecte dans le code, PARTIEL = implementation incomplete, ABSENT = non implemente, NON VERIFIE = preuve d execution manquante.
+Source auditee : commit de reprise de l’audit sur `codex/operations-reprise-audit`. Statuts normalises : PRESENT = inspecte dans le code, PARTIEL = implementation incomplete, ABSENT = non implemente, NON VERIFIE = preuve d execution manquante.
 
 | ID | Exigence | Source | Preuve / limite | Etat | Severite | Action | Gate | Revue |
 |---|---|---|---|---|---|---|---|---|
@@ -15,7 +15,7 @@ Source auditee : commit `9206bd2` sur `codex/operations-reprise-audit`. Statuts 
 | CRT-04 | brouillon persistant | OperationService.convert | Operation DRAFT persistant | PARTIEL | P1 | Tester brouillon prive et reprise | 2 | En attente |
 | CRT-05 | erreur autosave | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2 | En attente |
 | CRT-06 | éditeur complet | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2 | En attente |
-| CRT-07 | aperçu | operation-editor.component | Apercu participant reel absent | ABSENT | P0 | Gate 2/6 : reutiliser template participant | 2 | En attente |
+| CRT-07 | aperçu | operation-editor.component | Apercu éditeur présent ; rendu participant complet à aligner | PARTIEL | P0 | Gate 2/6 : reutiliser template participant | 2 | En attente |
 | CRT-08 | publication explicite | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2 | En attente |
 | CRT-09 | modification opération publiée | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2 | En attente |
 | CRT-10 | date obligatoire | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2 | En attente |
@@ -43,7 +43,7 @@ Source auditee : commit `9206bd2` sur `codex/operations-reprise-audit`. Statuts 
 | GRP-08 | override par groupe | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-09 | transition atomique | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-10 | attente conserve ancienne place | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
-| GRP-11 | délégation explicite | OperationGroup / migrations V40-V47 | Delegation explicite absente | ABSENT | P0 | Gate 3 : ajouter delegation scoped | 3 / 4 | En attente |
+| GRP-11 | délégation explicite | OperationGroup / migration V48 / OperationAssignmentService | Responsable UUID persisté ; décisions et file filtrées au groupe et descendants ; runtime d’autorisation non vérifié | PARTIEL | P0 | Ajouter tests parent/enfant/frère et preuve runtime autorisée | 3 / 4 | Revue code PASS partiel ; runtime en attente |
 | GRP-12 | visibilité composition | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-13 | participant sans affectation | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
 | GRP-14 | baisse capacité | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 3 / 4 | En attente |
@@ -66,7 +66,7 @@ Source auditee : commit `9206bd2` sur `codex/operations-reprise-audit`. Statuts 
 | DSC-05 | synchronisation bidirectionnelle | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
 | DSC-06 | annulation libère place | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 7 | En attente |
 | SEC-01 | permissions organisateur serveur | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2-7 | En attente |
-| SEC-02 | délégation scope | OperationController / services | Scope delegation absent | ABSENT | P0 | Gate 3 : controles serveur | 2-7 | En attente |
+| SEC-02 | délégation scope | OperationController / services | Contrôle serveur ADMIN/OFFICIER/responsable + descendants ; mutation runtime refusée par auto-review | PARTIEL | P0 | Compléter tests d’autorisation et preuve runtime sûre | 2-7 | Revue code PASS partiel ; runtime en attente |
 | SEC-03 | contrôle ownership hangar | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2-7 | En attente |
 | SEC-04 | anti-surbooking transactionnel | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2-7 | En attente |
 | SEC-05 | brouillon non public | Audit statique a completer | Aucune preuve reproductible consolidee | NON VERIFIE | P1 | Definir test ou capture au gate correspondant | 2-7 | En attente |

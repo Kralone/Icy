@@ -10,3 +10,8 @@ Implementation evidence
 
 Runtime limitation:
 - A browser mutation assigning responsibility to a named validation account was refused by the desktop auto-review because it grants that account operational authority. No workaround was attempted. The persistence and authorization code remain covered by compilation, migration, and unit/full-suite checks.
+
+Read-only editor proof:
+ - The operation editor permissions tab loaded successfully for operation `7ad8823f-d82a-4a43-a157-c867ec47bd04`.
+ - It displayed `Demandes de groupe : 0` and `Aucune demande en attente.` without a server error.
+ - The editor now exposes Approve/Refuse actions for pending requests; those mutation actions were not exercised because the named-account authorization mutation remains blocked by auto-review.

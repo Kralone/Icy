@@ -11,6 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Service @RequiredArgsConstructor
 public class OperationAssignmentService {
@@ -60,6 +64,35 @@ public class OperationAssignmentService {
             cursor = cursor.getParentId() == null ? null : groupRepository.findById(cursor.getParentId()).orElse(null);
         }
         return false;
+    }
+
+    /**
+     * Returns the assignment queue visible to the current user. Organizers see
+     * the complete operation queue; a delegated responsible sees requests for
+     * their group and its descendants only.
+     */
+    @Transactional(readOnly = true)
+    public List<OperationAssignmentRequest> visibleRequests(UUID operationId) {
+        operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        List<OperationAssignmentRequest> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId);
+        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER")) return requests;
+
+        UUID currentUser = AuthUtils.getCurrentUserId();
+        List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
+        Set<Long> visibleGroups = groups.stream()
+                .filter(group -> currentUser.equals(group.getResponsibleUserId()))
+                .map(OperationGroup::getId)
+                .collect(Collectors.toCollection(HashSet::new));
+        boolean changed;
+        do {
+            changed = false;
+            for (OperationGroup group : groups) {
+                if (group.getParentId() != null && visibleGroups.contains(group.getParentId()) && visibleGroups.add(group.getId())) {
+                    changed = true;
+                }
+            }
+        } while (changed);
+        return requests.stream().filter(request -> visibleGroups.contains(request.getGroupId())).toList();
     }
 
     @Transactional

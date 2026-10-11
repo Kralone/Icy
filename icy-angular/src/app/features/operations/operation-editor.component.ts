@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 
 export interface OperationObjective {
@@ -26,7 +26,8 @@ export class OperationEditorComponent {
     tap(operation => { if (operation) this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false }; })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
-  readonly assignmentRequests$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationAssignmentRequests(params.get('id')!)), map(response => response.data), catchError(() => of([])));
+  private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
+  readonly assignmentRequests$ = this.route.paramMap.pipe(switchMap(params => this.assignmentRefresh.pipe(switchMap(() => this.eventService.getOperationAssignmentRequests(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
   set groups(value: any[]) { this.groupState.set(value); }
@@ -91,4 +92,8 @@ export class OperationEditorComponent {
     this.eventService.reorderOperationGroups(operationId, siblings.map(group => group.id)).subscribe({ next: () => { const orderById = new Map(siblings.map((group, order) => [group.id, order])); this.groups = this.groups.map(group => orderById.has(group.id) ? { ...group, sortOrder: orderById.get(group.id) } : group).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' });
   }
   deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
+  decideAssignment(requestId: string, approve: boolean): void {
+    const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
+    action.subscribe({ next: () => { this.message = approve ? 'Demande approuvée.' : 'Demande refusée.'; this.assignmentRefresh.next(); }, error: error => this.message = error?.error?.message || 'Décision impossible.' });
+  }
 }
