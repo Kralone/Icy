@@ -29,3 +29,5 @@ Fiche participant publiée (retest local)
 Builds
 - Backend Docker : mvn verify terminé avec succès dans l’image locale.
 - Frontend Docker : npm run build terminé avec succès ; avertissements de budget CSS existants.
+
+Responsive CUA complémentaire : 1280x720 -> client 1280 / scroll 1280 / body 1280 ; 3840x2160 -> client 3840 / scroll 3840 / body 3840. Aucun débordement horizontal observé.

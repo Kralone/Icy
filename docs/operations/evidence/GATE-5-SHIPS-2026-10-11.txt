@@ -6,3 +6,5 @@
 - Participant : les besoins ouverts sont visibles dans la carte Ressources, avant les vaisseaux effectivement proposés.
 - Validation : image frontend Docker reconstruite avec succès ; backend conservé à 272 tests, 0 échec, 3 ignorés.
 - Limite restante : aucune association automatique entre un besoin et une proposition de vaisseau n’est introduite dans ce lot.
+
+Correctif sécurité 12b0424 : lecture des besoins d’un brouillon refusée aux non-organisateurs ; ADMIN/OFFICIER conservent l’accès d’édition.
