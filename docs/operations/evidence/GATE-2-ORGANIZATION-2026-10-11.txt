@@ -12,3 +12,8 @@ Validation:
 - Backend Docker `mvn verify` succeeded: 266 tests, 0 failures, 3 skipped.
 - The targeted `OperationGroupServiceTest` covers complete sibling lists, partial-list rejection, mixed-parent rejection and cross-operation rejection; the Docker suite now reports 270 tests, 0 failures, 3 skipped.
 - Frontend and backend containers were redeployed and reported healthy.
+
+Runtime CUA check:
+- Opened the operation editor, selected Organisation and clicked `Descendre le groupe` on Alpha.
+- UI feedback: `Ordre des groupes mis à jour.`
+- PostgreSQL output: `2|Bravo|0` then `1|Alpha|1`.
