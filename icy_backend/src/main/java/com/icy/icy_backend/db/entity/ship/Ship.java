@@ -62,6 +62,8 @@ public class Ship {
     @Transient
     private String catalogGroup;
     @Transient
+    private String externalId;
+    @Transient
     private Boolean executiveHangar;
     @Transient
     private Boolean imageIsBase;

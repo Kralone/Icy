@@ -24,6 +24,7 @@ export interface Ship {
   focus: string;
   crew: string;
   catalogGroup?: ShipCatalogGroup;
+  externalId?: string;
   executiveHangar?: boolean;
   sourceUrl?: string;
   sourceVersion?: string;

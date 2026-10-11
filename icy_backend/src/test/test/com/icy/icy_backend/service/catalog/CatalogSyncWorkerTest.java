@@ -57,11 +57,10 @@ class CatalogSyncWorkerTest {
         when(uexDatasetService.refreshDataset("vehicles_prices"))
                 .thenReturn(ResponseEntity.ok(uexBody));
 
-        WikeloShip wikeloShip = new WikeloShip(
-                null, "Test Ship", "Mission", "Cost", "Reputation", "Components",
-                "Test sheet", "https://example.test/wikelo", LocalDateTime.now(), null
-        );
+        WikeloShip wikeloShip = offer("Test Ship");
         when(wikeloService.scrapeShips()).thenReturn(List.of(wikeloShip));
+        when(rawStore.upsert(org.mockito.ArgumentMatchers.eq("WIKELO"), org.mockito.ArgumentMatchers.eq("offers"),
+                org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq(42L))).thenReturn(1);
 
         CatalogSyncWorker worker = new CatalogSyncWorker(
                 runRepository,
@@ -112,9 +111,10 @@ class CatalogSyncWorkerTest {
         CatalogSyncRun run = new CatalogSyncRun(); run.setId(7L);
         when(runs.findById(7L)).thenReturn(Optional.of(run));
         when(wiki.scrape("vehicles", 7L)).thenReturn(11);
-        WikeloShip ship = new WikeloShip(null, "Polaris", "Mission", "Cost", null, null,
-                "Ships", "https://example.test", LocalDateTime.now(), null);
+        WikeloShip ship = offer("Polaris");
         when(wikelo.scrapeShips()).thenReturn(List.of(ship));
+        when(raw.upsert(org.mockito.ArgumentMatchers.eq("WIKELO"), org.mockito.ArgumentMatchers.eq("offers"),
+                org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq(7L))).thenReturn(1);
         when(recipes.scrapeAndStore(7L)).thenReturn(2);
         when(mapper.mapWikiDataset("vehicles", 7L)).thenReturn(11);
         when(recipes.publish(7L)).thenReturn(2);
@@ -146,13 +146,17 @@ class CatalogSyncWorkerTest {
         CatalogSyncRun run = new CatalogSyncRun(); run.setId(8L);
         when(runs.findById(8L)).thenReturn(Optional.of(run));
         when(wiki.scrape("vehicles", 8L)).thenReturn(1);
-        WikeloShip ship = new WikeloShip(null, "Polaris", "Mission", "Cost", null, null,
-                "Ships", "https://example.test", LocalDateTime.now(), null);
+        WikeloShip ship = offer("Polaris");
         when(wikelo.scrapeShips()).thenReturn(List.of(ship));
+        when(raw.upsert(org.mockito.ArgumentMatchers.eq("WIKELO"), org.mockito.ArgumentMatchers.eq("offers"),
+                org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.eq(8L))).thenReturn(1);
         when(recipes.scrapeAndStore(8L)).thenReturn(1);
         when(mapper.mapWikiDataset("vehicles", 8L)).thenThrow(new CatalogReviewRequiredException(1)).thenReturn(1);
         ObjectMapper testMapper = new ObjectMapper().findAndRegisterModules();
-        when(raw.loadActive("WIKELO", "offers")).thenReturn(List.of(testMapper.valueToTree(ship)));
+        var stored = testMapper.<com.fasterxml.jackson.databind.node.ObjectNode>valueToTree(ship);
+        stored.put("uuid", ship.getMissionId() + ":" + ship.getRewardUuid());
+        stored.put("version", ship.getSourceVersion());
+        when(raw.loadActive("WIKELO", "offers")).thenReturn(List.of(stored));
         when(recipes.publish(8L)).thenReturn(1);
         CatalogSyncWorker worker = new CatalogSyncWorker(runs, wiki, mapper, mock(CatalogEconomyMapper.class), raw,
                 mock(UexDatasetService.class), wikelo, recipes, new CatalogSyncProperties(), new ObjectMapper().findAndRegisterModules());
@@ -165,5 +169,17 @@ class CatalogSyncWorkerTest {
         verify(wikelo).scrapeShips();
         verify(wikelo).publishScrapedShips(org.mockito.ArgumentMatchers.anyList());
         assertThat(run.getStatus()).isEqualTo("SUCCEEDED");
+    }
+    private static WikeloShip offer(String name) {
+        var ship = new WikeloShip();
+        ship.setShipName(name);
+        ship.setMissionId("e05b8ffb-7455-4f24-bbcf-43e9dffc0cca");
+        ship.setRewardUuid("bc4aa5c5-2e9b-40d6-aa95-0757a763efff");
+        ship.setSourceVersion("4.10.1-LIVE.12660092");
+        ship.setMissionText("Mission");
+        ship.setCostText("50 × Wikelo Favor");
+        ship.setSourceUrl("https://api.star-citizen.wiki/missions/polaris");
+        ship.setScrapedAt(LocalDateTime.now());
+        return ship;
     }
 }

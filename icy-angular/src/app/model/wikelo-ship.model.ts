@@ -5,7 +5,12 @@ export interface WikeloShip {
   costText: string | null;
   reputationText: string | null;
   componentsText: string | null;
-  sourceSheet: string;
+  rewardsText: string | null;
+  rewardManufacturer: string | null;
+  rewardImageUrl: string | null;
+  sourceVersion: string;
+  missionId: string;
+  rewardUuid: string;
   sourceUrl: string;
   scrapedAt: string;
   updatedAt: string | null;

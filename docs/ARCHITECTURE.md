@@ -20,7 +20,7 @@ flowchart LR
     API --> Rabbit[(RabbitMQ)]
     Rabbit <--> Bot[Bot Discord Python]
     Bot <--> Discord[Discord]
-    API --> External[UEX / RSI / Google Sheets / OpenAI]
+    API --> External[UEX / RSI / Star Citizen Wiki API / OpenAI]
 ```
 
 ## Composants

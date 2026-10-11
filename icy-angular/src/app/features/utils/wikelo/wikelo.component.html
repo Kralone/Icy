@@ -77,20 +77,21 @@
           @if (!filteredShips.length) { <app-async-state kind="empty" title="Aucun échange trouvé" actionLabel="Effacer la recherche" (action)="clearSearch()" /> }
           <div class="offer-grid">
             @for (ship of filteredShips; track ship.id) {
-              <article class="offer" [class.offer-expanded]="isExpanded(ship.shipName)" (click)="onCardClick($event, ship.shipName)">
+              <article class="offer" [class.offer-expanded]="isExpanded(offerKey(ship))" (click)="onCardClick($event, offerKey(ship))">
                 <div class="offer-media">
-                  @if (getShipImage(ship.shipName); as image) { <img [src]="image" [alt]="ship.shipName" loading="lazy" (error)="imageFailed(image)"> }
+                  @if (getShipImage(ship.shipName, ship.rewardUuid, ship.rewardImageUrl); as image) { <img [src]="image" [alt]="ship.shipName" loading="lazy" (error)="imageFailed(image)"> }
                   @else { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
                 </div>
                 <div class="offer-body">
-                  @if (getCatalogShip(ship.shipName)?.brand; as brand) { <p class="manufacturer ship-manufacturer">@if (brand.imageUrl && !failedImages.has(brand.imageUrl)) { <img [src]="brand.imageUrl" alt="" loading="lazy" (error)="imageFailed(brand.imageUrl)"> }<span>{{ brand.name }}</span></p> }
+                  @if (getCatalogShip(ship.shipName, ship.rewardUuid)?.brand; as brand) { <p class="manufacturer ship-manufacturer">@if (brand.imageUrl && !failedImages.has(brand.imageUrl)) { <img [src]="brand.imageUrl" alt="" loading="lazy" (error)="imageFailed(brand.imageUrl)"> }<span>{{ brand.name }}</span></p> }
+                  @else if (ship.rewardManufacturer) { <p class="manufacturer">{{ ship.rewardManufacturer }}</p> }
                   <h3>{{ ship.shipName }}</h3>
-                  @if (getCatalogShip(ship.shipName); as catalog) {
+                  @if (getCatalogShip(ship.shipName, ship.rewardUuid); as catalog) {
                     <dl class="specs"><div><dt>Rôle</dt><dd>{{ catalog.focus || 'Non renseigné' }}</dd></div><div><dt>Équipage</dt><dd>{{ catalog.crew || 'Non renseigné' }}</dd></div><div><dt>Soute cargo</dt><dd>{{ catalog.scu === null || catalog.scu === undefined ? 'Non renseignée' : catalog.scu + ' SCU' }}</dd></div>@if ((catalog.oreCapacity ?? 0) > 0) { <div><dt>Minerai</dt><dd>{{ catalog.oreCapacity }} SCU</dd></div> }<div><dt>Taille</dt><dd>{{ catalog.size || 'Non renseignée' }}</dd></div></dl>
                   }
-                  <button type="button" class="primary details-toggle" [class.collapse-toggle]="isExpanded(ship.shipName)" [attr.aria-label]="isExpanded(ship.shipName) ? 'Réduire la fiche de ' + ship.shipName : null" [attr.aria-expanded]="isExpanded(ship.shipName)" [attr.aria-controls]="'offer-details-' + ship.id" (click)="toggleDetails(ship.shipName)">@if (!isExpanded(ship.shipName)) { Voir l’échange } <span aria-hidden="true">{{ isExpanded(ship.shipName) ? '−' : '+' }}</span></button>
+                  <button type="button" class="primary details-toggle" [class.collapse-toggle]="isExpanded(offerKey(ship))" [attr.aria-label]="isExpanded(offerKey(ship)) ? 'Réduire la fiche de ' + ship.shipName : null" [attr.aria-expanded]="isExpanded(offerKey(ship))" [attr.aria-controls]="'offer-details-' + ship.id" (click)="toggleDetails(offerKey(ship))">@if (!isExpanded(offerKey(ship))) { Voir l’échange } <span aria-hidden="true">{{ isExpanded(offerKey(ship)) ? '−' : '+' }}</span></button>
                 </div>
-                @if (isExpanded(ship.shipName)) {
+                @if (isExpanded(offerKey(ship))) {
                   <div class="offer-details" [id]="'offer-details-' + ship.id" @detailsExpand>
                     <section class="ingredients-section"><h4>Ingrédients <span>{{ ingredientDetails(ship).length }}</span></h4>
                       @if (ingredientDetails(ship).length) { <ul class="item-grid ingredient-list">@for (ingredient of ingredientDetails(ship); track $index) { <li>@if (ingredient.quantity) { <strong class="quantity">{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> }</ul> }
@@ -100,6 +101,9 @@
                       <section class="equipment-section"><h4>Équipement inclus <span>{{ equipmentDetails(ship).length }}</span></h4>
                         <ul class="item-grid equipment-list">@for (component of equipmentDetails(ship); track $index) { <li><div class="item-heading">@if (component.category) { <span class="component-category">{{ component.category }}</span> }@if (component.quantity) { <strong class="quantity">{{ component.quantity }}</strong> }</div><span class="component-name">{{ component.name }}</span>@if (component.grade) { <span class="component-grade">{{ component.grade }}</span> }</li> }</ul>
                       </section>
+                    }
+                    @if (ship.rewardsText) {
+                      <section><h4>Récompenses supplémentaires</h4><ul class="item-grid">@for (reward of toParts(ship.rewardsText); track $index) { <li>{{ reward }}</li> }</ul></section>
                     }
                     <footer class="exchange-footer">
                       <dl class="mission-meta"><div><dt>Mission</dt><dd>{{ missionName(ship) }}</dd></div>@if (ship.reputationText) { <div><dt>Réputation</dt><dd>{{ ship.reputationText }}</dd></div> }</dl>

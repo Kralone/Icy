@@ -182,7 +182,11 @@ public class CatalogSyncWorker {
 
     private WikeloShip wikeloShip(JsonNode node) {
         try {
-            return objectMapper.treeToValue(node, WikeloShip.class);
+            var payload = node.deepCopy();
+            if (payload.isObject()) {
+                ((com.fasterxml.jackson.databind.node.ObjectNode) payload).remove(List.of("uuid", "version"));
+            }
+            return objectMapper.treeToValue(payload, WikeloShip.class);
         } catch (Exception exception) {
             throw new IllegalArgumentException("Offre Wikelo brute invalide", exception);
         }
@@ -256,8 +260,14 @@ public class CatalogSyncWorker {
             throw new IllegalStateException("Le scrape Wikelo est vide");
         }
         List<JsonNode> nodes = new ArrayList<>(rows.size());
-        rows.forEach(row -> nodes.add(objectMapper.valueToTree(row)));
-        rawStore.upsert("WIKELO", "offers", nodes, runId);
+        rows.forEach(row -> {
+            var node = objectMapper.<com.fasterxml.jackson.databind.node.ObjectNode>valueToTree(row);
+            node.put("uuid", row.getMissionId() + ":" + row.getRewardUuid());
+            node.put("version", row.getSourceVersion());
+            nodes.add(node);
+        });
+        int stored = rawStore.upsert("WIKELO", "offers", nodes, runId);
+        if (stored != rows.size()) throw new IllegalStateException("Import des offres Wikelo incomplet");
         rawStore.deactivateMissing("WIKELO", "offers", runId);
         return rows;
     }

@@ -1,0 +1,13 @@
+{
+  "uuid": "881acfdf-9376-4ad0-a78f-bca6b4ff3c9d",
+  "name": "Mirai Pulse Wikelo Special",
+  "type": "Vehicle",
+  "version": "4.10.1-LIVE.12660092",
+  "manufacturer": {
+    "name": "Mirai",
+    "code": "MRAI",
+    "uuid": "cdf6ea1e-7de3-4b58-bf9d-13c5fbafc49a",
+    "link": "https://api.star-citizen.wiki/api/manufacturers/MRAI"
+  },
+  "images": []
+}

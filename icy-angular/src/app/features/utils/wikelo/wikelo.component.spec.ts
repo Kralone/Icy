@@ -39,31 +39,31 @@ describe('Wikelo catalogue', () => {
     component.catalogShips = [{ name: 'Prospector', imageUrl: '/assets/images/catalog/catalog-fallback.svg' } as Ship];
     expect(component.getShipImage('Prospector')).toBeNull();
   });
-  it('matches verified short names and the declared manufacturer prefix', () => {
+  it('matches the catalog vehicle UUID even when the reward has a manufacturer prefix', () => {
     component.catalogShips = [
-      { name: 'A2 Hercules Starlifter' }, { name: 'Ares Star Fighter Inferno' },
-      { name: 'MISC Prospector', brand: { name: 'MISC' } },
-      { name: 'MISC Starlancer MAX', brand: { name: 'MISC' } }, { name: 'Zeus Mk II CL' }
+      { name: 'A2 Hercules Starlifter Wikelo War Special', externalId: 'a2', imageUrl: '/a2.webp' },
+      { name: 'Prospector Wikelo Work Special', externalId: 'prospector' },
+      { name: 'Zeus Mk II CL', externalId: 'zeus-cl' }
     ] as Ship[];
-    expect(component.getCatalogShip('A2 Hercules')?.name).toBe('A2 Hercules Starlifter');
-    expect(component.getCatalogShip('Ares Inferno')?.name).toBe('Ares Star Fighter Inferno');
-    expect(component.getCatalogShip('Prospector')?.name).toBe('MISC Prospector');
-    expect(component.getCatalogShip('Starlancer MAX')?.name).toBe('MISC Starlancer MAX');
-    expect(component.getCatalogShip('Zeus CL')?.name).toBe('Zeus Mk II CL');
-    expect(component.getCatalogShip('Zeus ES')).toBeNull();
-    expect(component.getCatalogShip('Ares Ion')).toBeNull();
-    expect(component.getCatalogShip('Starlancer TAC')).toBeNull();
+    expect(component.getCatalogShip('Crusader A2', 'a2')?.name).toBe('A2 Hercules Starlifter Wikelo War Special');
+    expect(component.getShipImage('Crusader A2', 'a2')).toBe('/a2.webp');
+    expect(component.getCatalogShip('Zeus Mk II CL', 'unknown-uuid')).toBeNull();
   });
-  it('resolves explicit Wikelo military and stealth aliases to their own variants', () => {
+  it('resolves military and stealth offers to their exact reward UUIDs', () => {
     component.catalogShips = [
-      { name: 'F8C Lightning Wikelo War Special', imageUrl: '/war.webp' },
-      { name: 'F8C Lightning Wikelo Sneak Special', imageUrl: '/sneak.webp' },
-      { name: 'L-21 Wolf Wikelo War Special', imageUrl: '/wolf.webp' }
+      { name: 'F8C Lightning Wikelo War Special', externalId: 'war', imageUrl: '/war.webp' },
+      { name: 'F8C Lightning Wikelo Sneak Special', externalId: 'sneak', imageUrl: '/sneak.webp' }
     ] as Ship[];
-    expect(component.getShipImage('F8C Lightning Military')).toBe('/war.webp');
-    expect(component.getShipImage('F8C Lightning Stealth')).toBe('/sneak.webp');
-    expect(component.getShipImage('L-21 Wolf Military + Gear')).toBe('/wolf.webp');
-    expect(component.getShipImage('L-21 Wolf Stealth')).toBeNull();
+    expect(component.getShipImage('Anvil F8C Lightning Wikelo War Special', 'war')).toBe('/war.webp');
+    expect(component.getShipImage('Anvil F8C Lightning Wikelo Sneak Special', 'sneak')).toBe('/sneak.webp');
+    expect(component.getShipImage('F8C Lightning Wikelo Sneak Special', 'missing')).toBeNull();
+  });
+  it('opens separate recipes independently when they reward the same ship', () => {
+    const first = {...offer, missionId: 'first', rewardUuid: 'prospector'};
+    const second = {...offer, missionId: 'second', rewardUuid: 'prospector'};
+    component.toggleDetails(component.offerKey(first));
+    expect(component.isExpanded(component.offerKey(first))).toBe(true);
+    expect(component.isExpanded(component.offerKey(second))).toBe(false);
   });
   it('does not remove special-edition suffixes or guess ambiguous manufacturer matches', () => {
     component.catalogShips = [{ name: 'MISC Prospector Wikelo Work Special', brand: { name: 'MISC' } }] as Ship[];
@@ -87,6 +87,26 @@ describe('Wikelo catalogue', () => {
   it('preserves explicit ingredient quantities when preparing goals', () => {
     component.selectedGoalShip = offer;
     expect(component.getGoalPreviewIngredients()).toEqual([{ name: 'Ore', target: 2500 }, { name: 'Token', target: 4 }]);
+  });
+  it('preserves the SCU quantities supplied by vehicle contracts when preparing goals', () => {
+    component.selectedGoalShip = {...offer, costText: '36 SCU Quantainium | 8 SCU Copper | 2 × Wikelo Favor'};
+    expect(component.ingredientDetails(component.selectedGoalShip)[0]).toEqual({name: 'Quantainium', quantity: '36 SCU'});
+    expect(component.getGoalPreviewIngredients()).toEqual([
+      {name: 'Quantainium (SCU)', target: 36}, {name: 'Copper (SCU)', target: 8}, {name: 'Wikelo Favor', target: 2}
+    ]);
+  });
+  it('never invents a quantity of one for a range or missing recipe quantity', async () => {
+    component.canCreateGoals = true;
+    component.selectedGoalShip = {...offer, costText: '2–4 × Ore | Unknown Token'};
+    expect(component.getGoalPreviewIngredients()).toEqual([]);
+    await component.confirmCreateGoal();
+    expect(component.goalCreateStatus).toContain('objectif manuel');
+    expect(component.isCreatingGoal).toBe(false);
+  });
+  it('uses only the supplied reward image when a vehicle is absent from the catalog', () => {
+    expect(component.getShipImage('Pulse Wikelo Special', 'pulse', '/exact-pulse.webp')).toBe('/exact-pulse.webp');
+    component.imageFailed('/exact-pulse.webp');
+    expect(component.getShipImage('Pulse Wikelo Special', 'pulse', '/exact-pulse.webp')).toBeNull();
   });
   it('separates comma-delimited ingredients without splitting grouped numbers', () => {
     component.selectedGoalShip = { ...offer, costText: '1,250,000 x Ore, 2,500 × Token,4 x Part' };

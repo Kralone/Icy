@@ -28,7 +28,7 @@ Les briques existantes sont utiles mais separees :
 - `fleet.items` et `fleet.item_categories`, geres manuellement ;
 - `celestial_bodies` et `orbital_stations`, initialises par la migration V25 ;
 - `utils.uex_dataset_cache`, qui remplace des blobs JSON dataset par dataset ;
-- `utils.wikelo_ships`, remplace en bloc depuis une feuille Google Sheets ;
+- `utils.wikelo_ships`, offres importées depuis l’API des missions Star Citizen Wiki ;
 - des pages d'administration distinctes et aucun rescan global.
 
 Le cache UEX actuel ne synchronise pas les tables metier. Il ne conserve pas non
@@ -90,17 +90,17 @@ Documentation : <https://uexcorp.space/api/documentation?is_kiosk=1&set_lang=en_
 
 ### 3. Wikelo : offres et couts de missions
 
-La feuille Google Sheets deja configuree reste la source Wikelo. Son contenu ne doit
-plus etre limite aux vaisseaux : chaque offre devient un enregistrement versionne,
-avec recompense, couts, quantites, reputation, texte de mission et URL source.
+L’API `/api/missions?filter[faction]=Wikelo%20Emporium` est la source des recettes
+de vaisseaux et d’équipements. Pages et détails sont épinglés à la même version du jeu.
+Chaque offre conserve l’UUID de la mission, celui de la récompense, les ingrédients,
+les quantités, la réputation renseignée et l’URL source.
 
-Le rapprochement se fait ainsi :
+Les vaisseaux sont reliés au catalogue par UUID de récompense. Une récompense absente
+du dataset véhicules peut être identifiée explicitement comme véhicule par l’API items ;
+aucune fiche technique d’un modèle voisin n’est substituée. Le fit provient des ports
+de la variante exacte. Les récompenses supplémentaires d’un lot restent distinctes.
 
-1. UUID explicite s'il devient disponible dans la feuille ;
-2. nom normalise et table d'alias validee ;
-3. conflit place dans une file de revue, jamais rattache automatiquement au hasard.
-
-Une feuille vide ou illisible ne doit jamais vider les donnees Wikelo publiees.
+Un import vide, incomplet ou invalide ne remplace pas les offres publiées.
 
 ### 4. Sources de secours
 

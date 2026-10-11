@@ -280,41 +280,24 @@ export class WikeloComponent implements OnInit {
     });
   }
 
-  getShipImage(shipName: string): string | null {
-    const image = this.getCatalogShip(shipName)?.imageUrl;
-    return image && !image.includes('/catalog-fallback.svg') && !this.failedImages.has(image) ? image : null;
+  getShipImage(shipName: string, rewardUuid?: string, rewardImageUrl?: string | null): string | null {
+    const image = this.getCatalogShip(shipName, rewardUuid)?.imageUrl;
+    if (image && !image.includes('/catalog-fallback.svg') && !this.failedImages.has(image)) return image;
+    return rewardImageUrl && !this.failedImages.has(rewardImageUrl) ? rewardImageUrl : null;
   }
 
-  getCatalogShip(shipName: string): Ship | null {
+  getCatalogShip(shipName: string, rewardUuid?: string): Ship | null {
+    if (rewardUuid) {
+      const exactReward = this.catalogShips.find(ship => ship.externalId === rewardUuid);
+      return exactReward ? this.presentCatalogShip(exactReward) : null;
+    }
     const target = this.normalizeName(shipName);
     const exact = this.catalogShips.find(ship => this.normalizeName(ship.name) === target);
-    if (exact) return this.presentCatalogShip(exact);
+    return exact ? this.presentCatalogShip(exact) : null;
+  }
 
-    // Explicit short names observed in Wikelo versus canonical names in /api/ships.
-    // Never discard variant suffixes such as CL/ES, Inferno/Ion or Wikelo Special.
-    const aliases: Record<string, string> = {
-      a2hercules: 'A2 Hercules Starlifter',
-      aresinferno: 'Ares Star Fighter Inferno',
-      aresion: 'Ares Star Fighter Ion',
-      zeuscl: 'Zeus Mk II CL',
-      zeuses: 'Zeus Mk II ES',
-      f8clightningmilitary: 'F8C Lightning Wikelo War Special',
-      f8clightningstealth: 'F8C Lightning Wikelo Sneak Special',
-      l21wolfmilitarygear: 'L-21 Wolf Wikelo War Special',
-      l21wolfstealth: 'L-21 Wolf Wikelo Sneak Special',
-      miraiguardianmx: 'Guardian MX Wikelo War Special',
-      rsimeteor: 'Meteor Wikelo Sneak Special',
-      superhornetmkii: 'F7C-M Super Hornet Mk II'
-    };
-    const canonicalTarget = this.normalizeName(aliases[target] ?? shipName);
-    const matches = this.catalogShips.filter(ship => {
-      const canonicalName = this.normalizeName(ship.name);
-      if (canonicalName === canonicalTarget) return true;
-      const manufacturer = this.normalizeName(ship.brand?.name ?? '');
-      return !!manufacturer && canonicalName.startsWith(manufacturer)
-        && canonicalName.slice(manufacturer.length) === canonicalTarget;
-    });
-    return matches.length === 1 ? this.presentCatalogShip(matches[0]) : null;
+  offerKey(ship: WikeloShip): string {
+    return ship.missionId + ':' + ship.rewardUuid;
   }
 
   private presentCatalogShip(ship: Ship): Ship {
@@ -355,7 +338,7 @@ export class WikeloComponent implements OnInit {
 
   equipmentDetails(ship: WikeloShip): Array<{ category: string; name: string; quantity: string | null; grade: string | null }> {
     const labels: Record<string, string> = {
-      'power plant': 'Centrale énergétique', shield: 'Bouclier', 'quantum drive': 'Moteur quantique',
+      component: 'Composant', 'power plant': 'Centrale énergétique', shield: 'Bouclier', 'quantum drive': 'Moteur quantique',
       cooler: 'Refroidisseur', weapon: 'Arme', weapons: 'Armes', missile: 'Missile', missiles: 'Missiles',
       'missile rack': 'Support de missiles', turret: 'Tourelle', 'mining laser': 'Laser de minage'
     };
@@ -443,7 +426,8 @@ export class WikeloComponent implements OnInit {
 
   getGoalPreviewIngredients(): Array<{ name: string; target: number }> {
     if (!this.selectedGoalShip) return [];
-    return this.ingredients(this.selectedGoalShip).map((part) => this.parseIngredient(part));
+    return this.ingredients(this.selectedGoalShip).map(part => this.parseIngredient(part))
+      .filter((part): part is { name: string; target: number } => part !== null);
   }
 
   async confirmCreateGoal(): Promise<void> {
@@ -457,6 +441,10 @@ export class WikeloComponent implements OnInit {
     this.isCreatingGoal = true;
     try {
       const ingredients = this.getGoalPreviewIngredients();
+      if (!ingredients.length || ingredients.length !== this.ingredients(this.selectedGoalShip).length) {
+        this.goalCreateStatus = 'Les quantités de cette recette nécessitent un objectif manuel.';
+        return;
+      }
       const parentPayload = {
         name: `Wikelo - ${this.selectedGoalShip.shipName}`,
         description: `Objectif Wikelo pour ${this.selectedGoalShip.shipName}`,
@@ -572,16 +560,16 @@ export class WikeloComponent implements OnInit {
       .replace(/[^a-z0-9]/g, '');
   }
 
-  private parseIngredient(rawValue: string): { name: string; target: number } {
+  private parseIngredient(rawValue: string): { name: string; target: number } | null {
     const cleaned = (rawValue ?? '').trim();
-    const matched = cleaned.match(/^(\d{1,3}(?:,\d{3})+|\d+)\s*[xX×]\s*(.+)$/);
+    const matched = cleaned.match(/^(\d{1,3}(?:,\d{3})+|\d+)\s*(?:[xX×]\s*|\s+(SCU)\s+)(.+)$/i);
     if (matched) {
       return {
         target: Number.parseInt(matched[1].replace(/,/g, ''), 10),
-        name: matched[2].trim()
+        name: matched[3].trim() + (matched[2] ? ' (SCU)' : '')
       };
     }
-    return { name: cleaned, target: 1 };
+    return null;
   }
 
   private resolveGoalIdFromResponse(response: any): number | null {

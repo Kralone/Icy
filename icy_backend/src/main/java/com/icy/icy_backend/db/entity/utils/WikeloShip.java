@@ -20,7 +20,7 @@ public class WikeloShip {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ship_name", nullable = false, unique = true, length = 255)
+    @Column(name = "ship_name", nullable = false, length = 255)
     private String shipName;
 
     @Column(name = "mission_text", columnDefinition = "TEXT")
@@ -35,8 +35,23 @@ public class WikeloShip {
     @Column(name = "components_text", columnDefinition = "TEXT")
     private String componentsText;
 
-    @Column(name = "source_sheet", nullable = false, length = 120)
-    private String sourceSheet;
+    @Column(name = "rewards_text", columnDefinition = "TEXT")
+    private String rewardsText;
+
+    @Column(name = "reward_manufacturer", length = 255)
+    private String rewardManufacturer;
+
+    @Column(name = "reward_image_url", columnDefinition = "TEXT")
+    private String rewardImageUrl;
+
+    @Column(name = "source_version", nullable = false, length = 120)
+    private String sourceVersion;
+
+    @Column(name = "mission_id", nullable = false, length = 36)
+    private String missionId;
+
+    @Column(name = "reward_uuid", nullable = false, length = 36)
+    private String rewardUuid;
 
     @Column(name = "source_url", nullable = false, columnDefinition = "TEXT")
     private String sourceUrl;

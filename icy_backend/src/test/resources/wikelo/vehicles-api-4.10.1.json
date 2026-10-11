@@ -1,0 +1,1176 @@
+[
+  {
+    "uuid": "deb6d97e-38ce-48a2-9e12-d63eb01a0207",
+    "name": "Idris-P Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "33ba66d8-da04-432b-80b8-566bf6301659",
+    "name": "Sabre Firebird Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "a6952b66-a5c5-4550-9fb3-4432e8612d24",
+    "name": "Sabre Peregrine Wikelo Speedy Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "afae3e97-7f7e-45a3-9f3b-fe268479775b",
+    "name": "Asgard Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "41494cbf-8d90-4bb5-abd3-3b20cd694fc9",
+    "name": "F7 Hornet Mk Wikelo",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "64f7df97-d423-4360-a25b-176801cb4819",
+    "name": "F8C Lightning Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "71f76583-1061-4215-9d05-839a4fb6cabc",
+    "name": "F8C Lightning Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092",
+    "ports": [
+      {
+        "equipped_item": {
+          "uuid": "7fedca61-dfeb-4ecb-b421-e7c3ba55a584",
+          "name": "VariPuck S2 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "972c562f-bc9b-441c-a2fb-785293e54eda",
+              "name": "Tarantula GT-870 Mark 2 Cannon",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": {
+                  "uuid": "a2dac8c7-296b-4960-ac91-b0431bc9f824",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "4a9f9853-49b5-4b00-96e7-86ae9291b6c8",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "2c1502e1-138c-443c-85d2-2ad0a326ba28",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "a736f0bf-155b-4c7f-988d-902a51096759",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c",
+          "name": "VariPuck S3 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "0c60b4ec-ba9c-42e5-9246-6f241f138167",
+              "name": "Tarantula GT-870 Mark 3 Cannon",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": {
+                  "uuid": "5bcd7b38-3d29-40f5-be4f-9d1bf81514ea",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "53933f98-7685-47f5-a7d7-e57a2ef794e0",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "492010f1-32cb-4832-93b8-bbf1bd4849f4",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "e75799ef-d278-47b1-b667-9bf7528b23d4",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "efbe76b3-0b35-431f-a956-043418ed36de",
+          "name": "<= PLACEHOLDER =>",
+          "type": "MainThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "4a84a3e6-7e44-4eaf-800a-da679f11ea36",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "efbe76b3-0b35-431f-a956-043418ed36de",
+          "name": "<= PLACEHOLDER =>",
+          "type": "MainThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "7fedca61-dfeb-4ecb-b421-e7c3ba55a584",
+          "name": "VariPuck S2 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "972c562f-bc9b-441c-a2fb-785293e54eda",
+              "name": "Tarantula GT-870 Mark 2 Cannon",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": {
+                  "uuid": "a2dac8c7-296b-4960-ac91-b0431bc9f824",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "4a9f9853-49b5-4b00-96e7-86ae9291b6c8",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "2c1502e1-138c-443c-85d2-2ad0a326ba28",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "a736f0bf-155b-4c7f-988d-902a51096759",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c",
+          "name": "VariPuck S3 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "0c60b4ec-ba9c-42e5-9246-6f241f138167",
+              "name": "Tarantula GT-870 Mark 3 Cannon",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": {
+                  "uuid": "5bcd7b38-3d29-40f5-be4f-9d1bf81514ea",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "53933f98-7685-47f5-a7d7-e57a2ef794e0",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "492010f1-32cb-4832-93b8-bbf1bd4849f4",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              },
+              {
+                "equipped_item": {
+                  "uuid": "e75799ef-d278-47b1-b667-9bf7528b23d4",
+                  "name": "<= PLACEHOLDER =>",
+                  "type": "WeaponAttachment"
+                },
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "efbe76b3-0b35-431f-a956-043418ed36de",
+          "name": "<= PLACEHOLDER =>",
+          "type": "MainThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "4a84a3e6-7e44-4eaf-800a-da679f11ea36",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "a6710f95-d0df-422a-815d-11e31084feb8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "ManneuverThruster"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c",
+          "name": "VariPuck S3 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "bd13235d-1261-4b71-b32f-aed1a8beb526",
+              "name": "CF-337 Panther Repeater",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "8197c45b-eaf4-4836-a8f0-837d1875cd9c",
+          "name": "VariPuck S3 Gimbal Mount",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "bd13235d-1261-4b71-b32f-aed1a8beb526",
+              "name": "CF-337 Panther Repeater",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "e9655bd9-dd74-46ee-8a15-2ac3bd3dfde1",
+          "name": "Self Destruct Unit",
+          "type": "SelfDestruct"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "5e246a30-db97-4ba0-91a8-702d4c35add0",
+          "name": "TRGT. STATUS",
+          "type": "Seat"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "4128d91f-9888-44c8-b080-94df4c6154a4",
+          "name": "Access",
+          "type": "SeatAccess"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "b0ccd135-4424-417c-95e4-594a88d9b72f",
+          "name": "Ecouter",
+          "type": "Radar"
+        },
+        "ports": [
+          {
+            "equipped_item": null,
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "8b1bee89-8ee1-49a9-998e-9f4d6f28fa30",
+          "name": "<= PLACEHOLDER =>",
+          "type": "SeatDashboard"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "32825158-05c7-4ad3-914c-4671a8f145e1",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "517ee1fe-2e3a-4070-a332-62487efcd448",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "c08cedfa-fafc-4ea6-9737-59faeb4b1510",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "c08cedfa-fafc-4ea6-9737-59faeb4b1510",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "c08cedfa-fafc-4ea6-9737-59faeb4b1510",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "c08cedfa-fafc-4ea6-9737-59faeb4b1510",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "9a48b047-69d8-44d0-84b0-14246524e5d0",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "9a48b047-69d8-44d0-84b0-14246524e5d0",
+              "name": "<= PLACEHOLDER =>",
+              "type": "Display"
+            },
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "c78851f1-ded8-4e8d-91ec-905e3dae075e",
+          "name": "WEAPONS",
+          "type": "WeaponController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "2c591044-ab1c-4e10-8cd8-e0a42117f123",
+          "name": "SHIELDS",
+          "type": "ShieldController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "056628be-ecee-41b9-9dd2-bb32215e6e34",
+          "name": "LIGHTS",
+          "type": "LightController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "7c26d79c-c36c-4d83-8491-a31d5defde04",
+          "name": "Flight Blade",
+          "type": "FlightController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "61cc7bf5-6666-40f7-8c0a-ee8a8092f51e",
+          "name": "POWER",
+          "type": "EnergyController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "4a9ebf31-a405-4b68-9886-b4a47bd1b61d",
+          "name": "SECURITY",
+          "type": "DoorController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "b935e5d8-dead-47c5-8937-382c3aa11682",
+          "name": "HEAT",
+          "type": "CoolerController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "ae1a186e-0f8c-4deb-8079-bfb54df4a8a7",
+          "name": "COMMS",
+          "type": "CommsController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "537e8385-4679-41e1-9fe3-b5cfc0f48a93",
+          "name": "Anvil Lightning F8C Turret",
+          "type": "Turret"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "5453a817-dfd4-4143-aa11-840ca428540c",
+              "name": "CF-227 Badger Repeater",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              }
+            ]
+          },
+          {
+            "equipped_item": {
+              "uuid": "5453a817-dfd4-4143-aa11-840ca428540c",
+              "name": "CF-227 Badger Repeater",
+              "type": "WeaponGun"
+            },
+            "ports": [
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              },
+              {
+                "equipped_item": null,
+                "ports": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "899a64a6-bc36-4b5b-8167-64218e376337",
+          "name": "MSD-442 Missile Rack",
+          "type": "MissileLauncher"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "899a64a6-bc36-4b5b-8167-64218e376337",
+          "name": "MSD-442 Missile Rack",
+          "type": "MissileLauncher"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "d358cf84-9c78-4929-a2ad-b9caade81962",
+              "name": "Ignite II Missile",
+              "type": "Missile"
+            },
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "be9729fb-c973-4c49-93cb-6a6f7c877408",
+          "name": "FR-76",
+          "type": "Shield"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "be9729fb-c973-4c49-93cb-6a6f7c877408",
+          "name": "FR-76",
+          "type": "Shield"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "0d72db6f-09f8-4455-8930-68316798be22",
+          "name": "Internal Tank",
+          "type": "QuantumFuelTank"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "e61d58d6-3ffd-4d7b-ad19-64ae9d27efb1",
+          "name": "Colossus",
+          "type": "QuantumDrive"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "c8797bce-6220-4d1e-bc6d-23da4a366a6d",
+              "name": "Explorer",
+              "type": "JumpDrive"
+            },
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "78e0c040-6668-4b43-a29c-4c47051bba8d",
+          "name": "LuxCore",
+          "type": "PowerPlant"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "ac3687d7-7092-4c75-b73c-738cb82afe4c",
+          "name": "Internal Tank",
+          "type": "FuelTank"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "ac3687d7-7092-4c75-b73c-738cb82afe4c",
+          "name": "Internal Tank",
+          "type": "FuelTank"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "acd6d10b-9bdc-402a-a25d-f0ba1019c8db",
+          "name": "<= PLACEHOLDER =>",
+          "type": "FuelIntake"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "acd6d10b-9bdc-402a-a25d-f0ba1019c8db",
+          "name": "<= PLACEHOLDER =>",
+          "type": "FuelIntake"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "b98f31ac-b050-4e5e-9719-8b8d2a832dcd",
+          "name": "Anvil Noise Launcher",
+          "type": "WeaponDefensive"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "5a9e0874-ec5e-4ef2-84f0-6f8cb8444176",
+          "name": "Anvil Decoy Launcher",
+          "type": "WeaponDefensive"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "5748cdbc-5a26-477a-a4ad-b20a593bde59",
+          "name": "Glacier",
+          "type": "Cooler"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "5748cdbc-5a26-477a-a4ad-b20a593bde59",
+          "name": "Glacier",
+          "type": "Cooler"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "4750556e-1afc-45be-86f7-f7adbc1fb7aa",
+          "name": "MISSILES",
+          "type": "MissileController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "0219b443-6f28-4aa2-bcc3-cfbff843729d",
+          "name": "<= PLACEHOLDER =>",
+          "type": "CapacitorAssignmentController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "85e284ec-96ea-4de7-930a-2db6099585b3",
+          "name": "<= PLACEHOLDER =>",
+          "type": "Armor"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "613bf1ef-7882-4e8a-9017-35e9e1af0687",
+          "name": "<= PLACEHOLDER =>",
+          "type": "LandingSystem"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "9925488b-127a-4fc3-b7bb-9e4f5a46bbbd",
+          "name": "<= PLACEHOLDER =>",
+          "type": "FuelController"
+        },
+        "ports": []
+      },
+      {
+        "equipped_item": null,
+        "ports": []
+      },
+      {
+        "equipped_item": {
+          "uuid": "91590edf-3361-49d7-aef2-e8ce6f74d4f8",
+          "name": "<= PLACEHOLDER =>",
+          "type": "DockingCollar"
+        },
+        "ports": [
+          {
+            "equipped_item": null,
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "d046b6a3-84ba-4a9b-bc51-952ecb40224d",
+          "name": "Relay",
+          "type": "Relay"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "8cf8dd1b-756e-496c-a1ae-e88ebbf999f7",
+              "name": "Fuse",
+              "type": "Misc"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "8cf8dd1b-756e-496c-a1ae-e88ebbf999f7",
+              "name": "Fuse",
+              "type": "Misc"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": {
+              "uuid": "8cf8dd1b-756e-496c-a1ae-e88ebbf999f7",
+              "name": "Fuse",
+              "type": "Misc"
+            },
+            "ports": []
+          }
+        ]
+      },
+      {
+        "equipped_item": {
+          "uuid": "e947b002-e65e-4637-90b7-c894925d6625",
+          "name": "ComfortAir",
+          "type": "LifeSupportGenerator"
+        },
+        "ports": [
+          {
+            "equipped_item": {
+              "uuid": "b44ec4bd-854d-48ef-9ac1-c4183edf1d0a",
+              "name": "lfsp_filter_subitem_standard",
+              "type": "Misc"
+            },
+            "ports": []
+          },
+          {
+            "equipped_item": null,
+            "ports": []
+          },
+          {
+            "equipped_item": null,
+            "ports": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "uuid": "61cc74dc-fff7-4a1f-b0bf-6f092bcdf023",
+    "name": "Terrapin Medic Wikelo Savior Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "8f262a17-633f-43d8-8689-ff345d723b24",
+    "name": "Nox Wikelo Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "d4abc245-9a8d-43fe-a33d-c7988af62d0f",
+    "name": "Argo ATLS GEO IKTI",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "4a7a4b9d-ae3c-4375-af63-4100f831f43c",
+    "name": "Argo ATLS IKTI",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "84cfa722-9a24-48f1-87af-637f45b340a0",
+    "name": "RAFT Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "48a46604-7786-44f5-9c22-fa298fad141e",
+    "name": "ATLS Cool Metal Color",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "f183c17c-eb46-47d6-8029-24f4189be6f2",
+    "name": "ATLS Orange Line",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "8b2016c5-0eba-4cc7-87a2-24b7cd4b82d8",
+    "name": "ATLS Snowland Color",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "05d033f3-5628-497c-b1c4-8fb112f079a1",
+    "name": "A2 Hercules Starlifter Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "a50ce1a2-6178-4988-a05b-72d7df8d65f9",
+    "name": "Ares Star Fighter Inferno Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "78a6c0c5-b364-430f-8e8c-0389fef66fcc",
+    "name": "Ares Star Fighter Ion Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "8c23e3f9-b2e6-42a6-92ab-e023f1e0c643",
+    "name": "C1 Spirit Wikelo Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "f203e95e-927c-43b0-947b-e8cb3025d23e",
+    "name": "Intrepid Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "1b7318af-7607-40b5-ba1b-54134089c284",
+    "name": "Clipper Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "310be6d1-ea0f-45d8-87b0-0fc9f8aa1530",
+    "name": "Golem Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "1b3a41ea-6942-44de-9514-315e81c36bb4",
+    "name": "Prowler Utility Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "305052b9-dfce-4917-a909-48c1a63c6753",
+    "name": "L-21 Wolf Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "86d0db63-70b6-41eb-be32-a14190ebd57d",
+    "name": "L-21 Wolf Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "38d93014-74d8-4ff9-9a2c-edf817590730",
+    "name": "L-22 Alpha Wolf Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "57ea2eaa-c495-43ae-bc96-c6f53a8e46ef",
+    "name": "Guardian MX Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "4eea10ca-d254-462b-8a44-7de6852dc1d4",
+    "name": "Guardian QI Wikelo Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "e07d46e4-92cd-462d-8cda-e17b5051a9eb",
+    "name": "Guardian Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "b8a2669a-76cb-497c-9090-6ff9a173b220",
+    "name": "MISC Fortune Wikelo Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "4e6f4187-6b7e-4c67-93bf-a41658922ba6",
+    "name": "MISC Prospector Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "e20211a3-e615-4103-a099-c00fb4fd1552",
+    "name": "MISC Starlancer MAX Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "4369e7f9-f2e5-4b62-969f-8b35e623ff29",
+    "name": "MISC Starlancer TAC Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "752f2ea8-159a-4a58-b4af-fd79054b3e2f",
+    "name": "Apollo Triage Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "80c96371-9c46-44f2-bee8-627a66b37dca",
+    "name": "Constellation Taurus Wikelo War Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "656d529f-ea3c-4bb4-8ca0-883071734e87",
+    "name": "Meteor Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "bc4aa5c5-2e9b-40d6-aa95-0757a763efff",
+    "name": "Polaris",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "81586add-ea18-4a95-bf0e-d102ab78d46b",
+    "name": "Scorpius Wikelo Sneak Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "6b621d46-86d6-4f5a-835f-b98242c51876",
+    "name": "Ursa Medivac Wikelo Special",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "f8ee95ed-cc18-4d65-a9d2-2d14d26d106d",
+    "name": "Zeus Mk II CL",
+    "version": "4.10.1-LIVE.12660092"
+  },
+  {
+    "uuid": "4b0436fc-32cb-4ce8-804b-11ed8677aa48",
+    "name": "Zeus Mk II ES Wikelo Work Special",
+    "version": "4.10.1-LIVE.12660092"
+  }
+]

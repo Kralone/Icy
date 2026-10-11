@@ -52,7 +52,8 @@ public class ShipCatalogEnrichment {
         });
     }
 
-    static void applyPayload(Ship ship, JsonNode payload) {
+    public static void applyPayload(Ship ship, JsonNode payload) {
+        ship.setExternalId(payload == null ? null : text(payload.path("uuid")));
         ship.setImageIsBase(payload != null && payload.path("image_source_vehicle_uuid").isTextual()
                 && !payload.path("image_source_vehicle_uuid").asText().isBlank()
                 && !payload.path("image_source_vehicle_uuid").asText().equals(payload.path("uuid").asText()));

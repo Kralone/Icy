@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class WikeloEquipmentRecipeScraperTest {
     private final ObjectMapper mapper = new ObjectMapper();
-    private final WikeloEquipmentRecipeScraper scraper = new WikeloEquipmentRecipeScraper(mapper);
+    private final WikeloEquipmentRecipeScraper scraper = new WikeloEquipmentRecipeScraper(new WikeloMissionScraper(mapper, new com.icy.icy_backend.config.CatalogSyncProperties()));
     private ObjectNode ana() throws Exception {
         try (var input = getClass().getResourceAsStream("/wikelo/ana-mission.json")) {
             return (ObjectNode) mapper.readTree(input).path("data");
