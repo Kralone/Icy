@@ -41,11 +41,26 @@ describe('OperationFleetCardsComponent', () => {
     expect(needs[1]).toContain('Couvert');
     expect(needs[1]).toContain('Sans image');
 
-    const ships = text('.card--ship');
-    // Les propositions à valider passent devant.
-    expect(ships[0]).toContain('Propriétaire : Thorn');
-    expect(ships[0]).toContain('Proposé');
-    expect(ships[0]).toContain('répond au besoin Prospector');
+    // Les appareils proposés pour un besoin sont dans sa carte, les propositions à valider devant.
+    const linked = text('.card--need:first-child .need-ship');
+    expect(linked.length).toBe(2);
+    expect(linked[0]).toContain('Propriétaire : Thorn');
+    expect(linked[0]).toContain('Proposé');
+    expect(linked[1]).toContain('Accepté');
+    // Ils ne sont pas répétés dans la liste des autres appareils.
+    const others = text('.card--ship');
+    expect(others.length).toBe(1);
+    expect(others[0]).toContain('Cutlass');
+    expect(text('.fleet__block h4')).toEqual(['Besoins', 'Autres appareils proposés']);
+  });
+
+  it('lists every ship when needs are not shown, and marks a covered need clearly', () => {
+    expect(fixture.nativeElement.querySelector('.card--need.is-covered .tag--covered').textContent).toContain('Couvert');
+    fixture.componentRef.setInput('showRequirements', false);
+    fixture.detectChanges();
+    expect(text('.card--ship').length).toBe(3);
+    expect(text('.fleet__block h4')).toEqual(['Appareils proposés']);
+    expect(text('.card--ship')[0]).toContain('répond au besoin Prospector');
     expect(fixture.nativeElement.querySelector('.card--ship img').getAttribute('src')).toBe('https://img/prospector.jpg');
   });
 
@@ -60,7 +75,8 @@ describe('OperationFleetCardsComponent', () => {
     fixture.componentRef.setInput('scopeGroupId', 1);
     fixture.detectChanges();
     expect(text('.card--need').length).toBe(1);
-    expect(text('.card--ship').every(card => card.includes('Prospector'))).toBe(true);
+    expect(text('.need-ship').length).toBe(2);
+    expect(text('.card--ship').length).toBe(0);
 
     fixture.componentRef.setInput('scopeGroupId', 3);
     fixture.detectChanges();
@@ -79,7 +95,9 @@ describe('OperationFleetCardsComponent', () => {
     const declined: string[] = [];
     fixture.componentInstance.accept.subscribe(id => accepted.push(id));
     fixture.componentInstance.decline.subscribe(id => declined.push(id));
-    const pending: HTMLElement = fixture.nativeElement.querySelector('.card--ship[data-status="PROPOSED"]');
+    const pending: HTMLElement = fixture.nativeElement.querySelector('.need-ship[data-status="PROPOSED"]');
+    // L'organisateur n'a que deux décisions : accepter ou refuser.
+    expect(Array.from(pending.querySelectorAll('.card__actions button')).map(button => button.textContent!.trim().split(' ')[0])).toEqual(['Accepter', 'Refuser', 'Retirer']);
     (pending.querySelector('.accept') as HTMLButtonElement).click();
     (pending.querySelector('.refuse') as HTMLButtonElement).click();
     expect(accepted).toEqual(['s2']);
@@ -94,6 +112,6 @@ describe('OperationFleetCardsComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('button').length).toBe(0);
     expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
-    expect(text('.card--ship').length).toBe(3);
+    expect(text('.card--ship').length + text('.need-ship').length).toBe(3);
   });
 });

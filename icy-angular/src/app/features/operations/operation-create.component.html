@@ -1,11 +1,11 @@
-<main class="operation-create">
-  <a routerLink="/icy/events" class="back">← Retour au calendrier</a>
+<main class="operation-create" [style.--type-accent]="typeColors.accent" [style.--type-label]="typeColors.label">
+  <a routerLink="/icy/admin/operations" class="back">← Opérations</a>
   <section class="create-shell">
     <div class="create-card">
       <p class="eyebrow">Nouvelle opération · brouillon</p>
       <h1>Créer une opération</h1>
       <p class="intro">Posez le cadre de la mission. L’éditeur ouvrira ensuite les objectifs, l’organisation et la publication.</p>
-      <div class="steps" aria-label="Étapes de création"><span class="active">01 Cadre</span><span>02 Organisation</span><span>03 Publication</span></div>
+      <div class="steps" aria-label="Étapes de création"><span class="active"><app-operation-icon name="briefing" /> 01 Cadre</span><span><app-operation-icon name="groups" /> 02 Organisation</span><span><app-operation-icon name="presence" /> 03 Publication</span></div>
       <p class="required-hint"><span aria-hidden="true">*</span> Champ obligatoire</p>
       <div class="form-grid">
         <label>
@@ -49,12 +49,13 @@
       <button type="button" class="primary" [disabled]="invalid" [attr.aria-busy]="saving" (click)="create()">{{ saving ? 'Création…' : 'Créer le brouillon et ouvrir l’éditeur' }}</button>
     </div>
     <aside class="mission-preview" aria-label="Aperçu de la mission">
-      <div class="preview-hero" [style.backgroundColor]="previewType?.backgroundColor || '#123047'">
+      <div class="preview-hero">
         @if (previewType?.imageUrl) { <img [src]="previewType?.imageUrl" alt="" /> }
-        <span>{{ form.type || 'TYPE D’OPÉRATION' }}</span>
-        <h2>{{ form.title || 'Nom de la mission' }}</h2>
+        <div class="preview-hero__veil"></div>
+        <p class="preview-hero__tags"><span class="preview-hero__type" [class.is-placeholder]="!form.type">{{ form.type || 'Type d’opération' }}</span><span class="preview-hero__status">Brouillon</span></p>
+        <h2 [class.is-placeholder]="!form.title">{{ form.title || 'Nom de la mission' }}</h2>
       </div>
-      <div class="preview-body"><p>{{ form.description || 'Le briefing apparaîtra ici.' }}</p><div>📅 {{ form.startDateTime ? (form.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm':'':'fr') : 'Date à définir' }}</div><div>👥 Organisation à préparer dans l’éditeur</div></div>
+      <div class="preview-body"><p [class.is-placeholder]="!form.description">{{ form.description || 'Le briefing apparaîtra ici.' }}</p><div class="preview-fact"><app-operation-icon name="calendar" /> {{ form.startDateTime ? (form.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm':'':'fr') : 'Date à définir' }}</div><div class="preview-fact"><app-operation-icon name="groups" /> Organisation à préparer dans l’éditeur</div></div>
     </aside>
   </section>
 </main>

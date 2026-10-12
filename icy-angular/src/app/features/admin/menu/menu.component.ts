@@ -93,14 +93,9 @@ export class AdminMenuComponent {
       route: '/icy/admin/events',
     },
     {
-      label: 'Nouvelle opération',
-      imageUrl: 'assets/images/home/activities/mining.jpg',
-      route: '/icy/operations/new',
-    },
-    {
-      label: 'Brouillons d’opération',
+      label: 'Opérations',
       imageUrl: 'assets/images/home/activities/space-combat.jpg',
-      route: '/icy/admin/operation-drafts',
+      route: '/icy/admin/operations',
     },
     {
       label: 'SC World Event',

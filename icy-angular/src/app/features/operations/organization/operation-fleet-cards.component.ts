@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 /** Besoin : ce que l'organisateur recherche. Il existe sans propriétaire. */
@@ -37,10 +38,11 @@ export interface FleetGroup { id: number; name: string; parentId?: number | null
 const SHIP_STATUS: Record<FleetShip['status'], string> = { PROPOSED: 'Proposé', ACCEPTED: 'Accepté', DECLINED: 'Refusé', UNAVAILABLE: 'Indisponible' };
 const SHIP_ORDER: Record<FleetShip['status'], number> = { PROPOSED: 0, ACCEPTED: 1, UNAVAILABLE: 2, DECLINED: 3 };
 
-/** Cartes de flotte : besoins d'un côté, appareils proposés de l'autre, et le lien entre les deux. */
+/** Cartes de flotte : chaque besoin porte les appareils proposés pour lui ; les autres appareils sont listés à part. */
 @Component({
   selector: 'app-operation-fleet-cards',
   standalone: true,
+  imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-fleet-cards.component.html',
   styleUrl: './operation-fleet-cards.component.css'
@@ -64,7 +66,6 @@ export class OperationFleetCardsComponent {
 
   readonly accept = output<string>();
   readonly decline = output<string>();
-  readonly unavailable = output<string>();
   readonly withdraw = output<FleetShip>();
   readonly pilot = output<{ proposalId: string; userId: string | null }>();
   readonly editRequirement = output<FleetRequirement>();
@@ -87,6 +88,31 @@ export class OperationFleetCardsComponent {
       .filter(ship => scope === null || (ship.groupId != null && scope.has(ship.groupId)))
       .sort((a, b) => SHIP_ORDER[a.status] - SHIP_ORDER[b.status]);
   });
+
+  /** Appareils rattachés à un besoin affiché : ils sont montrés dans sa carte, pas une seconde fois dans la liste. */
+  private readonly shipsByNeed = computed(() => {
+    const byNeed = new Map<string, FleetShip[]>();
+    if (!this.showRequirements()) return byNeed;
+    const shown = new Set(this.visibleRequirements().map(requirement => requirement.id));
+    for (const ship of [...this.ships()].sort((a, b) => SHIP_ORDER[a.status] - SHIP_ORDER[b.status])) {
+      if (!ship.requirementId || !shown.has(ship.requirementId)) continue;
+      byNeed.set(ship.requirementId, [...(byNeed.get(ship.requirementId) ?? []), ship]);
+    }
+    return byNeed;
+  });
+
+  linkedShips(requirement: FleetRequirement): FleetShip[] { return this.shipsByNeed().get(requirement.id) ?? []; }
+
+  /** Appareils proposés hors de tout besoin affiché. */
+  readonly otherShips = computed(() => this.visibleShips().filter(ship => !ship.requirementId || !this.shipsByNeed().has(ship.requirementId)));
+
+  readonly shipsTitle = computed(() => this.showRequirements() ? 'Autres appareils proposés' : 'Appareils proposés');
+  readonly emptyShipsLabel = computed(() => {
+    const scope = this.scopeGroupId() === null ? '' : ' pour ce groupe';
+    return this.showRequirements() ? `Aucun appareil proposé en dehors des besoins${scope}.` : `Aucun appareil proposé${scope}.`;
+  });
+
+  covered(requirement: FleetRequirement): boolean { return requirement.status !== 'CANCELLED' && requirement.missing === 0; }
 
   groupName(groupId: number | null | undefined): string {
     if (groupId == null) return 'Toute l’opération';

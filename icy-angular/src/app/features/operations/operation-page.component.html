@@ -9,6 +9,7 @@
     <app-operation-hero [operation]="operation" [presentCount]="presentCount" />
     <nav class="section-nav" aria-label="Sections de la fiche">
       @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
+      @if (canManage) { <a class="section-nav__manage" [routerLink]="['/icy/operations', operation.id, 'edit']">Gérer l’opération</a> }
     </nav>
     <div class="sheet">
       @let fleetShips = (ships$ | async) ?? [];

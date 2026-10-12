@@ -4,6 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { OperationEditorComponent } from './operation-editor.component';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService } from '../../core/services/catalog/catalog.service';
+import { OperationConfirmService } from './operation-confirm.service';
 import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 
@@ -162,8 +163,8 @@ describe('OperationEditorComponent', () => {
     expect(updateOperation.mock.calls[1][1].imageUrl).toBe('https://exemple.test/mission.webp');
   });
 
-  it('asks before leaving when changes cannot be saved, and not when a draft can still be sent', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('asks before leaving when changes cannot be saved, and not when a draft can still be sent', async () => {
+    const confirmSpy = vi.spyOn(TestBed.inject(OperationConfirmService), 'ask').mockResolvedValue(false);
     try {
       expect(component.canLeave()).toBe(true);
 
@@ -176,7 +177,7 @@ describe('OperationEditorComponent', () => {
       updateOperation.mockReturnValue(throwError(() => ({ status: 0 })));
       component.save();
       expect(component.saveError).toBe(true);
-      expect(component.canLeave()).toBe(false);
+      expect(await component.canLeave()).toBe(false);
       expect(confirmSpy).toHaveBeenCalledTimes(1);
     } finally {
       confirmSpy.mockRestore();

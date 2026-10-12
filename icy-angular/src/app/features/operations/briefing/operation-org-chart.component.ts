@@ -28,8 +28,6 @@ export class OperationOrgChartComponent {
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
   readonly preview = input(false);
-  /** Largeur imposée par l'aperçu de l'éditeur (bascule Mobile) ; null : la largeur mesurée fait foi. */
-  readonly narrow = input<boolean | null>(null);
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();
@@ -63,7 +61,7 @@ export class OperationOrgChartComponent {
   isOpen(root: CompositionGroup): boolean {
     const choice = this.toggled().get(root.id);
     if (choice !== undefined) return choice;
-    if (this.narrow() === null ? this.wide() : !this.narrow()) return true;
+    if (this.wide()) return true;
     const mine = this.composition().myGroupId;
     if (mine === null) return this.roots()[0]?.id === root.id;
     return root.id === mine || this.children(root.id).some(child => child.id === mine);

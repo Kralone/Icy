@@ -5,10 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { EventService } from '../../core/services/event/event.service';
 import { EventType } from '../../model/event-type.model';
+import { eventColor } from '../events/event-appearance';
+import { OperationIconComponent } from './briefing/operation-icon.component';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, OperationIconComponent],
   templateUrl: './operation-create.component.html',
   styleUrl: './operation-create.component.css'
 })
@@ -52,6 +54,14 @@ export class OperationCreateComponent implements OnInit {
   }
 
   get previewType(): EventType | undefined { return this.types.find(type => type.name === this.form.type); }
+
+  /** Couleurs du type choisi : la paire par défaut s'applique tant qu'aucun type valide n'est sélectionné. */
+  get typeColors(): { accent: string; label: string } {
+    const invalid = '#000000ff';
+    const accent = eventColor(this.previewType?.backgroundColor, invalid);
+    const label = eventColor(this.previewType?.textColor, invalid);
+    return accent === invalid || label === invalid ? { accent: '#27647c', label: '#e3f4fb' } : { accent, label };
+  }
 
   isKnownType(name: string): boolean { return this.types.some(type => type.name === name); }
 

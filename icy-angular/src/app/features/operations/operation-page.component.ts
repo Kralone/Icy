@@ -7,7 +7,9 @@ import { catchError, map, Observable, of, shareReplay, startWith, Subject, switc
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
+import { OperationConfirmService } from './operation-confirm.service';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 import { OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 import { GroupMember } from './operation-group.model';
@@ -38,8 +40,10 @@ export class OperationPageComponent {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly eventService = inject(EventService);
   private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(HotToastService);
+  private readonly confirmService = inject(OperationConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shipsRefresh$ = new Subject<void>();
   readonly operationState$ = this.route.paramMap.pipe(
@@ -118,9 +122,22 @@ export class OperationPageComponent {
       this.compositionError = '';
       this.compositionStale = false;
       this.assignmentBusy = false;
-      if (id) { this.loadParticipations(id); this.loadComposition(id); }
+      if (id) { this.loadParticipations(id); this.loadComposition(id); if (this.canManage) this.loadCoordination(id); }
+    });
+    this.userService.getMyProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => {
+        const roles = (response?.data?.roles ?? []).map(role => (role ?? '').trim().toUpperCase());
+        this.canManage = roles.includes('ADMIN') || roles.includes('OFFICIER');
+        // Un organisateur coordonne toute l'opération, sans être responsable d'un groupe.
+        if (this.canManage && this.shownOperationId) this.loadCoordination(this.shownOperationId);
+        this.changeDetector.markForCheck();
+      },
+      error: () => { this.canManage = false; }
     });
   }
+
+  /** Administrateur ou officier : accès à l'éditeur et au tableau de coordination complet. */
+  canManage = false;
 
   loadParticipations(operationId: string): void {
     const seq = ++this.participationLoadSeq;
@@ -188,8 +205,8 @@ export class OperationPageComponent {
     this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
   }
 
-  removeMember(operationId: string, member: GroupMember): void {
-    if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
+  async removeMember(operationId: string, member: GroupMember): Promise<void> {
+    if (!await this.confirmService.ask({ title: `Retirer ${member.username} de son groupe ?`, message: 'Ce membre reste inscrit Présent.', confirmLabel: 'Retirer du groupe', danger: true })) return;
     this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
   }
 
@@ -286,10 +303,10 @@ export class OperationPageComponent {
     if (this.coordination) this.loadCoordination(operationId);
   }
 
-  joinGroup(operationId: string, group: CompositionGroup): void {
+  async joinGroup(operationId: string, group: CompositionGroup): Promise<void> {
     const pending = this.composition?.myRequest;
     // Prendre une place directement rend caduque la demande en attente : le dire avant, pas après.
-    if (pending && !confirm(`Rejoindre ${group.name} annule votre demande en attente pour ${pending.groupName}. Continuer ?`)) return;
+    if (pending && !await this.confirmService.ask({ title: `Rejoindre ${group.name} ?`, message: `Votre demande en attente pour ${pending.groupName} sera annulée.`, confirmLabel: `Rejoindre ${group.name}` })) return;
     const moving = this.composition?.myGroupId != null;
     this.assignmentAction(operationId, this.eventService.assignOperationGroup(operationId, group.id), moving ? `Vous êtes maintenant dans ${group.name}.` : `Vous avez rejoint ${group.name}.`, 'Affectation impossible.');
   }
@@ -299,11 +316,11 @@ export class OperationPageComponent {
     this.assignmentAction(operationId, this.eventService.requestOperationGroup(operationId, group.id), moving ? `Transfert demandé vers ${group.name} : vous gardez votre place en attendant.` : `Demande envoyée pour ${group.name}.`, 'Demande impossible.');
   }
 
-  leaveGroup(operationId: string): void {
+  async leaveGroup(operationId: string): Promise<void> {
     const mine = this.composition?.groups.find(group => group.id === this.composition?.myGroupId);
     const back = mine?.effectiveMode === 'MANAGED' ? ' Seul un organisateur ou le responsable pourra vous y réaffecter.'
       : mine?.effectiveMode === 'VALIDATION' ? ' Y revenir demandera une nouvelle validation.' : '';
-    if (!confirm(`Quitter ${mine?.name ?? 'votre groupe'} ? Vous restez inscrit Présent.${back}`)) return;
+    if (!await this.confirmService.ask({ title: `Quitter ${mine?.name ?? 'votre groupe'} ?`, message: `Vous restez inscrit Présent.${back}`, confirmLabel: 'Quitter le groupe', danger: true })) return;
     this.assignmentAction(operationId, this.eventService.leaveOperationGroup(operationId), 'Vous avez quitté votre groupe.', 'Impossible de quitter le groupe.');
   }
 
@@ -349,8 +366,8 @@ export class OperationPageComponent {
       'Vaisseau proposé : l’organisateur doit encore l’accepter.', 'Proposition impossible.', () => { this.selectedShipId = null; this.selectedShipRequirementId = null; this.selectedShipGroupId = null; });
   }
 
-  withdrawShip(operationId: string, ship: FleetShip) {
-    if (!confirm(`Retirer ${ship.shipName || 'ce vaisseau'} de l’opération ?`)) return;
+  async withdrawShip(operationId: string, ship: FleetShip): Promise<void> {
+    if (!await this.confirmService.ask({ title: `Retirer ${ship.shipName || 'ce vaisseau'} de l’opération ?`, message: 'Votre proposition est supprimée.', confirmLabel: 'Retirer ma proposition', danger: true })) return;
     this.fleetAction(this.eventService.withdrawOperationShipProposal(operationId, ship.id), 'Proposition de vaisseau retirée.', 'Retrait impossible.');
   }
 

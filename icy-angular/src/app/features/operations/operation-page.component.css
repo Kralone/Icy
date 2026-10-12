@@ -7,6 +7,8 @@
 .section-nav::-webkit-scrollbar { display: none; }
 .section-nav button { display: inline-flex; flex: none; align-items: center; gap: .4rem; min-height: 2.5rem; padding: .4rem .85rem; border: 1px solid #2b445a; border-radius: 999px; color: #bae6fd; background: #0f1b2d; font-size: .9rem; white-space: nowrap; transition: border-color .15s, background-color .15s; }
 .section-nav button:hover { border-color: #67e8f9; background: #12283a; }
+.section-nav__manage { display: inline-flex; flex: none; align-items: center; min-height: 2.5rem; margin-left: auto; padding: .4rem .95rem; border: 1px solid #f4cd7d; border-radius: 999px; color: #f4cd7d; background: #2a2110; font-size: .9rem; font-weight: 600; white-space: nowrap; text-decoration: none; }
+.section-nav__manage:hover { color: #1a1406; background: #f4cd7d; }
 
 
 .fold { justify-self: start; display: inline-flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 2.5rem; padding: .45rem .9rem; border: 1px solid #36546a; border-radius: .45rem; color: #bae6fd; background: #122235; font-size: .9rem; }
@@ -35,11 +37,13 @@ app-operation-coordination-board[hidden] { display: none; }
 .hangar__form small { grid-column: 1 / -1; color: #94a3b8; }
 .hangar__form button { min-height: 2.5rem; padding: .55rem .9rem; border: 1px solid #67e8f9; border-radius: .4rem; color: #082f49; background: #67e8f9; font-weight: 700; }
 .hangar__form button:disabled { opacity: .5; }
-button:focus-visible, select:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+button:focus-visible, select:focus-visible, .section-nav__manage:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 
 @container sheet (max-width: 640px) {
   /* Le bord droit s'estompe : il reste des sections à faire défiler. */
   .section-nav { padding-inline: .65rem 1.5rem; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); }
+  /* En tête de barre : sinon l'accès à l'éditeur reste caché derrière le défilement. */
+  .section-nav__manage { order: -1; margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .section-nav button { transition: none; } }
 @container sheet (min-width: 2400px) {

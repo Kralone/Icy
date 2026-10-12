@@ -55,7 +55,7 @@ describe('OperationPreviewComponent', () => {
     expect(text('app-operation-org-chart')).toContain('Vaisseaux Prospector de Mira');
     expect(text('app-operation-fleet-cards')).toContain('Flotte prévue');
     expect(text('app-operation-fleet-cards')).toContain('Manque 1 sur 2');
-    expect(text('app-operation-fleet-cards')).toContain('Appareils proposés');
+    expect(text('app-operation-fleet-cards')).toContain('Autres appareils proposés');
     // Dans l'éditeur, le titre de l'aperçu n'est pas un second titre de niveau 1.
     expect(fixture.nativeElement.querySelector('h1')).toBeNull();
     // Un besoin annulé n'est pas montré aux participants.
@@ -86,16 +86,9 @@ describe('OperationPreviewComponent', () => {
     fixture.detectChanges();
     expect(text('app-operation-org-chart')).toContain('Complet');
 
-    const frame: HTMLElement = fixture.nativeElement.querySelector('.preview');
-    const widths = Array.from(fixture.nativeElement.querySelectorAll('.preview-width button') as NodeListOf<HTMLButtonElement>);
-    expect(widths.map(button => button.textContent!.trim())).toEqual(['Ordinateur', 'Mobile']);
-    widths[1].click();
-    fixture.detectChanges();
-    expect(frame.classList.contains('preview--mobile')).toBe(true);
-    // Comme sur un téléphone : sans groupe à moi, seul le premier groupe principal reste ouvert.
+    // Sans groupe à moi, le premier groupe principal est ouvert.
     expect(fixture.nativeElement.querySelector('.root__toggle').getAttribute('aria-expanded')).toBe('true');
     expect((fixture.nativeElement.querySelector('.root__children') as HTMLElement).hidden).toBe(false);
-    expect(widths[1].getAttribute('aria-pressed')).toBe('true');
     http.expectNone(() => true);
   });
 

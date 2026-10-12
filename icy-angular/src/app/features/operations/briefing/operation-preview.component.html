@@ -1,8 +1,4 @@
-<div class="preview-width" role="group" aria-label="Largeur de l’aperçu">
-  <button type="button" [attr.aria-pressed]="width() === 'desktop'" (click)="width.set('desktop')">Ordinateur</button>
-  <button type="button" [attr.aria-pressed]="width() === 'mobile'" (click)="width.set('mobile')">Mobile</button>
-</div>
-<div class="preview" [class.preview--mobile]="width() === 'mobile'" role="region" aria-label="Aperçu de la fiche participant">
+<div class="preview" role="region" aria-label="Aperçu de la fiche participant">
   <app-operation-hero [operation]="operation()" [presentCount]="presentCount()" [preview]="true" />
   <div class="sheet">
     <app-operation-my-assignment [preview]="true" />
@@ -17,7 +13,7 @@
     <section class="panel panel--organisation" aria-labelledby="operation-preview-organisation">
       <h2 id="operation-preview-organisation"><app-operation-icon name="groups" /> Organisation</h2>
       @if (organizationState() === 'ready') {
-        <app-operation-org-chart [composition]="composition()" [readOnly]="true" [preview]="!locked()" [ships]="ships()" [narrow]="width() === 'mobile' ? true : null" />
+        <app-operation-org-chart [composition]="composition()" [readOnly]="true" [preview]="!locked()" [ships]="ships()" />
       } @else {
         <p class="empty-state" role="status">{{ organizationState() === 'error' ? 'L’organisation n’a pas pu être chargée : voir l’onglet Organisation.' : 'Chargement de l’organisation…' }}</p>
       }

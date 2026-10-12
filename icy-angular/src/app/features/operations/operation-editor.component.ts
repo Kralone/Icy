@@ -1,14 +1,15 @@
-import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, map, Observable, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, debounceTime, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
 import { User } from '../../model/user.model';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { DraftAutosave } from './operation-autosave';
+import { OperationConfirmService } from './operation-confirm.service';
 import { EffectiveAssignmentMode, GroupMember } from './operation-group.model';
 import { GroupSettings, OperationOrganization, OrganizationGroup, sortedChildren } from './organization/operation-organization.model';
 import { OperationStructureTreeComponent } from './organization/operation-structure-tree.component';
@@ -18,6 +19,8 @@ import { OperationCoordination, OperationCoordinationBoardComponent } from './or
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 import { OperationPreviewComponent } from './briefing/operation-preview.component';
 import { OperationSheet } from './briefing/operation-sheet.model';
+import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
+import { eventColor, eventImage } from '../events/event-appearance';
 import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
@@ -41,15 +44,16 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
+  imports: [FormsModule, AsyncPipe, DatePipe, RouterLink, NgTemplateOutlet, OperationIconComponent, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
-  styleUrl: './operation-editor.component.css'
+  styleUrls: ['./operation-editor.component.css', './operation-requirement-form.css']
 })
 export class OperationEditorComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly eventService = inject(EventService);
   private readonly toast = inject(HotToastService);
+  private readonly confirmService = inject(OperationConfirmService);
   private readonly changeDetector = inject(ChangeDetectorRef);
 
   /** Retour d'action ponctuel : toast lié à l'action, jamais un message persistant dans un autre onglet. */
@@ -57,14 +61,39 @@ export class OperationEditorComponent implements OnDestroy {
     if (kind === 'success') this.toast.success(text); else this.toast.error(text);
   }
 
+  readonly tabs: ReadonlyArray<{ id: OperationEditorComponent['tab']; label: string; icon: OperationIconName }> = [
+    { id: 'briefing', label: 'Général / briefing', icon: 'briefing' },
+    { id: 'objectifs', label: 'Objectifs', icon: 'target' },
+    { id: 'organisation', label: 'Organisation', icon: 'groups' },
+    { id: 'permissions', label: 'Coordination', icon: 'assignment' },
+    { id: 'publication', label: 'Aperçu / publication', icon: 'presence' }
+  ];
+
+  /** Couleurs du type d'événement : la paire par défaut s'applique si l'une des deux est invalide. */
+  typeColors(operation: any): { accent: string; label: string } {
+    const invalid = '#000000ff';
+    const accent = eventColor(operation?.typeBackgroundColor, invalid);
+    const label = eventColor(operation?.typeTextColor, invalid);
+    return accent === invalid || label === invalid ? { accent: '#27647c', label: '#e3f4fb' } : { accent, label };
+  }
+
+  /** Image de la bannière : celle de la mission en cours de saisie, à défaut celle du type. */
+  readonly bannerFailed = signal<ReadonlySet<string>>(new Set());
+  bannerImage(operation: any): string | null {
+    return [this.form.imageUrl, operation?.typeImageUrl].map(url => eventImage(url)).find(url => !!url && !this.bannerFailed().has(url)) ?? null;
+  }
+  bannerImageFailed(url: string): void { this.bannerFailed.update(failed => new Set(failed).add(url)); }
+
   selectTab(tab: OperationEditorComponent['tab']): void {
-    if (tab !== this.tab && !this.mayLeaveGroupSettings()) return;
-    this.tab = tab;
-    // Les inscriptions changent sans l'organisateur : la coordination est relue à chaque ouverture.
-    if (tab === 'permissions' && this.operationId) this.loadCoordination(this.operationId);
-    if (tab === 'publication') this.loadPreviewParticipations();
-    // Un brouillon ne garde pas de saisie en attente derrière un onglet.
-    if (this.autosave.auto) this.autosave.flush();
+    const open = () => {
+      this.tab = tab;
+      // Les inscriptions changent sans l'organisateur : la coordination est relue à chaque ouverture.
+      if (tab === 'permissions' && this.operationId) this.loadCoordination(this.operationId);
+      if (tab === 'publication') this.loadPreviewParticipations();
+      // Un brouillon ne garde pas de saisie en attente derrière un onglet.
+      if (this.autosave.auto) this.autosave.flush();
+    };
+    if (tab === this.tab) open(); else this.afterGroupSettings(open);
   }
 
   // --- Aperçu : la fiche telle que la verront les participants, sans aucune écriture.
@@ -118,18 +147,31 @@ export class OperationEditorComponent implements OnDestroy {
     return !!id && members.some(member => member.id === id);
   }
 
-  searchRequirementModels(): void {
-    this.catalogLoading.set(true);
-    this.catalogError.set('');
-    this.catalogService.browse({ query: this.catalogQuery, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 60 }).subscribe({
-      next: response => { this.catalogResults.set(response.data.items); this.catalogLoading.set(false); },
-      error: () => { this.catalogError.set('Le catalogue ne peut pas être chargé. Réessayez.'); this.catalogLoading.set(false); }
-    });
-  }
+  /** Recherche au fil de la frappe : la dernière saisie l'emporte, une réponse plus ancienne est ignorée. */
+  private readonly catalogSearch$ = new Subject<string>();
+  /** Vrai une fois qu'une recherche a abouti : « Aucun modèle » n'est dit qu'à ce moment-là. */
+  readonly catalogSearched = signal(false);
+  private readonly catalogSearchSubscription = this.catalogSearch$.pipe(
+    map(query => query.trim()),
+    tap(query => { this.catalogError.set(''); this.catalogSearched.set(false); this.catalogLoading.set(query.length >= 2); if (query.length < 2) this.catalogResults.set([]); }),
+    debounceTime(250),
+    switchMap(query => query.length < 2 ? of(null) : this.catalogService.browse({ query, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 24 }).pipe(
+      map(response => response.data.items),
+      catchError(() => { this.catalogError.set('Le catalogue ne peut pas être chargé.'); return of(null); })))
+  ).subscribe(items => {
+    this.catalogLoading.set(false);
+    if (items) { this.catalogResults.set(items); this.catalogSearched.set(true); }
+  });
+
+  searchRequirementModels(): void { this.catalogSearch$.next(this.catalogQuery); }
 
   selectRequirementModel(model: CatalogEntry): void {
     this.requirementForm.shipModelId = model.id;
     this.selectedRequirementModel.set(model);
+    // Le choix est fait : la liste de résultats se referme.
+    this.catalogQuery = '';
+    this.catalogResults.set([]);
+    this.catalogSearched.set(false);
   }
 
   clearRequirementModel(): void {
@@ -140,13 +182,18 @@ export class OperationEditorComponent implements OnDestroy {
   editShipRequirement(requirement: any): void {
     this.editingRequirementId = requirement.id;
     this.requirementForm = { groupId: requirement.groupId ?? null, shipModelId: requirement.shipModelId ?? null, quantity: requirement.quantity, notes: requirement.notes || '', status: requirement.status || 'OPEN' };
-    this.selectedRequirementModel.set(null);
+    // Le modèle déjà demandé reste affiché, avec son image, pendant la modification.
+    this.selectedRequirementModel.set(requirement.shipModelId == null ? null : { id: requirement.shipModelId, name: requirement.shipModelName || 'Modèle inconnu', imageUrl: requirement.shipModelImageUrl ?? null } as CatalogEntry);
     this.catalogQuery = '';
+    this.catalogResults.set([]);
+    this.catalogSearched.set(false);
   }
 
   cancelShipRequirementEdit(): void {
     this.editingRequirementId = null;
     this.clearRequirementModel();
+    this.catalogQuery = '';
+    this.catalogSearch$.next('');
     this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' };
   }
   readonly operationState$ = this.route.paramMap.pipe(
@@ -215,8 +262,8 @@ export class OperationEditorComponent implements OnDestroy {
     this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
   }
 
-  removeMember(operationId: string, member: GroupMember): void {
-    if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
+  async removeMember(operationId: string, member: GroupMember): Promise<void> {
+    if (!await this.confirmService.ask({ title: `Retirer ${member.username} de son groupe ?`, message: 'Ce membre reste inscrit Présent.', confirmLabel: 'Retirer du groupe', danger: true })) return;
     this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
   }
 
@@ -248,21 +295,25 @@ export class OperationEditorComponent implements OnDestroy {
     });
   }
 
-  /** Vrai si l'on peut quitter la fiche du groupe : rien à perdre, ou abandon confirmé. */
-  private mayLeaveGroupSettings(): boolean {
-    if (!this.groupSettingsDirty()) return true;
-    if (!confirm('Les réglages de ce groupe ne sont pas enregistrés. Les abandonner ?')) return false;
-    this.groupSettingsDirty.set(false);
-    return true;
+  /** Exécute l'action si l'on peut quitter la fiche du groupe : tout de suite s'il n'y a rien à perdre, sinon après abandon confirmé. */
+  private afterGroupSettings(action: () => void): void {
+    if (!this.groupSettingsDirty()) { action(); return; }
+    this.confirmService.ask({ title: 'Abandonner les réglages du groupe ?', message: 'Les réglages de ce groupe ne sont pas enregistrés.', confirmLabel: 'Abandonner les réglages', cancelLabel: 'Continuer la saisie', danger: true }).then(confirmed => {
+      if (!confirmed) return;
+      this.groupSettingsDirty.set(false);
+      action();
+      this.changeDetector.markForCheck();
+    });
   }
 
   selectGroup(id: number | null, tab: GroupPanelTab = 'equipage'): void {
     if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
-    if (!this.mayLeaveGroupSettings()) return;
-    this.groupPanelTab.set(tab);
-    this.selectedGroupId.set(id);
-    this.groupOpenOnMobile.set(id !== null);
-    if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+    this.afterGroupSettings(() => {
+      this.groupPanelTab.set(tab);
+      this.selectedGroupId.set(id);
+      this.groupOpenOnMobile.set(id !== null);
+      if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+    });
   }
 
   private withDefaultMode(organization: OperationOrganization, mode: EffectiveAssignmentMode): OperationOrganization {
@@ -282,20 +333,23 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Création rapide : le groupe existe tout de suite avec un nom provisoire, ses réglages s'ouvrent pour le nommer. */
   quickAddGroup(operationId: string, parentId: number | null): void {
-    if (this.organizationBusy() || !this.organization() || !this.mayLeaveGroupSettings()) return;
-    const siblings = sortedChildren(this.organizationGroups(), parentId);
-    const base = parentId === null ? 'Nouveau groupe' : 'Nouveau sous-groupe';
-    const taken = new Set(siblings.map(group => group.name.toLocaleLowerCase()));
-    let name = base;
-    for (let index = 2; taken.has(name.toLocaleLowerCase()); index++) name = `${base} ${index}`;
-    this.organizationBusy.set(true);
-    this.eventService.createOperationGroup(operationId, { name, description: '', capacity: null, parentId, assignmentMode: 'INHERITED', sortOrder: siblings.length, responsibleUserId: null }).subscribe({
-      next: (response: any) => {
-        this.groupPanelTab.set('reglages');
-        this.groupOpenOnMobile.set(true);
-        this.loadOrganization(operationId, response?.data?.id ?? null);
-      },
-      error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Création du groupe impossible.')); }
+    if (this.organizationBusy() || !this.organization()) return;
+    this.afterGroupSettings(() => {
+      if (this.organizationBusy()) return;
+      const siblings = sortedChildren(this.organizationGroups(), parentId);
+      const base = parentId === null ? 'Nouveau groupe' : 'Nouveau sous-groupe';
+      const taken = new Set(siblings.map(group => group.name.toLocaleLowerCase()));
+      let name = base;
+      for (let index = 2; taken.has(name.toLocaleLowerCase()); index++) name = `${base} ${index}`;
+      this.organizationBusy.set(true);
+      this.eventService.createOperationGroup(operationId, { name, description: '', capacity: null, parentId, assignmentMode: 'INHERITED', sortOrder: siblings.length, responsibleUserId: null }).subscribe({
+        next: (response: any) => {
+          this.groupPanelTab.set('reglages');
+          this.groupOpenOnMobile.set(true);
+          this.loadOrganization(operationId, response?.data?.id ?? null);
+        },
+        error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Création du groupe impossible.')); }
+      });
     });
   }
 
@@ -353,10 +407,6 @@ export class OperationEditorComponent implements OnDestroy {
     this.fleetAction(this.eventService.declineOperationShipProposal(operationId, proposalId), 'Vaisseau refusé.', 'Refus impossible.');
   }
 
-  withdrawShip(operationId: string, ship: FleetShip): void {
-    if (!confirm(`Retirer ${ship.shipName || 'ce vaisseau'} de l’opération ? Les affectations des membres ne changent pas.`)) return;
-    this.fleetAction(this.eventService.withdrawOperationShipProposal(operationId, ship.id), 'Vaisseau retiré de l’opération.', 'Retrait impossible.');
-  }
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
   private operationId: string | null = null;
   private currentOperation: any = null;
@@ -426,8 +476,8 @@ export class OperationEditorComponent implements OnDestroy {
   }
 
   /** Garde de navigation interne : l'envoi des saisies en attente est fait par ngOnDestroy. */
-  canLeave(): boolean {
-    return this.leavingIsSafe || confirm('Des modifications ne sont pas enregistrées. Quitter l’éditeur quand même ?');
+  canLeave(): boolean | Promise<boolean> {
+    return this.leavingIsSafe || this.confirmService.ask({ title: 'Quitter l’éditeur ?', message: 'Des modifications ne sont pas enregistrées et seront perdues.', confirmLabel: 'Quitter sans enregistrer', cancelLabel: 'Rester dans l’éditeur', danger: true });
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -445,6 +495,7 @@ export class OperationEditorComponent implements OnDestroy {
   ngOnDestroy(): void {
     // Navigation interne : la requête se termine après la destruction du composant.
     if (this.autosave.auto) this.autosave.flush();
+    this.catalogSearchSubscription.unsubscribe();
   }
 
   reloadFromServer(): void {
@@ -541,8 +592,10 @@ export class OperationEditorComponent implements OnDestroy {
     });
   }
 
-  deleteGroup(operationId: string, group: OrganizationGroup): void {
-    if (this.organizationBusy() || !confirm(`Supprimer « ${group.name} » ? Cette action est définitive.`)) return;
+  async deleteGroup(operationId: string, group: OrganizationGroup): Promise<void> {
+    if (this.organizationBusy()) return;
+    if (!await this.confirmService.ask({ title: `Supprimer « ${group.name} » ?`, message: 'Cette action est définitive.', confirmLabel: 'Supprimer le groupe', danger: true })) return;
+    if (this.organizationBusy()) return;
     this.groupSettingsDirty.set(false);
     this.organizationBusy.set(true);
     this.eventService.deleteOperationGroup(operationId, group.id).subscribe({
@@ -555,12 +608,9 @@ export class OperationEditorComponent implements OnDestroy {
     const request = this.editingRequirementId ? this.eventService.updateOperationShipRequirement(operationId, this.editingRequirementId, this.requirementForm) : this.eventService.createOperationShipRequirement(operationId, this.requirementForm);
     this.fleetAction(request, editing ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.', 'Enregistrement du besoin impossible.', () => this.cancelShipRequirementEdit());
   }
-  deleteShipRequirement(operationId: string, requirement: FleetRequirement): void {
-    if (!confirm('Supprimer ce besoin ? Les vaisseaux proposés pour lui restent proposés, sans besoin lié.')) return;
+  async deleteShipRequirement(operationId: string, requirement: FleetRequirement): Promise<void> {
+    if (!await this.confirmService.ask({ title: 'Supprimer ce besoin ?', message: 'Les vaisseaux proposés pour lui restent proposés, sans besoin lié.', confirmLabel: 'Supprimer le besoin', danger: true })) return;
     this.fleetAction(this.eventService.deleteOperationShipRequirement(operationId, requirement.id), 'Besoin de vaisseau supprimé.', 'Suppression du besoin impossible.', () => { if (this.editingRequirementId === requirement.id) this.cancelShipRequirementEdit(); });
-  }
-  markShipUnavailable(operationId: string, proposalId: string): void {
-    this.fleetAction(this.eventService.markOperationShipProposalUnavailable(operationId, proposalId), 'Vaisseau marqué indisponible.', 'Impossible de marquer ce vaisseau indisponible.');
   }
   setShipPilot(operationId: string, proposalId: string, pilotUserId: string | null): void {
     this.fleetAction(this.eventService.setOperationShipPilot(operationId, proposalId, pilotUserId), pilotUserId ? 'Pilote désigné.' : 'Pilote retiré.', 'Impossible de modifier le pilote.');

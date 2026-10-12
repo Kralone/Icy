@@ -1,0 +1,41 @@
+.catalog-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .5rem; max-height: 22rem; overflow-y: auto; margin-top: .75rem; }
+.catalog-result { display: flex; align-items: center; gap: .5rem; text-align: left; border: 1px solid #475569; border-radius: .4rem; padding: .5rem; color: #e2e8f0; background: #111827; }
+.catalog-result[aria-pressed="true"] { border-color: #67e8f9; background: #164e63; }
+.catalog-result img { width: 4rem; height: 3rem; object-fit: contain; }
+.catalog-result span { overflow-wrap: anywhere; }
+/* Formulaire de besoin : bandeau d'explication, recherche au fil de la frappe, actions en vrais boutons */
+.requirement-form { container: needform / inline-size; margin-top: 1rem; padding: 0; border: 1px solid; border-radius: .7rem; border-color: color-mix(in srgb, #f4cd7d 45%, #24384d); background: #0b1525; }
+.requirement-form summary { cursor: pointer; display: flex; align-items: center; gap: .6rem; min-height: 3rem; padding: .6rem 1rem; color: #f4cd7d; font-weight: 700; list-style: none; border-radius: .7rem; }
+.requirement-form summary::-webkit-details-marker { display: none; }
+.requirement-form summary:hover { background: rgba(244,205,125,.08); }
+.requirement-form summary:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+.requirement-form[open] summary { margin-bottom: 0; border-bottom: 1px solid rgba(148,163,184,.18); border-radius: .7rem .7rem 0 0; }
+.requirement-form__plus { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; color: #1c1503; background: #f4cd7d; font-weight: 800; line-height: 1; }
+.requirement-form__info { display: flex; align-items: flex-start; gap: .7rem; margin: 1rem 1rem 0; padding: .8rem 1rem; border: 1px solid rgba(244,205,125,.4); border-left: 3px solid #f4cd7d; border-radius: .6rem; color: #e2e8f0; background: #2a2110; line-height: 1.45; }
+.requirement-form__info app-operation-icon { margin-top: .15rem; color: #f4cd7d; font-size: 1.2rem; }
+.requirement-form__info strong { color: #fde9b8; }
+.requirement-form__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; padding: 1rem; }
+.requirement-form__grid > label { align-content: start; }
+
+.requirement-form__label { color: #e2e8f0; font-weight: 600; }
+.requirement-form__label small { margin-left: .35rem; color: #7893a3; font-weight: 400; }
+.requirement-form select { width: 100%; border: 1px solid #475569; border-radius: .45rem; padding: .75rem; color: #f8fafc; background: #111827; }
+.requirement-model { display: grid; gap: .6rem; min-width: 0; }
+.requirement-model__chosen { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; padding: .6rem; border: 1px solid #80e5b8; border-radius: .6rem; background: #10261f; }
+.requirement-model__chosen img, .requirement-model__noimage { flex: none; width: 6.5rem; height: 4rem; border-radius: .4rem; object-fit: cover; background: #111827; }
+.requirement-model__noimage { display: grid; place-items: center; color: #94a3b8; font-size: .75rem; }
+.requirement-model__chosen > span:not(.requirement-model__noimage) { display: grid; flex: 1 1 8rem; min-width: 0; }
+.requirement-model__chosen small { color: #80e5b8; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+.requirement-model__chosen strong { color: #f8fafc; font-size: 1.05rem; overflow-wrap: anywhere; }
+.requirement-model__any, .requirement-model__state { margin: 0; color: #94a3b8; font-size: .9rem; }
+.requirement-form .catalog-results { margin-top: 0; padding: .5rem; border: 1px solid #36546a; border-radius: .6rem; background: #0f172a; }
+.requirement-form .catalog-result:hover { border-color: #67e8f9; }
+.requirement-form .catalog-result img { object-fit: cover; border-radius: .3rem; }
+.requirement-form__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; padding: 0 1rem 1rem; }
+.operation-editor .secondary { min-height: 2.6rem; border: 1px solid #36546a; border-radius: .45rem; padding: .5rem 1rem; color: #bae6fd; background: #122235; }
+.operation-editor .secondary:hover { border-color: #67e8f9; }
+.requirement-form .primary { min-height: 2.6rem; }
+/* Le formulaire suit la largeur de son panneau, pas celle de la fenêtre. */
+@container needform (min-width: 30rem) { .requirement-form__grid { grid-template-columns: 1fr 1fr; } .requirement-model, .requirement-form__wide { grid-column: 1 / -1; } }
+@container needform (min-width: 52rem) { .requirement-form__grid { grid-template-columns: minmax(0, 2fr) minmax(8rem, 1fr) minmax(10rem, 1.2fr); } .requirement-model { grid-column: auto; grid-row: span 2; } .requirement-form__wide { grid-column: 2 / -1; } }
+@container needform (max-width: 30rem) { .requirement-form__actions > button { flex: 1 1 100%; } }

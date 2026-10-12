@@ -172,9 +172,6 @@ export class EventService {
   declineOperationShipProposal(operationId: string, proposalId: string) {
     return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/decline`, {});
   }
-  markOperationShipProposalUnavailable(operationId: string, proposalId: string) {
-    return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/unavailable`, {});
-  }
   setOperationShipPilot(operationId: string, proposalId: string, pilotUserId: string | null) {
     let params: any = {};
     if (pilotUserId) params.pilotUserId = pilotUserId;

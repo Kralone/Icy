@@ -7,6 +7,7 @@ import { HotToastService } from '@ngxpert/hot-toast';
 import { OperationPageComponent } from './operation-page.component';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { OperationConfirmService } from './operation-confirm.service';
 
 describe('OperationPageComponent', () => {
   let component: OperationPageComponent;
@@ -53,6 +54,24 @@ describe('OperationPageComponent', () => {
       ]
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
+  });
+
+  it('gives an organizer the editor link and the coordination board, and neither to a plain member', async () => {
+    await render();
+    expect(fixture.nativeElement.querySelector('.section-nav__manage')).toBeNull();
+    expect(component.coordination).toBeNull();
+
+    fixture = TestBed.createComponent(OperationPageComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    http.expectOne('/api/users/me/profile').flush({ data: { roles: ['officier'] } });
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2026-10-20T20:00:00', endDateTime: '2026-10-20T23:00:00', finished: false } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.section-nav__manage').getAttribute('href')).toBe('/icy/operations/op/edit');
+    expect(component.coordination).toEqual(board);
   });
 
   it('reads counters, lists and the active button back from the server after each answer', async () => {
@@ -126,11 +145,12 @@ describe('OperationPageComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.mine__group').textContent).toContain('Escadrille');
 
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirmSpy = vi.spyOn(TestBed.inject(OperationConfirmService), 'ask').mockResolvedValue(true);
     try {
       (Array.from(fixture.nativeElement.querySelectorAll('.mine__actions button') as NodeListOf<HTMLButtonElement>).find(button => button.textContent!.includes('Quitter'))!).click();
       // Le texte prévient qu'il faudra une nouvelle validation pour revenir.
-      expect(confirmSpy.mock.calls[0][0]).toContain('Y revenir demandera une nouvelle validation.');
+      expect(confirmSpy.mock.calls[0][0].message).toContain('Y revenir demandera une nouvelle validation.');
+      await fixture.whenStable();
       expect(leaveOperationGroup).toHaveBeenCalledWith('op');
       http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [{ ...group, memberCount: 0, members: [] }] } });
       fixture.detectChanges();

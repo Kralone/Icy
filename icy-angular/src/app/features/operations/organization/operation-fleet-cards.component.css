@@ -8,7 +8,7 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .card { display: grid; grid-template-rows: auto 1fr auto; width: 100%; max-width: 24rem; min-width: 0; overflow: hidden; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
 /* Un besoin est une intention, pas un appareil : contour en pointillés, image atténuée, mention « Recherché ». */
 .card--need { border: 1px dashed #f4cd7d; background: #0e1726; }
-.card--need.is-covered { border-color: #80e5b8; }
+.card--need.is-covered { border: 1px solid #80e5b8; background: linear-gradient(180deg, #10261f, #0e1726 9rem); }
 .card--need.is-off { border-color: #64748b; }
 .card--need .card__image { position: relative; }
 .card--need .card__image img { opacity: .6; }
@@ -31,6 +31,8 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .card__actions button { flex: 1 1 auto; }
 .tag { padding: .1rem .55rem; border: 1px solid #64748b; border-radius: 999px; color: #cbd5e1; font-size: .8rem; }
 .tag--ok { border-color: #80e5b8; color: #80e5b8; }
+/* Besoin couvert : pastille pleine, lisible d'un coup d'œil. */
+.tag--covered { border-color: #80e5b8; color: #052e1f; background: #80e5b8; font-weight: 700; }
 .tag--warn, .tag--pending { border-color: #f4cd7d; color: #f4cd7d; }
 .tag--alert { border-color: #fda4af; color: #ffd0d4; background: #351f2a; }
 .tag--off { border-color: #64748b; color: #94a3b8; }
@@ -39,6 +41,14 @@ button:disabled { opacity: .45; }
 button.accept { border-color: #80e5b8; color: #082f49; background: #80e5b8; font-weight: 700; }
 button.refuse { border-color: #774457; color: #ffbbc5; background: #311f2b; }
 button:focus-visible, select:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+/* Les besoins portent leurs appareils : cartes plus larges que celles des appareils isolés. */
+.fleet__cards--needs { grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.fleet__cards--needs .card { max-width: 28rem; }
+.need-ships { list-style: none; display: grid; gap: .5rem; margin: .4rem 0 0; padding: .6rem 0 0; border-top: 1px solid rgba(148,163,184,.22); }
+.need-ship { display: grid; gap: .3rem; min-width: 0; padding: .55rem .65rem; border: 1px solid rgba(103,232,249,.22); border-left: 3px solid #f4cd7d; border-radius: .5rem; background: #0b1525; }
+.need-ship[data-status="ACCEPTED"] { border-left-color: #80e5b8; }
+.need-ship.is-off { border-left-color: #64748b; opacity: .75; }
+.need-ship .card__actions { padding: .3rem 0 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Mobile : vignette à gauche, texte à droite, pour ne pas empiler de grandes images. */
 @media (max-width: 640px) {

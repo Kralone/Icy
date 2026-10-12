@@ -1,4 +1,4 @@
-<main class="operation-editor">
+<main class="operation-editor" [attr.data-tab]="tab">
   @if (operationState$ | async; as state) {
     @if (state.kind === 'LOADING') {
       <section class="editor-loading" role="status" aria-live="polite">Chargement de l’éditeur…</section>
@@ -6,17 +6,25 @@
       <section class="editor-error" role="alert"><h1>{{ state.message }}</h1><a routerLink="/icy/events">Retour au calendrier</a></section>
     } @else {
       @let operation = state.operation;
-    <header>
+    @let colors = typeColors(operation);
+    <header class="editor-banner" [style.--type-accent]="colors.accent" [style.--type-label]="colors.label">
+      @if (bannerImage(operation); as source) { <img class="editor-banner__image" [src]="source" alt="" referrerpolicy="no-referrer" (error)="bannerImageFailed(source)"> }
+      <div class="editor-banner__veil"></div>
       <div class="editor-topline">
-        <a routerLink="/icy/events">← Calendrier</a>
+        <a routerLink="/icy/events" class="editor-banner__chip">← Calendrier</a>
         @if (saving) { <span class="save-activity" aria-hidden="true"></span> }
       </div>
-      <p class="eyebrow">Éditeur d’opération</p><h1>{{ operation.title }}</h1>
+      <p class="editor-banner__tags"><span class="eyebrow">Éditeur d’opération</span>@if (operation.typeName) { <span class="editor-banner__type">{{ operation.typeName }}</span> }<span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>
+      <h1>{{ operation.title }}</h1>
+      <p class="editor-banner__facts">
+        @if (operation.startDateTime) { <span class="editor-banner__chip"><app-operation-icon name="calendar" /> {{ operation.startDateTime | date:"EEEE d MMMM yyyy" }}</span><span class="editor-banner__chip"><app-operation-icon name="clock" /> {{ operation.startDateTime | date:"HH'h'mm" }} – {{ operation.endDateTime | date:"HH'h'mm" }}</span> }
+        @if (operation.publicationStatus === 'PUBLISHED') { <a class="editor-banner__chip editor-banner__sheet" [routerLink]="['/icy/operations', operation.id]">Voir la fiche →</a> }
+      </p>
       @if (operation.locked) { <p class="closed-banner" role="status"><strong>Opération terminée.</strong> Groupes, affectations et flotte sont en lecture seule. Le briefing et les objectifs restent modifiables.</p> }
     </header>
     <nav class="tabs" aria-label="Sections de l’éditeur">
-      @for (item of [['briefing','Général / briefing'], ['objectifs','Objectifs'], ['organisation','Organisation'], ['permissions','Coordination'], ['publication','Aperçu / publication']]; track item[0]) {
-        <button type="button" [class.active]="tab === item[0]" (click)="selectTab($any(item[0]))">{{ item[1] }}</button>
+      @for (item of tabs; track item.id) {
+        <button type="button" [class.active]="tab === item.id" [attr.data-tab]="item.id" (click)="selectTab(item.id)"><app-operation-icon [name]="item.icon" /> {{ item.label }}</button>
       }
     </nav>
     <section class="editor-card">
@@ -26,14 +34,19 @@
         <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" (ngModelChange)="touch()" maxlength="2000" [attr.aria-invalid]="imageUrlPending" aria-describedby="operation-image-help">@if (imageUrlPending) { <small id="operation-image-help" class="field-warning">Adresse incomplète : elle sera enregistrée dès qu’elle commencera par https:// et sera complète. Le reste du brouillon est enregistré.</small> }</label>
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()"> Autoriser les membres présents à proposer un vaisseau de leur hangar</label>
       } @else if (tab === 'objectifs') {
-        <div class="objectives-head"><div><h2>Objectifs de mission</h2><p class="muted">Ordonnez les résultats attendus et distinguez le principal du secondaire.</p></div><div class="objective-actions"><button type="button" (click)="addObjective('PRINCIPAL')">+ Principal</button><button type="button" (click)="addObjective('SECONDAIRE')">+ Secondaire</button></div></div>
-        <div class="objective-list">@for (objective of form.objectives; track $index) { <div class="objective-row"><select [(ngModel)]="objective.kind" (ngModelChange)="touch()" aria-label="Nature de l’objectif"><option value="PRINCIPAL">Principal</option><option value="SECONDAIRE">Secondaire</option></select><input [(ngModel)]="objective.text" (ngModelChange)="touch()" maxlength="1000" [placeholder]="objective.kind === 'PRINCIPAL' ? 'Résultat indispensable' : 'Résultat complémentaire'"><div class="objective-order"><button type="button" (click)="moveObjective($index, -1)" [disabled]="$index === 0" aria-label="Monter l’objectif">↑</button><button type="button" (click)="moveObjective($index, 1)" [disabled]="$index === form.objectives.length - 1" aria-label="Descendre l’objectif">↓</button><button type="button" (click)="removeObjective($index)" [disabled]="form.objectives.length === 1" aria-label="Supprimer l’objectif">×</button></div></div> }</div>
+        <div class="objectives-head"><div><h2>Objectifs de mission</h2><p class="muted">Ordonnez les résultats attendus et distinguez le principal du secondaire.</p></div><div class="objective-actions"><button type="button" class="objective-add--main" (click)="addObjective('PRINCIPAL')">+ Principal</button><button type="button" (click)="addObjective('SECONDAIRE')">+ Secondaire</button></div></div>
+        <div class="objective-list">@for (objective of form.objectives; track $index) { <div class="objective-row" [attr.data-kind]="objective.kind"><select [(ngModel)]="objective.kind" (ngModelChange)="touch()" aria-label="Nature de l’objectif"><option value="PRINCIPAL">Principal</option><option value="SECONDAIRE">Secondaire</option></select><input [(ngModel)]="objective.text" (ngModelChange)="touch()" maxlength="1000" [placeholder]="objective.kind === 'PRINCIPAL' ? 'Résultat indispensable' : 'Résultat complémentaire'"><div class="objective-order"><button type="button" (click)="moveObjective($index, -1)" [disabled]="$index === 0" aria-label="Monter l’objectif">↑</button><button type="button" (click)="moveObjective($index, 1)" [disabled]="$index === form.objectives.length - 1" aria-label="Descendre l’objectif">↓</button><button type="button" (click)="removeObjective($index)" [disabled]="form.objectives.length === 1" aria-label="Supprimer l’objectif">×</button></div></div> }</div>
       } @else if (tab === 'publication') {
-        <p class="publication-state">Statut actuel : <span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>@if (operation.publicationStatus !== 'PUBLISHED') { <button type="button" class="primary" [disabled]="publishing || autosave.hasUnsavedChanges || imageUrlPending" [attr.aria-busy]="publishing" (click)="publish(operation)">{{ publishing ? 'Publication…' : 'Publier l’opération' }}</button> @if (autosave.hasUnsavedChanges || imageUrlPending) { <p class="muted">La publication sera possible dès que les dernières modifications seront enregistrées.</p> } }
         <h2>Aperçu de la fiche</h2>
-        <p class="muted">Ce que verront les participants, avec vos saisies en cours. Aucune action n’est possible dans l’aperçu.</p>
         <app-operation-preview [operation]="previewSheet(operation)" [groups]="organizationGroups()" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [participations]="previewParticipations()" [participationsState]="previewParticipationsState()"
           [organizationState]="organizationError() ? 'error' : organization() ? 'ready' : 'loading'" [fleetError]="fleetLoadError()" />
+        <div class="publish-bar">
+          <p class="publication-state">Statut : <span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>
+          @if (operation.publicationStatus !== 'PUBLISHED') {
+            @if (autosave.hasUnsavedChanges || imageUrlPending) { <p class="muted">La publication sera possible dès que les dernières modifications seront enregistrées.</p> }
+            <button type="button" class="primary" [disabled]="publishing || autosave.hasUnsavedChanges || imageUrlPending" [attr.aria-busy]="publishing" (click)="publish(operation)">{{ publishing ? 'Publication…' : 'Publier l’opération' }}</button>
+          }
+        </div>
       } @else if (tab === 'organisation') {
         <div class="organization" [class.organization--detail]="groupOpenOnMobile()">
           <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy()" [locked]="!!operation.locked" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" />
@@ -52,24 +65,40 @@
         <ng-template #needs>
         @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
         <app-operation-fleet-cards [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [scopeGroupId]="selectedGroupId()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
-          (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (unavailable)="markShipUnavailable(operation.id, $event)" (withdraw)="withdrawShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)"
+          (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)"
           (editRequirement)="editShipRequirement($event)" (deleteRequirement)="deleteShipRequirement(operation.id, $event)" />
         @if (!operation.locked) {
         <details class="requirement-form" [open]="!!editingRequirementId">
-        <summary>{{ editingRequirementId ? 'Modifier le besoin' : 'Ajouter un besoin' }}</summary>
-        <p class="muted">Un besoin décrit un vaisseau recherché. Il reste distinct des appareils que les membres proposent depuis leur hangar.</p>
-        <fieldset class="requirement-catalog">
-          <legend>Modèle souhaité (facultatif)</legend>
-          <div class="catalog-search"><label>Rechercher un vaisseau<input [(ngModel)]="catalogQuery" (keydown.enter)="searchRequirementModels()" placeholder="Nom du modèle"></label><button type="button" (click)="searchRequirementModels()" [disabled]="catalogLoading()">{{ catalogLoading() ? 'Recherche…' : 'Rechercher' }}</button></div>
-          @if (catalogError()) { <p role="alert">{{ catalogError() }}</p> }
-          @if (selectedRequirementModel(); as selected) { <p role="status">Modèle choisi : <strong>{{ selected.name }}</strong> <button type="button" (click)="clearRequirementModel()">Retirer le modèle</button></p> }
-          <div class="catalog-results">@for (model of catalogResults(); track model.id) { <button type="button" class="catalog-result" [attr.aria-pressed]="requirementForm.shipModelId === model.id" (click)="selectRequirementModel(model)">@if (model.imageUrl) { <img [src]="model.imageUrl" alt="" loading="lazy"> }<span>{{ model.name }}</span></button> }</div>
-        </fieldset>
-        <label>Quantité<input type="number" min="1" max="100" [(ngModel)]="requirementForm.quantity"></label>
-        <label>Groupe (facultatif)<select [(ngModel)]="requirementForm.groupId"><option [ngValue]="null">Toute l’opération</option>@for (group of leafGroups(); track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
-        <label>Notes<textarea [(ngModel)]="requirementForm.notes" maxlength="5000" rows="2"></textarea></label>
-        <button type="button" [disabled]="fleetBusy()" (click)="createShipRequirement(operation.id)">{{ editingRequirementId ? 'Enregistrer le besoin' : 'Ajouter le besoin' }}</button>
-        @if (editingRequirementId) { <button type="button" (click)="cancelShipRequirementEdit()">Annuler la modification</button> }
+        <summary><span class="requirement-form__plus" aria-hidden="true">{{ editingRequirementId ? '✎' : '+' }}</span> {{ editingRequirementId ? 'Modifier le besoin' : 'Ajouter un besoin' }}</summary>
+        <p class="requirement-form__info"><app-operation-icon name="ship" /><span><strong>Un besoin décrit un vaisseau recherché.</strong> Il reste distinct des appareils que les membres proposent depuis leur hangar.</span></p>
+        <div class="requirement-form__grid">
+          <div class="requirement-model">
+            <span class="requirement-form__label" id="requirement-model-label">Modèle souhaité <small>facultatif</small></span>
+            @if (selectedRequirementModel(); as selected) {
+              <div class="requirement-model__chosen" role="status">
+                @if (selected.imageUrl) { <img [src]="selected.imageUrl" alt="" loading="lazy"> } @else { <span class="requirement-model__noimage">Sans image</span> }
+                <span><small>Modèle choisi</small><strong>{{ selected.name }}</strong></span>
+                <button type="button" class="secondary" (click)="clearRequirementModel()">Retirer le modèle</button>
+              </div>
+            } @else {
+              <p class="requirement-model__any">Aucun modèle choisi : le besoin accepte tout modèle.</p>
+            }
+            <input type="search" aria-labelledby="requirement-model-label" [ngModel]="catalogQuery" (ngModelChange)="catalogQuery = $event; searchRequirementModels()" placeholder="Rechercher un vaisseau par son nom" autocomplete="off">
+            @if (catalogError()) { <p class="organization__error" role="alert">{{ catalogError() }} <button type="button" (click)="searchRequirementModels()">Réessayer</button></p> }
+            @else if (catalogLoading()) { <p class="requirement-model__state" role="status">Recherche…</p> }
+            @else if (catalogSearched() && !catalogResults().length) { <p class="requirement-model__state" role="status">Aucun modèle ne correspond à « {{ catalogQuery }} ».</p> }
+            @if (catalogResults().length) {
+              <div class="catalog-results">@for (model of catalogResults(); track model.id) { <button type="button" class="catalog-result" [attr.aria-pressed]="requirementForm.shipModelId === model.id" (click)="selectRequirementModel(model)">@if (model.imageUrl) { <img [src]="model.imageUrl" alt="" loading="lazy"> }<span>{{ model.name }}</span></button> }</div>
+            }
+          </div>
+          <label><span class="requirement-form__label">Quantité</span><input type="number" min="1" max="100" [(ngModel)]="requirementForm.quantity"></label>
+          <label><span class="requirement-form__label">Groupe <small>facultatif</small></span><select [(ngModel)]="requirementForm.groupId"><option [ngValue]="null">Toute l’opération</option>@for (group of leafGroups(); track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
+          <label class="requirement-form__wide"><span class="requirement-form__label">Notes <small>facultatif</small></span><textarea [(ngModel)]="requirementForm.notes" maxlength="5000" rows="2"></textarea></label>
+        </div>
+        <div class="requirement-form__actions">
+          @if (editingRequirementId) { <button type="button" class="secondary" (click)="cancelShipRequirementEdit()">Annuler la modification</button> }
+          <button type="button" class="primary" [disabled]="fleetBusy()" (click)="createShipRequirement(operation.id)">{{ editingRequirementId ? 'Enregistrer le besoin' : 'Ajouter le besoin' }}</button>
+        </div>
         </details>
         }
         </ng-template>
@@ -84,7 +113,7 @@
           <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()" [disabled]="!!operation.locked"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
           @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
           <app-operation-fleet-cards [showRequirements]="false" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
-            (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (unavailable)="markShipUnavailable(operation.id, $event)" (withdraw)="withdrawShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)" />
+            (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)" />
         </section>
       }
       @if (tab === 'briefing' || tab === 'objectifs' || tab === 'permissions' || (tab === 'organisation' && operation.publicationStatus === 'PUBLISHED')) {

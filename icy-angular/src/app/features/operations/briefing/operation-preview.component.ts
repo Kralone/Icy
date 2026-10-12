@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../../shared/participation-panel/participation-panel.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from '../organization/operation-fleet-cards.component';
 import { OrganizationGroup } from '../organization/operation-organization.model';
@@ -36,9 +36,6 @@ export class OperationPreviewComponent {
   /** Structure de l'éditeur : « Aucun groupe » n'est affiché que si elle a bien été lue. */
   readonly organizationState = input<'loading' | 'error' | 'ready'>('ready');
   readonly fleetError = input(false);
-
-  /** Largeur simulée : la fiche s'adapte à son cadre, l'aperçu montre donc le rendu ordinateur ou mobile. */
-  readonly width = signal<'desktop' | 'mobile'>('desktop');
 
   readonly published = computed(() => this.operation().publicationStatus === 'PUBLISHED');
   readonly locked = computed(() => !!this.operation().locked);

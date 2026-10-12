@@ -322,9 +322,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/admin/event-management/event-management.component').then(m => m.EventManagementComponent)
           },
           {
-            path: 'operation-drafts',
+            path: 'operations',
             loadComponent: () => import('./features/admin/operation-drafts/operation-drafts.component').then(m => m.OperationDraftsComponent)
           },
+          { path: 'operation-drafts', redirectTo: 'operations', pathMatch: 'full' },
           {
             path: 'sc-world-events',
             loadComponent: () => import('./features/admin/sc-world-event-management/sc-world-event-management.component').then(m => m.ScWorldEventManagementComponent)

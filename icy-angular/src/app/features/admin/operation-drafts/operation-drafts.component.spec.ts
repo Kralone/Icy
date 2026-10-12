@@ -7,15 +7,27 @@ import { EventService } from '../../../core/services/event/event.service';
 describe('OperationDraftsComponent', () => {
   let fixture: ComponentFixture<OperationDraftsComponent>;
   let getOperationDrafts: ReturnType<typeof vi.fn>;
+  let getAll: ReturnType<typeof vi.fn>;
+  const type = { name: 'Combat', textColor: '#ffffff', backgroundColor: '#123456', imageUrl: '' };
+  const event = (id: string, title: string, start: string, finished: boolean, activityType = 'OPERATION') =>
+    ({ id, title, type, description: '', startDateTime: start, endDateTime: start, createdAt: start, finished, activityType });
 
   async function render(): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [OperationDraftsComponent],
-      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts } }]
+      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts, getAll } }]
     }).compileComponents();
     fixture = TestBed.createComponent(OperationDraftsComponent);
     fixture.detectChanges();
   }
+
+  const section = (name: string): HTMLElement => fixture.nativeElement.querySelector(`.block--${name}`);
+  const titles = (name: string): string[] => Array.from(section(name).querySelectorAll('h3')).map(title => (title as HTMLElement).textContent!.trim());
+
+  beforeEach(() => {
+    getOperationDrafts = vi.fn(() => of([]));
+    getAll = vi.fn(() => of([]));
+  });
 
   it('lists each draft with its title, dates and a link back to the editor', async () => {
     getOperationDrafts = vi.fn(() => of([
@@ -23,8 +35,8 @@ describe('OperationDraftsComponent', () => {
     ]));
     await render();
 
-    const card: HTMLElement = fixture.nativeElement.querySelector('.draft-card');
-    expect(card.querySelector('h2')?.textContent).toContain('Escorte du convoi');
+    const card: HTMLElement = section('drafts').querySelector('.draft-card')!;
+    expect(card.querySelector('h3')?.textContent).toContain('Escorte du convoi');
     expect(card.textContent).toContain('Date prévue');
     expect(card.textContent).toContain('2026');
     expect(card.textContent).toContain('Dernière modification');
@@ -33,22 +45,54 @@ describe('OperationDraftsComponent', () => {
     expect(resume.getAttribute('href')).toBe('/icy/operations/op-1/edit');
   });
 
-  it('says so when there is no draft', async () => {
-    getOperationDrafts = vi.fn(() => of([]));
+  it('shows planned operations first and open, drafts and history folded', async () => {
+    getAll = vi.fn(() => of([
+      event('late', 'Plus tard', '2026-12-01T20:00:00', false),
+      event('old', 'Ancienne', '2026-01-10T20:00:00', true),
+      event('soon', 'Bientôt', '2026-11-01T20:00:00', false),
+      event('recent', 'Récente', '2026-09-10T20:00:00', true),
+      event('party', 'Soirée', '2026-11-05T20:00:00', false, 'EVENT')
+    ]));
     await render();
 
-    expect(fixture.nativeElement.querySelector('.empty').textContent).toContain('Aucun brouillon en cours');
+    expect(titles('planned')).toEqual(['Bientôt', 'Plus tard']);
+    expect(titles('past')).toEqual(['Récente', 'Ancienne']);
+    expect(section('planned').tagName).toBe('SECTION');
+    expect((section('drafts') as HTMLDetailsElement).open).toBe(false);
+    expect((section('past') as HTMLDetailsElement).open).toBe(false);
+    const links = Array.from(section('planned').querySelector('.draft-card')!.querySelectorAll('a')).map(link => link.getAttribute('href'));
+    expect(links).toEqual(['/icy/operations/soon/edit', '/icy/operations/soon']);
   });
 
-  it('offers a retry when the list cannot be loaded', async () => {
+  it('says so when there is no draft', async () => {
+    await render();
+
+    expect(section('drafts').querySelector('.empty')!.textContent).toContain('Aucun brouillon en cours');
+    expect(section('planned').querySelector('.empty')!.textContent).toContain('Aucune opération prévue');
+  });
+
+  it('offers a retry when the drafts cannot be loaded', async () => {
     getOperationDrafts = vi.fn().mockReturnValueOnce(throwError(() => ({ status: 0 }))).mockReturnValue(of([]));
     await render();
 
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Impossible de charger les brouillons.');
-    fixture.nativeElement.querySelector('[role="alert"] button').click();
+    expect(section('drafts').querySelector('[role="alert"]')!.textContent).toContain('Impossible de charger les brouillons.');
+    (section('drafts').querySelector('[role="alert"] button') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(getOperationDrafts).toHaveBeenCalledTimes(2);
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('does not present unreadable published operations as an empty list', async () => {
+    getAll = vi.fn().mockReturnValueOnce(throwError(() => ({ status: 500 }))).mockReturnValue(of([]));
+    await render();
+
+    expect(section('planned').querySelector('[role="alert"]')!.textContent).toContain('Impossible de charger les opérations publiées.');
+    expect(section('planned').querySelector('.empty')).toBeNull();
+    (section('planned').querySelector('[role="alert"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(getAll).toHaveBeenCalledTimes(2);
+    expect(section('planned').querySelector('.empty')).not.toBeNull();
   });
 });
