@@ -1,0 +1,6 @@
+# Gate 7 — Non-régression frontend — 2026-10-12
+
+- Commande exécutée dans Node 24.19 Docker, depuis `icy-angular` : `npm run test:ci -- --watch=false`.
+- Résultat : **73 fichiers de test passés, 197 tests passés, 0 échec**.
+- Couverture directement pertinente observée : `events.component.spec.ts` (7 tests), `event-details-modal.component.spec.ts` (2 tests), `event.service.spec.ts` (1 test), `operation-editor.component.spec.ts` (1 test), `app-route-policy.spec.ts` (3 tests), gardes auth et services websocket.
+- Limite : cette suite unitaire ne remplace pas un parcours navigateur mobile/desktop ni une relecture des données historiques en base ; REG-01/02/03/05 restent partiels, REG-04/06/07/08 restent à vérifier selon leur portée.
