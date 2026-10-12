@@ -138,3 +138,73 @@ Mineurs laissés ouverts : l'entrée d'aperçu du bloc ne sert qu'au 3D-3 ; la s
 20 comptes fictifs ajoutés à « Escorte Nyx » pour la lisibilité (`discord_id` commençant par `lot3d-test-`, mot de passe inutilisable), inscrits Présent et affectés : 14 à Équipe FPS, 6 à Infirmerie. Suppression : `delete from core.users where discord_id like 'lot3d-test-%';`
 
 Les captures datent d'avant les corrections de la revue : l'étiquette « Affecté » a disparu, « Groupe » est devenu « Groupe principal », Infirmerie affiche « Groupe principal complet ».
+
+## 3D-3 — Flotte et aperçu
+
+Aucun changement côté serveur dans cette étape. La règle du 3D-2 est conservée : un membre peut quitter librement son groupe, y compris un groupe géré.
+
+### Ce qui est livré
+
+**Flotte de la fiche participant**
+- Trois blocs : « Flotte prévue » (besoins), « Appareils proposés », « Mon hangar ». Les cartes du 3C sont réutilisées.
+- Un besoin se distingue d'un appareil réel : contour en pointillés, image atténuée, mention « Recherché × N » (« Prévu × N » une fois couvert), statut « Couvert » ou « Manque n sur q ».
+- Cartes de 17 à 24 rem sur grand écran ; sur mobile, vignette à gauche et texte à droite.
+- L'organigramme rappelle sous chaque groupe les vaisseaux acceptés et disponibles qui lui sont rattachés, avec leur propriétaire.
+
+**Aperçu de l'éditeur**
+- L'ancien résumé textuel est remplacé par les composants de la fiche : bannière, « Mon affectation », présence, briefing, objectifs, organigramme, flotte.
+- Il reflète les saisies en cours, enregistrées ou non, et fonctionne sur un brouillon.
+- Il n'émet aucune action : présence désactivée, organigramme et flotte en lecture seule, pas de hangar.
+- Pour une opération publiée, il montre les réponses déjà données ; pour un brouillon, aucun compteur.
+- Une structure, une flotte ou des réponses non lues ne passent jamais pour vides : l'aperçu dit qu'il charge ou qu'il a échoué.
+
+### Tests exécutés
+
+| Suite | Résultat |
+|---|---|
+| Front, 7 specs ciblées | 54 tests passés (aperçu 4, composition 12, bannière 3, cartes de flotte 5, organisation 12, fiche 5, éditeur 13) |
+
+Backend inchangé : build non relancé. Suite front complète non lancée.
+
+### Vérifications sur la pile dev
+
+| Vérification | Résultat observé |
+|---|---|
+| Fiche : besoins et propositions | « Flotte prévue » : Prospector « Prévu × 2 », Couvert ; Carrack « Recherché × 1 », Manque 1 sur 1. « Appareils proposés » : 2 Prospector acceptés, avec propriétaire, groupe et besoin lié |
+| Vaisseaux, propriétaires et groupes | Sous Escadrille dans l'organigramme : les deux Prospector et leurs propriétaires |
+| Action selon le participant | « Retirer ma proposition » sur mon seul appareil ; dans « Mon hangar », l'appareil déjà proposé est désactivé |
+| Aperçu d'un brouillon (organisateur) | Bannière « Brouillon », briefing, organisation, flotte ; aucun compteur de présence |
+| Écritures depuis l'aperçu, tous les boutons cliqués | Aucune : seules des lectures (besoins, vaisseaux, et réponses pour une opération publiée) |
+| Boutons actifs dans l'aperçu | Aucun hors repli des groupes |
+| Membre face au brouillon | 401 sur l'édition et l'organisation ; 404 sur la fiche, la composition, les vaisseaux et les besoins |
+| Membre face à l'édition d'une opération publiée | 401 |
+| Mobile 375 px | Aucun débordement ; section Flotte de 1316 px au lieu de 1990 px avant compactage |
+| Événement classique depuis le calendrier | Modale historique, trois boutons, trois colonnes ; réponse enregistrée (200) |
+
+Non rejoué dans cette étape : flotte après la clôture (serveur inchangé depuis le 3C, lecture seule couverte par les specs) ; tablette et 4K (3D-4).
+
+### Captures
+
+`3d3-desktop-flotte-prevue.jpg`, `3d3-desktop-appareils-et-hangar.jpg`, `3d3-desktop-apercu-brouillon.jpg`, `3d3-desktop-apercu-operation-publiee.jpg`, `3d3-desktop-apercu-organisation.jpg`, `3d3-mobile-flotte.jpg`, `3d3-mobile-apercu.jpg`.
+
+Seules `3d3-desktop-flotte-prevue.jpg` et `3d3-desktop-apercu-operation-publiee.jpg` datent d'après les corrections de la revue. Sur les autres, le bloc s'appelle encore « Appareils mobilisés », le titre de l'aperçu est plus grand et les vaisseaux d'un groupe sont notés « (propriétaire) ».
+
+### Revue indépendante
+
+Aucun bloquant, 5 constats importants, 9 mineurs. Les 5 importants sont corrigés :
+1. L'aperçu montrait une structure ou une flotte non lue comme vide.
+2. Pour une opération publiée, il affichait « Confirmés 0 » tant que les réponses n'étaient pas lues.
+3. Le titre « Appareils mobilisés » couvrait aussi les appareils refusés ou indisponibles : le bloc s'appelle « Appareils proposés ».
+4. L'aperçu ignorait la clôture (textes au futur sur une opération terminée).
+5. L'organigramme rappelait un vaisseau accepté même sorti du hangar, et son propriétaire pouvait passer pour le pilote.
+
+Mineurs corrigés : besoin annulé encore marqué « Recherché » ; aperçu qui pouvait garder l'ancien titre après un rechargement ; réponses de l'aperçu sans garde contre une lecture tardive ; second titre de niveau 1 dans l'éditeur ; cartes laissant du vide dans les largeurs moyennes ; statuts « Complet » absents de l'aperçu.
+
+Laissés ouverts :
+- L'aperçu s'adapte à la largeur de la fenêtre, pas à celle de son cadre : dans l'éditeur il est plus étroit que la fiche réelle et ne montre pas la disposition à 1600 px.
+- Les places de l'aperçu sont recalculées à l'écran à partir de la structure de l'éditeur, au lieu de venir du serveur.
+- Le flux `groups$` de l'éditeur n'a plus d'abonné.
+
+### Données de test
+
+`validation_admin` est maintenant inscrit Présent à l'événement classique « Lot2 classique visibilite » (vérification de la modale).
