@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -63,6 +66,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Map<String, String>> handleForbiddenException(ForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Forbidden", "message", ex.getMessage()));
+    }
+
+    /** Requête mal formée : c'est une erreur de l'appelant (400), pas une erreur interne. La valeur reçue n'est pas renvoyée. */
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, MissingServletRequestParameterException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<Map<String, String>> handleMalformedRequest(Exception ex) {
+        String message = ex instanceof MethodArgumentTypeMismatchException mismatch ? "Paramètre « " + mismatch.getName() + " » invalide."
+                : ex instanceof MissingServletRequestParameterException missing ? "Paramètre « " + missing.getParameterName() + " » manquant."
+                : "Corps de requête illisible.";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Bad Request", "message", message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
