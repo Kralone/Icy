@@ -158,6 +158,8 @@ class OperationFleetAndClosureTest {
         signInAs(memberId, "ROLE_USER");
         assertThatThrownBy(() -> assignmentService.assign(operationId, 4L)).isInstanceOf(OperationClosedException.class);
         assertThatThrownBy(() -> assignmentService.request(operationId, 4L)).isInstanceOf(OperationClosedException.class);
+        assertThatThrownBy(() -> assignmentService.leave(operationId)).isInstanceOf(OperationClosedException.class);
+        assertThatThrownBy(() -> assignmentService.cancelRequest(operationId)).isInstanceOf(OperationClosedException.class);
 
         verify(assignments, never()).save(any());
         verify(assignments, never()).delete(any());

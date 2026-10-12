@@ -48,6 +48,7 @@ public class OperationAssignmentService {
         UUID user = AuthUtils.getCurrentUserId();
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
         requireActiveAccount(operationId, user);
+        if (assignmentRepository.findByOperationEventIdAndUserId(operationId, user).map(current -> groupId.equals(current.getGroupId())).orElse(false)) throw new IllegalStateException("Vous êtes déjà dans ce groupe");
         if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
         requestRepository.save(OperationAssignmentRequest.builder().operationEventId(operationId).groupId(groupId).userId(user).build());
         return messageService.buildResponse("operation.assignment.requested", null);
@@ -127,6 +128,30 @@ public class OperationAssignmentService {
         OperationAssignment assignment = found.orElseThrow(() -> new ResourceNotFoundException("Affectation introuvable"));
         assignmentRepository.delete(assignment);
         return messageService.buildResponse("operation.assignment.removed", null);
+    }
+
+    /** Le participant quitte lui-même son groupe : il reste inscrit Présent, sa demande éventuelle et ses vaisseaux ne changent pas. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> leave(UUID operationId) {
+        operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
+        OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, AuthUtils.getCurrentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vous n’avez pas d’affectation sur cette opération"));
+        assignmentRepository.delete(assignment);
+        return messageService.buildResponse("operation.assignment.left", null);
+    }
+
+    /** Le participant annule sa propre demande en attente ; son affectation actuelle n'est pas touchée. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> cancelRequest(UUID operationId) {
+        operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
+        OperationAssignmentRequest request = requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, AuthUtils.getCurrentUserId(), OperationAssignmentRequest.Status.PENDING)
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune demande en attente"));
+        requestRepository.delete(request);
+        return messageService.buildResponse("operation.assignment.request.cancelled", null);
     }
 
     /** Une réponse « Présent » laissée par un compte désactivé ne permet ni nouvelle affectation ni transfert. Les affectations déjà en place ne sont pas touchées. */

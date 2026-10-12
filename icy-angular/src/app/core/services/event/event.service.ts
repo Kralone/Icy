@@ -152,6 +152,14 @@ export class EventService {
     return this.http.post(`/api/operations/${operationId}/assignment-requests/me/${groupId}`, {});
   }
 
+  leaveOperationGroup(operationId: string) {
+    return this.http.delete(`/api/operations/${operationId}/assignments/me`);
+  }
+
+  cancelOperationGroupRequest(operationId: string) {
+    return this.http.delete(`/api/operations/${operationId}/assignment-requests/me`);
+  }
+
   getMyHangar() { return this.http.get<{ data: any[] }>('/api/user-ships'); }
   proposeOperationShip(operationId: string, shipId: number, groupId?: number, requirementId?: string) {
     let params: any = { shipId };

@@ -1,0 +1,36 @@
+/* Le panneau se place directement dans la grille de la fiche. */
+:host { display: contents; }
+/* Premier dans le document, à droite de la présence sur grand écran. */
+.mine { grid-column: 9 / -1; grid-row: 1; align-self: start; display: grid; align-content: start; gap: .7rem; min-width: 0; padding: clamp(1rem, 1.8vw, 1.6rem); border: 1px solid rgba(103,232,249,.35); border-top: 3px solid #67e8f9; border-radius: .9rem; background: #0d2433; scroll-margin-top: 4.5rem; }
+.mine:focus { outline: none; }
+.mine:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
+.mine--assigned { border-color: #67e8f9; box-shadow: inset 0 0 0 1px rgba(103,232,249,.25); }
+h2 { display: flex; align-items: center; gap: .5rem; margin: 0; color: #f8fafc; font-size: 1.15rem; font-weight: 700; }
+h2 app-operation-icon { color: #67e8f9; }
+.mine__group { margin: 0; color: #f8fafc; font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.mine__group--none { color: #cbd5e1; font-weight: 700; }
+.mine__facts { display: grid; gap: .3rem; margin: 0; }
+.mine__facts > div { display: flex; gap: .5rem; }
+.mine__facts dt { flex: none; width: 8.5rem; color: #94a3b8; font-size: .85rem; }
+.mine__facts dd { margin: 0; color: #e2e8f0; overflow-wrap: anywhere; }
+.mine__status { margin: 0; }
+.mine__muted { margin: 0; color: #a9bfd0; line-height: 1.5; }
+.mine__request { display: grid; gap: .3rem; padding: .65rem .75rem; border: 1px solid #f4cd7d; border-radius: .6rem; background: #2a2618; }
+.mine__request p { margin: 0; color: #e2e8f0; line-height: 1.5; }
+.mine__request strong { color: #f8fafc; }
+.mine__error { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4; background: #351f2a; }
+.mine__error button { margin-left: .4rem; min-height: 0; padding: .2rem .6rem; border-color: #fda4af; color: #ffe4e6; background: transparent; }
+.mine__actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.tag { display: inline-block; padding: .1rem .6rem; border: 1px solid; border-radius: 999px; font-size: .82rem; font-weight: 600; }
+.tag--ok { border-color: #80e5b8; color: #80e5b8; }
+.tag--pending { justify-self: start; border-color: #f4cd7d; color: #f4cd7d; }
+button { min-height: 2.5rem; padding: .45rem .9rem; border: 1px solid #36546a; border-radius: .45rem; color: #bae6fd; background: #122235; font-size: .9rem; }
+button.primary { border-color: #67e8f9; color: #082f49; background: #67e8f9; font-weight: 700; }
+button.danger { border-color: #774457; color: #ffbbc5; background: #311f2b; }
+button:disabled { opacity: .5; }
+button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+@media (max-width: 1000px) {
+  /* Sur écran étroit, mon affectation reste en tête, avant la présence. */
+  .mine { grid-column: 1 / -1; grid-row: auto; }
+  .mine__actions button { flex: 1 1 auto; }
+}

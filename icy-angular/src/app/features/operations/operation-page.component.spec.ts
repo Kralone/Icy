@@ -14,6 +14,7 @@ describe('OperationPageComponent', () => {
   let http: HttpTestingController;
   let getParticipations: ReturnType<typeof vi.fn>;
   let setParticipationStatus: ReturnType<typeof vi.fn>;
+  let leaveOperationGroup: ReturnType<typeof vi.fn>;
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   const me = { status: 1, user: { id: 'me', username: 'Moi' } };
   const other = { status: 0, user: { id: 'other', username: 'Autre' } };
@@ -35,6 +36,7 @@ describe('OperationPageComponent', () => {
   beforeEach(async () => {
     getParticipations = vi.fn().mockReturnValue(of({ data: [other] }));
     setParticipationStatus = vi.fn(() => of({}));
+    leaveOperationGroup = vi.fn(() => of({}));
     toast = { success: vi.fn(), error: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [OperationPageComponent],
@@ -42,7 +44,7 @@ describe('OperationPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
-        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar: vi.fn(() => of({ data: [] })) } },
+        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar: vi.fn(() => of({ data: [] })), leaveOperationGroup } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
       ]
@@ -107,7 +109,31 @@ describe('OperationPageComponent', () => {
     expect(fixture.nativeElement.querySelector('.panel--briefing').textContent).toContain('Protéger le convoi.');
     const objectives: string = fixture.nativeElement.querySelector('.panel--objectives').textContent;
     expect(objectives.indexOf('Convoi arrivé')).toBeLessThan(objectives.indexOf('Aucune perte'));
-    expect(Array.from(fixture.nativeElement.querySelectorAll('.section-nav button')).map(button => (button as HTMLElement).textContent!.trim())).toEqual(['Présence', 'Briefing', 'Organisation', 'Flotte']);
+    expect(Array.from(fixture.nativeElement.querySelectorAll('.section-nav button')).map(button => (button as HTMLElement).textContent!.trim())).toEqual(['Mon affectation', 'Présence', 'Briefing', 'Organisation', 'Flotte']);
+  });
+
+  it('reads my assignment back from the server after I leave my group', async () => {
+    const group = { id: 3, parentId: null, name: 'Escadrille', capacity: null, effectiveMode: 'VALIDATION', container: false, memberCount: 1, freeSeats: null, ownFreeSeats: null, responsibleUsername: null, members: [{ userId: 'me', username: 'Moi' }] };
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [group] } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.mine__group').textContent).toContain('Escadrille');
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+      (Array.from(fixture.nativeElement.querySelectorAll('.mine__actions button') as NodeListOf<HTMLButtonElement>).find(button => button.textContent!.includes('Quitter'))!).click();
+      // Le texte prévient qu'il faudra une nouvelle validation pour revenir.
+      expect(confirmSpy.mock.calls[0][0]).toContain('Y revenir demandera une nouvelle validation.');
+      expect(leaveOperationGroup).toHaveBeenCalledWith('op');
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [{ ...group, memberCount: 0, members: [] }] } });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.mine__group').textContent).toContain('Aucune affectation');
+      expect(toast.success).toHaveBeenCalledWith('Vous avez quitté votre groupe.');
+    } finally { confirmSpy.mockRestore(); }
   });
 
   it('locks the answers of a finished operation', async () => {

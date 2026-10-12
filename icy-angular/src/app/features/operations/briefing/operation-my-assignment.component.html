@@ -1,0 +1,48 @@
+<section class="mine" id="affectation" tabindex="-1" aria-labelledby="operation-mine-title" [class.mine--assigned]="!!group()">
+  <h2 id="operation-mine-title"><app-operation-icon name="assignment" /> Mon affectation</h2>
+
+  @if (error()) {
+    <p class="mine__muted">Votre affectation n’a pas pu être lue : voir la section Organisation.</p>
+  } @else if (!composition()) {
+    <p class="mine__muted" role="status">Chargement de votre affectation…</p>
+  } @else {
+    @if (group(); as mine) {
+      <p class="mine__group">{{ mine.name }}</p>
+      <dl class="mine__facts">
+        @if (parent(); as root) { <div><dt>Groupe principal</dt><dd>{{ root.name }}</dd></div> }
+        <div><dt>Responsable</dt><dd>{{ responsible() || 'Aucun' }}</dd></div>
+        <div><dt>Mode</dt><dd>{{ modeLabel() }}</dd></div>
+      </dl>
+    } @else if (!request()) {
+      <p class="mine__group mine__group--none">Aucune affectation</p>
+      @if (locked()) {
+        <p class="mine__muted">L’opération est terminée.</p>
+      } @else if (!composition()!.present) {
+        <p class="mine__muted">Inscrivez-vous « Présent » pour rejoindre un groupe.</p>
+      } @else if (!composition()!.groups.length) {
+        <p class="mine__muted">Aucun groupe n’est encore défini.</p>
+      } @else if (!hasChoices()) {
+        <p class="mine__muted">Aucun groupe n’est ouvert au choix : un organisateur vous affectera.</p>
+      } @else {
+        <p class="mine__muted">Choisissez un groupe dans l’organisation.</p>
+      }
+    }
+
+    @if (request(); as pending) {
+      <div class="mine__request">
+        <span class="tag tag--pending">{{ group() ? 'Transfert demandé' : 'Demande en attente' }}</span>
+        <p><strong>{{ pending.groupName }}</strong>@if (group()) { — vous gardez votre place actuelle jusqu’à la réponse. } @else { — en attente de validation. }</p>
+      </div>
+    }
+
+    @if (canAct()) {
+      <div class="mine__actions">
+        @if (hasChoices()) { <button type="button" class="primary" [disabled]="busy()" (click)="browse.emit()">{{ group() ? 'Changer de groupe' : 'Choisir un groupe' }}</button> }
+        @if (request()) { <button type="button" [disabled]="busy()" (click)="cancelRequest.emit()">Annuler la demande</button> }
+        @if (group()) { <button type="button" class="danger" [disabled]="busy()" (click)="leave.emit()">Quitter mon groupe</button> }
+      </div>
+    } @else if (locked() && (group() || request())) {
+      <p class="mine__muted">Opération terminée : votre affectation n’est plus modifiable.</p>
+    }
+  }
+</section>

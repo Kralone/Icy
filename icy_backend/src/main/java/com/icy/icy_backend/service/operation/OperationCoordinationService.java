@@ -107,6 +107,48 @@ public class OperationCoordinationService {
         return new OperationCoordinationDTO(organizer, present, byStatus(participations, 0, member), byStatus(participations, -1, member), unassigned, nodes, requests);
     }
 
+    /** Composition complète, en lecture, pour tout membre : une opération non publiée n'existe pas, pour personne ici. */
+    @Transactional(readOnly = true)
+    public com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO composition(UUID operationId) {
+        Operation operation = operationRepository.findById(operationId)
+                .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
+        Map<Long, OperationGroup> byId = groups.stream().collect(Collectors.toMap(OperationGroup::getId, Function.identity()));
+        UUID currentUser = AuthUtils.getCurrentUserId();
+
+        List<OperationAssignment> confirmed = assignmentRepository.findByOperationEventId(operationId).stream()
+                .filter(assignment -> assignment.getStatus() == OperationAssignment.Status.CONFIRMED).toList();
+        Set<UUID> userIds = new HashSet<>();
+        confirmed.forEach(assignment -> userIds.add(assignment.getUserId()));
+        groups.stream().map(OperationGroup::getResponsibleUserId).filter(Objects::nonNull).forEach(userIds::add);
+        Map<UUID, String> usernames = userRepository.findAllById(userIds).stream().collect(Collectors.toMap(User::getId, User::getUsername));
+
+        Map<Long, Integer> headcount = groups.stream().collect(Collectors.toMap(OperationGroup::getId, group -> (int) confirmed.stream()
+                .filter(assignment -> group.getId().equals(assignment.getGroupId()) || group.getId().equals(parentOf(byId, assignment.getGroupId())))
+                .map(OperationAssignment::getUserId).distinct().count()));
+
+        var nodes = groups.stream().map(group -> new com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO.Group(
+                group.getId(), group.getParentId(), group.getName(), group.getDescription(), group.getCapacity(),
+                effectiveMode(group, byId, operation.getDefaultAssignmentMode()),
+                groups.stream().anyMatch(candidate -> group.getId().equals(candidate.getParentId())),
+                headcount.get(group.getId()), freeSeats(group, byId, headcount),
+                group.getCapacity() == null ? null : Math.max(0, group.getCapacity() - headcount.getOrDefault(group.getId(), 0)),
+                group.getResponsibleUserId() == null ? null : usernames.getOrDefault(group.getResponsibleUserId(), "Compte désactivé"),
+                confirmed.stream().filter(assignment -> group.getId().equals(assignment.getGroupId()))
+                        .map(assignment -> new com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO.Member(assignment.getUserId(), usernames.getOrDefault(assignment.getUserId(), "Compte désactivé")))
+                        .sorted(Comparator.comparing(com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO.Member::username, String.CASE_INSENSITIVE_ORDER)).toList())).toList();
+
+        Long myGroupId = confirmed.stream().filter(assignment -> currentUser.equals(assignment.getUserId())).map(OperationAssignment::getGroupId).findFirst().orElse(null);
+        var myRequest = requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, currentUser, OperationAssignmentRequest.Status.PENDING)
+                .map(request -> new com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO.MyRequest(request.getId(), request.getGroupId(),
+                        byId.get(request.getGroupId()) == null ? "Groupe" : byId.get(request.getGroupId()).getName(),
+                        request.getCreatedAt() == null ? null : request.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant()))
+                .orElse(null);
+        return new com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO(
+                participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, currentUser, 1), myGroupId, myRequest, nodes);
+    }
+
     private static List<OperationCoordinationDTO.Member> byStatus(List<EventParticipationRepository.ActiveParticipation> participations, int status, Function<UUID, OperationCoordinationDTO.Member> member) {
         return participations.stream().filter(participation -> participation.getStatus() == status)
                 .map(participation -> member.apply(participation.getUserId())).sorted(BY_NAME).toList();

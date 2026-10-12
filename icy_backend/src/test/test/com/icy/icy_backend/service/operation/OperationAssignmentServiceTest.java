@@ -302,7 +302,9 @@ class OperationAssignmentServiceTest {
         service.request(operationId, 2L);
 
         verify(requests).save(any(OperationAssignmentRequest.class));
-        verifyNoInteractions(assignments);
+        // L'affectation en place est lue (pour refuser une demande vers son propre groupe), jamais modifiée.
+        verify(assignments, org.mockito.Mockito.never()).save(any());
+        verify(assignments, org.mockito.Mockito.never()).delete(any());
     }
 
     @Test

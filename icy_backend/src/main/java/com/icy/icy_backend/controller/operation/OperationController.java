@@ -175,6 +175,25 @@ public class OperationController {
         return assignmentService.assign(id, groupId);
     }
 
+    @DeleteMapping("/{id}/assignments/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> leaveMyGroup(@PathVariable UUID id) {
+        return assignmentService.leave(id);
+    }
+
+    @DeleteMapping("/{id}/assignment-requests/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> cancelMyRequest(@PathVariable UUID id) {
+        return assignmentService.cancelRequest(id);
+    }
+
+    /** Composition lisible par tout membre connecté ; un brouillon répond 404 comme un identifiant inconnu. */
+    @GetMapping("/{id}/composition")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCompositionDTO>> composition(@PathVariable UUID id) {
+        return messageService.buildResponse("operation.composition", coordinationService.composition(id));
+    }
+
     @PostMapping("/{id}/assignment-requests/me/{groupId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<Void>> requestAssignment(@PathVariable UUID id, @PathVariable Long groupId) {

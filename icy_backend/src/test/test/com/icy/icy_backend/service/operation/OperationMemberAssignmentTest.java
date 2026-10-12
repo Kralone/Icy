@@ -267,6 +267,70 @@ class OperationMemberAssignmentTest {
         assertThatThrownBy(() -> coordination.coordination(operationId)).isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test void anyMemberReadsTheWholeCompositionAndTheirOwnSituationButNeverADraft() {
+        when(users.findAllById(any())).thenReturn(List.of(user(memberId, "Mira"), user(otherMemberId, "Thorn"), user(responsibleId, "Faramir")));
+        place(memberId, 2L);
+        place(otherMemberId, 3L);
+        OperationAssignmentRequest transfer = OperationAssignmentRequest.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(4L).userId(memberId).build();
+        when(requests.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, memberId, OperationAssignmentRequest.Status.PENDING)).thenReturn(Optional.of(transfer));
+        OperationCoordinationService coordination = new OperationCoordinationService(operations, groups, assignments, requests, participation, users);
+
+        signInAs(memberId, "ROLE_USER");
+        var composition = coordination.composition(operationId);
+        assertThat(composition.present()).isTrue();
+        assertThat(composition.myGroupId()).isEqualTo(2L);
+        // La demande de transfert n'a pas retiré la place actuelle.
+        assertThat(composition.myRequest().groupName()).isEqualTo("Bravo");
+        assertThat(composition.groups()).extracting(group -> group.name() + ":" + group.memberCount() + ":" + group.container())
+                .containsExactly("Alpha:2:true", "Polaris:1:false", "Escadrille:1:false", "Bravo:0:false");
+        assertThat(composition.groups().get(0).freeSeats()).isZero();
+        assertThat(composition.groups().get(0).responsibleUsername()).isEqualTo("Faramir");
+        assertThat(composition.groups().get(1).members()).extracting(member -> member.username()).containsExactly("Mira");
+        assertThat(composition.groups().get(1).effectiveMode()).isEqualTo(OperationGroup.AssignmentMode.MANAGED);
+
+        // Un membre qui n'a pas répondu lit la même composition, sans situation personnelle.
+        signInAs(UUID.randomUUID(), "ROLE_USER");
+        var visitor = coordination.composition(operationId);
+        assertThat(visitor.present()).isFalse();
+        assertThat(visitor.myGroupId()).isNull();
+        assertThat(visitor.myRequest()).isNull();
+        assertThat(visitor.groups()).hasSize(4);
+
+        operation.setPublicationStatus(Operation.PublicationStatus.DRAFT);
+        assertThatThrownBy(() -> coordination.composition(operationId)).isInstanceOf(ResourceNotFoundException.class);
+        signInAs(organizerId, "ROLE_ADMIN");
+        assertThatThrownBy(() -> coordination.composition(operationId)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test void aParticipantLeavesTheirGroupOrCancelsTheirRequestAndNothingElse() {
+        signInAs(memberId, "ROLE_USER");
+        OperationAssignment mine = place(memberId, 3L);
+        OperationAssignmentRequest pending = OperationAssignmentRequest.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(4L).userId(memberId).build();
+        when(requests.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, memberId, OperationAssignmentRequest.Status.PENDING)).thenReturn(Optional.of(pending));
+
+        // Demander son propre groupe n'a pas de sens ; une demande ailleurs existe déjà.
+        when(groups.findLockedById(3L)).thenReturn(Optional.of(escadrille));
+        escadrille.setAssignmentMode(OperationGroup.AssignmentMode.VALIDATION);
+        assertThatThrownBy(() -> service.request(operationId, 3L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("déjà dans ce groupe");
+
+        service.cancelRequest(operationId);
+        verify(requests).delete(pending);
+        verify(assignments, never()).delete(any());
+
+        service.leave(operationId);
+        verify(assignments).delete(mine);
+        verify(participation, never()).save(any());
+
+        signInAs(otherMemberId, "ROLE_USER");
+        assertThatThrownBy(() -> service.leave(operationId)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.cancelRequest(operationId)).isInstanceOf(ResourceNotFoundException.class);
+
+        operation.setPublicationStatus(Operation.PublicationStatus.DRAFT);
+        signInAs(memberId, "ROLE_USER");
+        assertThatThrownBy(() -> service.leave(operationId)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Opération introuvable");
+        assertThatThrownBy(() -> service.cancelRequest(operationId)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Opération introuvable");
+    }
+
     private static User user(UUID id, String username) {
         User user = new User();
         user.setId(id);

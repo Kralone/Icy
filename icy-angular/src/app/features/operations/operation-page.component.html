@@ -11,6 +11,8 @@
       @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
     </nav>
     <div class="sheet">
+      <app-operation-my-assignment [composition]="composition" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
+        (browse)="goTo('organisation')" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
       <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
         <app-participation-panel
           [participationsByStatus]="participationsByStatus"
@@ -27,12 +29,16 @@
       <app-operation-brief [briefing]="operation.briefing" [description]="operation.description" [objectives]="operation.objectives" [locked]="!!operation.locked" />
       <section class="panel panel--organisation" id="organisation" tabindex="-1" aria-labelledby="operation-organisation-title">
         <h2 id="operation-organisation-title"><app-operation-icon name="groups" /> Organisation</h2>
-        @if (groups$ | async; as groups) {
-          @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><div><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }} · {{ groupModeLabel(group, groups) }}</span></div>@if (isLeaf(group, groups) && !operation.locked) { @if (effectiveGroupMode(group, groups) === 'VALIDATION') { <button type="button" (click)="requestAssignment(operation.id, group.id)">Demander</button> } @else { <button type="button" (click)="assign(operation.id, group.id)" [disabled]="effectiveGroupMode(group, groups) === 'MANAGED'">Choisir</button> } }</div> }</div> }
-          @else { <p class="empty-state">{{ operation.locked ? 'Aucun groupe.' : 'Les groupes seront affichés ici.' }}</p> }
+        @if (compositionError) {
+          <p class="operation-coordination__error" role="alert">{{ compositionError }} <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p>
+        } @else if (composition; as loaded) {
+          @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
+          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy"
+            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" />
+          @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
+        } @else {
+          <p class="empty-state" role="status">Chargement de l’organisation…</p>
         }
-        @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
-        @if (assignmentMessage) { <p role="status">{{ assignmentMessage }}</p> }
       </section>
       @if (coordination; as board) {
         <section class="panel panel--coordination" id="coordination" tabindex="-1" aria-labelledby="operation-coordination-title">
