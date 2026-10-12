@@ -1,7 +1,9 @@
 <section class="mine" id="affectation" tabindex="-1" aria-labelledby="operation-mine-title" [class.mine--assigned]="!!group()">
   <h2 id="operation-mine-title"><app-operation-icon name="assignment" /> Mon affectation</h2>
 
-  @if (error()) {
+  @if (preview()) {
+    <p class="mine__muted">Chaque participant verra ici son groupe, son responsable et sa demande en attente.</p>
+  } @else if (error()) {
     <p class="mine__muted">Votre affectation n’a pas pu être lue : voir la section Organisation.</p>
   } @else if (!composition()) {
     <p class="mine__muted" role="status">Chargement de votre affectation…</p>

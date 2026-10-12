@@ -11,6 +11,9 @@
       @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
     </nav>
     <div class="sheet">
+      @let fleetShips = (ships$ | async) ?? [];
+      @let fleetNeeds = (shipRequirements$ | async) ?? [];
+      @let fleetGroups = (groups$ | async) ?? [];
       <app-operation-my-assignment [composition]="composition" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
         (browse)="goTo('organisation')" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
       <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
@@ -33,7 +36,7 @@
           <p class="operation-coordination__error" role="alert">{{ compositionError }} <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p>
         } @else if (composition; as loaded) {
           @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
-          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy"
+          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips"
             (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" />
           @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
         } @else {
@@ -49,11 +52,8 @@
       }
       <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
         <h2 id="operation-fleet-title"><app-operation-icon name="ship" /> Flotte</h2>
-        @let fleetShips = (ships$ | async) ?? [];
-        @let fleetNeeds = (shipRequirements$ | async) ?? [];
-        @let fleetGroups = (groups$ | async) ?? [];
         @if (fleetLoadError) { <p class="operation-coordination__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="reloadFleet()">Réessayer</button></p> }
-        <app-operation-fleet-cards [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" (withdraw)="withdrawShip(operation.id, $event)" />
+        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" (withdraw)="withdrawShip(operation.id, $event)" />
         @if (operation.locked) {
           <p class="empty-state">Opération terminée : la flotte n’est plus modifiable.</p>
         } @else if (!operation.allowShipProposals) {

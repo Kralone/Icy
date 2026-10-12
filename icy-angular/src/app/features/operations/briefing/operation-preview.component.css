@@ -1,0 +1,6 @@
+:host { display: block; min-width: 0; }
+/* L'aperçu tient dans la carte de l'éditeur : cadre visible, largeur du conteneur. */
+.preview { overflow: hidden; padding-bottom: 1rem; border: 1px solid rgba(103,232,249,.35); border-radius: 1rem; color: #e2e8f0; background: #0b1220; }
+.sheet { width: calc(100% - 2rem); margin-top: 1rem; }
+.preview__state { margin: 0; padding: 1.2rem 0 .4rem; color: #a9bfd0; }
+@media (max-width: 640px) { .sheet { width: calc(100% - 1.25rem); } }

@@ -1,18 +1,18 @@
 <div class="fleet">
   @if (showRequirements()) {
-    <section class="fleet__block" aria-label="Besoins de vaisseaux">
-      <h4>Besoins</h4>
+    <section class="fleet__block" [attr.aria-label]="needsTitle()">
+      <h4>{{ needsTitle() }}</h4>
       @if (visibleRequirements().length) {
         <ul class="fleet__cards">
           @for (requirement of visibleRequirements(); track requirement.id) {
             <li class="card card--need" [class.is-covered]="requirement.missing === 0" [class.is-off]="requirement.status === 'CANCELLED'">
               <div class="card__image">
                 @if (requirement.shipModelImageUrl) { <img [src]="requirement.shipModelImageUrl" alt="" loading="lazy"> } @else { <span>Sans image</span> }
+                @if (wantedLabel(requirement); as wanted) { <span class="card__wanted">{{ wanted }}</span> }
               </div>
               <div class="card__body">
                 <strong>{{ modelName(requirement) }}</strong>
                 <span class="card__meta">{{ groupName(requirement.groupId) }}</span>
-                <span class="card__count">{{ requirement.accepted }} / {{ requirement.quantity }} <small>accepté{{ requirement.accepted > 1 ? 's' : '' }}</small></span>
                 <span class="card__tags">
                   <span class="tag" [class.tag--ok]="requirement.status !== 'CANCELLED' && requirement.missing === 0" [class.tag--warn]="requirement.status !== 'CANCELLED' && requirement.missing > 0">{{ needLabel(requirement) }}</span>
                   @if (requirement.proposed) { <span class="tag tag--pending">{{ requirement.proposed }} à valider</span> }

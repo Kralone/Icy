@@ -57,6 +57,8 @@ export class OperationFleetCardsComponent {
   readonly locked = input(false);
   readonly busy = input(false);
   readonly showRequirements = input(true);
+  /** Titre du bloc des besoins : « Flotte prévue » sur la fiche participant. */
+  readonly needsTitle = input('Besoins');
   /** Membres proposés comme pilote (organisateur). Vide : le pilote est seulement affiché. */
   readonly members = input<Array<{ id: string; username: string }>>([]);
 
@@ -98,10 +100,16 @@ export class OperationFleetCardsComponent {
     return requirement.shipModelId === null ? 'Tout modèle' : 'Modèle inconnu';
   }
 
+  /** Mention posée sur l'image d'un besoin ; aucune pour un besoin annulé. */
+  wantedLabel(requirement: FleetRequirement): string {
+    if (requirement.status === 'CANCELLED') return '';
+    return `${requirement.missing === 0 ? 'Prévu' : 'Recherché'} × ${requirement.quantity}`;
+  }
+
   needLabel(requirement: FleetRequirement): string {
     if (requirement.status === 'CANCELLED') return 'Annulé';
     if (requirement.missing === 0) return 'Couvert';
-    return `Manque ${requirement.missing}`;
+    return `Manque ${requirement.missing} sur ${requirement.quantity}`;
   }
 
   /** Besoin auquel l'appareil répond, s'il existe encore. */

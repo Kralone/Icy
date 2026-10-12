@@ -259,4 +259,23 @@ describe('OperationEditorComponent', () => {
     expect(text).toContain('Brouillon');
     expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
   });
+
+  it('previews the sheet with the same components as the published page, with unsaved entries and without writing', () => {
+    updateOperation.mockClear();
+    component.form.briefing = 'Briefing en cours de saisie';
+    component.form.meetingPoint = 'Levski';
+    component.tab = 'publication';
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+
+    const preview: HTMLElement = fixture.nativeElement.querySelector('app-operation-preview');
+    expect(preview.querySelector('app-operation-hero')!.textContent).toContain('Levski');
+    expect(preview.querySelector('.panel--briefing')!.textContent).toContain('Briefing en cours de saisie');
+    expect(preview.querySelector('app-operation-org-chart')).not.toBeNull();
+    expect(preview.querySelector('app-operation-fleet-cards')).not.toBeNull();
+    // Afficher l'aperçu n'enregistre rien et ne crée ni groupe ni affectation.
+    expect(updateOperation).not.toHaveBeenCalled();
+    expect(createOperationGroup).not.toHaveBeenCalled();
+    expect(assignOperationMember).not.toHaveBeenCalled();
+  });
 });

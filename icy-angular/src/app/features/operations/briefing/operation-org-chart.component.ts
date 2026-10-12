@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { FleetShip } from '../organization/operation-fleet-cards.component';
 import { COMPOSITION_MODE_LABELS, CompositionGroup, CompositionMember, fillPercent, occupancy, OperationComposition, seatsFor } from './operation-composition.model';
 
 /** Ce que le participant peut faire d'un groupe, d'après ce que la fiche a lu ; le serveur recontrôle toujours. */
@@ -22,6 +23,10 @@ export class OperationOrgChartComponent {
   /** Opération terminée, ou aperçu : lecture seule. */
   readonly readOnly = input(false);
   readonly busy = input(false);
+  /** Vaisseaux de l'opération : ceux qui sont acceptés sont rappelés sous leur groupe (le détail est dans la section Flotte). */
+  readonly ships = input<FleetShip[]>([]);
+  /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
+  readonly preview = input(false);
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();
@@ -77,6 +82,12 @@ export class OperationOrgChartComponent {
     this.expanded.update(current => { const next = new Set(current); if (next.has(group.id)) next.delete(group.id); else next.add(group.id); return next; });
   }
 
+  acceptedShips(group: CompositionGroup): string {
+    // Seulement les appareils réellement disponibles : acceptés, encore au hangar, propriétaire présent.
+    return this.ships().filter(ship => ship.groupId === group.id && ship.status === 'ACCEPTED' && ship.inHangar && ship.ownerPresent)
+      .map(ship => `${ship.shipName || 'Vaisseau inconnu'} de ${ship.ownerUsername || 'propriétaire inconnu'}`).join(', ');
+  }
+
   isMe(member: CompositionMember): boolean { return !!this.currentUserId() && member.userId === this.currentUserId(); }
   /** Plein selon sa propre capacité : c'est ce que la jauge et le compteur montrent. */
   isFull(group: CompositionGroup): boolean { return group.ownFreeSeats === 0; }
@@ -84,6 +95,11 @@ export class OperationOrgChartComponent {
   action(group: CompositionGroup): GroupAction {
     const composition = this.composition();
     if (group.container) return 'none';
+    if (this.preview()) {
+      if (group.effectiveMode === 'MANAGED') return 'managed';
+      if (group.freeSeats === 0) return group.ownFreeSeats === 0 ? 'full' : 'parentFull';
+      return 'none';
+    }
     if (group.id === composition.myGroupId) return 'mine';
     if (composition.myRequest?.groupId === group.id) return 'requested';
     if (this.readOnly()) return 'none';

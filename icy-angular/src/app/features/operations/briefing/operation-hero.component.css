@@ -12,7 +12,9 @@
 .hero__status[data-status="running"] { border-color: #80e5b8; color: #80e5b8; background: rgba(24,77,61,.8); }
 .hero__status[data-status="done"] { border-color: #94a3b8; color: #cbd5e1; background: rgba(30,41,59,.85); }
 .hero__status[data-status="draft"] { border-color: #f4cd7d; color: #f4cd7d; background: rgba(81,64,39,.8); }
-h1 { margin: .7rem 0 .9rem; color: #f8fafc; font-size: clamp(2rem, 5vw, 4.5rem); font-weight: 800; line-height: 1; overflow-wrap: anywhere; text-shadow: 0 2px 18px rgba(2,8,23,.7); }
+.hero--preview { min-height: clamp(12rem, 22vw, 20rem); }
+.hero--preview .hero__title { font-size: clamp(1.8rem, 3.2vw, 3rem); }
+.hero__title { margin: .7rem 0 .9rem; color: #f8fafc; font-size: clamp(2rem, 5vw, 4.5rem); font-weight: 800; line-height: 1; overflow-wrap: anywhere; text-shadow: 0 2px 18px rgba(2,8,23,.7); }
 .hero__facts { display: flex; flex-wrap: wrap; gap: .5rem .6rem; margin: 0; }
 .hero__facts > div { display: flex; align-items: center; gap: .45rem; padding: .4rem .75rem; border: 1px solid rgba(148,163,184,.3); border-radius: .6rem; color: #e2e8f0; background: rgba(11,18,32,.72); }
 .hero__facts dt { color: #67e8f9; }

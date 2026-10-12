@@ -1,4 +1,4 @@
-<header class="hero" [style.--type-accent]="accent()" [style.--type-label]="label()">
+<header class="hero" [class.hero--preview]="preview()" [style.--type-accent]="accent()" [style.--type-label]="label()">
   @if (image(); as source) { <img class="hero__image" [src]="source" alt="" referrerpolicy="no-referrer" (error)="imageFailed(source)"> }
   <div class="hero__veil"></div>
   <div class="hero__content">
@@ -7,7 +7,7 @@
       <span class="hero__type">Opération@if (operation().typeName) { · {{ operation().typeName }} }</span>
       <span class="hero__status" [attr.data-status]="status()">{{ statusLabel() }}</span>
     </p>
-    <h1>{{ operation().title }}</h1>
+    @if (preview()) { <p class="hero__title" role="heading" aria-level="3">{{ operation().title }}</p> } @else { <h1 class="hero__title">{{ operation().title }}</h1> }
     <dl class="hero__facts">
       <div>
         <dt><app-operation-icon name="calendar" /><span class="sr-only">Date</span></dt>

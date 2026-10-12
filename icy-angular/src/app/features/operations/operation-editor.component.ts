@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,6 +15,9 @@ import { GroupPanelTab, OperationGroupPanelComponent } from './organization/oper
 import { OperationOverviewComponent } from './organization/operation-overview.component';
 import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
+import { OperationPreviewComponent } from './briefing/operation-preview.component';
+import { OperationSheet } from './briefing/operation-sheet.model';
+import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -37,7 +40,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent],
+  imports: [FormsModule, AsyncPipe, RouterLink, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
@@ -58,8 +61,44 @@ export class OperationEditorComponent implements OnDestroy {
     this.tab = tab;
     // Les inscriptions changent sans l'organisateur : la coordination est relue à chaque ouverture.
     if (tab === 'permissions' && this.operationId) this.loadCoordination(this.operationId);
+    if (tab === 'publication') this.loadPreviewParticipations();
     // Un brouillon ne garde pas de saisie en attente derrière un onglet.
     if (this.autosave.auto) this.autosave.flush();
+  }
+
+  // --- Aperçu : la fiche telle que la verront les participants, sans aucune écriture.
+  /** Réponses déjà données, pour une opération publiée ; null pour un brouillon ou tant qu'elles ne sont pas lues. */
+  readonly previewParticipations = signal<ParticipationsByStatus | null>(null);
+  readonly previewParticipationsState = signal<'none' | 'loading' | 'error' | 'ready'>('none');
+  private previewLoadSeq = 0;
+
+  private loadPreviewParticipations(): void {
+    const seq = ++this.previewLoadSeq;
+    this.previewParticipations.set(null);
+    if (!this.operationId || this.currentOperation?.publicationStatus !== 'PUBLISHED') { this.previewParticipationsState.set('none'); return; }
+    this.previewParticipationsState.set('loading');
+    this.eventService.getParticipations(this.operationId).subscribe({
+      next: (response: any) => {
+        if (seq !== this.previewLoadSeq) return;
+        const rows = (response?.data ?? []) as Array<{ status: number }>;
+        this.previewParticipations.set({ confirmed: rows.filter(row => row.status === 1), maybe: rows.filter(row => row.status === 0), refused: rows.filter(row => row.status === -1) });
+        this.previewParticipationsState.set('ready');
+      },
+      // Sans les réponses, l'aperçu le dit : ni listes vides ni compteur à zéro inventés.
+      error: () => { if (seq === this.previewLoadSeq) this.previewParticipationsState.set('error'); }
+    });
+  }
+
+  private previewCache: { key: string; sheet: OperationSheet } | null = null;
+
+  /** L'opération avec les saisies en cours, enregistrées ou non : c'est elles que l'organisateur veut relire. */
+  previewSheet(operation: any): OperationSheet {
+    const payload = this.payload();
+    const key = JSON.stringify([operation.id, operation.title, operation.startDateTime, operation.endDateTime, operation.revision, operation.publicationStatus, operation.locked, operation.started, payload]);
+    if (this.previewCache?.key !== key) {
+      this.previewCache = { key, sheet: { ...operation, briefing: payload.briefing, objectives: payload.objectives, meetingPoint: payload.meetingPoint, imageUrl: payload.imageUrl, allowShipProposals: payload.allowShipProposals } };
+    }
+    return this.previewCache.sheet;
   }
 
   publicationLabel(status?: string | null): string {
@@ -345,6 +384,9 @@ export class OperationEditorComponent implements OnDestroy {
   private adoptServerState(operation: any): void {
     this.operationId = operation.id;
     this.currentOperation = operation;
+    // Version du serveur adoptée (autre opération, rechargement) : l'aperçu repart de ses propres lectures.
+    this.previewCache = null;
+    if (this.tab === 'publication') this.loadPreviewParticipations();
     this.lastValidImageUrl = operation.imageUrl || '';
     this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
     this.loadOrganization(operation.id);
@@ -475,6 +517,7 @@ export class OperationEditorComponent implements OnDestroy {
       next: updated => {
         this.publishing = false;
         operation.publicationStatus = updated?.publicationStatus ?? 'PUBLISHED';
+        if (this.tab === 'publication') this.loadPreviewParticipations();
         operation.defaultAssignmentMode = updated?.defaultAssignmentMode ?? operation.defaultAssignmentMode;
         this.autosave.setRevision(updated?.revision);
         this.autosave.auto = false;

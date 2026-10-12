@@ -32,8 +32,10 @@ describe('OperationFleetCardsComponent', () => {
     const needs = text('.card--need');
     expect(needs[0]).toContain('Prospector');
     expect(needs[0]).toContain('Minage');
-    expect(needs[0]).toContain('1 / 2');
-    expect(needs[0]).toContain('Manque 1');
+    expect(needs[0]).toContain('Recherché × 2');
+    // Couvert : le besoin n'est plus « recherché ».
+    expect(needs[1]).toContain('Prévu × 1');
+    expect(needs[0]).toContain('Manque 1 sur 2');
     expect(needs[0]).toContain('1 à valider');
     expect(needs[1]).toContain('Tout modèle');
     expect(needs[1]).toContain('Couvert');

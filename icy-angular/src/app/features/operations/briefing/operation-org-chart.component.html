@@ -62,6 +62,7 @@
   } @else {
     <p class="leaf__nobody">Personne pour l’instant.</p>
   }
+  @if (acceptedShips(group); as fleet) { <p class="leaf__ships"><span>Vaisseaux</span> {{ fleet }}</p> }
   @switch (action(group)) {
     @case ('mine') { <p class="leaf__action"><span class="tag tag--mine">Votre groupe</span></p> }
     @case ('requested') { <p class="leaf__action"><span class="tag tag--pending">Demande envoyée</span></p> }

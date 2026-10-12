@@ -30,6 +30,8 @@
 .leaf__description { margin: 0; color: #a9bfd0; font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; }
 .leaf__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem; margin: 0; color: #a9bfd0; font-size: .84rem; }
 .leaf__nobody { margin: 0; color: #94a3b8; font-size: .86rem; }
+.leaf__ships { margin: 0; color: #cbd5e1; font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; }
+.leaf__ships span { margin-right: .3rem; color: #5eead4; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .leaf__action { margin: .1rem 0 0; }
 .leaf__hint { color: #a9bfd0; font-size: .84rem; line-height: 1.45; }
 

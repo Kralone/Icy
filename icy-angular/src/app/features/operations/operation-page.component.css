@@ -7,23 +7,6 @@
 .section-nav button { display: inline-flex; flex: none; align-items: center; gap: .4rem; min-height: 2.5rem; padding: .4rem .85rem; border: 1px solid #2b445a; border-radius: 999px; color: #bae6fd; background: #0f1b2d; font-size: .9rem; white-space: nowrap; transition: border-color .15s, background-color .15s; }
 .section-nav button:hover { border-color: #67e8f9; background: #12283a; }
 
-/* Grille de la fiche : pleine largeur de la zone de contenu, plafonnée sur les très grands écrans. */
-.sheet { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; width: min(1600px, calc(100% - 2rem)); margin: 1.25rem auto 0; }
-.panel { grid-column: 1 / -1; min-width: 0; padding: clamp(1rem, 1.8vw, 1.6rem); border: 1px solid rgba(148,163,184,.2); border-top: 3px solid var(--section, #67e8f9); border-radius: .9rem; background: #0f1b2d; scroll-margin-top: 4.5rem; }
-.panel:focus { outline: none; }
-.panel:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
-.panel > h2 { display: flex; align-items: center; gap: .5rem; margin: 0 0 .9rem; color: #f8fafc; font-size: 1.15rem; font-weight: 700; }
-.panel > h2 app-operation-icon { color: var(--section, #67e8f9); }
-.panel--presence { --section: #80e5b8; grid-column: 1 / 9; grid-row: 1; padding-top: 0; background: #101f2e; color: #e3eff7; }
-.panel--organisation { --section: #a5b4fc; }
-.panel--coordination { --section: #f4cd7d; display: grid; gap: .9rem; }
-.panel--coordination > h2 { margin: 0; }
-.panel--fleet { --section: #5eead4; display: grid; gap: 1rem; }
-.panel--fleet > h2 { margin: 0; }
-.panel p { color: #cbd5e1; line-height: 1.7; }
-.empty-state { margin: 0; color: #94a3b8 !important; }
-
-.panel--organisation .empty-state { margin-top: .8rem; }
 
 .operation-loading { padding: 4rem 1rem; color: #cbd5e1; text-align: center; }
 .operation-error { width: min(720px, calc(100% - 2rem)); margin: 12vh auto; padding: 2rem; border: 1px solid rgba(248,113,113,.35); border-radius: .8rem; background: #111827; }
@@ -50,12 +33,7 @@
 .hangar__form button:disabled { opacity: .5; }
 button:focus-visible, select:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 
-@media (max-width: 1000px) {
-  /* Mon affectation, première dans le document, passe au-dessus de la présence. */
-  .panel--presence { grid-column: 1 / -1; grid-row: auto; }
-}
 @media (max-width: 640px) {
-  .sheet { gap: .75rem; width: calc(100% - 1.25rem); margin-top: .9rem; }
   /* Le bord droit s'estompe : il reste des sections à faire défiler. */
   .section-nav { padding-inline: .65rem 1.5rem; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); }
 }

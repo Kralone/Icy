@@ -31,7 +31,7 @@ type OperationViewState =
   imports: [AsyncPipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationHeroComponent, OperationBriefComponent, OperationIconComponent, OperationMyAssignmentComponent, OperationOrgChartComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
-  styleUrl: './operation-page.component.css'
+  styleUrls: ['./briefing/operation-sheet.css', './operation-page.component.css']
 })
 export class OperationPageComponent {
   private readonly http = inject(HttpClient);
