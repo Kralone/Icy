@@ -32,3 +32,24 @@ h1 { margin: .6rem 0; font-size: clamp(2.3rem, 6vw, 5.5rem); line-height: .98; c
 .operation-coordination h2 { margin: 0; color: #f8fafc; font-size: 1.2rem; }
 .operation-coordination__error { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4; background: #351f2a; }
 .operation-coordination__error button { margin-left: .5rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .2rem .6rem; color: #ffe4e6; background: transparent; }
+
+/* Lot 3C : flotte et hangar */
+.operation-card--fleet { grid-column: 1 / -1; display: grid; gap: 1rem; }
+.operation-card--fleet h2 { margin-bottom: 0; }
+.hangar { display: grid; gap: .7rem; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,.2); }
+.hangar h3 { margin: 0; color: #f8fafc; font-size: 1rem; }
+.hangar__ships { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: .6rem; }
+.hangar__ship { display: grid; gap: .3rem; width: 100%; padding: 0 0 .5rem; overflow: hidden; border: 1px solid #36546a; border-radius: .6rem; color: #e2e8f0; background: #0b1525; text-align: left; cursor: pointer; }
+.hangar__ship img, .hangar__noimage { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.hangar__noimage { display: grid; place-items: center; color: #94a3b8; background: #111827; font-size: .8rem; }
+.hangar__ship strong, .hangar__ship small { padding: 0 .6rem; overflow-wrap: anywhere; }
+.hangar__ship small { color: #f4cd7d; }
+.hangar__ship[aria-pressed="true"] { border-color: #67e8f9; box-shadow: 0 0 0 2px #67e8f9; }
+.hangar__ship:disabled { opacity: .55; cursor: default; }
+.hangar__ship:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+.hangar__form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: .7rem; align-items: end; }
+.hangar__form label { display: grid; gap: .3rem; color: #cbd5e1; font-size: .9rem; }
+.hangar__form select { width: 100%; padding: .5rem; border: 1px solid #36546a; border-radius: .4rem; color: #e2e8f0; background: #122235; }
+.hangar__form small { grid-column: 1 / -1; color: #94a3b8; }
+.hangar__form button { padding: .55rem .9rem; border: 1px solid #67e8f9; border-radius: .4rem; color: #082f49; background: #67e8f9; font-weight: 700; }
+.hangar__form button:disabled { opacity: .5; }

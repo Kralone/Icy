@@ -16,6 +16,8 @@ export class OperationStructureTreeComponent {
   /** null : la vue d'ensemble est affichée. */
   readonly selectedId = input<number | null>(null);
   readonly busy = input(false);
+  /** Opération terminée : la structure se consulte, elle ne se modifie plus. */
+  readonly locked = input(false);
   /** Faux tant que la structure n'a pas été lue sur le serveur. */
   readonly loaded = input(true);
   readonly select = output<number | null>();

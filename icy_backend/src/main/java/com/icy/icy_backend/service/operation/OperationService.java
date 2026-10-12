@@ -93,8 +93,10 @@ public class OperationService {
         operation.setObjectives(request.getObjectives());
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
-        if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
-        if (request.getDefaultAssignmentMode() != null) {
+        // Après la fin, seul le contenu éditorial se modifie : les réglages d'organisation restent ceux de l'opération.
+        boolean closed = OperationLock.isClosed(event, operation);
+        if (!closed && request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
+        if (!closed && request.getDefaultAssignmentMode() != null) {
             if (request.getDefaultAssignmentMode() == com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode.INHERITED) throw new IllegalArgumentException("Mode d’affectation par défaut invalide");
             operation.setDefaultAssignmentMode(request.getDefaultAssignmentMode());
         }
@@ -111,6 +113,10 @@ public class OperationService {
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
         boolean becomesVisible = operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED;
+        // Publiée, elle serait aussitôt clôturée et annoncée comme disponible alors qu'elle est finie.
+        if (becomesVisible && OperationLock.isClosed(event.getEndDateTime(), LocalDateTime.now(OperationLock.ZONE))) {
+            throw new IllegalStateException("La fin de ce brouillon est déjà passée : corrigez ses dates avant de le publier.");
+        }
         operation.setPublicationStatus(Operation.PublicationStatus.PUBLISHED);
         operation.setUpdatedAt(LocalDateTime.now());
         Operation saved = operationRepository.save(operation);

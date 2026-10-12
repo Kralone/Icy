@@ -19,6 +19,8 @@ export class OperationGroupPanelComponent {
   readonly groups = input.required<OrganizationGroup[]>();
   readonly members = input<User[]>([]);
   readonly busy = input(false);
+  /** Opération terminée : ni déplacement, ni suppression, ni réglages. */
+  readonly locked = input(false);
   readonly defaultMode = input<EffectiveAssignmentMode>('FREE');
   /** Onglet à ouvrir quand un autre groupe est sélectionné (les réglages juste après une création). */
   readonly openTab = input<GroupPanelTab>('equipage');

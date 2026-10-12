@@ -64,3 +64,13 @@ input::placeholder, textarea::placeholder { color: #64748b; font-style: italic; 
   .organization--detail .organization__tree { display: none; }
   .organization:not(.organization--detail) .organization__panel app-operation-group-panel { display: none; }
 }
+
+/* Lot 3C : clôture et flotte */
+.closed-banner { margin: .8rem 0 0; padding: .7rem .9rem; border: 1px solid #f4cd7d; border-radius: .6rem; color: #fde9b8; background: #2a2618; }
+.closed-banner strong { color: #f4cd7d; }
+.requirement-form { margin-top: 1rem; padding: .8rem 1rem; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
+.requirement-form summary { cursor: pointer; color: #a5f3fc; font-weight: 600; }
+.requirement-form[open] summary { margin-bottom: .8rem; }
+.coordination-fleet { display: grid; gap: .9rem; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid rgba(148,163,184,.25); }
+.toggle-row { display: flex; align-items: center; gap: .6rem; }
+.toggle-row input { width: auto; flex: none; }

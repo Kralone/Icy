@@ -12,6 +12,7 @@
         @if (saving) { <span class="save-activity" aria-hidden="true"></span> }
       </div>
       <p class="eyebrow">Éditeur d’opération</p><h1>{{ operation.title }}</h1>
+      @if (operation.locked) { <p class="closed-banner" role="status"><strong>Opération terminée.</strong> Groupes, affectations et flotte sont en lecture seule. Le briefing et les objectifs restent modifiables.</p> }
     </header>
     <nav class="tabs" aria-label="Sections de l’éditeur">
       @for (item of [['briefing','Général / briefing'], ['objectifs','Objectifs'], ['organisation','Organisation'], ['permissions','Coordination'], ['publication','Aperçu / publication']]; track item[0]) {
@@ -33,23 +34,28 @@
         <p class="publication-state">Statut actuel : <span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>@if (operation.publicationStatus !== 'PUBLISHED') { <button type="button" class="primary" [disabled]="publishing || autosave.hasUnsavedChanges || imageUrlPending" [attr.aria-busy]="publishing" (click)="publish(operation)">{{ publishing ? 'Publication…' : 'Publier l’opération' }}</button> @if (autosave.hasUnsavedChanges || imageUrlPending) { <p class="muted">La publication sera possible dès que les dernières modifications seront enregistrées.</p> } }
       } @else if (tab === 'organisation') {
         <div class="organization" [class.organization--detail]="groupOpenOnMobile()">
-          <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy()" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" />
+          <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy()" [locked]="!!operation.locked" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" />
           <div class="organization__panel">
             @if (organizationError()) { <p class="organization__error" role="alert">{{ organizationError() }} <button type="button" (click)="loadOrganization(operation.id)">Réessayer</button></p> }
             @if (selectedGroup(); as group) {
-              <app-operation-group-panel [group]="group" [groups]="organizationGroups()" [members]="(members$ | async) ?? []" [busy]="organizationBusy()" [defaultMode]="form.defaultAssignmentMode" [openTab]="groupPanelTab()" (save)="saveGroup(operation.id, group.id, $event)" (remove)="deleteGroup(operation.id, group)" (move)="moveGroup(operation.id, group, $event)" (addSubgroup)="quickAddGroup(operation.id, group.id)" (back)="groupOpenOnMobile.set(false)" (selectGroup)="selectGroup($event)" (dirtyChange)="groupSettingsDirty.set($event)">
+              <app-operation-group-panel [group]="group" [groups]="organizationGroups()" [members]="(members$ | async) ?? []" [busy]="organizationBusy()" [locked]="!!operation.locked" [defaultMode]="form.defaultAssignmentMode" [openTab]="groupPanelTab()" (save)="saveGroup(operation.id, group.id, $event)" (remove)="deleteGroup(operation.id, group)" (move)="moveGroup(operation.id, group, $event)" (addSubgroup)="quickAddGroup(operation.id, group.id)" (back)="groupOpenOnMobile.set(false)" (selectGroup)="selectGroup($event)" (dirtyChange)="groupSettingsDirty.set($event)">
                 <ng-container *ngTemplateOutlet="needs" />
               </app-operation-group-panel>
             } @else if (organization()) {
-              <app-operation-overview [groups]="organizationGroups()" [defaultMode]="form.defaultAssignmentMode" [busy]="organizationBusy()" [defaultModeUnsaved]="defaultModeUnsaved" (select)="selectGroup($event)" (defaultModeChange)="setDefaultMode($event)" (addGroup)="quickAddGroup(operation.id, null)" />
+              <app-operation-overview [groups]="organizationGroups()" [defaultMode]="form.defaultAssignmentMode" [busy]="organizationBusy() || !!operation.locked" [defaultModeUnsaved]="defaultModeUnsaved" (select)="selectGroup($event)" (defaultModeChange)="setDefaultMode($event)" (addGroup)="quickAddGroup(operation.id, null)" />
               <section class="organization__needs"><ng-container *ngTemplateOutlet="needs" /></section>
             }
           </div>
         </div>
         <ng-template #needs>
-        <h3>Besoins de vaisseaux</h3>
-        <p class="muted">Un besoin décrit une ressource attendue ; il reste séparé des appareils proposés par les membres.</p>
-        @if (shipRequirements$ | async; as requirements) { @if (requirements.length) { <div class="permission-summary">@for (requirement of requirements; track requirement.id) { <span>{{ requirement.quantity }} × modèle {{ requirement.shipModelId || 'à préciser' }} · {{ requirement.status }} <button type="button" (click)="editShipRequirement(requirement)">Modifier</button> <button type="button" (click)="deleteShipRequirement(operation.id, requirement.id)">Supprimer</button></span> }</div> } @else { <p class="empty-state">Aucun besoin de vaisseau.</p> } }
+        @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
+        <app-operation-fleet-cards [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [scopeGroupId]="selectedGroupId()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
+          (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (unavailable)="markShipUnavailable(operation.id, $event)" (withdraw)="withdrawShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)"
+          (editRequirement)="editShipRequirement($event)" (deleteRequirement)="deleteShipRequirement(operation.id, $event)" />
+        @if (!operation.locked) {
+        <details class="requirement-form" [open]="!!editingRequirementId">
+        <summary>{{ editingRequirementId ? 'Modifier le besoin' : 'Ajouter un besoin' }}</summary>
+        <p class="muted">Un besoin décrit un vaisseau recherché. Il reste distinct des appareils que les membres proposent depuis leur hangar.</p>
         <fieldset class="requirement-catalog">
           <legend>Modèle souhaité (facultatif)</legend>
           <div class="catalog-search"><label>Rechercher un vaisseau<input [(ngModel)]="catalogQuery" (keydown.enter)="searchRequirementModels()" placeholder="Nom du modèle"></label><button type="button" (click)="searchRequirementModels()" [disabled]="catalogLoading()">{{ catalogLoading() ? 'Recherche…' : 'Rechercher' }}</button></div>
@@ -60,18 +66,24 @@
         <label>Quantité<input type="number" min="1" max="100" [(ngModel)]="requirementForm.quantity"></label>
         <label>Groupe (facultatif)<select [(ngModel)]="requirementForm.groupId"><option [ngValue]="null">Toute l’opération</option>@for (group of leafGroups(); track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
         <label>Notes<textarea [(ngModel)]="requirementForm.notes" maxlength="5000" rows="2"></textarea></label>
-        <button type="button" (click)="createShipRequirement(operation.id)">{{ editingRequirementId ? 'Enregistrer le besoin' : 'Ajouter le besoin' }}</button>
+        <button type="button" [disabled]="fleetBusy()" (click)="createShipRequirement(operation.id)">{{ editingRequirementId ? 'Enregistrer le besoin' : 'Ajouter le besoin' }}</button>
         @if (editingRequirementId) { <button type="button" (click)="cancelShipRequirementEdit()">Annuler la modification</button> }
+        </details>
+        }
         </ng-template>
       } @else {
         @if (coordinationError()) { <p class="organization__error" role="alert">{{ coordinationError() }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
         @if (coordination(); as board) {
-          <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy()" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+          <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy()" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
         } @else if (!coordinationError()) {
           <p class="editor-loading" role="status">Chargement de la coordination…</p>
         }
-        <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
-        @if (ships$ | async; as ships) { <div class="permission-summary"><strong>Propositions de vaisseaux : {{ ships.length }}</strong>@if (!ships.length) { <span>Aucune proposition.</span> } @for (ship of ships; track ship.id) { <span>{{ ship.shipName || ('Vaisseau #' + ship.shipId) }} · propriétaire : {{ ship.ownerUsername || 'membre' }} · {{ ship.status }} @if (ship.requirementId) { · besoin lié } <label>Pilote distinct<select [value]="ship.pilotUserId || ''" (change)="setShipPilot(operation.id, ship.id, $any($event.target).value || null)"><option value="">À affecter</option>@if (members$ | async; as members) { @for (member of members; track member.id) { <option [value]="member.id">{{ member.username }}</option> } }</select></label> @if (ship.status !== 'UNAVAILABLE') { <button type="button" (click)="markShipUnavailable(operation.id, ship.id)">Marquer indisponible</button> }</span> } </div> }
+        <section class="coordination-fleet" aria-label="Vaisseaux proposés par les membres">
+          <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()" [disabled]="!!operation.locked"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
+          @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
+          <app-operation-fleet-cards [showRequirements]="false" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
+            (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (unavailable)="markShipUnavailable(operation.id, $event)" (withdraw)="withdrawShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)" />
+        </section>
       }
       @if (tab === 'briefing' || tab === 'objectifs' || tab === 'permissions' || (tab === 'organisation' && operation.publicationStatus === 'PUBLISHED')) {
         <div class="save-row">

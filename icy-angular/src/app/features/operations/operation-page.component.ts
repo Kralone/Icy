@@ -10,6 +10,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
+import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 
 interface OperationPageModel {
   id: string;
@@ -23,6 +24,8 @@ interface OperationPageModel {
   startDateTime: string;
   endDateTime: string;
   finished: boolean;
+  /** Heure de fin atteinte selon le serveur : organisation et flotte en lecture seule. */
+  locked?: boolean;
   /** Mode des groupes qui n'en fixent pas un eux-mêmes. */
   defaultAssignmentMode?: string;
 }
@@ -35,7 +38,7 @@ type OperationViewState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent],
+  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
   styleUrl: './operation-page.component.css'
@@ -51,7 +54,7 @@ export class OperationPageComponent {
   private readonly shipsRefresh$ = new Subject<void>();
   readonly operationState$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
-    map(response => { this.defaultAssignmentMode = response.data.defaultAssignmentMode || 'FREE'; return { status: 'READY', data: response.data } as OperationViewState; }),
+    map(response => { this.defaultAssignmentMode = response.data.defaultAssignmentMode || 'FREE'; this.currentOperation = response.data; return { status: 'READY', data: response.data } as OperationViewState; }),
     startWith({ status: 'LOADING' } as OperationViewState),
     catchError(() => of({ status: 'ERROR' } as OperationViewState)),
     shareReplay({ bufferSize: 1, refCount: true })
@@ -61,20 +64,29 @@ export class OperationPageComponent {
     map(response => response.data),
     // Le tableau de coordination n'est demandé que si un groupe est délégué à l'utilisateur.
     tap(groups => { const id = this.route.snapshot.paramMap.get('id'); if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
-    catchError(() => of([]))
+    catchError(() => of([])),
+    shareReplay({ bufferSize: 1, refCount: true })
   );
   readonly ships$ = this.shipsRefresh$.pipe(
     startWith(undefined),
     switchMap(() => this.route.paramMap),
-    switchMap(params => this.http.get<{ data: Array<{ id: string; shipId: number; ownerUserId: string; ownerUsername?: string; shipName?: string; shipImageUrl?: string; groupId?: number; requirementId?: string; status: string }> }>(`/api/operations/${params.get('id')}/ships`)),
-    map(response => response.data),
-    catchError(() => of([]))
+    switchMap(params => this.http.get<{ data: FleetShip[] }>(`/api/operations/${params.get('id')}/ships`).pipe(
+      map(response => { this.fleetLoadError = false; return response.data; }),
+      // Une lecture en échec ne passe pas pour une flotte vide et n'empêche pas les suivantes.
+      catchError(() => { this.fleetLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetShip[]); })))
   );
-  readonly shipRequirements$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: Array<{ id: string; groupId?: number; shipModelId?: number; quantity: number; notes?: string; status: string }> }>(`/api/operations/${params.get('id')}/ship-requirements`)),
-    map(response => response.data),
-    catchError(() => of([]))
+  /** Relus avec les vaisseaux : une proposition change ce qu'il reste à couvrir. */
+  readonly shipRequirements$ = this.shipsRefresh$.pipe(
+    startWith(undefined),
+    switchMap(() => this.route.paramMap),
+    switchMap(params => this.http.get<{ data: FleetRequirement[] }>(`/api/operations/${params.get('id')}/ship-requirements`).pipe(
+      map(response => response.data.filter(requirement => requirement.status !== 'CANCELLED')),
+      catchError(() => { this.fleetLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetRequirement[]); })))
   );
+  fleetLoadError = false;
+  reloadFleet(): void { this.shipsRefresh$.next(); }
+  private currentOperation: OperationPageModel | null = null;
+  fleetBusy = false;
   readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
   private defaultAssignmentMode = 'FREE';
   selectedShipId: number | null = null;
@@ -154,7 +166,7 @@ export class OperationPageComponent {
     action.subscribe({
       next: () => { this.toast.success(success); this.loadCoordination(operationId); },
       error: error => {
-        this.toast.error(error?.status === 0 ? 'Serveur injoignable. Rien n’a été modifié.' : ((typeof error?.error?.message === 'string' && error.error.message) || failure));
+        this.toast.error(this.fleetError(error, failure));
         this.loadCoordination(operationId);
       }
     });
@@ -193,7 +205,7 @@ export class OperationPageComponent {
     this.changeDetector.markForCheck();
     this.eventService.assignOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({
       next: () => { this.assignmentMessage = 'Affectation confirmée.'; this.changeDetector.markForCheck(); },
-      error: error => { this.assignmentMessage = error?.error?.message || 'Affectation impossible. La vérification a expiré.'; this.changeDetector.markForCheck(); }
+      error: error => { this.assignmentMessage = this.fleetError(error, 'Affectation impossible. La vérification a expiré.'); this.changeDetector.markForCheck(); }
     });
   }
   requestAssignment(operationId: string, groupId: number) {
@@ -201,19 +213,51 @@ export class OperationPageComponent {
     this.changeDetector.markForCheck();
     this.eventService.requestOperationGroup(operationId, groupId).pipe(timeout(10000)).subscribe({
       next: () => { this.assignmentMessage = 'Demande envoyée aux responsables.'; this.changeDetector.markForCheck(); },
-      error: error => { this.assignmentMessage = error?.error?.message || 'Demande impossible. La vérification a expiré.'; this.changeDetector.markForCheck(); }
+      error: error => { this.assignmentMessage = this.fleetError(error, 'Demande impossible. La vérification a expiré.'); this.changeDetector.markForCheck(); }
     });
   }
-  proposeShip(operationId: string) {
-    if (this.selectedShipId == null) return;
-    this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined).subscribe({ next: () => { this.assignmentMessage = 'Vaisseau proposé à l’opération.'; this.shipsRefresh$.next(); }, error: error => this.assignmentMessage = error?.error?.message || 'Proposition impossible.' });
+  // --- Flotte : proposer un appareil de son hangar. Cela n'affecte personne à un groupe.
+  ownedId(owned: any): number { return owned?.id?.shipId ?? owned?.ship?.id; }
+  isProposed(shipId: number, ships: FleetShip[]): boolean { return ships.some(ship => ship.shipId === shipId && ship.ownerUserId === this.currentUserId); }
+  leafGroups<T extends { id: number; parentId?: number }>(groups: T[]): T[] { return groups.filter(group => this.isLeaf(group, groups)); }
+  /** Besoins encore ouverts auxquels l'appareil choisi peut répondre. */
+  compatibleNeeds(requirements: FleetRequirement[]): FleetRequirement[] {
+    return requirements.filter(requirement => requirement.status === 'OPEN' && requirement.accepted + requirement.proposed < requirement.quantity
+      && (requirement.shipModelId === null || requirement.shipModelId === this.selectedShipId));
+  }
+  selectShip(shipId: number): void {
+    this.selectedShipId = this.selectedShipId === shipId ? null : shipId;
+    this.selectedShipRequirementId = null;
+    this.selectedShipGroupId = null;
   }
 
-  withdrawShip(operationId: string, proposalId: string) {
-    this.eventService.withdrawOperationShipProposal(operationId, proposalId).subscribe({
-      next: () => { this.assignmentMessage = 'Proposition de vaisseau retirée.'; this.shipsRefresh$.next(); },
-      error: error => this.assignmentMessage = error?.error?.message || 'Retrait impossible.'
+  /** L'heure de fin est passée pendant que la page était ouverte : la fiche passe en lecture seule. */
+  private fleetError(error: any, fallback: string): string {
+    if (error?.status === 0) return 'Serveur injoignable. Rien n’a été modifié.';
+    const message = (typeof error?.error?.message === 'string' && error.error.message) || '';
+    if (error?.status === 409 && message.startsWith('Opération terminée') && this.currentOperation) this.currentOperation.locked = true;
+    return message || fallback;
+  }
+
+  private fleetAction(action: Observable<unknown>, success: string, failure: string, done?: () => void): void {
+    if (this.fleetBusy) return;
+    this.fleetBusy = true;
+    this.changeDetector.markForCheck();
+    action.subscribe({
+      next: () => { this.fleetBusy = false; this.toast.success(success); done?.(); this.shipsRefresh$.next(); this.changeDetector.markForCheck(); },
+      error: error => { this.fleetBusy = false; this.toast.error(this.fleetError(error, failure)); this.shipsRefresh$.next(); this.changeDetector.markForCheck(); }
     });
+  }
+
+  proposeShip(operationId: string) {
+    if (this.selectedShipId == null) return;
+    this.fleetAction(this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined),
+      'Vaisseau proposé : l’organisateur doit encore l’accepter.', 'Proposition impossible.', () => { this.selectedShipId = null; this.selectedShipRequirementId = null; this.selectedShipGroupId = null; });
+  }
+
+  withdrawShip(operationId: string, ship: FleetShip) {
+    if (!confirm(`Retirer ${ship.shipName || 'ce vaisseau'} de l’opération ?`)) return;
+    this.fleetAction(this.eventService.withdrawOperationShipProposal(operationId, ship.id), 'Proposition de vaisseau retirée.', 'Retrait impossible.');
   }
 
   effectiveGroupMode(group: any, groups: any[]): string {

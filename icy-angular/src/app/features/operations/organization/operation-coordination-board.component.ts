@@ -51,6 +51,8 @@ export interface OperationCoordination {
 export class OperationCoordinationBoardComponent {
   readonly coordination = input.required<OperationCoordination>();
   readonly busy = input(false);
+  /** Opération terminée : la composition reste lisible, plus aucune action. */
+  readonly locked = input(false);
   readonly assign = output<{ userId: string; groupId: number }>();
   readonly remove = output<CoordinationMember>();
   readonly decide = output<{ requestId: string; approve: boolean }>();
@@ -59,7 +61,7 @@ export class OperationCoordinationBoardComponent {
   readonly placing = signal<string | null>(null);
 
   readonly roots = computed(() => this.coordination().groups.filter(group => group.parentId === null || !this.coordination().groups.some(parent => parent.id === group.parentId)));
-  readonly destinations = computed(() => this.coordination().groups.filter(group => group.manageable));
+  readonly destinations = computed(() => this.locked() ? [] : this.coordination().groups.filter(group => group.manageable));
 
   modeLabel(group: CoordinationGroup): string { return MODE_LABELS[group.effectiveMode]; }
   children(parentId: number): CoordinationGroup[] { return this.coordination().groups.filter(group => group.parentId === parentId); }

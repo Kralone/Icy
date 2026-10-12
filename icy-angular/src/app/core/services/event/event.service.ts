@@ -162,6 +162,12 @@ export class EventService {
   withdrawOperationShipProposal(operationId: string, proposalId: string) {
     return this.http.delete(`/api/operations/${operationId}/ships/proposals/${proposalId}`);
   }
+  acceptOperationShipProposal(operationId: string, proposalId: string) {
+    return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/accept`, {});
+  }
+  declineOperationShipProposal(operationId: string, proposalId: string) {
+    return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/decline`, {});
+  }
   markOperationShipProposalUnavailable(operationId: string, proposalId: string) {
     return this.http.post(`/api/operations/${operationId}/ships/proposals/${proposalId}/unavailable`, {});
   }

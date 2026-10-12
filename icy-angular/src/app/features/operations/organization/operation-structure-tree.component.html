@@ -1,7 +1,7 @@
 <nav class="structure" aria-label="Structure de l’opération">
   <div class="structure__head">
     <h3>Structure</h3>
-    <button type="button" class="structure__add" [disabled]="busy() || !loaded()" (click)="addGroup.emit()"><span aria-hidden="true">+</span> Groupe</button>
+    @if (!locked()) { <button type="button" class="structure__add" [disabled]="busy() || !loaded()" (click)="addGroup.emit()"><span aria-hidden="true">+</span> Groupe</button> }
   </div>
 
   @if (!loaded()) {
@@ -18,7 +18,7 @@
           @for (child of children(root.id); track child.id) {
             <li><ng-container *ngTemplateOutlet="node; context: { $implicit: child, child: true }" /></li>
           }
-          <li><button type="button" class="structure__add-child" [disabled]="busy()" (click)="addSubgroup.emit(root.id)"><span aria-hidden="true">+</span> Sous-groupe <span class="sr-only">dans {{ root.name }}</span></button></li>
+          @if (!locked()) { <li><button type="button" class="structure__add-child" [disabled]="busy()" (click)="addSubgroup.emit(root.id)"><span aria-hidden="true">+</span> Sous-groupe <span class="sr-only">dans {{ root.name }}</span></button></li> }
         </ul>
       </li>
     }

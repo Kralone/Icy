@@ -22,10 +22,14 @@
               @if (target(request); as group) { <span class="request__seats" [class.is-full]="seatsFor(group, request.currentGroupId) === 0">{{ occupancy(group) }} · {{ seatsLabel(seatsFor(group, request.currentGroupId)) }}</span> }
               @if (request.currentGroupName) { <small>Garde sa place actuelle tant que la demande n’est pas acceptée.</small> }
             </div>
-            <div class="request__actions">
-              <button type="button" class="accept" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: true })">Accepter<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
-              <button type="button" class="refuse" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: false })">Refuser<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
-            </div>
+            @if (locked()) {
+              <small class="request__closed">Non traitée avant la fin de l’opération.</small>
+            } @else {
+              <div class="request__actions">
+                <button type="button" class="accept" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: true })">Accepter<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
+                <button type="button" class="refuse" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: false })">Refuser<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
+              </div>
+            }
           </li>
         }
       </ul>
@@ -97,7 +101,7 @@
           <li class="person">
             <span class="avatar" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>
             <strong>{{ member.username }}</strong>
-            @if (group.manageable) {
+            @if (group.manageable && !locked()) {
               <button type="button" class="place" [disabled]="busy()" [attr.aria-expanded]="placing() === member.userId" (click)="togglePlacing(member.userId)">Déplacer<span class="sr-only"> {{ member.username }}</span></button>
               <button type="button" class="refuse" [disabled]="busy()" (click)="remove.emit(member)">Retirer<span class="sr-only"> {{ member.username }} de {{ group.name }}</span></button>
             }
@@ -105,7 +109,7 @@
           </li>
         }
       </ul>
-    } @else if (group.manageable) {
+    } @else if (group.manageable || locked()) {
       <p class="group__empty">Aucun membre affecté.</p>
     }
   }

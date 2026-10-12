@@ -85,7 +85,7 @@ public class DiscordEventParticipationListener {
             participation.setUser(user);
             participation.setStatus(status);
             participationRepository.save(participation);
-            if (status != 1) {
+            if (status != 1 && !com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event)) {
                 operationAssignmentRepository.deleteByOperationEventIdAndUserId(event.getId(), user.getId());
                 operationAssignmentRequestRepository.deleteByOperationEventIdAndUserIdAndStatus(event.getId(), user.getId(), OperationAssignmentRequest.Status.PENDING);
             }

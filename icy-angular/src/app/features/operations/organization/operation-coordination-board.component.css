@@ -21,6 +21,7 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .request__seats { color: #bae6fd !important; font-variant-numeric: tabular-nums; }
 .request__seats.is-full { color: #fda4af !important; }
 .request__actions { grid-column: 1 / -1; display: flex; gap: .4rem; }
+.request__closed { grid-column: 1 / -1; color: #f4cd7d; font-size: .82rem; }
 .request__actions button { flex: 1; }
 .person { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; min-width: 0; padding: .5rem .65rem; border: 1px solid rgba(128,229,184,.35); border-radius: .55rem; color: #e2e8f0; background: #14372f; }
 .person strong { flex: 1 1 6rem; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }

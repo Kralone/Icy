@@ -232,6 +232,17 @@ public class EventService {
 
         boolean dateChanged = !Objects.equals(oldStart, start) || !Objects.equals(oldEnd, end);
 
+        // Une opération publiée dont la fin est passée est clôturée : repousser ses dates la rouvrirait.
+        if (dateChanged && event.getActivityType() == ActivityType.OPERATION && !isUnpublishedOperation(event)
+                && com.icy.icy_backend.service.operation.OperationLock.isClosed(oldEnd, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE))) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException("Opération terminée : ses dates ne peuvent plus être modifiées.");
+        }
+        // Une fin déjà passée clôturerait l'opération sur-le-champ, sans retour possible.
+        if (dateChanged && event.getActivityType() == ActivityType.OPERATION && !isUnpublishedOperation(event)
+                && com.icy.icy_backend.service.operation.OperationLock.isClosed(end, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE))) {
+            throw new IllegalArgumentException("La fin d’une opération publiée doit être à venir.");
+        }
+
         // --- Mise à jour event
         event.setType(getEventTypeByName(type));
         event.setTitle(title);
@@ -568,7 +579,8 @@ public class EventService {
 
         participationRepository.save(participation);
 
-        if (status != 1 && operationAssignmentRepository != null) {
+        // Quitter « Présent » libère la place dans le groupe, sauf après la fin de l'opération : la composition reste telle qu'elle était.
+        if (status != 1 && operationAssignmentRepository != null && !(com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event) && !isUnpublishedOperation(event))) {
             UUID userId = user.getId();
             operationAssignmentRepository.deleteByOperationEventIdAndUserId(eventId, userId);
             if (operationAssignmentRequestRepository != null) {

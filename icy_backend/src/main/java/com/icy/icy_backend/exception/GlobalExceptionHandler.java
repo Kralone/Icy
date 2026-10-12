@@ -53,6 +53,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", "Ce contenu a été modifié ailleurs depuis votre dernière lecture."));
     }
 
+    @ExceptionHandler(com.icy.icy_backend.exception.definition.OperationClosedException.class)
+    public ResponseEntity<Map<String, String>> handleOperationClosed(com.icy.icy_backend.exception.definition.OperationClosedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", ex.getMessage()));
+    }
+
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
         logger.warn("Écriture refusée par une contrainte de la base: {}", ex.getMostSpecificCause().getMessage());

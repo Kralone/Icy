@@ -27,6 +27,18 @@ public class OperationShipRequirementService {
     private final OperationShipRequirementRepository requirementRepository;
     private final MessageService messageService;
 
+    private OperationLock operationLock;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationLock(OperationLock operationLock) {
+        this.operationLock = operationLock;
+    }
+
+    /** Clôture automatique à l'heure de fin : voir OperationLock. */
+    private void requireOpen(UUID operationId) {
+        if (operationLock != null) operationLock.requireOpen(operationId);
+    }
+
     @Transactional(readOnly = true)
     public List<OperationShipRequirementResponseDTO> list(UUID operationId) {
         Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -40,6 +52,7 @@ public class OperationShipRequirementService {
     @Transactional
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> create(UUID operationId, OperationShipRequirementRequest request) {
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         validate(operationId, request);
         OperationShipRequirement value = OperationShipRequirement.builder().operationEventId(operationId).groupId(request.getGroupId()).shipModelId(request.getShipModelId()).quantity(request.getQuantity()).notes(request.getNotes()).status(request.getStatus() == null ? OperationShipRequirement.Status.OPEN : request.getStatus()).build();
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
@@ -49,6 +62,7 @@ public class OperationShipRequirementService {
     @Transactional
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> update(UUID operationId, UUID requirementId, OperationShipRequirementRequest request) {
         OperationShipRequirement value = requirementRepository.findById(requirementId).filter(item -> operationId.equals(item.getOperationEventId())).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+        requireOpen(operationId);
         validate(operationId, request);
         value.setGroupId(request.getGroupId()); value.setShipModelId(request.getShipModelId()); value.setQuantity(request.getQuantity()); value.setNotes(request.getNotes());
         if (request.getStatus() != null) value.setStatus(request.getStatus());
@@ -60,6 +74,7 @@ public class OperationShipRequirementService {
     @Transactional
     public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, UUID requirementId) {
         OperationShipRequirement value = requirementRepository.findById(requirementId).filter(item -> operationId.equals(item.getOperationEventId())).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+        requireOpen(operationId);
         requirementRepository.delete(value);
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.deleted", null);

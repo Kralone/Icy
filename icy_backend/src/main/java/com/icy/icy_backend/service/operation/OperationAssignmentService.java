@@ -26,9 +26,22 @@ public class OperationAssignmentService {
     private final MessageService messageService;
     private final OperationAssignmentRequestRepository requestRepository;
 
+    private OperationLock operationLock;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationLock(OperationLock operationLock) {
+        this.operationLock = operationLock;
+    }
+
+    /** Clôture automatique à l'heure de fin : voir OperationLock. */
+    private void requireOpen(UUID operationId) {
+        if (operationLock != null) operationLock.requireOpen(operationId);
+    }
+
     @Transactional
     public ResponseEntity<MessageResponse<Void>> request(UUID operationId, Long groupId) {
         Operation operation = operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         OperationGroup group = groupRepository.findLockedById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Groupe feuille invalide");
         if (effectiveMode(operationId, groupId) != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
@@ -49,6 +62,8 @@ public class OperationAssignmentService {
         if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
+        // Après la fin, une demande restée en attente n'est plus ni acceptée ni refusée : elle reste telle quelle.
+        requireOpen(request.getOperationEventId());
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(request.getOperationEventId(), request.getUserId(), 1)) throw new IllegalStateException("Ce membre n’est plus inscrit Présent : la demande ne peut pas être acceptée.");
         requireActiveAccount(request.getOperationEventId(), request.getUserId());
@@ -72,6 +87,7 @@ public class OperationAssignmentService {
         if (!organizer && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Groupe hors de votre délégation");
         }
+        requireOpen(operationId);
         if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) throw new IllegalStateException("Ce membre n’est pas inscrit Présent");
         requireActiveAccount(operationId, userId);
@@ -107,6 +123,7 @@ public class OperationAssignmentService {
                 throw new org.springframework.security.access.AccessDeniedException("Ce membre appartient à un groupe hors de votre délégation");
             }
         }
+        requireOpen(operationId);
         OperationAssignment assignment = found.orElseThrow(() -> new ResourceNotFoundException("Affectation introuvable"));
         assignmentRepository.delete(assignment);
         return messageService.buildResponse("operation.assignment.removed", null);
@@ -165,6 +182,7 @@ public class OperationAssignmentService {
         Operation operation = operationRepository.findById(operationId)
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) {
             throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");

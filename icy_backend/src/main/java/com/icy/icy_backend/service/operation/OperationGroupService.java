@@ -37,6 +37,18 @@ public class OperationGroupService {
         this.proposalRepository = proposals;
     }
 
+    private OperationLock operationLock;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationLock(OperationLock operationLock) {
+        this.operationLock = operationLock;
+    }
+
+    /** Clôture automatique à l'heure de fin : voir OperationLock. */
+    private void requireOpen(UUID operationId) {
+        if (operationLock != null) operationLock.requireOpen(operationId);
+    }
+
     /** Besoins ou vaisseaux proposés rattachés à ce groupe : sa suppression les détacherait sans le dire. */
     private boolean hasLinkedShips(UUID operationId, Long groupId) {
         boolean requirements = requirementRepository != null && requirementRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream().anyMatch(requirement -> groupId.equals(requirement.getGroupId()));
@@ -78,6 +90,7 @@ public class OperationGroupService {
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
         if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         if (request.getParentId() != null) {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId())) throw new IllegalArgumentException("Le groupe parent appartient à une autre opération");
@@ -95,6 +108,7 @@ public class OperationGroupService {
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> update(UUID operationId, Long groupId, OperationGroupRequest request) {
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId())) throw new ResourceNotFoundException("Groupe introuvable");
+        requireOpen(operationId);
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
         if (request.getDescription() != null && request.getDescription().length() > 5000) throw new IllegalArgumentException("Description trop longue");
         if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
@@ -125,6 +139,7 @@ public class OperationGroupService {
     public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, Long groupId) {
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId())) throw new ResourceNotFoundException("Groupe introuvable");
+        requireOpen(operationId);
         if (groupRepository.existsByParentId(groupId)) throw new IllegalStateException("Supprimez d’abord les sous-groupes");
         if (isOccupied(operationId, groupId)) throw new IllegalStateException("Ce groupe a des membres ou des demandes en attente : libérez-le avant de le supprimer.");
         if (hasLinkedShips(operationId, groupId)) throw new IllegalStateException("Ce groupe porte des besoins ou des vaisseaux proposés : rattachez-les à un autre groupe ou à toute l’opération avant de le supprimer.");
@@ -140,6 +155,7 @@ public class OperationGroupService {
         }
         List<OperationGroup> groups = groupIds.stream().map(id -> groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"))).toList();
         if (groups.stream().anyMatch(group -> !operationId.equals(group.getOperationEventId()))) throw new IllegalArgumentException("Les groupes appartiennent à une autre opération");
+        requireOpen(operationId);
         Long expectedParent = groups.get(0).getParentId();
         if (groups.stream().anyMatch(group -> !java.util.Objects.equals(expectedParent, group.getParentId()))) throw new IllegalArgumentException("Seuls les groupes frères peuvent être réordonnés");
         java.util.Set<Long> expectedIds = operationGroupIds(operationId, expectedParent);

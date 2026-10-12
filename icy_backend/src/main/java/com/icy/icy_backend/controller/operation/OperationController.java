@@ -8,7 +8,6 @@ import com.icy.icy_backend.service.operation.OperationService;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
 import com.icy.icy_backend.service.operation.OperationShipService;
 import com.icy.icy_backend.service.operation.OperationGroupService;
-import com.icy.icy_backend.db.repository.event.OperationShipProposalRepository;
 import com.icy.icy_backend.controller.dto.response.event.OperationShipProposalResponseDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationGroupRequest;
 import com.icy.icy_backend.controller.dto.event.CreateEventRequest;
@@ -27,8 +26,6 @@ import com.icy.icy_backend.controller.dto.response.event.OperationShipRequiremen
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.event.EventService;
-import com.icy.icy_backend.db.repository.user.UserShipRepository;
-import com.icy.icy_backend.db.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,11 +56,9 @@ public class OperationController {
     private final OperationAssignmentService assignmentService;
     private final OperationShipService shipService;
     private final OperationGroupService groupService;
-    private final OperationShipProposalRepository proposalRepository;
     private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
-    private final UserShipRepository userShipRepository;
-    private final UserRepository userRepository;
+    private final com.icy.icy_backend.service.operation.OperationFleetService fleetService;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
     private final com.icy.icy_backend.service.operation.OperationCoordinationService coordinationService;
@@ -87,13 +82,7 @@ public class OperationController {
     @GetMapping("/{id}/ships")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationShipProposalResponseDTO>>> ships(@PathVariable UUID id) {
-        operationRepository.findById(id).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        List<OperationShipProposalResponseDTO> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(id).stream()
-                .map(proposal -> new OperationShipProposalResponseDTO(proposal,
-                        userShipRepository.findByUserIdAndShipId(proposal.getOwnerUserId(), proposal.getShipId()).orElse(null),
-                        proposal.getPilotUserId() == null ? null : userRepository.findById(proposal.getPilotUserId()).map(user -> user.getUsername()).orElse(null)))
-                .toList();
-        return messageService.buildResponse("operation.ships", proposals);
+        return messageService.buildResponse("operation.ships", fleetService.proposals(id));
     }
 
     @PostMapping("/{id}/groups")
@@ -132,6 +121,18 @@ public class OperationController {
         return shipService.withdraw(id, proposalId);
     }
 
+    @PostMapping("/{id}/ships/proposals/{proposalId}/accept")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> acceptShipProposal(@PathVariable UUID id, @PathVariable UUID proposalId) {
+        return shipService.accept(id, proposalId);
+    }
+
+    @PostMapping("/{id}/ships/proposals/{proposalId}/decline")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> declineShipProposal(@PathVariable UUID id, @PathVariable UUID proposalId) {
+        return shipService.decline(id, proposalId);
+    }
+
     @PostMapping("/{id}/ships/proposals/{proposalId}/unavailable")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<Void>> markShipUnavailable(@PathVariable UUID id, @PathVariable UUID proposalId) {
@@ -147,7 +148,7 @@ public class OperationController {
     @GetMapping("/{id}/ship-requirements")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationShipRequirementResponseDTO>>> shipRequirements(@PathVariable UUID id) {
-        return messageService.buildResponse("operation.ship.requirements", shipRequirementService.list(id));
+        return messageService.buildResponse("operation.ship.requirements", fleetService.requirements(id));
     }
 
     @PostMapping("/{id}/ship-requirements")

@@ -2,7 +2,7 @@ import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
@@ -14,6 +14,7 @@ import { OperationStructureTreeComponent } from './organization/operation-struct
 import { GroupPanelTab, OperationGroupPanelComponent } from './organization/operation-group-panel.component';
 import { OperationOverviewComponent } from './organization/operation-overview.component';
 import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
+import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -36,7 +37,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent],
+  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
@@ -71,7 +72,7 @@ export class OperationEditorComponent implements OnDestroy {
   readonly catalogError = signal('');
   catalogQuery = '';
   selectedRequirementModel = signal<CatalogEntry | null>(null);
-  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])));
+  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])), shareReplay({ bufferSize: 1, refCount: true }));
 
   hasMember(members: User[], id: string | null): boolean {
     return !!id && members.some(member => member.id === id);
@@ -118,8 +119,13 @@ export class OperationEditorComponent implements OnDestroy {
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
   private readonly shipRefresh = new BehaviorSubject<void>(undefined);
-  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.eventService.getOperationShipRequirements(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
-  readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.eventService.getOperationShips(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
+  /** Une lecture en échec ne doit ni passer pour une flotte vide, ni empêcher les lectures suivantes. */
+  readonly fleetLoadError = signal(false);
+  private fleetRead<T>(read: Observable<{ data: any[] }>): Observable<T[]> {
+    return read.pipe(map(response => response.data as T[]), tap(() => this.fleetLoadError.set(false)), catchError(() => { this.fleetLoadError.set(true); return of([] as T[]); }));
+  }
+  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.fleetRead<FleetRequirement>(this.eventService.getOperationShipRequirements(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
+  readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
   set groups(value: any[]) { this.groupState.set(value); }
@@ -278,7 +284,43 @@ export class OperationEditorComponent implements OnDestroy {
 
   private organizationErrorMessage(error: any, fallback: string): string {
     if (error?.status === 0) return 'Serveur injoignable. Rien n’a été modifié.';
-    return (typeof error?.error?.message === 'string' && error.error.message) || fallback;
+    const message = (typeof error?.error?.message === 'string' && error.error.message) || '';
+    // L'heure de fin est passée pendant que la page était ouverte : l'éditeur passe en lecture seule.
+    if (error?.status === 409 && message.startsWith('Opération terminée') && this.currentOperation && !this.currentOperation.locked) {
+      this.currentOperation.locked = true;
+      this.changeDetector.markForCheck();
+    }
+    return message || fallback;
+  }
+
+  // --- Flotte : besoins et appareils proposés, relus sur le serveur après chaque action.
+  readonly fleetBusy = signal(false);
+
+  refreshFleet(): void {
+    this.shipRefresh.next();
+    this.requirementRefresh.next();
+  }
+
+  private fleetAction(action: Observable<unknown>, success: string, failure: string, done?: () => void): void {
+    if (this.fleetBusy()) return;
+    this.fleetBusy.set(true);
+    action.subscribe({
+      next: () => { this.fleetBusy.set(false); this.notify('success', success); done?.(); this.refreshFleet(); },
+      error: error => { this.fleetBusy.set(false); this.notify('error', this.organizationErrorMessage(error, failure)); this.refreshFleet(); }
+    });
+  }
+
+  acceptShip(operationId: string, proposalId: string): void {
+    this.fleetAction(this.eventService.acceptOperationShipProposal(operationId, proposalId), 'Vaisseau accepté.', 'Acceptation impossible.');
+  }
+
+  declineShip(operationId: string, proposalId: string): void {
+    this.fleetAction(this.eventService.declineOperationShipProposal(operationId, proposalId), 'Vaisseau refusé.', 'Refus impossible.');
+  }
+
+  withdrawShip(operationId: string, ship: FleetShip): void {
+    if (!confirm(`Retirer ${ship.shipName || 'ce vaisseau'} de l’opération ? Les affectations des membres ne changent pas.`)) return;
+    this.fleetAction(this.eventService.withdrawOperationShipProposal(operationId, ship.id), 'Vaisseau retiré de l’opération.', 'Retrait impossible.');
   }
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
   private operationId: string | null = null;
@@ -470,22 +512,18 @@ export class OperationEditorComponent implements OnDestroy {
     });
   }
   createShipRequirement(operationId: string): void {
+    const editing = !!this.editingRequirementId;
     const request = this.editingRequirementId ? this.eventService.updateOperationShipRequirement(operationId, this.editingRequirementId, this.requirementForm) : this.eventService.createOperationShipRequirement(operationId, this.requirementForm);
-    request.subscribe({ next: () => { this.notify('success', this.editingRequirementId ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.'); this.cancelShipRequirementEdit(); this.requirementRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Enregistrement du besoin impossible.') });
+    this.fleetAction(request, editing ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.', 'Enregistrement du besoin impossible.', () => this.cancelShipRequirementEdit());
   }
-  deleteShipRequirement(operationId: string, requirementId: string): void {
-    this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.notify('success', 'Besoin de vaisseau supprimé.'); this.requirementRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Suppression du besoin impossible.') });
+  deleteShipRequirement(operationId: string, requirement: FleetRequirement): void {
+    if (!confirm('Supprimer ce besoin ? Les vaisseaux proposés pour lui restent proposés, sans besoin lié.')) return;
+    this.fleetAction(this.eventService.deleteOperationShipRequirement(operationId, requirement.id), 'Besoin de vaisseau supprimé.', 'Suppression du besoin impossible.', () => { if (this.editingRequirementId === requirement.id) this.cancelShipRequirementEdit(); });
   }
   markShipUnavailable(operationId: string, proposalId: string): void {
-    this.eventService.markOperationShipProposalUnavailable(operationId, proposalId).subscribe({
-      next: () => { this.notify('success', 'Proposition marquée indisponible.'); this.shipRefresh.next(); },
-      error: error => this.notify('error', error?.error?.message || 'Impossible de marquer la proposition indisponible.')
-    });
+    this.fleetAction(this.eventService.markOperationShipProposalUnavailable(operationId, proposalId), 'Vaisseau marqué indisponible.', 'Impossible de marquer ce vaisseau indisponible.');
   }
   setShipPilot(operationId: string, proposalId: string, pilotUserId: string | null): void {
-    this.eventService.setOperationShipPilot(operationId, proposalId, pilotUserId).subscribe({
-      next: () => { this.notify('success', pilotUserId ? 'Pilote affecté séparément du propriétaire.' : 'Pilote retiré.'); this.shipRefresh.next(); },
-      error: error => this.notify('error', error?.error?.message || 'Impossible de modifier le pilote.')
-    });
+    this.fleetAction(this.eventService.setOperationShipPilot(operationId, proposalId, pilotUserId), pilotUserId ? 'Pilote désigné.' : 'Pilote retiré.', 'Impossible de modifier le pilote.');
   }
 }

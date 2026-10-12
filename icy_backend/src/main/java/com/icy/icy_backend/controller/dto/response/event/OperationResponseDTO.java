@@ -17,6 +17,8 @@ public class OperationResponseDTO {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private boolean finished;
+    /** Heure de fin atteinte (horloge du serveur) : l'organisation n'est plus modifiable. */
+    private boolean locked;
     private String briefing;
     private String objectives;
     private String meetingPoint;
@@ -34,6 +36,7 @@ public class OperationResponseDTO {
         this.startDateTime = event.getStartDateTime();
         this.endDateTime = event.getEndDateTime();
         this.finished = event.isFinished();
+        this.locked = com.icy.icy_backend.service.operation.OperationLock.isClosed(event, operation);
         this.briefing = operation.getBriefing();
         this.objectives = operation.getObjectives();
         this.meetingPoint = operation.getMeetingPoint();
