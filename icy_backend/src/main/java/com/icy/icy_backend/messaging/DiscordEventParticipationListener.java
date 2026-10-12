@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class DiscordEventParticipationListener {
      * Écoute les participations envoyées par le bot Discord.
      */
     @RabbitListener(queues = "events.participation.queue")
+    @Transactional
     public void handleParticipation(@Payload Map<String, Object> payload) {
         log.info("🎯 Participation reçue : {}", payload);
 
