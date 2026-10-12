@@ -121,6 +121,8 @@ where o.publication_status <> 'PUBLISHED' and e.discord_message_id is not null
 order by e.created_at;
 ```
 
+Requêtes mal formées : un identifiant qui n'est pas un UUID, un paramètre manquant ou un corps illisible renvoyaient un 500 générique sur toute l'API. Ils renvoient maintenant un 400 avec un message (« Paramètre « userId » invalide. »), sans recopier la valeur reçue. Vérifié sur 5 appels, 0 erreur serveur journalisée ; test ajouté dans `GlobalExceptionHandlerSecurityTest` (4 tests, 0 échec). Backend : 315 tests, 0 échec, 3 ignorés.
+
 ## Captures
 
 `brouillons-liste.jpg`, `brouillons-liste-mobile.jpg`, `editeur-desktop.jpg`, `editeur-mobile.jpg`, `editeur-erreur.jpg`, `editeur-conflit.jpg`, `editeur-conflit-mobile.jpg`. Les trois captures desktop de l'éditeur montrent encore « · Brouillon » dans le surtitre, retiré ensuite ; `editeur-mobile.jpg` montre l'en-tête final.
