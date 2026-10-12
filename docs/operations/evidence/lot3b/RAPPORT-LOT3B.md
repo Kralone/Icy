@@ -62,12 +62,32 @@ Mineurs corrigés : demande de transfert annulée par une affectation sans effet
 
 `desktop-coordination-demande-et-sans-affectation.jpg`, `desktop-coordination-groupes.jpg`, `desktop-fiche-responsable-delegue.jpg`, `mobile-coordination.jpg`. Prises avant les corrections de la revue : la mention « ★ nom » est devenue « Responsable : nom ».
 
+## Réception conditionnelle : comptes désactivés
+
+Le serveur refuse toute nouvelle affectation d'un compte désactivé, même s'il est resté inscrit Présent : affectation par lui-même, demande, approbation d'une demande, affectation ou transfert par un organisateur ou un responsable. Les affectations existantes ne sont pas supprimées ; le membre s'affiche « Compte désactivé » et peut être retiré.
+
+| Vérification sur la pile dev | Résultat observé |
+|---|---|
+| Affecter un compte désactivé inscrit Présent | 400 « Ce compte est désactivé : il ne peut pas recevoir d'affectation. » |
+| Transférer un compte désactivé déjà affecté | 400, même message ; il reste dans son groupe |
+| Approuver sa demande restée en attente | 400, même message ; le refus répond 200 |
+| Affectation historique | Conservée, affichée « Compte désactivé », retirable par l'organisateur (200) |
+| Affecter un compte actif | 200 |
+| Événement classique : création, participation, liste, calendrier, report, suppression | 201 puis 200 |
+| Backend, build Docker | 330 tests, 0 échec, 3 ignorés |
+
+Courte revue indépendante : aucun bloquant. Ses deux constats importants portaient sur l'absence d'exécution de la requête ; les appels ci-dessus y répondent. Restent ouverts :
+
+- La requête n'a pas de test d'intégration automatisé, seulement un test unitaire bouchonné et les appels réels.
+- Une demande en attente d'un compte désactivé ne se ferme que par un refus manuel.
+- Un responsable délégué qui connaît l'identifiant d'un participant peut apprendre que son compte est désactivé.
+- La désignation d'un compte désactivé comme responsable de groupe n'a pas été examinée.
+
 ## Anomalies et risques ouverts
 
-- Un compte désactivé resté inscrit Présent peut encore être affecté par l'API ; il s'afficherait « Membre ».
-- Aucune règle sur une opération terminée : les affectations y restent modifiables.
+- Aucune règle sur une opération terminée : aucun contrôle serveur, les affectations y restent modifiables ; seul le panneau de présence est désactivé à l'écran. Règle à décider.
 - Un refus d'accès répond 401 au lieu de 403 (comportement général de l'application).
 - Le participant ne peut pas encore quitter son groupe ni annuler sa demande lui-même, et ne voit pas la composition : prévu au 3D.
 - Le tableau garde ses trois compteurs en tête, qui répètent en partie les blocs du dessous.
 - Après une action, le focus clavier n'est pas replacé sur le membre concerné.
-- Données de test dans la base dev : 8 comptes fictifs (`discord_id` commençant par `lot3b-test-`, mot de passe inutilisable, 7 actifs) inscrits à « Escorte Nyx ». Suppression : `delete from core.users where discord_id like 'lot3b-test-%';`
+- Données de test dans la base dev : 8 comptes fictifs (`discord_id` commençant par `lot3b-test-`, mot de passe inutilisable, 7 actifs, 1 désactivé) inscrits à « Escorte Nyx ». Suppression : `delete from core.users where discord_id like 'lot3b-test-%';`
