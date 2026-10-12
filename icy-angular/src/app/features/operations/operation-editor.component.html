@@ -9,13 +9,9 @@
     <header>
       <div class="editor-topline">
         <a routerLink="/icy/events">← Calendrier</a>
-        <div class="save-indicator" [attr.data-status]="autosave.status">
-          <span class="save-indicator__state"><span class="save-indicator__dot" aria-hidden="true"></span>{{ saveStatusLabel }}@if (autosave.status === 'saved' && autosave.savedAt) { <span class="save-indicator__time">· {{ autosave.savedAt | date:"d MMM, HH'h'mm" }}</span> }</span>
-          @if (autosave.status === 'error') { <span class="save-indicator__detail"><span role="alert">{{ autosave.errorMessage }}</span> <button type="button" (click)="retrySave()">Réessayer</button></span> }
-          @if (autosave.status === 'conflict') { <span class="save-indicator__detail"><span role="alert">{{ autosave.errorMessage }}</span> <button type="button" (click)="reloadFromServer()">Charger la version du serveur</button> <button type="button" (click)="keepLocalVersion()">Garder ma version</button></span> }
-        </div>
+        @if (saving) { <span class="save-activity" aria-hidden="true"></span> }
       </div>
-      <p class="eyebrow">Éditeur d’opération · {{ publicationLabel(operation.publicationStatus) }}</p><h1>{{ operation.title }}</h1>
+      <p class="eyebrow">Éditeur d’opération</p><h1>{{ operation.title }}</h1>
     </header>
     <nav class="tabs" aria-label="Sections de l’éditeur">
       @for (item of [['briefing','Général / briefing'], ['objectifs','Objectifs'], ['organisation','Organisation'], ['permissions','Inscriptions et permissions'], ['publication','Aperçu / publication']]; track item[0]) {
@@ -80,10 +76,19 @@
       @if (tab !== 'publication') {
         <div class="save-row">
           <button type="button" class="primary" [disabled]="saving || !autosave.hasUnsavedChanges || autosave.status === 'conflict'" (click)="save()">{{ saving ? 'Enregistrement…' : (operation.publicationStatus === 'PUBLISHED' ? 'Enregistrer les modifications' : 'Enregistrer maintenant') }}</button>
-          <span class="save-row__state" [attr.data-status]="autosave.status" aria-hidden="true">{{ saveStatusLabel }}@if (operation.publicationStatus !== 'PUBLISHED' && autosave.status === 'saved') { · le brouillon s’enregistre automatiquement }</span>
         </div>
       }
     </section>
+      @if (autosave.status === 'error' || autosave.status === 'conflict') {
+        <aside class="save-alert" [attr.data-status]="autosave.status">
+          <p class="save-alert__label" role="alert"><span class="save-alert__icon" aria-hidden="true">!</span>{{ autosave.status === 'error' ? 'Modifications non enregistrées' : 'Modifié ailleurs : non enregistré' }}</p>
+          <div class="save-alert__actions">
+            @if (autosave.status === 'error') { <button type="button" class="save-alert__main" (click)="retrySave()">Réessayer</button> }
+            @else { <button type="button" class="save-alert__main" (click)="keepLocalVersion()">Garder ma version</button><button type="button" (click)="reloadFromServer()">Charger la version du serveur</button> }
+          </div>
+          <details><summary>Détails</summary><p>{{ autosave.errorMessage }}</p></details>
+        </aside>
+      }
     }
   }
 </main>

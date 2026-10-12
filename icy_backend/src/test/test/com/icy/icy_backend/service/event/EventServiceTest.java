@@ -5,6 +5,10 @@ import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Operation;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.EventRepository;
@@ -17,6 +21,7 @@ import com.icy.icy_backend.service.notification.NotificationPushService;
 import com.icy.icy_backend.service.user.UserService;
 import com.icy.icy_backend.websocket.EventWebSocketService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -285,6 +290,133 @@ class EventServiceTest {
 
         verify(participationRepository).save(any(EventParticipation.class));
         verify(eventPublisher).publishEventUpdated(event);
+    }
+
+    /** Lot 2 : une opération en brouillon n'existe pas pour les membres. */
+    private static final class DraftFixture {
+        final EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        final MessageService messageService = Mockito.mock(MessageService.class);
+        final EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
+        final EventParticipationRepository participationRepository = Mockito.mock(EventParticipationRepository.class);
+        final UserService userService = Mockito.mock(UserService.class);
+        final EventPublisher eventPublisher = Mockito.mock(EventPublisher.class);
+        final NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        final OperationRepository operationRepository = Mockito.mock(OperationRepository.class);
+        final EventService service = new EventService(eventRepository, messageService, eventWebSocketService,
+                Mockito.mock(EventTypeRepository.class), participationRepository, userService, Mockito.mock(AuthService.class), eventPublisher, notificationPushService);
+        final Event classic = event("Classique", ActivityType.EVENT);
+        final Event draft = event("Brouillon", ActivityType.OPERATION);
+        final Event published = event("Publiée", ActivityType.OPERATION);
+
+        DraftFixture() {
+            service.setOperationRepository(operationRepository);
+            when(operationRepository.findEventIdsByPublicationStatus(Operation.PublicationStatus.PUBLISHED)).thenReturn(List.of(published.getId()));
+            when(operationRepository.findById(draft.getId())).thenReturn(Optional.of(Operation.builder().eventId(draft.getId()).build()));
+            when(operationRepository.findById(published.getId())).thenReturn(Optional.of(Operation.builder().eventId(published.getId()).publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+            for (Event event : List.of(classic, draft, published)) when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+        }
+
+        private static Event event(String title, ActivityType activityType) {
+            Event event = new Event();
+            event.setId(UUID.randomUUID());
+            event.setTitle(title);
+            event.setActivityType(activityType);
+            event.setStartDateTime(LocalDateTime.now().plusDays(1));
+            event.setEndDateTime(LocalDateTime.now().plusDays(1).plusHours(2));
+            return event;
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> titlesSentAs(String messageKey) {
+            ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+            verify(messageService).buildResponse(eq(messageKey), captor.capture());
+            return ((List<EventResponseDTO>) captor.getValue()).stream().map(EventResponseDTO::getTitle).toList();
+        }
+    }
+
+    @Test
+    void memberListsLeaveOutDraftOperationsButKeepClassicEventsAndPublishedOperations() {
+        DraftFixture fixture = new DraftFixture();
+        List<Event> all = List.of(fixture.classic, fixture.draft, fixture.published);
+        when(fixture.eventRepository.findByStartDateTimeAfterOrderByStartDateTimeAsc(any())).thenReturn(all);
+        when(fixture.eventRepository.findAll()).thenReturn(all);
+        when(fixture.eventRepository.findTop3ByFinishedTrueOrderByEndDateTimeDesc()).thenReturn(all);
+        when(fixture.eventRepository.findByStartDateTimeBetweenOrderByStartDateTimeAsc(any(), any())).thenReturn(all);
+
+        fixture.service.getUpcomingEvents();
+        assertThat(fixture.titlesSentAs("event.upcoming")).containsExactly("Classique", "Publiée");
+        assertThat(fixture.service.getAllEventsAsMap()).extracting(EventResponseDTO::getTitle).containsExactly("Classique", "Publiée");
+        assertThat(fixture.service.getEventsBetween(java.time.LocalDate.now(), java.time.LocalDate.now().plusDays(7)))
+                .extracting(Event::getTitle).containsExactly("Classique", "Publiée");
+    }
+
+    @Test
+    void draftsAreListedOnlyForAnOrganizerWhoAsksForThem() {
+        DraftFixture fixture = new DraftFixture();
+        when(fixture.eventRepository.findAll()).thenReturn(List.of(fixture.classic, fixture.draft, fixture.published));
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::isAdmin).thenReturn(false);
+            mockedAuth.when(() -> AuthUtils.hasRole("OFFICIER")).thenReturn(false);
+            fixture.service.getAllEvents(true);
+            assertThat(fixture.titlesSentAs("event.list")).containsExactly("Classique", "Publiée");
+        }
+
+        DraftFixture organizer = new DraftFixture();
+        when(organizer.eventRepository.findAll()).thenReturn(List.of(organizer.classic, organizer.draft, organizer.published));
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::isAdmin).thenReturn(false);
+            mockedAuth.when(() -> AuthUtils.hasRole("OFFICIER")).thenReturn(true);
+            organizer.service.getAllEvents(true);
+            assertThat(organizer.titlesSentAs("event.list")).containsExactly("Classique", "Brouillon", "Publiée");
+        }
+    }
+
+    @Test
+    void aMemberCannotReadOrAnswerADraftOperationByItsIdentifier() {
+        DraftFixture fixture = new DraftFixture();
+        UUID userId = UUID.randomUUID();
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(userId);
+            mockedAuth.when(AuthUtils::isAdmin).thenReturn(false);
+            mockedAuth.when(() -> AuthUtils.hasRole("OFFICIER")).thenReturn(false);
+
+            assertThatThrownBy(() -> fixture.service.getEventParticipations(fixture.draft.getId()))
+                    .isInstanceOf(ResourceNotFoundException.class);
+            assertThatThrownBy(() -> fixture.service.setParticipation(fixture.draft.getId(), 1))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        Mockito.verifyNoInteractions(fixture.participationRepository, fixture.eventPublisher);
+    }
+
+    @Test
+    void aDraftOperationIsNotAnnouncedWhenCreatedUpdatedOrDeleted() {
+        DraftFixture fixture = new DraftFixture();
+        UUID userId = UUID.randomUUID();
+        when(fixture.eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(fixture.participationRepository.findAllByEvent(any())).thenReturn(Optional.of(List.of()));
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(userId);
+            fixture.service.createEvent("Type", "Brouillon", "", LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(1), false);
+        }
+        fixture.service.updateEvent(fixture.draft.getId(), "Type", "Brouillon modifié", "", LocalDateTime.now().plusDays(2), LocalDateTime.now().plusDays(2).plusHours(1), false);
+        fixture.service.deleteEvent(fixture.draft.getId());
+
+        Mockito.verifyNoInteractions(fixture.eventWebSocketService, fixture.eventPublisher, fixture.notificationPushService);
+    }
+
+    @Test
+    void publishingAnOperationAnnouncesItLikeANewEvent() {
+        DraftFixture fixture = new DraftFixture();
+
+        fixture.service.announcePublishedOperation(fixture.published.getId());
+
+        verify(fixture.eventWebSocketService).sendEventUpdate(fixture.published, "ADD");
+        verify(fixture.eventPublisher).publishEventCreated(fixture.published);
+        verify(fixture.notificationPushService).sendBroadcast(any(), any(), any(), Mockito.anyInt());
     }
 
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {

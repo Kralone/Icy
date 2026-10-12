@@ -13,6 +13,9 @@ import java.util.UUID;
 public interface OperationRepository extends CrudRepository<Operation, UUID> {
     List<Operation> findByPublicationStatusOrderByUpdatedAtDesc(Operation.PublicationStatus publicationStatus);
 
+    @Query("select o.eventId from Operation o where o.publicationStatus = :status")
+    List<UUID> findEventIdsByPublicationStatus(@Param("status") Operation.PublicationStatus status);
+
     /** Date de dernière modification pour les groupes et besoins, sans avancer la révision : l'éditeur ouvert ne doit pas y voir un conflit. */
     @Modifying
     @Query("update Operation o set o.updatedAt = :at where o.eventId = :eventId")

@@ -18,6 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.icy.icy_backend.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,6 +35,12 @@ public class OperationService {
     private final MessageService messageService;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
+    private EventService eventService;
+
+    @Autowired
+    public void setEventService(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
@@ -96,12 +106,32 @@ public class OperationService {
         Event event = findOperationEvent(eventId);
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        boolean becomesVisible = operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED;
         operation.setPublicationStatus(Operation.PublicationStatus.PUBLISHED);
         operation.setUpdatedAt(LocalDateTime.now());
         Operation saved = operationRepository.save(operation);
         // Même raison que pour update : l'éditeur poursuit à partir de la révision renvoyée.
         entityManager.flush();
+        if (becomesVisible) announceAfterCommit(eventId);
         return messageService.buildResponse("operation.published", new OperationResponseDTO(event, saved));
+    }
+
+    /**
+     * C'est la publication qui rend l'opération visible : calendrier en direct, Discord et notification partent ici,
+     * une seule fois (le verrou optimiste refuse une seconde publication concurrente) et seulement si la transaction est validée.
+     */
+    private void announceAfterCommit(UUID eventId) {
+        if (eventService == null) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventService.announcePublishedOperation(eventId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventService.announcePublishedOperation(eventId);
+            }
+        });
     }
 
     private Event findOperationEvent(UUID id) {

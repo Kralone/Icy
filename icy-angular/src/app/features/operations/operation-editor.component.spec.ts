@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { OperationEditorComponent } from './operation-editor.component';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService } from '../../core/services/catalog/catalog.service';
@@ -45,17 +45,17 @@ describe('OperationEditorComponent', () => {
     fixture.detectChanges();
 
     expect(component.saveError).toBe(true);
-    expect(fixture.nativeElement.querySelector('.save-indicator__state').textContent).toContain('Non enregistré');
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Serveur injoignable');
+    const alert: HTMLElement = fixture.nativeElement.querySelector('.save-alert');
+    expect(alert.querySelector('[role="alert"]')?.textContent).toContain('Modifications non enregistrées');
+    expect(alert.querySelector('details')?.textContent).toContain('Serveur injoignable');
     expect(component.form.briefing).toBe('À conserver');
-    expect(component.canLeave).toBeDefined();
 
-    fixture.nativeElement.querySelector('.save-indicator__detail button').click();
+    (alert.querySelector('.save-alert__actions button') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(updateOperation).toHaveBeenCalledTimes(2);
     expect(component.saveError).toBe(false);
-    expect(fixture.nativeElement.querySelector('.save-indicator__state').textContent).toContain('Enregistré');
+    expect(fixture.nativeElement.querySelector('.save-alert')).toBeNull();
     expect(updateOperation.mock.calls[0][1].briefing).toBe('À conserver');
     expect(updateOperation.mock.calls[1][1].briefing).toBe('À conserver');
     expect(updateOperation.mock.calls[0][1].expectedRevision).toBe(7);
@@ -69,7 +69,7 @@ describe('OperationEditorComponent', () => {
       textarea.value = 'Première frappe';
       textarea.dispatchEvent(new Event('input'));
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.save-indicator__state').textContent).toContain('Modifications en cours');
+      expect(component.autosave.status).toBe('dirty');
       expect(updateOperation).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(1500);
@@ -77,7 +77,7 @@ describe('OperationEditorComponent', () => {
 
       expect(updateOperation).toHaveBeenCalledTimes(1);
       expect(updateOperation.mock.calls[0][1]).toMatchObject({ briefing: 'Première frappe', expectedRevision: 7 });
-      expect(fixture.nativeElement.querySelector('.save-indicator__state').textContent).toContain('Enregistré');
+      expect(component.autosave.status).toBe('saved');
     } finally {
       vi.useRealTimers();
     }
@@ -96,6 +96,43 @@ describe('OperationEditorComponent', () => {
 
     expect(updateOperation).toHaveBeenCalledTimes(1);
     expect(updateOperation.mock.calls[0][1].meetingPoint).toBe('Area18');
+  });
+
+  it('shows nothing about saving while everything works, and only a small activity mark during a write', () => {
+    const pending = new Subject<{ revision: number }>();
+    updateOperation.mockReset().mockReturnValue(pending);
+    const header: HTMLElement = fixture.nativeElement.querySelector('header');
+    const quiet = header.textContent;
+    expect(fixture.nativeElement.querySelector('.save-activity, .save-alert')).toBeNull();
+
+    component.form.briefing = 'Saisie';
+    component.touch();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.save-activity, .save-alert')).toBeNull();
+
+    component.save();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.save-activity')).not.toBeNull();
+    expect(header.textContent).toBe(quiet);
+
+    pending.next({ revision: 8 });
+    pending.complete();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.save-activity, .save-alert')).toBeNull();
+    expect(header.textContent).toBe(quiet);
+  });
+
+  it('keeps both ways out of a conflict within reach, with the explanation on demand', () => {
+    updateOperation.mockReset().mockReturnValue(throwError(() => ({ status: 409 })));
+    component.form.briefing = 'Ma version';
+    component.save();
+    fixture.detectChanges();
+
+    const alert: HTMLElement = fixture.nativeElement.querySelector('.save-alert');
+    expect(alert.querySelector('[role="alert"]')?.textContent).toContain('Modifié ailleurs');
+    expect(Array.from(alert.querySelectorAll('.save-alert__actions button')).map(button => button.textContent?.trim())).toEqual(['Garder ma version', 'Charger la version du serveur']);
+    expect(alert.querySelector('details')?.hasAttribute('open')).toBe(false);
+    expect(alert.querySelector('details p')?.textContent).toContain('autre organisateur');
   });
 
   it('saves the rest of the draft while the image address is still being typed', () => {
@@ -145,7 +182,8 @@ describe('OperationEditorComponent', () => {
       fixture.detectChanges();
 
       expect(updateOperation).not.toHaveBeenCalled();
-      expect(fixture.nativeElement.querySelector('.save-indicator__state').textContent).toContain('Modifications non enregistrées');
+      expect(component.autosave.status).toBe('dirty');
+      expect(fixture.nativeElement.querySelector('.save-row button').disabled).toBe(false);
     } finally {
       vi.useRealTimers();
     }

@@ -73,9 +73,11 @@ public class OperationAssignmentService {
      */
     @Transactional(readOnly = true)
     public List<OperationAssignmentRequest> visibleRequests(UUID operationId) {
-        operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        if (!organizer && operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) throw new ResourceNotFoundException("Opération introuvable");
         List<OperationAssignmentRequest> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId);
-        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER")) return requests;
+        if (organizer) return requests;
 
         UUID currentUser = AuthUtils.getCurrentUserId();
         List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);

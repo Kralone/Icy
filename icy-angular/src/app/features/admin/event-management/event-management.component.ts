@@ -77,7 +77,7 @@ export class EventManagementComponent implements OnInit {
   // === Charger tous les événements ===
   loadAllEvents() {
     this.isLoadingEvents = true;
-    this.eventService.getAll().subscribe({
+    this.eventService.getAll({ includeDrafts: true }).subscribe({
       next: (response) => {
         // tri : plus récent en premier
         this.events = response.sort(

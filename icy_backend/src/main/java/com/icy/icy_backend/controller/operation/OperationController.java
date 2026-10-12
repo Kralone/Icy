@@ -71,7 +71,8 @@ public class OperationController {
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
         String type = eventService.requireExistingEventTypeName(request.getType());
-        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
+        // Un brouillon n'est annoncé nulle part : ni calendrier, ni Discord, ni notification.
+        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
         OperationUpdateRequest seed = new OperationUpdateRequest();
@@ -213,7 +214,11 @@ public class OperationController {
     @PostMapping("/{id}/convert")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(@PathVariable UUID id) {
-        return operationService.convert(id);
+        boolean wasVisible = eventRepository.findById(id).map(event -> !eventService.isUnpublishedOperation(event)).orElse(false);
+        ResponseEntity<MessageResponse<OperationResponseDTO>> response = operationService.convert(id);
+        // L'événement devient un brouillon : il quitte les calendriers ouverts et Discord jusqu'à sa publication.
+        if (wasVisible) eventRepository.findById(id).filter(eventService::isUnpublishedOperation).ifPresent(eventService::announceWithdrawn);
+        return response;
     }
 
     @PutMapping("/{id}")

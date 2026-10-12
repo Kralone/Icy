@@ -77,8 +77,9 @@ export class EventService {
   /**
    * 🔹 Récupère tous les événements
    */
-  getAll(): Observable<EventDTO[]> {
-    return this.http.get<any>(`${this.baseUrl}/all`).pipe(
+  /** `includeDrafts` : réservé à la gestion des événements ; le serveur ne l'honore que pour un organisateur. */
+  getAll(options: { includeDrafts?: boolean } = {}): Observable<EventDTO[]> {
+    return this.http.get<any>(`${this.baseUrl}/all`, options.includeDrafts ? { params: { includeDrafts: true } } : {}).pipe(
       map(res => res.data as EventDTO[])
     );
   }

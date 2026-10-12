@@ -168,24 +168,14 @@ export class OperationEditorComponent implements OnDestroy {
 
   private describeSaveError(error: unknown): string {
     const response = error as { status?: number; error?: { message?: unknown } };
-    if (response?.status === 409) return 'Cette opération a été modifiée ailleurs. Vos saisies ne sont pas enregistrées.';
-    if (response?.status === 0 || response?.status === undefined) return 'Serveur injoignable. Vos saisies sont conservées sur cette page.';
-    return (typeof response.error?.message === 'string' && response.error.message) || 'Enregistrement refusé. Vos saisies sont conservées sur cette page.';
+    if (response?.status === 409) return 'Cette opération a été modifiée depuis un autre onglet ou par un autre organisateur. « Garder ma version » remplace la version du serveur par vos saisies ; « Charger la version du serveur » les abandonne.';
+    if (response?.status === 0 || response?.status === undefined) return 'Serveur injoignable. Vos saisies restent sur cette page ; elles partiront au prochain essai.';
+    return (typeof response.error?.message === 'string' && response.error.message) || 'Enregistrement refusé. Vos saisies restent sur cette page.';
   }
 
   /** À appeler à chaque modification du formulaire. */
   touch(): void {
     if (this.operationId) this.autosave.update(this.payload());
-  }
-
-  get saveStatusLabel(): string {
-    switch (this.autosave.status) {
-      case 'dirty': return this.autosave.auto ? 'Modifications en cours…' : 'Modifications non enregistrées';
-      case 'saving': return 'Enregistrement…';
-      case 'error': return 'Non enregistré';
-      case 'conflict': return 'Modifié ailleurs';
-      default: return 'Enregistré';
-    }
   }
 
   /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */

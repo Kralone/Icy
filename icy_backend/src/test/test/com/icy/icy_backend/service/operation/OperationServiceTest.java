@@ -180,10 +180,16 @@ class OperationServiceTest {
         when(operations.findById(operationId)).thenReturn(Optional.of(operation));
         when(operations.save(operation)).thenReturn(operation);
 
+        com.icy.icy_backend.service.event.EventService eventService = Mockito.mock(com.icy.icy_backend.service.event.EventService.class);
+        service.setEventService(eventService);
+
+        service.publish(operationId);
         service.publish(operationId);
 
+        // Annoncée une seule fois : la seconde publication ne change rien de visible.
+        verify(eventService, Mockito.times(1)).announcePublishedOperation(operationId);
         assertThat(operation.getPublicationStatus()).isEqualTo(Operation.PublicationStatus.PUBLISHED);
-        Mockito.inOrder(operations, entityManager, messages).verify(entityManager).flush();
-        verify(messages).buildResponse(eq("operation.published"), any());
+        verify(entityManager, Mockito.times(2)).flush();
+        verify(messages, Mockito.times(2)).buildResponse(eq("operation.published"), any());
     }
 }
