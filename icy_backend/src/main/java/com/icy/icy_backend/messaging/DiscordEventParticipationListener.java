@@ -15,6 +15,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
 import java.util.Optional;
@@ -77,8 +79,19 @@ public class DiscordEventParticipationListener {
 
             log.info("✅ Participation enregistrée pour {} ({}) : {}", username, userIdStr, status);
 
-            // 🔁 Publier la mise à jour complète de l'événement
-            eventPublisher.publishEventUpdated(event);
+            // Publier uniquement après commit : Discord ne doit pas voir une
+            // participation que la transaction pourrait encore annuler.
+            Runnable publishUpdate = () -> eventPublisher.publishEventUpdated(event);
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        publishUpdate.run();
+                    }
+                });
+            } else {
+                publishUpdate.run();
+            }
 
     }
 }
