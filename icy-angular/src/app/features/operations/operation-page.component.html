@@ -35,6 +35,13 @@
         (statusChange)="setParticipation(operation.id, $event)"
         (retry)="retryParticipations()" />
     </section>
+    @if (coordination; as board) {
+      <section class="operation-coordination" aria-label="Coordination de mes groupes">
+        <h2>{{ board.organizer ? 'Coordination' : 'Coordination de mes groupes' }}</h2>
+        @if (coordinationError) { <p class="operation-coordination__error" role="alert">{{ coordinationError }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
+        <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+      </section>
+    }
     <div class="operation-grid">
       <article class="operation-card operation-card--briefing">
         <p class="eyebrow">Briefing</p>

@@ -49,11 +49,64 @@ public class OperationAssignmentService {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(request.getOperationEventId(), request.getUserId(), 1)) throw new IllegalStateException("Ce membre n’est plus inscrit Présent : la demande ne peut pas être acceptée.");
         ensureCapacity(request.getOperationEventId(), group.getId(), request.getUserId());
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
         request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
         return messageService.buildResponse("operation.assignment.approved", null);
+    }
+
+    /** Organisateur : place ou déplace un membre présent. Responsable : uniquement entre des groupes de sa délégation. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> assignMember(UUID operationId, UUID userId, Long groupId) {
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        operationRepository.findById(operationId)
+                .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        OperationGroup group = groupRepository.findById(groupId).filter(value -> operationId.equals(value.getOperationEventId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        UUID currentUser = AuthUtils.getCurrentUserId();
+        if (!organizer && !hasResponsibleScope(currentUser, group)) {
+            throw new org.springframework.security.access.AccessDeniedException("Groupe hors de votre délégation");
+        }
+        if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) throw new IllegalStateException("Ce membre n’est pas inscrit Présent");
+        java.util.Optional<OperationAssignment> existing = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId);
+        if (existing.isPresent() && groupId.equals(existing.get().getGroupId())) {
+            return messageService.buildResponse("operation.assignment.confirmed", null);
+        }
+        if (!organizer && existing.isPresent()) {
+            OperationGroup source = groupRepository.findById(existing.get().getGroupId()).orElse(null);
+            if (source == null || !hasResponsibleScope(currentUser, source)) {
+                throw new org.springframework.security.access.AccessDeniedException("Ce membre appartient à un groupe hors de votre délégation");
+            }
+        }
+        ensureCapacity(operationId, groupId, userId);
+        OperationAssignment assignment = existing.orElseGet(OperationAssignment::new);
+        assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+        assignmentRepository.save(assignment);
+        requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
+        return messageService.buildResponse("operation.assignment.confirmed", null);
+    }
+
+    /** Retire un membre de son groupe : il reste inscrit Présent et redevient « sans affectation ». */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> removeMember(UUID operationId, UUID userId) {
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        operationRepository.findById(operationId)
+                .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        java.util.Optional<OperationAssignment> found = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId);
+        if (!organizer) {
+            OperationGroup group = found.flatMap(value -> groupRepository.findById(value.getGroupId())).orElse(null);
+            if (group == null || !hasResponsibleScope(AuthUtils.getCurrentUserId(), group)) {
+                throw new org.springframework.security.access.AccessDeniedException("Ce membre appartient à un groupe hors de votre délégation");
+            }
+        }
+        OperationAssignment assignment = found.orElseThrow(() -> new ResourceNotFoundException("Affectation introuvable"));
+        assignmentRepository.delete(assignment);
+        return messageService.buildResponse("operation.assignment.removed", null);
     }
 
     private boolean hasResponsibleScope(UUID userId, OperationGroup target) {
@@ -134,6 +187,12 @@ public class OperationAssignmentService {
         // order. This serializes sibling assignments through their shared
         // parent and prevents two transactions from overshooting its limit.
         ancestors.stream().sorted().forEach(id -> groupRepository.findLockedById(id));
+        // Sous verrou : un sous-groupe créé entre-temps fait de ce groupe un conteneur.
+        if (groupRepository.existsByParentId(leafId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
+        // Sous verrou aussi : si le groupe a changé de parent pendant l'attente, les plafonds lus ne sont plus les bons.
+        OperationGroup leaf = byId.get(leafId);
+        boolean moved = leaf != null && (leaf.getParentId() == null ? groupRepository.existsByIdAndParentIdIsNotNull(leafId) : groupRepository.hasMovedFrom(leafId, leaf.getParentId()));
+        if (moved) throw new IllegalStateException("L’organisation vient d’être modifiée : réessayez.");
         List<OperationAssignment> assignments = assignmentRepository.findByOperationEventId(operationId);
         for (Long groupId : ancestors) {
             OperationGroup group = byId.get(groupId);

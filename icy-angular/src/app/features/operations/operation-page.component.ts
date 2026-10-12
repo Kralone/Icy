@@ -3,12 +3,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, map, of, shareReplay, startWith, Subject, switchMap, timeout } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
+import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 
 interface OperationPageModel {
   id: string;
@@ -34,7 +35,7 @@ type OperationViewState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent],
+  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
   styleUrl: './operation-page.component.css'
@@ -56,8 +57,10 @@ export class OperationPageComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
   readonly groups$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string }> }>(`/api/operations/${params.get('id')}/groups`)),
+    switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string; responsibleUserId?: string }> }>(`/api/operations/${params.get('id')}/groups`)),
     map(response => response.data),
+    // Le tableau de coordination n'est demandé que si un groupe est délégué à l'utilisateur.
+    tap(groups => { const id = this.route.snapshot.paramMap.get('id'); if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
     catchError(() => of([]))
   );
   readonly ships$ = this.shipsRefresh$.pipe(
@@ -90,6 +93,11 @@ export class OperationPageComponent {
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const id = params.get('id');
+      // Une autre opération : le tableau de coordination de la précédente ne doit ni rester ni revenir par une réponse tardive.
+      this.coordinationLoadSeq++;
+      this.coordination = null;
+      this.coordinationError = '';
+      this.coordinationBusy = false;
       if (id) this.loadParticipations(id);
     });
   }
@@ -122,6 +130,48 @@ export class OperationPageComponent {
         this.changeDetector.markForCheck();
       }
     });
+  }
+
+  // --- Coordination déléguée : uniquement les groupes dont l'utilisateur est responsable.
+  coordination: OperationCoordination | null = null;
+  coordinationBusy = false;
+  coordinationError = '';
+  private coordinationLoadSeq = 0;
+
+  loadCoordination(operationId: string): void {
+    const seq = ++this.coordinationLoadSeq;
+    this.eventService.getOperationCoordination(operationId).subscribe({
+      next: coordination => { if (seq !== this.coordinationLoadSeq) return; this.coordination = coordination; this.coordinationError = ''; this.coordinationBusy = false; this.changeDetector.markForCheck(); },
+      // Le dernier tableau lu reste affiché, avec l'erreur et un moyen de relire.
+      error: () => { if (seq !== this.coordinationLoadSeq) return; this.coordinationError = 'La coordination n’a pas pu être relue.'; this.coordinationBusy = false; this.changeDetector.markForCheck(); }
+    });
+  }
+
+  private coordinate(operationId: string, action: Observable<unknown>, success: string, failure: string): void {
+    if (this.coordinationBusy) return;
+    this.coordinationBusy = true;
+    this.changeDetector.markForCheck();
+    action.subscribe({
+      next: () => { this.toast.success(success); this.loadCoordination(operationId); },
+      error: error => {
+        this.toast.error(error?.status === 0 ? 'Serveur injoignable. Rien n’a été modifié.' : ((typeof error?.error?.message === 'string' && error.error.message) || failure));
+        this.loadCoordination(operationId);
+      }
+    });
+  }
+
+  assignMember(operationId: string, userId: string, groupId: number): void {
+    this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
+  }
+
+  removeMember(operationId: string, member: CoordinationMember): void {
+    if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
+    this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
+  }
+
+  decideRequest(operationId: string, requestId: string, approve: boolean): void {
+    const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
+    this.coordinate(operationId, action, approve ? 'Demande acceptée.' : 'Demande refusée.', 'Décision impossible.');
   }
 
   retryParticipations(): void {

@@ -52,6 +52,18 @@ public class OperationGroupService {
         return assigned || requested;
     }
 
+    /** Le plafond d'un parent compte les membres uniques de tous ses sous-groupes : le groupe déplacé doit y tenir. */
+    private void requireRoomInParent(UUID operationId, OperationGroup moved, OperationGroup parent) {
+        if (parent.getCapacity() == null) return;
+        java.util.Set<Long> family = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId).stream()
+                .filter(candidate -> parent.getId().equals(candidate.getParentId()) || moved.getId().equals(candidate.getId()))
+                .map(OperationGroup::getId).collect(java.util.stream.Collectors.toSet());
+        long members = assignmentRepository.findByOperationEventId(operationId).stream()
+                .filter(assignment -> assignment.getStatus() == com.icy.icy_backend.db.entity.event.OperationAssignment.Status.CONFIRMED && family.contains(assignment.getGroupId()))
+                .map(com.icy.icy_backend.db.entity.event.OperationAssignment::getUserId).distinct().count();
+        if (members > parent.getCapacity()) throw new IllegalStateException("Le groupe de destination n’a pas assez de places pour les membres de ce groupe.");
+    }
+
     /** Un groupe qui reçoit des sous-groupes devient un conteneur : il ne peut plus porter d'affectation directe. */
     private void requireEmptyParent(UUID operationId, OperationGroup parent) {
         if (isOccupied(operationId, parent.getId())) {
@@ -70,6 +82,8 @@ public class OperationGroupService {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId())) throw new IllegalArgumentException("Le groupe parent appartient à une autre opération");
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
+            // Même verrou que les affectations : une affectation en cours sur ce parent se termine avant le contrôle, ou attend la création.
+            groupRepository.findLockedById(parent.getId());
             requireEmptyParent(operationId, parent);
         }
         OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).responsibleUserId(request.getResponsibleUserId()).build();
@@ -91,7 +105,14 @@ public class OperationGroupService {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId()) || groupId.equals(parent.getId()) || parent.getParentId() != null) throw new IllegalArgumentException("Groupe parent invalide");
             if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Deux niveaux de groupes maximum : ce groupe a déjà des sous-groupes");
-            if (!request.getParentId().equals(group.getParentId())) requireEmptyParent(operationId, parent);
+            if (!request.getParentId().equals(group.getParentId())) {
+                // Les deux groupes sont verrouillés dans un ordre stable, puis les contrôles sont refaits : une création de
+                // sous-groupe ou une affectation en cours sur l'un d'eux se termine avant, ou attend la fin du déplacement.
+                java.util.stream.Stream.of(groupId, parent.getId()).sorted().forEach(groupRepository::findLockedById);
+                if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Deux niveaux de groupes maximum : ce groupe a déjà des sous-groupes");
+                requireEmptyParent(operationId, parent);
+                requireRoomInParent(operationId, group, parent);
+            }
         }
         group.setName(request.getName().trim()); group.setDescription(request.getDescription()); group.setCapacity(request.getCapacity());
         group.setParentId(request.getParentId()); group.setAssignmentMode(request.getAssignmentMode()); group.setSortOrder(request.getSortOrder());

@@ -331,8 +331,10 @@ class OperationAssignmentServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 new UserAuthDetails(UUID.randomUUID(), "admin", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
 
+        var participation = mock(EventParticipationRepository.class);
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
         var service = new OperationAssignmentService(operations, groups, assignments, mock(EventRepository.class),
-                mock(EventParticipationRepository.class), mock(MessageService.class), requests);
+                participation, mock(MessageService.class), requests);
         service.decide(requestId, true);
 
         assertThat(current.getGroupId()).isEqualTo(2L);

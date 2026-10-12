@@ -13,9 +13,12 @@ describe('OperationEditorComponent', () => {
   let updateOperation: ReturnType<typeof vi.fn>;
   let createOperationGroup: ReturnType<typeof vi.fn>;
   let organizationGroups: any[];
+  let assignOperationMember: ReturnType<typeof vi.fn>;
+  const coordinationData = { organizer: true, present: [{ userId: 'u1', username: 'Mira' }], maybe: [], unavailable: [], unassigned: [{ userId: 'u1', username: 'Mira' }], requests: [], groups: [{ id: 3, parentId: null, name: 'Escadrille', capacity: 4, effectiveMode: 'MANAGED', container: false, memberCount: 0, freeSeats: 4, ownFreeSeats: 4, responsibleUsername: null, manageable: true, members: [] }] };
 
   beforeEach(async () => {
     organizationGroups = [];
+    assignOperationMember = vi.fn(() => of({}));
     createOperationGroup = vi.fn(() => of({ data: { id: 5 } }));
     updateOperation = vi.fn()
       .mockReturnValueOnce(throwError(() => new Error('network')))
@@ -30,6 +33,11 @@ describe('OperationEditorComponent', () => {
           getOperationGroupsForEdit: vi.fn(() => of({ data: [] })),
           getOperationOrganization: vi.fn(() => of({ defaultAssignmentMode: 'FREE', groups: [...organizationGroups] })),
           createOperationGroup,
+          getOperationCoordination: vi.fn(() => of(coordinationData)),
+          assignOperationMember,
+          removeOperationMember: vi.fn(() => of({})),
+          approveOperationAssignment: vi.fn(() => of({})),
+          refuseOperationAssignment: vi.fn(() => of({})),
           getOperationShipRequirements: vi.fn(() => of({ data: [] })),
           getOperationShips: vi.fn(() => of({ data: [] })),
           getOperationAssignmentRequests: vi.fn(() => of({ data: [] })),
@@ -207,6 +215,21 @@ describe('OperationEditorComponent', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('lets the organizer place an unassigned member from the coordination board, then reads the result back', () => {
+    component.selectTab('permissions');
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const board: HTMLElement = fixture.nativeElement.querySelector('app-operation-coordination-board');
+    expect(board.textContent).toContain('Sans affectation');
+
+    (board.querySelector('.person--unassigned .place') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (board.querySelector('.picker button') as HTMLButtonElement).click();
+
+    expect(assignOperationMember).toHaveBeenCalledWith('op', 'u1', 3);
+    expect(TestBed.inject(EventService).getOperationCoordination).toHaveBeenCalledTimes(2);
   });
 
   it('does not autosave an operation that is already published', () => {

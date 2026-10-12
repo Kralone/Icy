@@ -66,6 +66,7 @@ public class OperationController {
     private final UserRepository userRepository;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
+    private final com.icy.icy_backend.service.operation.OperationCoordinationService coordinationService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -202,6 +203,25 @@ public class OperationController {
         List<OperationGroupResponseDTO> groups = operationGroupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(id)
                 .stream().map(OperationGroupResponseDTO::new).toList();
         return messageService.buildResponse("operation.groups", groups);
+    }
+
+    /** Les droits fins (organisateur, responsable délégué, brouillon) sont contrôlés dans les services. */
+    @GetMapping("/{id}/coordination")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCoordinationDTO>> coordination(@PathVariable UUID id) {
+        return messageService.buildResponse("operation.coordination", coordinationService.coordination(id));
+    }
+
+    @PutMapping("/{id}/assignments/members/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> assignMember(@PathVariable UUID id, @PathVariable UUID userId, @RequestParam Long groupId) {
+        return assignmentService.assignMember(id, userId, groupId);
+    }
+
+    @DeleteMapping("/{id}/assignments/members/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> removeMember(@PathVariable UUID id, @PathVariable UUID userId) {
+        return assignmentService.removeMember(id, userId);
     }
 
     @GetMapping("/{id}/organization")

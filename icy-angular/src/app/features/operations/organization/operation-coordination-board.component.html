@@ -1,0 +1,124 @@
+<section class="board" aria-label="Coordination des participants">
+  <dl class="board__figures">
+    <div class="is-present"><dt>Présents</dt><dd>{{ coordination().present.length }}</dd></div>
+    <div [class.is-warning]="coordination().unassigned.length > 0"><dt>Sans affectation</dt><dd>{{ coordination().unassigned.length }}</dd></div>
+    <div [class.is-warning]="coordination().requests.length > 0"><dt>Demandes en attente</dt><dd>{{ coordination().requests.length }}</dd></div>
+  </dl>
+
+  @if (!coordination().present.length) {
+    <p class="board__empty">Personne n’est encore inscrit Présent. Les membres répondent sur la fiche de l’opération, une fois celle-ci publiée.</p>
+  }
+
+  @if (coordination().requests.length) {
+    <section class="board__block" aria-label="Demandes en attente">
+      <h4>Demandes en attente</h4>
+      <ul class="requests">
+        @for (request of coordination().requests; track request.id) {
+          <li class="request">
+            <span class="avatar avatar--pending" aria-hidden="true">{{ request.member.username.charAt(0).toUpperCase() }}</span>
+            <div class="request__body">
+              <strong>{{ request.member.username }}</strong>
+              <span>{{ request.currentGroupName ? 'Transfert de ' + request.currentGroupName + ' vers ' : 'Demande à rejoindre ' }}<b>{{ request.groupName }}</b></span>
+              @if (target(request); as group) { <span class="request__seats" [class.is-full]="seatsFor(group, request.currentGroupId) === 0">{{ occupancy(group) }} · {{ seatsLabel(seatsFor(group, request.currentGroupId)) }}</span> }
+              @if (request.currentGroupName) { <small>Garde sa place actuelle tant que la demande n’est pas acceptée.</small> }
+            </div>
+            <div class="request__actions">
+              <button type="button" class="accept" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: true })">Accepter<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
+              <button type="button" class="refuse" [disabled]="busy()" (click)="decide.emit({ requestId: request.id, approve: false })">Refuser<span class="sr-only"> la demande de {{ request.member.username }}</span></button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (coordination().unassigned.length) {
+    <section class="board__block" aria-label="Participants sans affectation">
+      <h4>Sans affectation</h4>
+      <ul class="people">
+        @for (member of coordination().unassigned; track member.userId) {
+          <li class="person person--unassigned">
+            <span class="avatar avatar--unassigned" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>
+            <strong>{{ member.username }}</strong>
+            @if (destinations().length) {
+              <button type="button" class="place" [disabled]="busy()" [attr.aria-expanded]="placing() === member.userId" (click)="togglePlacing(member.userId)">Affecter<span class="sr-only"> {{ member.username }}</span></button>
+            }
+            @if (placing() === member.userId) { <ng-container *ngTemplateOutlet="picker; context: { $implicit: member, current: null }" /> }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (coordination().groups.length) {
+    <section class="board__block" aria-label="Groupes et membres affectés">
+      <h4>Groupes</h4>
+      <ul class="groups">
+        @for (root of roots(); track root.id) {
+          <li class="group" [class.group--container]="root.container">
+            <ng-container *ngTemplateOutlet="groupCard; context: { $implicit: root }" />
+            @if (root.container) {
+              <ul class="group__children">
+                @for (child of children(root.id); track child.id) { <li class="group group--child"><ng-container *ngTemplateOutlet="groupCard; context: { $implicit: child }" /></li> }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  } @else if (coordination().present.length) {
+    <p class="board__empty">Aucun groupe n’est défini : créez la structure dans l’onglet Organisation pour répartir les participants.</p>
+  }
+
+  @if (coordination().maybe.length || coordination().unavailable.length) {
+    <details class="board__others">
+      <summary>Peut-être ({{ coordination().maybe.length }}) et indisponibles ({{ coordination().unavailable.length }})</summary>
+      <div class="board__others-lists">
+        <p><strong>Peut-être</strong> @for (member of coordination().maybe; track member.userId) { <span class="tag tag--maybe">{{ member.username }}</span> } @empty { <span class="muted">Aucun</span> }</p>
+        <p><strong>Indisponibles</strong> @for (member of coordination().unavailable; track member.userId) { <span class="tag tag--refused">{{ member.username }}</span> } @empty { <span class="muted">Aucun</span> }</p>
+        <small>Seuls les membres inscrits Présent peuvent recevoir une affectation.</small>
+      </div>
+    </details>
+  }
+</section>
+
+<ng-template #groupCard let-group>
+  <div class="group__head">
+    <div>
+      <strong>{{ group.name }}</strong>
+      <span class="group__meta">{{ group.container ? 'Répartit dans ses sous-groupes' : modeLabel(group) }}@if (group.responsibleUsername) { · Responsable : {{ group.responsibleUsername }} }</span>
+    </div>
+    <span class="group__count" [class.is-full]="isFull(group)">{{ occupancy(group) }}@if (!group.container) { <small>{{ seats(group) }}</small> }</span>
+  </div>
+  @if (!group.container) {
+    @if (group.members.length) {
+      <ul class="people">
+        @for (member of group.members; track member.userId) {
+          <li class="person">
+            <span class="avatar" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>
+            <strong>{{ member.username }}</strong>
+            @if (group.manageable) {
+              <button type="button" class="place" [disabled]="busy()" [attr.aria-expanded]="placing() === member.userId" (click)="togglePlacing(member.userId)">Déplacer<span class="sr-only"> {{ member.username }}</span></button>
+              <button type="button" class="refuse" [disabled]="busy()" (click)="remove.emit(member)">Retirer<span class="sr-only"> {{ member.username }} de {{ group.name }}</span></button>
+            }
+            @if (placing() === member.userId) { <ng-container *ngTemplateOutlet="picker; context: { $implicit: member, current: group.id }" /> }
+          </li>
+        }
+      </ul>
+    } @else if (group.manageable) {
+      <p class="group__empty">Aucun membre affecté.</p>
+    }
+  }
+</ng-template>
+
+<ng-template #picker let-member let-current="current">
+  <div class="picker" role="group" [attr.aria-label]="'Choisir un groupe pour ' + member.username">
+    @for (destination of otherDestinations(current); track destination.id) {
+      <button type="button" [disabled]="busy() || seatsFor(destination, current) === 0" (click)="choose(member.userId, destination.id)">
+        <span>{{ destination.name }}</span><small>{{ seatsLabel(seatsFor(destination, current)) }}</small>
+      </button>
+    } @empty {
+      <p class="picker__empty">Aucun autre groupe disponible.</p>
+    }
+  </div>
+</ng-template>

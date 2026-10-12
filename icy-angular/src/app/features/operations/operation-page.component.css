@@ -26,3 +26,9 @@ h1 { margin: .6rem 0; font-size: clamp(2.3rem, 6vw, 5.5rem); line-height: .98; c
 @media (max-width: 700px) { .operation-status { align-items: flex-start; flex-direction: column; } .operation-card, .operation-card--briefing { grid-column: 1 / -1; } }
 
 .operation-presence { width: min(1180px, calc(100% - 2rem)); margin: 0 auto 2rem; padding: 0 1.5rem 1.5rem; border: 1px solid #3a586c; border-radius: 1rem; background: #101f2e; color: #e3eff7; }
+
+/* Lot 3B : coordination déléguée à un responsable de groupe */
+.operation-coordination { display: grid; gap: .9rem; width: min(1180px, calc(100% - 2rem)); margin: 0 auto 2rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid rgba(148,163,184,.2); border-radius: 1rem; background: rgba(15,23,42,.72); }
+.operation-coordination h2 { margin: 0; color: #f8fafc; font-size: 1.2rem; }
+.operation-coordination__error { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4; background: #351f2a; }
+.operation-coordination__error button { margin-left: .5rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .2rem .6rem; color: #ffe4e6; background: transparent; }

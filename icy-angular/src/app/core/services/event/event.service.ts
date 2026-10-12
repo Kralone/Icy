@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { WebSocketService } from '../websocket/websocket.service';
 import { EventType } from '../../../model/event-type.model';
 import { OperationOrganization } from '../../../features/operations/organization/operation-organization.model';
+import { OperationCoordination } from '../../../features/operations/organization/operation-coordination-board.component';
 
 export interface EventCreateRequest {
   type: string;
@@ -171,6 +172,9 @@ export class EventService {
   }
   getOperationShips(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/ships`); }
   getOperationOrganization(operationId: string) { return this.http.get<{ data: OperationOrganization }>(`/api/operations/${operationId}/organization`).pipe(map(res => res.data)); }
+  getOperationCoordination(operationId: string) { return this.http.get<{ data: OperationCoordination }>(`/api/operations/${operationId}/coordination`).pipe(map(res => res.data)); }
+  assignOperationMember(operationId: string, userId: string, groupId: number) { return this.http.put(`/api/operations/${operationId}/assignments/members/${userId}`, {}, { params: { groupId } }); }
+  removeOperationMember(operationId: string, userId: string) { return this.http.delete(`/api/operations/${operationId}/assignments/members/${userId}`); }
   getOperationGroupsForEdit(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/groups/edit`); }
   createOperationGroup(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/groups`, payload); }
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }

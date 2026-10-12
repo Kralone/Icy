@@ -13,6 +13,7 @@ import { EffectiveAssignmentMode, GroupSettings, OperationOrganization, Organiza
 import { OperationStructureTreeComponent } from './organization/operation-structure-tree.component';
 import { GroupPanelTab, OperationGroupPanelComponent } from './organization/operation-group-panel.component';
 import { OperationOverviewComponent } from './organization/operation-overview.component';
+import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -35,7 +36,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent],
+  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
@@ -54,6 +55,8 @@ export class OperationEditorComponent implements OnDestroy {
   selectTab(tab: OperationEditorComponent['tab']): void {
     if (tab !== this.tab && !this.mayLeaveGroupSettings()) return;
     this.tab = tab;
+    // Les inscriptions changent sans l'organisateur : la coordination est relue à chaque ouverture.
+    if (tab === 'permissions' && this.operationId) this.loadCoordination(this.operationId);
     // Un brouillon ne garde pas de saisie en attente derrière un onglet.
     if (this.autosave.auto) this.autosave.flush();
   }
@@ -113,12 +116,10 @@ export class OperationEditorComponent implements OnDestroy {
     tap(state => { if (state.kind === 'READY') this.adoptServerState(state.operation); })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
-  private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
   private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
   private readonly shipRefresh = new BehaviorSubject<void>(undefined);
   readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.eventService.getOperationShipRequirements(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.eventService.getOperationShips(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
-  readonly assignmentRequests$ = this.route.paramMap.pipe(switchMap(params => this.assignmentRefresh.pipe(switchMap(() => this.eventService.getOperationAssignmentRequests(params.get('id')!)))), map(response => response.data), catchError(() => of([])));
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
   set groups(value: any[]) { this.groupState.set(value); }
@@ -138,6 +139,49 @@ export class OperationEditorComponent implements OnDestroy {
   readonly organizationError = signal('');
   /** Sur mobile, la fiche du groupe remplace l'arborescence. */
   readonly groupOpenOnMobile = signal(false);
+
+  // --- Coordination : présents, affectations et demandes, relus sur le serveur après chaque action.
+  readonly coordination = signal<OperationCoordination | null>(null);
+  readonly coordinationBusy = signal(false);
+  readonly coordinationError = signal('');
+  private coordinationLoadSeq = 0;
+
+  /** `afterAction` : la lecture qui suit une action, seule autorisée à rendre la main aux boutons. */
+  loadCoordination(operationId: string, afterAction = false): void {
+    const seq = ++this.coordinationLoadSeq;
+    this.eventService.getOperationCoordination(operationId).subscribe({
+      next: coordination => { if (afterAction) this.coordinationBusy.set(false); if (seq !== this.coordinationLoadSeq) return; this.coordination.set(coordination); this.coordinationError.set(''); },
+      error: () => { if (afterAction) this.coordinationBusy.set(false); if (seq !== this.coordinationLoadSeq) return; this.coordinationError.set('La coordination n’a pas pu être chargée.'); }
+    });
+  }
+
+  /** Une action de coordination : l'écran n'annonce le résultat qu'après la réponse du serveur, puis relit les effectifs. */
+  private coordinate(operationId: string, action: import('rxjs').Observable<unknown>, success: string, failure: string): void {
+    if (this.coordinationBusy()) return;
+    this.coordinationBusy.set(true);
+    action.subscribe({
+      next: () => { this.notify('success', success); this.loadCoordination(operationId, true); this.loadOrganization(operationId); },
+      error: error => {
+        this.notify('error', this.organizationErrorMessage(error, failure));
+        // L'état a pu changer entre-temps (place prise, demande déjà traitée) : on relit.
+        this.loadCoordination(operationId, true);
+      }
+    });
+  }
+
+  assignMember(operationId: string, userId: string, groupId: number): void {
+    this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
+  }
+
+  removeMember(operationId: string, member: CoordinationMember): void {
+    if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
+    this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
+  }
+
+  decideRequest(operationId: string, requestId: string, approve: boolean): void {
+    const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
+    this.coordinate(operationId, action, approve ? 'Demande acceptée.' : 'Demande refusée.', 'Décision impossible.');
+  }
 
   /** Réglages d'un groupe saisis mais pas encore enregistrés. */
   readonly groupSettingsDirty = signal(false);
@@ -424,10 +468,6 @@ export class OperationEditorComponent implements OnDestroy {
       next: () => { this.notify('success', 'Groupe supprimé.'); this.groupOpenOnMobile.set(false); this.loadOrganization(operationId, group.parentId ?? null); },
       error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Suppression impossible.')); }
     });
-  }
-  decideAssignment(requestId: string, approve: boolean): void {
-    const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
-    action.subscribe({ next: () => { this.notify('success', approve ? 'Demande approuvée.' : 'Demande refusée.'); this.assignmentRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Décision impossible.') });
   }
   createShipRequirement(operationId: string): void {
     const request = this.editingRequirementId ? this.eventService.updateOperationShipRequirement(operationId, this.editingRequirementId, this.requirementForm) : this.eventService.createOperationShipRequirement(operationId, this.requirementForm);
