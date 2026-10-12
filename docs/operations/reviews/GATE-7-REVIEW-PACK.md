@@ -7,12 +7,13 @@ Flux d’activités, embed opération, trois boutons de participation, lien prof
 ## Preuves à relire
 
 - `evidence/GATE-7-DISCORD-2026-10-11.txt`.
+- `reviews/GATE-7-REVIEW-ADDENDUM-2026-10-12.md`.
 - `icy/messaging/event_handler.py`.
 - `icy/tests/test_event_participation.py`, `test_discord_idempotency.py`, `test_removed_attack_surface.py`.
 
 ## Commandes
 
-Exécuter les tests Python du bot dans l’image de validation ; le runtime Discord réel reste opt-in et nécessite un token/salon configurés.
+Exécuter les tests Python du bot dans l’image de validation, les tests Maven du publisher/listener et la suite Angular Docker ; le runtime Discord réel reste opt-in et nécessite un token/salon configurés.
 
 ## Limites à contrôler
 
