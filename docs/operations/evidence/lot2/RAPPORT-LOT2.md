@@ -58,9 +58,48 @@ Revue du diff par un agent séparé, en lecture seule : aucun bloquant, 5 consta
 | Révision périmée renvoyée par la publication | Corrigé (trouvé aussi en test manuel) |
 | Autres constats mineurs | Voir le suivi ci-dessous |
 
+## Corrections avant validation (2026-10-12)
+
+### Autosauvegarde discrète
+
+| État | Affichage |
+|---|---|
+| Modifications en cours, sauvegarde réussie | Rien : ni badge, ni horodatage, ni toast |
+| Enregistrement en cours | Un petit indicateur d'activité sans texte, à droite de « ← Calendrier » |
+| Erreur | Alerte compacte en bas de l'éditeur : « Modifications non enregistrées », « Réessayer », détails repliés |
+| Conflit | Même alerte : « Modifié ailleurs : non enregistré », « Garder ma version », « Charger la version du serveur », explication dans « Détails » |
+| Départ avec des saisies non enregistrables | Confirmation conservée |
+
+L'alerte ne déplace ni l'en-tête ni le formulaire : elle reste collée en bas de la zone visible. L'indication près du bouton et la mention du statut dans l'en-tête sont retirées. La mécanique de sauvegarde (révisions, 409, une écriture à la fois) n'a pas changé.
+
+### Brouillons invisibles pour les membres
+
+Règle appliquée côté serveur : une opération non publiée n'existe pas pour un membre, ni dans les listes, ni par identifiant, ni en temps réel, ni sur Discord, ni par notification. Les événements classiques ne sont pas concernés.
+
+| Vérification (pile dev, comptes de test) | Résultat |
+|---|---|
+| 1. Création d'un brouillon par un administrateur | 200 |
+| 2. Présent dans la liste des brouillons et dans la gestion des événements de l'administration | oui |
+| 3. Calendrier d'un membre (`/api/events/upcoming`, `/api/events/all`, y compris avec `includeDrafts=true`) | absent |
+| 3 bis. Calendrier d'un administrateur | absent (les brouillons se gèrent depuis l'administration) |
+| 4. Accès direct d'un membre : opération, groupes, vaisseaux, besoins, participations (lecture et écriture), demandes d'affectation | 404, identique à un identifiant inexistant |
+| 4 bis. Édition, liste des brouillons, groupes en édition par un membre ; calendrier par un anonyme | 401 |
+| 4 ter. Site public (`/api/front/recent-events`) | brouillon absent |
+| 5. Après publication | visible dans `/upcoming` et `/all` pour le membre, fiche 200, participation 200 |
+| 5 bis. Deux publications successives | une seule annonce (1 `ADD` WebSocket, 1 `events.created`) dans les journaux |
+| 6. Événement classique | création 201, visible pour le membre, participation 200 |
+
+Autres changements liés : un brouillon n'est plus annoncé à sa création (calendrier en direct, Discord, notification) ; l'annonce part à la publication, après validation de la transaction. Les rappels programmés et le bloc IceLink ignorent les brouillons. Une réponse Discord sur une opération non publiée est ignorée. Un événement classique converti en opération est retiré des calendriers ouverts et de Discord jusqu'à sa publication.
+
+Tests : backend 313 tests, 0 échec, 3 ignorés (`EventServiceTest` 12, `OperationServiceTest` 5) ; front 28 tests ciblés passés (autosauvegarde 11, éditeur 9, gestion des événements 1, calendrier 7).
+
+### Revue indépendante ciblée (visibilité)
+
+Aucun bloquant, aucune fuite de contenu trouvée. Trois constats importants, corrigés et revérifiés : fuite d'existence par `GET /api/operations/{id}/assignment-requests` (200 au lieu de 404), entrée Discord de participation non filtrée, double annonce possible lors de deux publications concurrentes (la transition est maintenant décidée dans la transaction). Les constats mineurs sont dans le suivi.
+
 ## Captures
 
-`brouillons-liste.jpg`, `brouillons-liste-mobile.jpg`, `editeur-enregistre.jpg`, `editeur-erreur-reseau.jpg`, `editeur-conflit.jpg`, `editeur-mobile.jpg`. Les captures de l'éditeur datent d'avant les corrections de la revue (texte du conflit et message d'adresse d'image modifiés depuis).
+`brouillons-liste.jpg`, `brouillons-liste-mobile.jpg`, `editeur-desktop.jpg`, `editeur-mobile.jpg`, `editeur-erreur.jpg`, `editeur-conflit.jpg`, `editeur-conflit-mobile.jpg`. Les trois captures desktop de l'éditeur montrent encore « · Brouillon » dans le surtitre, retiré ensuite ; `editeur-mobile.jpg` montre l'en-tête final.
 
 ## Suivi
 
@@ -73,12 +112,16 @@ Lot 2 :
 - Liste des brouillons sans filtre ni pagination ; les brouillons d'opérations passées y restent.
 - `updatedAt` est converti avec le fuseau de la JVM ; un changement de fuseau du conteneur décalerait les dates affichées.
 - Le verrou optimiste est couvert par des tests à base de mocks et par les tests manuels, pas par un test d'intégration avec base.
-- L'état d'enregistrement est affiché dans l'en-tête et près du bouton, car l'en-tête sort de l'écran sur un long briefing.
 - Titre, type et dates d'une opération ne sont pas modifiables dans l'éditeur (déjà le cas avant le lot).
 
 Constaté pendant le lot, hors périmètre :
 
-- **Le calendrier (`/api/events/upcoming`) liste les opérations en brouillon à tous les membres** (titre, type, dates). Le contenu du brouillon reste protégé. Comportement antérieur au lot 2, non modifié.
+- Brouillons créés avant cette correction : ils ont déjà été annoncés sur Discord à leur création ; leur message n'est pas retiré.
+- `GET /api/user-ships/member?eventId=&userId=` ne contrôle pas le statut de publication : si un organisateur se déclare présent sur un brouillon, un membre connaissant les deux identifiants obtient sa flotte (200 au lieu de 403).
+- Une opération dont la ligne `operations` manquerait serait masquée partout sauf dans la gestion des événements. Aucun cas connu.
+- Site public : un brouillon échu peut occuper une des 3 places des événements récents, la page en affiche alors moins de 3. Aucun contenu ne fuit.
+- Un brouillon déjà échu puis publié est annoncé comme disponible.
+- Si l'annonce de publication échoue (WebSocket, Discord), l'opération reste publiée et l'annonce n'est pas rejouée.
 - Un refus d'accès pour rôle insuffisant renvoie 401 au lieu de 403.
 - `GET /api/operations/{id}/ships` renvoie 404 sur un brouillon ; l'éditeur l'ignore.
 
