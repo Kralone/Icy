@@ -9,6 +9,8 @@ import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
 import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,9 +42,17 @@ class DiscordEventParticipationListenerTest {
         when(users.findByDiscordId("discord-1")).thenReturn(Optional.of(user));
         when(participations.findByEventAndUser(event, user)).thenReturn(Optional.empty());
 
-        listener.handleParticipation(Map.of(
-                "eventId", eventId.toString(), "userId", "discord-1",
-                "username", "pilot", "status", 1));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            listener.handleParticipation(Map.of(
+                    "eventId", eventId.toString(), "userId", "discord-1",
+                    "username", "pilot", "status", 1));
+
+            verify(publisher, never()).publishEventUpdated(any());
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
 
         verify(participations).save(any(EventParticipation.class));
         verify(publisher).publishEventUpdated(event);
