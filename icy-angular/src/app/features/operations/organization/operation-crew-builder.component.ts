@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { catchError, debounceTime, map, of, Subject, switchMap, tap } from 'rxjs';
-import { CatalogEntry, CatalogService } from '../../../core/services/catalog/catalog.service';
+import { catchError, map, of, switchMap } from 'rxjs';
+import { CatalogEntry } from '../../../core/services/catalog/catalog.service';
 import { EventService } from '../../../core/services/event/event.service';
 import { OperationIconComponent } from '../briefing/operation-icon.component';
 import { CrewPreset, POSITION_MODE_LABELS, positionIcon } from './operation-crew.model';
 import { OrganizationGroup, sortedChildren } from './operation-organization.model';
+import { OperationShipPickerComponent } from './operation-ship-picker.component';
 
 type CrewSetup = 'free' | 'custom' | 'preset';
 
@@ -14,13 +15,12 @@ type CrewSetup = 'free' | 'custom' | 'preset';
 @Component({
   selector: 'app-operation-crew-builder',
   standalone: true,
-  imports: [FormsModule, OperationIconComponent],
+  imports: [FormsModule, OperationIconComponent, OperationShipPickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-crew-builder.component.html',
   styleUrl: './operation-crew-builder.component.css'
 })
 export class OperationCrewBuilderComponent {
-  private readonly catalogService = inject(CatalogService);
   private readonly eventService = inject(EventService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -47,14 +47,13 @@ export class OperationCrewBuilderComponent {
   readonly addNeed = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
-  private nameEdited = false;
+  private readonly nameEdited = signal(false);
 
-  readonly query = signal('');
-  readonly results = signal<CatalogEntry[]>([]);
-  readonly searching = signal(false);
-  readonly searched = signal(false);
-  readonly searchError = signal('');
-  private readonly search$ = new Subject<string>();
+  /** Une recherche est saisie dans le sélecteur de vaisseau. */
+  readonly searchTyped = signal(false);
+  /** Vrai dès qu'il y a une saisie à perdre : l'éditeur demande confirmation avant de fermer. */
+  readonly dirty = computed(() => !!this.model() || this.searchTyped() || this.nameEdited());
+  readonly dirtyChange = output<boolean>();
 
   readonly modeLabels = POSITION_MODE_LABELS;
   readonly positionIcon = positionIcon;
@@ -67,36 +66,17 @@ export class OperationCrewBuilderComponent {
 
   constructor() {
     effect(() => this.busyChange.emit(this.saving()));
+    effect(() => this.dirtyChange.emit(this.dirty()));
     effect(() => {
       const initial = this.initialParentId();
       untracked(() => this.parentId.set(initial !== null && this.parents().some(group => group.id === initial) ? initial : null));
     });
-    this.search$.pipe(
-      map(query => query.trim()),
-      tap(query => { this.searchError.set(''); this.searched.set(false); this.searching.set(query.length >= 2); if (query.length < 2) this.results.set([]); }),
-      // Pas de filtre sur les valeurs identiques : « Réessayer » et une même recherche refaite doivent repartir.
-      debounceTime(250),
-      switchMap(query => query.length < 2 ? of(null) : this.catalogService.browse({ query, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 24 }).pipe(
-        map(response => response.data.items),
-        catchError(() => { this.searchError.set('Le catalogue ne peut pas être chargé.'); return of(null); }))),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(items => {
-      this.searching.set(false);
-      if (items) { this.results.set(items); this.searched.set(true); }
-    });
-  }
-
-  search(query: string): void {
-    this.query.set(query);
-    this.search$.next(query);
   }
 
   chooseModel(model: CatalogEntry): void {
     this.model.set(model);
-    this.query.set('');
-    this.results.set([]);
-    this.searched.set(false);
-    if (!this.nameEdited) this.name.set(`Équipage ${model.name}`);
+    this.searchTyped.set(false);
+    if (!this.nameEdited()) this.name.set(`Équipage ${model.name}`);
     this.presetId.set(null);
     if (this.setup() === 'preset') this.setup.set('free');
     this.loadPresets(model.id);
@@ -118,7 +98,7 @@ export class OperationCrewBuilderComponent {
   }
 
   setName(value: string): void {
-    this.nameEdited = true;
+    this.nameEdited.set(true);
     this.name.set(value);
   }
 

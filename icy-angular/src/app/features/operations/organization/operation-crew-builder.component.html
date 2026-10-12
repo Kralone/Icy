@@ -20,23 +20,7 @@
         <button type="button" class="ghost" (click)="changeModel()" [disabled]="saving()">Changer de vaisseau</button>
       </div>
     } @else {
-      <label class="field">Rechercher un vaisseau du catalogue
-        <input type="search" [ngModel]="query()" (ngModelChange)="search($event)" placeholder="Polaris, Carrack, MOLE" autocomplete="off">
-      </label>
-      @if (searchError()) { <p class="builder__error" role="alert">{{ searchError() }} <button type="button" (click)="search(query())">Réessayer</button></p> }
-      @else if (searching()) { <p class="builder__state" role="status">Recherche…</p> }
-      @else if (searched() && !results().length) { <p class="builder__state" role="status">Aucun vaisseau ne correspond à « {{ query() }} ».</p> }
-      @else if (!results().length) { <p class="builder__state">Saisissez au moins deux lettres du nom du vaisseau.</p> }
-      @if (results().length) {
-        <div class="models">
-          @for (candidate of results(); track candidate.id) {
-            <button type="button" class="model" (click)="chooseModel(candidate)">
-              @if (candidate.imageUrl) { <img [src]="candidate.imageUrl" alt="" loading="lazy"> } @else { <span class="model__noimage">Sans image</span> }
-              <span><strong>{{ candidate.name }}</strong>@if (candidate.manufacturer) { <small>{{ candidate.manufacturer }}</small> }</span>
-            </button>
-          }
-        </div>
-      }
+      <app-operation-ship-picker (chosen)="chooseModel($event)" (typed)="searchTyped.set($event)" />
     }
   </div>
 

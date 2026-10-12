@@ -1,3 +1,4 @@
+import { OperationCrew } from '../organization/operation-crew.model';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../../shared/participation-panel/participation-panel.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from '../organization/operation-fleet-cards.component';
@@ -29,6 +30,7 @@ export class OperationPreviewComponent {
   readonly groups = input<OrganizationGroup[]>([]);
   readonly requirements = input<FleetRequirement[]>([]);
   readonly ships = input<FleetShip[]>([]);
+  readonly crews = input<OperationCrew[]>([]);
   /** Réponses déjà données (opération publiée) ; null pour un brouillon, où personne n'a encore pu répondre. */
   readonly participations = input<ParticipationsByStatus | null>(null);
   /** Lecture des réponses d'une opération publiée : tant qu'elle n'a pas abouti, l'aperçu n'affiche pas de listes vides. */

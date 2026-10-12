@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { WebSocketService } from '../websocket/websocket.service';
 import { EventType } from '../../../model/event-type.model';
 import { OperationOrganization } from '../../../features/operations/organization/operation-organization.model';
-import { CrewPreset, OperationCrew, PositionDraft } from '../../../features/operations/organization/operation-crew.model';
+import { CrewPreset, CrewPresetPayload, OperationCrew, PositionDraft } from '../../../features/operations/organization/operation-crew.model';
 import { OperationCoordination } from '../../../features/operations/organization/operation-coordination-board.component';
 
 export interface EventCreateRequest {
@@ -194,6 +194,19 @@ export class EventService {
   updateOperationShipRequirement(operationId: string, requirementId: string, payload: any) { return this.http.put(`/api/operations/${operationId}/ship-requirements/${requirementId}`, payload); }
   getOperationCrews(operationId: string) { return this.http.get<{ data: OperationCrew[] }>(`/api/operations/${operationId}/crews`).pipe(map(res => res.data)); }
   getCrewPresets(shipModelId: number) { return this.http.get<{ data: CrewPreset[] }>('/api/operations/crew-presets', { params: { shipModelId } }).pipe(map(res => res.data)); }
+  /** Bibliothèque complète, presets archivés compris : le serveur ne rend les archivés qu'à un administrateur. */
+  getCrewPresetLibrary() { return this.http.get<{ data: CrewPreset[] }>('/api/operations/crew-presets', { params: { includeArchived: true } }).pipe(map(res => res.data)); }
+  saveCrewPreset(presetId: string | null, payload: CrewPresetPayload) {
+    return (presetId ? this.http.put<{ data: CrewPreset }>(`/api/operations/crew-presets/${presetId}`, payload) : this.http.post<{ data: CrewPreset }>('/api/operations/crew-presets', payload)).pipe(map(res => res.data));
+  }
+  setCrewPresetArchived(presetId: string, archived: boolean) {
+    return archived ? this.http.delete(`/api/operations/crew-presets/${presetId}`) : this.http.post(`/api/operations/crew-presets/${presetId}/restore`, {});
+  }
+  /** Mon propre poste dans mon équipage ; null : je reste dans l'équipage, sans poste. */
+  setMyOperationPosition(operationId: string, positionId: number | null) {
+    const url = `/api/operations/${operationId}/assignments/me/position`;
+    return positionId === null ? this.http.delete(url) : this.http.put(url, {}, { params: { positionId } });
+  }
   addOperationPosition(operationId: string, groupId: number, payload: PositionDraft & { sortOrder: number }) { return this.http.post(`/api/operations/${operationId}/groups/${groupId}/positions`, payload); }
   updateOperationPosition(operationId: string, groupId: number, positionId: number, payload: PositionDraft & { sortOrder: number }) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}/positions/${positionId}`, payload); }
   deleteOperationPosition(operationId: string, groupId: number, positionId: number) { return this.http.delete(`/api/operations/${operationId}/groups/${groupId}/positions/${positionId}`); }

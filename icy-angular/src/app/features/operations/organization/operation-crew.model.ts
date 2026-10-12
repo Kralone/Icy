@@ -1,5 +1,6 @@
 import { OperationIconName } from '../briefing/operation-icon.component';
 import { GroupMember } from '../operation-group.model';
+import type { FleetRequirement } from './operation-fleet-cards.component';
 
 export type PositionMode = 'SELF' | 'MANAGED';
 
@@ -49,6 +50,8 @@ export interface CrewPreset {
 
 export interface PositionDraft { label: string; icon: string | null; capacity: number | null; }
 
+export interface CrewPresetPayload { name: string; description: string | null; shipModelId: number; capacity: number | null; positionMode: PositionMode; positions: PositionDraft[]; }
+
 export const POSITION_MODE_LABELS: Record<PositionMode, string> = {
   SELF: 'Choisis par les membres',
   MANAGED: 'Attribués par les responsables'
@@ -81,6 +84,19 @@ export function isPositionFull(position: Pick<CrewPosition, 'capacity' | 'taken'
 
 export function positionOccupancy(position: Pick<CrewPosition, 'capacity' | 'taken'>): string {
   return position.capacity === null ? `${position.taken} · sans limite` : `${position.taken} / ${position.capacity}`;
+}
+
+export interface CrewShipStatus { tone: 'none' | 'wanted' | 'proposed' | 'confirmed'; text: string; }
+
+/** Besoin en appareil rattaché à l'équipage : ce qui est attendu n'est jamais présenté comme disponible. */
+export function crewShipStatus(crew: OperationCrew, requirements: FleetRequirement[]): CrewShipStatus {
+  const needs = requirements.filter(requirement => requirement.groupId === crew.groupId && requirement.status !== 'CANCELLED'
+    && (requirement.shipModelId === null || crew.shipModelId === null || requirement.shipModelId === crew.shipModelId));
+  const model = crew.shipModelName || 'Appareil';
+  if (!needs.length) return { tone: 'none', text: 'Aucun appareil demandé pour cet équipage' };
+  if (needs.some(need => need.accepted > 0)) return { tone: 'confirmed', text: `${model} confirmé` };
+  if (needs.some(need => need.proposed > 0)) return { tone: 'proposed', text: `${model} proposé, à valider` };
+  return { tone: 'wanted', text: `${model} recherché` };
 }
 
 export function membersAt(crew: OperationCrew, positionId: number | null): CrewMember[] {

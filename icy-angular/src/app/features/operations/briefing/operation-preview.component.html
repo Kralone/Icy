@@ -13,7 +13,7 @@
     <section class="panel panel--organisation" aria-labelledby="operation-preview-organisation">
       <h2 id="operation-preview-organisation"><app-operation-icon name="groups" /> Organisation</h2>
       @if (organizationState() === 'ready') {
-        <app-operation-org-chart [composition]="composition()" [readOnly]="true" [preview]="!locked()" [ships]="ships()" />
+        <app-operation-org-chart [composition]="composition()" [readOnly]="true" [preview]="!locked()" [ships]="ships()" [crews]="crews()" [requirements]="visibleRequirements()" />
       } @else {
         <p class="empty-state" role="status">{{ organizationState() === 'error' ? 'L’organisation n’a pas pu être chargée : voir l’onglet Organisation.' : 'Chargement de l’organisation…' }}</p>
       }

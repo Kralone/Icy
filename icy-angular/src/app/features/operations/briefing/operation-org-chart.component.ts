@@ -1,3 +1,7 @@
+import { OperationCrew } from '../organization/operation-crew.model';
+import { FleetRequirement } from '../organization/operation-fleet-cards.component';
+import { OperationCrewCardComponent } from './operation-crew-card.component';
+import { OperationIconComponent } from './operation-icon.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, input, output, signal } from '@angular/core';
 import { FleetShip } from '../organization/operation-fleet-cards.component';
@@ -13,7 +17,7 @@ const VISIBLE_MEMBERS = 8;
 @Component({
   selector: 'app-operation-org-chart',
   standalone: true,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, OperationIconComponent, OperationCrewCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-org-chart.component.html',
   styleUrl: './operation-org-chart.component.css'
@@ -28,6 +32,20 @@ export class OperationOrgChartComponent {
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
   readonly preview = input(false);
+
+  /** Équipages de vaisseau de l'opération : un groupe absent de cette liste est un groupe ordinaire. */
+  readonly crews = input<OperationCrew[]>([]);
+  /** Besoins en appareils : ils disent si le vaisseau d'un équipage est recherché, proposé ou confirmé. */
+  readonly requirements = input<FleetRequirement[]>([]);
+  private readonly crewByGroup = computed(() => new Map(this.crews().map(crew => [crew.groupId, crew])));
+  crewOf(group: CompositionGroup): OperationCrew | null { return this.crewByGroup().get(group.id) ?? null; }
+  /** Je choisis mon poste seulement dans mon propre équipage, s'il laisse le choix aux membres, tant que l'opération est ouverte. */
+  canChoosePosition(group: CompositionGroup, crew: OperationCrew): boolean {
+    const composition = this.composition();
+    return !this.readOnly() && !this.preview() && composition.present && group.id === composition.myGroupId && crew.positionMode === 'SELF';
+  }
+  /** Poste choisi pour moi dans mon équipage ; null : sans poste. */
+  readonly position = output<number | null>();
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();

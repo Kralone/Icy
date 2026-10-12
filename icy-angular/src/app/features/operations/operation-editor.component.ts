@@ -306,16 +306,32 @@ export class OperationEditorComponent implements OnDestroy {
 
   openCrewBuilder(parentId: number | null): void {
     if (this.organizationBusy() || this.crewBusy() || this.crewsError() || !this.organization()) return;
+    // Déjà ouvert : l'emplacement devient celui qui vient d'être demandé, le reste de la saisie est gardé.
+    if (this.crewBuilderParent() !== undefined) { this.crewBuilderParent.set(parentId); return; }
     this.afterGroupSettings(() => { this.crewBuilderParent.set(parentId); this.groupOpenOnMobile.set(true); });
   }
 
   closeCrewBuilder(): void {
-    this.crewBuilderParent.set(undefined);
-    this.groupOpenOnMobile.set(false);
+    this.afterCrewBuilder(() => this.groupOpenOnMobile.set(false));
+  }
+
+  /** Le constructeur d'équipage contient une saisie qui serait perdue en le fermant. */
+  readonly crewBuilderDirty = signal(false);
+
+  /** Ferme le constructeur d'équipage puis exécute l'action : tout de suite s'il est vide ou fermé, sinon après abandon confirmé. */
+  private afterCrewBuilder(action: () => void): void {
+    const close = () => { this.crewBuilderParent.set(undefined); this.crewBuilderDirty.set(false); action(); };
+    if (this.crewBuilderParent() === undefined || !this.crewBuilderDirty()) { close(); return; }
+    this.confirmService.ask({ title: 'Abandonner la création de l’équipage ?', message: 'Le vaisseau et les réglages choisis ne sont pas enregistrés.', confirmLabel: 'Abandonner la création', cancelLabel: 'Continuer la saisie', danger: true }).then(confirmed => {
+      if (!confirmed) return;
+      close();
+      this.changeDetector.markForCheck();
+    });
   }
 
   onCrewCreated(operationId: string, result: { groupId: number; openPositions: boolean; warning?: string }): void {
     this.crewBuilderParent.set(undefined);
+    this.crewBuilderDirty.set(false);
     this.crewPositionsFor.set(result.openPositions ? result.groupId : null);
     this.groupPanelTab.set('equipage');
     this.groupOpenOnMobile.set(true);
@@ -354,6 +370,8 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Exécute l'action si l'on peut quitter la fiche du groupe : tout de suite s'il n'y a rien à perdre, sinon après abandon confirmé. */
   private afterGroupSettings(action: () => void): void {
+    // Un constructeur d'équipage ouvert passe d'abord : il se ferme, après confirmation s'il contient une saisie.
+    if (this.crewBuilderParent() !== undefined) { this.afterCrewBuilder(() => this.afterGroupSettings(action)); return; }
     if (!this.groupSettingsDirty()) { action(); return; }
     this.confirmService.ask({ title: 'Abandonner les réglages du groupe ?', message: 'Les réglages de ce groupe ne sont pas enregistrés.', confirmLabel: 'Abandonner les réglages', cancelLabel: 'Continuer la saisie', danger: true }).then(confirmed => {
       if (!confirmed) return;
@@ -365,14 +383,15 @@ export class OperationEditorComponent implements OnDestroy {
 
   selectGroup(id: number | null, tab: GroupPanelTab = 'equipage'): void {
     if (this.crewBusy()) return;
-    this.crewBuilderParent.set(undefined);
-    if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
-    this.afterGroupSettings(() => {
-      this.crewPositionsFor.set(null);
-      this.groupPanelTab.set(tab);
-      this.selectedGroupId.set(id);
-      this.groupOpenOnMobile.set(id !== null);
-      if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+    this.afterCrewBuilder(() => {
+      if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
+      this.afterGroupSettings(() => {
+        this.crewPositionsFor.set(null);
+        this.groupPanelTab.set(tab);
+        this.selectedGroupId.set(id);
+        this.groupOpenOnMobile.set(id !== null);
+        if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+      });
     });
   }
 
@@ -394,7 +413,6 @@ export class OperationEditorComponent implements OnDestroy {
   /** Création rapide : le groupe existe tout de suite avec un nom provisoire, ses réglages s'ouvrent pour le nommer. */
   quickAddGroup(operationId: string, parentId: number | null): void {
     if (this.organizationBusy() || this.crewBusy() || !this.organization()) return;
-    this.crewBuilderParent.set(undefined);
     this.afterGroupSettings(() => {
       if (this.organizationBusy()) return;
       const siblings = sortedChildren(this.organizationGroups(), parentId);
@@ -531,7 +549,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */
   private get leavingIsSafe(): boolean {
-    if (this.imageUrlPending || this.groupSettingsDirty()) return false;
+    if (this.imageUrlPending || this.groupSettingsDirty() || (this.crewBuilderParent() !== undefined && this.crewBuilderDirty())) return false;
     if (!this.autosave.hasUnsavedChanges) return true;
     return this.autosave.auto && (this.autosave.status === 'dirty' || this.autosave.status === 'saving');
   }

@@ -7,7 +7,7 @@ import { concat, Observable, toArray } from 'rxjs';
 import { EventService } from '../../../core/services/event/event.service';
 import { OperationIconComponent } from '../briefing/operation-icon.component';
 import { OperationConfirmService } from '../operation-confirm.service';
-import { CrewMember, CrewPosition, CrewPreset, isPositionFull, membersAt, OperationCrew, POSITION_ICONS, POSITION_MODE_HINTS, POSITION_MODE_LABELS, PositionDraft, positionIcon, PositionMode, positionOccupancy } from './operation-crew.model';
+import { CrewMember, CrewPosition, CrewPreset, crewShipStatus, isPositionFull, membersAt, OperationCrew, POSITION_ICONS, POSITION_MODE_HINTS, POSITION_MODE_LABELS, PositionDraft, positionIcon, PositionMode, positionOccupancy } from './operation-crew.model';
 import { FleetRequirement } from './operation-fleet-cards.component';
 import { OrganizationGroup } from './operation-organization.model';
 
@@ -56,16 +56,7 @@ export class OperationCrewPanelComponent {
   readonly unplaced = computed(() => membersAt(this.crew(), null));
 
   /** Besoin en appareil rattaché à cet équipage : ce qui est attendu n'est jamais présenté comme disponible. */
-  readonly shipStatus = computed<{ tone: 'none' | 'wanted' | 'proposed' | 'confirmed'; text: string }>(() => {
-    const crew = this.crew();
-    const needs = this.requirements().filter(requirement => requirement.groupId === crew.groupId && requirement.status !== 'CANCELLED'
-      && (requirement.shipModelId === null || crew.shipModelId === null || requirement.shipModelId === crew.shipModelId));
-    const model = crew.shipModelName || 'Appareil';
-    if (!needs.length) return { tone: 'none', text: 'Aucun appareil demandé pour cet équipage' };
-    if (needs.some(need => need.accepted > 0)) return { tone: 'confirmed', text: `${model} confirmé` };
-    if (needs.some(need => need.proposed > 0)) return { tone: 'proposed', text: `${model} proposé, à valider` };
-    return { tone: 'wanted', text: `${model} recherché` };
-  });
+  readonly shipStatus = computed(() => crewShipStatus(this.crew(), this.requirements()));
 
   readonly draftError = computed(() => {
     const draft = this.draft();

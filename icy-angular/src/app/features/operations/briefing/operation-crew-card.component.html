@@ -1,0 +1,46 @@
+<div class="crewcard">
+  <div class="crewcard__ship">
+    @if (crew().shipModelImageUrl) { <img [src]="crew().shipModelImageUrl" alt="" loading="lazy"> } @else { <span class="crewcard__noimage"><app-operation-icon name="ship" /></span> }
+    <div class="crewcard__text">
+      <strong>{{ crew().shipModelName || 'Modèle non renseigné' }}</strong>
+      <span class="crewcard__status" [attr.data-tone]="shipStatus().tone">{{ shipStatus().text }}</span>
+    </div>
+  </div>
+
+  @if (crew().positions.length) {
+    <p class="crewcard__mode">{{ modeText() }}</p>
+    <ul class="crewcard__positions">
+      @for (position of crew().positions; track position.id) {
+        <li [class.is-mine]="isMine(position)" [class.is-full]="isFull(position)">
+          <span class="crewcard__icon"><app-operation-icon [name]="positionIcon(position.icon)" /></span>
+          <div class="crewcard__position">
+            <span class="crewcard__line"><strong>{{ position.label }}</strong><span class="crewcard__count">{{ positionOccupancy(position) }}</span></span>
+            @if (members(position).length) {
+              <span class="crewcard__names"><ng-container *ngTemplateOutlet="names; context: { $implicit: members(position), key: 'p' + position.id }" /></span>
+            } @else { <span class="crewcard__nobody">Libre</span> }
+          </div>
+          @if (isMine(position)) {
+            <span class="crewcard__action"><span class="tag tag--mine">Votre poste</span>@if (canChoose()) { <button type="button" [disabled]="busy()" (click)="choose.emit(null)">Quitter<span class="sr-only"> le poste {{ position.label }}</span></button> }</span>
+          } @else if (isFull(position)) {
+            <span class="crewcard__action"><span class="tag tag--full">Complet</span></span>
+          } @else if (canChoose()) {
+            <span class="crewcard__action"><button type="button" class="primary" [disabled]="busy()" (click)="choose.emit(position.id)">{{ me()?.positionId == null ? 'Prendre' : 'Passer ici' }}<span class="sr-only"> : poste {{ position.label }}</span></button></span>
+          }
+        </li>
+      }
+    </ul>
+    @if (unplaced().length) {
+      <p class="crewcard__unplaced"><span class="crewcard__label">Sans poste</span> <ng-container *ngTemplateOutlet="names; context: { $implicit: unplaced(), key: 'none' }" /></p>
+    }
+  } @else {
+    <p class="crewcard__mode">Équipage libre : aucun poste n’est défini.</p>
+    @if (crew().members.length) {
+      <p class="crewcard__unplaced"><span class="crewcard__label">À bord</span> <ng-container *ngTemplateOutlet="names; context: { $implicit: crew().members, key: 'all' }" /></p>
+    } @else { <p class="crewcard__nobody">Personne pour l’instant.</p> }
+  }
+</div>
+
+<ng-template #names let-list let-key="key">
+  @for (member of shown(key, list); track member.userId; let last = $last) {<span [class.is-me]="isMe(member)">{{ member.username }}@if (isMe(member)) {&ngsp;<span class="you">Vous</span>}</span>@if (!last) {, }}
+  @if (list.length > visibleLimit) { <button type="button" class="crewcard__more" [attr.aria-expanded]="isExpanded(key)" (click)="toggle(key)">{{ isExpanded(key) ? 'Réduire' : '+ ' + (list.length - visibleLimit) + ' autre' + (list.length - visibleLimit > 1 ? 's' : '') }}</button> }
+</ng-template>

@@ -1,9 +1,10 @@
+import { OperationCrew } from './organization/operation-crew.model';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -259,9 +260,15 @@ export class OperationPageComponent {
   /** `afterAction` : la relecture qui suit une action, seule autorisée à rendre la main aux boutons. */
   loadComposition(operationId: string, afterAction = false): void {
     const seq = ++this.compositionLoadSeq;
-    this.http.get<{ data: OperationComposition }>(`/api/operations/${operationId}/composition`).subscribe({
-      next: response => {
+    // Composition et équipages arrivent ensemble : un équipage n'est jamais montré, même un instant, comme un groupe ordinaire.
+    forkJoin({
+      response: this.http.get<{ data: OperationComposition }>(`/api/operations/${operationId}/composition`),
+      crews: this.eventService.getOperationCrews(operationId).pipe(timeout(15000), catchError(() => of(null)))
+    }).subscribe({
+      next: ({ response, crews }) => {
         if (seq !== this.compositionLoadSeq) return;
+        if (crews) this.crews = crews;
+        this.crewsError = !crews;
         const data = response?.data;
         this.composition = { present: !!data?.present, myGroupId: data?.myGroupId ?? null, myRequest: data?.myRequest ?? null, groups: Array.isArray(data?.groups) ? data.groups : [] };
         this.compositionError = '';
@@ -282,6 +289,22 @@ export class OperationPageComponent {
         this.changeDetector.markForCheck();
       }
     });
+  }
+
+  /** Équipages de vaisseau, lus avec la composition. */
+  crews: OperationCrew[] = [];
+  crewsError = false;
+  /** Mon équipage, si mon groupe en est un. */
+  get myCrew(): OperationCrew | null {
+    const mine = this.composition?.myGroupId;
+    return mine == null ? null : this.crews.find(crew => crew.groupId === mine) ?? null;
+  }
+
+  /** Je choisis, change ou quitte mon poste : rejoindre un équipage ne donne jamais de poste par lui-même. */
+  setMyPosition(operationId: string, positionId: number | null): void {
+    const label = this.myCrew?.positions.find(position => position.id === positionId)?.label;
+    this.assignmentAction(operationId, this.eventService.setMyOperationPosition(operationId, positionId),
+      positionId === null ? 'Vous n’avez plus de poste.' : `Vous êtes au poste ${label ?? 'choisi'}.`, 'Changement de poste impossible.');
   }
 
   /** Une action sur ma propre affectation : résultat annoncé après la réponse du serveur, puis relecture. */

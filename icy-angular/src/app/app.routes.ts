@@ -327,6 +327,12 @@ export const routes: Routes = [
           },
           { path: 'operation-drafts', redirectTo: 'operations', pathMatch: 'full' },
           {
+            path: 'crew-presets',
+            // La bibliothèque de presets est réservée aux administrateurs ; le serveur applique la même règle.
+            data: { roles: ['ADMIN'] },
+            loadComponent: () => import('./features/admin/crew-presets/crew-presets.component').then(m => m.CrewPresetsComponent)
+          },
+          {
             path: 'sc-world-events',
             loadComponent: () => import('./features/admin/sc-world-event-management/sc-world-event-management.component').then(m => m.ScWorldEventManagementComponent)
           },

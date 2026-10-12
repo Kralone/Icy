@@ -48,7 +48,7 @@ describe('OperationPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
-        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)) } },
+        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)), getOperationCrews: vi.fn(() => of([])) } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
       ]
