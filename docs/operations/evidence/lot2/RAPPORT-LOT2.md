@@ -97,6 +97,30 @@ Tests : backend 313 tests, 0 échec, 3 ignorés (`EventServiceTest` 12, `Operati
 
 Aucun bloquant, aucune fuite de contenu trouvée. Trois constats importants, corrigés et revérifiés : fuite d'existence par `GET /api/operations/{id}/assignment-requests` (200 au lieu de 404), entrée Discord de participation non filtrée, double annonce possible lors de deux publications concurrentes (la transition est maintenant décidée dans la transaction). Les constats mineurs sont dans le suivi.
 
+### Dernière réserve (2026-10-12)
+
+`GET /api/user-ships/member?eventId=&userId=` : si `eventId` désigne une opération non publiée, un non-organisateur reçoit le même refus que pour un participant non confirmé.
+
+| Appel (pile dev) | Résultat |
+|---|---|
+| Membre, brouillon sur lequel un administrateur s'est déclaré présent | 403 |
+| Membre, identifiant d'événement inexistant | 403, corps identique |
+| Administrateur, même brouillon | 200 |
+| Anonyme | 401 |
+| Membre, après publication | 200 |
+| Événement classique : participant confirmé / non participant | 200 / 403, comme avant |
+
+Test ajouté : `UserShipServiceTest` (6 tests, 0 échec). Courte revue : c'est le seul point d'accès hors événements et opérations qui accepte un identifiant d'événement ; le profil utilisateur n'expose qu'un nombre d'événements terminés.
+
+Anciennes annonces Discord : contrôle en lecture seule de la base de développement, 2 brouillons, aucun avec un message Discord (aucun événement de cette base n'en a, le bot n'y est pas relié). Requête à lancer sur une base reliée au bot :
+
+```sql
+select e.id, e.title, e.start_date_time, e.created_at, e.discord_channel_id, e.discord_message_id
+from events.operations o join events.events e on e.id = o.event_id
+where o.publication_status <> 'PUBLISHED' and e.discord_message_id is not null
+order by e.created_at;
+```
+
 ## Captures
 
 `brouillons-liste.jpg`, `brouillons-liste-mobile.jpg`, `editeur-desktop.jpg`, `editeur-mobile.jpg`, `editeur-erreur.jpg`, `editeur-conflit.jpg`, `editeur-conflit-mobile.jpg`. Les trois captures desktop de l'éditeur montrent encore « · Brouillon » dans le surtitre, retiré ensuite ; `editeur-mobile.jpg` montre l'en-tête final.
@@ -116,8 +140,7 @@ Lot 2 :
 
 Constaté pendant le lot, hors périmètre :
 
-- Brouillons créés avant cette correction : ils ont déjà été annoncés sur Discord à leur création ; leur message n'est pas retiré.
-- `GET /api/user-ships/member?eventId=&userId=` ne contrôle pas le statut de publication : si un organisateur se déclare présent sur un brouillon, un membre connaissant les deux identifiants obtient sa flotte (200 au lieu de 403).
+- Anciennes annonces Discord de brouillons : aucune dans la base de développement ; à contrôler sur chaque base reliée au bot avec la requête de la section « Dernière réserve ». Aucun message n'est supprimé automatiquement.
 - Une opération dont la ligne `operations` manquerait serait masquée partout sauf dans la gestion des événements. Aucun cas connu.
 - Site public : un brouillon échu peut occuper une des 3 places des événements récents, la page en affiche alors moins de 3. Aucun contenu ne fuit.
 - Un brouillon déjà échu puis publié est annoncé comme disponible.
