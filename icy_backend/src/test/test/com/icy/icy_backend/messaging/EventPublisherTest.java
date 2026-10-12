@@ -3,6 +3,7 @@ package com.icy.icy_backend.messaging;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ class EventPublisherTest {
         event.setTitle("Event");
         event.setDescription("Desc");
         event.setStartDateTime(LocalDateTime.now());
+        event.setActivityType(ActivityType.OPERATION);
         EventType type = new EventType();
         type.setName("Type");
         event.setType(type);
@@ -49,5 +51,8 @@ class EventPublisherTest {
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
         verify(rabbitTemplate).convertAndSend(eq("icy.exchange"), eq("events.created"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isInstanceOfAny(java.util.Map.class);
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> payload = (java.util.Map<String, Object>) payloadCaptor.getValue();
+        assertThat(payload).containsEntry("activityType", "OPERATION");
     }
 }

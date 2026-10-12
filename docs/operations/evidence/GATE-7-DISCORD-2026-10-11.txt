@@ -10,3 +10,5 @@
 - Commande depuis icy : docker run --rm -v <chemin-absolu-icy>:/app --entrypoint python iceforge/bot:local -m unittest discover -s tests -q. Une première exécution avec montage en lecture seule a échoué sur l’écriture SQLite ; la relance inscriptible ci-dessus passe.
 
 - Revue indépendante Gate 7 : CHANGES REQUIRED. Correctif P1 traité pour conserver le lien opération dans les vues recréées lors d’une édition ou d’un réordonnancement ; tests ciblés : 10/10. DSC-03 reste NON VERIFIE : la création est partiellement testée, mais objectifs structurés, lieu, image métier et mises à jour ne sont pas couverts.
+
+- Contrat Spring→Rabbit corrigé dans EventPublisher : events.created/updated portent désormais activityType (EVENT ou OPERATION). EventPublisherTest vérifie activityType=OPERATION ; test ciblé Maven : PASS.
