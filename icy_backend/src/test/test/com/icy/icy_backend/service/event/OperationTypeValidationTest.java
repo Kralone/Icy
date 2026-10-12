@@ -14,6 +14,8 @@ import com.icy.icy_backend.websocket.EventWebSocketService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
@@ -31,6 +33,15 @@ class OperationTypeValidationTest {
     void acceptsKnownTypeAndTrimsIt() {
         when(eventTypeRepository.findByName("Combat")).thenReturn(new EventType());
         assertThat(service.requireExistingEventTypeName("  Combat ")).isEqualTo("Combat");
+    }
+
+    @Test
+    void acceptsKnownTypeWithDifferentCaseAndReturnsStoredName() {
+        EventType stored = new EventType();
+        stored.setName("Combat");
+        when(eventTypeRepository.findByName("combat")).thenReturn(null);
+        when(eventTypeRepository.findAll()).thenReturn(List.of(stored));
+        assertThat(service.requireExistingEventTypeName(" combat ")).isEqualTo("Combat");
     }
 
     @Test

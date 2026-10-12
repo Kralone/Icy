@@ -191,8 +191,8 @@ export class OperationPageComponent {
       },
       error: error => {
         this.participationSaving = false;
-        this.participationError = (typeof error?.error?.message === 'string' && error.error.message) || 'Votre réponse n’a pas été enregistrée. Veuillez réessayer.';
-        this.toast.error(this.participationError);
+        // L'alerte du panneau suffit (comme dans la modale du calendrier) ; sans réponse du serveur, error.error porte un message technique du navigateur.
+        this.participationError = (error?.status !== 0 && typeof error?.error?.message === 'string' && error.error.message) || 'Votre réponse n’a pas été enregistrée. Veuillez réessayer.';
         this.changeDetector.markForCheck();
       }
     });

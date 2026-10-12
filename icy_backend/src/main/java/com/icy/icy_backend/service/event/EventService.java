@@ -442,10 +442,15 @@ public class EventService {
             throw new BadRequestException("Choisissez un type d’opération.");
         }
         String trimmed = name.trim();
-        if (eventTypeRepository.findByName(trimmed) == null) {
-            throw new BadRequestException("Type d’opération inconnu : « " + trimmed + " ». Choisissez un type dans la liste.");
+        if (eventTypeRepository.findByName(trimmed) != null) {
+            return trimmed;
         }
-        return trimmed;
+        // Tolère une différence de casse et renvoie le nom enregistré.
+        return eventTypeRepository.findAll().stream()
+                .map(EventType::getName)
+                .filter(trimmed::equalsIgnoreCase)
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Type d’opération inconnu : « " + trimmed + " ». Choisissez un type dans la liste."));
     }
 
     private EventType getEventTypeByName(String name) {

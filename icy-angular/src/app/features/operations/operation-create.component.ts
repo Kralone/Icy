@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -17,6 +17,7 @@ export class OperationCreateComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly toast = inject(HotToastService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   types: EventType[] = [];
   typesLoading = false;
   typesError = '';
@@ -39,11 +40,13 @@ export class OperationCreateComponent implements OnInit {
         this.types = types ?? [];
         if (!this.types.length) this.typesError = 'Aucun type d’opération n’est configuré. Ajoutez-en un dans la gestion des événements.';
         if (this.form.type && !this.isKnownType(this.form.type)) this.form.type = '';
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.typesLoading = false;
         this.types = [];
         this.typesError = 'Impossible de charger les types d’opération.';
+        this.changeDetector.markForCheck();
       }
     });
   }
@@ -72,12 +75,14 @@ export class OperationCreateComponent implements OnInit {
       },
       error: error => {
         this.saving = false;
-        const serverMessage = typeof error?.error?.message === 'string' ? error.error.message : '';
+        // Sans réponse du serveur (status 0), error.error porte le message technique du navigateur, pas un message métier.
+        const serverMessage = error?.status !== 0 && typeof error?.error?.message === 'string' ? error.error.message : '';
         this.error = serverMessage
           || (error?.status === 0 ? 'Serveur injoignable : l’opération n’a pas été créée. Vérifiez votre connexion puis réessayez.'
             : error?.status === 403 ? 'Vous n’avez pas les droits pour créer une opération.'
             : 'La création de l’opération a échoué. Rien n’a été enregistré ; réessayez.');
         this.toast.error(this.error);
+        this.changeDetector.markForCheck();
       }
     });
   }
