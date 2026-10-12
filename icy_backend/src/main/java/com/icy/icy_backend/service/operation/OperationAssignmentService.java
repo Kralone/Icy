@@ -70,7 +70,7 @@ public class OperationAssignmentService {
         requireActiveAccount(request.getOperationEventId(), request.getUserId());
         ensureCapacity(request.getOperationEventId(), group.getId(), request.getUserId());
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
-        assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
+        assignment.setOperationEventId(request.getOperationEventId()); assignment.moveTo(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
         request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
         return messageService.buildResponse("operation.assignment.approved", null);
     }
@@ -104,7 +104,7 @@ public class OperationAssignmentService {
         }
         ensureCapacity(operationId, groupId, userId);
         OperationAssignment assignment = existing.orElseGet(OperationAssignment::new);
-        assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+        assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
         assignmentRepository.save(assignment);
         requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
         return messageService.buildResponse("operation.assignment.confirmed", null);
@@ -161,7 +161,8 @@ public class OperationAssignmentService {
         }
     }
 
-    private boolean hasResponsibleScope(UUID userId, OperationGroup target) {
+    /** Vrai si l'utilisateur est responsable du groupe ou de son groupe parent. */
+    boolean hasResponsibleScope(UUID userId, OperationGroup target) {
         OperationGroup cursor = target;
         int depth = 0;
         while (cursor != null && depth++ < 2) {
@@ -223,7 +224,7 @@ public class OperationAssignmentService {
         if (mode == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");
         ensureCapacity(operationId, groupId, userId);
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId).orElseGet(OperationAssignment::new);
-        assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+        assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
         assignmentRepository.save(assignment);
         // Une place prise directement rend caduque une demande encore en attente ailleurs dans l'opération.
         requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);

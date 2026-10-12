@@ -17,6 +17,9 @@ public interface OperationGroupRepository extends CrudRepository<OperationGroup,
 
     /** Même contrôle pour un groupe qui était principal : vrai s'il a reçu un parent entre-temps. */
     boolean existsByIdAndParentIdIsNotNull(Long id);
+    /** Lectures directes en base, à faire sous verrou : le type ou le mode des postes a pu changer depuis le chargement du groupe. */
+    boolean existsByIdAndKind(Long id, OperationGroup.Kind kind);
+    boolean existsByIdAndPositionMode(Long id, OperationGroup.PositionMode positionMode);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     java.util.Optional<OperationGroup> findLockedById(Long id);
 }
