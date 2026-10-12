@@ -3,7 +3,10 @@ package com.icy.icy_backend.messaging;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,6 +24,7 @@ public class EventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
     private final EventParticipationRepository participationRepository;
+    private final OperationRepository operationRepository;
 
     public void publishEventCreated(Event event) {
         sendEventMessage("events.created", event);
@@ -51,6 +55,16 @@ public class EventPublisher {
         payload.put("activityType", event.getActivityType() != null
                 ? event.getActivityType().name()
                 : "EVENT");
+        if (event.getActivityType() == ActivityType.OPERATION) {
+            operationRepository.findById(event.getId()).ifPresent(operation -> {
+                Map<String, Object> operationData = new HashMap<>();
+                operationData.put("briefing", operation.getBriefing());
+                operationData.put("objectives", operation.getObjectives());
+                operationData.put("meetingPoint", operation.getMeetingPoint());
+                operationData.put("imageUrl", operation.getImageUrl());
+                payload.put("operation", operationData);
+            });
+        }
 
         // ✅ Ajout des IDs Discord pour les updates
         payload.put("channelId", event.getDiscordChannelId());

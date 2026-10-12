@@ -4,8 +4,10 @@ import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
 import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -27,7 +29,8 @@ class EventPublisherTest {
     void publishEventCreatedSendsPayload() {
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
         EventParticipationRepository participationRepository = Mockito.mock(EventParticipationRepository.class);
-        EventPublisher publisher = new EventPublisher(rabbitTemplate, participationRepository);
+        OperationRepository operationRepository = Mockito.mock(OperationRepository.class);
+        EventPublisher publisher = new EventPublisher(rabbitTemplate, participationRepository, operationRepository);
 
         Event event = new Event();
         event.setId(UUID.randomUUID());
@@ -35,6 +38,12 @@ class EventPublisherTest {
         event.setDescription("Desc");
         event.setStartDateTime(LocalDateTime.now());
         event.setActivityType(ActivityType.OPERATION);
+        Operation operation = new Operation();
+        operation.setBriefing("Briefing tactique");
+        operation.setObjectives("Objectif Alpha");
+        operation.setMeetingPoint("Port Olisar");
+        operation.setImageUrl("https://cdn.example.test/operation.png");
+        when(operationRepository.findById(event.getId())).thenReturn(java.util.Optional.of(operation));
         EventType type = new EventType();
         type.setName("Type");
         event.setType(type);
@@ -54,5 +63,9 @@ class EventPublisherTest {
         @SuppressWarnings("unchecked")
         java.util.Map<String, Object> payload = (java.util.Map<String, Object>) payloadCaptor.getValue();
         assertThat(payload).containsEntry("activityType", "OPERATION");
+        assertThat((java.util.Map<?, ?>) payload.get("operation"))
+                .containsEntry("objectives", "Objectif Alpha")
+                .containsEntry("meetingPoint", "Port Olisar")
+                .containsEntry("imageUrl", "https://cdn.example.test/operation.png");
     }
 }

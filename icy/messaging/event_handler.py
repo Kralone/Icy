@@ -140,6 +140,11 @@ class EventHandler:
         image_url = type_info.get("imageUrl")
         type_name = type_info.get("name", "Événement")
         type_color = type_info.get("color")
+        operation_info = payload.get("operation", {}) or {}
+        if payload.get("activityType") == "OPERATION" and operation_info.get("briefing"):
+            description = html_to_discord(operation_info["briefing"])
+        if payload.get("activityType") == "OPERATION" and operation_info.get("imageUrl"):
+            image_url = operation_info["imageUrl"]
 
         color_value = discord.Color(int(type_color.replace("#", ""), 16)) if type_color else discord.Color.blue()
 
@@ -169,6 +174,10 @@ class EventHandler:
         if payload.get("activityType") == "OPERATION":
             operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
             embed.add_field(name="Opération", value=f"[Voir l'opération sur IceForge]({operation_url})", inline=False)
+            if operation_info.get("objectives"):
+                embed.add_field(name="Objectifs", value=html_to_discord(operation_info["objectives"]), inline=False)
+            if operation_info.get("meetingPoint"):
+                embed.add_field(name="Lieu", value=str(operation_info["meetingPoint"]), inline=False)
         view = EventParticipationView(self.rabbit, payload["id"], operation_url=operation_url)
 
         channel = self.bot.get_channel(self.channel_id)

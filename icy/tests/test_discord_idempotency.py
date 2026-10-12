@@ -110,6 +110,12 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
                     "description": "Briefing et objectifs du convoi.",
                     "date": "2026-10-12T20:30:00Z",
                     "activityType": "OPERATION",
+                    "operation": {
+                        "briefing": "Briefing opérationnel.",
+                        "objectives": "Objectif Alpha",
+                        "meetingPoint": "Port Olisar",
+                        "imageUrl": "https://cdn.example.test/mission.png",
+                    },
                     "author": "Amiral",
                     "type": {
                         "name": "Opération",
@@ -122,10 +128,12 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             embed = channel.send.await_args.kwargs["embed"]
             self.assertEqual("Opération : Convoy minier", embed.title)
-            self.assertIn("Briefing et objectifs du convoi.", embed.description)
+            self.assertIn("Briefing opérationnel.", embed.description)
             self.assertIn("Date :", embed.description)
             self.assertEqual("Créé par Amiral", embed.footer.text)
-            self.assertEqual("https://cdn.example.test/operation.png", embed.image.url)
+            self.assertEqual("https://cdn.example.test/mission.png", embed.image.url)
+            self.assertEqual("Objectifs", embed.fields[4].name)
+            self.assertEqual("Lieu", embed.fields[5].name)
             operation_field = next(field for field in embed.fields if field.name == "Opération")
             self.assertIn("https://iceforge.fr/icy/operations/operation-1", operation_field.value)
             self.assertEqual(
