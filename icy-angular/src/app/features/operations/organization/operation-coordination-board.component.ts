@@ -1,28 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { EffectiveAssignmentMode, MODE_LABELS } from './operation-organization.model';
+import { GroupMember, GroupSeats, MODE_LABELS, occupancyLabel, OperationGroupBase, seatsFor } from '../operation-group.model';
 
-export interface CoordinationMember { userId: string; username: string; }
-export interface CoordinationGroup {
-  id: number;
-  parentId: number | null;
-  name: string;
-  capacity: number | null;
-  effectiveMode: EffectiveAssignmentMode;
-  container: boolean;
-  memberCount: number;
-  /** Places restantes, plafond du parent compris ; null sans limite. */
-  freeSeats: number | null;
-  /** Places restantes selon la seule capacité du groupe. */
-  ownFreeSeats: number | null;
-  responsibleUsername: string | null;
+export interface CoordinationGroup extends OperationGroupBase, GroupSeats {
   /** Vrai si l'utilisateur peut y placer ou en retirer un membre. */
   manageable: boolean;
-  members: CoordinationMember[];
 }
 export interface CoordinationRequest {
   id: string;
-  member: CoordinationMember;
+  member: GroupMember;
   groupId: number;
   groupName: string;
   currentGroupId: number | null;
@@ -31,10 +17,10 @@ export interface CoordinationRequest {
 }
 export interface OperationCoordination {
   organizer: boolean;
-  present: CoordinationMember[];
-  maybe: CoordinationMember[];
-  unavailable: CoordinationMember[];
-  unassigned: CoordinationMember[];
+  present: GroupMember[];
+  maybe: GroupMember[];
+  unavailable: GroupMember[];
+  unassigned: GroupMember[];
   groups: CoordinationGroup[];
   requests: CoordinationRequest[];
 }
@@ -54,7 +40,7 @@ export class OperationCoordinationBoardComponent {
   /** Opération terminée : la composition reste lisible, plus aucune action. */
   readonly locked = input(false);
   readonly assign = output<{ userId: string; groupId: number }>();
-  readonly remove = output<CoordinationMember>();
+  readonly remove = output<GroupMember>();
   readonly decide = output<{ requestId: string; approve: boolean }>();
 
   /** Membre dont on choisit la destination ; un seul sélecteur ouvert à la fois. */
@@ -65,27 +51,12 @@ export class OperationCoordinationBoardComponent {
 
   modeLabel(group: CoordinationGroup): string { return MODE_LABELS[group.effectiveMode]; }
   children(parentId: number): CoordinationGroup[] { return this.coordination().groups.filter(group => group.parentId === parentId); }
-  occupancy(group: CoordinationGroup): string {
-    if (group.capacity !== null) return `${group.memberCount} / ${group.capacity}`;
-    return group.memberCount === 1 ? '1 membre' : `${group.memberCount} membres`;
-  }
+  readonly occupancy = occupancyLabel;
   isFull(group: CoordinationGroup): boolean { return group.freeSeats === 0; }
-  seats(group: CoordinationGroup): string {
-    if (group.freeSeats === null) return 'sans limite';
-    if (group.freeSeats === 0) return 'complet';
-    return group.freeSeats === 1 ? '1 place' : `${group.freeSeats} places`;
-  }
+  seats(group: CoordinationGroup): string { return this.seatsLabel(group.freeSeats); }
   target(request: CoordinationRequest): CoordinationGroup | undefined { return this.coordination().groups.find(group => group.id === request.groupId); }
 
-  /**
-   * Places pour un membre venant de `fromGroupId` : s'il est déjà compté dans le même groupe parent,
-   * seul le plafond propre à la destination compte (le serveur applique la même règle).
-   */
-  seatsFor(destination: CoordinationGroup, fromGroupId: number | null): number | null {
-    const from = fromGroupId === null ? undefined : this.coordination().groups.find(group => group.id === fromGroupId);
-    const sameParent = !!from && from.parentId !== null && from.parentId === destination.parentId;
-    return sameParent ? destination.ownFreeSeats : destination.freeSeats;
-  }
+  seatsFor(destination: CoordinationGroup, fromGroupId: number | null): number | null { return seatsFor(destination, fromGroupId, this.coordination().groups); }
   seatsLabel(seats: number | null): string {
     if (seats === null) return 'sans limite';
     if (seats === 0) return 'complet';

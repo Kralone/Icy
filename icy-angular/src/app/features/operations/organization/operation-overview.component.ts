@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { EffectiveAssignmentMode, MODE_HINTS, MODE_LABELS, occupancyLabel, occupancyPercent, OrganizationGroup, sortedChildren } from './operation-organization.model';
+import { EffectiveAssignmentMode, MODE_LABELS, occupancyLabel, occupancyPercent } from '../operation-group.model';
+import { MODE_HINTS, OrganizationGroup, sortedChildren } from './operation-organization.model';
 
 /** Vue d'ensemble : toute la structure d'un coup, construite sur les données réelles, plus le mode d'affectation de l'opération. */
 @Component({

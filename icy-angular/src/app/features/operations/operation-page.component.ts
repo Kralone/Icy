@@ -9,7 +9,8 @@ import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
-import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
+import { OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
+import { GroupMember } from './operation-group.model';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 import { OperationHeroComponent } from './briefing/operation-hero.component';
 import { OperationBriefComponent } from './briefing/operation-brief.component';
@@ -187,7 +188,7 @@ export class OperationPageComponent {
     this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
   }
 
-  removeMember(operationId: string, member: CoordinationMember): void {
+  removeMember(operationId: string, member: GroupMember): void {
     if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
     this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
   }

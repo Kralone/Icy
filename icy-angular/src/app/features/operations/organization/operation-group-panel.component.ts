@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../model/user.model';
-import { AssignmentMode, EffectiveAssignmentMode, GroupSettings, MODE_HINTS, MODE_LABELS, occupancyLabel, occupancyPercent, OrganizationGroup, sortedChildren } from './operation-organization.model';
+import { EffectiveAssignmentMode, MODE_LABELS, occupancyLabel, occupancyPercent } from '../operation-group.model';
+import { AssignmentMode, GroupSettings, MODE_HINTS, OrganizationGroup, sortedChildren } from './operation-organization.model';
 
 export type GroupPanelTab = 'equipage' | 'ressources' | 'reglages';
 

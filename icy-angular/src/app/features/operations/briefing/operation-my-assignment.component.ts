@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { OperationIconComponent } from './operation-icon.component';
-import { COMPOSITION_MODE_LABELS, isOpenTo, OperationComposition } from './operation-composition.model';
+import { MODE_LABELS } from '../operation-group.model';
+import { isOpenTo, OperationComposition } from './operation-composition.model';
 
 /** « Mon affectation » : où je suis, qui est mon responsable, ce que j'attends, et ce que je peux faire. */
 @Component({
@@ -38,7 +39,7 @@ export class OperationMyAssignmentComponent {
   /** Responsable du groupe, à défaut celui du groupe parent. */
   readonly responsible = computed(() => this.group()?.responsibleUsername || this.parent()?.responsibleUsername || null);
   readonly request = computed(() => this.composition()?.myRequest ?? null);
-  readonly modeLabel = computed(() => { const group = this.group(); return group ? COMPOSITION_MODE_LABELS[group.effectiveMode] : ''; });
+  readonly modeLabel = computed(() => { const group = this.group(); return group ? MODE_LABELS[group.effectiveMode] : ''; });
   readonly canAct = computed(() => !this.locked() && !this.preview() && !!this.composition()?.present);
   /** Il reste au moins un groupe que je peux rejoindre ou demander moi-même. */
   readonly hasChoices = computed(() => { const composition = this.composition(); return !!composition && composition.groups.some(group => isOpenTo(group, composition)); });

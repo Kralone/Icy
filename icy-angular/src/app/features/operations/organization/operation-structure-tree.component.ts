@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { MODE_LABELS, occupancyLabel, occupancyPercent, OrganizationGroup, sortedChildren } from './operation-organization.model';
+import { MODE_LABELS, occupancyLabel, occupancyPercent } from '../operation-group.model';
+import { OrganizationGroup, sortedChildren } from './operation-organization.model';
 
 /** Arborescence des groupes : ce que l'organisateur voit d'un coup d'œil (effectifs, places, responsable, demandes). */
 @Component({

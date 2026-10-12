@@ -9,11 +9,12 @@ import { UserService } from '../../core/services/user/user.service';
 import { User } from '../../model/user.model';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { DraftAutosave } from './operation-autosave';
-import { EffectiveAssignmentMode, GroupSettings, OperationOrganization, OrganizationGroup, sortedChildren } from './organization/operation-organization.model';
+import { EffectiveAssignmentMode, GroupMember } from './operation-group.model';
+import { GroupSettings, OperationOrganization, OrganizationGroup, sortedChildren } from './organization/operation-organization.model';
 import { OperationStructureTreeComponent } from './organization/operation-structure-tree.component';
 import { GroupPanelTab, OperationGroupPanelComponent } from './organization/operation-group-panel.component';
 import { OperationOverviewComponent } from './organization/operation-overview.component';
-import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
+import { OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 import { OperationPreviewComponent } from './briefing/operation-preview.component';
 import { OperationSheet } from './briefing/operation-sheet.model';
@@ -214,7 +215,7 @@ export class OperationEditorComponent implements OnDestroy {
     this.coordinate(operationId, this.eventService.assignOperationMember(operationId, userId, groupId), 'Affectation enregistrée.', 'Affectation impossible.');
   }
 
-  removeMember(operationId: string, member: CoordinationMember): void {
+  removeMember(operationId: string, member: GroupMember): void {
     if (!confirm(`Retirer ${member.username} de son groupe ? Ce membre reste inscrit Présent.`)) return;
     this.coordinate(operationId, this.eventService.removeOperationMember(operationId, member.userId), 'Membre retiré du groupe.', 'Retrait impossible.');
   }

@@ -123,10 +123,6 @@ export class EventService {
     return this.http.get(`${this.baseUrl}/participation`, { params: { eventId } });
   }
 
-  convertToOperation(eventId: string) {
-    return this.http.post<any>(`/api/operations/${eventId}/convert`, {}).pipe(map(res => res.data));
-  }
-
   getOperationForEdit(eventId: string) {
     return this.http.get<any>(`/api/operations/${eventId}/edit`).pipe(map(res => res.data));
   }
@@ -193,7 +189,6 @@ export class EventService {
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }
   deleteOperationGroup(operationId: string, groupId: number) { return this.http.delete(`/api/operations/${operationId}/groups/${groupId}`); }
   reorderOperationGroups(operationId: string, groupIds: number[]) { return this.http.put(`/api/operations/${operationId}/groups/reorder`, groupIds); }
-  getOperationAssignmentRequests(operationId: string) { return this.http.get<{ data: Array<{ id: string; groupId: number; userId: string; status: string; createdAt: string }> }>(`/api/operations/${operationId}/assignment-requests`); }
   approveOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/approve`, {}); }
   refuseOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/refuse`, {}); }
   getOperationShipRequirements(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/ship-requirements`); }

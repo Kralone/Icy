@@ -1,7 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, input, output, signal } from '@angular/core';
 import { FleetShip } from '../organization/operation-fleet-cards.component';
-import { COMPOSITION_MODE_LABELS, CompositionGroup, CompositionMember, fillPercent, occupancy, OperationComposition, seatsFor } from './operation-composition.model';
+import { GroupMember, MODE_LABELS, occupancyLabel, occupancyPercent, seatsFor } from '../operation-group.model';
+import { CompositionGroup, OperationComposition } from './operation-composition.model';
 
 /** Ce que le participant peut faire d'un groupe, d'après ce que la fiche a lu ; le serveur recontrôle toujours. */
 export type GroupAction = 'mine' | 'requested' | 'join' | 'request' | 'full' | 'parentFull' | 'managed' | 'waiting' | 'none';
@@ -33,9 +34,9 @@ export class OperationOrgChartComponent {
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();
 
-  modeLabel(group: CompositionGroup): string { return COMPOSITION_MODE_LABELS[group.effectiveMode]; }
-  readonly occupancy = occupancy;
-  readonly fillPercent = fillPercent;
+  modeLabel(group: CompositionGroup): string { return MODE_LABELS[group.effectiveMode]; }
+  readonly occupancy = occupancyLabel;
+  readonly fillPercent = occupancyPercent;
 
   readonly roots = computed(() => {
     const groups = this.composition().groups;
@@ -76,7 +77,7 @@ export class OperationOrgChartComponent {
   private readonly expanded = signal<ReadonlySet<number>>(new Set());
   readonly visibleLimit = VISIBLE_MEMBERS;
   /** Mon nom d'abord : il ne doit jamais se cacher derrière « + N autres ». */
-  visibleMembers(group: CompositionGroup): CompositionMember[] {
+  visibleMembers(group: CompositionGroup): GroupMember[] {
     const ordered = [...group.members].sort((a, b) => Number(this.isMe(b)) - Number(this.isMe(a)));
     return this.expanded().has(group.id) ? ordered : ordered.slice(0, VISIBLE_MEMBERS);
   }
@@ -92,7 +93,7 @@ export class OperationOrgChartComponent {
       .map(ship => `${ship.shipName || 'Vaisseau inconnu'} de ${ship.ownerUsername || 'propriétaire inconnu'}`).join(', ');
   }
 
-  isMe(member: CompositionMember): boolean { return !!this.currentUserId() && member.userId === this.currentUserId(); }
+  isMe(member: GroupMember): boolean { return !!this.currentUserId() && member.userId === this.currentUserId(); }
   /** Plein selon sa propre capacité : c'est ce que la jauge et le compteur montrent. */
   isFull(group: CompositionGroup): boolean { return group.ownFreeSeats === 0; }
 

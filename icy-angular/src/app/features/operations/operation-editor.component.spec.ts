@@ -39,7 +39,6 @@ describe('OperationEditorComponent', () => {
           refuseOperationAssignment: vi.fn(() => of({})),
           getOperationShipRequirements: vi.fn(() => of({ data: [] })),
           getOperationShips: vi.fn(() => of({ data: [] })),
-          getOperationAssignmentRequests: vi.fn(() => of({ data: [] })),
           updateOperation,
         } },
         { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } },
