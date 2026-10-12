@@ -6,66 +6,43 @@
       <section class="operation-error" role="alert"><h1>Opération indisponible</h1><p>La fiche n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.</p><a routerLink="/icy/events">Retour au calendrier</a></section>
     } @else if (operationState.status === 'READY') {
       @if (operationState.data; as operation) {
-    <header class="operation-hero" [style.background-image]="operation.imageUrl ? 'linear-gradient(180deg, transparent 28%, rgba(11,18,32,.95)), url(' + operation.imageUrl + ')' : null">
-      <div class="operation-hero__veil"></div>
-      <div class="operation-hero__content">
-        <a routerLink="/icy/events" class="operation-back">← Calendrier</a>
-        <span class="operation-badge">Opération</span>
-        <h1>{{ operation.title }}</h1>
-        <p class="operation-meta">{{ operation.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm' }} · {{ operation.meetingPoint || 'Rendez-vous à préciser' }}</p>
-      </div>
-    </header>
-    <section class="operation-status" aria-label="Situation de l'opération">
-      <strong>Situation</strong>
-      <span>{{ operation.locked || operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      @if (!participationError) {
-        <span class="operation-counts">{{ participationsByStatus.confirmed.length }} confirmé(s) · {{ participationsByStatus.maybe.length }} peut-être · {{ participationsByStatus.refused.length }} indisponible(s)</span>
-      }
-    </section>
-    <section class="operation-presence" aria-label="Présence et équipage">
-      <app-participation-panel
-        [participationsByStatus]="participationsByStatus"
-        [selectedStatus]="participationStatus"
-        [finished]="operation.finished || !!operation.locked"
-        finishedLabel="Opération terminée."
-        actionsLabel="Votre réponse à cette opération"
-        [loading]="participationLoading"
-        [saving]="participationSaving"
-        [error]="participationError"
-        (statusChange)="setParticipation(operation.id, $event)"
-        (retry)="retryParticipations()" />
-    </section>
-    @if (coordination; as board) {
-      <section class="operation-coordination" aria-label="Coordination de mes groupes">
-        <h2>{{ board.organizer ? 'Coordination' : 'Coordination de mes groupes' }}</h2>
-        @if (coordinationError) { <p class="operation-coordination__error" role="alert">{{ coordinationError }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
-        <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+    <app-operation-hero [operation]="operation" [presentCount]="presentCount" />
+    <nav class="section-nav" aria-label="Sections de la fiche">
+      @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
+    </nav>
+    <div class="sheet">
+      <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
+        <app-participation-panel
+          [participationsByStatus]="participationsByStatus"
+          [selectedStatus]="participationStatus"
+          [finished]="operation.finished || !!operation.locked"
+          finishedLabel="Opération terminée."
+          actionsLabel="Votre réponse à cette opération"
+          [loading]="participationLoading"
+          [saving]="participationSaving"
+          [error]="participationError"
+          (statusChange)="setParticipation(operation.id, $event)"
+          (retry)="retryParticipations()" />
       </section>
-    }
-    <div class="operation-grid">
-      <article class="operation-card operation-card--briefing">
-        <p class="eyebrow">Briefing</p>
-        <h2>Ordres de mission</h2>
-        <p>{{ operation.briefing || operation.description || 'Le briefing sera publié par l’organisateur.' }}</p>
-      </article>
-      <article class="operation-card">
-        <p class="eyebrow">Objectifs</p>
-        <h2>Mission accomplie si…</h2>
-        @if (objectiveItems(operation.objectives); as objectives) { @if (objectives.length) { <ul class="objective-display">@for (objective of objectives; track $index) { <li><span>{{ objective.kind === 'PRINCIPAL' ? 'Principal' : 'Secondaire' }}</span>{{ objective.text }}</li> }</ul> } @else { <p>Les objectifs seront précisés par l’organisateur.</p> } }
-      </article>
-      <article class="operation-card">
-        <p class="eyebrow">Organisation</p>
-        <h2>Composition</h2>
+      <app-operation-brief [briefing]="operation.briefing" [description]="operation.description" [objectives]="operation.objectives" [locked]="!!operation.locked" />
+      <section class="panel panel--organisation" id="organisation" tabindex="-1" aria-labelledby="operation-organisation-title">
+        <h2 id="operation-organisation-title"><app-operation-icon name="groups" /> Organisation</h2>
         @if (groups$ | async; as groups) {
           @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><div><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }} · {{ groupModeLabel(group, groups) }}</span></div>@if (isLeaf(group, groups) && !operation.locked) { @if (effectiveGroupMode(group, groups) === 'VALIDATION') { <button type="button" (click)="requestAssignment(operation.id, group.id)">Demander</button> } @else { <button type="button" (click)="assign(operation.id, group.id)" [disabled]="effectiveGroupMode(group, groups) === 'MANAGED'">Choisir</button> } }</div> }</div> }
-          @else { <p class="empty-state">Les groupes seront affichés ici.</p> }
+          @else { <p class="empty-state">{{ operation.locked ? 'Aucun groupe.' : 'Les groupes seront affichés ici.' }}</p> }
         }
         @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
         @if (assignmentMessage) { <p role="status">{{ assignmentMessage }}</p> }
-      </article>
-      <article class="operation-card operation-card--fleet">
-        <p class="eyebrow">Flotte</p>
-        <h2>Vaisseaux</h2>
+      </section>
+      @if (coordination; as board) {
+        <section class="panel panel--coordination" id="coordination" tabindex="-1" aria-labelledby="operation-coordination-title">
+          <h2 id="operation-coordination-title"><app-operation-icon name="assignment" /> {{ board.organizer ? 'Coordination' : 'Coordination de mes groupes' }}</h2>
+          @if (coordinationError) { <p class="operation-coordination__error" role="alert">{{ coordinationError }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
+          <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+        </section>
+      }
+      <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
+        <h2 id="operation-fleet-title"><app-operation-icon name="ship" /> Flotte</h2>
         @let fleetShips = (ships$ | async) ?? [];
         @let fleetNeeds = (shipRequirements$ | async) ?? [];
         @let fleetGroups = (groups$ | async) ?? [];
@@ -108,7 +85,7 @@
             }
           </section>
         }
-      </article>
+      </section>
     </div>
       }
     }

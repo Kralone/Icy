@@ -52,7 +52,8 @@ describe('OperationPageComponent', () => {
 
   it('reads counters, lists and the active button back from the server after each answer', async () => {
     await render();
-    expect(fixture.nativeElement.querySelector('.operation-counts').textContent).toContain('0 confirmé(s) · 1 peut-être · 0 indisponible(s)');
+    expect(fixture.nativeElement.querySelector('.hero__present').textContent).toContain('0 confirmé');
+    expect(fixture.nativeElement.querySelector('.crew-group.status-maybe h4').textContent).toContain('1');
     expect(fixture.nativeElement.querySelector('[aria-pressed="true"]')).toBeNull();
 
     getParticipations.mockReturnValue(of({ data: [other, me] }));
@@ -62,7 +63,8 @@ describe('OperationPageComponent', () => {
 
     expect(setParticipationStatus).toHaveBeenCalledWith('op', 1);
     expect(getParticipations).toHaveBeenCalledTimes(2);
-    expect(fixture.nativeElement.querySelector('.operation-counts').textContent).toContain('1 confirmé(s) · 1 peut-être · 0 indisponible(s)');
+    expect(fixture.nativeElement.querySelector('.hero__present').textContent).toContain('1 confirmé');
+    expect(fixture.nativeElement.querySelector('.crew-group.status-confirmed h4').textContent).toContain('1');
     expect(fixture.nativeElement.querySelector('[aria-pressed="true"]').textContent).toContain('Présent');
     expect(fixture.nativeElement.querySelector('.crew-group.status-confirmed').textContent).toContain('Moi');
     expect(toast.success).toHaveBeenCalledWith('Présence enregistrée : Présent.');
@@ -83,6 +85,29 @@ describe('OperationPageComponent', () => {
     expect(toast.error).not.toHaveBeenCalled();
     expect(getParticipations).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('.crew-group.status-maybe').textContent).toContain('Autre');
+  });
+
+  it('shows the mission at a glance: type, title, schedule, meeting point, status, then briefing and objectives', async () => {
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'Escorte Nyx', allowShipProposals: false, startDateTime: '2099-11-20T20:30:00', endDateTime: '2099-11-20T23:30:00', finished: false,
+      meetingPoint: 'Levski', typeName: 'Escorte', typeBackgroundColor: '#27647c', briefing: 'Protéger le convoi.', objectives: JSON.stringify([{ kind: 'SECONDAIRE', text: 'Aucune perte' }, { kind: 'PRINCIPAL', text: 'Convoi arrivé' }]) } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const hero: string = fixture.nativeElement.querySelector('app-operation-hero').textContent;
+    expect(hero).toContain('Opération · Escorte');
+    expect(hero).toContain('Escorte Nyx');
+    expect(hero).toContain('20h30 – 23h30');
+    expect(hero).toContain('Levski');
+    expect(hero).toContain('À venir');
+    // Sans image de mission ni image de type : un aplat aux couleurs du type, pas d'image cassée.
+    expect(fixture.nativeElement.querySelector('.hero__image')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.panel--briefing').textContent).toContain('Protéger le convoi.');
+    const objectives: string = fixture.nativeElement.querySelector('.panel--objectives').textContent;
+    expect(objectives.indexOf('Convoi arrivé')).toBeLessThan(objectives.indexOf('Aucune perte'));
+    expect(Array.from(fixture.nativeElement.querySelectorAll('.section-nav button')).map(button => (button as HTMLElement).textContent!.trim())).toEqual(['Présence', 'Briefing', 'Organisation', 'Flotte']);
   });
 
   it('locks the answers of a finished operation', async () => {

@@ -1,0 +1,34 @@
+<header class="hero" [style.--type-accent]="accent()" [style.--type-label]="label()">
+  @if (image(); as source) { <img class="hero__image" [src]="source" alt="" referrerpolicy="no-referrer" (error)="imageFailed(source)"> }
+  <div class="hero__veil"></div>
+  <div class="hero__content">
+    @if (!preview()) { <a routerLink="/icy/events" class="hero__back"><span aria-hidden="true">←</span> Calendrier</a> }
+    <p class="hero__tags">
+      <span class="hero__type">Opération@if (operation().typeName) { · {{ operation().typeName }} }</span>
+      <span class="hero__status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+    </p>
+    <h1>{{ operation().title }}</h1>
+    <dl class="hero__facts">
+      <div>
+        <dt><app-operation-icon name="calendar" /><span class="sr-only">Date</span></dt>
+        <dd>{{ operation().startDateTime ? (operation().startDateTime | date:'EEEE d MMMM yyyy') : 'Date à définir' }}</dd>
+      </div>
+      @if (operation().startDateTime) {
+        <div>
+          <dt><app-operation-icon name="clock" /><span class="sr-only">Horaires</span></dt>
+          <dd>{{ operation().startDateTime | date:"HH'h'mm" }} – {{ operation().endDateTime | date:(endsAnotherDay() ? "EEE d MMM, HH'h'mm" : "HH'h'mm") }}</dd>
+        </div>
+      }
+      <div>
+        <dt><app-operation-icon name="pin" /><span class="sr-only">Rendez-vous</span></dt>
+        <dd>{{ operation().meetingPoint || (status() === 'done' ? 'Rendez-vous non renseigné' : 'Rendez-vous à préciser') }}</dd>
+      </div>
+      @if (presentCount() !== null) {
+        <div class="hero__present">
+          <dt><app-operation-icon name="users" /><span class="sr-only">Participants</span></dt>
+          <dd>{{ presentCount() }} confirmé{{ presentCount()! > 1 ? 's' : '' }}</dd>
+        </div>
+      }
+    </dl>
+  </div>
+</header>

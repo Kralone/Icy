@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
@@ -11,26 +11,13 @@ import { HotToastService } from '@ngxpert/hot-toast';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 import { CoordinationMember, OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
+import { OperationHeroComponent } from './briefing/operation-hero.component';
+import { OperationBriefComponent } from './briefing/operation-brief.component';
+import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
+import { OperationSheet } from './briefing/operation-sheet.model';
 
-interface OperationPageModel {
-  id: string;
-  title: string;
-  description?: string;
-  briefing?: string;
-  objectives?: string;
-  meetingPoint?: string;
-  imageUrl?: string;
-  allowShipProposals: boolean;
-  startDateTime: string;
-  endDateTime: string;
-  finished: boolean;
-  /** Heure de fin atteinte selon le serveur : organisation et flotte en lecture seule. */
-  locked?: boolean;
-  /** Mode des groupes qui n'en fixent pas un eux-mêmes. */
-  defaultAssignmentMode?: string;
-}
+type OperationPageModel = OperationSheet;
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string; username?: string }; }
-interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
 type OperationViewState =
   | { status: 'LOADING' }
   | { status: 'ERROR' }
@@ -38,7 +25,7 @@ type OperationViewState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent],
+  imports: [AsyncPipe, RouterLink, FormsModule, ParticipationPanelComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationHeroComponent, OperationBriefComponent, OperationIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
   styleUrl: './operation-page.component.css'
@@ -110,6 +97,7 @@ export class OperationPageComponent {
       this.coordination = null;
       this.coordinationError = '';
       this.coordinationBusy = false;
+      this.presentCount = null;
       if (id) this.loadParticipations(id);
     });
   }
@@ -132,11 +120,13 @@ export class OperationPageComponent {
           maybe: participations.filter(item => item.status === 0),
           refused: participations.filter(item => item.status === -1)
         };
+        this.presentCount = this.participationsByStatus.confirmed.length;
         this.participationLoading = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
         if (seq !== this.participationLoadSeq) return;
+        this.presentCount = null;
         this.participationLoading = false;
         this.participationError = 'Impossible de charger les participations.';
         this.changeDetector.markForCheck();
@@ -191,13 +181,26 @@ export class OperationPageComponent {
   }
   readonly currentUserId = this.authService.getUserIdFromToken();
   assignmentMessage = '';
-  objectiveItems(value?: string): ObjectiveItem[] {
-    if (!value?.trim()) return [];
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.filter(item => item && typeof item.text === 'string').map(item => ({ kind: item.kind === 'SECONDAIRE' ? 'SECONDAIRE' : 'PRINCIPAL', text: item.text }));
-    } catch { /* Legacy plain text remains readable below. */ }
-    return [{ kind: 'PRINCIPAL', text: value }];
+  /** Sections de la fiche, dans l'ordre de lecture : des ancres, tout reste visible au défilement. */
+  readonly sections: ReadonlyArray<{ id: string; label: string; icon: OperationIconName }> = [
+    { id: 'presence', label: 'Présence', icon: 'presence' },
+    { id: 'briefing', label: 'Briefing', icon: 'briefing' },
+    { id: 'organisation', label: 'Organisation', icon: 'groups' },
+    { id: 'coordination', label: 'Coordination', icon: 'assignment' },
+    { id: 'flotte', label: 'Flotte', icon: 'ship' }
+  ];
+
+  /** La coordination n'apparaît que pour qui a des groupes à coordonner. */
+  visibleSections() { return this.sections.filter(section => section.id !== 'coordination' || !!this.coordination); }
+
+  /** Nombre de confirmés affiché dans la bannière : le dernier connu reste pendant une relecture. */
+  presentCount: number | null = null;
+
+  goTo(sectionId: string): void {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    section.focus({ preventScroll: true });
   }
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
   assign(operationId: string, groupId: number) {
