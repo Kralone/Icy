@@ -249,6 +249,12 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             await handler.handle_event_updated({
                 "id": "event-1", "channelId": 123, "messageId": 456,
                 "activityType": "OPERATION",
+                "operation": {
+                    "briefing": "Briefing mis à jour.",
+                    "objectives": "Objectif Bravo",
+                    "meetingPoint": "New Babbage",
+                    "imageUrl": "https://cdn.example.test/updated.png",
+                },
                 "title": "Actif", "date": "2026-10-01T20:00:00Z",
                 "finished": False, "participants": [], "type": {},
             })
@@ -256,7 +262,10 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(store.is_event_finished("event-1"))
             self.assertIsNotNone(message.edit.await_args.kwargs["view"])
             self.assertTrue(message.edit.await_args.kwargs["view"].children[3].url.endswith("/icy/operations/event-1"))
-            self.assertEqual("Opération", message.edit.await_args.kwargs["embed"].fields[-1].name)
+            self.assertEqual("Opération", message.edit.await_args.kwargs["embed"].fields[3].name)
+            self.assertIn("Briefing mis à jour.", message.edit.await_args.kwargs["embed"].description)
+            self.assertEqual("Objectifs", message.edit.await_args.kwargs["embed"].fields[-2].name)
+            self.assertEqual("Lieu", message.edit.await_args.kwargs["embed"].fields[-1].name)
 
     @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
     async def test_editing_event_date_reorders_active_messages(self):

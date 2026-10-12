@@ -14,3 +14,4 @@
 - Contrat Spring→Rabbit corrigé dans EventPublisher : events.created/updated portent désormais activityType (EVENT ou OPERATION). EventPublisherTest vérifie activityType=OPERATION ; test ciblé Maven : PASS.
 
 - Payload opération enrichi : EventPublisher transmet operation.briefing/objectives/meetingPoint/imageUrl ; EventPublisherTest vérifie le contrat et le bot rend ces champs dans l’embed. DSC-03 passe à PARTIEL avancé : les champs sont couverts par tests, mais le runtime Discord réel et les mises à jour complètes de contenu restent non vérifiés.
+- Le listener Spring `DiscordEventParticipationListenerTest` couvre le retour Discord : statut présent enregistré puis publication de `events.updated`, et statut absent retrait de l’affectation/proposition en attente puis publication de la mise à jour. Tests Maven ciblés PASS.
