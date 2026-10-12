@@ -183,6 +183,37 @@ class OperationMemberAssignmentTest {
         verify(groups).findLockedById(4L);
     }
 
+    @Test void aDeactivatedAccountGetsNoNewAssignmentOrTransferButKeepsItsHistoricalOne() {
+        when(participation.isDeactivatedParticipant(operationId, memberId)).thenReturn(true);
+        OperationAssignment historical = place(memberId, 3L);
+
+        // Placement et transfert par un organisateur.
+        signInAs(organizerId, "ROLE_ADMIN");
+        assertThatThrownBy(() -> service.assignMember(operationId, memberId, 4L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("compte est désactivé");
+
+        // Approbation d'une demande restée en attente.
+        UUID requestId = UUID.randomUUID();
+        OperationAssignmentRequest pending = OperationAssignmentRequest.builder().id(requestId).operationEventId(operationId).groupId(4L).userId(memberId).build();
+        when(requests.findById(requestId)).thenReturn(Optional.of(pending));
+        assertThatThrownBy(() -> service.decide(requestId, true)).isInstanceOf(IllegalStateException.class).hasMessageContaining("compte est désactivé");
+        assertThat(pending.getStatus()).isEqualTo(OperationAssignmentRequest.Status.PENDING);
+
+        // Le compte lui-même, tant que son jeton est encore valide.
+        when(events.findById(operationId)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Event.builder().id(operationId).build()));
+        signInAs(memberId, "ROLE_USER");
+        assertThatThrownBy(() -> service.assign(operationId, 4L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("compte est désactivé");
+        escadrille.setAssignmentMode(OperationGroup.AssignmentMode.VALIDATION);
+        assertThatThrownBy(() -> service.request(operationId, 3L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("compte est désactivé");
+
+        // L'affectation déjà en place reste, et un organisateur peut toujours la retirer.
+        assertThat(historical.getGroupId()).isEqualTo(3L);
+        verify(assignments, never()).save(any());
+        verify(assignments, never()).delete(any());
+        signInAs(organizerId, "ROLE_ADMIN");
+        service.removeMember(operationId, memberId);
+        verify(assignments).delete(historical);
+    }
+
     @Test void anAssignmentIsRefusedWhenItsGroupWasMovedWhileItWaited() {
         signInAs(organizerId, "ROLE_ADMIN");
         when(groups.existsByIdAndParentIdIsNotNull(4L)).thenReturn(true);

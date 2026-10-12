@@ -34,6 +34,7 @@ public class OperationAssignmentService {
         if (effectiveMode(operationId, groupId) != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
         UUID user = AuthUtils.getCurrentUserId();
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
+        requireActiveAccount(operationId, user);
         if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
         requestRepository.save(OperationAssignmentRequest.builder().operationEventId(operationId).groupId(groupId).userId(user).build());
         return messageService.buildResponse("operation.assignment.requested", null);
@@ -50,6 +51,7 @@ public class OperationAssignmentService {
         }
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(request.getOperationEventId(), request.getUserId(), 1)) throw new IllegalStateException("Ce membre n’est plus inscrit Présent : la demande ne peut pas être acceptée.");
+        requireActiveAccount(request.getOperationEventId(), request.getUserId());
         ensureCapacity(request.getOperationEventId(), group.getId(), request.getUserId());
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
@@ -72,6 +74,7 @@ public class OperationAssignmentService {
         }
         if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) throw new IllegalStateException("Ce membre n’est pas inscrit Présent");
+        requireActiveAccount(operationId, userId);
         java.util.Optional<OperationAssignment> existing = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId);
         if (existing.isPresent() && groupId.equals(existing.get().getGroupId())) {
             return messageService.buildResponse("operation.assignment.confirmed", null);
@@ -107,6 +110,13 @@ public class OperationAssignmentService {
         OperationAssignment assignment = found.orElseThrow(() -> new ResourceNotFoundException("Affectation introuvable"));
         assignmentRepository.delete(assignment);
         return messageService.buildResponse("operation.assignment.removed", null);
+    }
+
+    /** Une réponse « Présent » laissée par un compte désactivé ne permet ni nouvelle affectation ni transfert. Les affectations déjà en place ne sont pas touchées. */
+    private void requireActiveAccount(UUID operationId, UUID userId) {
+        if (participationRepository.isDeactivatedParticipant(operationId, userId)) {
+            throw new IllegalStateException("Ce compte est désactivé : il ne peut pas recevoir d’affectation.");
+        }
     }
 
     private boolean hasResponsibleScope(UUID userId, OperationGroup target) {
@@ -164,6 +174,7 @@ public class OperationAssignmentService {
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) {
             throw new IllegalStateException("La participation Présent est requise");
         }
+        requireActiveAccount(operationId, userId);
         OperationGroup.AssignmentMode mode = effectiveMode(operationId, groupId);
         if (mode == OperationGroup.AssignmentMode.MANAGED) throw new IllegalStateException("Groupe géré par les organisateurs");
         if (mode == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");

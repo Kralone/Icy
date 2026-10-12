@@ -69,7 +69,7 @@ public class OperationCoordinationService {
         groups.stream().map(OperationGroup::getResponsibleUserId).filter(Objects::nonNull).forEach(userIds::add);
         Map<UUID, String> usernames = userRepository.findAllById(userIds).stream().collect(Collectors.toMap(User::getId, User::getUsername));
         participations.forEach(participation -> usernames.putIfAbsent(participation.getUserId(), participation.getUsername()));
-        Function<UUID, OperationCoordinationDTO.Member> member = id -> new OperationCoordinationDTO.Member(id, usernames.getOrDefault(id, "Membre"));
+        Function<UUID, OperationCoordinationDTO.Member> member = id -> new OperationCoordinationDTO.Member(id, usernames.getOrDefault(id, "Compte désactivé"));
 
         Map<UUID, Long> groupOfUser = confirmed.stream().collect(Collectors.toMap(OperationAssignment::getUserId, OperationAssignment::getGroupId, (first, second) -> first));
         List<OperationCoordinationDTO.Member> present = byStatus(participations, 1, member);

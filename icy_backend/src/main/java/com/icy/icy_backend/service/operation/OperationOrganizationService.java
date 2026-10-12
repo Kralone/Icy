@@ -58,7 +58,7 @@ public class OperationOrganizationService {
                     .map(OperationAssignment::getUserId).distinct().count();
             List<OperationOrganizationDTO.Member> members = confirmed.stream()
                     .filter(assignment -> group.getId().equals(assignment.getGroupId()))
-                    .map(assignment -> new OperationOrganizationDTO.Member(assignment.getUserId(), usernames.getOrDefault(assignment.getUserId(), "Membre")))
+                    .map(assignment -> new OperationOrganizationDTO.Member(assignment.getUserId(), usernames.getOrDefault(assignment.getUserId(), "Compte désactivé")))
                     .sorted(java.util.Comparator.comparing(OperationOrganizationDTO.Member::username, String.CASE_INSENSITIVE_ORDER))
                     .toList();
             int pendingRequests = (int) pending.stream().filter(request -> subtree.contains(request.getGroupId())).count();

@@ -31,6 +31,13 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
     @org.springframework.data.jpa.repository.Query("select u.id as userId, u.username as username, p.status as status from EventParticipation p join p.user u where p.event.id = :eventId")
     List<ActiveParticipation> findActiveByEventId(@org.springframework.data.repository.query.Param("eventId") UUID eventId);
 
+    /**
+     * Vrai si ce membre a répondu à l'événement mais que son compte est désactivé (l'entité User ne charge que les comptes actifs).
+     * Une réponse « Présent » laissée par un compte désactivé ne donne plus droit à une affectation.
+     */
+    @org.springframework.data.jpa.repository.Query("select count(p) > 0 from EventParticipation p where p.event.id = :eventId and p.user.id = :userId and not exists (select u.id from User u where u.id = :userId)")
+    boolean isDeactivatedParticipant(@org.springframework.data.repository.query.Param("eventId") UUID eventId, @org.springframework.data.repository.query.Param("userId") UUID userId);
+
     interface ActiveParticipation {
         UUID getUserId();
         String getUsername();
