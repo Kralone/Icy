@@ -24,7 +24,7 @@ class EventParticipationViewTest(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(
-            ["Présent ✅", "Peut-être ❔", "Absent ❌"],
+            ["Présent", "Peut-être", "Indisponible"],
             [item.label for item in view.children[:3]],
         )
         self.assertEqual(
