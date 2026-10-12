@@ -82,6 +82,14 @@ class DiscordIntegrationHardeningTest {
                 .containsEntry(InboundMessageErrorHandler.FAILURE_REASON_HEADER, "invalid_message");
     }
 
+    @Test void anUnreadableOrIncompleteMessageIsNotRetriedEither() {
+        fail(message(null), new org.springframework.amqp.support.converter.MessageConversionException("Failed to convert message"));
+        fail(message(null), new IllegalStateException("Confirmation Discord à réessayer", new NullPointerException("messageId")));
+
+        verify(template, org.mockito.Mockito.times(2)).send(eq(RabbitConfig.DEAD_LETTER_EXCHANGE), eq("events.participation"), any(Message.class));
+        verify(template, never()).send(eq(RabbitConfig.BACKEND_RETRY_EXCHANGE), anyString(), any(Message.class));
+    }
+
     @Test void aTemporaryFailureIsRetriedAfterADelayWithItsAttemptCount() {
         fail(message(1), new IllegalStateException("Confirmation Discord à réessayer"));
 

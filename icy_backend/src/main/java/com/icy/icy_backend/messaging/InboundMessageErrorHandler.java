@@ -8,6 +8,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.MessageConversionException;
 import org.springframework.amqp.rabbit.listener.api.RabbitListenerErrorHandler;
 import org.springframework.amqp.listener.ListenerExecutionFailedException;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +43,7 @@ public class InboundMessageErrorHandler implements RabbitListenerErrorHandler {
     public Object handleError(Message amqpMessage, Channel channel, org.springframework.messaging.Message<?> message, ListenerExecutionFailedException exception) {
         Throwable cause = exception.getCause() == null ? exception : exception.getCause();
         String routingKey = amqpMessage.getMessageProperties().getReceivedRoutingKey();
-        String failure = cause.getClass().getSimpleName();
+        String failure = describe(cause);
 
         if (isPermanent(cause)) {
             park(amqpMessage, routingKey, "invalid_message", null);
@@ -63,10 +64,20 @@ public class InboundMessageErrorHandler implements RabbitListenerErrorHandler {
         return null;
     }
 
-    /** Une charge refusée pour son contenu le sera à chaque essai : la réessayer ne sert à rien. */
+    /** Cause d'origine en une ligne, pour le journal : la classe et le message de l'exception la plus profonde. */
+    private static String describe(Throwable cause) {
+        Throwable root = cause;
+        for (int depth = 0; root.getCause() != null && root.getCause() != root && depth < 10; depth++) root = root.getCause();
+        String message = root.getMessage() == null ? "" : root.getMessage().replaceAll("\s+", " ").trim();
+        if (message.length() > 200) message = message.substring(0, 200) + "…";
+        return message.isEmpty() ? root.getClass().getSimpleName() : root.getClass().getSimpleName() + " : " + message;
+    }
+
+    /** Une charge refusée pour son contenu ou son format le sera à chaque essai : la réessayer ne sert à rien. */
     private static boolean isPermanent(Throwable cause) {
         for (Throwable current = cause; current != null; current = current.getCause()) {
-            if (current instanceof IllegalArgumentException || current instanceof AmqpRejectAndDontRequeueException || current instanceof ClassCastException) return true;
+            if (current instanceof IllegalArgumentException || current instanceof AmqpRejectAndDontRequeueException || current instanceof ClassCastException
+                    || current instanceof NullPointerException || current instanceof MessageConversionException) return true;
             if (current.getCause() == current) break;
         }
         return false;

@@ -207,9 +207,10 @@ class RabbitManager:
                     retry_count=retry_count,
                 )
                 logger.error(
-                    "Traitement RabbitMQ impossible (%s %s), message en DLQ sans nouvel essai",
+                    "Traitement RabbitMQ impossible (%s %s, ressource=%s), message en DLQ sans nouvel essai",
                     routing_key,
                     type(exception).__name__,
+                    payload.get("id") or payload.get("eventId") or payload.get("newsId") or "inconnue",
                 )
             elif retry_count < self.retry_limit:
                 next_retry = retry_count + 1
