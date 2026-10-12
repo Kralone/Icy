@@ -208,3 +208,104 @@ Laissés ouverts :
 ### Données de test
 
 `validation_admin` est maintenant inscrit Présent à l'événement classique « Lot2 classique visibilite » (vérification de la modale).
+
+## 3D-4 — Finition, responsive et réception
+
+### Ce qui est livré
+
+**Responsive**
+- La fiche s'adapte à la largeur de son conteneur, et non plus à celle de la fenêtre : elle se comporte de la même façon dans la page et dans le cadre d'aperçu.
+- Très grand écran : la fiche s'élargit à 2400 px au lieu de rester à 1600 px entre deux marges vides.
+- Les noms d'un équipage se rangent sur plusieurs colonnes ; sur fiche large, chaque liste est bornée en hauteur et garde son titre visible. Le tableau de coordination est replié par défaut et annonce ce qui y attend (demandes, membres sans affectation). Sur mobile, la fiche de test (28 présents) passe de 9227 px à 4668 px de haut, sans zone de défilement imbriquée.
+- Boutons d'au moins 36 px de haut partout sur la fiche, textes d'au moins 12 px.
+
+**Aperçu de l'éditeur**
+- Bascule « Ordinateur / Mobile » : le cadre prend 390 px et la fiche s'y réorganise comme sur un téléphone.
+- Les places affichées viennent du serveur, comme sur la fiche publiée ; le calcul fait à l'écran est supprimé.
+- Toujours en lecture seule.
+
+**Finition technique**
+- Erreur de chargement du hangar distinguée d'un hangar vide, avec « Réessayer ».
+- Code sans usage retiré : flux et accesseurs de groupes de l'éditeur, appel de service correspondant, alias de type de la fiche.
+- Serveur : deux champs ajoutés à la lecture de la structure (places restantes), pour que l'aperçu ne les recalcule plus.
+
+### Régression corrigée
+
+Supprimer un événement qui avait encore des réponses répondait 500, opérations et événements classiques compris. Le défaut datait du sous-lot 3B (suppression des réponses en une requête) : il était passé inaperçu parce que les vérifications précédentes supprimaient toujours l'événement après un changement de dates, qui vide les réponses d'un événement classique. Corrigé et revérifié par appels réels.
+
+### Tests exécutés
+
+| Suite | Résultat |
+|---|---|
+| Backend, build Docker | 344 tests, 0 échec, 3 ignorés |
+| Front, suite complète (une fois, avant les corrections de la revue) | 84 fichiers, 279 tests passés |
+| Front, specs du module, du panneau de présence et du calendrier (après corrections) | 13 fichiers, 91 tests passés |
+
+### Vérifications à l'écran, fiche « Escorte Nyx » (28 présents)
+
+| Largeur | Résultat observé |
+|---|---|
+| Mobile 375 px | Aucun débordement ; Mon affectation en tête ; équipage sur 2 colonnes ; seul mon groupe est ouvert ; plus petit texte 12 px ; aucun bouton ni lien sous 36 px |
+| Tablette 820 px | Aucun débordement ; une colonne large ; organigramme sur 2 colonnes ; cartes de flotte de 366 px |
+| Ordinateur 1440 px | Présence et Mon affectation côte à côte ; briefing et objectifs côte à côte ; barre de sections collée |
+| 4K 3840 px | Fiche de 2400 px, bannière, barre et panneaux alignés ; organigramme sur 3 colonnes |
+| Aperçu, mode Ordinateur | Cadre de 980 px, disposition en deux colonnes |
+| Aperçu, mode Mobile | Cadre de 390 px, une colonne, cartes de flotte compactes, groupes repliés comme sur un téléphone |
+| Écritures depuis l'aperçu | Aucune |
+
+### Non-régression par appels réels
+
+| Vérification | Résultat observé |
+|---|---|
+| Événement classique avec 2 réponses : suppression | 200 (500 avant correction) |
+| Événement classique : changement de dates | 200, titre et dates enregistrés, réponses remises à zéro comme avant |
+| Opération publiée à venir : changement de dates, puis suppression | 200 ; la réponse est conservée au changement de dates |
+| Opération terminée avec une réponse : suppression | 409, toujours protégée |
+| Modale d'un événement classique | Trois boutons, trois colonnes, mise en page inchangée (les règles de la fiche n'y sont pas actives) |
+| Calendrier, hangar, liste des brouillons | 200 |
+| Autosauvegarde d'un brouillon ; révision périmée | 200 ; 409 |
+| Places renvoyées par le serveur pour la structure | Conformes : Infirmerie sans capacité propre mais 0 place (groupe principal plein) |
+| Discord | Aucun fichier de messagerie modifié dans le lot 3D ; aucune erreur au journal du serveur |
+
+Non vérifié : envoi réel des annonces Discord ; lecteur d'écran réel ; navigateurs autres que celui de test.
+
+### Revue de réception
+
+Elle a porté sur l'étape 3D-4 et sur l'ensemble du lot 3D. Aucun bloquant, 5 constats importants, 10 mineurs.
+
+Importants, tous corrigés :
+1. L'erreur de hangar ne se remettait jamais à zéro et le hangar était relu à chaque changement de présence.
+2. En aperçu « Mobile », l'organigramme restait déplié : il suivait la largeur de la fenêtre, pas celle du cadre.
+3. Les listes d'équipage bornées en hauteur créaient des zones de défilement imbriquées sur mobile.
+4. Le calcul des places de la structure n'avait pas de test côté serveur : un test est ajouté.
+5. Le repli de la coordination et l'erreur de hangar n'avaient pas de test : deux specs sont ajoutées.
+
+Mineurs corrigés : unités de fenêtre restantes dans la fiche ; membres sans affectation non signalés quand le tableau est replié ; bascule de largeur inutile en fenêtre étroite ; styles et classe sans usage ; seuils décalés d'un pixel ; boutons « Réessayer », lien « Calendrier » et libellés du tableau trop petits ; briefing trop large à 2400 px.
+
+Laissés ouverts :
+- Le calcul des places existe à deux endroits côté serveur (structure de l'éditeur et tableau de coordination), avec le même résultat à deux niveaux de groupes.
+- Les règles mobiles des cartes de flotte et du panneau de présence sont écrites deux fois (fenêtre et conteneur), parce que ces composants servent aussi hors de la fiche.
+- Le point d'accès `GET /api/operations/{id}/groups/edit` n'a plus d'appelant côté écran ; il n'est pas retiré, pour ne pas toucher au serveur sans nécessité.
+
+### Captures
+
+`3d4-mobile-375-fiche.jpg`, `3d4-mobile-375-equipage.jpg`, `3d4-tablette-820-fiche.jpg`, `3d4-desktop-1440-fiche.jpg`, `3d4-desktop-1440-equipage-28.jpg`, `3d4-desktop-1440-organisation.jpg`, `3d4-4k-fiche.jpg`, `3d4-desktop-apercu-mode-mobile.jpg`.
+
+Seule `3d4-desktop-1440-equipage-28.jpg` date d'après les corrections de la revue. `3d4-mobile-375-equipage.jpg` montre encore la liste bornée en hauteur sur mobile, ce qui n'est plus le cas.
+
+### Données de test
+
+Trois événements de vérification ont été créés puis supprimés. L'opération « Lot3D opération test » a été publiée avant d'être supprimée : si le bot Discord de développement est connecté, il a pu en recevoir l'annonce et le retrait.
+
+## État final du lot 3D
+
+Les quatre sous-étapes sont livrées sur `feat/operations-lot3-organisation`. Rien n'est poussé ni fusionné.
+
+Anomalies et limites connues à la réception :
+- Le statut de la bannière (À venir, En cours, Terminée) est celui du chargement de la page ; il ne change pas tout seul au passage de l'heure.
+- Une écriture contrôlée juste avant l'heure de fin peut être validée quelques millisecondes après (limite acceptée au 3C).
+- Une opération marquée terminée à la main alors que sa fin est à venir peut être remise « non terminée », puis supprimée.
+- La liste des pilotes proposés à l'organisateur contient tous les membres ; le serveur refuse un pilote qui n'est pas Présent.
+- Le hangar ne contient qu'un exemplaire par modèle et par membre.
+- L'envoi réel des annonces Discord n'a pas été observé ; aucun fichier de messagerie n'est modifié dans le lot 3D.
+- Données de test en base de développement : 8 comptes `lot3b-test-*` et 20 comptes `lot3d-test-*`, inscrits à « Escorte Nyx ».
