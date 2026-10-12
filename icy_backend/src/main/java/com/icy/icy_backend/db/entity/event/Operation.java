@@ -59,6 +59,12 @@ public class Operation {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    /** Mode d'affectation des groupes qui n'en fixent pas un eux-mêmes (ni leur parent). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_assignment_mode", nullable = false, length = 20)
+    @Builder.Default
+    private OperationGroup.AssignmentMode defaultAssignmentMode = OperationGroup.AssignmentMode.FREE;
+
     /** Verrou optimiste : une écriture fondée sur une révision périmée est refusée au lieu d'écraser une version plus récente. */
     @Version
     @Column(nullable = false)

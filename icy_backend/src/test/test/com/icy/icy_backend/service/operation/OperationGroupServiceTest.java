@@ -75,6 +75,55 @@ class OperationGroupServiceTest {
         return group;
     }
 
+    @Test void refusesDeletingAnOccupiedGroupWithAnExplanation() {
+        OperationGroup leaf = group(1, null);
+        leaf.setName("Alpha");
+        when(assignments.findByOperationEventId(operationId)).thenReturn(List.of(
+                com.icy.icy_backend.db.entity.event.OperationAssignment.builder().operationEventId(operationId).groupId(1L).userId(UUID.randomUUID()).build()));
+        assertThatThrownBy(() -> service.delete(operationId, 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("libérez-le avant de le supprimer");
+        verify(repository, never()).delete(leaf);
+    }
+
+    @Test void refusesDeletingAGroupWithAPendingRequestOrLinkedShips() {
+        OperationGroup leaf = group(1, null);
+        var requests = mock(com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository.class);
+        var requirements = mock(com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository.class);
+        var proposals = mock(com.icy.icy_backend.db.repository.event.OperationShipProposalRepository.class);
+        service.setRequestRepository(requests);
+        service.setShipRepositories(requirements, proposals);
+        when(requests.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of(
+                com.icy.icy_backend.db.entity.event.OperationAssignmentRequest.builder().operationEventId(operationId).groupId(1L).userId(UUID.randomUUID()).build()));
+        assertThatThrownBy(() -> service.delete(operationId, 1L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("demandes en attente");
+
+        when(requests.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of());
+        when(requirements.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of(
+                com.icy.icy_backend.db.entity.event.OperationShipRequirement.builder().operationEventId(operationId).groupId(1L).build()));
+        assertThatThrownBy(() -> service.delete(operationId, 1L)).isInstanceOf(IllegalStateException.class).hasMessageContaining("besoins ou des vaisseaux");
+        verify(repository, never()).delete(leaf);
+
+        when(requirements.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of());
+        service.delete(operationId, 1L);
+        verify(repository).delete(leaf);
+    }
+
+    @Test void refusesASubgroupUnderAGroupThatAlreadyHasMembers() {
+        OperationGroup parent = group(1, null);
+        parent.setName("Alpha");
+        when(operations.findById(operationId)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Operation.builder().eventId(operationId).build()));
+        when(assignments.findByOperationEventId(operationId)).thenReturn(List.of(
+                com.icy.icy_backend.db.entity.event.OperationAssignment.builder().operationEventId(operationId).groupId(1L).userId(UUID.randomUUID()).build()));
+        com.icy.icy_backend.controller.dto.operation.OperationGroupRequest request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Équipage Polaris");
+        request.setParentId(1L);
+        request.setAssignmentMode(OperationGroup.AssignmentMode.INHERITED);
+        assertThatThrownBy(() -> service.create(operationId, request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ne peut pas recevoir de sous-groupe");
+        verify(repository, never()).save(any());
+    }
+
     @Test void rejectsPartialSiblingListBeforeWriting() {
         OperationGroup first = group(1, null), second = group(2, null);
         when(repository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(first, second));

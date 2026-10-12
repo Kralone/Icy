@@ -11,8 +11,12 @@ describe('OperationEditorComponent', () => {
   let component: OperationEditorComponent;
   let fixture: ComponentFixture<OperationEditorComponent>;
   let updateOperation: ReturnType<typeof vi.fn>;
+  let createOperationGroup: ReturnType<typeof vi.fn>;
+  let organizationGroups: any[];
 
   beforeEach(async () => {
+    organizationGroups = [];
+    createOperationGroup = vi.fn(() => of({ data: { id: 5 } }));
     updateOperation = vi.fn()
       .mockReturnValueOnce(throwError(() => new Error('network')))
       .mockReturnValue(of({ data: {} }));
@@ -24,6 +28,8 @@ describe('OperationEditorComponent', () => {
         { provide: EventService, useValue: {
           getOperationForEdit: vi.fn(() => of(operation)),
           getOperationGroupsForEdit: vi.fn(() => of({ data: [] })),
+          getOperationOrganization: vi.fn(() => of({ defaultAssignmentMode: 'FREE', groups: [...organizationGroups] })),
+          createOperationGroup,
           getOperationShipRequirements: vi.fn(() => of({ data: [] })),
           getOperationShips: vi.fn(() => of({ data: [] })),
           getOperationAssignmentRequests: vi.fn(() => of({ data: [] })),
@@ -168,6 +174,38 @@ describe('OperationEditorComponent', () => {
       expect(confirmSpy).toHaveBeenCalledTimes(1);
     } finally {
       confirmSpy.mockRestore();
+    }
+  });
+
+  it('creates a group in one click, selects it and opens its settings', () => {
+    component.tab = 'organisation';
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-operation-overview')).not.toBeNull();
+
+    organizationGroups.push({ id: 5, parentId: null, name: 'Nouveau groupe', description: '', capacity: null, assignmentMode: 'INHERITED', effectiveMode: 'FREE', sortOrder: 0, responsibleUserId: null, responsibleUsername: null, container: false, memberCount: 0, members: [], pendingRequests: 0 });
+    fixture.nativeElement.querySelector('.structure__add').click();
+    fixture.detectChanges();
+
+    expect(createOperationGroup.mock.calls[0][1]).toMatchObject({ name: 'Nouveau groupe', parentId: null, assignmentMode: 'INHERITED', sortOrder: 0 });
+    expect(component.selectedGroupId()).toBe(5);
+    expect(fixture.nativeElement.querySelector('app-operation-group-panel form')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.save-indicator, .save-row__state')).toBeNull();
+  });
+
+  it('saves the default assignment mode with the draft and applies it to groups without their own mode', () => {
+    vi.useFakeTimers();
+    try {
+      updateOperation.mockReset().mockReturnValue(of({ revision: 8 }));
+      component.organization.set({ defaultAssignmentMode: 'FREE', groups: [{ id: 1, parentId: null, name: 'Alpha', description: '', capacity: null, assignmentMode: 'INHERITED', effectiveMode: 'FREE', sortOrder: 0, responsibleUserId: null, responsibleUsername: null, container: false, memberCount: 0, members: [], pendingRequests: 0 }] });
+
+      component.setDefaultMode('VALIDATION');
+      vi.advanceTimersByTime(1500);
+
+      expect(updateOperation.mock.calls[0][1].defaultAssignmentMode).toBe('VALIDATION');
+      expect(component.organizationGroups()[0].effectiveMode).toBe('VALIDATION');
+    } finally {
+      vi.useRealTimers();
     }
   });
 

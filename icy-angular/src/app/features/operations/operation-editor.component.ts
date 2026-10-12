@@ -1,5 +1,5 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, inject, OnDestroy, signal } from '@angular/core';
+import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
@@ -9,6 +9,10 @@ import { UserService } from '../../core/services/user/user.service';
 import { User } from '../../model/user.model';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { DraftAutosave } from './operation-autosave';
+import { EffectiveAssignmentMode, GroupSettings, OperationOrganization, OrganizationGroup, sortedChildren } from './organization/operation-organization.model';
+import { OperationStructureTreeComponent } from './organization/operation-structure-tree.component';
+import { GroupPanelTab, OperationGroupPanelComponent } from './organization/operation-group-panel.component';
+import { OperationOverviewComponent } from './organization/operation-overview.component';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -21,6 +25,7 @@ interface OperationFormPayload {
   meetingPoint: string;
   imageUrl: string;
   allowShipProposals: boolean;
+  defaultAssignmentMode: EffectiveAssignmentMode;
 }
 
 type OperationEditorState =
@@ -30,7 +35,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe],
+  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe, NgTemplateOutlet, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
@@ -47,6 +52,7 @@ export class OperationEditorComponent implements OnDestroy {
   }
 
   selectTab(tab: OperationEditorComponent['tab']): void {
+    if (tab !== this.tab && !this.mayLeaveGroupSettings()) return;
     this.tab = tab;
     // Un brouillon ne garde pas de saisie en attente derrière un onglet.
     if (this.autosave.auto) this.autosave.flush();
@@ -116,11 +122,120 @@ export class OperationEditorComponent implements OnDestroy {
   private readonly groupState = signal<any[]>([]);
   get groups(): any[] { return this.groupState(); }
   set groups(value: any[]) { this.groupState.set(value); }
-  groupForm = { name: '', description: '', capacity: null as number | null, parentId: null as number | null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null as string | null };
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
-  editingGroupId: number | null = null;
-  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
+  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
+
+  // --- Organisation : structure lue sur le serveur, un seul groupe édité à la fois.
+  readonly organization = signal<OperationOrganization | null>(null);
+  readonly organizationGroups = computed<OrganizationGroup[]>(() => this.organization()?.groups ?? []);
+  /** Groupes qui peuvent recevoir un besoin ou un membre : ceux qui n'ont pas de sous-groupes. */
+  readonly leafGroups = computed(() => this.organizationGroups().filter(group => !group.container));
+  readonly selectedGroupId = signal<number | null>(null);
+  readonly selectedGroup = computed(() => this.organizationGroups().find(group => group.id === this.selectedGroupId()) ?? null);
+  readonly groupPanelTab = signal<GroupPanelTab>('equipage');
+  readonly organizationBusy = signal(false);
+  readonly organizationError = signal('');
+  /** Sur mobile, la fiche du groupe remplace l'arborescence. */
+  readonly groupOpenOnMobile = signal(false);
+
+  /** Réglages d'un groupe saisis mais pas encore enregistrés. */
+  readonly groupSettingsDirty = signal(false);
+  private organizationLoadSeq = 0;
+
+  loadOrganization(operationId: string, selectId?: number | null): void {
+    const seq = ++this.organizationLoadSeq;
+    this.eventService.getOperationOrganization(operationId).subscribe({
+      next: organization => {
+        // Seule la lecture la plus récente compte.
+        if (seq !== this.organizationLoadSeq) return;
+        // Un mode par défaut choisi mais pas encore reçu par le serveur reste celui affiché.
+        this.organization.set(this.withDefaultMode(organization, this.form.defaultAssignmentMode));
+        this.organizationError.set('');
+        this.groups = organization.groups;
+        if (selectId !== undefined) this.selectedGroupId.set(selectId);
+        else if (this.selectedGroupId() !== null && !organization.groups.some(group => group.id === this.selectedGroupId())) this.selectedGroupId.set(null);
+        if (this.selectedGroupId() === null) this.groupOpenOnMobile.set(false);
+        if (!this.leafGroups().some(group => group.id === this.requirementForm.groupId)) this.requirementForm.groupId = null;
+        this.organizationBusy.set(false);
+      },
+      error: () => { if (seq !== this.organizationLoadSeq) return; this.organizationBusy.set(false); this.organizationError.set('La structure de l’opération n’a pas pu être chargée.'); }
+    });
+  }
+
+  /** Vrai si l'on peut quitter la fiche du groupe : rien à perdre, ou abandon confirmé. */
+  private mayLeaveGroupSettings(): boolean {
+    if (!this.groupSettingsDirty()) return true;
+    if (!confirm('Les réglages de ce groupe ne sont pas enregistrés. Les abandonner ?')) return false;
+    this.groupSettingsDirty.set(false);
+    return true;
+  }
+
+  selectGroup(id: number | null, tab: GroupPanelTab = 'equipage'): void {
+    if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
+    if (!this.mayLeaveGroupSettings()) return;
+    this.groupPanelTab.set(tab);
+    this.selectedGroupId.set(id);
+    this.groupOpenOnMobile.set(id !== null);
+    if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+  }
+
+  private withDefaultMode(organization: OperationOrganization, mode: EffectiveAssignmentMode): OperationOrganization {
+    const byId = new Map(organization.groups.map(group => [group.id, group]));
+    const effective = (group: OrganizationGroup): EffectiveAssignmentMode => {
+      if (group.assignmentMode !== 'INHERITED') return group.assignmentMode;
+      const parent = group.parentId === null ? undefined : byId.get(group.parentId);
+      return parent ? effective(parent) : mode;
+    };
+    return { defaultAssignmentMode: mode, groups: organization.groups.map(group => ({ ...group, effectiveMode: effective(group) })) };
+  }
+
+  /** Mode par défaut choisi à l'écran mais pas encore enregistré sur une opération publiée. */
+  get defaultModeUnsaved(): boolean {
+    return !this.autosave.auto && !!this.currentOperation && (this.currentOperation.defaultAssignmentMode ?? 'FREE') !== this.form.defaultAssignmentMode;
+  }
+
+  /** Création rapide : le groupe existe tout de suite avec un nom provisoire, ses réglages s'ouvrent pour le nommer. */
+  quickAddGroup(operationId: string, parentId: number | null): void {
+    if (this.organizationBusy() || !this.organization() || !this.mayLeaveGroupSettings()) return;
+    const siblings = sortedChildren(this.organizationGroups(), parentId);
+    const base = parentId === null ? 'Nouveau groupe' : 'Nouveau sous-groupe';
+    const taken = new Set(siblings.map(group => group.name.toLocaleLowerCase()));
+    let name = base;
+    for (let index = 2; taken.has(name.toLocaleLowerCase()); index++) name = `${base} ${index}`;
+    this.organizationBusy.set(true);
+    this.eventService.createOperationGroup(operationId, { name, description: '', capacity: null, parentId, assignmentMode: 'INHERITED', sortOrder: siblings.length, responsibleUserId: null }).subscribe({
+      next: (response: any) => {
+        this.groupPanelTab.set('reglages');
+        this.groupOpenOnMobile.set(true);
+        this.loadOrganization(operationId, response?.data?.id ?? null);
+      },
+      error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Création du groupe impossible.')); }
+    });
+  }
+
+  saveGroup(operationId: string, groupId: number, settings: GroupSettings): void {
+    if (this.organizationBusy()) return;
+    this.organizationBusy.set(true);
+    this.eventService.updateOperationGroup(operationId, groupId, settings).subscribe({
+      next: () => { this.groupSettingsDirty.set(false); this.notify('success', 'Groupe enregistré.'); this.loadOrganization(operationId); },
+      error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Enregistrement du groupe impossible.')); }
+    });
+  }
+
+  setDefaultMode(mode: EffectiveAssignmentMode): void {
+    this.form.defaultAssignmentMode = mode;
+    // Les groupes sans mode propre suivent aussitôt le nouveau défaut à l'écran.
+    this.organization.update(organization => organization ? this.withDefaultMode(organization, mode) : organization);
+    this.touch();
+    // Brouillon : le serveur le reçoit tout de suite, sans attendre la temporisation.
+    if (this.autosave.auto) this.autosave.flush();
+  }
+
+  private organizationErrorMessage(error: any, fallback: string): string {
+    if (error?.status === 0) return 'Serveur injoignable. Rien n’a été modifié.';
+    return (typeof error?.error?.message === 'string' && error.error.message) || fallback;
+  }
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
   private operationId: string | null = null;
   private currentOperation: any = null;
@@ -134,7 +249,7 @@ export class OperationEditorComponent implements OnDestroy {
       { ...payload, expectedRevision: revision },
       // Au-delà de 64 Ko le navigateur refuse une requête keepalive.
       { keepalive: options.keepalive && new Blob([JSON.stringify(payload)]).size < 60000 }
-    ),
+    ).pipe(tap(() => { if (this.currentOperation) this.currentOperation.defaultAssignmentMode = payload.defaultAssignmentMode; })),
     describeError: error => this.describeSaveError(error),
     onChange: () => this.changeDetector.markForCheck()
   });
@@ -145,7 +260,8 @@ export class OperationEditorComponent implements OnDestroy {
     this.operationId = operation.id;
     this.currentOperation = operation;
     this.lastValidImageUrl = operation.imageUrl || '';
-    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false };
+    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
+    this.loadOrganization(operation.id);
     this.autosave.auto = operation.publicationStatus !== 'PUBLISHED';
     this.autosave.reset(this.payload(), operation.revision ?? null, operation.updatedAt ? new Date(operation.updatedAt) : null);
   }
@@ -180,7 +296,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */
   private get leavingIsSafe(): boolean {
-    if (this.imageUrlPending) return false;
+    if (this.imageUrlPending || this.groupSettingsDirty()) return false;
     if (!this.autosave.hasUnsavedChanges) return true;
     return this.autosave.auto && (this.autosave.status === 'dirty' || this.autosave.status === 'saving');
   }
@@ -265,7 +381,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   publishing = false;
 
-  publish(operation: { id: string; publicationStatus?: string }) {
+  publish(operation: { id: string; publicationStatus?: string; defaultAssignmentMode?: string }) {
     // On ne publie que ce que le serveur a confirmé.
     if (this.publishing || this.autosave.hasUnsavedChanges || this.imageUrlPending) return;
     this.publishing = true;
@@ -273,6 +389,7 @@ export class OperationEditorComponent implements OnDestroy {
       next: updated => {
         this.publishing = false;
         operation.publicationStatus = updated?.publicationStatus ?? 'PUBLISHED';
+        operation.defaultAssignmentMode = updated?.defaultAssignmentMode ?? operation.defaultAssignmentMode;
         this.autosave.setRevision(updated?.revision);
         this.autosave.auto = false;
         this.notify('success', 'Opération publiée : elle est visible dans le calendrier.');
@@ -286,27 +403,28 @@ export class OperationEditorComponent implements OnDestroy {
     });
   }
 
-  createGroup(operationId: string) {
-    const request = this.editingGroupId ? this.eventService.updateOperationGroup(operationId, this.editingGroupId, this.groupForm) : this.eventService.createOperationGroup(operationId, this.groupForm);
-    request.subscribe({ next: () => {
-      this.notify('success', this.editingGroupId ? 'Groupe mis à jour.' : 'Groupe créé.');
-      this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data);
-      this.editingGroupId = null;
-      this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null };
-    }, error: error => this.notify('error', error?.error?.message || (this.editingGroupId ? 'Mise à jour du groupe impossible.' : 'Création du groupe impossible.')) });
+  moveGroup(operationId: string, group: OrganizationGroup, delta: -1 | 1): void {
+    const siblings = sortedChildren(this.organizationGroups(), group.parentId ?? null);
+    const index = siblings.findIndex(candidate => candidate.id === group.id);
+    const target = index + delta;
+    if (this.organizationBusy() || index < 0 || target < 0 || target >= siblings.length) return;
+    [siblings[index], siblings[target]] = [siblings[target], siblings[index]];
+    this.organizationBusy.set(true);
+    this.eventService.reorderOperationGroups(operationId, siblings.map(candidate => candidate.id)).subscribe({
+      next: () => this.loadOrganization(operationId),
+      error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Impossible de réordonner les groupes.')); }
+    });
   }
 
-  editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0, responsibleUserId: group.responsibleUserId ?? null }; }
-  moveGroup(operationId: string, index: number, delta: number): void {
-    const current = this.groups[index];
-    const siblings = this.groups.filter(group => (group.parentId ?? null) === (current.parentId ?? null)).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    const siblingIndex = siblings.findIndex(group => group.id === current.id);
-    const target = siblingIndex + delta;
-    if (siblingIndex < 0 || target < 0 || target >= siblings.length) return;
-    [siblings[siblingIndex], siblings[target]] = [siblings[target], siblings[siblingIndex]];
-    this.eventService.reorderOperationGroups(operationId, siblings.map(group => group.id)).subscribe({ next: () => { const orderById = new Map(siblings.map((group, order) => [group.id, order])); this.groups = this.groups.map(group => orderById.has(group.id) ? { ...group, sortOrder: orderById.get(group.id) } : group).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.notify('success', 'Ordre des groupes mis à jour.'); }, error: () => this.notify('error', 'Impossible de réordonner les groupes.') });
+  deleteGroup(operationId: string, group: OrganizationGroup): void {
+    if (this.organizationBusy() || !confirm(`Supprimer « ${group.name} » ? Cette action est définitive.`)) return;
+    this.groupSettingsDirty.set(false);
+    this.organizationBusy.set(true);
+    this.eventService.deleteOperationGroup(operationId, group.id).subscribe({
+      next: () => { this.notify('success', 'Groupe supprimé.'); this.groupOpenOnMobile.set(false); this.loadOrganization(operationId, group.parentId ?? null); },
+      error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Suppression impossible.')); }
+    });
   }
-  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.notify('success', 'Groupe supprimé.'); this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.notify('error', error?.error?.message || 'Suppression impossible.') }); }
   decideAssignment(requestId: string, approve: boolean): void {
     const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
     action.subscribe({ next: () => { this.notify('success', approve ? 'Demande approuvée.' : 'Demande refusée.'); this.assignmentRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Décision impossible.') });

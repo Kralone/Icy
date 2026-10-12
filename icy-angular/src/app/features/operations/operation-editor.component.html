@@ -32,28 +32,21 @@
         <article class="participant-preview"><span class="operation-badge">Opération</span><h3>{{ operation.title }}</h3><p>{{ operation.startDateTime ? (operation.startDateTime | date:"EEEE d MMMM yyyy, HH'h'mm") : 'Date à définir' }} · {{ form.meetingPoint || operation.meetingPoint || 'Rendez-vous à préciser' }}</p><h4>Briefing</h4><p>{{ form.briefing || operation.briefing || operation.description || 'Briefing à compléter.' }}</p><h4>Objectifs</h4><ul>@for (objective of form.objectives; track $index) { @if (objective.text.trim()) { <li><strong>{{ objective.kind === 'PRINCIPAL' ? 'Principal' : 'Secondaire' }}</strong> {{ objective.text }}</li> } }</ul><h4>Organisation</h4>@if (groups$ | async; as previewGroups) { @if (previewGroups.data.length) { <ul class="preview-list">@for (group of previewGroups.data; track group.id) { <li><strong>{{ group.name }}</strong><span>{{ group.parentId ? 'Sous-groupe' : 'Groupe principal' }} · {{ group.capacity ?? 'Capacité libre' }}</span></li> }</ul> } @else { <p class="empty-state">Les groupes seront affichés ici.</p> } }<h4>Ressources</h4>@if (shipRequirements$ | async; as previewRequirements) { @if (previewRequirements.length) { <p>{{ previewRequirements.length }} besoin(s) de vaisseau configuré(s).</p> } @else { <p class="empty-state">Aucun besoin de vaisseau.</p> } }<p class="preview-participation">La participation et l’affectation restent pilotées depuis la fiche participant publiée.</p></article>
         <p class="publication-state">Statut actuel : <span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>@if (operation.publicationStatus !== 'PUBLISHED') { <button type="button" class="primary" [disabled]="publishing || autosave.hasUnsavedChanges || imageUrlPending" [attr.aria-busy]="publishing" (click)="publish(operation)">{{ publishing ? 'Publication…' : 'Publier l’opération' }}</button> @if (autosave.hasUnsavedChanges || imageUrlPending) { <p class="muted">La publication sera possible dès que les dernières modifications seront enregistrées.</p> } }
       } @else if (tab === 'organisation') {
-        <h2>Organisation</h2>
-        <div class="organization-workspace">
-          <section class="group-tree" aria-label="Arborescence des groupes">
-            <div class="workspace-heading"><h3>Groupes</h3><span>{{ groups.length }} élément(s)</span></div>
-            @if (groups$ | async) { @if (groups.length) { @for (group of groups; track group.id; let i = $index) {
-              <article class="group-tree-row" [class.is-selected]="editingGroupId === group.id" [class.is-child]="group.parentId">
-                <button type="button" class="group-select" (click)="editGroup(group)" [attr.aria-pressed]="editingGroupId === group.id"><strong>{{ group.name }}</strong><span>{{ group.parentId ? 'Sous-groupe' : 'Groupe principal' }} · {{ group.capacity ?? '∞' }}</span></button>
-                <div class="group-tree-actions"><button type="button" (click)="moveGroup(operation.id, i, -1)" [disabled]="i === 0" aria-label="Monter le groupe">↑</button><button type="button" (click)="moveGroup(operation.id, i, 1)" [disabled]="i === groups.length - 1" aria-label="Descendre le groupe">↓</button><button type="button" (click)="deleteGroup(operation.id, group)" aria-label="Supprimer {{ group.name }}">×</button></div>
-              </article>
-            } } @else { <p class="empty-state">Aucun groupe. Créez le premier élément à droite.</p> } }
-          </section>
-          <section class="group-properties" aria-label="Propriétés du groupe sélectionné">
-            <div class="workspace-heading"><h3>{{ editingGroupId ? 'Propriétés du groupe' : 'Nouveau groupe' }}</h3><span>Deux niveaux maximum</span></div>
-            <label>Nom<input [(ngModel)]="groupForm.name" maxlength="120"></label>
-            <label>Description<textarea [(ngModel)]="groupForm.description" rows="3"></textarea></label>
-            <label>Parent<select [(ngModel)]="groupForm.parentId"><option [ngValue]="null">Groupe principal</option>@for (group of groups; track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
-            <label>Capacité<input type="number" min="0" [(ngModel)]="groupForm.capacity"></label>
-            <label>Mode<select [(ngModel)]="groupForm.assignmentMode"><option value="INHERITED">Hérité</option><option value="FREE">Libre</option><option value="VALIDATION">Sur validation</option><option value="MANAGED">Géré</option></select></label>
-            <label>Responsable délégué<select [(ngModel)]="groupForm.responsibleUserId"><option [ngValue]="null">Aucun responsable</option>@if (members$ | async; as members) { @if (groupForm.responsibleUserId && !hasMember(members, groupForm.responsibleUserId)) { <option [ngValue]="groupForm.responsibleUserId">Responsable actuel · {{ groupForm.responsibleUserId }}</option> } @for (member of members; track member.id) { <option [ngValue]="member.id">{{ member.username }} · {{ member.id }}</option> } }</select></label>
-            <div class="property-actions"><button type="button" class="primary" (click)="createGroup(operation.id)">{{ editingGroupId ? 'Mettre à jour le groupe' : 'Créer le groupe' }}</button>@if (editingGroupId) { <button type="button" (click)="editingGroupId = null; groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null }">Nouveau groupe</button> }</div>
-          </section>
+        <div class="organization" [class.organization--detail]="groupOpenOnMobile()">
+          <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy()" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" />
+          <div class="organization__panel">
+            @if (organizationError()) { <p class="organization__error" role="alert">{{ organizationError() }} <button type="button" (click)="loadOrganization(operation.id)">Réessayer</button></p> }
+            @if (selectedGroup(); as group) {
+              <app-operation-group-panel [group]="group" [groups]="organizationGroups()" [members]="(members$ | async) ?? []" [busy]="organizationBusy()" [defaultMode]="form.defaultAssignmentMode" [openTab]="groupPanelTab()" (save)="saveGroup(operation.id, group.id, $event)" (remove)="deleteGroup(operation.id, group)" (move)="moveGroup(operation.id, group, $event)" (addSubgroup)="quickAddGroup(operation.id, group.id)" (back)="groupOpenOnMobile.set(false)" (selectGroup)="selectGroup($event)" (dirtyChange)="groupSettingsDirty.set($event)">
+                <ng-container *ngTemplateOutlet="needs" />
+              </app-operation-group-panel>
+            } @else if (organization()) {
+              <app-operation-overview [groups]="organizationGroups()" [defaultMode]="form.defaultAssignmentMode" [busy]="organizationBusy()" [defaultModeUnsaved]="defaultModeUnsaved" (select)="selectGroup($event)" (defaultModeChange)="setDefaultMode($event)" (addGroup)="quickAddGroup(operation.id, null)" />
+              <section class="organization__needs"><ng-container *ngTemplateOutlet="needs" /></section>
+            }
+          </div>
         </div>
+        <ng-template #needs>
         <h3>Besoins de vaisseaux</h3>
         <p class="muted">Un besoin décrit une ressource attendue ; il reste séparé des appareils proposés par les membres.</p>
         @if (shipRequirements$ | async; as requirements) { @if (requirements.length) { <div class="permission-summary">@for (requirement of requirements; track requirement.id) { <span>{{ requirement.quantity }} × modèle {{ requirement.shipModelId || 'à préciser' }} · {{ requirement.status }} <button type="button" (click)="editShipRequirement(requirement)">Modifier</button> <button type="button" (click)="deleteShipRequirement(operation.id, requirement.id)">Supprimer</button></span> }</div> } @else { <p class="empty-state">Aucun besoin de vaisseau.</p> } }
@@ -65,15 +58,16 @@
           <div class="catalog-results">@for (model of catalogResults(); track model.id) { <button type="button" class="catalog-result" [attr.aria-pressed]="requirementForm.shipModelId === model.id" (click)="selectRequirementModel(model)">@if (model.imageUrl) { <img [src]="model.imageUrl" alt="" loading="lazy"> }<span>{{ model.name }}</span></button> }</div>
         </fieldset>
         <label>Quantité<input type="number" min="1" max="100" [(ngModel)]="requirementForm.quantity"></label>
-        <label>Groupe (facultatif)<select [(ngModel)]="requirementForm.groupId"><option [ngValue]="null">Toute l’opération</option>@for (group of groups; track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
+        <label>Groupe (facultatif)<select [(ngModel)]="requirementForm.groupId"><option [ngValue]="null">Toute l’opération</option>@for (group of leafGroups(); track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
         <label>Notes<textarea [(ngModel)]="requirementForm.notes" maxlength="5000" rows="2"></textarea></label>
         <button type="button" (click)="createShipRequirement(operation.id)">{{ editingRequirementId ? 'Enregistrer le besoin' : 'Ajouter le besoin' }}</button>
         @if (editingRequirementId) { <button type="button" (click)="cancelShipRequirementEdit()">Annuler la modification</button> }
+        </ng-template>
       } @else {
         <h2>Inscriptions et permissions</h2><p class="muted">Les membres choisissent Présent, Peut-être ou Absent. Une affectation ou une proposition de vaisseau exige le statut Présent.</p><label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label><div class="permission-summary"><strong>Règles actives</strong><span>Une affectation principale par opération</span><span>Les groupes en validation créent une demande</span><span>Les groupes gérés restent sous contrôle organisateur</span></div>@if (assignmentRequests$ | async; as requests) { <div class="permission-summary"><strong>Demandes de groupe : {{ requests.length }}</strong>@if (!requests.length) { <span>Aucune demande en attente.</span> } @for (request of requests; track request.id) { <span>{{ request.userId }} · groupe {{ request.groupId }} · {{ request.status }} @if (request.status === 'PENDING') { <button type="button" (click)="decideAssignment(request.id, true)">Approuver</button><button type="button" (click)="decideAssignment(request.id, false)">Refuser</button> }</span> } </div> }
         @if (ships$ | async; as ships) { <div class="permission-summary"><strong>Propositions de vaisseaux : {{ ships.length }}</strong>@if (!ships.length) { <span>Aucune proposition.</span> } @for (ship of ships; track ship.id) { <span>{{ ship.shipName || ('Vaisseau #' + ship.shipId) }} · propriétaire : {{ ship.ownerUsername || 'membre' }} · {{ ship.status }} @if (ship.requirementId) { · besoin lié } <label>Pilote distinct<select [value]="ship.pilotUserId || ''" (change)="setShipPilot(operation.id, ship.id, $any($event.target).value || null)"><option value="">À affecter</option>@if (members$ | async; as members) { @for (member of members; track member.id) { <option [value]="member.id">{{ member.username }}</option> } }</select></label> @if (ship.status !== 'UNAVAILABLE') { <button type="button" (click)="markShipUnavailable(operation.id, ship.id)">Marquer indisponible</button> }</span> } </div> }
       }
-      @if (tab !== 'publication') {
+      @if (tab === 'briefing' || tab === 'objectifs' || tab === 'permissions' || (tab === 'organisation' && operation.publicationStatus === 'PUBLISHED')) {
         <div class="save-row">
           <button type="button" class="primary" [disabled]="saving || !autosave.hasUnsavedChanges || autosave.status === 'conflict'" (click)="save()">{{ saving ? 'Enregistrement…' : (operation.publicationStatus === 'PUBLISHED' ? 'Enregistrer les modifications' : 'Enregistrer maintenant') }}</button>
         </div>

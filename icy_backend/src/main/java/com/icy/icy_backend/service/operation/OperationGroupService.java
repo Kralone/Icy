@@ -20,6 +20,44 @@ public class OperationGroupService {
     private final OperationGroupRepository groupRepository;
     private final MessageService messageService;
     private final OperationAssignmentRepository assignmentRepository;
+    private com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository requestRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setRequestRepository(com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository requestRepository) {
+        this.requestRepository = requestRepository;
+    }
+
+    private com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository requirementRepository;
+    private com.icy.icy_backend.db.repository.event.OperationShipProposalRepository proposalRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setShipRepositories(com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository requirements,
+                                    com.icy.icy_backend.db.repository.event.OperationShipProposalRepository proposals) {
+        this.requirementRepository = requirements;
+        this.proposalRepository = proposals;
+    }
+
+    /** Besoins ou vaisseaux proposés rattachés à ce groupe : sa suppression les détacherait sans le dire. */
+    private boolean hasLinkedShips(UUID operationId, Long groupId) {
+        boolean requirements = requirementRepository != null && requirementRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream().anyMatch(requirement -> groupId.equals(requirement.getGroupId()));
+        boolean proposals = proposalRepository != null && proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream().anyMatch(proposal -> groupId.equals(proposal.getGroupId()));
+        return requirements || proposals;
+    }
+
+    /** Membres affectés directement à ce groupe, ou demandes encore en attente sur lui. */
+    private boolean isOccupied(UUID operationId, Long groupId) {
+        boolean assigned = assignmentRepository.findByOperationEventId(operationId).stream().anyMatch(assignment -> groupId.equals(assignment.getGroupId()));
+        boolean requested = requestRepository != null && requestRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream()
+                .anyMatch(request -> groupId.equals(request.getGroupId()) && request.getStatus() == com.icy.icy_backend.db.entity.event.OperationAssignmentRequest.Status.PENDING);
+        return assigned || requested;
+    }
+
+    /** Un groupe qui reçoit des sous-groupes devient un conteneur : il ne peut plus porter d'affectation directe. */
+    private void requireEmptyParent(UUID operationId, OperationGroup parent) {
+        if (isOccupied(operationId, parent.getId())) {
+            throw new IllegalStateException("Ce groupe a déjà des membres ou des demandes : un groupe occupé ne peut pas recevoir de sous-groupe. Libérez-le d’abord.");
+        }
+    }
     @Transactional
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> create(UUID operationId, OperationGroupRequest request) {
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
@@ -32,6 +70,7 @@ public class OperationGroupService {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId())) throw new IllegalArgumentException("Le groupe parent appartient à une autre opération");
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
+            requireEmptyParent(operationId, parent);
         }
         OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).responsibleUserId(request.getResponsibleUserId()).build();
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
@@ -51,6 +90,8 @@ public class OperationGroupService {
         if (request.getParentId() != null) {
             OperationGroup parent = groupRepository.findById(request.getParentId()).orElseThrow(() -> new ResourceNotFoundException("Groupe parent introuvable"));
             if (!operationId.equals(parent.getOperationEventId()) || groupId.equals(parent.getId()) || parent.getParentId() != null) throw new IllegalArgumentException("Groupe parent invalide");
+            if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Deux niveaux de groupes maximum : ce groupe a déjà des sous-groupes");
+            if (!request.getParentId().equals(group.getParentId())) requireEmptyParent(operationId, parent);
         }
         group.setName(request.getName().trim()); group.setDescription(request.getDescription()); group.setCapacity(request.getCapacity());
         group.setParentId(request.getParentId()); group.setAssignmentMode(request.getAssignmentMode()); group.setSortOrder(request.getSortOrder());
@@ -64,6 +105,8 @@ public class OperationGroupService {
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId())) throw new ResourceNotFoundException("Groupe introuvable");
         if (groupRepository.existsByParentId(groupId)) throw new IllegalStateException("Supprimez d’abord les sous-groupes");
+        if (isOccupied(operationId, groupId)) throw new IllegalStateException("Ce groupe a des membres ou des demandes en attente : libérez-le avant de le supprimer.");
+        if (hasLinkedShips(operationId, groupId)) throw new IllegalStateException("Ce groupe porte des besoins ou des vaisseaux proposés : rattachez-les à un autre groupe ou à toute l’opération avant de le supprimer.");
         groupRepository.delete(group);
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.deleted", null);

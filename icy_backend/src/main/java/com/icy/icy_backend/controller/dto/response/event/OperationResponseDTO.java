@@ -24,6 +24,7 @@ public class OperationResponseDTO {
     private Operation.PublicationStatus publicationStatus;
     private boolean allowShipProposals;
     private long revision;
+    private com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode defaultAssignmentMode;
     private Instant updatedAt;
 
     public OperationResponseDTO(Event event, Operation operation) {
@@ -40,6 +41,7 @@ public class OperationResponseDTO {
         this.publicationStatus = operation.getPublicationStatus();
         this.allowShipProposals = operation.isAllowShipProposals();
         this.revision = operation.getRevision();
+        this.defaultAssignmentMode = operation.getDefaultAssignmentMode();
         this.updatedAt = operation.getUpdatedAt() == null ? null : operation.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant();
     }
 }

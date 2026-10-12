@@ -118,6 +118,8 @@ public class OperationAssignmentService {
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId).orElseGet(OperationAssignment::new);
         assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
         assignmentRepository.save(assignment);
+        // Une place prise directement rend caduque une demande encore en attente ailleurs dans l'opération.
+        requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
         return messageService.buildResponse("operation.assignment.confirmed", null);
     }
 
@@ -165,6 +167,7 @@ public class OperationAssignmentService {
             if (cursor.getAssignmentMode() != OperationGroup.AssignmentMode.INHERITED) return cursor.getAssignmentMode();
             cursor = cursor.getParentId() == null ? null : byId.get(cursor.getParentId());
         }
-        return OperationGroup.AssignmentMode.FREE;
+        // Aucun groupe de la branche ne fixe de mode : c'est celui de l'opération qui s'applique.
+        return operationRepository.findById(operationId).map(Operation::getDefaultAssignmentMode).orElse(OperationGroup.AssignmentMode.FREE);
     }
 }

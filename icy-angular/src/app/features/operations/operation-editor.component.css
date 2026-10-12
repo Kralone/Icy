@@ -50,3 +50,17 @@ input::placeholder, textarea::placeholder { color: #64748b; font-style: italic; 
 @keyframes save-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .save-activity { animation: none; border-top-color: rgba(103,232,249,.25); background: #67e8f9; } }
 @media (max-width: 640px) { .save-alert { bottom: .5rem; } .save-alert__actions { margin-left: 0; } }
+
+/* Lot 3A : organisation en deux zones, arborescence et élément sélectionné */
+.operation-editor > header, .operation-editor > .tabs, .operation-editor > .editor-card, .operation-editor > .save-alert { width: min(1600px, 100%); }
+.organization { display: grid; grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.organization__panel { display: grid; gap: 1rem; min-width: 0; }
+.organization__needs { display: grid; gap: .8rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid rgba(148,163,184,.2); border-radius: .8rem; background: #0b1525; }
+.organization__needs h3 { margin: 0; }
+.organization__error { margin: 0; padding: .7rem .9rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4; background: #351f2a; }
+.organization__error button { margin-left: .5rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .25rem .6rem; color: #ffe4e6; background: transparent; }
+@media (max-width: 900px) {
+  .organization { grid-template-columns: 1fr; }
+  .organization--detail .organization__tree { display: none; }
+  .organization:not(.organization--detail) .organization__panel app-operation-group-panel { display: none; }
+}

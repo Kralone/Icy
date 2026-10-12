@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { WebSocketService } from '../websocket/websocket.service';
 import { EventType } from '../../../model/event-type.model';
+import { OperationOrganization } from '../../../features/operations/organization/operation-organization.model';
 
 export interface EventCreateRequest {
   type: string;
@@ -169,6 +170,7 @@ export class EventService {
     return this.http.put(`/api/operations/${operationId}/ships/proposals/${proposalId}/pilot`, {}, { params });
   }
   getOperationShips(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/ships`); }
+  getOperationOrganization(operationId: string) { return this.http.get<{ data: OperationOrganization }>(`/api/operations/${operationId}/organization`).pipe(map(res => res.data)); }
   getOperationGroupsForEdit(operationId: string) { return this.http.get<{ data: any[] }>(`/api/operations/${operationId}/groups/edit`); }
   createOperationGroup(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/groups`, payload); }
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }

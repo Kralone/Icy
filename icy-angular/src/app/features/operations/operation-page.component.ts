@@ -22,6 +22,8 @@ interface OperationPageModel {
   startDateTime: string;
   endDateTime: string;
   finished: boolean;
+  /** Mode des groupes qui n'en fixent pas un eux-mêmes. */
+  defaultAssignmentMode?: string;
 }
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string; username?: string }; }
 interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
@@ -48,7 +50,7 @@ export class OperationPageComponent {
   private readonly shipsRefresh$ = new Subject<void>();
   readonly operationState$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
-    map(response => ({ status: 'READY', data: response.data } as OperationViewState)),
+    map(response => { this.defaultAssignmentMode = response.data.defaultAssignmentMode || 'FREE'; return { status: 'READY', data: response.data } as OperationViewState; }),
     startWith({ status: 'LOADING' } as OperationViewState),
     catchError(() => of({ status: 'ERROR' } as OperationViewState)),
     shareReplay({ bufferSize: 1, refCount: true })
@@ -71,6 +73,7 @@ export class OperationPageComponent {
     catchError(() => of([]))
   );
   readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
+  private defaultAssignmentMode = 'FREE';
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
   selectedShipRequirementId: string | null = null;
@@ -170,7 +173,7 @@ export class OperationPageComponent {
       if (cursor.assignmentMode && cursor.assignmentMode !== 'INHERITED') return cursor.assignmentMode;
       cursor = cursor.parentId == null ? null : groups.find(item => item.id === cursor.parentId);
     }
-    return 'FREE';
+    return this.defaultAssignmentMode;
   }
 
   groupModeLabel(group: any, groups: any[]): string {

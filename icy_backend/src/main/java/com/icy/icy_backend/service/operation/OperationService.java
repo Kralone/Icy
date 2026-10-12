@@ -94,6 +94,10 @@ public class OperationService {
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
         if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
+        if (request.getDefaultAssignmentMode() != null) {
+            if (request.getDefaultAssignmentMode() == com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode.INHERITED) throw new IllegalArgumentException("Mode d’affectation par défaut invalide");
+            operation.setDefaultAssignmentMode(request.getDefaultAssignmentMode());
+        }
         operation.setUpdatedAt(LocalDateTime.now());
         Operation saved = operationRepository.save(operation);
         // Écrit maintenant pour renvoyer la révision réellement enregistrée.

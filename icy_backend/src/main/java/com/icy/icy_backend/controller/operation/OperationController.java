@@ -65,6 +65,7 @@ public class OperationController {
     private final UserShipRepository userShipRepository;
     private final UserRepository userRepository;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
+    private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -201,6 +202,12 @@ public class OperationController {
         List<OperationGroupResponseDTO> groups = operationGroupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(id)
                 .stream().map(OperationGroupResponseDTO::new).toList();
         return messageService.buildResponse("operation.groups", groups);
+    }
+
+    @GetMapping("/{id}/organization")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationOrganizationDTO>> organization(@PathVariable UUID id) {
+        return messageService.buildResponse("operation.groups.edit", organizationService.organization(id));
     }
 
     @GetMapping("/{id}/groups/edit")
