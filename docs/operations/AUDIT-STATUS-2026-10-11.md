@@ -13,11 +13,11 @@ Branche contrôlée : `codex/operations-reprise-audit`.
 | 4 — affectations et capacité | PARTIEL — capacité et refus validés | Verrous feuille/ancêtres, test PostgreSQL réel à deux transactions, intégration Spring de deux affectations concurrentes sur un parent capacité 1, capacités hiérarchiques, tests de scope parent/enfant/frère ; fixture runtime authentifiée parent plein et message UI `Groupe complet` après HTTP 400 | Maintenir les tests de concurrence et le retour d’erreur visible |
 | 5 — flotte et besoins | CONFORME — SHP-01 à SHP-08 validés | Migrations V49/V50/V51, API séparée, contrôle permission/ownership hangar, séparation besoin/proposition, propriétaire/pilote distincts avec pilote Présent, contrôle modèle et quantité, retrait propriétaire et indisponibilité organisateur, éditeur participant/admin, protection des brouillons, sélecteur catalogue nommé ; parcours runtime publié hangar→besoin→carte puis retrait ; marque admin `UNAVAILABLE` ; requête runtime/DB `owner_assignments = 0` ; plusieurs vaisseaux sur un groupe feuille | Maintenir les régressions de flotte et la migration V51 |
 | 6 — non-régression UI | PARTIEL avancé | Build Angular, états explicites chargement/erreur de la page participant et parcours calendrier/opération exécutés | Revue visuelle indépendante complète des états demandés |
-| 7 — Discord et historique | PARTIEL | Sources inspectées, suite bot **66 réussis / 7 ignorés**, boutons et lien profond testés | Runtime Discord réel et migrations historiques à exécuter |
+| 7 — Discord et historique | PARTIEL avancé | Sources inspectées, suite bot **73 tests recensés : 66 réussis / 7 ignorés**, embed opération enrichi, boutons, lien profond, édition/réordonnancement et retours de participation testés ; suite Angular **73 fichiers / 197 tests / 0 échec** | Runtime Discord/Rabbit réel, capacité visible après annulation et migrations historiques à exécuter |
 
 ## Vérifications techniques
 
-- Build Docker backend : **289 tests, 0 échec, 3 ignorés**.
+- Build Docker backend : **289 tests, 0 échec, 3 ignorés** (baseline) ; tests ciblés ajoutés depuis, dont deep-links PostgreSQL/MockMvc **4/0**.
 - Build Angular de production réussi ; avertissements CSS historiques conservés.
 - Services locaux actifs : frontend `127.0.0.1:18088`, backend `127.0.0.1:18080`, PostgreSQL `127.0.0.1:15432`.
 - Le bouton de gestion des événements a été retiré du calendrier ; le panneau admin expose `Nouvelle opération` vers `/icy/operations/new`.
