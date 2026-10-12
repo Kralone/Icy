@@ -6,17 +6,47 @@
       <h1>Créer une opération</h1>
       <p class="intro">Posez le cadre de la mission. L’éditeur ouvrira ensuite les objectifs, l’organisation et la publication.</p>
       <div class="steps" aria-label="Étapes de création"><span class="active">01 Cadre</span><span>02 Organisation</span><span>03 Publication</span></div>
+      <p class="required-hint"><span aria-hidden="true">*</span> Champ obligatoire</p>
       <div class="form-grid">
-        <label>Titre<input [(ngModel)]="form.title" maxlength="180" placeholder="Nom de la mission"></label>
-        <label>Type<input [(ngModel)]="form.type" list="operation-types" maxlength="120" placeholder="Choisir ou saisir un type"><datalist id="operation-types">@for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }</datalist></label>
-        <label class="wide">Briefing<textarea [(ngModel)]="form.description" rows="5" maxlength="50000" placeholder="Contexte, intention et consignes de préparation"></textarea><small>{{ form.description.length }} / 50000</small></label>
-        <label>Début<input type="datetime-local" [(ngModel)]="form.startDateTime"></label>
-        <label>Fin<input type="datetime-local" [(ngModel)]="form.endDateTime"></label>
-        <label class="wide">Image de mission (URL autorisée)<input type="url" [(ngModel)]="form.imageUrl" maxlength="2000" placeholder="https://…"><small>Facultative, réutilisée dans l’aperçu et l’éditeur.</small></label>
-        <label class="check wide"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
+        <label>
+          <span class="field-label">Titre <span class="req" aria-hidden="true">*</span></span>
+          <input [(ngModel)]="form.title" maxlength="180" required placeholder="Ex. : Escorte du convoi minier">
+        </label>
+        <label>
+          <span class="field-label">Type <span class="req" aria-hidden="true">*</span></span>
+          <select [(ngModel)]="form.type" required [disabled]="typesLoading || !types.length" [class.is-empty]="!form.type" aria-describedby="operation-type-help">
+            <option value="" disabled>{{ typesLoading ? 'Chargement des types…' : 'Choisir un type' }}</option>
+            @for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }
+          </select>
+          @if (typesError) {
+            <span id="operation-type-help" class="field-error" role="alert">{{ typesError }} <button type="button" class="link-button" (click)="loadTypes()">Réessayer</button></span>
+          } @else {
+            <small id="operation-type-help" class="field-help">Types définis dans la gestion des événements.</small>
+          }
+        </label>
+        <label class="wide">
+          <span class="field-label">Briefing</span>
+          <textarea [(ngModel)]="form.description" rows="5" maxlength="50000" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>
+          <small>{{ form.description.length }} / 50000</small>
+        </label>
+        <label>
+          <span class="field-label">Début <span class="req" aria-hidden="true">*</span></span>
+          <input type="datetime-local" [(ngModel)]="form.startDateTime" required>
+        </label>
+        <label>
+          <span class="field-label">Fin <span class="req" aria-hidden="true">*</span></span>
+          <input type="datetime-local" [(ngModel)]="form.endDateTime" required [attr.aria-invalid]="datesInvalid">
+          @if (datesInvalid) { <span class="field-error" role="alert">La fin doit être postérieure au début.</span> }
+        </label>
+        <label class="wide">
+          <span class="field-label">Image de mission</span>
+          <input type="url" [(ngModel)]="form.imageUrl" maxlength="2000" placeholder="https://…">
+          <small class="field-help">Facultative. Adresse https d’une image autorisée par le site ; elle sera vérifiée à l’enregistrement.</small>
+        </label>
+        <label class="check wide"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> <span>Autoriser les membres présents à proposer un vaisseau depuis leur hangar</span></label>
       </div>
       @if (error) { <p class="error" role="alert">{{ error }}</p> }
-      <button type="button" class="primary" [disabled]="invalid" (click)="create()">{{ saving ? 'Création…' : 'Créer le brouillon et ouvrir l’éditeur' }}</button>
+      <button type="button" class="primary" [disabled]="invalid" [attr.aria-busy]="saving" (click)="create()">{{ saving ? 'Création…' : 'Créer le brouillon et ouvrir l’éditeur' }}</button>
     </div>
     <aside class="mission-preview" aria-label="Aperçu de la mission">
       <div class="preview-hero" [style.backgroundColor]="previewType?.backgroundColor || '#123047'">
@@ -24,7 +54,7 @@
         <span>{{ form.type || 'TYPE D’OPÉRATION' }}</span>
         <h2>{{ form.title || 'Nom de la mission' }}</h2>
       </div>
-      <div class="preview-body"><p>{{ form.description || 'Le briefing apparaîtra ici.' }}</p><div>📅 {{ form.startDateTime || 'Date à définir' }}</div><div>👥 Organisation à préparer dans l’éditeur</div></div>
+      <div class="preview-body"><p>{{ form.description || 'Le briefing apparaîtra ici.' }}</p><div>📅 {{ form.startDateTime ? (form.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm':'':'fr') : 'Date à définir' }}</div><div>👥 Organisation à préparer dans l’éditeur</div></div>
     </aside>
   </section>
 </main>

@@ -13,6 +13,7 @@ import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.event.EventTypeRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.EventPublisher;
@@ -431,6 +432,21 @@ public class EventService {
 
 
 // ------------------------------Event Type Service--------------------------------------
+
+    /**
+     * Liste fermée des types d’opération : le type doit exister dans events.event_types.
+     * Réservé à la création d’opération ; les événements classiques gardent leur comportement historique.
+     */
+    public String requireExistingEventTypeName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Choisissez un type d’opération.");
+        }
+        String trimmed = name.trim();
+        if (eventTypeRepository.findByName(trimmed) == null) {
+            throw new BadRequestException("Type d’opération inconnu : « " + trimmed + " ». Choisissez un type dans la liste.");
+        }
+        return trimmed;
+    }
 
     private EventType getEventTypeByName(String name) {
         if (name == null) {

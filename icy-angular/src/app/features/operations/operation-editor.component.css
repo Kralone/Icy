@@ -28,3 +28,8 @@ header a { color: #a5f3fc; text-decoration: none; } h1 { margin: .5rem 0 2rem; c
 .objectives-head { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }.objectives-head h2 { margin: 0; }.objective-actions { display: flex; gap: .5rem; flex-wrap: wrap; }.objective-actions button, .objective-order button { border: 1px solid #36546a; border-radius: .4rem; padding: .45rem .65rem; color: #bae6fd; background: #122235; }.objective-list { display: grid; gap: .65rem; }.objective-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; gap: .55rem; align-items: center; padding: .6rem; border: 1px solid rgba(103,232,249,.18); border-radius: .6rem; background: #0b1525; }.objective-row select { border: 1px solid #475569; border-radius: .45rem; padding: .75rem; color: #dffaff; background: #111827; }.objective-order { display: flex; gap: .25rem; }.objective-order button:disabled { opacity: .35; }.objective-order button:last-child { color: #fecaca; }
 @media (max-width: 760px) { .organization-workspace { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .objectives-head { flex-direction: column; }.objective-row { grid-template-columns: 1fr; }.objective-order { justify-content: flex-end; } }
+
+/* Lot 1 : placeholders distincts des valeurs saisies, statut de publication lisible */
+input::placeholder, textarea::placeholder { color: #64748b; font-style: italic; opacity: 1; }
+.status-pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; border: 1px solid #f4cd7d; color: #f4cd7d; background: #514027; font-weight: 600; font-size: .85rem; }
+.status-pill--published { border-color: #80e5b8; color: #80e5b8; background: #184d3d; }

@@ -18,14 +18,22 @@
     <section class="operation-status" aria-label="Situation de l'opération">
       <strong>Situation</strong>
       <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      @if (participationSummary$ | async; as participation) {
-        <span class="operation-counts">{{ participation.total }} inscrit(s) · {{ participation.present }} présent(s)</span>
+      @if (!participationError) {
+        <span class="operation-counts">{{ participationsByStatus.confirmed.length }} confirmé(s) · {{ participationsByStatus.maybe.length }} peut-être · {{ participationsByStatus.refused.length }} indisponible(s)</span>
       }
-      <div class="participation-actions" aria-label="Participation">
-        <button type="button" [class.active]="participationStatus === 1" (click)="setParticipation(operation.id, 1)">Présent</button>
-        <button type="button" [class.active]="participationStatus === 0" (click)="setParticipation(operation.id, 0)">Peut-être</button>
-        <button type="button" [class.active]="participationStatus === -1" (click)="setParticipation(operation.id, -1)">Absent</button>
-      </div>
+    </section>
+    <section class="operation-presence" aria-label="Présence et équipage">
+      <app-participation-panel
+        [participationsByStatus]="participationsByStatus"
+        [selectedStatus]="participationStatus"
+        [finished]="operation.finished"
+        finishedLabel="Opération terminée."
+        actionsLabel="Votre réponse à cette opération"
+        [loading]="participationLoading"
+        [saving]="participationSaving"
+        [error]="participationError"
+        (statusChange)="setParticipation(operation.id, $event)"
+        (retry)="retryParticipations()" />
     </section>
     <div class="operation-grid">
       <article class="operation-card operation-card--briefing">

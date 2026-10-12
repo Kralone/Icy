@@ -1,5 +1,5 @@
-import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
@@ -7,6 +7,7 @@ import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
 import { User } from '../../model/user.model';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
@@ -20,7 +21,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, RouterLink],
+  imports: [FormsModule, AsyncPipe, RouterLink, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
@@ -28,6 +29,23 @@ type OperationEditorState =
 export class OperationEditorComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly eventService = inject(EventService);
+  private readonly toast = inject(HotToastService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+
+  /** Retour d'action ponctuel : toast lié à l'action, jamais un message persistant dans un autre onglet. */
+  private notify(kind: 'success' | 'error', text: string): void {
+    if (kind === 'success') this.toast.success(text); else this.toast.error(text);
+  }
+
+  selectTab(tab: OperationEditorComponent['tab']): void {
+    this.tab = tab;
+    // Le message inline ne concerne que l'enregistrement du formulaire de l'onglet courant.
+    if (!this.saveError) this.message = '';
+  }
+
+  publicationLabel(status?: string | null): string {
+    return status === 'PUBLISHED' ? 'Publiée' : status === 'DRAFT' ? 'Brouillon' : 'Statut inconnu';
+  }
   private readonly catalogService = inject(CatalogService);
   private readonly userService = inject(UserService);
   readonly catalogResults = signal<CatalogEntry[]>([]);
@@ -129,25 +147,41 @@ export class OperationEditorComponent {
     this.saveErrorState.set(false);
     this.lastSaveId = id;
     const payload = { ...this.form, objectives: JSON.stringify(this.form.objectives.filter(item => item.text.trim()).map(item => ({ kind: item.kind, text: item.text.trim() }))) };
-    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: () => { this.saving = false; this.saveErrorState.set(true); this.message = 'Impossible d’enregistrer l’opération.'; } });
+    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: error => { this.saving = false; this.saveErrorState.set(true); this.message = (typeof error?.error?.message === 'string' && error.error.message) || 'Impossible d’enregistrer l’opération : vos saisies sont conservées.'; } });
   }
 
   retrySave(): void {
     if (this.lastSaveId) this.save(this.lastSaveId);
   }
 
-  publish(id: string) {
-    this.eventService.publishOperation(id).subscribe({ next: () => this.message = 'Opération publiée.', error: () => this.message = 'Publication impossible.' });
+  publishing = false;
+
+  publish(operation: { id: string; publicationStatus?: string }) {
+    if (this.publishing) return;
+    this.publishing = true;
+    this.eventService.publishOperation(operation.id).subscribe({
+      next: updated => {
+        this.publishing = false;
+        operation.publicationStatus = updated?.publicationStatus ?? 'PUBLISHED';
+        this.notify('success', 'Opération publiée : elle est visible dans le calendrier.');
+        this.changeDetector.markForCheck();
+      },
+      error: error => {
+        this.publishing = false;
+        this.notify('error', (typeof error?.error?.message === 'string' && error.error.message) || 'Publication impossible. L’opération reste en brouillon.');
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   createGroup(operationId: string) {
     const request = this.editingGroupId ? this.eventService.updateOperationGroup(operationId, this.editingGroupId, this.groupForm) : this.eventService.createOperationGroup(operationId, this.groupForm);
     request.subscribe({ next: () => {
-      this.message = this.editingGroupId ? 'Groupe mis à jour.' : 'Groupe créé.';
+      this.notify('success', this.editingGroupId ? 'Groupe mis à jour.' : 'Groupe créé.');
       this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data);
       this.editingGroupId = null;
       this.groupForm = { name: '', description: '', capacity: null, parentId: null, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null };
-    }, error: error => this.message = error?.error?.message || 'Création impossible.' });
+    }, error: error => this.notify('error', error?.error?.message || (this.editingGroupId ? 'Mise à jour du groupe impossible.' : 'Création du groupe impossible.')) });
   }
 
   editGroup(group: any): void { this.editingGroupId = group.id; this.groupForm = { name: group.name, description: group.description || '', capacity: group.capacity ?? null, parentId: group.parentId ?? null, assignmentMode: group.assignmentMode, sortOrder: group.sortOrder ?? 0, responsibleUserId: group.responsibleUserId ?? null }; }
@@ -158,30 +192,30 @@ export class OperationEditorComponent {
     const target = siblingIndex + delta;
     if (siblingIndex < 0 || target < 0 || target >= siblings.length) return;
     [siblings[siblingIndex], siblings[target]] = [siblings[target], siblings[siblingIndex]];
-    this.eventService.reorderOperationGroups(operationId, siblings.map(group => group.id)).subscribe({ next: () => { const orderById = new Map(siblings.map((group, order) => [group.id, order])); this.groups = this.groups.map(group => orderById.has(group.id) ? { ...group, sortOrder: orderById.get(group.id) } : group).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.message = 'Ordre des groupes mis à jour.'; }, error: () => this.message = 'Impossible de réordonner les groupes.' });
+    this.eventService.reorderOperationGroups(operationId, siblings.map(group => group.id)).subscribe({ next: () => { const orderById = new Map(siblings.map((group, order) => [group.id, order])); this.groups = this.groups.map(group => orderById.has(group.id) ? { ...group, sortOrder: orderById.get(group.id) } : group).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)); this.notify('success', 'Ordre des groupes mis à jour.'); }, error: () => this.notify('error', 'Impossible de réordonner les groupes.') });
   }
-  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.message = 'Groupe supprimé.'; this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.message = error?.error?.message || 'Suppression impossible.' }); }
+  deleteGroup(operationId: string, group: any): void { if (!confirm(`Supprimer « ${group.name} » ? Les sous-groupes ou affectations existants doivent être traités avant cette action.`)) return; this.eventService.deleteOperationGroup(operationId, group.id).subscribe({ next: () => { this.notify('success', 'Groupe supprimé.'); this.eventService.getOperationGroupsForEdit(operationId).subscribe(response => this.groups = response.data); }, error: error => this.notify('error', error?.error?.message || 'Suppression impossible.') }); }
   decideAssignment(requestId: string, approve: boolean): void {
     const action = approve ? this.eventService.approveOperationAssignment(requestId) : this.eventService.refuseOperationAssignment(requestId);
-    action.subscribe({ next: () => { this.message = approve ? 'Demande approuvée.' : 'Demande refusée.'; this.assignmentRefresh.next(); }, error: error => this.message = error?.error?.message || 'Décision impossible.' });
+    action.subscribe({ next: () => { this.notify('success', approve ? 'Demande approuvée.' : 'Demande refusée.'); this.assignmentRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Décision impossible.') });
   }
   createShipRequirement(operationId: string): void {
     const request = this.editingRequirementId ? this.eventService.updateOperationShipRequirement(operationId, this.editingRequirementId, this.requirementForm) : this.eventService.createOperationShipRequirement(operationId, this.requirementForm);
-    request.subscribe({ next: () => { this.message = this.editingRequirementId ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.'; this.cancelShipRequirementEdit(); this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Enregistrement du besoin impossible.' });
+    request.subscribe({ next: () => { this.notify('success', this.editingRequirementId ? 'Besoin de vaisseau mis à jour.' : 'Besoin de vaisseau créé.'); this.cancelShipRequirementEdit(); this.requirementRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Enregistrement du besoin impossible.') });
   }
   deleteShipRequirement(operationId: string, requirementId: string): void {
-    this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.message = 'Besoin de vaisseau supprimé.'; this.requirementRefresh.next(); }, error: error => this.message = error?.error?.message || 'Suppression du besoin impossible.' });
+    this.eventService.deleteOperationShipRequirement(operationId, requirementId).subscribe({ next: () => { this.notify('success', 'Besoin de vaisseau supprimé.'); this.requirementRefresh.next(); }, error: error => this.notify('error', error?.error?.message || 'Suppression du besoin impossible.') });
   }
   markShipUnavailable(operationId: string, proposalId: string): void {
     this.eventService.markOperationShipProposalUnavailable(operationId, proposalId).subscribe({
-      next: () => { this.message = 'Proposition marquée indisponible.'; this.shipRefresh.next(); },
-      error: error => this.message = error?.error?.message || 'Impossible de marquer la proposition indisponible.'
+      next: () => { this.notify('success', 'Proposition marquée indisponible.'); this.shipRefresh.next(); },
+      error: error => this.notify('error', error?.error?.message || 'Impossible de marquer la proposition indisponible.')
     });
   }
   setShipPilot(operationId: string, proposalId: string, pilotUserId: string | null): void {
     this.eventService.setOperationShipPilot(operationId, proposalId, pilotUserId).subscribe({
-      next: () => { this.message = pilotUserId ? 'Pilote affecté séparément du propriétaire.' : 'Pilote retiré.'; this.shipRefresh.next(); },
-      error: error => this.message = error?.error?.message || 'Impossible de modifier le pilote.'
+      next: () => { this.notify('success', pilotUserId ? 'Pilote affecté séparément du propriétaire.' : 'Pilote retiré.'); this.shipRefresh.next(); },
+      error: error => this.notify('error', error?.error?.message || 'Impossible de modifier le pilote.')
     });
   }
 }

@@ -5,6 +5,7 @@ import { OperationEditorComponent } from './operation-editor.component';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 describe('OperationEditorComponent', () => {
   let component: OperationEditorComponent;
@@ -15,7 +16,7 @@ describe('OperationEditorComponent', () => {
     updateOperation = vi.fn()
       .mockReturnValueOnce(throwError(() => new Error('network')))
       .mockReturnValue(of({ data: {} }));
-    const operation = { id: 'op', title: 'QA', briefing: '', objectives: '[]', meetingPoint: '', imageUrl: '', allowShipProposals: false, publicationStatus: 'DRAFT' };
+    const operation = { id: 'op', title: 'QA', briefing: '', objectives: '[]', meetingPoint: '', imageUrl: '', allowShipProposals: false, publicationStatus: 'DRAFT', startDateTime: '2026-10-20T20:30:00' };
     await TestBed.configureTestingModule({
       imports: [OperationEditorComponent],
       providers: [
@@ -30,6 +31,7 @@ describe('OperationEditorComponent', () => {
         } },
         { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } },
         { provide: UserService, useValue: { getAllUsers: vi.fn(() => of({ data: [] })) } },
+        { provide: HotToastService, useValue: { success: vi.fn(), error: vi.fn() } },
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(OperationEditorComponent);
@@ -54,5 +56,15 @@ describe('OperationEditorComponent', () => {
     expect(component.message).toBe('Opération enregistrée.');
     expect(updateOperation.mock.calls[0][1].briefing).toBe('À conserver');
     expect(updateOperation.mock.calls[1][1].briefing).toBe('À conserver');
+  });
+
+  it('renders the participant preview without raw ISO date or technical status', () => {
+    component.tab = 'publication';
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).not.toContain('DRAFT');
+    expect(text).toContain('Brouillon');
+    expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
   });
 });

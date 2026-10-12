@@ -69,7 +69,8 @@ public class OperationController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
-        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(request.getType(), request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
+        String type = eventService.requireExistingEventTypeName(request.getType());
+        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime());
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
         OperationUpdateRequest seed = new OperationUpdateRequest();

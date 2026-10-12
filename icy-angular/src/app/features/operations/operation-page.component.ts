@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +7,8 @@ import { catchError, map, of, shareReplay, startWith, Subject, switchMap, timeou
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { HotToastService } from '@ngxpert/hot-toast';
+import { ParticipationPanelComponent, ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 interface OperationPageModel {
   id: string;
@@ -20,7 +23,7 @@ interface OperationPageModel {
   endDateTime: string;
   finished: boolean;
 }
-interface ParticipationRow { status: number; userId?: string; user?: { id?: string }; }
+interface ParticipationRow { status: number; userId?: string; user?: { id?: string; username?: string }; }
 interface ObjectiveItem { kind: 'PRINCIPAL' | 'SECONDAIRE'; text: string; }
 type OperationViewState =
   | { status: 'LOADING' }
@@ -29,7 +32,7 @@ type OperationViewState =
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule],
+  imports: [AsyncPipe, DatePipe, RouterLink, FormsModule, ParticipationPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-page.component.html',
   styleUrl: './operation-page.component.css'
@@ -40,6 +43,8 @@ export class OperationPageComponent {
   private readonly eventService = inject(EventService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(HotToastService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly shipsRefresh$ = new Subject<void>();
   readonly operationState$ = this.route.paramMap.pipe(
     switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
@@ -66,23 +71,59 @@ export class OperationPageComponent {
     catchError(() => of([]))
   );
   readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
-  readonly participation$ = this.route.paramMap.pipe(
-    switchMap(params => this.eventService.getParticipations(params.get('id')!)),
-    map((response: any) => (response?.data ?? []) as ParticipationRow[]),
-    catchError(() => of([] as ParticipationRow[]))
-  );
-  readonly participationSummary$ = this.participation$.pipe(
-    map(participations => {
-      const currentUserId = this.authService.getUserIdFromToken();
-      const own = participations.find(item => (item.userId || item.user?.id) === currentUserId);
-      this.participationStatus = own?.status ?? null;
-      return { total: participations.length, present: participations.filter(item => item.status === 1).length };
-    })
-  );
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
   selectedShipRequirementId: string | null = null;
+  /** Présence : état issu du serveur uniquement (même logique que la modale historique du calendrier). */
+  participationsByStatus: ParticipationsByStatus = { confirmed: [], maybe: [], refused: [] };
   participationStatus: number | null = null;
+  participationLoading = false;
+  participationSaving = false;
+  participationError = '';
+  private participationOperationId: string | null = null;
+  private participationLoadSeq = 0;
+  private static readonly STATUS_LABELS: Record<number, string> = { 1: 'Présent', 0: 'Peut-être', [-1]: 'Indisponible' };
+
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const id = params.get('id');
+      if (id) this.loadParticipations(id);
+    });
+  }
+
+  loadParticipations(operationId: string): void {
+    const seq = ++this.participationLoadSeq;
+    this.participationOperationId = operationId;
+    this.participationLoading = true;
+    this.participationError = '';
+    this.changeDetector.markForCheck();
+    this.eventService.getParticipations(operationId).subscribe({
+      next: (response: any) => {
+        if (seq !== this.participationLoadSeq) return;
+        const participations = (response?.data ?? []) as ParticipationRow[];
+        const currentUserId = this.authService.getUserIdFromToken();
+        const own = currentUserId ? participations.find(item => String(item.user?.id ?? item.userId) === String(currentUserId)) : undefined;
+        this.participationStatus = own?.status ?? null;
+        this.participationsByStatus = {
+          confirmed: participations.filter(item => item.status === 1),
+          maybe: participations.filter(item => item.status === 0),
+          refused: participations.filter(item => item.status === -1)
+        };
+        this.participationLoading = false;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (seq !== this.participationLoadSeq) return;
+        this.participationLoading = false;
+        this.participationError = 'Impossible de charger les participations.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  retryParticipations(): void {
+    if (this.participationOperationId) this.loadParticipations(this.participationOperationId);
+  }
   readonly currentUserId = this.authService.getUserIdFromToken();
   assignmentMessage = '';
   objectiveItems(value?: string): ObjectiveItem[] {
@@ -137,10 +178,24 @@ export class OperationPageComponent {
     return mode === 'VALIDATION' ? 'Sur validation' : mode === 'MANAGED' ? 'Géré par les responsables' : 'Libre';
   }
   setParticipation(operationId: string, status: number) {
-    this.assignmentMessage = '';
+    if (this.participationSaving) return;
+    this.participationSaving = true;
+    this.participationError = '';
+    this.changeDetector.markForCheck();
     this.eventService.setParticipationStatus(operationId, status).subscribe({
-      next: () => { this.participationStatus = status; },
-      error: error => this.assignmentMessage = error?.error?.message || 'Statut impossible à enregistrer.'
+      next: () => {
+        this.participationSaving = false;
+        this.toast.success(`Présence enregistrée : ${OperationPageComponent.STATUS_LABELS[status]}.`);
+        // Les compteurs et listes sont relus côté serveur, jamais incrémentés localement.
+        this.loadParticipations(operationId);
+      },
+      error: error => {
+        this.participationSaving = false;
+        this.participationError = (typeof error?.error?.message === 'string' && error.error.message) || 'Votre réponse n’a pas été enregistrée. Veuillez réessayer.';
+        this.toast.error(this.participationError);
+        this.changeDetector.markForCheck();
+      }
     });
   }
+
 }

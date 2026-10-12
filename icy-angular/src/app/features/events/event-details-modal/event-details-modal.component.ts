@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { SafeHtml } from '@angular/platform-browser';
 import { FleetMiniCardComponent } from '../../../shared/fleet-mini-card/fleet-mini-card.component';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
+import { ParticipationPanelComponent } from '../../../shared/participation-panel/participation-panel.component';
 
 type FleetMiniShip = {
   name: string;
@@ -15,7 +16,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-event-details-modal',
   standalone: true,
-  imports: [CommonModule, A11yModule, FleetMiniCardComponent, AsyncStateComponent],
+  imports: [CommonModule, A11yModule, FleetMiniCardComponent, AsyncStateComponent, ParticipationPanelComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-details-modal.component.html',
   styleUrl: './event-details-modal.component.css'

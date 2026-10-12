@@ -1,63 +1,84 @@
 import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HotToastService } from '@ngxpert/hot-toast';
 import { EventService } from '../../core/services/event/event.service';
 import { EventType } from '../../model/event-type.model';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './operation-create.component.html',
   styleUrl: './operation-create.component.css'
 })
 export class OperationCreateComponent implements OnInit {
   private readonly eventService = inject(EventService);
   private readonly router = inject(Router);
+  private readonly toast = inject(HotToastService);
+  private readonly platformId = inject(PLATFORM_ID);
   types: EventType[] = [];
+  typesLoading = false;
+  typesError = '';
   saving = false;
   error = '';
   form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false };
-  private readonly platformId = inject(PLATFORM_ID);
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.eventService.getAllTypes().subscribe({
-      next: types => types?.length ? this.types = types : this.loadTypesFromEvents(),
-      error: () => this.loadTypesFromEvents()
-    });
+    this.loadTypes();
   }
 
-  private loadTypesFromEvents(): void {
-    this.eventService.getAll().subscribe({
-      next: events => {
-        const unique = new Map<string, EventType>();
-        events.forEach(event => {
-          const type = typeof event.type === 'string' ? event.type : event.type?.name;
-          if (type && !unique.has(type)) {
-            unique.set(type, typeof event.type === 'string'
-              ? { name: type, textColor: '#b8f3ff', backgroundColor: '#123047', imageUrl: '' }
-              : event.type);
-          }
-        });
-        this.types = [...unique.values()];
-        if (!this.types.length) this.error = 'Aucun type d’événement disponible pour créer l’opération.';
+  /** Liste fermée : uniquement les types enregistrés côté serveur, sans reconstruction à partir des événements. */
+  loadTypes(): void {
+    this.typesLoading = true;
+    this.typesError = '';
+    this.eventService.getAllTypes().subscribe({
+      next: types => {
+        this.typesLoading = false;
+        this.types = types ?? [];
+        if (!this.types.length) this.typesError = 'Aucun type d’opération n’est configuré. Ajoutez-en un dans la gestion des événements.';
+        if (this.form.type && !this.isKnownType(this.form.type)) this.form.type = '';
       },
-      error: () => this.error = 'Impossible de charger les types d’événement.'
+      error: () => {
+        this.typesLoading = false;
+        this.types = [];
+        this.typesError = 'Impossible de charger les types d’opération.';
+      }
     });
   }
 
   get previewType(): EventType | undefined { return this.types.find(type => type.name === this.form.type); }
 
-  get invalid(): boolean { return !this.form.title.trim() || !this.form.type || !this.form.startDateTime || !this.form.endDateTime || this.saving; }
+  isKnownType(name: string): boolean { return this.types.some(type => type.name === name); }
+
+  get datesInvalid(): boolean {
+    return !!this.form.startDateTime && !!this.form.endDateTime && this.form.endDateTime <= this.form.startDateTime;
+  }
+
+  get invalid(): boolean {
+    return !this.form.title.trim() || !this.isKnownType(this.form.type) || !this.form.startDateTime || !this.form.endDateTime || this.datesInvalid || this.saving;
+  }
 
   create(): void {
     if (this.invalid) return;
     this.saving = true;
     this.error = '';
-    this.eventService.createOperation(this.form).subscribe({
-      next: operation => this.router.navigate(['/icy/operations', operation.eventId || operation.id, 'edit']),
-      error: () => { this.saving = false; this.error = 'La création de l’opération a échoué.'; }
+    this.eventService.createOperation({ ...this.form, title: this.form.title.trim() }).subscribe({
+      next: operation => {
+        this.saving = false;
+        this.toast.success('Brouillon d’opération créé.');
+        this.router.navigate(['/icy/operations', operation.eventId || operation.id, 'edit']);
+      },
+      error: error => {
+        this.saving = false;
+        const serverMessage = typeof error?.error?.message === 'string' ? error.error.message : '';
+        this.error = serverMessage
+          || (error?.status === 0 ? 'Serveur injoignable : l’opération n’a pas été créée. Vérifiez votre connexion puis réessayez.'
+            : error?.status === 403 ? 'Vous n’avez pas les droits pour créer une opération.'
+            : 'La création de l’opération a échoué. Rien n’a été enregistré ; réessayez.');
+        this.toast.error(this.error);
+      }
     });
   }
 }
