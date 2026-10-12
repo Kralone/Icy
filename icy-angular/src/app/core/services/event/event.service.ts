@@ -26,6 +26,18 @@ export interface EventDTO {
   activityType?: 'EVENT' | 'OPERATION';
 }
 
+export interface OperationDraftSummary {
+  id: string;
+  title: string;
+  type?: string | null;
+  typeTextColor?: string | null;
+  typeBackgroundColor?: string | null;
+  typeImageUrl?: string | null;
+  startDateTime: string;
+  endDateTime: string;
+  updatedAt?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -116,8 +128,13 @@ export class EventService {
     return this.http.get<any>(`/api/operations/${eventId}/edit`).pipe(map(res => res.data));
   }
 
-  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean }) {
-    return this.http.put<any>(`/api/operations/${eventId}`, payload).pipe(map(res => res.data));
+  /** `expectedRevision` : le serveur refuse (409) si l'opération a changé depuis cette révision. */
+  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
+    return this.http.put<any>(`/api/operations/${eventId}`, payload, options.keepalive ? { keepalive: true } : {}).pipe(map(res => res.data));
+  }
+
+  getOperationDrafts() {
+    return this.http.get<{ data: OperationDraftSummary[] }>('/api/operations/drafts').pipe(map(res => res.data));
   }
 
   publishOperation(eventId: string) {

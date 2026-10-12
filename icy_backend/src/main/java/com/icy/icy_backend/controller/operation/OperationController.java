@@ -2,6 +2,7 @@ package com.icy.icy_backend.controller.operation;
 
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.event.OperationResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.OperationDraftSummaryDTO;
 import com.icy.icy_backend.controller.dto.operation.OperationUpdateRequest;
 import com.icy.icy_backend.service.operation.OperationService;
 import com.icy.icy_backend.service.operation.OperationAssignmentService;
@@ -239,6 +240,17 @@ public class OperationController {
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         return messageService.buildResponse("operation.get", new OperationResponseDTO(event, operation));
+    }
+
+    @GetMapping("/drafts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<MessageResponse<List<OperationDraftSummaryDTO>>> drafts() {
+        List<OperationDraftSummaryDTO> drafts = operationRepository.findByPublicationStatusOrderByUpdatedAtDesc(Operation.PublicationStatus.DRAFT).stream()
+                .filter(operation -> operation.getEvent() != null)
+                .map(OperationDraftSummaryDTO::new)
+                .toList();
+        return messageService.buildResponse("operation.drafts", drafts);
     }
 
     @GetMapping("/{id}/edit")

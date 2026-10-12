@@ -1,0 +1,27 @@
+<section class="management-page">
+  <header class="page-heading">
+    <div><a routerLink="/icy/admin" class="back">← Administration</a><h1>Brouillons d’opération</h1></div>
+    <a routerLink="/icy/operations/new" class="primary">Nouvelle opération</a>
+  </header>
+  @if (error()) { <div class="feedback error" role="alert">{{ error() }} <button type="button" (click)="load()">Réessayer</button></div> }
+  @if (loading()) { <div class="empty" role="status">Chargement des brouillons…</div> }
+  @if (!loading() && !error() && !drafts().length) { <div class="empty">Aucun brouillon en cours. Une opération créée reste ici jusqu’à sa publication.</div> }
+  <ul class="draft-grid">
+    @for (draft of drafts(); track draft.id) {
+      <li class="draft-card" [style.--accent]="draft.typeBackgroundColor || '#39839c'">
+        <div class="draft-card__visual" [style.backgroundColor]="draft.typeBackgroundColor || '#123047'">
+          @if (draft.typeImageUrl) { <img [src]="draft.typeImageUrl" alt="" loading="lazy"> }
+          @if (draft.type) { <span class="draft-card__type" [style.color]="draft.typeTextColor || '#e6f2ff'" [style.backgroundColor]="draft.typeBackgroundColor || '#123047'">{{ draft.type }}</span> }
+        </div>
+        <div class="draft-card__body">
+          <h2>{{ draft.title }}</h2>
+          <dl>
+            <div><dt>Date prévue</dt><dd>{{ draft.startDateTime | date:"EEEE d MMMM yyyy, HH'h'mm" }}</dd></div>
+            <div><dt>Dernière modification</dt><dd>{{ draft.updatedAt ? (draft.updatedAt | date:"d MMMM yyyy, HH'h'mm") : 'Inconnue' }}</dd></div>
+          </dl>
+          <a [routerLink]="['/icy/operations', draft.id, 'edit']" class="primary resume">Reprendre l’édition</a>
+        </div>
+      </li>
+    }
+  </ul>
+</section>

@@ -4,7 +4,9 @@ import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.Operation;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Data
@@ -21,6 +23,8 @@ public class OperationResponseDTO {
     private String imageUrl;
     private Operation.PublicationStatus publicationStatus;
     private boolean allowShipProposals;
+    private long revision;
+    private Instant updatedAt;
 
     public OperationResponseDTO(Event event, Operation operation) {
         this.id = event.getId();
@@ -35,5 +39,7 @@ public class OperationResponseDTO {
         this.imageUrl = operation.getImageUrl();
         this.publicationStatus = operation.getPublicationStatus();
         this.allowShipProposals = operation.isAllowShipProposals();
+        this.revision = operation.getRevision();
+        this.updatedAt = operation.getUpdatedAt() == null ? null : operation.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant();
     }
 }

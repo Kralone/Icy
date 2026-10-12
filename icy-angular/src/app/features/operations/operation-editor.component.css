@@ -33,3 +33,22 @@ header a { color: #a5f3fc; text-decoration: none; } h1 { margin: .5rem 0 2rem; c
 input::placeholder, textarea::placeholder { color: #64748b; font-style: italic; opacity: 1; }
 .status-pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; border: 1px solid #f4cd7d; color: #f4cd7d; background: #514027; font-weight: 600; font-size: .85rem; }
 .status-pill--published { border-color: #80e5b8; color: #80e5b8; background: #184d3d; }
+
+/* Lot 2 : état d'enregistrement du brouillon, dans l'en-tête et près du bouton */
+.editor-topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; }
+.save-indicator { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .4rem .75rem; min-width: 0; font-size: .85rem; }
+.save-indicator__state { display: inline-flex; align-items: center; gap: .45rem; padding: .3rem .75rem; border: 1px solid currentColor; border-radius: 999px; color: #80e5b8; background: rgba(15,23,42,.7); font-weight: 600; white-space: nowrap; }
+.save-indicator__dot { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; }
+.save-indicator__time { color: #cbd5e1; font-weight: 400; }
+.save-indicator[data-status="dirty"] .save-indicator__state, .save-row__state[data-status="dirty"] { color: #f4cd7d; }
+.save-indicator[data-status="saving"] .save-indicator__state, .save-row__state[data-status="saving"] { color: #67e8f9; }
+.save-indicator[data-status="saving"] .save-indicator__dot { animation: save-pulse 1s ease-in-out infinite; }
+.save-indicator[data-status="error"] .save-indicator__state, .save-indicator[data-status="conflict"] .save-indicator__state, .save-row__state[data-status="error"], .save-row__state[data-status="conflict"] { color: #fda4af; }
+.save-indicator__detail { color: #ffd0d4; overflow-wrap: anywhere; }
+.save-indicator__detail button { margin-left: .35rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .25rem .6rem; color: #ffe4e6; background: #4a2c3c; }
+.save-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.save-row__state { color: #80e5b8; font-size: .85rem; }
+@keyframes save-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .save-indicator__dot { animation: none !important; } }
+@media (max-width: 640px) { .save-indicator { justify-content: flex-start; width: 100%; } }
+.field-warning { color: #f4cd7d; font-size: .85rem; }

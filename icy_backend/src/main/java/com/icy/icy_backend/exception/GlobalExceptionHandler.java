@@ -14,10 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -41,6 +43,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     public ResponseEntity<Map<String, String>> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<?> handleStaleWrite(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", "Ce contenu a été modifié ailleurs depuis votre dernière lecture."));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

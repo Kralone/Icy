@@ -34,6 +34,7 @@ public class OperationGroupService {
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
         }
         OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).responsibleUserId(request.getResponsibleUserId()).build();
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.created", new OperationGroupResponseDTO(groupRepository.save(group)));
     }
 
@@ -54,6 +55,7 @@ public class OperationGroupService {
         group.setName(request.getName().trim()); group.setDescription(request.getDescription()); group.setCapacity(request.getCapacity());
         group.setParentId(request.getParentId()); group.setAssignmentMode(request.getAssignmentMode()); group.setSortOrder(request.getSortOrder());
         group.setResponsibleUserId(request.getResponsibleUserId());
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.updated", new OperationGroupResponseDTO(groupRepository.save(group)));
     }
 
@@ -63,6 +65,7 @@ public class OperationGroupService {
         if (!operationId.equals(group.getOperationEventId())) throw new ResourceNotFoundException("Groupe introuvable");
         if (groupRepository.existsByParentId(groupId)) throw new IllegalStateException("Supprimez d’abord les sous-groupes");
         groupRepository.delete(group);
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.deleted", null);
     }
 
@@ -78,6 +81,7 @@ public class OperationGroupService {
         java.util.Set<Long> expectedIds = operationGroupIds(operationId, expectedParent);
         if (!expectedIds.equals(new java.util.HashSet<>(groupIds))) throw new IllegalArgumentException("La liste doit contenir tous les groupes frères");
         for (int index = 0; index < groups.size(); index++) { groups.get(index).setSortOrder(index); groupRepository.save(groups.get(index)); }
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.reordered", null);
     }
 

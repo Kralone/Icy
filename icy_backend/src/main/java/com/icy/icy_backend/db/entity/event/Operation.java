@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,6 +58,12 @@ public class Operation {
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    /** Verrou optimiste : une écriture fondée sur une révision périmée est refusée au lieu d'écraser une version plus récente. */
+    @Version
+    @Column(nullable = false)
+    @Builder.Default
+    private long revision = 0;
 
     public enum PublicationStatus { DRAFT, PUBLISHED }
 }

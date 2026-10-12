@@ -1,0 +1,2 @@
+ALTER TABLE events.operations
+    ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0;

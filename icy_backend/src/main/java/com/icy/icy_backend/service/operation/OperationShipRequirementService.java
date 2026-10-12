@@ -42,6 +42,7 @@ public class OperationShipRequirementService {
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         validate(operationId, request);
         OperationShipRequirement value = OperationShipRequirement.builder().operationEventId(operationId).groupId(request.getGroupId()).shipModelId(request.getShipModelId()).quantity(request.getQuantity()).notes(request.getNotes()).status(request.getStatus() == null ? OperationShipRequirement.Status.OPEN : request.getStatus()).build();
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.created", new OperationShipRequirementResponseDTO(requirementRepository.save(value)));
     }
 
@@ -52,6 +53,7 @@ public class OperationShipRequirementService {
         value.setGroupId(request.getGroupId()); value.setShipModelId(request.getShipModelId()); value.setQuantity(request.getQuantity()); value.setNotes(request.getNotes());
         if (request.getStatus() != null) value.setStatus(request.getStatus());
         value.setUpdatedAt(LocalDateTime.now());
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.updated", new OperationShipRequirementResponseDTO(requirementRepository.save(value)));
     }
 
@@ -59,6 +61,7 @@ public class OperationShipRequirementService {
     public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, UUID requirementId) {
         OperationShipRequirement value = requirementRepository.findById(requirementId).filter(item -> operationId.equals(item.getOperationEventId())).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
         requirementRepository.delete(value);
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.deleted", null);
     }
 

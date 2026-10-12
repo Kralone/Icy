@@ -9,4 +9,6 @@ public class OperationUpdateRequest {
     private String meetingPoint;
     private String imageUrl;
     private Boolean allowShipProposals;
+    /** Révision lue par le client ; absente, l'écriture n'est pas contrôlée. */
+    private Long expectedRevision;
 }

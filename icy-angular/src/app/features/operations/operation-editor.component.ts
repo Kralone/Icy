@@ -1,5 +1,5 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
@@ -8,10 +8,19 @@ import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalo
 import { UserService } from '../../core/services/user/user.service';
 import { User } from '../../model/user.model';
 import { HotToastService } from '@ngxpert/hot-toast';
+import { DraftAutosave } from './operation-autosave';
 
 export interface OperationObjective {
   kind: 'PRINCIPAL' | 'SECONDAIRE';
   text: string;
+}
+
+interface OperationFormPayload {
+  briefing: string;
+  objectives: string;
+  meetingPoint: string;
+  imageUrl: string;
+  allowShipProposals: boolean;
 }
 
 type OperationEditorState =
@@ -26,7 +35,7 @@ type OperationEditorState =
   templateUrl: './operation-editor.component.html',
   styleUrl: './operation-editor.component.css'
 })
-export class OperationEditorComponent {
+export class OperationEditorComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly eventService = inject(EventService);
   private readonly toast = inject(HotToastService);
@@ -39,8 +48,8 @@ export class OperationEditorComponent {
 
   selectTab(tab: OperationEditorComponent['tab']): void {
     this.tab = tab;
-    // Le message inline ne concerne que l'enregistrement du formulaire de l'onglet courant.
-    if (!this.saveError) this.message = '';
+    // Un brouillon ne garde pas de saisie en attente derrière un onglet.
+    if (this.autosave.auto) this.autosave.flush();
   }
 
   publicationLabel(status?: string | null): string {
@@ -95,7 +104,7 @@ export class OperationEditorComponent {
     map(operation => ({ kind: 'READY', operation } as OperationEditorState)),
     startWith({ kind: 'LOADING' } as OperationEditorState),
     catchError(() => of({ kind: 'ERROR', message: 'Impossible de charger le brouillon.' } as OperationEditorState)),
-    tap(state => { if (state.kind === 'READY') this.form = { briefing: state.operation.briefing || '', objectives: this.parseObjectives(state.operation.objectives), meetingPoint: state.operation.meetingPoint || '', imageUrl: state.operation.imageUrl || '', allowShipProposals: state.operation.allowShipProposals ?? false }; })
+    tap(state => { if (state.kind === 'READY') this.adoptServerState(state.operation); })
   );
   readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   private readonly assignmentRefresh = new BehaviorSubject<void>(undefined);
@@ -113,56 +122,169 @@ export class OperationEditorComponent {
   editingGroupId: number | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false };
   tab: 'briefing' | 'objectifs' | 'organisation' | 'permissions' | 'publication' = 'briefing';
-  private readonly savingState = signal(false);
-  get saving(): boolean { return this.savingState(); }
-  set saving(value: boolean) { this.savingState.set(value); }
-  private readonly messageState = signal('');
-  get message(): string { return this.messageState(); }
-  set message(value: string) { this.messageState.set(value); }
-  private readonly saveErrorState = signal(false);
-  get saveError(): boolean { return this.saveErrorState(); }
-  private lastSaveId: string | null = null;
+  private operationId: string | null = null;
+  private currentOperation: any = null;
+  /** Dernière adresse d'image valide : une adresse en cours de saisie ne bloque pas l'enregistrement du reste. */
+  private lastValidImageUrl = '';
+  /** Brouillon : autosauvegarde serveur. Opération publiée : enregistrement sur demande, pour ne pas diffuser chaque frappe. */
+  readonly autosave = new DraftAutosave<OperationFormPayload>({
+    delayMs: 1500,
+    save: (payload, revision, options) => this.eventService.updateOperation(
+      this.operationId!,
+      { ...payload, expectedRevision: revision },
+      // Au-delà de 64 Ko le navigateur refuse une requête keepalive.
+      { keepalive: options.keepalive && new Blob([JSON.stringify(payload)]).size < 60000 }
+    ),
+    describeError: error => this.describeSaveError(error),
+    onChange: () => this.changeDetector.markForCheck()
+  });
+  get saving(): boolean { return this.autosave.status === 'saving'; }
+  get saveError(): boolean { return this.autosave.status === 'error'; }
+
+  private adoptServerState(operation: any): void {
+    this.operationId = operation.id;
+    this.currentOperation = operation;
+    this.lastValidImageUrl = operation.imageUrl || '';
+    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false };
+    this.autosave.auto = operation.publicationStatus !== 'PUBLISHED';
+    this.autosave.reset(this.payload(), operation.revision ?? null, operation.updatedAt ? new Date(operation.updatedAt) : null);
+  }
+
+  /** Vrai tant que l'adresse saisie n'est pas une adresse http(s) complète : elle n'est alors pas envoyée. */
+  get imageUrlPending(): boolean {
+    const value = this.form.imageUrl.trim();
+    if (!value) return false;
+    if (/\s/.test(value)) return true;
+    try {
+      const url = new URL(value);
+      return !(url.protocol === 'http:' || url.protocol === 'https:') || !url.hostname;
+    } catch { return true; }
+  }
+
+  private payload(): OperationFormPayload {
+    if (!this.imageUrlPending) this.lastValidImageUrl = this.form.imageUrl.trim();
+    return { ...this.form, imageUrl: this.lastValidImageUrl, objectives: JSON.stringify(this.form.objectives.filter(item => item.text.trim()).map(item => ({ kind: item.kind, text: item.text.trim() }))) };
+  }
+
+  private describeSaveError(error: unknown): string {
+    const response = error as { status?: number; error?: { message?: unknown } };
+    if (response?.status === 409) return 'Cette opération a été modifiée ailleurs. Vos saisies ne sont pas enregistrées.';
+    if (response?.status === 0 || response?.status === undefined) return 'Serveur injoignable. Vos saisies sont conservées sur cette page.';
+    return (typeof response.error?.message === 'string' && response.error.message) || 'Enregistrement refusé. Vos saisies sont conservées sur cette page.';
+  }
+
+  /** À appeler à chaque modification du formulaire. */
+  touch(): void {
+    if (this.operationId) this.autosave.update(this.payload());
+  }
+
+  get saveStatusLabel(): string {
+    switch (this.autosave.status) {
+      case 'dirty': return this.autosave.auto ? 'Modifications en cours…' : 'Modifications non enregistrées';
+      case 'saving': return 'Enregistrement…';
+      case 'error': return 'Non enregistré';
+      case 'conflict': return 'Modifié ailleurs';
+      default: return 'Enregistré';
+    }
+  }
+
+  /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */
+  private get leavingIsSafe(): boolean {
+    if (this.imageUrlPending) return false;
+    if (!this.autosave.hasUnsavedChanges) return true;
+    return this.autosave.auto && (this.autosave.status === 'dirty' || this.autosave.status === 'saving');
+  }
+
+  /** Garde de navigation interne : l'envoi des saisies en attente est fait par ngOnDestroy. */
+  canLeave(): boolean {
+    return this.leavingIsSafe || confirm('Des modifications ne sont pas enregistrées. Quitter l’éditeur quand même ?');
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.autosave.auto) this.autosave.flush({ keepalive: true });
+    if (!this.leavingIsSafe) event.preventDefault();
+  }
+
+  @HostListener('window:pagehide')
+  @HostListener('document:visibilitychange')
+  onPageHidden(): void {
+    if (this.autosave.auto && document.visibilityState === 'hidden') this.autosave.flush({ keepalive: true });
+  }
+
+  ngOnDestroy(): void {
+    // Navigation interne : la requête se termine après la destruction du composant.
+    if (this.autosave.auto) this.autosave.flush();
+  }
+
+  reloadFromServer(): void {
+    if (!this.operationId) return;
+    this.eventService.getOperationForEdit(this.operationId).subscribe({
+      next: operation => { this.adoptServerState(Object.assign(this.currentOperation, operation)); this.changeDetector.markForCheck(); },
+      // L'éditeur et les saisies restent en place tant que la version du serveur n'est pas arrivée.
+      error: () => this.notify('error', 'Serveur injoignable. Vos saisies sont toujours sur cette page.')
+    });
+  }
+
+  keepLocalVersion(): void {
+    if (!this.operationId) return;
+    this.eventService.getOperationForEdit(this.operationId).subscribe({
+      next: operation => {
+        // Publiée entre-temps : la version locale part une fois, puis l'enregistrement redevient manuel.
+        this.currentOperation.publicationStatus = operation.publicationStatus;
+        this.autosave.auto = operation.publicationStatus !== 'PUBLISHED';
+        this.autosave.overwriteFrom(operation.revision ?? null);
+        this.changeDetector.markForCheck();
+      },
+      error: () => this.notify('error', 'Serveur injoignable. Réessayez dans un instant.')
+    });
+  }
 
   parseObjectives(value?: string | null): OperationObjective[] {
     if (!value?.trim()) return [{ kind: 'PRINCIPAL', text: '' }];
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.filter(item => item && typeof item.text === 'string').map(item => ({ kind: item.kind === 'SECONDAIRE' ? 'SECONDAIRE' : 'PRINCIPAL', text: item.text }));
+      if (Array.isArray(parsed)) {
+        const objectives: OperationObjective[] = parsed.filter(item => item && typeof item.text === 'string').map(item => ({ kind: item.kind === 'SECONDAIRE' ? 'SECONDAIRE' : 'PRINCIPAL', text: item.text }));
+        // Un brouillon enregistré sans objectif garde une ligne vide à remplir.
+        return objectives.length ? objectives : [{ kind: 'PRINCIPAL', text: '' }];
+      }
     } catch { /* Legacy plain text is preserved as one principal objective. */ }
     return [{ kind: 'PRINCIPAL', text: value }];
   }
 
-  addObjective(kind: OperationObjective['kind'] = 'PRINCIPAL'): void { this.form.objectives.push({ kind, text: '' }); }
-  removeObjective(index: number): void { if (this.form.objectives.length > 1) this.form.objectives.splice(index, 1); }
+  addObjective(kind: OperationObjective['kind'] = 'PRINCIPAL'): void { this.form.objectives.push({ kind, text: '' }); this.touch(); }
+  removeObjective(index: number): void { if (this.form.objectives.length > 1) { this.form.objectives.splice(index, 1); this.touch(); } }
   moveObjective(index: number, delta: number): void {
     const target = index + delta;
     if (target < 0 || target >= this.form.objectives.length) return;
     const [item] = this.form.objectives.splice(index, 1);
     this.form.objectives.splice(target, 0, item);
+    this.touch();
   }
 
-  save(id: string) {
-    this.saving = true;
-    this.message = '';
-    this.saveErrorState.set(false);
-    this.lastSaveId = id;
-    const payload = { ...this.form, objectives: JSON.stringify(this.form.objectives.filter(item => item.text.trim()).map(item => ({ kind: item.kind, text: item.text.trim() }))) };
-    this.eventService.updateOperation(id, payload).subscribe({ next: () => { this.saving = false; this.message = 'Opération enregistrée.'; }, error: error => { this.saving = false; this.saveErrorState.set(true); this.message = (typeof error?.error?.message === 'string' && error.error.message) || 'Impossible d’enregistrer l’opération : vos saisies sont conservées.'; } });
+  /** Enregistrement immédiat, sans attendre la temporisation. */
+  save(): void {
+    this.touch();
+    this.autosave.flush();
   }
 
   retrySave(): void {
-    if (this.lastSaveId) this.save(this.lastSaveId);
+    this.autosave.retry();
   }
 
   publishing = false;
 
   publish(operation: { id: string; publicationStatus?: string }) {
-    if (this.publishing) return;
+    // On ne publie que ce que le serveur a confirmé.
+    if (this.publishing || this.autosave.hasUnsavedChanges || this.imageUrlPending) return;
     this.publishing = true;
     this.eventService.publishOperation(operation.id).subscribe({
       next: updated => {
         this.publishing = false;
         operation.publicationStatus = updated?.publicationStatus ?? 'PUBLISHED';
+        this.autosave.setRevision(updated?.revision);
+        this.autosave.auto = false;
         this.notify('success', 'Opération publiée : elle est visible dans le calendrier.');
         this.changeDetector.markForCheck();
       },

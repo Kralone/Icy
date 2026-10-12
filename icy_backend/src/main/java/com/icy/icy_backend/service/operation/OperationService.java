@@ -15,6 +15,7 @@ import jakarta.persistence.EntityManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,11 +65,19 @@ public class OperationService {
         if (request.getBriefing() != null && request.getBriefing().length() > 50000) throw new IllegalArgumentException("Briefing trop long");
         if (request.getMeetingPoint() != null && request.getMeetingPoint().length() > 255) throw new IllegalArgumentException("Lieu trop long");
         if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
-            URI image = URI.create(request.getImageUrl());
+            URI image;
+            try {
+                image = URI.create(request.getImageUrl());
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("URL d’image invalide");
+            }
             if (!("https".equalsIgnoreCase(image.getScheme()) || "http".equalsIgnoreCase(image.getScheme())) || image.getHost() == null) throw new IllegalArgumentException("URL d’image invalide");
         }
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        if (request.getExpectedRevision() != null && request.getExpectedRevision() != operation.getRevision()) {
+            throw new ObjectOptimisticLockingFailureException(Operation.class, eventId);
+        }
         operation.setBriefing(request.getBriefing());
         validateObjectives(request.getObjectives());
         operation.setObjectives(request.getObjectives());
@@ -76,7 +85,10 @@ public class OperationService {
         operation.setImageUrl(request.getImageUrl());
         if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
         operation.setUpdatedAt(LocalDateTime.now());
-        return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, operationRepository.save(operation)));
+        Operation saved = operationRepository.save(operation);
+        // Écrit maintenant pour renvoyer la révision réellement enregistrée.
+        entityManager.flush();
+        return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, saved));
     }
 
     @Transactional
@@ -86,7 +98,10 @@ public class OperationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
         operation.setPublicationStatus(Operation.PublicationStatus.PUBLISHED);
         operation.setUpdatedAt(LocalDateTime.now());
-        return messageService.buildResponse("operation.published", new OperationResponseDTO(event, operationRepository.save(operation)));
+        Operation saved = operationRepository.save(operation);
+        // Même raison que pour update : l'éditeur poursuit à partir de la révision renvoyée.
+        entityManager.flush();
+        return messageService.buildResponse("operation.published", new OperationResponseDTO(event, saved));
     }
 
     private Event findOperationEvent(UUID id) {
