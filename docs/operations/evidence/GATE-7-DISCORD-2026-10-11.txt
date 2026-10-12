@@ -17,3 +17,4 @@
 - Le listener Spring `DiscordEventParticipationListenerTest` couvre le retour Discord : statut présent enregistré puis publication de `events.updated`, et statut absent retrait de l’affectation/proposition en attente puis publication de la mise à jour. Tests Maven ciblés PASS.
 - DSC-05 passe à PARTIEL avancé : les composants aller-retour sont testés séparément, mais la chaîne Rabbit+DB+Discord réelle, les replays et la concurrence restent non vérifiés. DSC-06 reste NON VERIFIE.
 - DSC-06 passe à PARTIEL avancé : le test du listener vérifie le retrait de l’affectation et de la demande en attente sur statut Absent ; la capacité visible dans un groupe et la chaîne réelle restent à exécuter.
+- Le listener de participation est annoté `@Transactional` depuis `8fcd814` afin de regrouper la persistance, la libération d’affectation et le nettoyage de demande ; la transaction Rabbit/DB réelle n’est pas exécutée dans cette session.
