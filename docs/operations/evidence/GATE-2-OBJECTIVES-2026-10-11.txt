@@ -31,3 +31,4 @@ Validation:
 - L’erreur de sauvegarde expose désormais une alerte et un bouton `Réessayer` qui conserve le contenu saisi ; le build frontend passe.
 - Rejeu CUA runtime : backend arrêté, clic sur `Enregistrer les modifications`, puis observation de `Impossible d’enregistrer l’opération.` et du bouton `Réessayer` avec le briefing conservé. Backend relancé, clic sur `Réessayer`, puis observation de `Opération enregistrée.`.
 - Test Angular ciblé `operation-editor.component.spec.ts` : **1 test passé**. Il simule une erreur de sauvegarde, vérifie l’alerte et la conservation du briefing, clique sur `Réessayer`, puis vérifie les deux appels et le succès.
+- `OperationServiceTest.rejectsMalformedObjectivesAndNonHttpImageUrls` : objectifs JSON avec type invalide et URL `javascript:` rejetés ; test Maven ciblé PASS. SEC-06 passe à PARTIEL avancé, l’audit XSS navigateur de bout en bout reste ouvert.
