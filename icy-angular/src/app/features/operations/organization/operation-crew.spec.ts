@@ -127,14 +127,14 @@ describe('OperationCrewPanelComponent', () => {
     const options = Array.from(select.options).map(option => `${option.textContent!.trim()}:${option.disabled}`);
     expect(options).toEqual(['Sans poste:false', 'Pilote (complet):true', 'Artilleur:false']);
 
-    fixture.componentInstance.assign(crew.members[2], { value: '11' });
+    fixture.componentInstance.assign({ member: crew.members[2], positionId: 11, select: { value: '11' } });
     expect(events['setOperationMemberPosition']).toHaveBeenCalledWith('op', 'u3', 11);
-    fixture.componentInstance.assign(crew.members[0], { value: '' });
+    fixture.componentInstance.assign({ member: crew.members[0], positionId: null, select: { value: '' } });
     expect(events['setOperationMemberPosition']).toHaveBeenCalledWith('op', 'u1', null);
 
     events['setOperationMemberPosition'].mockReturnValueOnce(throwError(() => ({ error: { message: 'Poste complet' } })));
     const refused = { value: '10' };
-    fixture.componentInstance.assign(crew.members[2], refused);
+    fixture.componentInstance.assign({ member: crew.members[2], positionId: 10, select: refused });
     expect(toast['error']).toHaveBeenCalledWith('Poste complet');
     // La liste ne garde pas le poste refusé.
     expect(refused.value).toBe('');

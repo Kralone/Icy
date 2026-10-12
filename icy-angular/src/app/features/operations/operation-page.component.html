@@ -39,7 +39,7 @@
           @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
           @if (crewsError) { <p class="operation-coordination__error" role="alert">Les équipages de vaisseau n’ont pas pu être lus : leurs postes peuvent manquer ou ne plus être à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
           <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips" [crews]="crews" [requirements]="fleetNeeds"
-            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" (position)="setMyPosition(operation.id, $event)" />
+            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" (position)="setMyPosition(operation.id, $event)" (memberPosition)="setMemberPosition(operation.id, $event.groupId, $event.change)" />
           @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
         } @else {
           <p class="empty-state" role="status">Chargement de l’organisation…</p>

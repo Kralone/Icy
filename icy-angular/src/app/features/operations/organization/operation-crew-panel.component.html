@@ -75,24 +75,7 @@
       <p class="empty">Personne n’est encore affecté à cet équipage. Les membres présents le rejoignent depuis la fiche, ou se placent dans « Coordination ».</p>
     } @else {
       @if (unplaced().length && crew().positions.length) { <p class="unplaced">{{ unplaced().length }} membre{{ unplaced().length > 1 ? 's' : '' }} sans poste : {{ unplacedNames() }}.</p> }
-      <ul class="members">
-        @for (member of crew().members; track member.userId) {
-          <li>
-            <span class="members__avatar" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>
-            <span class="members__name">{{ member.username }}</span>
-            @if (crew().positions.length && !locked()) {
-              <select [attr.aria-label]="'Poste de ' + member.username" [disabled]="busy()" [value]="member.positionId ?? ''" (change)="assign(member, $any($event.target))">
-                <option value="">Sans poste</option>
-                @for (position of crew().positions; track position.id) {
-                  <option [value]="position.id" [selected]="member.positionId === position.id" [disabled]="isFull(position) && member.positionId !== position.id">{{ position.label }}{{ isFull(position) && member.positionId !== position.id ? ' (complet)' : '' }}</option>
-                }
-              </select>
-            } @else {
-              <span class="members__position" [class.is-none]="member.positionId === null">{{ positionLabel(member) }}</span>
-            }
-          </li>
-        }
-      </ul>
+      <app-operation-crew-members [crew]="crew()" [editable]="!locked()" [busy]="busy()" (assign)="assign($event)" />
     }
   </section>
 </div>

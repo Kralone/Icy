@@ -8,6 +8,7 @@ import { EventService } from '../../../core/services/event/event.service';
 import { OperationIconComponent } from '../briefing/operation-icon.component';
 import { OperationConfirmService } from '../operation-confirm.service';
 import { CrewMember, CrewPosition, CrewPreset, crewShipStatus, isPositionFull, membersAt, OperationCrew, POSITION_ICONS, POSITION_MODE_HINTS, POSITION_MODE_LABELS, PositionDraft, positionIcon, PositionMode, positionOccupancy } from './operation-crew.model';
+import { CrewPositionChange, OperationCrewMembersComponent } from './operation-crew-members.component';
 import { FleetRequirement } from './operation-fleet-cards.component';
 import { OrganizationGroup } from './operation-organization.model';
 
@@ -15,7 +16,7 @@ import { OrganizationGroup } from './operation-organization.model';
 @Component({
   selector: 'app-operation-crew-panel',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet, OperationIconComponent],
+  imports: [FormsModule, NgTemplateOutlet, OperationIconComponent, OperationCrewMembersComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-crew-panel.component.html',
   styleUrl: './operation-crew-panel.component.css'
@@ -99,9 +100,6 @@ export class OperationCrewPanelComponent {
   readonly unplacedNames = computed(() => this.unplaced().map(member => member.username).join(', '));
 
   members(position: CrewPosition): CrewMember[] { return membersAt(this.crew(), position.id); }
-  positionLabel(member: CrewMember): string {
-    return this.crew().positions.find(position => position.id === member.positionId)?.label ?? 'Sans poste';
-  }
 
   startAdd(): void {
     this.draft.set({ label: '', icon: null, capacity: null });
@@ -167,9 +165,7 @@ export class OperationCrewPanelComponent {
     }), 'Attribution des postes enregistrée.', 'Changement impossible.');
   }
 
-  assign(member: CrewMember, select: { value: string }): void {
-    const positionId = select.value === '' ? null : Number(select.value);
-    if (positionId === (member.positionId ?? null)) return;
+  assign({ member, positionId, select }: CrewPositionChange): void {
     this.run(this.eventService.setOperationMemberPosition(this.operationId(), member.userId, positionId),
       positionId === null ? `${member.username} n’a plus de poste.` : `Poste de ${member.username} enregistré.`, 'Attribution du poste impossible.',
       // Refus : la liste revient au poste réel du membre, elle ne garde pas le choix refusé.

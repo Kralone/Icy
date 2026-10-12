@@ -32,6 +32,12 @@
     @if (unplaced().length) {
       <p class="crewcard__unplaced"><span class="crewcard__label">Sans poste</span> <ng-container *ngTemplateOutlet="names; context: { $implicit: unplaced(), key: 'none' }" /></p>
     }
+    @if (canManage() && crew().members.length) {
+      <details class="crewcard__manage">
+        <summary>Attribuer les postes</summary>
+        <app-operation-crew-members [crew]="crew()" [busy]="busy()" (assign)="assign.emit($event)" />
+      </details>
+    }
   } @else {
     <p class="crewcard__mode">Équipage libre : aucun poste n’est défini.</p>
     @if (crew().members.length) {

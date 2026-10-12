@@ -1,3 +1,4 @@
+import { CrewPositionChange } from '../organization/operation-crew-members.component';
 import { OperationCrew } from '../organization/operation-crew.model';
 import { FleetRequirement } from '../organization/operation-fleet-cards.component';
 import { OperationCrewCardComponent } from './operation-crew-card.component';
@@ -46,6 +47,12 @@ export class OperationOrgChartComponent {
   }
   /** Poste choisi pour moi dans mon équipage ; null : sans poste. */
   readonly position = output<number | null>();
+  /** J'attribue les postes d'un équipage que le serveur me déclare gérable, tant que l'opération est ouverte. */
+  canManagePositions(crew: OperationCrew): boolean {
+    return crew.manageable && crew.positions.length > 0 && !this.readOnly() && !this.preview();
+  }
+  /** Poste attribué par un responsable ou un organisateur à un membre d'un équipage. */
+  readonly memberPosition = output<{ groupId: number; change: CrewPositionChange }>();
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();

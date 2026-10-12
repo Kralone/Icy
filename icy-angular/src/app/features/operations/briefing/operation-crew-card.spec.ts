@@ -99,6 +99,39 @@ describe('OperationCrewCardComponent', () => {
 });
 
 describe('Crew on the participant sheet', () => {
+  it('lets a delegated responsible assign positions on their own crews only, and nobody once the operation is over', async () => {
+    await TestBed.configureTestingModule({ imports: [OperationOrgChartComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(OperationOrgChartComponent);
+    // Je suis responsable de l'équipage Carrack, sans en être membre ; l'équipage Polaris est hors de ma délégation.
+    const polaris: OperationCrew = { ...crew, groupId: 3, shipModelName: 'Polaris', manageable: false, members: [{ userId: 'u9', username: 'Syl', positionId: null }] };
+    fixture.componentRef.setInput('composition', composition({ myGroupId: null }));
+    fixture.componentRef.setInput('currentUserId', 'chef');
+    fixture.componentRef.setInput('crews', [{ ...crew, manageable: true }, polaris]);
+    const asked: Array<{ groupId: number; user: string; positionId: number | null }> = [];
+    fixture.componentInstance.memberPosition.subscribe(event => asked.push({ groupId: event.groupId, user: event.change.member.username, positionId: event.change.positionId }));
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+
+    const panels = element.querySelectorAll('.crewcard__manage');
+    expect(panels.length).toBe(1);
+    expect(panels[0].closest('app-operation-crew-card')!.id).toBe('operation-crew-2');
+    // Aucun bouton pour prendre un poste moi-même : je ne suis pas membre de cet équipage.
+    expect(element.querySelectorAll('app-operation-crew-card .crewcard__action button').length).toBe(0);
+    const select = panels[0].querySelector<HTMLSelectElement>('select[aria-label="Poste de Tobias"]')!;
+    expect(Array.from(select.options).map(option => `${option.textContent!.trim()}:${option.disabled}`)).toEqual(['Sans poste:false', 'Pilote (complet):true', 'Artilleur:false', 'Soutien:false']);
+    select.value = '12';
+    select.dispatchEvent(new Event('change'));
+    const mine = panels[0].querySelector<HTMLSelectElement>('select[aria-label="Poste de Moi"]')!;
+    mine.value = '';
+    mine.dispatchEvent(new Event('change'));
+    expect(asked).toEqual([{ groupId: 2, user: 'Tobias', positionId: 12 }, { groupId: 2, user: 'Moi', positionId: null }]);
+
+    fixture.componentRef.setInput('readOnly', true);
+    fixture.detectChanges();
+    expect(element.querySelectorAll('.crewcard__manage').length).toBe(0);
+    expect(element.querySelectorAll('app-operation-crew-card select').length).toBe(0);
+  });
+
   it('draws a crew as a ship unit in the chart, an ordinary group as before, and only my own crew offers a choice', async () => {
     await TestBed.configureTestingModule({ imports: [OperationOrgChartComponent] }).compileComponents();
     const fixture = TestBed.createComponent(OperationOrgChartComponent);

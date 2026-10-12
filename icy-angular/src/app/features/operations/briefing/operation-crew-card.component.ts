@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { CrewMember, CrewPosition, crewShipStatus, isPositionFull, membersAt, OperationCrew, positionIcon, positionOccupancy } from '../organization/operation-crew.model';
+import { CrewPositionChange, OperationCrewMembersComponent } from '../organization/operation-crew-members.component';
 import { FleetRequirement } from '../organization/operation-fleet-cards.component';
 import { OperationIconComponent } from './operation-icon.component';
 
@@ -8,7 +9,7 @@ import { OperationIconComponent } from './operation-icon.component';
 @Component({
   selector: 'app-operation-crew-card',
   standalone: true,
-  imports: [NgTemplateOutlet, OperationIconComponent],
+  imports: [NgTemplateOutlet, OperationIconComponent, OperationCrewMembersComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-crew-card.component.html',
   styleUrl: './operation-crew-card.component.css'
@@ -22,6 +23,13 @@ export class OperationCrewCardComponent {
   readonly busy = input(false);
   /** Poste demandé pour moi ; null : rester dans l'équipage sans poste. */
   readonly choose = output<number | null>();
+  /**
+   * Vrai si j'attribue les postes des membres de cet équipage : le serveur me l'accorde (organisateur, ou responsable dans sa délégation)
+   * et l'opération est ouverte. Il recontrôle ce droit à chaque attribution.
+   */
+  readonly canManage = input(false);
+  /** Poste attribué, changé ou retiré à un membre de l'équipage. */
+  readonly assign = output<CrewPositionChange>();
 
   readonly positionIcon = positionIcon;
   readonly isFull = isPositionFull;
