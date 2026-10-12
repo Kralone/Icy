@@ -2,6 +2,11 @@
 
 - Inspection de `icy/messaging/event_handler.py` : les opérations conservent les trois boutons de participation et ajoutent le bouton lien « Voir l’opération sur IceForge ».
 - Tests ciblés `test_event_participation.py`, `test_discord_idempotency.py` et `test_removed_attack_surface.py` compilés avec Python 3.12 Docker (`py_compile` réussi).
-- Suite complète du bot exécutée dans Python 3.14 Docker : **65 tests réussis, 7 ignorés**, 6 avertissements de dépréciation.
+- Suite complète du bot exécutée dans Python 3.14 Docker : **73 tests recensés : 66 réussis, 7 ignorés**, aucun échec (source courante montée dans `/app`, 12/10/2026).
 - Le test de vue Discord vérifie les libellés `Présent`, `Peut-être`, `Absent` et le lien profond opération.
 - Limite : le runtime Discord et la synchronisation bidirectionnelle n’ont pas été exécutés dans cette session ; aucun token ni bot réel n’est configuré dans Docker Compose local.
+
+- Le test test_operation_event_embed_presents_context_and_deep_link vérifie titre, description, présence du libellé date, auteur, image et lien lors de la création. Il ne prouve pas le contenu structuré des objectifs, les mises à jour ou le réordonnancement ; DSC-03 reste NON VERIFIE en attente de couverture complète.
+- Commande depuis icy : docker run --rm -v <chemin-absolu-icy>:/app --entrypoint python iceforge/bot:local -m unittest discover -s tests -q. Une première exécution avec montage en lecture seule a échoué sur l’écriture SQLite ; la relance inscriptible ci-dessus passe.
+
+- Revue indépendante Gate 7 : CHANGES REQUIRED. Correctif P1 traité pour conserver le lien opération dans les vues recréées lors d’une édition ou d’un réordonnancement ; tests ciblés : 10/10. DSC-03 reste NON VERIFIE : la création est partiellement testée, mais objectifs structurés, lieu, image métier et mises à jour ne sont pas couverts.

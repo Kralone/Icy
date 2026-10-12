@@ -86,6 +86,53 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(456, linked["messageId"])
             self.assertEqual(123, linked["channelId"])
 
+    @patch.dict(
+        os.environ,
+        {"DISCORD_EVENTS_CHANNEL_ID": "123", "ICEFORGE_PUBLIC_URL": "https://iceforge.fr"},
+        clear=False,
+    )
+    async def test_operation_event_embed_presents_context_and_deep_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            bot = MagicMock()
+            channel = MagicMock(name="events")
+            channel.name = "events"
+            channel.send = AsyncMock(return_value=self._message())
+            bot.get_channel.return_value = channel
+            rabbit = MagicMock()
+            rabbit.publish = AsyncMock()
+            handler = EventHandler(bot, rabbit, store)
+
+            await handler.handle_event_created(
+                {
+                    "id": "operation-1",
+                    "title": "Convoy minier",
+                    "description": "Briefing et objectifs du convoi.",
+                    "date": "2026-10-12T20:30:00Z",
+                    "activityType": "OPERATION",
+                    "author": "Amiral",
+                    "type": {
+                        "name": "Opération",
+                        "color": "#1E90FF",
+                        "imageUrl": "https://cdn.example.test/operation.png",
+                    },
+                    "participants": [],
+                }
+            )
+
+            embed = channel.send.await_args.kwargs["embed"]
+            self.assertEqual("Opération : Convoy minier", embed.title)
+            self.assertIn("Briefing et objectifs du convoi.", embed.description)
+            self.assertIn("Date :", embed.description)
+            self.assertEqual("Créé par Amiral", embed.footer.text)
+            self.assertEqual("https://cdn.example.test/operation.png", embed.image.url)
+            operation_field = next(field for field in embed.fields if field.name == "Opération")
+            self.assertIn("https://iceforge.fr/icy/operations/operation-1", operation_field.value)
+            self.assertEqual(
+                "https://iceforge.fr/icy/operations/operation-1",
+                channel.send.await_args.kwargs["view"].children[3].url,
+            )
+
     @patch.dict(os.environ, {"DISCORD_NEWS_CHANNEL_ID": "123"}, clear=False)
     async def test_news_retry_reuses_message_when_backend_link_failed(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -139,6 +186,7 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             channel.id = 123
             old = self._message(456, 123)
             old.embeds = [discord.Embed(title="Later")]
+            old.embeds[0].add_field(name="Opération", value="[Voir](https://iceforge.fr/icy/operations/later)")
             channel.fetch_message = AsyncMock(return_value=old)
             deleted = MagicMock()
             deleted.delete = AsyncMock()
@@ -157,6 +205,8 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             })
 
             self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
+            self.assertEqual(3, len(channel.send.await_args_list[0].kwargs["view"].children))
+            self.assertTrue(channel.send.await_args_list[1].kwargs["view"].children[3].url.endswith("/icy/operations/later"))
             deleted.delete.assert_awaited_once()
             self.assertEqual(2, rabbit.publish.await_count)
 
@@ -190,12 +240,15 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             await handler.handle_event_updated({
                 "id": "event-1", "channelId": 123, "messageId": 456,
+                "activityType": "OPERATION",
                 "title": "Actif", "date": "2026-10-01T20:00:00Z",
                 "finished": False, "participants": [], "type": {},
             })
 
             self.assertFalse(store.is_event_finished("event-1"))
             self.assertIsNotNone(message.edit.await_args.kwargs["view"])
+            self.assertTrue(message.edit.await_args.kwargs["view"].children[3].url.endswith("/icy/operations/event-1"))
+            self.assertEqual("Opération", message.edit.await_args.kwargs["embed"].fields[-1].name)
 
     @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
     async def test_editing_event_date_reorders_active_messages(self):
@@ -224,12 +277,15 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             await handler.handle_event_updated({
                 "id": "earlier", "channelId": 123, "messageId": 200,
+                "activityType": "OPERATION",
                 "title": "Earlier", "date": "2026-10-01T20:00:00Z",
                 "finished": False, "participants": [], "type": {},
             })
 
             self.assertEqual(2, channel.send.await_count)
             self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
+            self.assertTrue(channel.send.await_args_list[0].kwargs["view"].children[3].url.endswith("/icy/operations/earlier"))
+            self.assertEqual(3, len(channel.send.await_args_list[1].kwargs["view"].children))
 
 
 if __name__ == "__main__":

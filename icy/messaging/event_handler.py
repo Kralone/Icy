@@ -261,7 +261,7 @@ class EventHandler:
                 continue
             current_message = await channel.send(
                 embed=current_embed,
-                view=EventParticipationView(self.rabbit, current_event_id),
+                view=self._view_for_embed(current_event_id, current_embed),
             )
             saved = self.discord_link_store.save("event", current_event_id, current_message.channel.id, current_message.id, key)
             new_links[current_event_id] = saved
@@ -277,6 +277,14 @@ class EventHandler:
                     "eventId": current_event_id, "messageId": saved.message_id, "channelId": saved.channel_id,
                 })
         return new_links[str(event_id)]
+
+    def _view_for_embed(self, event_id, embed):
+        # Rebuilt messages have no original payload. The operation field is
+        # retained in the embed; reconstruct only our own canonical URL.
+        operation_url = None
+        if any(field.name == "Opération" for field in embed.fields):
+            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
+        return EventParticipationView(self.rabbit, event_id, operation_url=operation_url)
 
     @staticmethod
     def _is_finished_message(message):
@@ -365,7 +373,10 @@ class EventHandler:
         elif image_url:
             logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
 
-        view = EventParticipationView(self.rabbit, event_id)
+        if payload.get("activityType") == "OPERATION":
+            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
+            embed.add_field(name="Opération", value=f"[Voir l'opération sur IceForge]({operation_url})", inline=False)
+        view = self._view_for_embed(event_id, embed)
         await message.edit(embed=embed, view=view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, message.channel.id, message.id, self._event_sort_key(payload.get("date")))
@@ -409,7 +420,7 @@ class EventHandler:
         old_message_ids = [message_id for _, _, message_id, _ in records]
         new_links = {}
         for key, event_id, _, embed in desired:
-            sent = await channel.send(embed=embed, view=EventParticipationView(self.rabbit, event_id))
+            sent = await channel.send(embed=embed, view=self._view_for_embed(event_id, embed))
             new_links[event_id] = self.discord_link_store.save("event", event_id, sent.channel.id, sent.id, key)
         for message_id in old_message_ids:
             try:
