@@ -168,3 +168,17 @@ Rien de ce qui suit n'est fait.
 6. **Fusion** de la PR après ta validation, en avance rapide ou par commit de fusion.
 7. **Production** : sauvegarde, backend et bot déployés ensemble, puis frontend ; contrôle de l'historique Flyway et d'une opération de test en brouillon, non publiée.
 8. **Retour arrière** : restauration de la sauvegarde. Les migrations V40 à V53 ajoutent des tables et des colonnes ; aucun script de retour n'est fourni.
+
+## 11. Preuves archivées hors du dépôt
+
+Les 92 fichiers de preuves de développement ont été retirés du dépôt le 2026-10-12 : 66 captures d'écran des lots 1 à 3D, les 22 revues intermédiaires de `reviews/`, trois notes d'étape (`00-audit.md`, `AUDIT-STATUS-2026-10-11.md`, `GATE-0-ADDENDUM.md`) et l'ancien texte de PR du lot 1.
+
+| Point | Valeur |
+|---|---|
+| Archive | `operations-preuves-2026-10-12.zip` |
+| Emplacement | `C:\Users\floga\IdeaProjects\IceForge-archives\`, hors du dépôt Git, sur le poste de développement |
+| Empreinte SHA-256 | `5e98de66e94fc5febe9f7ba19750bde30fcc401d0160e4d1545d0f85d8b3c76e` |
+| Manifeste | `operations-preuves-2026-10-12.sha256.txt`, à côté de l'archive et dans l'archive : une empreinte par fichier |
+| Historique Git | Les mêmes fichiers restent lisibles au commit `3061df3` |
+
+Les rapports de lot et la matrice de conformité citent ces captures et ces revues par leur nom : elles se trouvent dans l'archive, sous le même chemin.
