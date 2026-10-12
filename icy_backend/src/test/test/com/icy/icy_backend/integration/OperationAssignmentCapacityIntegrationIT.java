@@ -137,6 +137,21 @@ class OperationAssignmentCapacityIntegrationIT {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void participantCanReadPublishedOperationButCannotOpenEditor() throws Exception {
+        operationId = UUID.randomUUID();
+        jdbc.update("INSERT INTO events.events (id, type, event_type, title, description, start_date_time, end_date_time, activity_type) VALUES (?, 'OPERATION', 'VALIDATION', 'published deep link', 'briefing', ?, ?, 'OPERATION')",
+                operationId, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2));
+        jdbc.update("INSERT INTO events.operations (event_id, briefing, publication_status) VALUES (?, 'briefing', 'PUBLISHED')", operationId);
+
+        mockMvc.perform(get("/api/operations/{id}", operationId)
+                        .with(TestAuth.user(USER_ONE, "USER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/operations/{id}/edit", operationId)
+                        .with(TestAuth.user(USER_ONE, "USER")))
+                .andExpect(status().isForbidden());
+    }
+
     private Callable<Boolean> assign(UUID userId, Long groupId) {
         return () -> {
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(

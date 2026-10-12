@@ -3,6 +3,7 @@ Gate 2 / SEC-05 — accès aux brouillons — 11/10/2026
 Commande :
 `mvn -Dtest=OperationAssignmentCapacityIntegrationIT -Diceforge.integration=true -Diceforge.jdbc.password=change_me_local_only -Denforcer.skip=true -Dcheckstyle.skip=true test`
 
-Résultat : `Tests run: 3, Failures: 0, Errors: 0, Skipped: 0`.
+Résultat : `Tests run: 4, Failures: 0, Errors: 0, Skipped: 0`.
 
 Le test `nonOrganizerCannotOpenDraftOperationDeepLink` crée une opération DRAFT temporaire dans PostgreSQL puis appelle `GET /api/operations/{id}` avec un utilisateur `USER`. La réponse HTTP attendue et obtenue est `404 Not Found`. La fixture est supprimée dans `@AfterEach`.
+- `OperationAssignmentCapacityIntegrationIT.participantCanReadPublishedOperationButCannotOpenEditor` : avec PostgreSQL local et MockMvc, un utilisateur USER obtient 200 sur une opération PUBLISHED et 403 sur `/api/operations/{id}/edit`. Le test `nonOrganizerCannotOpenDraftOperationDeepLink` conserve le 404 sur DRAFT. Commande ciblée Maven avec `-Diceforge.integration=true` : PASS.
