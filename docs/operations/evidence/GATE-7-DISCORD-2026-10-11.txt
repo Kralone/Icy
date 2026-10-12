@@ -6,7 +6,7 @@
 - Le test de vue Discord vérifie les libellés `Présent`, `Peut-être`, `Absent` et le lien profond opération.
 - Limite : le runtime Discord et la synchronisation bidirectionnelle n’ont pas été exécutés dans cette session ; aucun token ni bot réel n’est configuré dans Docker Compose local.
 
-- Le test test_operation_event_embed_presents_context_and_deep_link vérifie titre, description, présence du libellé date, auteur, image et lien lors de la création. Les tests d’édition et de réordonnancement ajoutés vérifient la persistance du lien, mais pas la complétude du contenu d’embed ; objectifs structurés, lieu, image métier et mises à jour de contenu restent non couverts. DSC-03 reste NON VERIFIE.
+- Le test test_operation_event_embed_presents_context_and_deep_link vérifie titre, description, présence du libellé date, auteur, image et lien lors de la création. Les tests d’édition ajoutés vérifient aussi briefing, objectifs, lieu, image métier et persistance du lien ; le runtime Discord réel reste absent. DSC-03 reste PARTIEL avancé.
 - Commande depuis icy : docker run --rm -v <chemin-absolu-icy>:/app --entrypoint python iceforge/bot:local -m unittest discover -s tests -q. Une première exécution avec montage en lecture seule a échoué sur l’écriture SQLite ; la relance inscriptible ci-dessus passe.
 
 - Revue indépendante Gate 7 : CHANGES REQUIRED. Correctif P1 traité pour conserver le lien opération dans les vues recréées lors d’une édition ou d’un réordonnancement ; tests ciblés : 10/10. DSC-03 reste NON VERIFIE : la création est partiellement testée, mais objectifs structurés, lieu, image métier et mises à jour ne sont pas couverts.
@@ -15,3 +15,4 @@
 
 - Payload opération enrichi : EventPublisher transmet operation.briefing/objectives/meetingPoint/imageUrl ; EventPublisherTest vérifie le contrat et le bot rend ces champs dans l’embed. DSC-03 passe à PARTIEL avancé : les champs sont couverts par tests, mais le runtime Discord réel et les mises à jour complètes de contenu restent non vérifiés.
 - Le listener Spring `DiscordEventParticipationListenerTest` couvre le retour Discord : statut présent enregistré puis publication de `events.updated`, et statut absent retrait de l’affectation/proposition en attente puis publication de la mise à jour. Tests Maven ciblés PASS.
+- DSC-05 passe à PARTIEL avancé : les composants aller-retour sont testés séparément, mais la chaîne Rabbit+DB+Discord réelle, les replays et la concurrence restent non vérifiés. DSC-06 reste NON VERIFIE.
