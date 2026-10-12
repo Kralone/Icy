@@ -4,3 +4,4 @@
 - Résultat : **73 fichiers de test passés, 197 tests passés, 0 échec**.
 - Couverture directement pertinente observée : `events.component.spec.ts` (7 tests), `event-details-modal.component.spec.ts` (2 tests), `event.service.spec.ts` (1 test), `operation-editor.component.spec.ts` (1 test), `app-route-policy.spec.ts` (3 tests), gardes auth et services websocket.
 - Limite : cette suite unitaire ne remplace pas un parcours navigateur mobile/desktop ni une relecture des données historiques en base ; REG-01/02/03/05 restent partiels, REG-04/06/07/08 restent à vérifier selon leur portée.
+- Sous-suite ciblée exécutée avec le script Angular officiel (configuration complète) : `operation-editor`, `events`, `event-details-modal`, `event-management` — **4 fichiers, 11 tests, 0 échec**. Un lancement Vitest direct a été écarté car il contourne cette configuration (`@testing/test-providers` et globals absents).
