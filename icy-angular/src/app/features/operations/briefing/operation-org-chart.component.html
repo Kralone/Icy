@@ -51,7 +51,7 @@
     @if (group.responsibleUsername && group.parentId !== null) { <span>Responsable : {{ group.responsibleUsername }}</span> }
   </p>
   @if (crewOf(group); as crew) {
-    <app-operation-crew-card [crew]="crew" [requirements]="requirements()" [currentUserId]="currentUserId()" [canChoose]="canChoosePosition(group, crew)" [busy]="busy()" (choose)="position.emit($event)" />
+    <app-operation-crew-card [id]="'operation-crew-' + group.id" tabindex="-1" role="group" [attr.aria-label]="group.name + ', équipage de vaisseau'" [crew]="crew" [requirements]="requirements()" [currentUserId]="currentUserId()" [canChoose]="canChoosePosition(group, crew)" [busy]="busy()" (choose)="position.emit($event)" />
   } @else if (group.members.length) {
     <ul class="members">
       @for (member of visibleMembers(group); track member.userId) {

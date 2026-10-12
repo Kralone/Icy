@@ -6,6 +6,7 @@ import { CatalogService } from '../../../core/services/catalog/catalog.service';
 import { EventService } from '../../../core/services/event/event.service';
 import { routes } from '../../../app.routes';
 import { CrewPreset } from '../../operations/organization/operation-crew.model';
+import { OperationConfirmService } from '../../operations/operation-confirm.service';
 import { CrewPresetsComponent } from './crew-presets.component';
 
 const carrack: CrewPreset = { id: 'p1', name: 'Carrack — Exploration', description: 'Sortie longue', shipModelId: 286, shipModelName: 'Carrack', shipModelImageUrl: '/img/carrack.jpg', capacity: 6, positionMode: 'MANAGED', archived: false,
@@ -16,6 +17,7 @@ describe('CrewPresetsComponent', () => {
   let fixture: ComponentFixture<CrewPresetsComponent>;
   let events: Record<string, ReturnType<typeof vi.fn>>;
   let toast: Record<string, ReturnType<typeof vi.fn>>;
+  let ask: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     events = {
@@ -24,9 +26,10 @@ describe('CrewPresetsComponent', () => {
       setCrewPresetArchived: vi.fn(() => of({}))
     };
     toast = { success: vi.fn(), error: vi.fn() };
+    ask = vi.fn(() => Promise.resolve(false));
     await TestBed.configureTestingModule({
       imports: [CrewPresetsComponent],
-      providers: [provideRouter([]), { provide: EventService, useValue: events }, { provide: HotToastService, useValue: toast }, { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } }]
+      providers: [provideRouter([]), { provide: EventService, useValue: events }, { provide: HotToastService, useValue: toast }, { provide: OperationConfirmService, useValue: { ask } }, { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } }]
     }).compileComponents();
     fixture = TestBed.createComponent(CrewPresetsComponent);
     fixture.detectChanges();
@@ -118,11 +121,42 @@ describe('CrewPresetsComponent', () => {
     expect(page.draft()).not.toBeNull();
   });
 
+  it('asks before dropping unsaved changes, and not when nothing was changed', async () => {
+    const page = fixture.componentInstance;
+    page.edit(carrack);
+    expect(page.dirty()).toBe(false);
+    expect(page.canLeave()).toBe(true);
+    page.cancel();
+    await Promise.resolve();
+    expect(ask).not.toHaveBeenCalled();
+    expect(page.draft()).toBeNull();
+
+    page.edit(carrack);
+    page.set('capacity', 8);
+    expect(page.dirty()).toBe(true);
+    const unload = { preventDefault: vi.fn() };
+    page.onBeforeUnload(unload as any);
+    expect(unload.preventDefault).toHaveBeenCalled();
+    // « Continuer la saisie » : le formulaire reste ouvert avec la saisie.
+    page.cancel();
+    await Promise.resolve();
+    expect(ask).toHaveBeenCalledTimes(1);
+    expect(page.draft()!.capacity).toBe(8);
+    expect(await page.canLeave()).toBe(false);
+
+    ask.mockReturnValue(Promise.resolve(true));
+    page.cancel();
+    await Promise.resolve();
+    expect(page.draft()).toBeNull();
+    expect(page.canLeave()).toBe(true);
+  });
+
   it('is reachable by administrators only', () => {
     const find = (list: any[], path: string): any => list.flatMap(route => [route, ...(route.children ? [find(route.children, path)] : [])]).find(route => route?.path === path);
     const admin = (routes as any[]).flatMap(route => route.children ?? []).find(route => route.path === 'admin') ?? find(routes as any[], 'admin');
     const presets = admin.children.find((route: any) => route.path === 'crew-presets');
     expect(presets.data.roles).toEqual(['ADMIN']);
+    expect(presets.canDeactivate.length).toBe(1);
     expect(admin.data.roles).toEqual(['ADMIN', 'OFFICIER']);
   });
 });

@@ -1,5 +1,5 @@
 import { OperationCrew } from './organization/operation-crew.model';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -275,8 +275,13 @@ export class OperationPageComponent {
         this.compositionStale = false;
         if (afterAction) {
           this.assignmentBusy = false;
-          // Le bouton utilisé a pu disparaître : le focus revient sur « Mon affectation », qui dit le résultat.
-          setTimeout(() => document.getElementById('affectation')?.focus({ preventScroll: true }));
+          const crewGroup = this.focusCrewAfterAction ? this.composition.myGroupId : null;
+          this.focusCrewAfterAction = false;
+          // Le bouton utilisé a pu disparaître. Après un changement de poste, le focus reste sur mon équipage, là où l'action a eu lieu ;
+          // sinon il revient sur « Mon affectation », qui dit le résultat.
+          if (!(crewGroup !== null && this.myCrew && this.chart()?.reveal(crewGroup, false))) {
+            setTimeout(() => document.getElementById('affectation')?.focus({ preventScroll: true }));
+          }
         }
         this.changeDetector.markForCheck();
       },
@@ -300,16 +305,28 @@ export class OperationPageComponent {
     return mine == null ? null : this.crews.find(crew => crew.groupId === mine) ?? null;
   }
 
+  private readonly chart = viewChild(OperationOrgChartComponent);
+  /** La relecture qui suit un changement de poste rend le focus à mon équipage. */
+  private focusCrewAfterAction = false;
+
+  /** « Choisir mon poste » : directement à mon équipage, déplié s'il le faut. */
+  goToMyCrew(): void {
+    const mine = this.composition?.myGroupId;
+    if (mine == null || !this.myCrew || !this.chart()?.reveal(mine)) this.goTo('organisation');
+  }
+
   /** Je choisis, change ou quitte mon poste : rejoindre un équipage ne donne jamais de poste par lui-même. */
   setMyPosition(operationId: string, positionId: number | null): void {
     const label = this.myCrew?.positions.find(position => position.id === positionId)?.label;
     this.assignmentAction(operationId, this.eventService.setMyOperationPosition(operationId, positionId),
-      positionId === null ? 'Vous n’avez plus de poste.' : `Vous êtes au poste ${label ?? 'choisi'}.`, 'Changement de poste impossible.');
+      positionId === null ? 'Vous n’avez plus de poste.' : `Vous êtes au poste ${label ?? 'choisi'}.`, 'Changement de poste impossible.', true);
   }
 
   /** Une action sur ma propre affectation : résultat annoncé après la réponse du serveur, puis relecture. */
-  private assignmentAction(operationId: string, action: Observable<unknown>, success: string, failure: string): void {
+  private assignmentAction(operationId: string, action: Observable<unknown>, success: string, failure: string, focusCrew = false): void {
     if (this.assignmentBusy) return;
+    // Décidé à chaque action : un échec de relecture précédent ne laisse aucune cible de focus en attente.
+    this.focusCrewAfterAction = focusCrew;
     this.assignmentBusy = true;
     this.changeDetector.markForCheck();
     action.pipe(timeout(15000)).subscribe({

@@ -64,9 +64,31 @@ export class OperationOrgChartComponent {
   private readonly toggled = signal<ReadonlyMap<number, boolean>>(new Map());
   private readonly wide = signal(true);
 
+  private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
+  /**
+   * Amène à l'équipage d'un groupe : son groupe principal est déplié s'il le faut, puis la carte reçoit le focus.
+   * `scroll` faux : le focus seul, sans déplacer la page (retour après une action faite sur place).
+   */
+  reveal(groupId: number, scroll = true): boolean {
+    const group = this.composition().groups.find(candidate => candidate.id === groupId);
+    if (!group || !this.crewOf(group)) return false;
+    const root = this.roots().find(candidate => candidate.id === (group.parentId ?? group.id));
+    if (root?.container && !this.isOpen(root)) this.toggled.update(current => new Map(current).set(root.id, true));
+    // Après le rendu : un élément d'un groupe encore replié ne peut pas recevoir le focus.
+    setTimeout(() => {
+      const card = this.hostElement.querySelector<HTMLElement>(`#operation-crew-${groupId}`);
+      if (!card) return;
+      const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (scroll) card.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'center' });
+      card.focus({ preventScroll: true });
+    });
+    return true;
+  }
+
   constructor() {
     // Même seuil que les styles (conteneur de 700 px) : dans l'aperçu « Mobile » de l'éditeur, les groupes se replient comme sur un téléphone.
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const host = this.hostElement;
     const measure = (width: number): void => { if (width > 0) this.wide.set(width > 660); };
     // Première mesure dès l'affichage, sans attendre l'observateur.
     afterNextRender(() => measure(host.getBoundingClientRect().width));

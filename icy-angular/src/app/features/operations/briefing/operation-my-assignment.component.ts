@@ -35,6 +35,8 @@ export class OperationMyAssignmentComponent {
   /** Je peux choisir mon poste : l'équipage a des postes et laisse le choix à ses membres. */
   readonly canChoosePosition = computed(() => { const crew = this.crew(); return !!crew && crew.positions.length > 0 && crew.positionMode === 'SELF'; });
 
+  /** Aller choisir mon poste dans mon équipage. */
+  readonly choosePosition = output<void>();
   readonly leave = output<void>();
   readonly cancelRequest = output<void>();
   /** Aller choisir un groupe dans l'organisation. */

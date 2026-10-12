@@ -64,7 +64,7 @@
 
       @if (draftError()) { <p class="editor__error" role="status">{{ draftError() }}</p> }
       <div class="editor__actions">
-        <button type="button" (click)="draft.set(null)" [disabled]="busy()">Annuler</button>
+        <button type="button" (click)="cancel()" [disabled]="busy()">Annuler</button>
         <button type="button" class="primary" (click)="save()" [disabled]="busy() || !!draftError()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le preset' }}</button>
       </div>
     </section>

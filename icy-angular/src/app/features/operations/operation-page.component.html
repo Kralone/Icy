@@ -16,7 +16,7 @@
       @let fleetNeeds = (shipRequirements$ | async) ?? [];
       @let fleetGroups = (groups$ | async) ?? [];
       <app-operation-my-assignment [composition]="composition" [crew]="myCrew" [currentUserId]="currentUserId" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
-        (browse)="goTo('organisation')" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
+        (browse)="goTo('organisation')" (choosePosition)="goToMyCrew()" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
       <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
         <app-participation-panel
           [participationsByStatus]="participationsByStatus"

@@ -93,7 +93,7 @@ export function crewShipStatus(crew: OperationCrew, requirements: FleetRequireme
   const needs = requirements.filter(requirement => requirement.groupId === crew.groupId && requirement.status !== 'CANCELLED'
     && (requirement.shipModelId === null || crew.shipModelId === null || requirement.shipModelId === crew.shipModelId));
   const model = crew.shipModelName || 'Appareil';
-  if (!needs.length) return { tone: 'none', text: 'Aucun appareil demandé pour cet équipage' };
+  if (!needs.length) return { tone: 'none', text: 'Aucun appareil demandé' };
   if (needs.some(need => need.accepted > 0)) return { tone: 'confirmed', text: `${model} confirmé` };
   if (needs.some(need => need.proposed > 0)) return { tone: 'proposed', text: `${model} proposé, à valider` };
   return { tone: 'wanted', text: `${model} recherché` };

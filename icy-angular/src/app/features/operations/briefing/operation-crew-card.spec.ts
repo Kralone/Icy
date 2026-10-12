@@ -102,6 +102,7 @@ describe('Crew on the participant sheet', () => {
   it('draws a crew as a ship unit in the chart, an ordinary group as before, and only my own crew offers a choice', async () => {
     await TestBed.configureTestingModule({ imports: [OperationOrgChartComponent] }).compileComponents();
     const fixture = TestBed.createComponent(OperationOrgChartComponent);
+    document.body.appendChild(fixture.nativeElement);
     fixture.componentRef.setInput('composition', composition());
     fixture.componentRef.setInput('currentUserId', 'me');
     fixture.componentRef.setInput('crews', [crew]);
@@ -116,6 +117,17 @@ describe('Crew on the participant sheet', () => {
     const take = Array.from(element.querySelectorAll<HTMLButtonElement>('app-operation-crew-card button')).find(button => button.textContent!.includes('Passer ici'))!;
     take.click();
     expect(chosen).toEqual([12]);
+
+    // « Choisir mon poste » : le groupe principal replié se déplie et la carte de mon équipage reçoit le focus.
+    const alphaToggle = element.querySelector<HTMLButtonElement>('.root__toggle')!;
+    if (alphaToggle.getAttribute('aria-expanded') === 'true') alphaToggle.click();
+    fixture.detectChanges();
+    expect(alphaToggle.getAttribute('aria-expanded')).toBe('false');
+    fixture.componentInstance.reveal(2);
+    fixture.detectChanges();
+    await new Promise(resolve => setTimeout(resolve));
+    expect(alphaToggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement?.id).toBe('operation-crew-2');
 
     // Un autre équipage que le mien, une opération terminée ou un membre non présent : aucun choix de poste.
     for (const change of [{ composition: composition({ myGroupId: 3 }) }, { readOnly: true }, { composition: composition({ present: false }) }] as Array<Record<string, unknown>>) {
@@ -138,7 +150,12 @@ describe('Crew on the participant sheet', () => {
     const facts = (): string[] => Array.from(element.querySelectorAll('.mine__facts > div')).map(row => `${row.querySelector('dt')!.textContent!.trim()}: ${row.querySelector('dd')!.textContent!.trim()}`);
     expect(facts()).toContain('Vaisseau: Carrack');
     expect(facts()).toContain('Poste: Artilleur');
-    expect(Array.from(element.querySelectorAll('button')).map(button => button.textContent!.trim())).toContain('Changer de poste');
+    const asked: string[] = [];
+    fixture.componentInstance.choosePosition.subscribe(() => asked.push('poste'));
+    fixture.componentInstance.browse.subscribe(() => asked.push('groupe'));
+    Array.from(element.querySelectorAll('button')).find(button => button.textContent!.trim() === 'Changer de poste')!.click();
+    // « Changer de poste » mène à mon équipage, pas à la liste des groupes.
+    expect(asked).toEqual(['poste']);
 
     fixture.componentRef.setInput('crew', { ...crew, positionMode: 'MANAGED', members: crew.members.map(member => ({ ...member, positionId: null })) });
     fixture.detectChanges();

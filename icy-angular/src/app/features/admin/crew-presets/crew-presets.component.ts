@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { CatalogEntry } from '../../../core/services/catalog/catalog.service';
 import { EventService } from '../../../core/services/event/event.service';
 import { OperationIconComponent } from '../../operations/briefing/operation-icon.component';
+import { OperationConfirmService } from '../../operations/operation-confirm.service';
 import { CrewPreset, POSITION_ICONS, POSITION_MODE_HINTS, POSITION_MODE_LABELS, PositionDraft, positionIcon, PositionMode } from '../../operations/organization/operation-crew.model';
 import { OperationShipPickerComponent } from '../../operations/organization/operation-ship-picker.component';
 
@@ -32,6 +33,7 @@ const MAX_POSITIONS = 30;
 export class CrewPresetsComponent implements OnInit {
   private readonly eventService = inject(EventService);
   private readonly toast = inject(HotToastService);
+  private readonly confirmService = inject(OperationConfirmService);
 
   readonly presets = signal<CrewPreset[]>([]);
   readonly loading = signal(false);
@@ -41,6 +43,34 @@ export class CrewPresetsComponent implements OnInit {
   readonly busy = signal(false);
   /** Preset en cours de saisie ; null : la liste seule est affichée. */
   readonly draft = signal<PresetDraft | null>(null);
+  /** Saisie telle qu'elle était à l'ouverture du formulaire : sert à savoir s'il y a quelque chose à perdre. */
+  private baseline = '';
+  readonly dirty = computed(() => { const draft = this.draft(); return !!draft && JSON.stringify(draft) !== this.baseline; });
+
+  private open(draft: PresetDraft): void {
+    this.baseline = JSON.stringify(draft);
+    this.draft.set(draft);
+  }
+
+  /** Ferme le formulaire : tout de suite s'il n'y a rien à perdre, sinon après abandon confirmé. */
+  cancel(): void {
+    this.confirmLoss().then(confirmed => { if (confirmed) this.draft.set(null); });
+  }
+
+  private confirmLoss(): Promise<boolean> {
+    if (!this.dirty()) return Promise.resolve(true);
+    return this.confirmService.ask({ title: 'Abandonner les modifications du preset ?', message: 'Les modifications de ce preset ne sont pas enregistrées.', confirmLabel: 'Abandonner les modifications', cancelLabel: 'Continuer la saisie', danger: true });
+  }
+
+  /** Garde de navigation : quitter la page avec un preset modifié demande confirmation. */
+  canLeave(): boolean | Promise<boolean> {
+    return !this.dirty() || this.confirmLoss();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.dirty()) event.preventDefault();
+  }
 
   readonly icons = POSITION_ICONS;
   readonly modes: PositionMode[] = ['SELF', 'MANAGED'];
@@ -85,11 +115,11 @@ export class CrewPresetsComponent implements OnInit {
   }
 
   create(): void {
-    this.draft.set({ id: null, name: '', description: '', model: null, capacity: null, positionMode: 'SELF', positions: [] });
+    this.open({ id: null, name: '', description: '', model: null, capacity: null, positionMode: 'SELF', positions: [] });
   }
 
   edit(preset: CrewPreset): void {
-    this.draft.set({
+    this.open({
       id: preset.id, name: preset.name, description: preset.description ?? '',
       // Un modèle sorti du catalogue doit être choisi de nouveau avant d'enregistrer.
       model: preset.shipModelId === null ? null : { id: preset.shipModelId, name: preset.shipModelName, imageUrl: preset.shipModelImageUrl },
