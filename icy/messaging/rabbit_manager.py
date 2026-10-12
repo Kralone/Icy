@@ -1,4 +1,5 @@
 import aio_pika
+import discord
 import json
 import logging
 import os
@@ -11,6 +12,18 @@ from messaging.discord_link_store import DiscordLinkStore
 logger = logging.getLogger("icy.rabbit")
 RETRY_COUNT_HEADER = "x-iceforge-retry-count"
 FAILURE_REASON_HEADER = "x-iceforge-failure-reason"
+
+
+def is_permanent_failure(exception: BaseException) -> bool:
+    """
+    Vrai si réessayer le même message ne peut pas réussir : contenu inexploitable,
+    ou refus définitif de Discord (requête invalide, accès interdit). Une limite de
+    débit (429) ou une erreur serveur de Discord reste temporaire.
+    """
+    if isinstance(exception, discord.HTTPException):
+        status = getattr(exception, "status", None)
+        return isinstance(status, int) and 400 <= status < 500 and status != 429
+    return isinstance(exception, (ValueError, KeyError, TypeError))
 
 
 def safe_amqp_endpoint(amqp_url: str) -> str:
@@ -186,7 +199,19 @@ class RabbitManager:
             await self.handler.handle_message(routing_key, payload)
         except Exception as exception:
             retry_count = self._retry_count(message)
-            if retry_count < self.retry_limit:
+            if is_permanent_failure(exception):
+                await self._publish_dead_letter(
+                    message,
+                    reason="permanent_failure",
+                    payload=payload,
+                    retry_count=retry_count,
+                )
+                logger.error(
+                    "Traitement RabbitMQ impossible (%s %s), message en DLQ sans nouvel essai",
+                    routing_key,
+                    type(exception).__name__,
+                )
+            elif retry_count < self.retry_limit:
                 next_retry = retry_count + 1
                 await self._publish_retry(message, payload, next_retry)
                 logger.warning(

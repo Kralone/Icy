@@ -88,6 +88,12 @@ public class OperationService {
         if (request.getExpectedRevision() != null && request.getExpectedRevision() != operation.getRevision()) {
             throw new ObjectOptimisticLockingFailureException(Operation.class, eventId);
         }
+        // Ce que l'annonce Discord reprend : un changement ici doit l'actualiser, si l'opération est publiée.
+        boolean announcedContentChanged = operation.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED
+                && !(java.util.Objects.equals(operation.getBriefing(), request.getBriefing())
+                && java.util.Objects.equals(operation.getObjectives(), request.getObjectives())
+                && java.util.Objects.equals(operation.getMeetingPoint(), request.getMeetingPoint())
+                && java.util.Objects.equals(operation.getImageUrl(), request.getImageUrl()));
         operation.setBriefing(request.getBriefing());
         validateObjectives(request.getObjectives());
         operation.setObjectives(request.getObjectives());
@@ -104,6 +110,7 @@ public class OperationService {
         Operation saved = operationRepository.save(operation);
         // Écrit maintenant pour renvoyer la révision réellement enregistrée.
         entityManager.flush();
+        if (announcedContentChanged) refreshAnnouncementAfterCommit(eventId);
         return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, saved));
     }
 
@@ -140,6 +147,21 @@ public class OperationService {
             @Override
             public void afterCommit() {
                 eventService.announcePublishedOperation(eventId);
+            }
+        });
+    }
+
+    /** Le message Discord existant est modifié, jamais doublé, et seulement si l'enregistrement est validé. Un brouillon ne passe pas ici. */
+    private void refreshAnnouncementAfterCommit(UUID eventId) {
+        if (eventService == null) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventService.announceOperationContentChanged(eventId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventService.announceOperationContentChanged(eventId);
             }
         });
     }

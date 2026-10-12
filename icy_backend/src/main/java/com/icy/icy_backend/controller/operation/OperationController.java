@@ -261,6 +261,10 @@ public class OperationController {
     @PostMapping("/{id}/convert")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(@PathVariable UUID id) {
+        // Convertir un événement classique déjà annoncé ou ayant des réponses le ferait disparaître des membres : refusé, rien n'est modifié.
+        eventRepository.findById(id)
+                .filter(event -> event.getActivityType() != com.icy.icy_backend.db.entity.event.ActivityType.OPERATION && eventService.isAnnouncedOrAnswered(event))
+                .ifPresent(event -> { throw new IllegalStateException("Cet événement est déjà annoncé ou a des réponses : il ne peut pas être converti en brouillon d’opération."); });
         boolean wasVisible = eventRepository.findById(id).map(event -> !eventService.isUnpublishedOperation(event)).orElse(false);
         ResponseEntity<MessageResponse<OperationResponseDTO>> response = operationService.convert(id);
         // L'événement devient un brouillon : il quitte les calendriers ouverts et Discord jusqu'à sa publication.

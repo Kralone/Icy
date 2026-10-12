@@ -49,6 +49,7 @@ public class EventPublisher {
         payload.put("description", event.getDescription());
         payload.put("author", event.getCreator() != null ? event.getCreator().getUsername() : "Inconnu");
         payload.put("date", event.getStartDateTime().toString());
+        if (event.getEndDateTime() != null) payload.put("endDate", event.getEndDateTime().toString());
         payload.put("finished", event.isFinished());
         // Le bot doit distinguer une opération d’un événement classique pour
         // conserver le lien permanent vers la fiche opération.

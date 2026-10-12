@@ -121,6 +121,16 @@ public class EventService {
         announceCreated(findEventById(eventId));
     }
 
+    /** Le contenu d'une opération publiée a changé : son annonce Discord existante est mise à jour, sans nouveau message. */
+    public void announceOperationContentChanged(UUID eventId) {
+        eventRepository.findById(eventId).filter(event -> !isUnpublishedOperation(event)).ifPresent(eventPublisher::publishEventUpdated);
+    }
+
+    /** Vrai si l'événement a déjà une annonce Discord ou des réponses de membres. */
+    public boolean isAnnouncedOrAnswered(Event event) {
+        return event.getDiscordMessageId() != null || participationRepository.countByEvent_Id(event.getId()) > 0;
+    }
+
     /** Un événement visible redevient un brouillon d'opération : il est retiré des calendriers ouverts et de Discord. */
     public void announceWithdrawn(Event event) {
         eventWebSocketService.sendEventUpdate(event, "DELETE");

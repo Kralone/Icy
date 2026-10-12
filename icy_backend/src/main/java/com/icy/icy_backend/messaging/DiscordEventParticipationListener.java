@@ -44,7 +44,7 @@ public class DiscordEventParticipationListener {
     /**
      * Écoute les participations envoyées par le bot Discord.
      */
-    @RabbitListener(queues = "events.participation.queue")
+    @RabbitListener(queues = "events.participation.queue", errorHandler = "inboundMessageErrorHandler")
     @Transactional
     public void handleParticipation(@Payload Map<String, Object> payload) {
         log.info("🎯 Participation reçue : {}", payload);
@@ -57,9 +57,12 @@ public class DiscordEventParticipationListener {
 
             if (payload.get("eventId") == null || payload.get("userId") == null || !Set.of(-1, 0, 1).contains(status)) throw new IllegalArgumentException("Payload participation Discord invalide");
 
-            // 🔹 Trouver l'événement
-            Event event = eventRepository.findById(UUID.fromString(eventIdStr))
-                    .orElseThrow(() -> new IllegalStateException("Event non trouvé (ID=" + eventIdStr + ")"));
+            // 🔹 Trouver l'événement. Supprimé entre-temps : la réponse est obsolète, la réessayer ne le ferait pas revenir.
+            Event event = eventRepository.findById(UUID.fromString(eventIdStr)).orElse(null);
+            if (event == null) {
+                log.warn("Participation Discord ignorée : événement introuvable (ID={})", eventIdStr);
+                return;
+            }
 
             // Une opération non publiée n'accepte aucune réponse et ne repart pas vers Discord.
             if (event.getActivityType() == com.icy.icy_backend.db.entity.event.ActivityType.OPERATION && operationRepository != null
