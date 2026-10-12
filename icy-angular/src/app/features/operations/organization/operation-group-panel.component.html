@@ -3,7 +3,7 @@
 
   <header class="group-panel__head">
     <div>
-      <p class="group-panel__kind">{{ parent() ? 'Sous-groupe de ' + parent()!.name : 'Groupe principal' }}</p>
+      <p class="group-panel__kind" [class.group-panel__kind--crew]="crew()">{{ crew() ? 'Équipage de vaisseau' + (parent() ? ' · dans ' + parent()!.name : '') : parent() ? 'Sous-groupe de ' + parent()!.name : 'Groupe principal' }}</p>
       <h3>{{ group().name }}</h3>
       @if (group().description) { <p class="group-panel__description">{{ group().description }}</p> }
     </div>
@@ -36,13 +36,15 @@
   </dl>
 
   <div class="group-panel__tabs" role="group" aria-label="Contenu du groupe">
-    <button type="button" [attr.aria-pressed]="tab() === 'equipage'" [class.active]="tab() === 'equipage'" (click)="tab.set('equipage')">{{ group().container ? 'Sous-groupes' : 'Équipage' }}</button>
+    <button type="button" [attr.aria-pressed]="tab() === 'equipage'" [class.active]="tab() === 'equipage'" (click)="tab.set('equipage')">{{ group().container ? 'Sous-groupes' : crew() ? 'Équipage et postes' : 'Équipage' }}</button>
     <button type="button" [attr.aria-pressed]="tab() === 'ressources'" [class.active]="tab() === 'ressources'" (click)="tab.set('ressources')">Vaisseaux et besoins</button>
     @if (!locked()) { <button type="button" [attr.aria-pressed]="tab() === 'reglages'" [class.active]="tab() === 'reglages'" (click)="tab.set('reglages')">Réglages@if (changed()) { <span class="unsaved" aria-label="modifications non enregistrées">•</span> }</button> }
   </div>
 
   @if (tab() === 'equipage') {
-    @if (group().container) {
+    @if (crew()) {
+      <ng-content select="[crewSlot]" />
+    } @else if (group().container) {
       <ul class="subgroups">
         @for (child of children(); track child.id) {
           <li><button type="button" (click)="selectGroup.emit(child.id)"><strong>{{ child.name }}</strong><span>{{ occupancy(child) }} · {{ modeLabels[child.effectiveMode] }}@if (child.responsibleUsername) { · ★ {{ child.responsibleUsername }} }</span></button></li>
@@ -57,7 +59,7 @@
       }
       @if (group().pendingRequests) { <p class="pending">{{ group().pendingRequests }} demande{{ group().pendingRequests > 1 ? 's' : '' }} en attente, à traiter dans « Coordination ».</p> }
     }
-    @if (!parent() && !locked()) { <button type="button" class="ghost" [disabled]="busy()" (click)="addSubgroup.emit()"><span aria-hidden="true">+</span> Sous-groupe</button> }
+    @if (!parent() && !locked() && !crew()) { <button type="button" class="ghost" [disabled]="busy()" (click)="addSubgroup.emit()"><span aria-hidden="true">+</span> Sous-groupe</button> }
   } @else if (tab() === 'ressources') {
     <ng-content />
   } @else if (!locked()) {

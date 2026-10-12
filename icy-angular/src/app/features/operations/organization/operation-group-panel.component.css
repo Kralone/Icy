@@ -42,3 +42,4 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .unsaved { margin-left: .3rem; color: #f4cd7d; }
 @media (max-width: 900px) { .group-panel__back { display: inline-block; } }
 @media (max-width: 760px) { .primary { width: 100%; } }
+.group-panel__kind--crew { color: #f4cd7d; }

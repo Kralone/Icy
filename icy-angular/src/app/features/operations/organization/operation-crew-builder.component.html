@@ -1,0 +1,107 @@
+<section class="builder" aria-labelledby="crew-builder-title">
+  <header class="builder__head">
+    <div>
+      <p class="builder__kind">Organisation</p>
+      <h3 id="crew-builder-title">Nouvel équipage de vaisseau</h3>
+    </div>
+    <button type="button" class="builder__close" (click)="cancel.emit()" [disabled]="saving()">Annuler</button>
+  </header>
+
+  <div class="step">
+    <h4><span class="step__number" aria-hidden="true">1</span> Vaisseau</h4>
+    @if (model(); as chosen) {
+      <div class="ship-card">
+        @if (chosen.imageUrl) { <img [src]="chosen.imageUrl" alt="" loading="lazy"> } @else { <span class="ship-card__noimage">Sans image</span> }
+        <div class="ship-card__text">
+          <small>{{ chosen.manufacturer || 'Modèle du catalogue' }}</small>
+          <strong>{{ chosen.name }}</strong>
+          <span>{{ capacity() === null ? (selectedPreset()?.capacity != null ? selectedPreset()!.capacity + ' places, reprises du preset' : 'Capacité libre') : capacity() + ' place' + (capacity()! > 1 ? 's' : '') }}</span>
+        </div>
+        <button type="button" class="ghost" (click)="changeModel()" [disabled]="saving()">Changer de vaisseau</button>
+      </div>
+    } @else {
+      <label class="field">Rechercher un vaisseau du catalogue
+        <input type="search" [ngModel]="query()" (ngModelChange)="search($event)" placeholder="Polaris, Carrack, MOLE" autocomplete="off">
+      </label>
+      @if (searchError()) { <p class="builder__error" role="alert">{{ searchError() }} <button type="button" (click)="search(query())">Réessayer</button></p> }
+      @else if (searching()) { <p class="builder__state" role="status">Recherche…</p> }
+      @else if (searched() && !results().length) { <p class="builder__state" role="status">Aucun vaisseau ne correspond à « {{ query() }} ».</p> }
+      @else if (!results().length) { <p class="builder__state">Saisissez au moins deux lettres du nom du vaisseau.</p> }
+      @if (results().length) {
+        <div class="models">
+          @for (candidate of results(); track candidate.id) {
+            <button type="button" class="model" (click)="chooseModel(candidate)">
+              @if (candidate.imageUrl) { <img [src]="candidate.imageUrl" alt="" loading="lazy"> } @else { <span class="model__noimage">Sans image</span> }
+              <span><strong>{{ candidate.name }}</strong>@if (candidate.manufacturer) { <small>{{ candidate.manufacturer }}</small> }</span>
+            </button>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  @if (model()) {
+    <div class="step">
+      <h4><span class="step__number" aria-hidden="true">2</span> Emplacement</h4>
+      <div class="choices" role="radiogroup" aria-label="Emplacement de l’équipage">
+        <button type="button" class="choice" role="radio" [attr.aria-checked]="parentId() === null" (click)="parentId.set(null)">
+          <strong>Équipage autonome</strong><small>Au premier niveau de l’opération</small>
+        </button>
+        @for (parent of parents(); track parent.id) {
+          <button type="button" class="choice" role="radio" [attr.aria-checked]="parentId() === parent.id" (click)="parentId.set(parent.id)">
+            <strong>Dans {{ parent.name }}</strong><small>Sous-groupe de ce groupe principal</small>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="step">
+      <h4><span class="step__number" aria-hidden="true">3</span> Postes</h4>
+      <div class="choices" role="radiogroup" aria-label="Configuration des postes">
+        <button type="button" class="choice" role="radio" [attr.aria-checked]="setup() === 'free'" (click)="setup.set('free'); presetId.set(null)">
+          <strong>Équipage libre</strong><small>Aucun poste : les membres rejoignent simplement l’équipage.</small>
+        </button>
+        <button type="button" class="choice" role="radio" [attr.aria-checked]="setup() === 'custom'" (click)="setup.set('custom'); presetId.set(null)">
+          <strong>Postes personnalisés</strong><small>Vous nommez les postes juste après la création.</small>
+        </button>
+      </div>
+      @if (presetsState() === 'loading') { <p class="builder__state" role="status">Chargement des presets…</p> }
+      @else if (presetsState() === 'error') { <p class="builder__error" role="alert">Les presets n’ont pas pu être chargés. <button type="button" (click)="loadPresets(model()!.id)">Réessayer</button></p> }
+      @else if (presets().length) {
+        <p class="step__label">Ou partir d’un preset pour ce vaisseau</p>
+        <div class="presets" role="radiogroup" aria-label="Presets disponibles pour ce vaisseau">
+          @for (preset of presets(); track preset.id) {
+            <button type="button" class="preset" role="radio" [attr.aria-checked]="presetId() === preset.id" (click)="choosePreset(preset)">
+              <strong>{{ preset.name }}</strong>
+              <small>{{ preset.capacity === null ? 'Capacité libre' : preset.capacity + ' places' }} · {{ modeLabels[preset.positionMode] }}</small>
+              @if (preset.positions.length) {
+                <span class="preset__positions">@for (position of preset.positions; track position.label) { <span><app-operation-icon [name]="positionIcon(position.icon)" /> {{ position.label }}@if (position.capacity !== null) { <b>{{ position.capacity }}</b> }</span> }</span>
+              } @else { <span class="preset__free">Équipage libre, sans poste</span> }
+            </button>
+          }
+        </div>
+        <p class="builder__state">Le preset est copié dans l’opération : vous pourrez ensuite modifier ses postes sans toucher au preset.</p>
+      } @else { <p class="builder__state">Aucun preset n’existe pour ce vaisseau.</p> }
+    </div>
+
+    <div class="step">
+      <h4><span class="step__number" aria-hidden="true">4</span> Réglages</h4>
+      <div class="fields">
+        <label class="field">Nom de l’équipage
+          <input name="crewName" [ngModel]="name()" (ngModelChange)="setName($event)" maxlength="120" required>
+        </label>
+        <label class="field">Capacité
+          <input name="crewCapacity" type="number" min="0" max="10000" step="1" [ngModel]="capacity()" (ngModelChange)="setCapacity($event)" placeholder="Libre">
+          <small>{{ selectedPreset()?.capacity != null ? 'Vide : la capacité du preset est reprise.' : 'Vide : pas de limite. Ce nombre est un choix d’organisation.' }}</small>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" [ngModel]="addNeed()" (ngModelChange)="addNeed.set($event)"> <span>Ajouter le besoin d’un {{ model()!.name }} pour cet équipage<small>L’appareil reste à proposer par un membre depuis son hangar.</small></span></label>
+    </div>
+
+    @if (error()) { <p class="builder__error" role="alert">{{ error() }}</p> }
+    <div class="builder__actions">
+      <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="saving()">Annuler</button>
+      <button type="button" class="primary" (click)="submit()" [disabled]="!ready() || saving()">{{ saving() ? 'Création…' : 'Créer l’équipage' }}</button>
+    </div>
+  }
+</section>

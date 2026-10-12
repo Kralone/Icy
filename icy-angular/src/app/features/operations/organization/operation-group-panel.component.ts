@@ -25,6 +25,8 @@ export class OperationGroupPanelComponent {
   readonly defaultMode = input<EffectiveAssignmentMode>('FREE');
   /** Onglet à ouvrir quand un autre groupe est sélectionné (les réglages juste après une création). */
   readonly openTab = input<GroupPanelTab>('equipage');
+  /** Vrai si ce groupe est un équipage de vaisseau : son onglet « Équipage » affiche le contenu projeté dans `crewSlot`. */
+  readonly crew = input(false);
   readonly save = output<GroupSettings>();
   readonly remove = output<void>();
   readonly move = output<-1 | 1>();

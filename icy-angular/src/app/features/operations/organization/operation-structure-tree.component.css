@@ -28,3 +28,7 @@
 .structure__overview.is-selected { border-color: #67e8f9; color: #f8fafc; background: #164e63; }
 button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.structure__adds { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+.structure__add--crew { color: #1c1503; background: #f4cd7d; }
+.structure__child-adds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: .35rem; }
+.node__crew { display: inline-flex; align-items: center; gap: .3rem; color: #f4cd7d; font-weight: 600; }

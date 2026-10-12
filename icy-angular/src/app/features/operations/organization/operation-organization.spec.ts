@@ -49,7 +49,8 @@ describe('OperationStructureTreeComponent', () => {
     fixture.nativeElement.querySelector('.structure__add').click();
     const addChild: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.structure__add-child'));
     addChild[0].click();
-    expect(addChild.length).toBe(2);
+    // Chaque groupe principal propose un sous-groupe et un équipage.
+    expect(addChild.length).toBe(4);
     expect(added).toEqual(['root', 1]);
   });
 

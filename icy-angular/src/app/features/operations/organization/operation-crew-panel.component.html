@@ -1,0 +1,117 @@
+<div class="crewpanel">
+  <div class="ship">
+    @if (crew().shipModelImageUrl) { <img [src]="crew().shipModelImageUrl" alt="" loading="lazy"> } @else { <span class="ship__noimage"><app-operation-icon name="ship" /> Sans image</span> }
+    <div class="ship__text">
+      <small>Vaisseau de l’équipage</small>
+      <strong>{{ crew().shipModelName || 'Modèle non renseigné' }}</strong>
+      @if (crew().shipModelId === null && crew().shipModelName) { <span class="ship__gone">Ce modèle n’est plus dans le catalogue.</span> }
+      <span class="ship__status" [attr.data-tone]="shipStatus().tone"><app-operation-icon name="ship" /> {{ shipStatus().text }}</span>
+    </div>
+  </div>
+
+  <section class="block" aria-labelledby="crew-positions-title">
+    <div class="block__head">
+      <h4 id="crew-positions-title">Postes</h4>
+      @if (!locked()) {
+        <div class="mode" role="radiogroup" aria-label="Attribution des postes">
+          @for (mode of modes; track mode) {
+            <button type="button" role="radio" [attr.aria-checked]="crew().positionMode === mode" [disabled]="busy()" (click)="setMode(mode)">{{ modeLabels[mode] }}</button>
+          }
+        </div>
+      } @else { <span class="mode__read">{{ modeLabels[crew().positionMode] }}</span> }
+    </div>
+    <p class="hint">{{ modeHints[crew().positionMode] }}</p>
+
+    @if (!crew().positions.length && editing() !== 'new') {
+      <p class="empty">Équipage libre : aucun poste n’est défini. Les membres rejoignent l’équipage sans fonction attitrée.</p>
+    }
+
+    <ul class="positions">
+      @for (position of crew().positions; track position.id) {
+        <li class="position" [class.is-full]="isFull(position)">
+          @if (editing() === position.id) {
+            <ng-container *ngTemplateOutlet="form; context: { $implicit: 'Modifier le poste' }" />
+          } @else {
+            <div class="position__head">
+              <span class="position__icon"><app-operation-icon [name]="positionIcon(position.icon)" /></span>
+              <strong>{{ position.label }}</strong>
+              <span class="position__count">{{ positionOccupancy(position) }}</span>
+            </div>
+            @if (position.capacity !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="position.capacity ? (100 * position.taken / position.capacity) : 100"></span></span> }
+            @if (isFull(position)) { <span class="position__state">Complet</span> }
+            @if (members(position).length) {
+              <ul class="chips">@for (member of members(position); track member.userId) { <li>{{ member.username }}</li> }</ul>
+            } @else { <span class="position__nobody">Personne à ce poste</span> }
+            @if (!locked()) {
+              <div class="position__actions">
+                <button type="button" [disabled]="busy()" (click)="startEdit(position)">Modifier<span class="sr-only"> le poste {{ position.label }}</span></button>
+                <button type="button" class="danger" [disabled]="busy() || position.taken > 0" [attr.title]="position.taken > 0 ? 'Changez d’abord le poste de ses membres' : null" (click)="deletePosition(position)">Supprimer<span class="sr-only"> le poste {{ position.label }}</span></button>
+              </div>
+            }
+          }
+        </li>
+      }
+      @if (editing() === 'new') { <li class="position position--form"><ng-container *ngTemplateOutlet="form; context: { $implicit: 'Nouveau poste' }" /></li> }
+    </ul>
+
+    @if (!locked() && editing() === null) {
+      <div class="block__actions">
+        <button type="button" class="add" [disabled]="busy()" (click)="startAdd()"><span aria-hidden="true">+</span> Ajouter un poste</button>
+        @if (presets().length) {
+          <label class="preset-pick">Ajouter les postes d’un preset
+            <select #presetSelect [disabled]="busy()" (change)="applyPreset(presetSelect.value); presetSelect.value = ''">
+              <option value="">Choisir un preset</option>
+              @for (preset of presets(); track preset.id) { <option [value]="preset.id">{{ preset.name }} ({{ preset.positions.length }} poste{{ preset.positions.length > 1 ? 's' : '' }})</option> }
+            </select>
+          </label>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="block" aria-labelledby="crew-members-title">
+    <div class="block__head"><h4 id="crew-members-title">Membres de l’équipage</h4></div>
+    @if (!crew().members.length) {
+      <p class="empty">Personne n’est encore affecté à cet équipage. Les membres présents le rejoignent depuis la fiche, ou se placent dans « Coordination ».</p>
+    } @else {
+      @if (unplaced().length && crew().positions.length) { <p class="unplaced">{{ unplaced().length }} membre{{ unplaced().length > 1 ? 's' : '' }} sans poste : {{ unplacedNames() }}.</p> }
+      <ul class="members">
+        @for (member of crew().members; track member.userId) {
+          <li>
+            <span class="members__avatar" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>
+            <span class="members__name">{{ member.username }}</span>
+            @if (crew().positions.length && !locked()) {
+              <select [attr.aria-label]="'Poste de ' + member.username" [disabled]="busy()" [value]="member.positionId ?? ''" (change)="assign(member, $any($event.target))">
+                <option value="">Sans poste</option>
+                @for (position of crew().positions; track position.id) {
+                  <option [value]="position.id" [selected]="member.positionId === position.id" [disabled]="isFull(position) && member.positionId !== position.id">{{ position.label }}{{ isFull(position) && member.positionId !== position.id ? ' (complet)' : '' }}</option>
+                }
+              </select>
+            } @else {
+              <span class="members__position" [class.is-none]="member.positionId === null">{{ positionLabel(member) }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>
+
+<ng-template #form let-title>
+  <form class="pform" (ngSubmit)="savePosition()">
+    <strong class="pform__title">{{ title }}</strong>
+    <label>Nom du poste<input name="positionLabel" [ngModel]="draft().label" (ngModelChange)="patch({ label: $event })" maxlength="80" required placeholder="Pilote, Artilleur, Ingénieur"></label>
+    <label>Places<input name="positionCapacity" type="number" min="1" max="1000" step="1" [ngModel]="draft().capacity" (ngModelChange)="setDraftCapacity($event)" placeholder="Sans limite"><small>Vide : seule la capacité de l’équipage limite ce poste.</small></label>
+    <div class="pform__icons" role="radiogroup" aria-label="Pictogramme du poste">
+      <button type="button" role="radio" [attr.aria-checked]="draft().icon === null" (click)="patch({ icon: null })" aria-label="Sans pictogramme particulier"><app-operation-icon name="assignment" /></button>
+      @for (icon of icons; track icon.key) {
+        <button type="button" role="radio" [attr.aria-checked]="draft().icon === icon.key" (click)="patch({ icon: icon.key })" [attr.aria-label]="icon.label" [attr.title]="icon.label"><app-operation-icon [name]="icon.key" /></button>
+      }
+    </div>
+    @if (draft().label.trim() && draftError()) { <small class="pform__error" role="alert">{{ draftError() }}</small> }
+    <div class="pform__actions">
+      <button type="button" (click)="editing.set(null)" [disabled]="busy()">Annuler</button>
+      <button type="submit" class="primary" [disabled]="busy() || !!draftError()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le poste' }}</button>
+    </div>
+  </form>
+</ng-template>
