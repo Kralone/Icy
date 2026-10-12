@@ -23,6 +23,8 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
     @org.springframework.data.jpa.repository.Query("delete from EventParticipation p where p.event = :event")
     void deleteAllByEvent(@org.springframework.data.repository.query.Param("event") Event event);
     long countByUser_Id(UUID userId);
+    /** Toutes les réponses, y compris celles de comptes désactivés (pas de jointure sur les utilisateurs). */
+    long countByEvent_Id(UUID eventId);
     long countByUser_IdAndStatus(UUID userId, int status);
     long countByUser_IdAndStatusAndEvent_FinishedTrue(UUID userId, int status);
     boolean existsByEvent_IdAndUser_IdAndStatus(UUID eventId, UUID userId, int status);

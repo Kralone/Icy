@@ -252,8 +252,9 @@ public class EventService {
         event.setFinished(finished);
         event.setUpdatedAt(LocalDateTime.now());
 
-        // --- Si date changée : on purge les participations
-        if (dateChanged) {
+        // --- Si date changée : on purge les participations d'un événement classique.
+        // Une opération garde les siennes : ses affectations et ses vaisseaux en dépendent et ne sont pas réinitialisés.
+        if (dateChanged && event.getActivityType() != ActivityType.OPERATION) {
             logger.info("Date modifiée pour event {} ({}->{} / {}->{}). Suppression des participations.",
                     event.getId(), oldStart, start, oldEnd, end);
 
@@ -320,6 +321,12 @@ public class EventService {
                 .distinct()
                 .toList();
         boolean unpublishedOperation = isUnpublishedOperation(event);
+        // L'historique d'une opération terminée est conservé tant qu'elle porte des présences ou des affectations.
+        if (event.getActivityType() == ActivityType.OPERATION && !unpublishedOperation
+                && (event.isFinished() || com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event))
+                && (participationRepository.countByEvent_Id(id) > 0 || (operationAssignmentRepository != null && !operationAssignmentRepository.findByOperationEventId(id).isEmpty()))) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException("Opération terminée : elle est conservée avec ses participations et ses affectations, et ne peut pas être supprimée.");
+        }
         participationRepository.deleteAllByEvent(event);
         eventRepository.delete(event);
         if (unpublishedOperation) {
@@ -565,6 +572,8 @@ public class EventService {
         }
     }
 
+    /** La réponse et la libération éventuelle de la place sont enregistrées ensemble, ou pas du tout. */
+    @Transactional
     public ResponseEntity<MessageResponse<Void>> setParticipation(UUID eventId, int status) {
         Event event = findEventVisibleToCurrentUser(eventId);
 
@@ -589,7 +598,17 @@ public class EventService {
         }
 
         if (!isUnpublishedOperation(event)) {
-            eventPublisher.publishEventUpdated(event);
+            // Discord n'est prévenu qu'une fois la réponse validée en base, comme avant.
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        eventPublisher.publishEventUpdated(event);
+                    }
+                });
+            } else {
+                eventPublisher.publishEventUpdated(event);
+            }
         }
 
         return messageService.buildResponse("event.participation.set", null);

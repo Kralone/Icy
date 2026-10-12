@@ -409,6 +409,33 @@ class EventServiceTest {
     }
 
     @Test
+    void anOperationKeepsItsParticipationsWhenItsDatesMoveAndItsHistoryOnceFinished() {
+        DraftFixture fixture = new DraftFixture();
+        when(fixture.eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Changer les dates d'une opération ne vide plus ses présences (ses affectations et ses vaisseaux en dépendent).
+        fixture.service.updateEvent(fixture.published.getId(), "Type", "Publiée", "", LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(3).plusHours(2), false);
+        Mockito.verify(fixture.participationRepository, Mockito.never()).deleteAllByEvent(any());
+        // Un événement classique garde son comportement : ses réponses sont remises à zéro.
+        fixture.service.updateEvent(fixture.classic.getId(), "Type", "Classique", "", LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(3).plusHours(2), false);
+        Mockito.verify(fixture.participationRepository).deleteAllByEvent(fixture.classic);
+
+        // Terminée, avec encore des présences : elle n'est pas supprimée.
+        fixture.published.setEndDateTime(LocalDateTime.now().minusDays(1));
+        when(fixture.participationRepository.findAllByEvent(fixture.published)).thenReturn(Optional.of(List.of()));
+        when(fixture.participationRepository.countByEvent_Id(fixture.published.getId())).thenReturn(1L);
+        assertThatThrownBy(() -> fixture.service.deleteEvent(fixture.published.getId()))
+                .isInstanceOf(com.icy.icy_backend.exception.definition.OperationClosedException.class);
+        Mockito.verify(fixture.eventRepository, Mockito.never()).delete(any(Event.class));
+        Mockito.verify(fixture.participationRepository, Mockito.never()).deleteAllByEvent(fixture.published);
+
+        // Sans présence ni affectation, il n'y a pas d'historique à conserver.
+        when(fixture.participationRepository.countByEvent_Id(fixture.published.getId())).thenReturn(0L);
+        fixture.service.deleteEvent(fixture.published.getId());
+        Mockito.verify(fixture.eventRepository).delete(fixture.published);
+    }
+
+    @Test
     void publishingAnOperationAnnouncesItLikeANewEvent() {
         DraftFixture fixture = new DraftFixture();
 

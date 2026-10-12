@@ -235,6 +235,30 @@ class OperationFleetAndClosureTest {
         verifyNoInteractions(assignments);
     }
 
+    @Test void aNeedCannotShrinkBelowItsAcceptedShips() {
+        signInAs(organizerId, "ROLE_OFFICIER");
+        requirementService.setProposalRepository(proposals);
+        OperationShipRequirement need = requirement(3);
+        when(proposals.countByRequirementIdAndStatusIn(need.getId(), List.of(OperationShipProposal.Status.ACCEPTED))).thenReturn(2L);
+        OperationShipRequirementRequest change = new OperationShipRequirementRequest();
+        change.setShipModelId(42L);
+
+        change.setQuantity(1);
+        assertThatThrownBy(() -> requirementService.update(operationId, need.getId(), change)).isInstanceOf(IllegalStateException.class).hasMessageContaining("2 vaisseaux sont déjà acceptés");
+        assertThat(need.getQuantity()).isEqualTo(3);
+        verify(requirements, never()).save(any());
+
+        when(requirements.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        change.setQuantity(2);
+        requirementService.update(operationId, need.getId(), change);
+        assertThat(need.getQuantity()).isEqualTo(2);
+        verify(requirements, org.mockito.Mockito.times(2)).findLockedById(need.getId());
+
+        // Supprimer le besoin ne contourne pas la règle.
+        assertThatThrownBy(() -> requirementService.delete(operationId, need.getId())).isInstanceOf(IllegalStateException.class).hasMessageContaining("acceptés répondent");
+        verify(requirements, never()).delete(any());
+    }
+
     @Test void aShipThatLeftTheHangarOrWhoseOwnerIsNoLongerPresentCannotBeAccepted() {
         signInAs(organizerId, "ROLE_OFFICIER");
         OperationShipProposal offered = proposal(OperationShipProposal.Status.PROPOSED, null);
