@@ -155,7 +155,6 @@ export class OperationEditorComponent implements OnDestroy {
     catchError(() => of({ kind: 'ERROR', message: 'Impossible de charger le brouillon.' } as OperationEditorState)),
     tap(state => { if (state.kind === 'READY') this.adoptServerState(state.operation); })
   );
-  readonly groups$ = this.route.paramMap.pipe(switchMap(params => this.eventService.getOperationGroupsForEdit(params.get('id')!)), catchError(() => of({ data: [] })), tap(response => this.groups = response.data));
   private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
   private readonly shipRefresh = new BehaviorSubject<void>(undefined);
   /** Une lecture en échec ne doit ni passer pour une flotte vide, ni empêcher les lectures suivantes. */
@@ -165,9 +164,6 @@ export class OperationEditorComponent implements OnDestroy {
   }
   readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.fleetRead<FleetRequirement>(this.eventService.getOperationShipRequirements(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
-  private readonly groupState = signal<any[]>([]);
-  get groups(): any[] { return this.groupState(); }
-  set groups(value: any[]) { this.groupState.set(value); }
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
@@ -241,7 +237,6 @@ export class OperationEditorComponent implements OnDestroy {
         // Un mode par défaut choisi mais pas encore reçu par le serveur reste celui affiché.
         this.organization.set(this.withDefaultMode(organization, this.form.defaultAssignmentMode));
         this.organizationError.set('');
-        this.groups = organization.groups;
         if (selectId !== undefined) this.selectedGroupId.set(selectId);
         else if (this.selectedGroupId() !== null && !organization.groups.some(group => group.id === this.selectedGroupId())) this.selectedGroupId.set(null);
         if (this.selectedGroupId() === null) this.groupOpenOnMobile.set(false);

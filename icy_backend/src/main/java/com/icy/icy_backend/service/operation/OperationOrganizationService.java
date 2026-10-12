@@ -50,12 +50,17 @@ public class OperationOrganizationService {
         groups.stream().map(OperationGroup::getResponsibleUserId).filter(Objects::nonNull).forEach(userIds::add);
         Map<UUID, String> usernames = userRepository.findAllById(userIds).stream().collect(Collectors.toMap(User::getId, User::getUsername));
 
+        // Effectif de chaque groupe, sous-groupes compris : c'est lui que les capacités plafonnent.
+        Map<Long, Integer> headcount = groups.stream().collect(Collectors.toMap(OperationGroup::getId, group -> (int) confirmed.stream()
+                .filter(assignment -> group.getId().equals(assignment.getGroupId())
+                        || (byId.get(assignment.getGroupId()) != null && group.getId().equals(byId.get(assignment.getGroupId()).getParentId())))
+                .map(OperationAssignment::getUserId).distinct().count()));
+
         List<OperationOrganizationDTO.Group> nodes = groups.stream().map(group -> {
             Set<Long> subtree = groups.stream()
                     .filter(candidate -> group.getId().equals(candidate.getId()) || group.getId().equals(candidate.getParentId()))
                     .map(OperationGroup::getId).collect(Collectors.toSet());
-            int memberCount = (int) confirmed.stream().filter(assignment -> subtree.contains(assignment.getGroupId()))
-                    .map(OperationAssignment::getUserId).distinct().count();
+            int memberCount = headcount.get(group.getId());
             List<OperationOrganizationDTO.Member> members = confirmed.stream()
                     .filter(assignment -> group.getId().equals(assignment.getGroupId()))
                     .map(assignment -> new OperationOrganizationDTO.Member(assignment.getUserId(), usernames.getOrDefault(assignment.getUserId(), "Compte désactivé")))
@@ -66,9 +71,22 @@ public class OperationOrganizationService {
             return new OperationOrganizationDTO.Group(group.getId(), group.getParentId(), group.getName(), group.getDescription(), group.getCapacity(),
                     group.getAssignmentMode(), effectiveMode(group, byId, operation.getDefaultAssignmentMode()), group.getSortOrder(),
                     group.getResponsibleUserId(), group.getResponsibleUserId() == null ? null : usernames.get(group.getResponsibleUserId()),
-                    container, memberCount, members, pendingRequests);
+                    container, memberCount, members, pendingRequests, freeSeats(group, byId, headcount), ownFreeSeats(group, headcount));
         }).toList();
         return new OperationOrganizationDTO(operation.getDefaultAssignmentMode(), nodes);
+    }
+
+    private static Integer ownFreeSeats(OperationGroup group, Map<Long, Integer> headcount) {
+        return group.getCapacity() == null ? null : Math.max(0, group.getCapacity() - headcount.getOrDefault(group.getId(), 0));
+    }
+
+    /** La plus petite marge entre le groupe et son groupe principal : c'est ce qu'un nouveau membre peut réellement prendre. */
+    private static Integer freeSeats(OperationGroup group, Map<Long, OperationGroup> byId, Map<Long, Integer> headcount) {
+        Integer own = ownFreeSeats(group, headcount);
+        OperationGroup parent = group.getParentId() == null ? null : byId.get(group.getParentId());
+        Integer above = parent == null ? null : ownFreeSeats(parent, headcount);
+        if (own == null) return above;
+        return above == null ? own : Math.min(own, above);
     }
 
     /** Même règle que pour les affectations : le groupe, sinon son parent, sinon l'opération. */

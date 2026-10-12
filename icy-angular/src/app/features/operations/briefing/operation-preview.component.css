@@ -1,6 +1,13 @@
 :host { display: block; min-width: 0; }
-/* L'aperçu tient dans la carte de l'éditeur : cadre visible, largeur du conteneur. */
-.preview { overflow: hidden; padding-bottom: 1rem; border: 1px solid rgba(103,232,249,.35); border-radius: 1rem; color: #e2e8f0; background: #0b1220; }
+.preview-width { display: inline-flex; gap: .3rem; margin-bottom: .7rem; padding: .25rem; border: 1px solid #2b445a; border-radius: 999px; background: #0f1b2d; }
+.preview-width button { min-height: 2.25rem; padding: .3rem .9rem; border: 0; border-radius: 999px; color: #bae6fd; background: transparent; font-size: .88rem; }
+.preview-width button[aria-pressed="true"] { color: #082f49; background: #67e8f9; font-weight: 700; }
+/* Fenêtre étroite : le cadre est déjà à la largeur d'un téléphone, la bascule n'apporterait rien. */
+@media (max-width: 700px) { .preview-width { display: none; } }
+.preview-width button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+/* Le cadre est le conteneur de référence de la fiche : elle s'y adapte comme à une fenêtre de cette largeur. */
+.preview { container: sheet / inline-size; overflow: hidden; padding-bottom: 1rem; border: 1px solid rgba(103,232,249,.35); border-radius: 1rem; color: #e2e8f0; background: #0b1220; }
+.preview--mobile { width: min(100%, 390px); margin-inline: auto; }
 .sheet { width: calc(100% - 2rem); margin-top: 1rem; }
 .preview__state { margin: 0; padding: 1.2rem 0 .4rem; color: #a9bfd0; }
-@media (max-width: 640px) { .sheet { width: calc(100% - 1.25rem); } }
+@container sheet (max-width: 640px) { .sheet { width: calc(100% - 1.25rem); } }

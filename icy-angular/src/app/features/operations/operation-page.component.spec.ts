@@ -15,6 +15,8 @@ describe('OperationPageComponent', () => {
   let getParticipations: ReturnType<typeof vi.fn>;
   let setParticipationStatus: ReturnType<typeof vi.fn>;
   let leaveOperationGroup: ReturnType<typeof vi.fn>;
+  let getMyHangar: ReturnType<typeof vi.fn>;
+  const board = { organizer: false, present: [], maybe: [], unavailable: [], unassigned: [{ userId: 'u9', username: 'Syl' }], groups: [], requests: [{ id: 'r1', member: { userId: 'u8', username: 'Jax' }, groupId: 3, groupName: 'Escadrille', currentGroupId: null, currentGroupName: null, createdAt: null }] };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   const me = { status: 1, user: { id: 'me', username: 'Moi' } };
   const other = { status: 0, user: { id: 'other', username: 'Autre' } };
@@ -37,6 +39,7 @@ describe('OperationPageComponent', () => {
     getParticipations = vi.fn().mockReturnValue(of({ data: [other] }));
     setParticipationStatus = vi.fn(() => of({}));
     leaveOperationGroup = vi.fn(() => of({}));
+    getMyHangar = vi.fn(() => of({ data: [] }));
     toast = { success: vi.fn(), error: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [OperationPageComponent],
@@ -44,7 +47,7 @@ describe('OperationPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
-        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar: vi.fn(() => of({ data: [] })), leaveOperationGroup } },
+        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)) } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
       ]
@@ -134,6 +137,50 @@ describe('OperationPageComponent', () => {
       expect(fixture.nativeElement.querySelector('.mine__group').textContent).toContain('Aucune affectation');
       expect(toast.success).toHaveBeenCalledWith('Vous avez quitté votre groupe.');
     } finally { confirmSpy.mockRestore(); }
+  });
+
+  it('keeps the coordination board folded until asked, and says what is waiting in it', async () => {
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    fixture.detectChanges();
+    // Un groupe m'est délégué : le tableau de coordination est chargé.
+    http.expectOne('/api/operations/op/groups').flush({ data: [{ id: 3, name: 'Escadrille', assignmentMode: 'FREE', responsibleUserId: 'me' }] });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const fold: HTMLButtonElement = fixture.nativeElement.querySelector('.fold');
+    expect(fold.getAttribute('aria-expanded')).toBe('false');
+    expect(fold.textContent).toContain('1 demande en attente');
+    expect(fold.textContent).toContain('1 sans affectation');
+    expect((fixture.nativeElement.querySelector('app-operation-coordination-board') as HTMLElement).hidden).toBe(true);
+
+    (Array.from(fixture.nativeElement.querySelectorAll('.section-nav button') as NodeListOf<HTMLButtonElement>).find(button => button.textContent!.includes('Coordination'))!).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.fold').getAttribute('aria-expanded')).toBe('true');
+    expect((fixture.nativeElement.querySelector('app-operation-coordination-board') as HTMLElement).hidden).toBe(false);
+  });
+
+  it('tells an unreadable hangar from an empty one, and reads it again on demand', async () => {
+    getMyHangar.mockReturnValueOnce(throwError(() => ({ status: 500 })));
+    getParticipations.mockReturnValue(of({ data: [me] }));
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const hangar = (): string => fixture.nativeElement.querySelector('.hangar').textContent;
+    expect(hangar()).toContain('Votre hangar n’a pas pu être chargé.');
+    expect(hangar()).not.toContain('Votre hangar est vide');
+
+    (fixture.nativeElement.querySelector('.hangar button') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(getMyHangar).toHaveBeenCalledTimes(2);
+    expect(hangar()).toContain('Votre hangar est vide');
+    expect(hangar()).not.toContain('n’a pas pu être chargé');
   });
 
   it('locks the answers of a finished operation', async () => {

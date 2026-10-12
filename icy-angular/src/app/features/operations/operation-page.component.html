@@ -46,8 +46,9 @@
       @if (coordination; as board) {
         <section class="panel panel--coordination" id="coordination" tabindex="-1" aria-labelledby="operation-coordination-title">
           <h2 id="operation-coordination-title"><app-operation-icon name="assignment" /> {{ board.organizer ? 'Coordination' : 'Coordination de mes groupes' }}</h2>
+          <button type="button" class="fold" [attr.aria-expanded]="coordinationOpen" aria-controls="operation-coordination-board" (click)="coordinationOpen = !coordinationOpen">{{ coordinationOpen ? 'Replier le tableau' : 'Ouvrir le tableau' }}@if (!coordinationOpen && board.requests.length) { <span class="fold__badge">{{ board.requests.length }} demande{{ board.requests.length > 1 ? 's' : '' }} en attente</span> }@if (!coordinationOpen && board.unassigned.length) { <span class="fold__badge">{{ board.unassigned.length }} sans affectation</span> }</button>
           @if (coordinationError) { <p class="operation-coordination__error" role="alert">{{ coordinationError }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
-          <app-operation-coordination-board [coordination]="board" [busy]="coordinationBusy" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+          <app-operation-coordination-board id="operation-coordination-board" [hidden]="!coordinationOpen" [coordination]="board" [busy]="coordinationBusy" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
         </section>
       }
       <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
@@ -85,6 +86,8 @@
                     <small>Proposer un vaisseau ne vous affecte à aucun groupe.</small>
                   </div>
                 }
+              } @else if (hangarError) {
+                <p class="operation-coordination__error" role="alert">Votre hangar n’a pas pu être chargé. <button type="button" (click)="reloadHangar()">Réessayer</button></p>
               } @else {
                 <p class="empty-state">Votre hangar est vide : ajoutez-y vos vaisseaux pour pouvoir les proposer.</p>
               }

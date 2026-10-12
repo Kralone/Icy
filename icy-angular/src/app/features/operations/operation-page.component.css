@@ -1,5 +1,6 @@
 :host { display: block; min-height: 100%; }
-.operation-page { min-height: 100%; padding-bottom: 3rem; color: #e2e8f0; background: #0b1220; }
+/* La fiche est le conteneur de référence de ses panneaux : ils s'adaptent à sa largeur, pas à celle de la fenêtre. */
+.operation-page { container: sheet / inline-size; min-height: 100%; padding-bottom: 3rem; color: #e2e8f0; background: #0b1220; }
 
 /* Barre de sections : des ancres, collées en haut de la zone de lecture. */
 .section-nav { position: sticky; top: 0; z-index: 5; display: flex; gap: .4rem; padding: .55rem max(1rem, calc((100% - 1600px) / 2)); overflow-x: auto; border-bottom: 1px solid rgba(103,232,249,.18); background: rgba(11,18,32,.94); scrollbar-width: none; }
@@ -8,11 +9,14 @@
 .section-nav button:hover { border-color: #67e8f9; background: #12283a; }
 
 
+.fold { justify-self: start; display: inline-flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 2.5rem; padding: .45rem .9rem; border: 1px solid #36546a; border-radius: .45rem; color: #bae6fd; background: #122235; font-size: .9rem; }
+.fold__badge { padding: .05rem .55rem; border: 1px solid #f4cd7d; border-radius: 999px; color: #f4cd7d; font-size: .8rem; }
+app-operation-coordination-board[hidden] { display: none; }
 .operation-loading { padding: 4rem 1rem; color: #cbd5e1; text-align: center; }
 .operation-error { width: min(720px, calc(100% - 2rem)); margin: 12vh auto; padding: 2rem; border: 1px solid rgba(248,113,113,.35); border-radius: .8rem; background: #111827; }
 .operation-error a { color: #67e8f9; }
 .operation-coordination__error { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4 !important; background: #351f2a; }
-.operation-coordination__error button { margin-left: .5rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .2rem .6rem; color: #ffe4e6; background: transparent; }
+.operation-coordination__error button { margin-left: .5rem; min-height: 2.25rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .2rem .8rem; color: #ffe4e6; background: transparent; }
 
 /* Flotte : hangar personnel */
 .hangar { display: grid; gap: .7rem; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,.2); }
@@ -33,8 +37,12 @@
 .hangar__form button:disabled { opacity: .5; }
 button:focus-visible, select:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 
-@media (max-width: 640px) {
+@container sheet (max-width: 640px) {
   /* Le bord droit s'estompe : il reste des sections à faire défiler. */
   .section-nav { padding-inline: .65rem 1.5rem; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); }
 }
 @media (prefers-reduced-motion: reduce) { .section-nav button { transition: none; } }
+@container sheet (min-width: 2400px) {
+  .section-nav { padding-inline: max(2rem, calc((100% - 2400px) / 2)); }
+  .section-nav button { font-size: 1rem; }
+}

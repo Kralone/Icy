@@ -5,7 +5,7 @@
 .board__figures > div.is-present { border-color: rgba(128,229,184,.4); }
 .board__figures > div.is-warning { border-color: #f4cd7d; }
 .board__figures > div.is-warning dd { color: #f4cd7d; }
-dt { color: #94a3b8; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+dt { color: #94a3b8; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; }
 dd { margin: .15rem 0 0; color: #f8fafc; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .board__block { display: grid; gap: .6rem; min-width: 0; }
 h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
@@ -28,7 +28,7 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .person--unassigned { border-color: #f4cd7d; background: #2a2618; }
 .avatar { display: inline-grid; place-items: center; flex: none; width: 1.8rem; height: 1.8rem; border-radius: 50%; color: #082f49; background: #80e5b8; font-size: .82rem; font-weight: 700; }
 .avatar--pending, .avatar--unassigned { background: #f4cd7d; }
-button { border: 1px solid #36546a; border-radius: .4rem; padding: .35rem .7rem; color: #bae6fd; background: #122235; font-size: .85rem; }
+button { min-height: 2.5rem; border: 1px solid #36546a; border-radius: .4rem; padding: .35rem .7rem; color: #bae6fd; background: #122235; font-size: .85rem; }
 button:disabled { opacity: .45; }
 button.accept { border-color: #80e5b8; color: #082f49; background: #80e5b8; font-weight: 700; }
 button.refuse { border-color: #774457; color: #ffbbc5; background: #311f2b; }

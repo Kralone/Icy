@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, input, output, signal } from '@angular/core';
 import { FleetShip } from '../organization/operation-fleet-cards.component';
 import { COMPOSITION_MODE_LABELS, CompositionGroup, CompositionMember, fillPercent, occupancy, OperationComposition, seatsFor } from './operation-composition.model';
 
@@ -27,6 +27,8 @@ export class OperationOrgChartComponent {
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
   readonly preview = input(false);
+  /** Largeur imposée par l'aperçu de l'éditeur (bascule Mobile) ; null : la largeur mesurée fait foi. */
+  readonly narrow = input<boolean | null>(null);
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();
@@ -46,19 +48,21 @@ export class OperationOrgChartComponent {
   private readonly wide = signal(true);
 
   constructor() {
-    if (typeof matchMedia !== 'function') return;
-    // Suit la rotation et le redimensionnement, tant que l'utilisateur n'a pas replié ou déplié lui-même.
-    const query = matchMedia('(min-width: 701px)');
-    const follow = (): void => this.wide.set(query.matches);
-    follow();
-    query.addEventListener('change', follow);
-    inject(DestroyRef).onDestroy(() => query.removeEventListener('change', follow));
+    // Même seuil que les styles (conteneur de 700 px) : dans l'aperçu « Mobile » de l'éditeur, les groupes se replient comme sur un téléphone.
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const measure = (width: number): void => { if (width > 0) this.wide.set(width > 660); };
+    // Première mesure dès l'affichage, sans attendre l'observateur.
+    afterNextRender(() => measure(host.getBoundingClientRect().width));
+    if (typeof ResizeObserver !== 'function') return;
+    const observer = new ResizeObserver(entries => measure(entries[0]?.contentRect.width ?? 0));
+    observer.observe(host);
+    inject(DestroyRef).onDestroy(() => observer.disconnect());
   }
 
   isOpen(root: CompositionGroup): boolean {
     const choice = this.toggled().get(root.id);
     if (choice !== undefined) return choice;
-    if (this.wide()) return true;
+    if (this.narrow() === null ? this.wide() : !this.narrow()) return true;
     const mine = this.composition().myGroupId;
     if (mine === null) return this.roots()[0]?.id === root.id;
     return root.id === mine || this.children(root.id).some(child => child.id === mine);

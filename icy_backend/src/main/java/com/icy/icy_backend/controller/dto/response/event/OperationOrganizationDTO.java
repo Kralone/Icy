@@ -26,5 +26,9 @@ public record OperationOrganizationDTO(OperationGroup.AssignmentMode defaultAssi
             int memberCount,
             /** Membres confirmés affectés directement à ce groupe. */
             List<Member> members,
-            int pendingRequests) {}
+            int pendingRequests,
+            /** Places restantes, plafond du groupe principal compris ; null sans limite. */
+            Integer freeSeats,
+            /** Places restantes selon la seule capacité du groupe. */
+            Integer ownFreeSeats) {}
 }

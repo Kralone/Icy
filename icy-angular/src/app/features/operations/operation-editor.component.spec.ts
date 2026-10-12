@@ -30,7 +30,6 @@ describe('OperationEditorComponent', () => {
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
         { provide: EventService, useValue: {
           getOperationForEdit: vi.fn(() => of(operation)),
-          getOperationGroupsForEdit: vi.fn(() => of({ data: [] })),
           getOperationOrganization: vi.fn(() => of({ defaultAssignmentMode: 'FREE', groups: [...organizationGroups] })),
           createOperationGroup,
           getOperationCoordination: vi.fn(() => of(coordinationData)),

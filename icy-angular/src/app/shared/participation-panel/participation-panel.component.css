@@ -22,6 +22,13 @@ button:focus-visible { outline: 2px solid #b4edfa; outline-offset: 3px; }
   .crew-group h4 { justify-content: flex-start; }
   .participation-actions button { flex-direction: column; gap: .25rem; font-size: .7rem; }
 }
+/* Dans la fiche d’opération (ou son aperçu), le repli suit la largeur de la fiche. */
+@container sheet (max-width: 640px) {
+  .crew-columns { grid-template-columns: 1fr; gap: .5rem; }
+  .crew-group { padding: .8rem; }
+  .crew-group h4 { justify-content: flex-start; }
+  .participation-actions button { flex-direction: column; gap: .25rem; font-size: .8rem; }
+}
 .status-confirmed { --status-color: #80e5b8; --status-fill: #184d3d; }
 .status-maybe { --status-color: #f4cd7d; --status-fill: #514027; }
 .status-refused { --status-color: #eea4b8; --status-fill: #4a2c3c; }
@@ -54,3 +61,13 @@ button:focus-visible { outline: 2px solid #b4edfa; outline-offset: 3px; }
 .crew-group h4 span { background: var(--status-fill); border-color: color-mix(in srgb, var(--status-color) 45%, transparent); }
 .crew-group p:not(.dialog-muted) { padding: .4rem .5rem; border-radius: .35rem; background: #ffffff06; color: #eaf2f7; }
 @media (prefers-reduced-motion: reduce) { .participation-actions button { transition: none; } }
+/* Fiche d’opération : les noms d’un équipage nombreux se rangent sur plusieurs colonnes. Sans conteneur « sheet » (modale du calendrier), ces règles sont inertes. */
+@container sheet (min-width: 0) {
+  .crew-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0 .5rem; align-content: start; }
+  .crew-group h4 { grid-column: 1 / -1; }
+}
+/* Fiche large : trois listes côte à côte, chacune bornée, avec son titre toujours visible. Sur mobile, pas de défilement imbriqué. */
+@container sheet (min-width: 641px) {
+  .crew-group { max-height: 22rem; overflow-y: auto; }
+  .crew-group h4 { position: sticky; top: 0; z-index: 1; margin: -.8rem -.8rem .6rem; padding: .8rem .8rem .4rem; background: inherit; }
+}

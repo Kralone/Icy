@@ -331,6 +331,19 @@ class OperationMemberAssignmentTest {
         assertThatThrownBy(() -> service.cancelRequest(operationId)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Opération introuvable");
     }
 
+    @Test void theEditorStructureCarriesServerSideSeatsIncludingTheMainGroupCeiling() {
+        when(users.findAllById(any())).thenReturn(List.of(user(memberId, "Mira"), user(otherMemberId, "Thorn"), user(responsibleId, "Faramir")));
+        when(requests.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of());
+        escadrille.setCapacity(5);
+        place(memberId, 2L);
+        place(otherMemberId, 3L);
+        var organization = new OperationOrganizationService(operations, groups, assignments, requests, users).organization(operationId);
+
+        // Alpha (2 places) est plein : ses sous-groupes n'ont plus de place, même Escadrille qui en garde 4 en propre.
+        assertThat(organization.groups()).extracting(group -> group.name() + ":" + group.memberCount() + ":" + group.freeSeats() + ":" + group.ownFreeSeats())
+                .containsExactly("Alpha:2:0:0", "Polaris:1:0:null", "Escadrille:1:0:4", "Bravo:0:null:null");
+    }
+
     private static User user(UUID id, String username) {
         User user = new User();
         user.setId(id);

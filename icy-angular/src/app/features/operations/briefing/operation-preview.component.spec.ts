@@ -64,7 +64,7 @@ describe('OperationPreviewComponent', () => {
   });
 
   it('offers no participant action and never calls the server', () => {
-    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>);
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('.preview button') as NodeListOf<HTMLButtonElement>);
     // Restent seulement les boutons de présence, inactifs, et le repli des groupes.
     const active = buttons.filter(button => !button.disabled).map(button => button.className);
     expect(active.every(name => name.includes('root__toggle'))).toBe(true);
@@ -77,6 +77,25 @@ describe('OperationPreviewComponent', () => {
 
     buttons.forEach(button => button.click());
     fixture.detectChanges();
+    http.expectNone(() => true);
+  });
+
+  it('takes seats from the server and renders at desktop or mobile width, still read-only', () => {
+    // Le serveur dit qu'Escadrille est pleine : l'aperçu l'affiche tel quel, sans recalcul.
+    fixture.componentRef.setInput('groups', [groups[0], { ...groups[1], freeSeats: 0, ownFreeSeats: 0 }, groups[2]]);
+    fixture.detectChanges();
+    expect(text('app-operation-org-chart')).toContain('Complet');
+
+    const frame: HTMLElement = fixture.nativeElement.querySelector('.preview');
+    const widths = Array.from(fixture.nativeElement.querySelectorAll('.preview-width button') as NodeListOf<HTMLButtonElement>);
+    expect(widths.map(button => button.textContent!.trim())).toEqual(['Ordinateur', 'Mobile']);
+    widths[1].click();
+    fixture.detectChanges();
+    expect(frame.classList.contains('preview--mobile')).toBe(true);
+    // Comme sur un téléphone : sans groupe à moi, seul le premier groupe principal reste ouvert.
+    expect(fixture.nativeElement.querySelector('.root__toggle').getAttribute('aria-expanded')).toBe('true');
+    expect((fixture.nativeElement.querySelector('.root__children') as HTMLElement).hidden).toBe(false);
+    expect(widths[1].getAttribute('aria-pressed')).toBe('true');
     http.expectNone(() => true);
   });
 

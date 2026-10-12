@@ -19,7 +19,11 @@ public interface EventParticipationRepository extends JpaRepository<EventPartici
      */
     @org.springframework.data.jpa.repository.Query("select p from EventParticipation p join fetch p.user where p.event = :event")
     Optional<List<EventParticipation>> findAllByEvent(@org.springframework.data.repository.query.Param("event") Event event);
-    @org.springframework.data.jpa.repository.Modifying
+    /**
+     * Suppression en une requête, comptes désactivés compris. Le contexte de persistance est vidé ensuite : les réponses déjà
+     * chargées ne doivent pas y rester, sinon la suppression de l'événement échoue à l'écriture (elles pointeraient vers un événement supprimé).
+     */
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
     @org.springframework.data.jpa.repository.Query("delete from EventParticipation p where p.event = :event")
     void deleteAllByEvent(@org.springframework.data.repository.query.Param("event") Event event);
     long countByUser_Id(UUID userId);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { ParticipationPanelComponent, ParticipationsByStatus } from '../../../shared/participation-panel/participation-panel.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from '../organization/operation-fleet-cards.component';
 import { OrganizationGroup } from '../organization/operation-organization.model';
@@ -37,6 +37,9 @@ export class OperationPreviewComponent {
   readonly organizationState = input<'loading' | 'error' | 'ready'>('ready');
   readonly fleetError = input(false);
 
+  /** Largeur simulée : la fiche s'adapte à son cadre, l'aperçu montre donc le rendu ordinateur ou mobile. */
+  readonly width = signal<'desktop' | 'mobile'>('desktop');
+
   readonly published = computed(() => this.operation().publicationStatus === 'PUBLISHED');
   readonly locked = computed(() => !!this.operation().locked);
   /** Un brouillon n'a aucune réponse, c'est un fait ; une opération publiée n'en montre qu'une fois lues. */
@@ -49,18 +52,11 @@ export class OperationPreviewComponent {
 
   /** La structure de l'éditeur, vue comme un participant qui n'a encore rien choisi. */
   readonly composition = computed<OperationComposition>(() => {
-    const groups = this.groups();
-    const byId = new Map(groups.map(group => [group.id, group]));
-    const own = (group: OrganizationGroup): number | null => group.capacity === null ? null : Math.max(0, group.capacity - group.memberCount);
-    const free = (group: OrganizationGroup): number | null => {
-      const parent = group.parentId === null ? undefined : byId.get(group.parentId);
-      const limits = [own(group), parent ? own(parent) : null].filter((value): value is number => value !== null);
-      return limits.length ? Math.min(...limits) : null;
-    };
-    const nodes: CompositionGroup[] = groups.map(group => ({
+    // Effectifs et places viennent du serveur, comme sur la fiche publiée : rien n'est recalculé ici.
+    const nodes: CompositionGroup[] = this.groups().map(group => ({
       id: group.id, parentId: group.parentId, name: group.name, description: group.description, capacity: group.capacity,
       effectiveMode: group.effectiveMode, container: group.container, memberCount: group.memberCount,
-      freeSeats: free(group), ownFreeSeats: own(group), responsibleUsername: group.responsibleUsername, members: group.members
+      freeSeats: group.freeSeats ?? null, ownFreeSeats: group.ownFreeSeats ?? null, responsibleUsername: group.responsibleUsername, members: group.members
     }));
     return { present: false, myGroupId: null, myRequest: null, groups: nodes };
   });

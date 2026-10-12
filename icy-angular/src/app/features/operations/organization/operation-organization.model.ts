@@ -23,6 +23,10 @@ export interface OrganizationGroup {
   memberCount: number;
   members: OrganizationMember[];
   pendingRequests: number;
+  /** Places restantes calculées par le serveur, plafond du groupe principal compris ; null sans limite. */
+  freeSeats?: number | null;
+  /** Places restantes selon la seule capacité du groupe. */
+  ownFreeSeats?: number | null;
 }
 
 export interface OperationOrganization {

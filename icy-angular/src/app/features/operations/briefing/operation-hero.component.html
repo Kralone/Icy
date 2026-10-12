@@ -1,4 +1,4 @@
-<header class="hero" [class.hero--preview]="preview()" [style.--type-accent]="accent()" [style.--type-label]="label()">
+<header class="hero" [style.--type-accent]="accent()" [style.--type-label]="label()">
   @if (image(); as source) { <img class="hero__image" [src]="source" alt="" referrerpolicy="no-referrer" (error)="imageFailed(source)"> }
   <div class="hero__veil"></div>
   <div class="hero__content">

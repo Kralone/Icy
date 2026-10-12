@@ -46,9 +46,9 @@
 .members { display: flex; flex-wrap: wrap; gap: .3rem; }
 .members li { display: inline-flex; align-items: center; gap: .35rem; padding: .18rem .55rem; border: 1px solid rgba(128,229,184,.3); border-radius: 999px; color: #e2e8f0; background: #14372f; font-size: .86rem; overflow-wrap: anywhere; }
 .members li.is-me { border-color: #67e8f9; color: #f8fafc; background: #0e3a4d; font-weight: 700; }
-.members .you { padding: 0 .4rem; border-radius: 999px; color: #082f49; background: #67e8f9; font-size: .72rem; font-weight: 800; }
+.members .you { padding: 0 .4rem; border-radius: 999px; color: #082f49; background: #67e8f9; font-size: .75rem; font-weight: 800; }
 .members .members__more { padding: 0; border: 0; background: none; }
-.members__more button { min-height: 0; padding: .18rem .6rem; border-radius: 999px; font-size: .82rem; }
+.members__more button { min-height: 2.25rem; padding: .3rem .8rem; border-radius: 999px; font-size: .86rem; }
 
 .tag { display: inline-block; padding: .12rem .65rem; border: 1px solid; border-radius: 999px; font-size: .82rem; font-weight: 600; }
 .tag--mine { border-color: #67e8f9; color: #082f49; background: #67e8f9; }
@@ -60,7 +60,7 @@ button:disabled { opacity: .5; }
 button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-@media (max-width: 700px) {
+@container sheet (max-width: 700px) {
   .root { padding: .75rem; }
   .root__head { grid-template-columns: minmax(0, 1fr) auto; }
   .root__count { grid-column: 1 / -1; grid-row: 2; justify-items: start; }

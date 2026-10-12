@@ -19,12 +19,11 @@ import { OperationMyAssignmentComponent } from './briefing/operation-my-assignme
 import { OperationOrgChartComponent } from './briefing/operation-org-chart.component';
 import { CompositionGroup, OperationComposition } from './briefing/operation-composition.model';
 
-type OperationPageModel = OperationSheet;
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string; username?: string }; }
 type OperationViewState =
   | { status: 'LOADING' }
   | { status: 'ERROR' }
-  | { status: 'READY'; data: OperationPageModel };
+  | { status: 'READY'; data: OperationSheet };
 
 @Component({
   standalone: true,
@@ -43,7 +42,7 @@ export class OperationPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly shipsRefresh$ = new Subject<void>();
   readonly operationState$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: OperationPageModel }>(`/api/operations/${params.get('id')}`)),
+    switchMap(params => this.http.get<{ data: OperationSheet }>(`/api/operations/${params.get('id')}`)),
     map(response => { this.currentOperation = response.data; return { status: 'READY', data: response.data } as OperationViewState; }),
     startWith({ status: 'LOADING' } as OperationViewState),
     catchError(() => of({ status: 'ERROR' } as OperationViewState)),
@@ -53,7 +52,7 @@ export class OperationPageComponent {
     switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string; responsibleUserId?: string }> }>(`/api/operations/${params.get('id')}/groups`)),
     map(response => response.data),
     // Le tableau de coordination n'est demandé que si un groupe est délégué à l'utilisateur.
-    tap(groups => { const id = this.route.snapshot.paramMap.get('id'); if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
+    tap(groups => { const id = this.shownOperationId; if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
     catchError(() => of([])),
     shareReplay({ bufferSize: 1, refCount: true })
   );
@@ -75,9 +74,20 @@ export class OperationPageComponent {
   );
   fleetLoadError = false;
   reloadFleet(): void { this.shipsRefresh$.next(); }
-  private currentOperation: OperationPageModel | null = null;
+  private currentOperation: OperationSheet | null = null;
   fleetBusy = false;
-  readonly hangar$ = this.eventService.getMyHangar().pipe(map(response => response.data), catchError(() => of([])));
+  /** Hangar illisible : le dire, plutôt que de le présenter comme vide. */
+  hangarError = false;
+  private readonly hangarReload$ = new Subject<void>();
+  readonly hangar$ = this.hangarReload$.pipe(
+    startWith(undefined),
+    switchMap(() => this.eventService.getMyHangar().pipe(
+      map(response => { this.hangarError = false; return response.data; }),
+      catchError(() => { this.hangarError = true; this.changeDetector.markForCheck(); return of([] as any[]); }))),
+    // Une seule lecture, même si la section est redessinée après un changement de présence.
+    shareReplay({ bufferSize: 1, refCount: false })
+  );
+  reloadHangar(): void { this.hangarReload$.next(); }
   selectedShipId: number | null = null;
   selectedShipGroupId: number | null = null;
   selectedShipRequirementId: string | null = null;
@@ -100,6 +110,7 @@ export class OperationPageComponent {
       this.coordination = null;
       this.coordinationError = '';
       this.coordinationBusy = false;
+      this.coordinationOpen = false;
       this.presentCount = null;
       this.compositionLoadSeq++;
       this.composition = null;
@@ -146,6 +157,8 @@ export class OperationPageComponent {
   coordination: OperationCoordination | null = null;
   coordinationBusy = false;
   coordinationError = '';
+  /** Le tableau de coordination est long : il s'ouvre à la demande, la fiche reste lisible. */
+  coordinationOpen = false;
   private coordinationLoadSeq = 0;
 
   loadCoordination(operationId: string): void {
@@ -207,7 +220,9 @@ export class OperationPageComponent {
   goTo(sectionId: string): void {
     const section = document.getElementById(sectionId);
     if (!section) return;
-    section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    if (sectionId === 'coordination') this.coordinationOpen = true;
+    const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    section.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'start' });
     section.focus({ preventScroll: true });
   }
   isLeaf(group: { id: number }, groups: Array<{ parentId?: number }>) { return !groups.some(candidate => candidate.parentId === group.id); }
