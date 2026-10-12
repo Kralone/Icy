@@ -89,13 +89,30 @@ Mineurs laissés ouverts : voir les limites ci-dessous.
 - Le hangar ne contient qu'un exemplaire par modèle et par membre : deux appareils identiques ne se distinguent que par leur propriétaire.
 - Le statut d'un besoin (ouvert, rempli, annulé) reste manuel ; « Couvert » est calculé à partir des appareils acceptés.
 - La liste des pilotes proposés à l'organisateur contient tous les membres ; le serveur refuse un pilote qui n'est pas Présent.
-- La suppression d'une opération terminée reste possible pour un organisateur et efface sa composition. Règle à décider.
-- Réduire la quantité d'un besoin sous le nombre d'appareils déjà acceptés n'est pas refusé : la carte affiche alors par exemple « 3 / 2 ».
 - Le verrou de fin est injecté après la construction des services : un test qui construit un service à la main sans le fournir tourne sans verrou.
-- Le changement de présence n'est pas une seule transaction : si la libération de la place échoue, la réponse reste enregistrée.
-- Un changement de dates avant la fin vide les présences mais laisse affectations et propositions (comportement antérieur).
 - « n / q acceptés » et « Manque n » disent en partie la même chose sur la carte d'un besoin.
 - La désignation d'un compte désactivé comme responsable de groupe n'est toujours pas contrôlée (repris du 3B).
+
+## Corrections avant validation
+
+| Correction | Vérification par appel réel |
+|---|---|
+| Changer les dates d'une opération ne vide plus ses présences | Avant, après et après retour aux dates d'origine : 8 présents, 1 peut-être, 8 affectés, 1 demande, 2 vaisseaux |
+| Événement classique | Inchangé : 1 réponse avant le changement de dates, 0 après |
+| Réduire la quantité d'un besoin sous le nombre de vaisseaux acceptés | 400 « 2 vaisseaux sont déjà acceptés pour ce besoin… » ; le besoin reste à 2 / 2 ; l'augmenter répond 200 |
+| Supprimer un besoin couvert par des vaisseaux acceptés | 400 ; un besoin sans vaisseau accepté se supprime (200) |
+| Quitter « Présent » | 200 ; présence, place et demande en attente libérées ensemble, dans une seule transaction ; Discord prévenu après validation |
+| Supprimer une opération terminée qui a encore une présence | 409 ; l'opération est toujours lisible |
+
+Tests backend (build Docker) : 341 tests, 0 échec, 3 ignorés, dont deux nouveaux tests ciblés.
+
+Courte revue indépendante : aucun bloquant, aucun important, 7 mineurs. Corrigés : présences de comptes désactivés ignorées par la garde de suppression ; suppression d'un besoin qui contournait la règle de quantité ; besoin relu sous verrou ; commentaire périmé.
+
+Laissés ouverts :
+- Une opération marquée terminée à la main alors que sa fin est à venir peut être remise « non terminée », puis supprimée. Une fois l'heure de fin passée, ce n'est plus possible.
+- Une affectation validée pendant qu'un membre quitte « Présent » peut lui survivre (course étroite, antérieure à ce lot).
+- L'échec de la libération de la place en cours de transaction n'est pas rejoué par un test : l'atomicité repose sur la transaction unique.
+- La suppression d'une opération terminée sans présence ni affectation, et celle d'un brouillon, restent possibles.
 
 ## Captures
 
@@ -105,4 +122,4 @@ La capture de la coordination date d'avant l'alignement de la case « Autoriser 
 
 ## Données de test
 
-Sur « Escorte Nyx » : 2 besoins (Prospector, Carrack) et 2 appareils proposés (un accepté, un en attente) ; `validation_admin` y est inscrit Présent et affecté à Escadrille. Les dates de l'opération ont été avancées deux fois pour les vérifications, puis remises au 20 novembre ; le drapeau `finished` est resté faux. Les 8 comptes fictifs du 3B sont toujours présents.
+Sur « Escorte Nyx » : 2 besoins (Prospector, Carrack) et 2 appareils proposés, tous deux acceptés pour le besoin Prospector (quantité 2) ; `validation_admin` y est inscrit Présent et affecté à Escadrille. Les dates de l'opération ont été avancées deux fois pour les vérifications, puis remises au 20 novembre ; le drapeau `finished` est resté faux. Les 8 comptes fictifs du 3B sont toujours présents.
