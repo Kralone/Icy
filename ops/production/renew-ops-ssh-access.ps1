@@ -176,6 +176,8 @@ echo "Etat du compte: `$(passwd -S "`$ops_user" | awk '{ print `$2 }')"
 echo "Acces de `$ops_user renouvele jusqu'au `$expiry_date."
 "@
 
+# The remote script leaves Windows with CRLF line endings (CRLF checkout, plus the newline
+# PowerShell appends to piped text), which Bash reads as 'pipefail\r'. Strip them on arrival.
 $sshArguments = @('-T', '-o', 'StrictHostKeyChecking=yes')
 if ($AdminIdentityFile) {
     $sshArguments += @('-i', $AdminIdentityFile)
@@ -183,9 +185,9 @@ if ($AdminIdentityFile) {
 $sshArguments += "${AdminUser}@${Server}"
 
 if ($AdminUser -eq 'root') {
-    $sshArguments += 'bash -s'
+    $sshArguments += "tr -d '\r' | bash -s"
 } else {
-    $sshArguments += 'sudo -n bash -s'
+    $sshArguments += "tr -d '\r' | sudo -n bash -s"
 }
 
 Write-Host "Renouvellement de l'acces SSH $OpsUser sur $Server jusqu'au $expiryDate..."
@@ -243,9 +245,9 @@ journalctl -u sshd --since '-10 minutes' --no-pager 2>&1 |
     }
     $diagnosticSshArguments += "${AdminUser}@${Server}"
     if ($AdminUser -eq 'root') {
-        $diagnosticSshArguments += 'bash -s'
+        $diagnosticSshArguments += "tr -d '\r' | bash -s"
     } else {
-        $diagnosticSshArguments += 'sudo -n bash -s'
+        $diagnosticSshArguments += "tr -d '\r' | sudo -n bash -s"
     }
 
     $diagnosticScript | & ssh @diagnosticSshArguments
