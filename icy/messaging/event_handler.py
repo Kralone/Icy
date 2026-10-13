@@ -4,6 +4,7 @@ import os
 import discord
 from discord import ui, ButtonStyle
 from utils.html_to_discord import html_to_discord
+from utils.public_url import public_base_url
 import logging
 from typing import Dict, List, Tuple, Optional
 import json
@@ -255,7 +256,7 @@ class EventHandler:
 
     @staticmethod
     def _operation_url(event_id) -> str:
-        return f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
+        return f"{public_base_url()}/icy/operations/{event_id}"
 
     def _build_event_embed(self, event_id, payload: dict):
         """

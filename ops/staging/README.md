@@ -83,8 +83,7 @@ Si le tunnel est ouvert sur un autre port local, donner la même valeur à
 `STAGING_PUBLIC_URL` dans le fichier d'environnement, puis relancer
 `deploy.sh --with-bot` : l'adresse n'est lue qu'à la création du bot.
 
-Le message privé de mot de passe temporaire envoyé par le bot contient encore l'adresse
-de la production : ne pas tester cette fonction avec un vrai compte sur le staging.
+Le message privé de mot de passe temporaire envoyé par le bot utilise la même adresse.
 
 La redirection de port est interdite par défaut à la clé d'exploitation
 (`administratively prohibited`). Elle doit être autorisée par un administrateur avant

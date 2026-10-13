@@ -2,6 +2,8 @@ import logging
 
 import discord
 
+from utils.public_url import public_base_url
+
 logger = logging.getLogger("icy.user")
 
 class UserHandler:
@@ -52,7 +54,7 @@ class UserHandler:
             await user.send(
                 f"👤 Ton identifiant IceForge est : **{safe_username}**\n"
                 f"🔐 Ton mot de passe temporaire est : **{temp_password}**\n"
-                "🌐 [Accéder à IceForge](https://iceforge.fr)\n"
+                f"🌐 [Accéder à IceForge]({public_base_url()})\n"
                 "Pense à le changer dès que possible dès ta connexion sur le site !"
             )
             logger.info(f"✅ Mot de passe envoyé à {discord_id}")
