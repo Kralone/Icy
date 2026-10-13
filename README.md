@@ -69,7 +69,7 @@ Images (volume partage via nginx)   Discord
 ### Infra
 
 - PostgreSQL 18.6 pour la persistence.
-- RabbitMQ 4.3.5 pour la messagerie asynchrone.
+- RabbitMQ 4.3.6 pour la messagerie asynchrone.
 - Nginx pour servir le front et les images.
 
 ## Structure du repo
