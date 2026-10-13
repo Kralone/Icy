@@ -3,7 +3,7 @@
     @if (operationState.status === 'LOADING') {
       <section class="operation-loading" role="status" aria-live="polite"><p>Chargement de l’opération…</p></section>
     } @else if (operationState.status === 'ERROR') {
-      <section class="operation-error" role="alert"><h1>Opération indisponible</h1><p>La fiche n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.</p><a routerLink="/icy/events">Retour au calendrier</a></section>
+      <section class="operation-error" role="alert"><h1>{{ operationState.failure.title }}</h1><p>{{ operationState.failure.detail }}</p><p class="operation-error__actions">@if (operationState.failure.retry) { <button type="button" (click)="retryOperation()">Réessayer</button> }<a routerLink="/icy/events">Retour au calendrier</a></p></section>
     } @else if (operationState.status === 'READY') {
       @if (operationState.data; as operation) {
     <app-operation-hero [operation]="operation" [presentCount]="presentCount" />
@@ -56,7 +56,7 @@
       <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
         <h2 id="operation-fleet-title"><app-operation-icon name="ship" /> Flotte</h2>
         @if (fleetLoadError) { <p class="operation-coordination__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="reloadFleet()">Réessayer</button></p> }
-        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" (withdraw)="withdrawShip(operation.id, $event)" />
+        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" [requirementsUnavailable]="requirementsLoadError" [shipsUnavailable]="shipsLoadError" (withdraw)="withdrawShip(operation.id, $event)" />
         @if (operation.locked) {
           <p class="empty-state">Opération terminée : la flotte n’est plus modifiable.</p>
         } @else if (!operation.allowShipProposals) {

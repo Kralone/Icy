@@ -59,6 +59,9 @@ export class OperationFleetCardsComponent {
   readonly locked = input(false);
   readonly busy = input(false);
   readonly showRequirements = input(true);
+  /** Lecture en échec : le dire, plutôt qu'afficher « aucun besoin » ou « aucun appareil » comme un fait. */
+  readonly requirementsUnavailable = input(false);
+  readonly shipsUnavailable = input(false);
   /** Titre du bloc des besoins : « Flotte prévue » sur la fiche participant. */
   readonly needsTitle = input('Besoins');
   /** Membres proposés comme pilote (organisateur). Vide : le pilote est seulement affiché. */

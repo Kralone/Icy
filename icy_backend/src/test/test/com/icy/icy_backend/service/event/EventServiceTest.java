@@ -332,6 +332,12 @@ class EventServiceTest {
             verify(messageService).buildResponse(eq(messageKey), captor.capture());
             return ((List<EventResponseDTO>) captor.getValue()).stream().map(EventResponseDTO::getTitle).toList();
         }
+
+        List<String> draftTitlesSentAs(String messageKey) {
+            ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+            verify(messageService).buildResponse(eq(messageKey), captor.capture());
+            return ((List<EventResponseDTO>) captor.getValue()).stream().filter(EventResponseDTO::isDraft).map(EventResponseDTO::getTitle).toList();
+        }
     }
 
     @Test
@@ -369,6 +375,7 @@ class EventServiceTest {
             mockedAuth.when(() -> AuthUtils.hasRole("OFFICIER")).thenReturn(true);
             organizer.service.getAllEvents(true);
             assertThat(organizer.titlesSentAs("event.list")).containsExactly("Classique", "Brouillon", "Publiée");
+            assertThat(organizer.draftTitlesSentAs("event.list")).containsExactly("Brouillon");
         }
     }
 

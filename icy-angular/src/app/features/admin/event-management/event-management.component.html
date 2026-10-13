@@ -181,10 +181,11 @@
                       <td class="px-4 py-3">
                         <span
                 [ngClass]="{
-                  'text-green-400': !e.finished,
-                  'text-gray-400': e.finished
+                  'text-amber-300': e.draft,
+                  'text-green-400': !e.draft && !e.finished,
+                  'text-gray-400': !e.draft && e.finished
                 }">
-                          {{ e.finished ? 'Terminé' : 'À venir' }}
+                          {{ e.draft ? 'Brouillon' : e.finished ? 'Terminé' : 'À venir' }}
                         </span>
                       </td>
                       <td class="px-4 py-3 text-right">
