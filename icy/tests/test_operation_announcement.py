@@ -71,7 +71,9 @@ class OperationAnnouncementTest(unittest.TestCase):
         self.assertNotIn("{", fields["Objectifs"])
         self.assertNotIn("PRINCIPAL", fields["Objectifs"])
         self.assertEqual("https://iceforge.fr/icy/operations/11111111-1111-1111-1111-111111111111", url)
-        self.assertIn(url, fields["Opération"])
+        # Le lien vers la fiche n'existe qu'une fois : c'est le bouton, pas un champ de l'annonce.
+        self.assertNotIn("Opération", fields)
+        self.assertNotIn(url, embed.description)
         self.assertEqual("https://cdn.example.test/mission.png", embed.image.url)
 
     def test_legacy_free_text_objectives_are_kept_as_text(self):
@@ -201,7 +203,8 @@ class OperationAnnouncementUpdateTest(unittest.IsolatedAsyncioTestCase):
 
         channel.send.assert_not_awaited()
         message.edit.assert_awaited_once()
-        self.assertIsNone(message.edit.await_args.kwargs["view"])
+        # Aucune réponse possible : il ne reste que le lien vers la fiche.
+        self.assertEqual(["Consulter l’opération"], [item.label for item in message.edit.await_args.kwargs["view"].children])
         embed = message.edit.await_args.kwargs["embed"]
         self.assertEqual("🧊 [TERMINÉ] Opération : Escorte Nyx", embed.title)
         self.assertIn("Compte rendu corrigé.", embed.description)
@@ -218,7 +221,7 @@ class OperationAnnouncementUpdateTest(unittest.IsolatedAsyncioTestCase):
 
         await event_handler.handle_event_updated(operation_payload(channelId="42", messageId="555", finished=True))
 
-        self.assertIsNone(message.edit.await_args.kwargs["view"])
+        self.assertEqual(["Consulter l’opération"], [item.label for item in message.edit.await_args.kwargs["view"].children])
         embed = message.edit.await_args.kwargs["embed"]
         # Le signal de fin posera le marquage : il ne doit pas être doublé.
         self.assertEqual("Opération : Escorte Nyx", embed.title)
