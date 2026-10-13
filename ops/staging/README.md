@@ -71,6 +71,18 @@ ssh -N -L 19088:127.0.0.1:19088 iceforge-ops@SERVEUR
 
 Le navigateur peut alors ouvrir `http://127.0.0.1:19088`.
 
+Les annonces Discord d'une opération portent un bouton « Consulter l'opération ». Le bot
+de staging construit ce lien avec `STAGING_PUBLIC_URL`, par défaut
+`http://127.0.0.1:19088` : c'est l'adresse du staging **vue depuis le poste du testeur,
+tunnel SSH ouvert**. Sans tunnel, le lien ne s'ouvre pas ; il ne mène jamais à la
+production. `deploy.sh --with-bot` refuse de démarrer le bot si cette adresse n'est pas
+une adresse locale. Si le tunnel est ouvert sur un autre port local, donner la même
+valeur à `STAGING_PUBLIC_URL` dans le fichier d'environnement.
+
+La redirection de port est interdite par défaut à la clé d'exploitation
+(`administratively prohibited`). Elle doit être autorisée par un administrateur avant
+tout test dans un navigateur, en la limitant à `127.0.0.1:19088`.
+
 ## Vérification et nettoyage
 
 LibreTranslate est démarré avec le backend, sans port publié sur l’hôte. Les
