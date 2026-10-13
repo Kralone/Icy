@@ -166,4 +166,45 @@ class OperationGroupServiceTest {
         assertThatThrownBy(() -> service.update(operationId, 1L, request)).isInstanceOf(IllegalArgumentException.class);
         verify(repository, never()).save(any());
     }
+
+    private com.icy.icy_backend.controller.dto.operation.OperationGroupRequest groupWithCapacity(Integer capacity) {
+        var request = new com.icy.icy_backend.controller.dto.operation.OperationGroupRequest();
+        request.setName("Alpha");
+        request.setAssignmentMode(OperationGroup.AssignmentMode.FREE);
+        request.setCapacity(capacity);
+        return request;
+    }
+
+    @Test void aCapacityIsEitherAbsentOrAtLeastOneWhenCreatingAGroup() {
+        when(operations.findById(operationId)).thenReturn(Optional.of(com.icy.icy_backend.db.entity.event.Operation.builder().eventId(operationId).build()));
+        when(repository.save(any(OperationGroup.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        for (Integer refused : List.of(0, -1, -50, 10001)) {
+            assertThatThrownBy(() -> service.create(operationId, groupWithCapacity(refused)))
+                    .as("capacité %s", refused).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("entre 1 et 10 000");
+        }
+        verify(repository, never()).save(any());
+
+        service.create(operationId, groupWithCapacity(null));
+        service.create(operationId, groupWithCapacity(1));
+        service.create(operationId, groupWithCapacity(10000));
+        verify(repository).save(argThat(group -> group.getCapacity() == null));
+        verify(repository).save(argThat(group -> Integer.valueOf(1).equals(group.getCapacity())));
+        verify(repository).save(argThat(group -> Integer.valueOf(10000).equals(group.getCapacity())));
+    }
+
+    @Test void aCapacityIsEitherAbsentOrAtLeastOneWhenUpdatingAGroup() {
+        OperationGroup existing = group(7, null);
+        existing.setName("Alpha");
+        when(repository.save(any(OperationGroup.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        for (Integer refused : List.of(0, -1)) {
+            assertThatThrownBy(() -> service.update(operationId, 7L, groupWithCapacity(refused)))
+                    .as("capacité %s", refused).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("entre 1 et 10 000");
+        }
+        verify(repository, never()).save(any());
+
+        service.update(operationId, 7L, groupWithCapacity(null));
+        assertThat(existing.getCapacity()).isNull();
+        service.update(operationId, 7L, groupWithCapacity(4));
+        assertThat(existing.getCapacity()).isEqualTo(4);
+    }
 }
