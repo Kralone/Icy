@@ -120,10 +120,15 @@ membre que si le serveur a réellement enregistré sa réponse. Le bot interroge
 le serveur par `POST /api/events/bot/participation`, avec sa clé.
 
 - `BOT_API_KEY` doit être renseignée **à l'identique** pour le backend et pour le bot.
-  Sans elle côté bot, ou vide côté backend (réponse 503), tous les clics reçoivent un
-  message d'échec : aucune réponse n'est enregistrée, et aucun succès n'est annoncé à tort.
-- Le précontrôle d'une livraison vérifie la présence de la clé des deux côtés, sans
-  l'afficher. Les secrets restent sur le serveur ; cette procédure ne les modifie pas.
+  Sans elle, le bot refuse de démarrer. Vide côté backend (réponse 503) ou différente
+  (réponse 401), tous les clics reçoivent un message d'échec : aucune réponse n'est
+  enregistrée, et aucun succès n'est annoncé à tort.
+- **À contrôler à la main avant une livraison** : le précontrôle de
+  `deploy-application-release.sh` ne vérifie pas cette clé, et le `docker-compose.yml`
+  qu'il utilise accepte une valeur vide. Seul `vault/configure-production-secrets.sh`
+  la contrôle, au moment où les secrets sont posés (32 caractères au moins, identique
+  pour le backend et le bot). Les secrets restent sur le serveur ; cette procédure ne
+  les modifie pas.
 - Ordre obligatoire : **backend, puis bot** — celui que suit déjà
   `deploy-application-release.sh`. Un nouveau bot face à un ancien backend refuse toutes
   les réponses (401). Un ancien bot face au nouveau backend continue de fonctionner par
