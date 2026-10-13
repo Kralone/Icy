@@ -19,7 +19,7 @@ Fiabilise et complète le module Opérations (lots 1 à 3D) : 30 commits au-dess
 
 ## Base de données
 
-Deux migrations dans cette PR : `V52__add_operation_revision.sql` et `V53__add_operation_default_assignment_mode.sql`. Les migrations V40 à V51 du module sont déjà dans `main`.
+Trois migrations portent tout le module : `V40__create_operations_foundation.sql`, `V41__create_operation_organisation.sql` et `V42__create_operation_fleet.sql`. Elles remplacent les migrations de développement V40 à V53, dont les anciennes V40 à V51 déjà présentes dans `main` ; la correspondance est dans `icy_backend/MIGRATIONS.md`.
 
 ## Changements de comportement à connaître
 
