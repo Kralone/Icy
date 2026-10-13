@@ -20,9 +20,9 @@ Conséquence : une PR de cette branche vers `origin/main` porterait 279 commits,
 
 | Point | Constat |
 |---|---|
-| Migrations du module | V40 à V53, 14 fichiers, sans trou ni doublon de version |
+| Migrations du module | V40 à V42, 3 fichiers, sans trou ni doublon de version (regroupement des anciennes V40 à V53, correspondance dans `icy_backend/MIGRATIONS.md`) |
 | Migrations antérieures | V1 à V39 non modifiées par le module |
-| Base de développement | V53 appliquée, aucune migration en échec |
+| Base de développement | V53 appliquée (ancienne numérotation, au moment de la réception), aucune migration en échec |
 | `origin/main` | S'arrête à V34 ; V35 à V39 ne sont que sur le `main` local |
 | Production | Version appliquée non vérifiée dans cette session ; la documentation du dépôt mentionne des déploiements jusqu'à V38 |
 
@@ -127,7 +127,7 @@ Mineurs notables : présence encore modifiable après la fin (voulu au 3C) ; ré
 - **Périmètre réel de la mise en production** : si la production suit `origin/main` ou un état antérieur au `main` local, le déploiement embarque aussi les 42 commits hors module et les migrations V35 à V39. À vérifier avant tout.
 - **Historique Flyway divergent entre `origin/main` et le `main` local** : les migrations V31 à V34 n'y portent pas le même contenu (`V31__create_external_catalog_sync` d'un côté, `V31__consolidate_catalog_cutover` de l'autre, et ainsi de suite). Si la production a été migrée depuis `origin/main`, le backend refusera de démarrer à la validation des migrations. À comparer avec la table `flyway_schema_history` de production. Ce point est antérieur au module.
 - **Annonce perdue** : si RabbitMQ est indisponible au moment de la publication, l'annonce n'est pas rejouée.
-- **Migrations V40 à V53** : 14 migrations appliquées d'un coup sur une base peuplée. À répéter d'abord sur une copie de la production.
+- **Migrations V40 à V42** : 3 migrations appliquées d'un coup sur une base peuplée. À répéter d'abord sur une copie de la production.
 - **Bot et backend** : le bot est modifié. Un backend à jour avec un ancien bot, ou l'inverse, n'a pas été essayé.
 - **Variable `ICEFORGE_PUBLIC_URL`** : à définir sur le bot si le site n'est pas servi sur `https://iceforge.fr`.
 - **Clôture automatique** : dès le déploiement, toute opération publiée dont la fin est passée devient en lecture seule, et ne peut plus être supprimée si elle a des réponses.
@@ -163,11 +163,11 @@ Rien de ce qui suit n'est fait.
 1. **Clarifier `main`.** Pousser le `main` local (249 commits) sur le dépôt distant s'il représente bien l'état voulu, ou dire quelle branche fait référence. Sans cela, la PR mélange le module et 42 commits étrangers.
 2. **Corriger avant production** les constats I1, I2 et I4 de la revue finale, et trancher I3 et I5. Cela demande ton accord : ce n'est pas fait.
 3. **Pousser la branche** `feat/operations-lot3-organisation` et ouvrir la PR vers `main` : 30 commits, texte prêt dans `docs/operations/PR-MODULE-OPERATIONS.md`. Pas de fusion automatique.
-4. **Répétition** sur une copie de la base de production : migrations V40 à V53, démarrage du backend, parcours de la section 2, et rechargement de la page des brouillons.
+4. **Répétition** sur une copie de la base de production : migrations V40 à V42, démarrage du backend, parcours de la section 2, et rechargement de la page des brouillons.
 5. **Discord sur serveur de test** : publication, lien, synchronisation des réponses.
 6. **Fusion** de la PR après ta validation, en avance rapide ou par commit de fusion.
 7. **Production** : sauvegarde, backend et bot déployés ensemble, puis frontend ; contrôle de l'historique Flyway et d'une opération de test en brouillon, non publiée.
-8. **Retour arrière** : restauration de la sauvegarde. Les migrations V40 à V53 ajoutent des tables et des colonnes ; aucun script de retour n'est fourni.
+8. **Retour arrière** : restauration de la sauvegarde. Les migrations V40 à V42 ajoutent des tables et des colonnes ; aucun script de retour n'est fourni.
 
 ## 11. Preuves archivées hors du dépôt
 
