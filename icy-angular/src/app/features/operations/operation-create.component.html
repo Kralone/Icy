@@ -9,12 +9,12 @@
       <p class="required-hint"><span aria-hidden="true">*</span> Champ obligatoire</p>
       <div class="form-grid">
         <label>
-          <span class="field-label">Titre <span class="req" aria-hidden="true">*</span></span>
-          <input [(ngModel)]="form.title" maxlength="180" required placeholder="Ex. : Escorte du convoi minier">
+          <span class="field-label" id="operation-create-title">Titre <span class="req" aria-hidden="true">*</span></span>
+          <input [(ngModel)]="form.title" maxlength="180" required aria-labelledby="operation-create-title" placeholder="Ex. : Escorte du convoi minier">
         </label>
         <label>
-          <span class="field-label">Type <span class="req" aria-hidden="true">*</span></span>
-          <select [(ngModel)]="form.type" required [disabled]="typesLoading || !types.length" [class.is-empty]="!form.type" aria-describedby="operation-type-help">
+          <span class="field-label" id="operation-create-type">Type <span class="req" aria-hidden="true">*</span></span>
+          <select [(ngModel)]="form.type" required aria-labelledby="operation-create-type" [disabled]="typesLoading || !types.length" [class.is-empty]="!form.type" aria-describedby="operation-type-help">
             <option value="" disabled>{{ typesLoading ? 'Chargement des types…' : 'Choisir un type' }}</option>
             @for (type of types; track type.name) { <option [value]="type.name">{{ type.name }}</option> }
           </select>
@@ -25,23 +25,23 @@
           }
         </label>
         <label class="wide">
-          <span class="field-label">Briefing</span>
-          <textarea [(ngModel)]="form.description" rows="5" maxlength="50000" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>
-          <small>{{ form.description.length }} / 50000</small>
+          <span class="field-label" id="operation-create-briefing">Briefing</span>
+          <textarea [(ngModel)]="form.description" rows="5" maxlength="50000" aria-labelledby="operation-create-briefing" aria-describedby="operation-create-briefing-count" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>
+          <small id="operation-create-briefing-count">{{ form.description.length }} / 50000</small>
         </label>
         <label>
-          <span class="field-label">Début <span class="req" aria-hidden="true">*</span></span>
-          <input type="datetime-local" [(ngModel)]="form.startDateTime" required>
+          <span class="field-label" id="operation-create-start">Début <span class="req" aria-hidden="true">*</span></span>
+          <input type="datetime-local" [(ngModel)]="form.startDateTime" required aria-label="Date et heure de début">
         </label>
         <label>
-          <span class="field-label">Fin <span class="req" aria-hidden="true">*</span></span>
-          <input type="datetime-local" [(ngModel)]="form.endDateTime" required [attr.aria-invalid]="datesInvalid">
-          @if (datesInvalid) { <span class="field-error" role="alert">La fin doit être postérieure au début.</span> }
+          <span class="field-label" id="operation-create-end">Fin <span class="req" aria-hidden="true">*</span></span>
+          <input type="datetime-local" [(ngModel)]="form.endDateTime" required aria-label="Date et heure de fin" [attr.aria-invalid]="datesInvalid" [attr.aria-describedby]="datesInvalid ? 'operation-create-end-error' : null">
+          @if (datesInvalid) { <span id="operation-create-end-error" class="field-error" role="alert">La fin doit être postérieure au début.</span> }
         </label>
         <label class="wide">
-          <span class="field-label">Image de mission</span>
-          <input type="url" [(ngModel)]="form.imageUrl" maxlength="2000" placeholder="https://…">
-          <small class="field-help">Facultative. Adresse https d’une image autorisée par le site ; elle sera vérifiée à l’enregistrement.</small>
+          <span class="field-label" id="operation-create-image">Image de mission</span>
+          <input type="url" [(ngModel)]="form.imageUrl" maxlength="2000" aria-labelledby="operation-create-image" aria-describedby="operation-create-image-help" placeholder="https://…">
+          <small id="operation-create-image-help" class="field-help">Facultative. Adresse https d’une image autorisée par le site ; elle sera vérifiée à l’enregistrement.</small>
         </label>
         <label class="check wide"><input type="checkbox" [(ngModel)]="form.allowShipProposals"> <span>Autoriser les membres présents à proposer un vaisseau depuis leur hangar</span></label>
       </div>

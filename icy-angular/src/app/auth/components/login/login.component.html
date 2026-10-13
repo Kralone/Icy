@@ -34,12 +34,12 @@
       </div>
       <!-- Formulaire -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
-        <label class="text-gray-300 text-sm">Nom d'utilisateur</label>
-        <input type="text" formControlName="username"
+        <label class="text-gray-300 text-sm" for="login-username">Nom d'utilisateur</label>
+        <input id="login-username" type="text" formControlName="username" autocomplete="username"
           class="w-full p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
           placeholder="Nom d’utilisateur ou identifiant" />
-          <label class="text-gray-300 text-sm">Mot de passe</label>
-          <input type="password" formControlName="password"
+          <label class="text-gray-300 text-sm" for="login-password">Mot de passe</label>
+          <input id="login-password" type="password" formControlName="password" autocomplete="current-password"
             class="w-full p-2 rounded bg-white/10 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
             placeholder="Mot de passe" />
             <button type="submit"
