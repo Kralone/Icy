@@ -1,7 +1,8 @@
 import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { OperationLoadFailure, operationLoadFailure } from './operation-load-failure';
 import { BehaviorSubject, catchError, debounceTime, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
@@ -42,7 +43,7 @@ interface OperationFormPayload {
 
 type OperationEditorState =
   | { kind: 'LOADING' }
-  | { kind: 'ERROR'; message: string }
+  | { kind: 'ERROR'; failure: OperationLoadFailure }
   | { kind: 'READY'; operation: any };
 
 @Component({
@@ -200,22 +201,29 @@ export class OperationEditorComponent implements OnDestroy {
     this.catalogSearch$.next('');
     this.requirementForm = { groupId: null, shipModelId: null, quantity: 1, notes: '', status: 'OPEN' };
   }
-  readonly operationState$ = this.route.paramMap.pipe(
-    switchMap(params => this.eventService.getOperationForEdit(params.get('id')!)),
-    map(operation => ({ kind: 'READY', operation } as OperationEditorState)),
-    startWith({ kind: 'LOADING' } as OperationEditorState),
-    catchError(() => of({ kind: 'ERROR', message: 'Impossible de charger le brouillon.' } as OperationEditorState)),
+  private readonly operationReload = new BehaviorSubject<void>(undefined);
+  readonly operationState$ = this.operationReload.pipe(
+    switchMap(() => this.route.paramMap),
+    // L'échec reste dans la lecture en cours : un nouvel essai reste possible.
+    switchMap(params => this.eventService.getOperationForEdit(params.get('id')!).pipe(
+      map(operation => ({ kind: 'READY', operation } as OperationEditorState)),
+      catchError(error => of({ kind: 'ERROR', failure: operationLoadFailure(error, true) } as OperationEditorState)),
+      startWith({ kind: 'LOADING' } as OperationEditorState))),
     tap(state => { if (state.kind === 'READY') this.adoptServerState(state.operation); })
   );
+  retryOperation(): void { this.operationReload.next(); }
   private readonly requirementRefresh = new BehaviorSubject<void>(undefined);
   private readonly shipRefresh = new BehaviorSubject<void>(undefined);
   /** Une lecture en échec ne doit ni passer pour une flotte vide, ni empêcher les lectures suivantes. */
-  readonly fleetLoadError = signal(false);
-  private fleetRead<T>(read: Observable<{ data: any[] }>): Observable<T[]> {
-    return read.pipe(map(response => response.data as T[]), tap(() => this.fleetLoadError.set(false)), catchError(() => { this.fleetLoadError.set(true); return of([] as T[]); }));
+  readonly requirementsLoadError = signal(false);
+  readonly shipsLoadError = signal(false);
+  /** Un échec par lecture : la réussite de l'une n'efface pas l'échec de l'autre. */
+  readonly fleetLoadError = computed(() => this.requirementsLoadError() || this.shipsLoadError());
+  private fleetRead<T>(read: Observable<{ data: any[] }>, failed: WritableSignal<boolean>): Observable<T[]> {
+    return read.pipe(map(response => response.data as T[]), tap(() => failed.set(false)), catchError(() => { failed.set(true); return of([] as T[]); }));
   }
-  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.fleetRead<FleetRequirement>(this.eventService.getOperationShipRequirements(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
-  readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!))))), shareReplay({ bufferSize: 1, refCount: true }));
+  readonly shipRequirements$ = this.route.paramMap.pipe(switchMap(params => this.requirementRefresh.pipe(switchMap(() => this.fleetRead<FleetRequirement>(this.eventService.getOperationShipRequirements(params.get('id')!), this.requirementsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
+  readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!), this.shipsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };

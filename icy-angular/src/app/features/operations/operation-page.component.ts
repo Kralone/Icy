@@ -23,11 +23,12 @@ import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationMyAssignmentComponent } from './briefing/operation-my-assignment.component';
 import { OperationOrgChartComponent } from './briefing/operation-org-chart.component';
 import { CompositionGroup, OperationComposition } from './briefing/operation-composition.model';
+import { OperationLoadFailure, operationLoadFailure } from './operation-load-failure';
 
 interface ParticipationRow { status: number; userId?: string; user?: { id?: string; username?: string }; }
 type OperationViewState =
   | { status: 'LOADING' }
-  | { status: 'ERROR' }
+  | { status: 'ERROR'; failure: OperationLoadFailure }
   | { status: 'READY'; data: OperationSheet };
 
 @Component({
@@ -48,39 +49,57 @@ export class OperationPageComponent {
   private readonly confirmService = inject(OperationConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly shipsRefresh$ = new Subject<void>();
-  readonly operationState$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: OperationSheet }>(`/api/operations/${params.get('id')}`)),
-    map(response => { this.currentOperation = response.data; return { status: 'READY', data: response.data } as OperationViewState; }),
-    startWith({ status: 'LOADING' } as OperationViewState),
-    catchError(() => of({ status: 'ERROR' } as OperationViewState)),
+  private readonly operationReload$ = new Subject<void>();
+  readonly operationState$ = this.operationReload$.pipe(
+    startWith(undefined),
+    switchMap(() => this.route.paramMap),
+    // L'échec reste dans la lecture en cours : la suivante (autre fiche, nouvel essai) reste possible.
+    switchMap(params => this.http.get<{ data: OperationSheet }>(`/api/operations/${params.get('id')}`).pipe(
+      map(response => { this.currentOperation = response.data; return { status: 'READY', data: response.data } as OperationViewState; }),
+      catchError(error => of({ status: 'ERROR', failure: operationLoadFailure(error) } as OperationViewState)),
+      startWith({ status: 'LOADING' } as OperationViewState))),
     shareReplay({ bufferSize: 1, refCount: true })
   );
-  readonly groups$ = this.route.paramMap.pipe(
-    switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string; responsibleUserId?: string }> }>(`/api/operations/${params.get('id')}/groups`)),
-    map(response => response.data),
-    // Le tableau de coordination n'est demandé que si un groupe est délégué à l'utilisateur.
-    tap(groups => { const id = this.shownOperationId; if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
-    catchError(() => of([])),
+  readonly groups$ = this.operationReload$.pipe(
+    startWith(undefined),
+    switchMap(() => this.route.paramMap),
+    switchMap(params => this.http.get<{ data: Array<{ id: number; parentId?: number; name: string; description?: string; capacity?: number; assignmentMode: string; responsibleUserId?: string }> }>(`/api/operations/${params.get('id')}/groups`).pipe(
+      map(response => response.data),
+      // Le tableau de coordination n'est demandé que si un groupe est délégué à l'utilisateur.
+      tap(groups => { const id = this.shownOperationId; if (id && groups.some(group => !!this.currentUserId && group.responsibleUserId === this.currentUserId)) this.loadCoordination(id); }),
+      catchError(() => of([])))),
     shareReplay({ bufferSize: 1, refCount: true })
   );
   readonly ships$ = this.shipsRefresh$.pipe(
     startWith(undefined),
     switchMap(() => this.route.paramMap),
     switchMap(params => this.http.get<{ data: FleetShip[] }>(`/api/operations/${params.get('id')}/ships`).pipe(
-      map(response => { this.fleetLoadError = false; return response.data; }),
+      map(response => { this.shipsLoadError = false; return response.data; }),
       // Une lecture en échec ne passe pas pour une flotte vide et n'empêche pas les suivantes.
-      catchError(() => { this.fleetLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetShip[]); })))
+      catchError(() => { this.shipsLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetShip[]); })))
   );
   /** Relus avec les vaisseaux : une proposition change ce qu'il reste à couvrir. */
   readonly shipRequirements$ = this.shipsRefresh$.pipe(
     startWith(undefined),
     switchMap(() => this.route.paramMap),
     switchMap(params => this.http.get<{ data: FleetRequirement[] }>(`/api/operations/${params.get('id')}/ship-requirements`).pipe(
-      map(response => response.data.filter(requirement => requirement.status !== 'CANCELLED')),
-      catchError(() => { this.fleetLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetRequirement[]); })))
+      map(response => { this.requirementsLoadError = false; return response.data.filter(requirement => requirement.status !== 'CANCELLED'); }),
+      catchError(() => { this.requirementsLoadError = true; this.changeDetector.markForCheck(); return of([] as FleetRequirement[]); })))
   );
-  fleetLoadError = false;
+  /** Un échec par lecture : la réussite de l'une n'efface pas l'échec de l'autre. */
+  shipsLoadError = false;
+  requirementsLoadError = false;
+  get fleetLoadError(): boolean { return this.shipsLoadError || this.requirementsLoadError; }
   reloadFleet(): void { this.shipsRefresh$.next(); }
+  /** Nouvel essai après un échec de lecture de la fiche : tout ce qui en dépend est relu. */
+  retryOperation(): void {
+    this.operationReload$.next();
+    const id = this.shownOperationId;
+    if (!id) return;
+    this.loadParticipations(id);
+    this.loadComposition(id);
+    if (this.canManage) this.loadCoordination(id);
+  }
   private currentOperation: OperationSheet | null = null;
   fleetBusy = false;
   /** Hangar illisible : le dire, plutôt que de le présenter comme vide. */

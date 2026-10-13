@@ -369,9 +369,16 @@ public class EventService {
     /** `includeDrafts` n'est honoré que pour un organisateur : c'est la liste de gestion de l'administration. */
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getAllEvents(boolean includeDrafts) {
         List<Event> all = (List<Event>) eventRepository.findAll();
-        List<Event> listed = includeDrafts && currentUserIsOrganizer() ? all : withoutUnpublishedOperations(all);
-        List<EventResponseDTO> events = listed.stream()
-                .map(EventResponseDTO::new).collect(Collectors.toList());
+        List<Event> published = withoutUnpublishedOperations(all);
+        if (!includeDrafts || !currentUserIsOrganizer()) {
+            return messageService.buildResponse("event.list", published.stream().map(EventResponseDTO::new).collect(Collectors.toList()));
+        }
+        Set<UUID> publishedIds = published.stream().map(Event::getId).collect(Collectors.toSet());
+        List<EventResponseDTO> events = all.stream().map(event -> {
+            EventResponseDTO dto = new EventResponseDTO(event);
+            dto.setDraft(!publishedIds.contains(event.getId()));
+            return dto;
+        }).collect(Collectors.toList());
         return messageService.buildResponse("event.list", events);
     }
 

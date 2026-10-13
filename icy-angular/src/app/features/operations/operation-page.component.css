@@ -17,6 +17,8 @@ app-operation-coordination-board[hidden] { display: none; }
 .operation-loading { padding: 4rem 1rem; color: #cbd5e1; text-align: center; }
 .operation-error { width: min(720px, calc(100% - 2rem)); margin: 12vh auto; padding: 2rem; border: 1px solid rgba(248,113,113,.35); border-radius: .8rem; background: #111827; }
 .operation-error a { color: #67e8f9; }
+.operation-error__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+.operation-error__actions button { min-height: 2.5rem; border: 1px solid #67e8f9; border-radius: .45rem; padding: .3rem 1rem; color: #0b1220; background: #67e8f9; font-weight: 700; }
 .operation-coordination__error { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4 !important; background: #351f2a; }
 .operation-coordination__error button { margin-left: .5rem; min-height: 2.25rem; border: 1px solid #fda4af; border-radius: .4rem; padding: .2rem .8rem; color: #ffe4e6; background: transparent; }
 

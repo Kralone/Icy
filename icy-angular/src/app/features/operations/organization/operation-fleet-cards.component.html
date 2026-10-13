@@ -2,7 +2,9 @@
   @if (showRequirements()) {
     <section class="fleet__block" [attr.aria-label]="needsTitle()">
       <h4>{{ needsTitle() }}</h4>
-      @if (visibleRequirements().length) {
+      @if (requirementsUnavailable()) {
+        <p class="fleet__empty fleet__empty--error">Les besoins de vaisseaux n’ont pas pu être chargés.</p>
+      } @else if (visibleRequirements().length) {
         <ul class="fleet__cards fleet__cards--needs">
           @for (requirement of visibleRequirements(); track requirement.id) {
             <li class="card card--need" [class.is-covered]="covered(requirement)" [class.is-off]="requirement.status === 'CANCELLED'">
@@ -49,7 +51,9 @@
 
   <section class="fleet__block" [attr.aria-label]="shipsTitle()">
     <h4>{{ shipsTitle() }}</h4>
-    @if (otherShips().length) {
+    @if (shipsUnavailable()) {
+      <p class="fleet__empty fleet__empty--error">Les appareils proposés n’ont pas pu être chargés.</p>
+    } @else if (otherShips().length) {
       <ul class="fleet__cards">
         @for (ship of otherShips(); track ship.id) {
           <li class="card card--ship" [attr.data-status]="ship.status" [class.is-off]="ship.status === 'DECLINED' || ship.status === 'UNAVAILABLE'">

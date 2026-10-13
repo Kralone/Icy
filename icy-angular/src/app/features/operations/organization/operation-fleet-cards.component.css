@@ -3,6 +3,7 @@
 .fleet__block { display: grid; gap: .6rem; min-width: 0; }
 h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .fleet__empty { margin: 0; padding: .8rem 1rem; border: 1px dashed #36546a; border-radius: .6rem; color: #acc2d5; font-size: .9rem; }
+.fleet__empty--error { border-color: #774457; color: #ffd0d4; }
 /* Cartes larges sans s'étirer à l'excès : jusqu'à 24rem, alignées à gauche. */
 .fleet__cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .8rem; }
 .card { display: grid; grid-template-rows: auto 1fr auto; width: 100%; max-width: 24rem; min-width: 0; overflow: hidden; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
