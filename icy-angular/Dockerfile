@@ -9,6 +9,8 @@ COPY . .
 RUN ICEFORGE_BUILD_COMMIT="${ICEFORGE_BUILD_COMMIT}" npm run build
 
 FROM nginx:1.30.4-alpine3.24@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+# Les paquets système de l'image de base sont mis à niveau : son empreinte est fixée, pas leurs correctifs de sécurité.
+RUN apk upgrade --no-cache
 ARG ICEFORGE_BUILD_COMMIT=unknown
 LABEL org.opencontainers.image.revision="${ICEFORGE_BUILD_COMMIT}"
 
