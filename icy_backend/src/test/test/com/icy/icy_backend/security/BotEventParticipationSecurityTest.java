@@ -59,6 +59,7 @@ class BotEventParticipationSecurityTest {
 
     @Autowired private org.springframework.web.context.WebApplicationContext context;
     private MockMvc mockMvc;
+    @Autowired private BotEventParticipationController controller;
 
     /** Seule la chaîne de sécurité de l'application est posée devant le contrôleur, comme en service. */
     @org.junit.jupiter.api.BeforeEach
@@ -121,9 +122,36 @@ class BotEventParticipationSecurityTest {
         when(jwtUtil.extractRoles("jeton-membre")).thenReturn(List.of("USER"));
         when(userService.getByUsername("membre")).thenReturn(member);
 
-        mockMvc.perform(answer(event.getId(), "discord-1").header("Authorization", "Bearer jeton-membre")).andExpect(status().isUnauthorized());
+        // Ce qui compte est le refus, quel que soit le maillon qui le prononce : aujourd'hui le filtre du bot (401),
+        // demain peut-être le contrôle du rôle (403). Dans les deux cas, rien n'est lu ni écrit.
+        mockMvc.perform(answer(event.getId(), "discord-1").header("Authorization", "Bearer jeton-membre")).andExpect(status().is4xxClientError());
 
         verifyNoInteractions(users, participations, publisher);
+    }
+
+    /** Seconde barrière, indépendante du filtre : appelé directement, le contrôleur n'accepte que le rôle du bot. */
+    @Test
+    void theControllerItselfRefusesAnyoneButTheBot() {
+        Event event = classicEvent();
+        var request = new BotEventParticipationController.Request(event.getId(), "discord-9", "pilote", 1);
+        when(users.findByDiscordId("discord-9")).thenReturn(Optional.empty());
+        try {
+            for (String role : List.of("ROLE_USER", "ROLE_OFFICIER", "ROLE_ADMIN")) {
+                org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                        new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("membre", null,
+                                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role))));
+                org.assertj.core.api.Assertions.assertThatThrownBy(() -> controller.record(request))
+                        .as(role).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+            }
+            verifyNoInteractions(users, participations, publisher);
+
+            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                    new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("iceforge-bot", null,
+                            List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_BOT"))));
+            org.assertj.core.api.Assertions.assertThat(controller.record(request).getBody()).containsEntry("outcome", "UNKNOWN_USER");
+        } finally {
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
     }
 
     @Test
