@@ -127,4 +127,40 @@ describe('OperationFleetCardsComponent', () => {
     fixture.detectChanges();
     expect(text('.fleet__empty')).toEqual(['Aucun besoin de vaisseau.', 'Les appareils proposés n’ont pas pu être chargés.']);
   });
+
+  it('never leaves an unsaved pilot showing: the list returns to the saved one until the server confirms', () => {
+    fixture.componentRef.setInput('organizer', true);
+    fixture.componentRef.setInput('members', [{ id: 'u1', username: 'Mira' }, { id: 'u2', username: 'Thorn' }]);
+    fixture.detectChanges();
+    const chosen: Array<{ proposalId: string; userId: string | null }> = [];
+    fixture.componentInstance.pilot.subscribe(value => chosen.push(value));
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('.card__pilot select');
+    expect(select.value).toBe('');
+
+    select.value = 'u2';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    // La demande est partie, mais rien n'est encore enregistré : la liste montre toujours « Non désigné ».
+    expect(chosen.length).toBe(1);
+    expect(chosen[0].userId).toBe('u2');
+    expect(select.value).toBe('');
+
+    // Choisir de nouveau le pilote déjà enregistré ne déclenche rien.
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    expect(chosen.length).toBe(1);
+
+    // Après un enregistrement réussi, la relecture apporte le nouveau pilote.
+    const ships = (fixture.componentInstance.ships() as FleetShip[]).map(ship => ship.id === chosen[0].proposalId ? { ...ship, pilotUserId: 'u2', pilotUsername: 'Thorn' } : ship);
+    fixture.componentRef.setInput('ships', ships);
+    fixture.detectChanges();
+    const saved: HTMLSelectElement = Array.from(fixture.nativeElement.querySelectorAll('.card__pilot select') as NodeListOf<HTMLSelectElement>).find(item => item.value === 'u2')!;
+    expect(saved).toBeTruthy();
+
+    // Retirer le pilote envoie « aucun » et garde l'affichage du pilote enregistré en attendant.
+    saved.value = '';
+    saved.dispatchEvent(new Event('change'));
+    expect(chosen[1]).toEqual({ proposalId: chosen[0].proposalId, userId: null });
+    expect(saved.value).toBe('u2');
+  });
 });

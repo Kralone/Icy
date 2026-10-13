@@ -115,6 +115,16 @@ export class OperationFleetCardsComponent {
     return this.showRequirements() ? `Aucun appareil proposé en dehors des besoins${scope}.` : `Aucun appareil proposé${scope}.`;
   });
 
+  /**
+   * Le choix part au serveur, puis la liste revient aussitôt au pilote enregistré : elle ne change qu'à la relecture
+   * qui suit un enregistrement réussi. Après un échec, elle n'affiche donc jamais un pilote qui n'existe pas.
+   */
+  choosePilot(ship: FleetShip, select: HTMLSelectElement): void {
+    const userId = select.value || null;
+    select.value = ship.pilotUserId || '';
+    if (userId !== (ship.pilotUserId || null)) this.pilot.emit({ proposalId: ship.id, userId });
+  }
+
   covered(requirement: FleetRequirement): boolean { return requirement.status !== 'CANCELLED' && requirement.missing === 0; }
 
   groupName(groupId: number | null | undefined): string {
