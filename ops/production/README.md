@@ -136,3 +136,68 @@ le serveur par `POST /api/events/bot/participation`, avec sa clé.
 - Les annonces d'opération n'ont pas de bouton de réponse : la présence s'y gère sur la
   fiche. Après l'heure de fin d'une opération publiée, le serveur refuse tout changement
   de présence, par le site comme par le bot.
+
+## Release Opérations et Équipages : Flyway V39 à V43
+
+La production est en V38. Cette release applique cinq migrations au démarrage du backend :
+V39 (offres Wikelo par l'API) puis V40 à V43 (module Opérations et équipages).
+
+Fichiers à déposer dans `/root/iceforge/ops/backend-rollout/` avant le précontrôle, avec
+`verify.sh` : `verify-flyway-v38-checksums.sql` et `verify-flyway-v43.sql`. Le dépôt les
+porte dans `ops/backend-rollout/`. Le dossier `ops/production/backend-rollout/` en est une
+copie ancienne : il ne sert pas à cette release.
+
+| Moment | Contrôle | Refus |
+|---|---|---|
+| Précontrôle (`--preflight`), base en V38 | `verify-flyway-v33.sql` : historique exact V1 à V38 et structure | Autre version, migration en échec |
+| Précontrôle, base en V38 | `verify-flyway-v38-checksums.sql` : scripts et checksums V31 à V38 | Historique différent de celui livré |
+| Précontrôle, base déjà en V43 | `verify-flyway-v43.sql` | Release incomplète |
+| Après démarrage du backend | `verify.sh runtime`, version V43 exigée, puis `verify-flyway-v43.sql` | Base restée en V38, checksum V31 à V43 différent, structure Wikelo ou Opérations incomplète |
+
+Une base en V39, V40, V41 ou V42 est refusée : c'est une migration interrompue, à analyser
+avant toute reprise. Aucun `flyway repair` n'est prévu.
+
+**Retour arrière.** V39 supprime la colonne `source_sheet`, que l'ancien backend lit : il
+ne démarre plus sur la base migrée (« missing column [source_sheet] », vérifié). Le retour
+automatique aux trois images précédentes ne suffit donc pas après les migrations. Il faut
+restaurer la sauvegarde chiffrée prise par le script, puis remettre les anciennes images.
+Tout ce qui a été saisi entre-temps est perdu : prévoir une fenêtre courte et annoncée.
+
+## Après déploiement : resynchronisation Wikelo
+
+V39 vide les offres de vaisseaux Wikelo : 35 offres publiées et 36 enregistrements bruts en
+production (relevé du 13 octobre 2026). Les recettes d'équipement, les comptes et les
+objectifs des membres ne sont pas touchés. Tant que la resynchronisation n'est pas publiée,
+la page Wikelo répond normalement et affiche une liste de vaisseaux vide.
+
+La resynchronisation n'est pas automatique : un administrateur la lance et valide des choix.
+
+1. **Lancer.** Page d'administration du catalogue, traitement « Wikelo » (API :
+   `POST /api/admin/catalog-sync/scrape-and-map`, portée `WIKELO`). Aucun autre traitement
+   de catalogue ne doit être en cours ou en attente : un seul est admis à la fois.
+2. **Récupération.** Environ 10 secondes mesurées sur une copie isolée : véhicules et
+   missions lus sur l'API Star Citizen Wiki, 42 offres pour la version 4.10.1.
+3. **Choix de correspondance.** Le traitement s'arrête en « attente de validation » quand
+   un vaisseau a plusieurs variantes possibles. 8 choix sur la copie de la base de
+   développement (Avenger Stalker, cinq Constellation, Skylark) ; 36 sur une base au
+   catalogue vide. Le nombre en production dépend de son catalogue : il n'a pas été mesuré.
+   Chaque choix se tranche dans la page d'administration ; plusieurs variantes peuvent être
+   retenues pour un même nom.
+4. **Publication.** Elle part seule quand le dernier choix est enregistré, en quelques
+   secondes. Conditions : récupération complète, aucun identifiant de mission en double,
+   quantités valides. Sinon rien n'est publié et les offres précédentes restent en place.
+5. **Vérifier.**
+   - le traitement est « réussi », étape 6 sur 6 ;
+   - `GET /api/wikelo/ships` rend les offres (42 attendues pour 4.10.1), chacune avec sa
+     mission et sa récompense ;
+   - `GET /api/wikelo/equipment` répond ;
+   - la page Wikelo du site affiche les vaisseaux, images comprises.
+
+**Si la synchronisation échoue.** Le traitement passe en échec avec son message ; la liste
+reste vide, le reste du site n'est pas affecté. Corriger la cause (API injoignable, réponse
+incomplète) puis relancer : un traitement en échec ne bloque pas le suivant. Un traitement
+laissé en attente de validation, lui, bloque tout autre traitement de catalogue jusqu'à ce
+que ses choix soient faits.
+
+La durée réelle est donc celle de la revue par l'administrateur, pas celle de la machine.
+Ne pas lancer ce traitement avant que le contrôle après démarrage ait réussi.
