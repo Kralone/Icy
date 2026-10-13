@@ -926,11 +926,9 @@ class EventParticipationView(ui.View):
         self.rabbit = rabbit
         self.event_id = str(event_id)
 
-        # Les identifiants des boutons ne changent pas : seuls les libellés d'une opération diffèrent.
+        # Une opération se gère sur sa fiche (présence, groupe, poste) : son annonce n'offre que le lien.
+        # Un événement classique garde ses trois réponses, avec leurs identifiants de toujours.
         if operation_url:
-            self.add_item(self._build_button("Présent", ButtonStyle.success, 1))
-            self.add_item(self._build_button("Peut-être", ButtonStyle.secondary, 0))
-            self.add_item(self._build_button("Indisponible", ButtonStyle.danger, -1))
             self.add_item(ui.Button(label="Consulter l’opération", style=ButtonStyle.link, url=operation_url))
         else:
             self.add_item(self._build_button("Présent ✅", ButtonStyle.success, 1))

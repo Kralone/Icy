@@ -138,7 +138,7 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn("https://iceforge.fr/icy/operations/operation-1", operation_field.value)
             self.assertEqual(
                 "https://iceforge.fr/icy/operations/operation-1",
-                channel.send.await_args.kwargs["view"].children[3].url,
+                channel.send.await_args.kwargs["view"].children[0].url,
             )
 
     @patch.dict(os.environ, {"DISCORD_NEWS_CHANNEL_ID": "123"}, clear=False)
@@ -214,7 +214,7 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
             self.assertEqual(3, len(channel.send.await_args_list[0].kwargs["view"].children))
-            self.assertTrue(channel.send.await_args_list[1].kwargs["view"].children[3].url.endswith("/icy/operations/later"))
+            self.assertTrue(channel.send.await_args_list[1].kwargs["view"].children[0].url.endswith("/icy/operations/later"))
             deleted.delete.assert_awaited_once()
             self.assertEqual(2, rabbit.publish.await_count)
 
@@ -261,7 +261,7 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             self.assertFalse(store.is_event_finished("event-1"))
             self.assertIsNotNone(message.edit.await_args.kwargs["view"])
-            self.assertTrue(message.edit.await_args.kwargs["view"].children[3].url.endswith("/icy/operations/event-1"))
+            self.assertTrue(message.edit.await_args.kwargs["view"].children[0].url.endswith("/icy/operations/event-1"))
             self.assertEqual("Opération", message.edit.await_args.kwargs["embed"].fields[3].name)
             self.assertIn("Briefing mis à jour.", message.edit.await_args.kwargs["embed"].description)
             self.assertEqual("Objectifs", message.edit.await_args.kwargs["embed"].fields[-2].name)
@@ -301,7 +301,7 @@ class DiscordCreationIdempotencyTest(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(2, channel.send.await_count)
             self.assertEqual(["Événement : Earlier", "Later"], [call.kwargs["embed"].title for call in channel.send.await_args_list])
-            self.assertTrue(channel.send.await_args_list[0].kwargs["view"].children[3].url.endswith("/icy/operations/earlier"))
+            self.assertTrue(channel.send.await_args_list[0].kwargs["view"].children[0].url.endswith("/icy/operations/earlier"))
             self.assertEqual(3, len(channel.send.await_args_list[1].kwargs["view"].children))
 
 

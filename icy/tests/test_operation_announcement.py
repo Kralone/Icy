@@ -132,11 +132,11 @@ class OperationAnnouncementTest(unittest.TestCase):
         view = EventParticipationView(AsyncMock(), payload["id"])
         self.assertEqual(["Présent ✅", "Peut-être ❔", "Absent ❌"], [item.label for item in view.children])
 
-    def test_operation_buttons_keep_their_identifiers(self):
+    def test_an_operation_announcement_has_no_answer_button(self):
         view = EventParticipationView(AsyncMock(), "op", operation_url="https://iceforge.fr/icy/operations/op")
 
-        self.assertEqual(["Présent", "Peut-être", "Indisponible", "Consulter l’opération"], [item.label for item in view.children])
-        self.assertEqual(["event:op:1", "event:op:0", "event:op:-1"], [item.custom_id for item in view.children[:3]])
+        self.assertEqual(["Consulter l’opération"], [item.label for item in view.children])
+        self.assertEqual("https://iceforge.fr/icy/operations/op", view.children[0].url)
 
     def test_truncation_helpers(self):
         self.assertEqual("court", truncate_text("court", 10))
@@ -169,7 +169,8 @@ class OperationAnnouncementUpdateTest(unittest.IsolatedAsyncioTestCase):
         message.edit.assert_awaited_once()
         embed = message.edit.await_args.kwargs["embed"]
         self.assertEqual("Area18", next(field.value for field in embed.fields if field.name == "Lieu"))
-        self.assertEqual("Consulter l’opération", message.edit.await_args.kwargs["view"].children[3].label)
+        self.assertEqual("Consulter l’opération", message.edit.await_args.kwargs["view"].children[0].label)
+        self.assertEqual(1, len(message.edit.await_args.kwargs["view"].children))
 
     @staticmethod
     def _finished_fixture(existing_embed):
