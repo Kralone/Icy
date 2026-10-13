@@ -29,32 +29,17 @@
         }
       </section>
 
-      <section class="dialog-section">
-        <div class="section-heading"><h3>Présence</h3>@if (isParticipationSaving) { <span role="status" class="dialog-muted">Enregistrement…</span> }</div>
-        @if (selectedEvent?.finished) { <p class="dialog-muted">Événement terminé.</p> }
-        <div class="participation-actions" role="group" aria-label="Votre réponse à cet événement">
-          <button type="button" class="status-confirmed" [attr.aria-pressed]="selectedParticipationStatus === 1" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(1)"><span aria-hidden="true">✓</span> Présent</button>
-          <button type="button" class="status-maybe" [attr.aria-pressed]="selectedParticipationStatus === 0" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(0)"><span aria-hidden="true">?</span> Peut-être</button>
-          <button type="button" class="status-refused" [attr.aria-pressed]="selectedParticipationStatus === -1" [disabled]="selectedEvent?.finished || isParticipationSaving || isParticipationLoading" (click)="participationChange.emit(-1)"><span aria-hidden="true">−</span> Indisponible</button>
-        </div>
-        @if (participationError) { <div class="participation-error" role="alert"><p>{{ participationError }}</p><button type="button" (click)="retryParticipations.emit()">Recharger les participations</button></div> }
-      </section>
-
-      <section class="dialog-section">
-        <h3>Équipage</h3>
-        @if (isParticipationLoading) { <app-async-state kind="loading" title="Chargement des participations…" /> }
-        <div class="crew-columns">
-          <div class="crew-group status-confirmed"><h4>Confirmés <span>{{ participationsByStatus.confirmed.length }}</span></h4>
-            @for (p of participationsByStatus.confirmed; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
-          </div>
-          <div class="crew-group status-maybe"><h4>Peut-être <span>{{ participationsByStatus.maybe.length }}</span></h4>
-            @for (p of participationsByStatus.maybe; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
-          </div>
-          <div class="crew-group status-refused"><h4>Indisponibles <span>{{ participationsByStatus.refused.length }}</span></h4>
-            @for (p of participationsByStatus.refused; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
-          </div>
-        </div>
-      </section>
+      <app-participation-panel
+        [participationsByStatus]="participationsByStatus"
+        [selectedStatus]="selectedParticipationStatus"
+        [finished]="!!selectedEvent?.finished"
+        finishedLabel="Événement terminé."
+        actionsLabel="Votre réponse à cet événement"
+        [loading]="isParticipationLoading"
+        [saving]="isParticipationSaving"
+        [error]="participationError"
+        (statusChange)="participationChange.emit($event)"
+        (retry)="retryParticipations.emit()" />
 
       <section class="dialog-section">
         <div class="section-heading"><div><h3>Flotte</h3></div>

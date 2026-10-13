@@ -1,0 +1,75 @@
+<section class="group-panel" [attr.aria-label]="'Groupe ' + group().name">
+  <button type="button" class="group-panel__back" (click)="back.emit()"><span aria-hidden="true">←</span> Structure</button>
+
+  <header class="group-panel__head">
+    <div>
+      <p class="group-panel__kind">{{ parent() ? 'Sous-groupe de ' + parent()!.name : 'Groupe principal' }}</p>
+      <h3>{{ group().name }}</h3>
+      @if (group().description) { <p class="group-panel__description">{{ group().description }}</p> }
+    </div>
+    @if (!locked()) {
+    <div class="group-panel__tools">
+      <button type="button" (click)="move.emit(-1)" [disabled]="busy() || position() <= 0" aria-label="Monter le groupe">↑</button>
+      <button type="button" (click)="move.emit(1)" [disabled]="busy() || position() >= siblings().length - 1" aria-label="Descendre le groupe">↓</button>
+      <button type="button" class="danger" (click)="remove.emit()" [disabled]="busy()" [attr.aria-label]="'Supprimer ' + group().name">Supprimer</button>
+    </div>
+    }
+  </header>
+
+  <dl class="group-panel__facts">
+    <div>
+      <dt>{{ group().capacity !== null ? 'Occupation' : 'Effectif' }}</dt>
+      <dd>{{ occupancy(group()) }}</dd>
+      @if (percent(group()) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="percent(group())"></span></span> }
+      @if (freeSeats() !== null) { <small>{{ freeSeats() === 0 ? 'Complet' : freeSeats() + ' place' + (freeSeats()! > 1 ? 's' : '') + ' libre' + (freeSeats()! > 1 ? 's' : '') }}</small> } @else { <small>Capacité libre</small> }
+    </div>
+    <div>
+      <dt>Affectation</dt>
+      <dd>{{ modeSummary() }}</dd>
+      <small>{{ group().container ? 'Les membres rejoignent un sous-groupe.' : modeHints[group().effectiveMode] }}</small>
+    </div>
+    <div>
+      <dt>Responsable</dt>
+      <dd>{{ group().responsibleUsername || 'Aucun' }}</dd>
+      <small>{{ group().responsibleUsername ? 'Peut traiter les demandes de ce groupe.' : 'Les organisateurs traitent les demandes.' }}</small>
+    </div>
+  </dl>
+
+  <div class="group-panel__tabs" role="group" aria-label="Contenu du groupe">
+    <button type="button" [attr.aria-pressed]="tab() === 'equipage'" [class.active]="tab() === 'equipage'" (click)="tab.set('equipage')">{{ group().container ? 'Sous-groupes' : 'Équipage' }}</button>
+    <button type="button" [attr.aria-pressed]="tab() === 'ressources'" [class.active]="tab() === 'ressources'" (click)="tab.set('ressources')">Vaisseaux et besoins</button>
+    @if (!locked()) { <button type="button" [attr.aria-pressed]="tab() === 'reglages'" [class.active]="tab() === 'reglages'" (click)="tab.set('reglages')">Réglages@if (changed()) { <span class="unsaved" aria-label="modifications non enregistrées">•</span> }</button> }
+  </div>
+
+  @if (tab() === 'equipage') {
+    @if (group().container) {
+      <ul class="subgroups">
+        @for (child of children(); track child.id) {
+          <li><button type="button" (click)="selectGroup.emit(child.id)"><strong>{{ child.name }}</strong><span>{{ occupancy(child) }} · {{ modeLabels[child.effectiveMode] }}@if (child.responsibleUsername) { · ★ {{ child.responsibleUsername }} }</span></button></li>
+        }
+      </ul>
+      <p class="hint">Ce groupe répartit ses membres dans ses sous-groupes : personne ne s’y inscrit directement.</p>
+    } @else {
+      @if (group().members.length) {
+        <ul class="crew">@for (member of group().members; track member.userId) { <li><span class="crew__avatar" aria-hidden="true">{{ member.username.charAt(0).toUpperCase() }}</span>{{ member.username }}</li> }</ul>
+      } @else {
+        <p class="empty">Personne n’est encore affecté à ce groupe.</p>
+      }
+      @if (group().pendingRequests) { <p class="pending">{{ group().pendingRequests }} demande{{ group().pendingRequests > 1 ? 's' : '' }} en attente, à traiter dans « Coordination ».</p> }
+    }
+    @if (!parent() && !locked()) { <button type="button" class="ghost" [disabled]="busy()" (click)="addSubgroup.emit()"><span aria-hidden="true">+</span> Sous-groupe</button> }
+  } @else if (tab() === 'ressources') {
+    <ng-content />
+  } @else if (!locked()) {
+    <form class="settings" (ngSubmit)="submit()">
+      <label>Nom<input name="name" [ngModel]="settings().name" (ngModelChange)="patch({ name: $event })" maxlength="120" required [attr.aria-invalid]="nameTaken() || !settings().name.trim()">@if (nameTaken()) { <small class="field-error" role="alert">Un autre groupe de ce niveau porte déjà ce nom.</small> }</label>
+      <label>Rôle ou description<textarea name="description" [ngModel]="settings().description" (ngModelChange)="patch({ description: $event })" rows="3" maxlength="5000" placeholder="Ex. : défense rapprochée du convoi"></textarea></label>
+      <div class="settings__pair">
+        <label>Capacité<input name="capacity" type="number" min="0" max="10000" step="1" [ngModel]="settings().capacity" (ngModelChange)="setCapacity($event)" placeholder="Libre" [attr.aria-invalid]="capacityTooLow()"><small>{{ group().container ? 'Plafond pour l’ensemble de ses sous-groupes. Vide : pas de limite.' : 'Vide : pas de limite.' }}</small>@if (capacityTooLow()) { <small class="field-error" role="alert">{{ group().memberCount }} membre{{ group().memberCount > 1 ? 's sont' : ' est' }} déjà affecté{{ group().memberCount > 1 ? 's' : '' }} : la capacité ne peut pas être inférieure.</small> }</label>
+        <label>Mode d’affectation<select name="mode" [ngModel]="settings().assignmentMode" (ngModelChange)="patch({ assignmentMode: $event })">@for (mode of modes; track mode) { <option [ngValue]="mode">{{ mode === 'INHERITED' ? inheritedLabel() : modeLabels[mode] }}</option> }</select><small>{{ group().container ? 'S’applique aux sous-groupes qui n’ont pas leur propre mode.' : settingsModeHint() }}</small></label>
+      </div>
+      <label>Responsable délégué<select name="responsible" [ngModel]="settings().responsibleUserId" (ngModelChange)="patch({ responsibleUserId: $event })"><option [ngValue]="null">Aucun</option>@if (settings().responsibleUserId && !hasMember(settings().responsibleUserId)) { <option [ngValue]="settings().responsibleUserId">{{ group().responsibleUsername || 'Responsable actuel' }}</option> }@for (member of members(); track member.id) { <option [ngValue]="member.id">{{ member.username }}</option> }</select><small>Désigner un responsable lui donne le droit d’accepter ou de refuser les demandes de ce groupe{{ group().container ? ' et de ses sous-groupes' : '' }}.</small></label>
+      <button type="submit" class="primary" [disabled]="busy() || invalid() || !changed()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le groupe' }}</button>
+    </form>
+  }
+</section>

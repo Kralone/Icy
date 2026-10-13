@@ -36,9 +36,22 @@ for image_key in STAGING_BACKEND_IMAGE STAGING_BOT_IMAGE STAGING_FRONTEND_IMAGE;
   docker image inspect "$image" >/dev/null
 done
 
-if ((!WITH_BOT)); then
-  # A bot enabled by an older release must never survive an ordinary web deploy.
-  "${COMPOSE[@]}" --profile discord rm --stop --force bot >/dev/null 2>&1 || true
+# A bot created by an older release keeps its old environment, including a link to another site:
+# it never survives a deploy, with or without --with-bot. It is recreated below when requested.
+"${COMPOSE[@]}" --profile discord rm --stop --force bot >/dev/null 2>&1 || true
+
+if ((WITH_BOT)); then
+  for key in STAGING_DISCORD_TOKEN STAGING_GUILD_ID; do
+    value=$(sed -n "s/^${key}=//p" "$ENV_FILE" | tail -n 1)
+    [[ -n $value ]] || { echo "$key doit etre renseigne pour demarrer le bot" >&2; exit 1; }
+  done
+  # Les liens des annonces Discord doivent ouvrir le staging, joignable par tunnel SSH : jamais un autre site.
+  command -v jq >/dev/null || { echo "jq est requis pour controler l'adresse publique du bot" >&2; exit 1; }
+  public_url=$("${COMPOSE[@]}" --profile discord config --format json | jq -r '.services.bot.environment.ICEFORGE_PUBLIC_URL // ""')
+  [[ $public_url =~ ^http://(127\.0\.0\.1|localhost):[0-9]{2,5}$ ]] || {
+    echo "ICEFORGE_PUBLIC_URL du bot de staging doit etre une adresse locale du staging (http://127.0.0.1:PORT), obtenu: '$public_url'" >&2
+    exit 1
+  }
 fi
 
 "${COMPOSE[@]}" up -d --wait --wait-timeout 900 db rabbitmq libretranslate backend frontend
@@ -53,10 +66,6 @@ if ((SEED)); then
 fi
 
 if ((WITH_BOT)); then
-  for key in STAGING_DISCORD_TOKEN STAGING_GUILD_ID; do
-    value=$(sed -n "s/^${key}=//p" "$ENV_FILE" | tail -n 1)
-    [[ -n $value ]] || { echo "$key doit etre renseigne pour demarrer le bot" >&2; exit 1; }
-  done
   "${COMPOSE[@]}" --profile discord up -d --wait bot
 fi
 

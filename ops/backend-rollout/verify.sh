@@ -23,6 +23,7 @@ required_files=(
   "${rollout_dir}/verify-flyway-v30.sql"
   "${rollout_dir}/verify-flyway-v31.sql"
   "${rollout_dir}/verify-flyway-v33.sql"
+  "${rollout_dir}/verify-flyway-v43.sql"
 )
 for file in "${required_files[@]}"; do
   [[ -f "$file" ]] || { echo "ERROR: required file is missing: $file" >&2; exit 1; }
@@ -92,10 +93,22 @@ if docker exec "$backend_container" touch /app/.root-filesystem-write-check >/de
 fi
 
 docker exec -i "$backend_container" true >/dev/null
+# The Flyway check follows the version actually applied. A release that migrates the
+# database states the version it must reach, so that a backend left on the old schema fails here.
+flyway_version="$(docker exec -i iceforge_db sh -ceu \
+  'exec psql -X -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT max(version::integer) FROM public.flyway_schema_history WHERE success"')"
+expected_flyway_version="${EXPECTED_FLYWAY_VERSION:-$flyway_version}"
+[[ "$flyway_version" == "$expected_flyway_version" ]] \
+  || { echo "ERROR: Flyway is at V$flyway_version, V$expected_flyway_version expected" >&2; exit 1; }
+case "$flyway_version" in
+  38) flyway_check=verify-flyway-v33.sql ;;
+  43) flyway_check=verify-flyway-v43.sql ;;
+  *) echo "ERROR: unsupported Flyway version: V$flyway_version" >&2; exit 1 ;;
+esac
 docker exec -i iceforge_db sh -ceu \
   'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
-  <"${rollout_dir}/verify-flyway-v33.sql" >/dev/null \
-  || { echo "ERROR: Flyway V33 verification failed" >&2; exit 1; }
+  <"${rollout_dir}/${flyway_check}" >/dev/null \
+  || { echo "ERROR: Flyway V$flyway_version verification failed (${flyway_check})" >&2; exit 1; }
 if [[ ${BACKEND_SKIP_PUBLIC_PROBE:-false} != true ]]; then
   curl --fail --silent --show-error --output /dev/null https://iceforge.fr/api/front/members \
     || { echo "ERROR: public backend API probe failed" >&2; exit 1; }

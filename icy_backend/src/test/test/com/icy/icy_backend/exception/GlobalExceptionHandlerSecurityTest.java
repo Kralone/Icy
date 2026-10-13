@@ -35,6 +35,20 @@ class GlobalExceptionHandlerSecurityTest {
     }
 
     @Test
+    void answersBadRequestToMalformedRequestsWithoutEchoingTheValue() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(mock(MessageService.class));
+
+        var mismatch = handler.handleMalformedRequest(new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                "undefined<script>", java.util.UUID.class, "userId", null, new IllegalArgumentException("Invalid UUID string: undefined<script>")));
+        assertEquals(400, mismatch.getStatusCode().value());
+        assertEquals("Paramètre « userId » invalide.", mismatch.getBody().get("message"));
+
+        var missing = handler.handleMalformedRequest(new org.springframework.web.bind.MissingServletRequestParameterException("eventId", "UUID"));
+        assertEquals(400, missing.getStatusCode().value());
+        assertEquals("Paramètre « eventId » manquant.", missing.getBody().get("message"));
+    }
+
+    @Test
     void exposesBusinessStateErrorsAsBadRequestWithMessage() {
         GlobalExceptionHandler handler = new GlobalExceptionHandler(mock(MessageService.class));
 

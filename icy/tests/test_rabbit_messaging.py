@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 import unittest
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
@@ -62,6 +64,15 @@ class MessagePublisherTest(unittest.IsolatedAsyncioTestCase):
 
 
 class RabbitManagerTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        # Le registre des liens Discord s'écrit par défaut sous /app/config, qui n'existe que dans l'image du bot.
+        # Hors conteneur (poste de travail, CI), il doit aller dans un dossier temporaire.
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        environment = patch.dict(os.environ, {"BOT_IDEMPOTENCY_DB": os.path.join(directory.name, "links.sqlite3")})
+        environment.start()
+        self.addCleanup(environment.stop)
+
     def test_safe_endpoint_never_contains_credentials(self):
         endpoint = safe_amqp_endpoint(
             "amqps://iceforge-user:super-secret@rabbitmq.internal:5671/iceforge"

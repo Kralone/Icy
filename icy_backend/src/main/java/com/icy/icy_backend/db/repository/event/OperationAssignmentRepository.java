@@ -10,5 +10,7 @@ public interface OperationAssignmentRepository extends JpaRepository<OperationAs
     Optional<OperationAssignment> findByOperationEventIdAndUserId(UUID operationEventId, UUID userId);
     List<OperationAssignment> findByOperationEventId(UUID operationEventId);
     long countByOperationEventIdAndGroupIdAndStatus(UUID operationEventId, Long groupId, OperationAssignment.Status status);
+    /** Rejoint la transaction de l'appelant ; ouvre la sienne s'il n'y en a pas. */
+    @org.springframework.transaction.annotation.Transactional
     void deleteByOperationEventIdAndUserId(UUID operationEventId, UUID userId);
 }

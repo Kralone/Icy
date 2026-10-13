@@ -1,0 +1,106 @@
+<div class="fleet">
+  @if (showRequirements()) {
+    <section class="fleet__block" [attr.aria-label]="needsTitle()">
+      <h4>{{ needsTitle() }}</h4>
+      @if (requirementsUnavailable()) {
+        <p class="fleet__empty fleet__empty--error">Les besoins de vaisseaux n’ont pas pu être chargés.</p>
+      } @else if (visibleRequirements().length) {
+        <ul class="fleet__cards fleet__cards--needs">
+          @for (requirement of visibleRequirements(); track requirement.id) {
+            <li class="card card--need" [class.is-covered]="covered(requirement)" [class.is-off]="requirement.status === 'CANCELLED'">
+              <div class="card__image">
+                @if (requirement.shipModelImageUrl) { <img [src]="requirement.shipModelImageUrl" alt="" loading="lazy"> } @else { <span>Sans image</span> }
+                @if (wantedLabel(requirement); as wanted) { <span class="card__wanted">{{ wanted }}</span> }
+              </div>
+              <div class="card__body">
+                <strong>{{ modelName(requirement) }}</strong>
+                <span class="card__meta">{{ groupName(requirement.groupId) }}</span>
+                <span class="card__tags">
+                  <span class="tag" [class.tag--covered]="covered(requirement)" [class.tag--warn]="requirement.status !== 'CANCELLED' && requirement.missing > 0">@if (covered(requirement)) { <span aria-hidden="true">✓ </span> }{{ needLabel(requirement) }}</span>
+                  @if (requirement.proposed) { <span class="tag tag--pending">{{ requirement.proposed }} à valider</span> }
+                </span>
+                @if (requirement.notes) { <p class="card__notes">{{ requirement.notes }}</p> }
+                @if (linkedShips(requirement); as linked) {
+                  @if (linked.length) {
+                    <ul class="need-ships" [attr.aria-label]="'Appareils proposés pour ' + modelName(requirement)">
+                      @for (ship of linked; track ship.id) {
+                        <li class="need-ship" [attr.data-status]="ship.status" [class.is-off]="ship.status === 'DECLINED' || ship.status === 'UNAVAILABLE'">
+                          <strong>{{ ship.shipName || 'Vaisseau inconnu' }}</strong>
+                          <ng-container *ngTemplateOutlet="shipInfo; context: { $implicit: ship }" />
+                          <ng-container *ngTemplateOutlet="shipActions; context: { $implicit: ship }" />
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+              </div>
+              @if (organizer() && !locked()) {
+                <div class="card__actions">
+                  <button type="button" [disabled]="busy()" (click)="editRequirement.emit(requirement)">Modifier le besoin<span class="sr-only"> {{ modelName(requirement) }}</span></button>
+                  <button type="button" class="refuse" [disabled]="busy()" (click)="deleteRequirement.emit(requirement)">Supprimer le besoin<span class="sr-only"> {{ modelName(requirement) }}</span></button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="fleet__empty">Aucun besoin de vaisseau{{ scopeGroupId() === null ? '' : ' pour ce groupe' }}.</p>
+      }
+    </section>
+  }
+
+  <section class="fleet__block" [attr.aria-label]="shipsTitle()">
+    <h4>{{ shipsTitle() }}</h4>
+    @if (shipsUnavailable()) {
+      <p class="fleet__empty fleet__empty--error">Les appareils proposés n’ont pas pu être chargés.</p>
+    } @else if (otherShips().length) {
+      <ul class="fleet__cards">
+        @for (ship of otherShips(); track ship.id) {
+          <li class="card card--ship" [attr.data-status]="ship.status" [class.is-off]="ship.status === 'DECLINED' || ship.status === 'UNAVAILABLE'">
+            <div class="card__image">
+              @if (ship.shipImageUrl) { <img [src]="ship.shipImageUrl" alt="" loading="lazy"> } @else { <span>Sans image</span> }
+            </div>
+            <div class="card__body">
+              <strong>{{ ship.shipName || 'Vaisseau inconnu' }}</strong>
+              <span class="card__meta">{{ groupName(ship.groupId) }}@if (linkedNeed(ship); as need) { · répond au besoin {{ need }} }</span>
+              <ng-container *ngTemplateOutlet="shipInfo; context: { $implicit: ship }" />
+            </div>
+            <ng-container *ngTemplateOutlet="shipActions; context: { $implicit: ship }" />
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="fleet__empty">{{ emptyShipsLabel() }}</p>
+    }
+  </section>
+</div>
+
+<ng-template #shipInfo let-ship>
+  <span class="card__meta">Propriétaire : {{ ship.ownerUsername || 'inconnu' }}</span>
+  @if (ship.pilotUsername) { <span class="card__meta">Pilote : {{ ship.pilotUsername }}</span> }
+  <span class="card__tags">
+    <span class="tag" [class.tag--ok]="ship.status === 'ACCEPTED'" [class.tag--pending]="ship.status === 'PROPOSED'" [class.tag--off]="ship.status === 'DECLINED' || ship.status === 'UNAVAILABLE'">{{ statusLabel(ship) }}</span>
+    @if (!ship.inHangar) { <span class="tag tag--alert">Absent du hangar</span> }
+    @if (!ship.ownerPresent) { <span class="tag tag--alert">Propriétaire non présent</span> }
+  </span>
+  @if (organizer() && !locked() && members().length) {
+    <label class="card__pilot">Pilote
+      <select [value]="ship.pilotUserId || ''" [disabled]="busy()" (change)="pilot.emit({ proposalId: ship.id, userId: $any($event.target).value || null })">
+        <option value="">Non désigné</option>
+        @for (member of members(); track member.id) { <option [value]="member.id" [selected]="member.id === ship.pilotUserId">{{ member.username }}</option> }
+      </select>
+    </label>
+  }
+</ng-template>
+
+<ng-template #shipActions let-ship>
+  @if (!locked() && (organizer() || ownWithdrawable(ship))) {
+    <div class="card__actions">
+      @if (organizer()) {
+        @if (acceptable(ship)) { <button type="button" class="accept" [disabled]="busy()" (click)="accept.emit(ship.id)">Accepter<span class="sr-only"> {{ shipLabel(ship) }} de {{ ship.ownerUsername }}</span></button> }
+        @if (ship.status === 'PROPOSED' || ship.status === 'ACCEPTED') { <button type="button" class="refuse" [disabled]="busy()" (click)="decline.emit(ship.id)">Refuser<span class="sr-only"> {{ shipLabel(ship) }} de {{ ship.ownerUsername }}</span></button> }
+      }
+      @if (ownWithdrawable(ship)) { <button type="button" [disabled]="busy()" (click)="withdraw.emit(ship)">Retirer ma proposition<span class="sr-only"> : {{ shipLabel(ship) }}</span></button> }
+    </div>
+  }
+</ng-template>

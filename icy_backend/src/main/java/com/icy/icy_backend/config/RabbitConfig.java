@@ -35,6 +35,15 @@ public class RabbitConfig {
 
     public static final String USERS_QUEUE = "users.queue";
 
+    // === NOUVEL ESSAI ET FILE MORTE (messages reçus du bot que le serveur n'a pas pu traiter) ===
+    /** Un message y attend {@link #BACKEND_RETRY_DELAY_MS} ms, puis revient dans l'échange principal avec sa clé d'origine. */
+    public static final String BACKEND_RETRY_EXCHANGE = "icy.exchange.backend.retry";
+    public static final String BACKEND_RETRY_QUEUE = "icy.exchange.backend.retry.queue";
+    public static final int BACKEND_RETRY_DELAY_MS = 5000;
+    /** File morte partagée avec le bot, qui la déclare avec les mêmes paramètres. */
+    public static final String DEAD_LETTER_EXCHANGE = "icy.exchange.bot.dlx";
+    public static final String DEAD_LETTER_QUEUE = "icy.exchange.bot.dlx.queue";
+
     // === EXCHANGE ===
     @Bean
     public TopicExchange icyExchange() {
@@ -115,6 +124,40 @@ public class RabbitConfig {
         return BindingBuilder.bind(usersQueue)
                 .to(icyExchange)
                 .with(USERS_ROUTING_KEY);
+    }
+
+    // === NOUVEL ESSAI ET FILE MORTE ===
+    @Bean
+    public TopicExchange backendRetryExchange() {
+        return new TopicExchange(BACKEND_RETRY_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue backendRetryQueue() {
+        return org.springframework.amqp.core.QueueBuilder.durable(BACKEND_RETRY_QUEUE)
+                .ttl(BACKEND_RETRY_DELAY_MS)
+                .deadLetterExchange(EXCHANGE)
+                .build();
+    }
+
+    @Bean
+    public Binding backendRetryBinding(Queue backendRetryQueue, TopicExchange backendRetryExchange) {
+        return BindingBuilder.bind(backendRetryQueue).to(backendRetryExchange).with("#");
+    }
+
+    @Bean
+    public TopicExchange deadLetterExchange() {
+        return new TopicExchange(DEAD_LETTER_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue deadLetterQueue() {
+        return new Queue(DEAD_LETTER_QUEUE, true);
+    }
+
+    @Bean
+    public Binding deadLetterBinding(Queue deadLetterQueue, TopicExchange deadLetterExchange) {
+        return BindingBuilder.bind(deadLetterQueue).to(deadLetterExchange).with("#");
     }
 
     // === CONVERTISSEUR JSON ===

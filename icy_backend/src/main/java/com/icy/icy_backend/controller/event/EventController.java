@@ -43,8 +43,8 @@ public class EventController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> all() {
-        return eventService.getAllEvents();
+    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> all(@RequestParam(defaultValue = "false") boolean includeDrafts) {
+        return eventService.getAllEvents(includeDrafts);
     }
 
     @GetMapping("/types")
