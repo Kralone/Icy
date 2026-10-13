@@ -41,8 +41,12 @@ public class DiscordEventParticipationListener {
         this.operationRepository = operationRepository;
     }
 
+    /** Ce qu'il est advenu d'une réponse donnée depuis Discord. Seul RECORDED signifie qu'elle est enregistrée. */
+    public enum Outcome { RECORDED, UNKNOWN_USER, EVENT_NOT_FOUND, NOT_PUBLISHED }
+
     /**
      * Écoute les participations envoyées par le bot Discord.
+     * Chemin historique : le bot interroge désormais directement le serveur pour connaître le résultat.
      */
     @RabbitListener(queues = "events.participation.queue", errorHandler = "inboundMessageErrorHandler")
     @Transactional
@@ -55,27 +59,40 @@ public class DiscordEventParticipationListener {
             Object rawStatus = payload.get("status");
             int status = rawStatus instanceof Number number ? number.intValue() : Integer.parseInt(String.valueOf(rawStatus));
 
-            if (payload.get("eventId") == null || payload.get("userId") == null || !Set.of(-1, 0, 1).contains(status)) throw new IllegalArgumentException("Payload participation Discord invalide");
+            if (payload.get("eventId") == null || payload.get("userId") == null) throw new IllegalArgumentException("Payload participation Discord invalide");
+            record(UUID.fromString(eventIdStr), userIdStr, username, status);
+    }
+
+    /**
+     * Enregistre la réponse d'un membre identifié par son compte Discord, et dit ce qui s'est réellement passé.
+     * Un compte Discord inconnu ou inactif, un événement supprimé ou une opération non publiée ne sont pas des erreurs :
+     * rien n'est enregistré et le résultat le dit.
+     */
+    @Transactional
+    public Outcome record(UUID eventId, String discordUserId, String username, int status) {
+            if (eventId == null || discordUserId == null || discordUserId.isBlank() || !Set.of(-1, 0, 1).contains(status)) throw new IllegalArgumentException("Payload participation Discord invalide");
+            String eventIdStr = eventId.toString();
+            String userIdStr = discordUserId;
 
             // 🔹 Trouver l'événement. Supprimé entre-temps : la réponse est obsolète, la réessayer ne le ferait pas revenir.
-            Event event = eventRepository.findById(UUID.fromString(eventIdStr)).orElse(null);
+            Event event = eventRepository.findById(eventId).orElse(null);
             if (event == null) {
                 log.warn("Participation Discord ignorée : événement introuvable (ID={})", eventIdStr);
-                return;
+                return Outcome.EVENT_NOT_FOUND;
             }
 
             // Une opération non publiée n'accepte aucune réponse et ne repart pas vers Discord.
             if (event.getActivityType() == com.icy.icy_backend.db.entity.event.ActivityType.OPERATION && operationRepository != null
                     && operationRepository.findById(event.getId()).map(operation -> operation.getPublicationStatus() != com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED).orElse(true)) {
                 log.warn("Participation Discord ignorée : opération non publiée (ID={})", eventIdStr);
-                return;
+                return Outcome.NOT_PUBLISHED;
             }
 
             // 🔹 Trouver l’utilisateur existant (obligatoire)
             Optional<User> userOpt = userRepository.findByDiscordId(userIdStr);
             if (userOpt.isEmpty()) {
                 log.warn("⚠️ Utilisateur Discord inconnu ({}) — participation ignorée.", username);
-                return;
+                return Outcome.UNKNOWN_USER;
             }
 
             User user = userOpt.get();
@@ -108,7 +125,7 @@ public class DiscordEventParticipationListener {
             } else {
                 publishUpdate.run();
             }
-
+            return Outcome.RECORDED;
     }
 }
 
