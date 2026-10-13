@@ -12,7 +12,7 @@ production ni un test des intégrations réelles Discord, PostgreSQL et RabbitMQ
 |---|---:|---|
 | Java | 25 LTS | `.java-version`, Maven Enforcer et images Temurin épinglées |
 | Maven | 3.9.9 | Maven Wrapper |
-| Node.js | 24.19.0 LTS | `.nvmrc`, `engines.node` et image Docker épinglée |
+| Node.js | 24.19.0 LTS | `icy-angular/.nvmrc` (lu par la CI), `engines.node` et image Docker épinglée |
 | npm | 11.17.0 | `packageManager`, `engines.npm` et image Docker du frontend |
 | Python | 3.14.7 | `.python-version` et image Docker épinglée par digest |
 
