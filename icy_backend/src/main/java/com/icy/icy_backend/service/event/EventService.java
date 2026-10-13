@@ -586,6 +586,11 @@ public class EventService {
     @Transactional
     public ResponseEntity<MessageResponse<Void>> setParticipation(UUID eventId, int status) {
         Event event = findEventVisibleToCurrentUser(eventId);
+        // Après l'heure de fin d'une opération publiée, la liste des présents est un historique : elle ne change plus.
+        // C'est l'heure qui fait foi, pas le drapeau « finished », posé avec retard. Un événement classique n'est pas concerné.
+        if (com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event) && !isUnpublishedOperation(event)) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException(com.icy.icy_backend.service.operation.OperationLock.PRESENCE_MESSAGE);
+        }
 
         User user = userService.findUserById(AuthUtils.getCurrentUserId());
 

@@ -42,7 +42,7 @@ public class DiscordEventParticipationListener {
     }
 
     /** Ce qu'il est advenu d'une réponse donnée depuis Discord. Seul RECORDED signifie qu'elle est enregistrée. */
-    public enum Outcome { RECORDED, UNKNOWN_USER, EVENT_NOT_FOUND, NOT_PUBLISHED }
+    public enum Outcome { RECORDED, UNKNOWN_USER, EVENT_NOT_FOUND, NOT_PUBLISHED, OPERATION_CLOSED }
 
     /**
      * Écoute les participations envoyées par le bot Discord.
@@ -86,6 +86,12 @@ public class DiscordEventParticipationListener {
                     && operationRepository.findById(event.getId()).map(operation -> operation.getPublicationStatus() != com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED).orElse(true)) {
                 log.warn("Participation Discord ignorée : opération non publiée (ID={})", eventIdStr);
                 return Outcome.NOT_PUBLISHED;
+            }
+
+            // Même règle que sur le site : après l'heure de fin d'une opération publiée, les présences ne changent plus.
+            if (com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event)) {
+                log.warn("Participation Discord refusée : opération terminée (ID={})", eventIdStr);
+                return Outcome.OPERATION_CLOSED;
             }
 
             // 🔹 Trouver l’utilisateur existant (obligatoire)

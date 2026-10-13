@@ -77,6 +77,7 @@ class EventParticipationViewTest(unittest.IsolatedAsyncioTestCase):
             {"response": {"httpCode": 200, "outcome": "SOMETHING_NEW"}},
             {"response": {"httpCode": 200, "outcome": "EVENT_NOT_FOUND"}},
             {"response": {"httpCode": 200, "outcome": "NOT_PUBLISHED"}},
+            {"response": {"httpCode": 200, "outcome": "OPERATION_CLOSED"}},
             {"cog": False},
         ]
         for case in cases:

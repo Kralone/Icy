@@ -446,6 +446,38 @@ class EventServiceTest {
         verify(fixture.notificationPushService).sendBroadcast(any(), any(), any(), Mockito.anyInt());
     }
 
+    /** Après l'heure de fin d'une opération publiée, la présence ne change plus ; un événement classique n'est pas concerné. */
+    @Test
+    void presenceIsLockedOnceAPublishedOperationIsPastItsEndWhateverTheFinishedFlag() {
+        DraftFixture fixture = new DraftFixture();
+        LocalDateTime past = LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE).minusMinutes(1);
+        fixture.published.setEndDateTime(past);
+        fixture.published.setFinished(false);
+        fixture.classic.setEndDateTime(past);
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        when(fixture.userService.findUserById(userId)).thenReturn(user);
+        when(fixture.participationRepository.findByEventAndUser(any(), any())).thenReturn(Optional.empty());
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(userId);
+            mockedAuth.when(AuthUtils::isAdmin).thenReturn(true);
+
+            for (int status : new int[] {1, 0, -1}) {
+                assertThatThrownBy(() -> fixture.service.setParticipation(fixture.published.getId(), status))
+                        .isInstanceOf(com.icy.icy_backend.exception.definition.OperationClosedException.class)
+                        .hasMessageStartingWith("Opération terminée");
+            }
+            Mockito.verifyNoInteractions(fixture.participationRepository, fixture.eventPublisher);
+
+            // Un événement classique dont la fin est passée garde son comportement.
+            fixture.service.setParticipation(fixture.classic.getId(), 1);
+        }
+
+        verify(fixture.participationRepository).save(any(EventParticipation.class));
+    }
+
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {
         MessageResponse<T> body = new MessageResponse<>(HttpStatus.OK, "title", "message", 0, data);
         return ResponseEntity.ok(body);
