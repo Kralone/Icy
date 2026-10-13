@@ -92,6 +92,7 @@ header a:focus-visible, .tabs button:focus-visible { outline: 2px solid #72ddf7;
 .objective-actions .objective-add--main { border-color: #f4cd7d; color: #f4cd7d; background: #2a2110; }
 .save-row { display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,.18); }
 @media (prefers-reduced-motion: reduce) { .tabs button { transition: none; } }
+@media (max-width: 640px) { .operation-editor > .tabs { padding-right: 2.25rem; scroll-padding-inline: 1rem; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); } }
 @media (max-width: 640px) { .editor-banner__veil { background: linear-gradient(180deg, rgba(11,18,32,.82), rgba(11,18,32,.94)); } }
 .publish-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .8rem 1.2rem; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,.18); }
 .publish-bar p { margin: 0; }
