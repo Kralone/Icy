@@ -8,14 +8,14 @@ PR à ouvrir de `fix/security-dependency-updates` vers `main`. Sans fusion autom
 
 ## Résumé
 
-Le workflow Security échoue depuis plusieurs semaines. Cette PR corrige ce que Trivy signale, sans désactiver ni assouplir aucun contrôle, et sans montée de version majeure.
+Le workflow Security échoue depuis plusieurs semaines. Cette PR corrige ce que Trivy signale, sans désactiver ni assouplir aucun contrôle et sans aucune exception. Une seule montée de version majeure : `async-http-client`.
 
 | Sujet | Changement |
 |---|---|
 | Angular | 22.1.3 vers 22.2.2 (version mineure), par l'outil de mise à jour d'Angular |
 | npm, transitif | `piscina` 5.3.2, `undici` 8.11.2, `fast-uri` 3.1.8, `source-map-js` 1.2.2, `proxy-addr` 2.0.8, SDK MCP de l'outillage |
 | pnpm | `pnpm-lock.yaml` et `pnpm-workspace.yaml` retirés : aucun workflow ni image ne les utilise |
-| `async-http-client` | 2.15.0 vers 2.16.1, même version majeure |
+| `async-http-client` | 2.15.0 vers 3.0.14 (version majeure, étudiée ci-dessous) |
 | `jsoup` | 1.23.1 vers 1.23.2, qui contient le correctif |
 | Spring Boot 4.1.1 | Tomcat 11.0.27, Jackson 2.21.7 et 3.1.7, client RabbitMQ 5.34.0 imposés à leur correctif |
 | Images de base | Empreintes rafraîchies sur les mêmes étiquettes : Maven, Temurin 25 JRE, Python 3.14.7, nginx 1.30.4 |
@@ -29,24 +29,26 @@ Mêmes version et paramètres que GitHub Actions, sur cette branche fusionnée a
 
 | Analyse | Avant | Après |
 |---|---|---|
-| Dépôt | 25 alertes HIGH ou CRITICAL, dont 5 CRITICAL | 2 |
-| Image serveur | 28 corrigeables relevées | 2 |
+| Dépôt | 25 alertes HIGH ou CRITICAL, dont 5 CRITICAL | 0 |
+| Image serveur | 28 corrigeables relevées | 0 |
 | Image bot | 9 | 0 |
 | Image frontend | 19 | 0 |
 | Image frontend SSR | non relevé | 0 |
 | Image proxy | non relevé | 0 |
 
-Les 2 alertes restantes sont les mêmes dans les deux analyses : `async-http-client`, CVE-2026-107227 et CVE-2026-107230, corrigées seulement en 3.0.14. Le contrôle Security restera donc rouge tant qu'une décision n'est pas prise sur ces deux alertes (voir plus bas).
+## `async-http-client` 3.0.14
 
-## Les deux alertes restantes
+`async-http-client` n'est pas utilisé par le code d'IceForge : il est exigé par `web-push` 5.1.2, la bibliothèque des notifications, qui déclare sa version 2.12.4. La version 2.16.1 laissait deux alertes HIGH (CVE-2026-107227 et CVE-2026-107230), corrigées seulement en 3.0.14.
 
-`async-http-client` n'est pas utilisé par le code d'IceForge. Il est exigé par `web-push` 5.1.2, la bibliothèque des notifications, prévue pour sa version 2.
+Trois solutions ont été essayées sur des copies isolées : la version 3.0.14, l'exclusion Maven de la bibliothèque, et une exception Trivy. La version 3.0.14 est retenue : elle corrige les deux alertes à la source et garde utilisables les deux chemins d'envoi de `web-push`. L'exclusion rendait l'envoi asynchrone inutilisable (classe introuvable à l'exécution).
 
-- **Chemin d'exécution** : l'application envoie ses notifications par `PushService.send`, qui passe par le client HTTP Apache. Seule la classe `PushAsyncService` de `web-push` utilise `async-http-client`, et l'application ne l'appelle pas. Vérifié dans le jar et par un envoi réel.
-- **CVE-2026-107227** : décompression WebSocket non bornée. Ni `web-push` ni IceForge n'ouvrent de WebSocket par cette bibliothèque.
-- **CVE-2026-107230** : partage de connexions entre identités Kerberos, SPNEGO, NTLM ou proxy authentifié. Aucun de ces modes n'est configuré.
+**Netty.** `async-http-client` 3.0.14 est construit contre Netty 4.2.18 ; Spring Boot 4.1.1 gère Netty en 4.2.17, que le client RabbitMQ utilise aussi. L'écart est conservé :
 
-Conclusion : non applicables en l'état. Exception proposée, non incluse dans cette PR : un fichier `.trivyignore.yaml` limité à ces deux identifiants, avec cette justification et une date de révision à trois mois. Alternative : étudier le passage de `web-push` à `async-http-client` 3.
+- les 180 classes, 384 méthodes et 102 champs Netty référencés par `async-http-client` 3.0.14 se résolvent de la même façon contre 4.2.17 et contre 4.2.18 ;
+- les 9 seules références non résolues sont les transports natifs facultatifs (epoll, kqueue, io_uring), absents dans les deux cas et non utilisés ;
+- Trivy ne signale aucune alerte sur Netty 4.2.17.
+
+Imposer 4.2.18 changerait la pile Netty de tout le serveur sans rien corriger. À revoir quand Spring Boot passera à une version de Netty supérieure.
 
 ## Vérifications
 
@@ -54,7 +56,8 @@ Conclusion : non applicables en l'état. Exception proposée, non incluse dans c
 - Serveur, copie fusionnée : 393 tests, 0 échec, 3 ignorés, dans la construction de l'image.
 - Les cinq images se construisent.
 - Démarrage réel de l'image serveur sur une pile isolée : Tomcat 11.0.27, 43 migrations, connexion et réponses JSON, trois écouteurs RabbitMQ connectés.
-- Web Push : une notification chiffrée réellement envoyée à un point de réception local, par le chemin de l'application et par le chemin asynchrone ; 201 dans les deux cas.
+- Web Push, avec `async-http-client` 3.0.14 : notification chiffrée réellement envoyée à un point de réception local par le chemin de l'application (`PushService`, client HTTP Apache) et par le chemin asynchrone (`PushAsyncService`) ; 201 dans les deux cas.
+- Notification de bout en bout par l'application : abonnement de test, `POST /api/notifications/push/test`, envoi 201, message reçu chiffré, aucune erreur de chargement de classe.
 
 ## Non vérifié
 
@@ -73,7 +76,6 @@ Conclusion : non applicables en l'état. Exception proposée, non incluse dans c
 
 - [ ] PR Opérations fusionnée, ou cette branche mise à jour sur `main`
 - [ ] CI GitHub verte
-- [ ] Décision sur les deux alertes `async-http-client`
 - [ ] Parcours rapide du site après la montée d'Angular
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
