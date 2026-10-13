@@ -3,7 +3,7 @@
     @if (state.kind === 'LOADING') {
       <section class="editor-loading" role="status" aria-live="polite">Chargement de l’éditeur…</section>
     } @else if (state.kind === 'ERROR') {
-      <section class="editor-error" role="alert"><h1>{{ state.message }}</h1><a routerLink="/icy/events">Retour au calendrier</a></section>
+      <section class="editor-error" role="alert"><h1>{{ state.failure.title }}</h1><p>{{ state.failure.detail }}</p><p class="editor-error__actions">@if (state.failure.retry) { <button type="button" (click)="retryOperation()">Réessayer</button> }<a routerLink="/icy/events">Retour au calendrier</a></p></section>
     } @else {
       @let operation = state.operation;
     @let colors = typeColors(operation);
@@ -24,7 +24,7 @@
     </header>
     <nav class="tabs" aria-label="Sections de l’éditeur">
       @for (item of tabs; track item.id) {
-        <button type="button" [class.active]="tab === item.id" [attr.data-tab]="item.id" (click)="selectTab(item.id)"><app-operation-icon [name]="item.icon" /> {{ item.label }}</button>
+        <button type="button" [class.active]="tab === item.id" [attr.aria-current]="tab === item.id ? 'true' : null" [attr.data-tab]="item.id" (click)="selectTab(item.id)"><app-operation-icon [name]="item.icon" /> {{ item.label }}</button>
       }
     </nav>
     <section class="editor-card">
@@ -35,7 +35,7 @@
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()"> Autoriser les membres présents à proposer un vaisseau de leur hangar</label>
       } @else if (tab === 'objectifs') {
         <div class="objectives-head"><div><h2>Objectifs de mission</h2><p class="muted">Ordonnez les résultats attendus et distinguez le principal du secondaire.</p></div><div class="objective-actions"><button type="button" class="objective-add--main" (click)="addObjective('PRINCIPAL')">+ Principal</button><button type="button" (click)="addObjective('SECONDAIRE')">+ Secondaire</button></div></div>
-        <div class="objective-list">@for (objective of form.objectives; track $index) { <div class="objective-row" [attr.data-kind]="objective.kind"><select [(ngModel)]="objective.kind" (ngModelChange)="touch()" aria-label="Nature de l’objectif"><option value="PRINCIPAL">Principal</option><option value="SECONDAIRE">Secondaire</option></select><input [(ngModel)]="objective.text" (ngModelChange)="touch()" maxlength="1000" [placeholder]="objective.kind === 'PRINCIPAL' ? 'Résultat indispensable' : 'Résultat complémentaire'"><div class="objective-order"><button type="button" (click)="moveObjective($index, -1)" [disabled]="$index === 0" aria-label="Monter l’objectif">↑</button><button type="button" (click)="moveObjective($index, 1)" [disabled]="$index === form.objectives.length - 1" aria-label="Descendre l’objectif">↓</button><button type="button" (click)="removeObjective($index)" [disabled]="form.objectives.length === 1" aria-label="Supprimer l’objectif">×</button></div></div> }</div>
+        <div class="objective-list">@for (objective of form.objectives; track $index) { <div class="objective-row" [attr.data-kind]="objective.kind"><select [(ngModel)]="objective.kind" (ngModelChange)="touch()" aria-label="Nature de l’objectif"><option value="PRINCIPAL">Principal</option><option value="SECONDAIRE">Secondaire</option></select><input [(ngModel)]="objective.text" (ngModelChange)="touch()" maxlength="1000" [attr.aria-label]="'Objectif ' + ($index + 1)" [placeholder]="objective.kind === 'PRINCIPAL' ? 'Résultat indispensable' : 'Résultat complémentaire'"><div class="objective-order"><button type="button" (click)="moveObjective($index, -1)" [disabled]="$index === 0" aria-label="Monter l’objectif">↑</button><button type="button" (click)="moveObjective($index, 1)" [disabled]="$index === form.objectives.length - 1" aria-label="Descendre l’objectif">↓</button><button type="button" (click)="removeObjective($index)" [disabled]="form.objectives.length === 1" aria-label="Supprimer l’objectif">×</button></div></div> }</div>
       } @else if (tab === 'publication') {
         <h2>Aperçu de la fiche</h2>
         <app-operation-preview [operation]="previewSheet(operation)" [groups]="organizationGroups()" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [participations]="previewParticipations()" [participationsState]="previewParticipationsState()"
@@ -64,7 +64,7 @@
         </div>
         <ng-template #needs>
         @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
-        <app-operation-fleet-cards [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [scopeGroupId]="selectedGroupId()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
+        <app-operation-fleet-cards [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [scopeGroupId]="selectedGroupId()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [requirementsUnavailable]="requirementsLoadError()" [shipsUnavailable]="shipsLoadError()" [members]="(members$ | async) ?? []"
           (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)"
           (editRequirement)="editShipRequirement($event)" (deleteRequirement)="deleteShipRequirement(operation.id, $event)" />
         @if (!operation.locked) {
@@ -112,7 +112,7 @@
         <section class="coordination-fleet" aria-label="Vaisseaux proposés par les membres">
           <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()" [disabled]="!!operation.locked"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
           @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
-          <app-operation-fleet-cards [showRequirements]="false" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [members]="(members$ | async) ?? []"
+          <app-operation-fleet-cards [showRequirements]="false" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [requirementsUnavailable]="requirementsLoadError()" [shipsUnavailable]="shipsLoadError()" [members]="(members$ | async) ?? []"
             (accept)="acceptShip(operation.id, $event)" (decline)="declineShip(operation.id, $event)" (pilot)="setShipPilot(operation.id, $event.proposalId, $event.userId)" />
         </section>
       }

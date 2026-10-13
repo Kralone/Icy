@@ -209,4 +209,75 @@ describe('OperationPageComponent', () => {
     expect(buttons().every(button => button.disabled)).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('Opération terminée.');
   });
+
+  const sheet = { data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } };
+
+  async function settle(): Promise<void> {
+    http.match(request => request.url !== '/api/operations/op').forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('names a missing or refused operation without offering a useless retry', async () => {
+    for (const [status, title] of [[404, 'Opération introuvable'], [403, 'Accès refusé']] as Array<[number, string]>) {
+      fixture = TestBed.createComponent(OperationPageComponent);
+      fixture.detectChanges();
+      http.expectOne('/api/operations/op').flush({ message: 'refus' }, { status, statusText: 'Erreur' });
+      await settle();
+
+      const error: HTMLElement = fixture.nativeElement.querySelector('.operation-error');
+      expect(error.querySelector('h1')!.textContent).toBe(title);
+      expect(error.textContent).not.toContain('connexion');
+      expect(error.querySelector('button')).toBeNull();
+      expect(error.querySelector('a')!.textContent).toContain('Retour au calendrier');
+    }
+  });
+
+  it('offers a retry when the server cannot be reached, and shows the sheet once it answers', async () => {
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').error(new ProgressEvent('error'));
+    await settle();
+
+    const error: HTMLElement = fixture.nativeElement.querySelector('.operation-error');
+    expect(error.querySelector('h1')!.textContent).toBe('Serveur injoignable');
+    expect(getParticipations).toHaveBeenCalledTimes(1);
+
+    (error.querySelector('button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush(sheet);
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('.operation-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-operation-hero').textContent).toContain('QA');
+    expect(getParticipations).toHaveBeenCalledTimes(2);
+  });
+
+  it('never states that no ship is needed when the needs could not be read, even if the ships were', async () => {
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush(sheet);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op/ship-requirements').flush({ message: 'panne' }, { status: 500, statusText: 'Erreur' });
+    http.expectOne('/api/operations/op/ships').flush({ data: [] });
+    await settle();
+
+    const fleet: string = fixture.nativeElement.querySelector('.panel--fleet').textContent;
+    expect(fleet).toContain('La flotte n’a pas pu être chargée.');
+    expect(fleet).toContain('Les besoins de vaisseaux n’ont pas pu être chargés.');
+    expect(fleet).not.toContain('Aucun besoin de vaisseau');
+    // Les appareils, eux, ont été lus : leur liste vide est un fait.
+    expect(fleet).toContain('Aucun appareil proposé');
+
+    (fixture.nativeElement.querySelector('.panel--fleet .operation-coordination__error button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op/ship-requirements').flush({ data: [] });
+    http.expectOne('/api/operations/op/ships').flush({ data: [] });
+    await settle();
+
+    const reread: string = fixture.nativeElement.querySelector('.panel--fleet').textContent;
+    expect(reread).not.toContain('n’a pas pu être chargée');
+    expect(reread).toContain('Aucun besoin de vaisseau');
+  });
 });

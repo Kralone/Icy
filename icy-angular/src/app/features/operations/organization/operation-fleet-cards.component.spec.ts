@@ -114,4 +114,17 @@ describe('OperationFleetCardsComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
     expect(text('.card--ship').length + text('.need-ship').length).toBe(3);
   });
+
+  it('says that needs or ships could not be read instead of presenting them as empty', () => {
+    fixture.componentRef.setInput('requirements', []);
+    fixture.componentRef.setInput('ships', []);
+    fixture.componentRef.setInput('requirementsUnavailable', true);
+    fixture.detectChanges();
+    expect(text('.fleet__empty')).toEqual(['Les besoins de vaisseaux n’ont pas pu être chargés.', 'Aucun appareil proposé en dehors des besoins.']);
+
+    fixture.componentRef.setInput('requirementsUnavailable', false);
+    fixture.componentRef.setInput('shipsUnavailable', true);
+    fixture.detectChanges();
+    expect(text('.fleet__empty')).toEqual(['Aucun besoin de vaisseau.', 'Les appareils proposés n’ont pas pu être chargés.']);
+  });
 });

@@ -277,4 +277,48 @@ describe('OperationEditorComponent', () => {
     expect(createOperationGroup).not.toHaveBeenCalled();
     expect(assignOperationMember).not.toHaveBeenCalled();
   });
+
+  function reopenWith(...failures: Array<{ status: number }>): HTMLElement {
+    const read = TestBed.inject(EventService).getOperationForEdit as ReturnType<typeof vi.fn>;
+    failures.forEach(failure => read.mockReturnValueOnce(throwError(() => failure)));
+    fixture = TestBed.createComponent(OperationEditorComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('.editor-error');
+  }
+
+  it('tells a refused or missing operation apart from an unreachable server', () => {
+    const refused = reopenWith({ status: 403 });
+    expect(refused.querySelector('h1')!.textContent).toBe('Accès refusé');
+    expect(refused.textContent).toContain('réservé aux organisateurs');
+    expect(refused.querySelector('button')).toBeNull();
+
+    const missing = reopenWith({ status: 404 });
+    expect(missing.querySelector('h1')!.textContent).toBe('Opération introuvable');
+    expect(missing.querySelector('button')).toBeNull();
+  });
+
+  it('offers a retry when the server cannot be reached, then opens the editor', () => {
+    const unreachable = reopenWith({ status: 0 });
+    expect(unreachable.querySelector('h1')!.textContent).toBe('Serveur injoignable');
+
+    (unreachable.querySelector('button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.editor-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('QA');
+  });
+
+  it('exposes the open section and names each objective field for assistive technologies', () => {
+    const current = () => Array.from(fixture.nativeElement.querySelectorAll('.tabs button[aria-current="true"]')).map(button => (button as HTMLElement).textContent!.trim());
+    expect(current()).toEqual(['Général / briefing']);
+
+    component.selectTab('objectifs');
+    component.addObjective('SECONDAIRE');
+    fixture.detectChanges();
+
+    expect(current()).toEqual(['Objectifs']);
+    const fields: HTMLInputElement[] = Array.from(fixture.nativeElement.querySelectorAll('.objective-row input'));
+    expect(fields.map(field => field.getAttribute('aria-label'))).toEqual(['Objectif 1', 'Objectif 2']);
+  });
 });

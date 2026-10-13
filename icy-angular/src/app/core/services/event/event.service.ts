@@ -26,6 +26,8 @@ export interface EventDTO {
   createdAt: string;
   finished: boolean;
   activityType?: 'EVENT' | 'OPERATION';
+  /** Liste de gestion uniquement : opération pas encore publiée, invisible des membres. */
+  draft?: boolean;
 }
 
 export interface OperationDraftSummary {
