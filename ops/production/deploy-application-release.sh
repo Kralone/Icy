@@ -7,6 +7,8 @@ AGE_RECIPIENT=
 BACKUP_ARCHIVE=
 PREFLIGHT_ONLY=0
 MAX_BACKUP_AGE_SECONDS=86400
+# Flyway version this release must reach. V39 to V43 are applied by the backend at startup.
+TARGET_FLYWAY_VERSION=43
 
 usage() {
   echo "Usage: $0 --revision <git-sha> [--age-recipient 'age1...'|\"ssh-ed25519 AAAA...\"] [--verified-backup /var/backups/iceforge/iceforge-*.tar.gz.age] [--preflight]" >&2
@@ -76,6 +78,8 @@ required_files=(
   "$BACKEND_DIR/verify-flyway-v31.sql"
   "$BACKEND_DIR/verify-flyway-v32.sql"
   "$BACKEND_DIR/verify-flyway-v33.sql"
+  "$BACKEND_DIR/verify-flyway-v38-checksums.sql"
+  "$BACKEND_DIR/verify-flyway-v43.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -137,6 +141,12 @@ case "$current_version" in
     ;;
   33|34|35|36|37|38)
     db_psql <"$BACKEND_DIR/verify-flyway-v33.sql" >/dev/null
+    # Flyway would refuse to start on a different history: say so before the backup and the switch.
+    db_psql <"$BACKEND_DIR/verify-flyway-v38-checksums.sql" >/dev/null
+    ;;
+  43)
+    # Release already applied: the same command can be run again.
+    db_psql <"$BACKEND_DIR/verify-flyway-v43.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
@@ -182,7 +192,7 @@ fi
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 900 libretranslate
 trap rollback ERR
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend
-BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" runtime
+EXPECTED_FLYWAY_VERSION=$TARGET_FLYWAY_VERSION BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" runtime
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait bot
 BOT_ROLLOUT_DIR=$BOT_DIR "$BOT_DIR/verify.sh" runtime
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait frontend
