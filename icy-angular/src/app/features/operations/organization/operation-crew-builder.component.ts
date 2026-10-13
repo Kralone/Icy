@@ -62,7 +62,8 @@ export class OperationCrewBuilderComponent {
   readonly parents = computed(() => sortedChildren(this.groups(), null).filter(group => !this.crewIds().has(group.id) && (group.container || group.members.length === 0)));
   readonly selectedPreset = computed(() => this.presets().find(preset => preset.id === this.presetId()) ?? null);
   readonly ready = computed(() => !!this.model() && !!this.name().trim() && (this.setup() !== 'preset' || !!this.selectedPreset())
-    && (this.capacity() === null || (this.capacity()! >= 0 && this.capacity()! <= 10000)));
+    && !this.capacityOutOfRange());
+  readonly capacityOutOfRange = computed(() => this.capacity() !== null && (this.capacity()! < 1 || this.capacity()! > 10000));
 
   constructor() {
     effect(() => this.busyChange.emit(this.saving()));

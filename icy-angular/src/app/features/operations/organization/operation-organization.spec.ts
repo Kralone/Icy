@@ -109,6 +109,16 @@ describe('OperationGroupPanelComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('la capacité ne peut pas être inférieure');
     expect(submit.disabled).toBe(true);
 
+    // Renseignée, une capacité vaut au moins 1 ; vide, elle ne limite rien.
+    for (const refused of ['0', '-2', '10001']) {
+      fixture.componentInstance.setCapacity(refused);
+      fixture.componentInstance.patch({ name: 'Équipage Idris' });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Indiquez un nombre de 1 à 10 000');
+      expect(submit.disabled).toBe(true);
+    }
+    fixture.componentInstance.patch({ name: polaris.name });
+
     fixture.componentInstance.setCapacity('');
     fixture.componentInstance.patch({ name: ' Escadrille ' });
     fixture.detectChanges();
