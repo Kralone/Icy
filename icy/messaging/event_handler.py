@@ -936,6 +936,16 @@ class EventHandler:
 
 
 # --- Classe View pour les boutons ---
+PARTICIPATION_FAILURE = "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard."
+# Réponse donnée au membre selon ce que le serveur a réellement fait de son choix.
+PARTICIPATION_REPLIES = {
+    "RECORDED": "✅ Votre choix a été enregistré !",
+    "UNKNOWN_USER": "❌ Votre choix n'a pas été enregistré : votre compte Discord n'est relié à aucun compte IceForge actif.",
+    "EVENT_NOT_FOUND": "❌ Votre choix n'a pas été enregistré : cet événement n'existe plus.",
+    "NOT_PUBLISHED": "❌ Votre choix n'a pas été enregistré : cet événement n'accepte pas de réponse.",
+}
+
+
 class EventParticipationView(ui.View):
     def __init__(self, rabbit, event_id, operation_url=None):
         super().__init__(timeout=None)
@@ -965,27 +975,28 @@ class EventParticipationView(ui.View):
         return button
 
     async def _send_participation(self, interaction: discord.Interaction, status: int):
+        """Le membre n'est informé d'un succès que si le serveur a réellement enregistré sa réponse."""
         await interaction.response.defer(ephemeral=True)
+        outcome = None
         try:
-            await self.rabbit.publish(
-                "events.participation",
-                {
+            api = interaction.client.get_cog("APIClient")
+            if api is None:
+                raise RuntimeError("backend client unavailable")
+            response = await api.api_request(
+                "POST",
+                "api/events/bot/participation",
+                data={
                     "eventId": self.event_id,
-                    "userId": interaction.user.id,
+                    "discordUserId": str(interaction.user.id),
                     "username": interaction.user.name,
                     "status": status,
                 },
             )
+            if isinstance(response, dict) and response.get("httpCode") == 200:
+                outcome = response.get("outcome")
         except Exception as exc:
             logger.error(
-                "❌ Publication de participation impossible (%s)",
+                "❌ Enregistrement de participation impossible (%s)",
                 type(exc).__name__,
             )
-            await interaction.followup.send(
-                "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard.",
-                ephemeral=True,
-            )
-            return
-        await interaction.followup.send(
-            "✅ Votre choix a été enregistré !", ephemeral=True
-        )
+        await interaction.followup.send(PARTICIPATION_REPLIES.get(outcome, PARTICIPATION_FAILURE), ephemeral=True)
