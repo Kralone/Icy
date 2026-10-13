@@ -24,6 +24,7 @@ import java.util.UUID;
 public class OperationLock {
     public static final ZoneId ZONE = ZoneId.of("Europe/Paris");
     public static final String MESSAGE = "Opération terminée : son organisation n’est plus modifiable.";
+    public static final String PRESENCE_MESSAGE = "Opération terminée : les présences ne sont plus modifiables.";
 
     private final OperationRepository operationRepository;
     private final EventRepository eventRepository;

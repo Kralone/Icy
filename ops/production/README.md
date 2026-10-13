@@ -112,3 +112,22 @@ la recréation ou les contrôles du backend/bot échouent.
 La release ressources regroupe les anciennes migrations de développement V33 à V37 dans `V33__resources_catalogue.sql`. La production reste en V32 avant promotion et applique une seule migration transactionnelle PostgreSQL. Le précontrôle accepte V32 ou V33 ; le contrôle runtime vérifie V1–V33 et les structures ressources.
 
 Le staging anciennement V37 fait l’objet d’une réconciliation explicite et sauvegardée de son historique ; cette opération est interdite sur la production. La base de développement V32 migre normalement. Aucun `repair` aveugle ni suppression de données métier.
+
+## Réponses Discord : clé du bot et ordre de déploiement
+
+Un clic sur Présent, Peut-être ou Absent d'un événement classique n'est confirmé au
+membre que si le serveur a réellement enregistré sa réponse. Le bot interroge pour cela
+le serveur par `POST /api/events/bot/participation`, avec sa clé.
+
+- `BOT_API_KEY` doit être renseignée **à l'identique** pour le backend et pour le bot.
+  Sans elle côté bot, ou vide côté backend (réponse 503), tous les clics reçoivent un
+  message d'échec : aucune réponse n'est enregistrée, et aucun succès n'est annoncé à tort.
+- Le précontrôle d'une livraison vérifie la présence de la clé des deux côtés, sans
+  l'afficher. Les secrets restent sur le serveur ; cette procédure ne les modifie pas.
+- Ordre obligatoire : **backend, puis bot** — celui que suit déjà
+  `deploy-application-release.sh`. Un nouveau bot face à un ancien backend refuse toutes
+  les réponses (401). Un ancien bot face au nouveau backend continue de fonctionner par
+  RabbitMQ, avec l'ancien défaut de confirmation.
+- Les annonces d'opération n'ont pas de bouton de réponse : la présence s'y gère sur la
+  fiche. Après l'heure de fin d'une opération publiée, le serveur refuse tout changement
+  de présence, par le site comme par le bot.

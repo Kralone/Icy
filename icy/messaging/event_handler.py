@@ -943,6 +943,7 @@ PARTICIPATION_REPLIES = {
     "UNKNOWN_USER": "❌ Votre choix n'a pas été enregistré : votre compte Discord n'est relié à aucun compte IceForge actif.",
     "EVENT_NOT_FOUND": "❌ Votre choix n'a pas été enregistré : cet événement n'existe plus.",
     "NOT_PUBLISHED": "❌ Votre choix n'a pas été enregistré : cet événement n'accepte pas de réponse.",
+    "OPERATION_CLOSED": "❌ Votre choix n'a pas été enregistré : opération terminée.",
 }
 
 
