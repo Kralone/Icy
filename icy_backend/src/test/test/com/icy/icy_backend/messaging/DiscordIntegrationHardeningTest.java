@@ -161,6 +161,40 @@ class DiscordIntegrationHardeningTest {
         assertThat(payload.getValue()).containsEntry("date", "2026-11-20T20:30").containsEntry("endDate", "2026-11-20T23:30");
     }
 
+    private Map<String, Object> publishedPayload(ActivityType activityType, LocalDateTime end) {
+        EventParticipationRepository participations = mock(EventParticipationRepository.class);
+        EventPublisher publisher = new EventPublisher(template, participations, mock(OperationRepository.class));
+        Event event = new Event();
+        event.setId(UUID.randomUUID());
+        event.setTitle("Escorte");
+        event.setActivityType(activityType);
+        event.setStartDateTime(end.minusHours(3));
+        event.setEndDateTime(end);
+        when(participations.findAllByEvent(event)).thenReturn(Optional.empty());
+
+        publisher.publishEventUpdated(event);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> payload = ArgumentCaptor.forClass(Map.class);
+        verify(template).convertAndSend(eq("icy.exchange"), eq("events.updated"), payload.capture());
+        return payload.getValue();
+    }
+
+    @Test void anOperationPastItsEndIsAnnouncedAsClosedEvenBeforeTheScheduledTask() {
+        assertThat(publishedPayload(ActivityType.OPERATION, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE).minusMinutes(2)))
+                .containsEntry("finished", true);
+    }
+
+    @Test void anOperationStillRunningKeepsItsButtons() {
+        assertThat(publishedPayload(ActivityType.OPERATION, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE).plusHours(2)))
+                .containsEntry("finished", false);
+    }
+
+    @Test void aClassicEventPastItsEndKeepsItsOwnFinishedFlag() {
+        assertThat(publishedPayload(ActivityType.EVENT, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE).minusMinutes(2)))
+                .containsEntry("finished", false);
+    }
+
     private record OperationFixture(OperationService service, EventService eventService, UUID id, Operation operation) {}
 
     private static OperationFixture operation(Operation.PublicationStatus status) {
