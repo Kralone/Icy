@@ -63,7 +63,7 @@ class OperationShipServiceTest {
             auth.when(AuthUtils::getCurrentUserId).thenReturn(UUID.randomUUID());
             assertThatThrownBy(() -> service.propose(operation.getEventId(), 42L, null, null)).isInstanceOf(ResourceNotFoundException.class);
             Mockito.verify(hangar).existsByUserIdAndShipId(any(), Mockito.eq(42L));
-            Mockito.verifyNoInteractions(proposals);
+            Mockito.verify(proposals, Mockito.never()).save(any());
         }
     }
 
@@ -84,7 +84,7 @@ class OperationShipServiceTest {
         when(operations.findById(operationId)).thenReturn(Optional.of(operation));
         when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
         when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
-        when(requirements.findById(requirementId)).thenReturn(Optional.of(requirement));
+        when(requirements.findLockedById(requirementId)).thenReturn(Optional.of(requirement));
         try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
             auth.when(AuthUtils::getCurrentUserId).thenReturn(owner);
             OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
@@ -108,12 +108,12 @@ class OperationShipServiceTest {
         when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId).publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build()));
         when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
         when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
-        when(requirements.findById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder().id(requirementId).operationEventId(operationId).shipModelId(99L).status(OperationShipRequirement.Status.OPEN).build()));
+        when(requirements.findLockedById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder().id(requirementId).operationEventId(operationId).shipModelId(99L).status(OperationShipRequirement.Status.OPEN).build()));
         try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
             auth.when(AuthUtils::getCurrentUserId).thenReturn(owner);
             OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
             assertThatThrownBy(() -> service.propose(operationId, 42L, null, requirementId)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("modèle requis");
-            Mockito.verifyNoInteractions(proposals);
+            Mockito.verify(proposals, Mockito.never()).save(any());
         }
     }
 
@@ -133,7 +133,7 @@ class OperationShipServiceTest {
                 .publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build()));
         when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
         when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
-        when(requirements.findById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder()
+        when(requirements.findLockedById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder()
                 .id(requirementId).operationEventId(operationId).status(OperationShipRequirement.Status.FULFILLED).build()));
         OperationShipService service = new OperationShipService(operations, hangar, proposals, messages, groups, participations, requirements);
         try (MockedStatic<AuthUtils> auth = Mockito.mockStatic(AuthUtils.class)) {
@@ -141,7 +141,7 @@ class OperationShipServiceTest {
             assertThatThrownBy(() -> service.propose(operationId, 42L, null, requirementId))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
-        Mockito.verifyNoInteractions(proposals);
+        Mockito.verify(proposals, Mockito.never()).save(any());
     }
 
     @Test
@@ -160,7 +160,7 @@ class OperationShipServiceTest {
                 .publicationStatus(Operation.PublicationStatus.PUBLISHED).allowShipProposals(true).build()));
         when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, owner, 1)).thenReturn(true);
         when(hangar.existsByUserIdAndShipId(owner, 42L)).thenReturn(true);
-        when(requirements.findById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder()
+        when(requirements.findLockedById(requirementId)).thenReturn(Optional.of(OperationShipRequirement.builder()
                 .id(requirementId).operationEventId(operationId).quantity(1).status(OperationShipRequirement.Status.OPEN).build()));
         when(proposals.countByRequirementIdAndStatusIn(requirementId,
                 List.of(OperationShipProposal.Status.PROPOSED, OperationShipProposal.Status.ACCEPTED))).thenReturn(1L);

@@ -4,8 +4,10 @@ import os
 import discord
 from discord import ui, ButtonStyle
 from utils.html_to_discord import html_to_discord
+from utils.public_url import public_base_url
 import logging
 from typing import Dict, List, Tuple, Optional
+import json
 import re
 from os import getenv
 from urllib.parse import urlsplit
@@ -25,6 +27,92 @@ def is_supported_discord_image_url(value: object) -> bool:
         return parsed.scheme.lower() in {"http", "https"} and bool(parsed.netloc)
     except ValueError:
         return False
+
+# Limites de Discord pour un embed : au-delà, l'envoi est refusé en bloc.
+EMBED_TITLE_LIMIT = 256
+EMBED_DESCRIPTION_LIMIT = 4096
+EMBED_FIELD_LIMIT = 1024
+EMBED_TOTAL_LIMIT = 6000
+# Le briefing d'une opération est résumé : le détail se lit sur le site.
+OPERATION_BRIEFING_LIMIT = 900
+OBJECTIVE_KIND_LABELS = (("PRINCIPAL", "Principaux"), ("SECONDAIRE", "Secondaires"))
+
+
+def truncate_text(value: object, limit: int, suffix: str = "…") -> str:
+    """Coupe un texte à `limit` caractères, sur un mot si possible, et le termine par `suffix`."""
+    text = "" if value is None else str(value).strip()
+    if len(text) <= limit:
+        return text
+    room = max(0, limit - len(suffix))
+    cut = text[:room]
+    last_space = cut.rfind(" ")
+    if last_space > room * 0.6:
+        cut = cut[:last_space]
+    return cut.rstrip(" ,;:.\n") + suffix
+
+
+def truncate_lines(lines: List[str], limit: int, more: str) -> str:
+    """Garde des lignes entières sous `limit` caractères ; `more` annonce celles qui manquent (`{count}` = leur nombre)."""
+    kept: List[str] = []
+    for index, line in enumerate(lines):
+        remaining = len(lines) - index
+        candidate = "\n".join(kept + [line])
+        note = more.format(count=remaining - 1)
+        if len(candidate) + (len(note) + 1 if remaining > 1 else 0) > limit:
+            note = more.format(count=remaining)
+            while kept and len("\n".join(kept + [note])) > limit:
+                kept.pop()
+                note = more.format(count=len(lines) - len(kept))
+            return "\n".join(kept + [note])[:limit]
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def format_objectives(value: object) -> str:
+    """
+    Objectifs d'une opération en texte lisible. Ils sont enregistrés en JSON
+    (`[{"kind": "PRINCIPAL", "text": "…"}]`) ; un ancien texte libre est repris tel quel.
+    """
+    if not value:
+        return ""
+    text = str(value).strip()
+    try:
+        items = json.loads(text)
+    except (ValueError, TypeError):
+        return truncate_text(html_to_discord(text), EMBED_FIELD_LIMIT)
+    if not isinstance(items, list):
+        return truncate_text(html_to_discord(text), EMBED_FIELD_LIMIT)
+
+    lines: List[str] = []
+    known = {kind for kind, _ in OBJECTIVE_KIND_LABELS}
+    groups = list(OBJECTIVE_KIND_LABELS) + [(None, "Autres")]
+    for kind, label in groups:
+        texts = [
+            str(item.get("text", "")).strip()
+            for item in items
+            if isinstance(item, dict)
+            and str(item.get("text", "")).strip()
+            and (item.get("kind") == kind if kind else item.get("kind") not in known)
+        ]
+        if not texts:
+            continue
+        lines.append(f"**{label}**")
+        lines.extend(f"• {truncate_text(entry, 200)}" for entry in texts)
+    return truncate_lines(lines, EMBED_FIELD_LIMIT, "… suite sur la fiche de l’opération")
+
+
+def format_schedule(start: object, end: object) -> str:
+    """Date et heure de début, avec l'heure de fin quand elle est connue (et le jour s'il diffère)."""
+    text = format_date(start)
+    if not end:
+        return text
+    end_time = format_time(end)
+    if not end_time:
+        return text
+    if format_day(start) == format_day(end):
+        return f"{text} → {end_time}"
+    return f"{text} → {format_date(end)}"
+
 
 def format_date(date_str: str) -> str:
     """Convertit une date ISO (ex: 2025-11-03T12:30:00) en format lisible français, sans dépendre de la locale système."""
@@ -132,52 +220,7 @@ class EventHandler:
         if not event_id:
             raise ValueError("Event id is required")
         title = payload.get("title", "Sans titre")
-        description = html_to_discord(payload.get("description", ""))
-        creator = payload.get("author", "Inconnu")
-        date = format_date(payload.get("date"))
-
-        type_info = payload.get("type", {}) or {}
-        image_url = type_info.get("imageUrl")
-        type_name = type_info.get("name", "Événement")
-        type_color = type_info.get("color")
-        operation_info = payload.get("operation", {}) or {}
-        if payload.get("activityType") == "OPERATION" and operation_info.get("briefing"):
-            description = html_to_discord(operation_info["briefing"])
-        if payload.get("activityType") == "OPERATION" and operation_info.get("imageUrl"):
-            image_url = operation_info["imageUrl"]
-
-        color_value = discord.Color(int(type_color.replace("#", ""), 16)) if type_color else discord.Color.blue()
-
-        participants = payload.get("participants", [])
-        confirmed = [p["username"] for p in participants if p["status"] == 1]
-        maybe = [p["username"] for p in participants if p["status"] == 0]
-        refused = [p["username"] for p in participants if p["status"] == -1]
-
-        def fmt_list(lst):
-            return "\n".join(lst) if lst else "–"
-
-        embed = discord.Embed(
-            title=f"{type_name} : {title}",
-            description=f"📅 **Date :** {date}\n\n💬 {description}",
-            color=color_value,
-        )
-        embed.add_field(name="✅ Confirmés", value=fmt_list(confirmed), inline=True)
-        embed.add_field(name="❔ Peut-être", value=fmt_list(maybe), inline=True)
-        embed.add_field(name="❌ Refusés", value=fmt_list(refused), inline=True)
-        embed.set_footer(text=f"Créé par {creator}")
-        if is_supported_discord_image_url(image_url):
-            embed.set_image(url=image_url)
-        elif image_url:
-            logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
-
-        operation_url = None
-        if payload.get("activityType") == "OPERATION":
-            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
-            embed.add_field(name="Opération", value=f"[Voir l'opération sur IceForge]({operation_url})", inline=False)
-            if operation_info.get("objectives"):
-                embed.add_field(name="Objectifs", value=html_to_discord(operation_info["objectives"]), inline=False)
-            if operation_info.get("meetingPoint"):
-                embed.add_field(name="Lieu", value=str(operation_info["meetingPoint"]), inline=False)
+        embed, operation_url = self._build_event_embed(event_id, payload)
         view = EventParticipationView(self.rabbit, payload["id"], operation_url=operation_url)
 
         channel = self.bot.get_channel(self.channel_id)
@@ -212,6 +255,75 @@ class EventHandler:
         )
 
     @staticmethod
+    def _operation_url(event_id) -> str:
+        return f"{public_base_url()}/icy/operations/{event_id}"
+
+    def _build_event_embed(self, event_id, payload: dict):
+        """
+        Annonce d'un événement ou d'une opération, toujours sous les limites de Discord.
+        Rend l'embed et, pour une opération, l'adresse de sa fiche (None sinon).
+        """
+        is_operation = payload.get("activityType") == "OPERATION"
+        operation_info = (payload.get("operation") or {}) if is_operation else {}
+        type_info = payload.get("type", {}) or {}
+        type_name = type_info.get("name", "Événement")
+        type_color = type_info.get("color")
+        image_url = operation_info.get("imageUrl") or type_info.get("imageUrl")
+        creator = payload.get("author", "Inconnu")
+
+        description = html_to_discord(payload.get("description", ""))
+        if is_operation:
+            if operation_info.get("briefing"):
+                description = html_to_discord(operation_info["briefing"])
+            # Résumé : le briefing complet, la composition et la flotte se lisent sur la fiche.
+            description = truncate_text(description, OPERATION_BRIEFING_LIMIT, "… Suite sur la fiche de l’opération.")
+            schedule = format_schedule(payload.get("date"), payload.get("endDate"))
+        else:
+            schedule = format_date(payload.get("date"))
+        header = f"📅 **Date :** {schedule}\n\n💬 "
+        description = truncate_text(description, EMBED_DESCRIPTION_LIMIT - len(header))
+
+        try:
+            color_value = discord.Color(int(type_color.replace("#", ""), 16)) if type_color else discord.Color.blue()
+        except (ValueError, AttributeError):
+            color_value = discord.Color.blue()
+
+        participants = payload.get("participants", []) or []
+
+        def names(status):
+            listed = [str(p.get("username", "?")) for p in participants if p.get("status") == status]
+            return truncate_lines(listed, EMBED_FIELD_LIMIT, "… et {count} autre(s)") if listed else "–"
+
+        embed = discord.Embed(
+            title=truncate_text(f"{type_name} : {payload.get('title', 'Sans titre')}", EMBED_TITLE_LIMIT),
+            description=f"{header}{description}",
+            color=color_value,
+        )
+        embed.add_field(name="✅ Confirmés", value=names(1), inline=True)
+        embed.add_field(name="❔ Peut-être", value=names(0), inline=True)
+        embed.add_field(name="❌ Refusés", value=names(-1), inline=True)
+        embed.set_footer(text=truncate_text(f"Créé par {creator}", 200))
+        if is_supported_discord_image_url(image_url):
+            embed.set_image(url=image_url)
+        elif image_url:
+            logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
+
+        operation_url = None
+        if is_operation:
+            operation_url = self._operation_url(event_id)
+            objectives = format_objectives(operation_info.get("objectives"))
+            if objectives:
+                embed.add_field(name="Objectifs", value=objectives, inline=False)
+            if operation_info.get("meetingPoint"):
+                embed.add_field(name="Lieu", value=truncate_text(operation_info["meetingPoint"], EMBED_FIELD_LIMIT), inline=False)
+
+        # Dernier garde-fou : la somme de tous les textes ne doit pas dépasser la limite globale.
+        excess = len(embed) - EMBED_TOTAL_LIMIT
+        if excess > 0:
+            embed.description = f"{header}{truncate_text(description, max(0, len(description) - excess))}"
+        return embed, operation_url
+
+    @staticmethod
     def _event_sort_key(value: object) -> str | None:
         if not isinstance(value, str) or not value.strip():
             return None
@@ -239,6 +351,7 @@ class EventHandler:
         existing = self.discord_link_store.list_events(channel_id)
         records = []
         old_messages = []
+        operation_ids = {str(event_id)} if any(getattr(item, "url", None) for item in view.children) else set()
         for old_event_id, old_link, old_key in existing:
             try:
                 old_message = await channel.fetch_message(old_link.message_id)
@@ -256,6 +369,8 @@ class EventHandler:
                 continue
             if old_embed is not None:
                 old_embed = discord.Embed.from_dict(old_embed.to_dict())
+            if self._is_operation_message(old_message):
+                operation_ids.add(str(old_event_id))
             records.append((old_key or "9999", old_event_id, old_embed))
             old_messages.append(old_link.message_id)
         needs_reorder = bool(sort_key and any(sort_key < key for key, _, _ in records))
@@ -270,7 +385,7 @@ class EventHandler:
                 continue
             current_message = await channel.send(
                 embed=current_embed,
-                view=self._view_for_embed(current_event_id, current_embed),
+                view=self._view_for(current_event_id, str(current_event_id) in operation_ids),
             )
             saved = self.discord_link_store.save("event", current_event_id, current_message.channel.id, current_message.id, key)
             new_links[current_event_id] = saved
@@ -287,13 +402,22 @@ class EventHandler:
                 })
         return new_links[str(event_id)]
 
-    def _view_for_embed(self, event_id, embed):
-        # Rebuilt messages have no original payload. The operation field is
-        # retained in the embed; reconstruct only our own canonical URL.
-        operation_url = None
-        if any(field.name == "Opération" for field in embed.fields):
-            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
+    def _view_for(self, event_id, is_operation):
+        # Une annonce reconstruite n'a plus sa charge d'origine : seule notre propre adresse est recomposée.
+        operation_url = self._operation_url(event_id) if is_operation else None
         return EventParticipationView(self.rabbit, event_id, operation_url=operation_url)
+
+    @staticmethod
+    def _is_operation_message(message):
+        """Une annonce d'opération se reconnaît à son bouton de lien vers la fiche."""
+        rows = getattr(message, "components", None)
+        for row in rows if isinstance(rows, (list, tuple)) else []:
+            for child in getattr(row, "children", None) or []:
+                url = getattr(child, "url", None)
+                if isinstance(url, str) and "/icy/operations/" in url:
+                    return True
+        # Annonces publiées avant le retrait du champ « Opération ».
+        return any(field.name == "Opération" for embed in getattr(message, "embeds", None) or [] for field in embed.fields)
 
     @staticmethod
     def _is_finished_message(message):
@@ -301,6 +425,16 @@ class EventHandler:
             field.name == "Statut" and "terminé" in field.value.casefold()
             for field in embed.fields
         ) for embed in message.embeds)
+
+    @staticmethod
+    def _mark_finished(embed):
+        embed.color = discord.Color.dark_grey()
+        embed.title = truncate_text(f"🧊 [TERMINÉ] {embed.title}", EMBED_TITLE_LIMIT)
+        embed.add_field(
+            name="Statut",
+            value="✅ Cet événement est terminé automatiquement.",
+            inline=False,
+        )
 
     @staticmethod
     def _legacy_sort_key(embed):
@@ -341,6 +475,14 @@ class EventHandler:
         if is_finished:
             if self.discord_link_store:
                 self.discord_link_store.finish_event(event_id)
+            if payload.get("activityType") == "OPERATION" and payload.get("operation") is not None:
+                # Briefing ou objectifs corrigés après la fin : le texte est actualisé, les boutons ne reviennent pas.
+                embed, operation_url = self._build_event_embed(event_id, payload)
+                if self._is_finished_message(message):
+                    self._mark_finished(embed)
+                await message.edit(embed=embed, view=EventParticipationView(self.rabbit, event_id, operation_url=operation_url))
+                logger.info(f"✏️ Annonce d'une opération terminée mise à jour (eventId={event_id})")
+                return
             await message.edit(view=None)
             return
         if self.discord_link_store:
@@ -349,52 +491,8 @@ class EventHandler:
             self.discord_link_store.reopen_event(event_id)
 
         title = payload.get("title", "Sans titre")
-        description = html_to_discord(payload.get("description", ""))
-        creator = payload.get("author", "Inconnu")
-        date = format_date(payload.get("date"))
-
-        type_info = payload.get("type", {}) or {}
-        image_url = type_info.get("imageUrl")
-        type_name = type_info.get("name", "Événement")
-        type_color = type_info.get("color")
-        operation_info = payload.get("operation", {}) or {}
-        if payload.get("activityType") == "OPERATION" and operation_info.get("briefing"):
-            description = html_to_discord(operation_info["briefing"])
-        if payload.get("activityType") == "OPERATION" and operation_info.get("imageUrl"):
-            image_url = operation_info["imageUrl"]
-
-        color_value = discord.Color(int(type_color.replace("#", ""), 16)) if type_color else discord.Color.blue()
-
-        participants = payload.get("participants", [])
-        confirmed = [p["username"] for p in participants if p["status"] == 1]
-        maybe = [p["username"] for p in participants if p["status"] == 0]
-        refused = [p["username"] for p in participants if p["status"] == -1]
-
-        def fmt_list(lst):
-            return "\n".join(lst) if lst else "–"
-
-        embed = discord.Embed(
-            title=f"{type_name} : {title}",
-            description=f"📅 **Date :** {date}\n\n💬 {description}",
-            color=color_value,
-        )
-        embed.add_field(name="✅ Confirmés", value=fmt_list(confirmed), inline=True)
-        embed.add_field(name="❔ Peut-être", value=fmt_list(maybe), inline=True)
-        embed.add_field(name="❌ Refusés", value=fmt_list(refused), inline=True)
-        embed.set_footer(text=f"Créé par {creator}")
-        if is_supported_discord_image_url(image_url):
-            embed.set_image(url=image_url)
-        elif image_url:
-            logger.warning("⚠️ Image d'événement ignorée : URL Discord non compatible")
-
-        if payload.get("activityType") == "OPERATION":
-            operation_url = f"{getenv('ICEFORGE_PUBLIC_URL', 'https://iceforge.fr').rstrip('/')}/icy/operations/{event_id}"
-            embed.add_field(name="Opération", value=f"[Voir l'opération sur IceForge]({operation_url})", inline=False)
-            if operation_info.get("objectives"):
-                embed.add_field(name="Objectifs", value=html_to_discord(operation_info["objectives"]), inline=False)
-            if operation_info.get("meetingPoint"):
-                embed.add_field(name="Lieu", value=str(operation_info["meetingPoint"]), inline=False)
-        view = self._view_for_embed(event_id, embed)
+        embed, operation_url = self._build_event_embed(event_id, payload)
+        view = EventParticipationView(self.rabbit, event_id, operation_url=operation_url)
         await message.edit(embed=embed, view=view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, message.channel.id, message.id, self._event_sort_key(payload.get("date")))
@@ -409,6 +507,7 @@ class EventHandler:
         channel_id = getattr(channel, "id", self.channel_id)
         existing = self.discord_link_store.list_events(channel_id, include_finished=True)
         records = []
+        operation_ids = set()
         last_finished_message = 0
         for event_id, link, key in existing:
             if self.discord_link_store.is_event_finished(event_id):
@@ -426,6 +525,8 @@ class EventHandler:
             key = self._event_sort_key(key) or self._legacy_sort_key(embed) if embed else None
             if embed is None or key is None:
                 continue
+            if self._is_operation_message(message):
+                operation_ids.add(str(event_id))
             records.append((key, event_id, link.message_id, discord.Embed.from_dict(embed.to_dict())))
 
         desired = sorted(records, key=lambda record: (record[0], record[1]))
@@ -438,7 +539,7 @@ class EventHandler:
         old_message_ids = [message_id for _, _, message_id, _ in records]
         new_links = {}
         for key, event_id, _, embed in desired:
-            sent = await channel.send(embed=embed, view=self._view_for_embed(event_id, embed))
+            sent = await channel.send(embed=embed, view=self._view_for(event_id, str(event_id) in operation_ids))
             new_links[event_id] = self.discord_link_store.save("event", event_id, sent.channel.id, sent.id, key)
         for message_id in old_message_ids:
             try:
@@ -496,8 +597,9 @@ class EventHandler:
             inline=False,
         )
 
-        # ❌ Retrait des boutons
-        await message.edit(embed=embed, view=None)
+        # ❌ Retrait des boutons de réponse ; une opération garde son lien vers la fiche.
+        closed_view = self._view_for(event_id, True) if self._is_operation_message(message) else None
+        await message.edit(embed=embed, view=closed_view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, int(channel_id), int(message_id))
             self.discord_link_store.finish_event(event_id)
@@ -781,8 +883,10 @@ class EventHandler:
             if self._is_finished_message(message):
                 # Nettoie les boutons laissés par une ancienne reconstruction.
                 event_id = self._extract_event_id_from_message_components(message)
+                if not event_id:
+                    continue
                 try:
-                    await message.edit(view=None)
+                    await message.edit(view=self._view_for(event_id, True) if self._is_operation_message(message) else None)
                 except Exception as exc:
                     logger.warning("Impossible de retirer les boutons d'un événement terminé (%s)", type(exc).__name__)
                 if event_id and self.discord_link_store:
@@ -833,17 +937,31 @@ class EventHandler:
 
 
 # --- Classe View pour les boutons ---
+PARTICIPATION_FAILURE = "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard."
+# Réponse donnée au membre selon ce que le serveur a réellement fait de son choix.
+PARTICIPATION_REPLIES = {
+    "RECORDED": "✅ Votre choix a été enregistré !",
+    "UNKNOWN_USER": "❌ Votre choix n'a pas été enregistré : votre compte Discord n'est relié à aucun compte IceForge actif.",
+    "EVENT_NOT_FOUND": "❌ Votre choix n'a pas été enregistré : cet événement n'existe plus.",
+    "NOT_PUBLISHED": "❌ Votre choix n'a pas été enregistré : cet événement n'accepte pas de réponse.",
+    "OPERATION_CLOSED": "❌ Votre choix n'a pas été enregistré : opération terminée.",
+}
+
+
 class EventParticipationView(ui.View):
     def __init__(self, rabbit, event_id, operation_url=None):
         super().__init__(timeout=None)
         self.rabbit = rabbit
         self.event_id = str(event_id)
 
-        self.add_item(self._build_button("Présent ✅", ButtonStyle.success, 1))
-        self.add_item(self._build_button("Peut-être ❔", ButtonStyle.secondary, 0))
-        self.add_item(self._build_button("Absent ❌", ButtonStyle.danger, -1))
+        # Une opération se gère sur sa fiche (présence, groupe, poste) : son annonce n'offre que le lien.
+        # Un événement classique garde ses trois réponses, avec leurs identifiants de toujours.
         if operation_url:
-            self.add_item(ui.Button(label="Voir l’opération sur IceForge", style=ButtonStyle.link, url=operation_url))
+            self.add_item(ui.Button(label="Consulter l’opération", style=ButtonStyle.link, url=operation_url))
+        else:
+            self.add_item(self._build_button("Présent ✅", ButtonStyle.success, 1))
+            self.add_item(self._build_button("Peut-être ❔", ButtonStyle.secondary, 0))
+            self.add_item(self._build_button("Absent ❌", ButtonStyle.danger, -1))
 
     def _build_button(self, label: str, style: ButtonStyle, status: int) -> ui.Button:
         button = ui.Button(
@@ -859,27 +977,28 @@ class EventParticipationView(ui.View):
         return button
 
     async def _send_participation(self, interaction: discord.Interaction, status: int):
+        """Le membre n'est informé d'un succès que si le serveur a réellement enregistré sa réponse."""
         await interaction.response.defer(ephemeral=True)
+        outcome = None
         try:
-            await self.rabbit.publish(
-                "events.participation",
-                {
+            api = interaction.client.get_cog("APIClient")
+            if api is None:
+                raise RuntimeError("backend client unavailable")
+            response = await api.api_request(
+                "POST",
+                "api/events/bot/participation",
+                data={
                     "eventId": self.event_id,
-                    "userId": interaction.user.id,
+                    "discordUserId": str(interaction.user.id),
                     "username": interaction.user.name,
                     "status": status,
                 },
             )
+            if isinstance(response, dict) and response.get("httpCode") == 200:
+                outcome = response.get("outcome")
         except Exception as exc:
             logger.error(
-                "❌ Publication de participation impossible (%s)",
+                "❌ Enregistrement de participation impossible (%s)",
                 type(exc).__name__,
             )
-            await interaction.followup.send(
-                "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard.",
-                ephemeral=True,
-            )
-            return
-        await interaction.followup.send(
-            "✅ Votre choix a été enregistré !", ephemeral=True
-        )
+        await interaction.followup.send(PARTICIPATION_REPLIES.get(outcome, PARTICIPATION_FAILURE), ephemeral=True)

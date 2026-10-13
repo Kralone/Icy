@@ -19,6 +19,8 @@ public class EventResponseDTO {
     private LocalDateTime createdAt;
     private boolean finished;
     private ActivityType activityType;
+    /** Renseigné dans la liste de gestion : opération pas encore publiée, invisible des membres. */
+    private boolean draft;
 
     public EventResponseDTO(Event event) {
         this.id = event.getId();

@@ -10,6 +10,13 @@ import java.util.UUID;
 public interface OperationGroupRepository extends CrudRepository<OperationGroup, Long> {
     List<OperationGroup> findByOperationEventIdOrderBySortOrderAscIdAsc(UUID operationEventId);
     boolean existsByParentId(Long parentId);
+
+    /** Lecture directe en base : vrai si le parent du groupe n'est plus celui attendu (groupe déplacé par une autre transaction). */
+    @org.springframework.data.jpa.repository.Query("select count(g) > 0 from OperationGroup g where g.id = :id and (g.parentId is null or g.parentId <> :parentId)")
+    boolean hasMovedFrom(@org.springframework.data.repository.query.Param("id") Long id, @org.springframework.data.repository.query.Param("parentId") Long parentId);
+
+    /** Même contrôle pour un groupe qui était principal : vrai s'il a reçu un parent entre-temps. */
+    boolean existsByIdAndParentIdIsNotNull(Long id);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     java.util.Optional<OperationGroup> findLockedById(Long id);
 }

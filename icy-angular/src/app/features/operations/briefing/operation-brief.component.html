@@ -1,0 +1,27 @@
+<section class="panel panel--briefing" id="briefing" tabindex="-1" aria-labelledby="operation-briefing-title">
+  <h2 id="operation-briefing-title"><app-operation-icon name="briefing" /> Briefing</h2>
+  @if (text()) {
+    <p class="briefing" id="operation-briefing-text" [class.is-clamped]="long() && !expanded()">{{ text() }}</p>
+    @if (long()) {
+      <button type="button" class="briefing__toggle" [attr.aria-expanded]="expanded()" aria-controls="operation-briefing-text" (click)="expanded.set(!expanded())">{{ expanded() ? 'Réduire' : 'Lire tout le briefing' }}</button>
+    }
+  } @else {
+    <p class="empty">{{ locked() ? 'Aucun briefing.' : 'Le briefing sera publié par l’organisateur.' }}</p>
+  }
+</section>
+
+<section class="panel panel--objectives" aria-labelledby="operation-objectives-title">
+  <h2 id="operation-objectives-title"><app-operation-icon name="target" /> Objectifs</h2>
+  @if (principal().length || secondary().length) {
+    @if (principal().length) {
+      <h3>Principaux</h3>
+      <ul class="objectives objectives--principal">@for (objective of principal(); track $index) { <li>{{ objective.text }}</li> }</ul>
+    }
+    @if (secondary().length) {
+      <h3>Secondaires</h3>
+      <ul class="objectives">@for (objective of secondary(); track $index) { <li>{{ objective.text }}</li> }</ul>
+    }
+  } @else {
+    <p class="empty">{{ locked() ? 'Aucun objectif.' : 'Les objectifs seront précisés par l’organisateur.' }}</p>
+  }
+</section>

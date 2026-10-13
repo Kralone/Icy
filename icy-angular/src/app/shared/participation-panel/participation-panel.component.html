@@ -1,0 +1,26 @@
+<section class="dialog-section">
+  <div class="section-heading"><h3>Présence</h3>@if (saving) { <span role="status" class="dialog-muted">Enregistrement…</span> }</div>
+  @if (finished) { <p class="dialog-muted">{{ finishedLabel }}</p> }
+  <div class="participation-actions" role="group" [attr.aria-label]="actionsLabel">
+    <button type="button" class="status-confirmed" [attr.aria-pressed]="selectedStatus === 1" [disabled]="finished || saving || loading" (click)="statusChange.emit(1)"><span aria-hidden="true">✓</span> Présent</button>
+    <button type="button" class="status-maybe" [attr.aria-pressed]="selectedStatus === 0" [disabled]="finished || saving || loading" (click)="statusChange.emit(0)"><span aria-hidden="true">?</span> Peut-être</button>
+    <button type="button" class="status-refused" [attr.aria-pressed]="selectedStatus === -1" [disabled]="finished || saving || loading" (click)="statusChange.emit(-1)"><span aria-hidden="true">−</span> Indisponible</button>
+  </div>
+  @if (error) { <div class="participation-error" role="alert"><p>{{ error }}</p><button type="button" (click)="retry.emit()">Recharger les participations</button></div> }
+</section>
+
+<section class="dialog-section">
+  <h3>Équipage</h3>
+  @if (loading) { <app-async-state kind="loading" title="Chargement des participations…" /> }
+  <div class="crew-columns">
+    <div class="crew-group status-confirmed"><h4>Confirmés <span>{{ participationsByStatus.confirmed.length }}</span></h4>
+      @for (p of participationsByStatus.confirmed; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
+    </div>
+    <div class="crew-group status-maybe"><h4>Peut-être <span>{{ participationsByStatus.maybe.length }}</span></h4>
+      @for (p of participationsByStatus.maybe; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
+    </div>
+    <div class="crew-group status-refused"><h4>Indisponibles <span>{{ participationsByStatus.refused.length }}</span></h4>
+      @for (p of participationsByStatus.refused; track p) { <p>{{ p.user?.username || 'Membre' }}</p> } @empty { <p class="dialog-muted">Aucun pour le moment</p> }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,52 @@
+<section class="overview" aria-label="Vue d’ensemble de l’organisation">
+  <header class="overview__head">
+    <h3>Vue d’ensemble</h3>
+    <label class="overview__mode">Affectation par défaut
+      <select [ngModel]="defaultMode()" (ngModelChange)="defaultModeChange.emit($event)" [disabled]="busy()">
+        @for (mode of modes; track mode) { <option [ngValue]="mode">{{ modeLabels[mode] }}</option> }
+      </select>
+      <small>{{ modeHints[defaultMode()] }} Un groupe peut choisir un autre mode.</small>
+      @if (defaultModeUnsaved()) { <small class="unsaved" role="status">Non appliqué : enregistrez les modifications en bas de page.</small> }
+    </label>
+  </header>
+
+  @if (!roots().length) {
+    <div class="overview__empty">
+      <p>L’organisation est vide. Commencez par un groupe par grande mission, puis découpez-le en sous-groupes si plusieurs équipes y travaillent.</p>
+      <button type="button" class="primary" [disabled]="busy()" (click)="addGroup.emit()">Créer le premier groupe</button>
+    </div>
+  } @else {
+    <dl class="overview__figures">
+      <div><dt>Membres affectés</dt><dd>{{ assignedMembers() }}</dd></div>
+      <div><dt>Demandes en attente</dt><dd>{{ pendingRequests() }}</dd></div>
+    </dl>
+
+    <ul class="overview__map">
+      @for (root of roots(); track root.id) {
+        <li class="branch">
+          <button type="button" class="branch__root" (click)="select.emit(root.id)">
+            <span class="branch__line"><strong>{{ root.name }}</strong><span>{{ occupancy(root) }}</span></span>
+            @if (percent(root) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="percent(root)"></span></span> }
+            <span class="branch__meta">{{ root.container ? 'Groupe principal' : modeLabels[root.effectiveMode] }}@if (root.responsibleUsername) { · ★ {{ root.responsibleUsername }} }</span>
+          </button>
+          @if (children(root.id).length) {
+            <ul class="branch__leaves">
+              @for (child of children(root.id); track child.id) {
+                <li>
+                  <button type="button" class="leaf" (click)="select.emit(child.id)">
+                    <span class="branch__line"><strong>{{ child.name }}</strong><span>{{ occupancy(child) }}</span></span>
+                    @if (percent(child) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="percent(child)"></span></span> }
+                    <span class="branch__meta">{{ modeLabels[child.effectiveMode] }}@if (child.responsibleUsername) { · ★ {{ child.responsibleUsername }} }@if (child.pendingRequests) { · {{ child.pendingRequests }} demande{{ child.pendingRequests > 1 ? 's' : '' }} }</span>
+                    @if (child.members.length) { <span class="leaf__crew">@for (member of child.members; track member.userId) { <span>{{ member.username }}</span> }</span> }
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else if (root.members.length) {
+            <p class="leaf__crew leaf__crew--root">@for (member of root.members; track member.userId) { <span>{{ member.username }}</span> }</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

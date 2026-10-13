@@ -172,6 +172,8 @@ services:
       DISCORD_DISCUSSION_CHANNEL_ID: ${STAGING_DISCORD_DISCUSSION_CHANNEL_ID:-}
       ENV_MODE: staging
       BACKEND_API_URL: http://backend:8080
+      # Adresse du site dans les liens des annonces. Sans elle, le bot retombe sur la production.
+      ICEFORGE_PUBLIC_URL: ${STAGING_PUBLIC_URL:-http://127.0.0.1:${STAGING_HTTP_PORT:-19088}}
       BOT_API_KEY: ${STAGING_BOT_API_KEY:?required}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672

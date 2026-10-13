@@ -18,7 +18,7 @@ import java.util.List;
 
 @Component
 public class BotApiKeyAuthenticationFilter extends OncePerRequestFilter {
-    static final List<String> BOT_PATHS = List.of("/api/user-ships/bot", "/api/users/bot");
+    static final List<String> BOT_PATHS = List.of("/api/user-ships/bot", "/api/users/bot", "/api/events/bot");
     private final byte[] expectedKey;
 
     public BotApiKeyAuthenticationFilter(@Value("${bot.api-key:}") String apiKey) {

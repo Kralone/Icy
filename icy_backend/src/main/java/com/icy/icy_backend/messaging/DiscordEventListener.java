@@ -34,7 +34,7 @@ public class DiscordEventListener {
     @RabbitListener(queues = {
             RabbitConfig.NEWS_DISCORD_LINKED_QUEUE,
             RabbitConfig.EVENTS_DISCORD_LINKED_QUEUE
-    })
+    }, errorHandler = "inboundMessageErrorHandler")
     public void onDiscordLinked(Map<String, Object> message) {
         try {
             if (message.containsKey("newsId")) {

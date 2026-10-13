@@ -63,7 +63,9 @@ class EventPublisherTest {
         @SuppressWarnings("unchecked")
         java.util.Map<String, Object> payload = (java.util.Map<String, Object>) payloadCaptor.getValue();
         assertThat(payload).containsEntry("activityType", "OPERATION");
-        assertThat((java.util.Map<?, ?>) payload.get("operation"))
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> operationPayload = (java.util.Map<String, Object>) payload.get("operation");
+        assertThat(operationPayload)
                 .containsEntry("objectives", "Objectif Alpha")
                 .containsEntry("meetingPoint", "Port Olisar")
                 .containsEntry("imageUrl", "https://cdn.example.test/operation.png");

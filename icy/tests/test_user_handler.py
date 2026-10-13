@@ -1,5 +1,6 @@
+import os
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from messaging.user_handler import UserHandler
 
@@ -25,6 +26,21 @@ class UserHandlerTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Ice Pilot", sent_message)
         self.assertIn("one-time-password", sent_message)
         self.assertIn("[Accéder à IceForge](https://iceforge.fr)", sent_message)
+
+    async def test_the_site_link_follows_the_configured_environment(self):
+        bot = AsyncMock()
+        user = AsyncMock()
+        bot.fetch_user.return_value = user
+
+        with patch.dict(os.environ, {"ICEFORGE_PUBLIC_URL": "http://127.0.0.1:19088/"}, clear=False):
+            await UserHandler(bot).handle(
+                "users.password_reset",
+                {"discordId": "123456789", "username": "pilote", "tempPassword": "motdepasse-temporaire"},
+            )
+
+        sent_message = user.send.await_args.args[0]
+        self.assertIn("[Accéder à IceForge](http://127.0.0.1:19088)", sent_message)
+        self.assertNotIn("iceforge.fr", sent_message)
 
     async def test_missing_password_is_rejected_without_discord_call(self):
         bot = AsyncMock()

@@ -27,6 +27,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OperationAssignmentServiceTest {
     @AfterEach void clearAuth() { SecurityContextHolder.clearContext(); }
 
+    @Test void groupsWithoutTheirOwnModeFollowTheOperationDefault() {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        OperationRepository operations = mock(OperationRepository.class);
+        OperationGroupRepository groups = mock(OperationGroupRepository.class);
+        OperationAssignmentRepository assignments = mock(OperationAssignmentRepository.class);
+        EventParticipationRepository participation = mock(EventParticipationRepository.class);
+        EventRepository events = mock(EventRepository.class);
+        Operation operation = Operation.builder().eventId(operationId).publicationStatus(Operation.PublicationStatus.PUBLISHED)
+                .defaultAssignmentMode(OperationGroup.AssignmentMode.MANAGED).build();
+        OperationGroup leaf = OperationGroup.builder().id(2L).operationEventId(operationId).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(operation));
+        when(events.findById(operationId)).thenReturn(Optional.of(Event.builder().id(operationId).build()));
+        when(groups.findById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "user", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, events, participation, mock(MessageService.class), mock(OperationAssignmentRequestRepository.class));
+
+        assertThatThrownBy(() -> service.assign(operationId, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("géré par les organisateurs");
+        verify(assignments, never()).save(any(OperationAssignment.class));
+    }
+
     @Test void locksLeafAndAncestorsInStableOrderBeforeCapacityRead() {
         UUID operationId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -275,7 +302,9 @@ class OperationAssignmentServiceTest {
         service.request(operationId, 2L);
 
         verify(requests).save(any(OperationAssignmentRequest.class));
-        verifyNoInteractions(assignments);
+        // L'affectation en place est lue (pour refuser une demande vers son propre groupe), jamais modifiée.
+        verify(assignments, org.mockito.Mockito.never()).save(any());
+        verify(assignments, org.mockito.Mockito.never()).delete(any());
     }
 
     @Test
@@ -304,8 +333,10 @@ class OperationAssignmentServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 new UserAuthDetails(UUID.randomUUID(), "admin", "password", List.of()), "", List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
 
+        var participation = mock(EventParticipationRepository.class);
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
         var service = new OperationAssignmentService(operations, groups, assignments, mock(EventRepository.class),
-                mock(EventParticipationRepository.class), mock(MessageService.class), requests);
+                participation, mock(MessageService.class), requests);
         service.decide(requestId, true);
 
         assertThat(current.getGroupId()).isEqualTo(2L);

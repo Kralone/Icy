@@ -1,0 +1,80 @@
+@if (roots().length) {
+  <ul class="chart">
+    @for (root of roots(); track root.id) {
+      <li class="root" [class.root--leaf]="!root.container" [class.root--mine]="action(root) === 'mine'">
+        <header class="root__head">
+          <div class="root__title">
+            <h3>{{ root.name }}</h3>
+            @if (root.description) { <p>{{ root.description }}</p> }
+            @if (root.responsibleUsername) { <p class="root__responsible">Responsable : {{ root.responsibleUsername }}</p> }
+          </div>
+          <div class="root__count">
+            <strong>{{ occupancy(root) }}</strong>
+            @if (fillPercent(root) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="fillPercent(root)" [class.is-full]="isFull(root)"></span></span> }
+            @if (root.capacity !== null && root.container) { <small>{{ seatsLabel(root) }}</small> }
+          </div>
+          @if (root.container) {
+            <button type="button" class="root__toggle" [attr.aria-expanded]="isOpen(root)" [attr.aria-controls]="'operation-group-' + root.id" (click)="toggle(root)">
+              <span aria-hidden="true">{{ isOpen(root) ? '−' : '+' }}</span><span class="sr-only">Sous-groupes de {{ root.name }}</span>
+            </button>
+          }
+        </header>
+
+        @if (root.container) {
+          @if (!isOpen(root)) { <p class="root__summary">{{ children(root.id).length }} sous-groupe{{ children(root.id).length > 1 ? 's' : '' }}</p> }
+            <ul class="root__children" [id]="'operation-group-' + root.id" [hidden]="!isOpen(root)">
+              @for (child of children(root.id); track child.id) {
+                <li class="leaf" [class.leaf--mine]="action(child) === 'mine'">
+                  <div class="leaf__head">
+                    <h4>{{ child.name }}</h4>
+                    <span class="leaf__count" [class.is-full]="isFull(child)">{{ occupancy(child) }}</span>
+                  </div>
+                  @if (fillPercent(child) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="fillPercent(child)" [class.is-full]="isFull(child)"></span></span> }
+                  @if (child.description) { <p class="leaf__description">{{ child.description }}</p> }
+                  <ng-container *ngTemplateOutlet="body; context: { $implicit: child }" />
+                </li>
+              }
+            </ul>
+        } @else {
+          <div class="root__body"><ng-container *ngTemplateOutlet="body; context: { $implicit: root }" /></div>
+        }
+      </li>
+    }
+  </ul>
+} @else {
+  <p class="chart__empty">{{ readOnly() ? 'Aucun groupe.' : 'Aucun groupe n’est encore défini par l’organisateur.' }}</p>
+}
+
+<ng-template #body let-group>
+  <p class="leaf__meta">
+    <span class="mode" [attr.data-mode]="group.effectiveMode">{{ modeLabel(group) }}</span>
+    @if (group.responsibleUsername && group.parentId !== null) { <span>Responsable : {{ group.responsibleUsername }}</span> }
+  </p>
+  @if (group.members.length) {
+    <ul class="members">
+      @for (member of visibleMembers(group); track member.userId) {
+        <li [class.is-me]="isMe(member)">{{ member.username }}@if (isMe(member)) { <span class="you">Vous</span> }</li>
+      }
+      @if (group.members.length > visibleLimit) {
+        <li class="members__more"><button type="button" [attr.aria-expanded]="isExpanded(group)" (click)="toggleMembers(group)">{{ isExpanded(group) ? 'Réduire' : '+ ' + hiddenCount(group) + ' autre' + (hiddenCount(group) > 1 ? 's' : '') }}</button></li>
+      }
+    </ul>
+  } @else {
+    <p class="leaf__nobody">Personne pour l’instant.</p>
+  }
+  @if (acceptedShips(group); as fleet) { <p class="leaf__ships"><span>Vaisseaux</span> {{ fleet }}</p> }
+  @switch (action(group)) {
+    @case ('mine') { <p class="leaf__action"><span class="tag tag--mine">Votre groupe</span></p> }
+    @case ('requested') { <p class="leaf__action"><span class="tag tag--pending">Demande envoyée</span></p> }
+    @case ('full') { <p class="leaf__action"><span class="tag tag--full">Complet</span></p> }
+    @case ('parentFull') { <p class="leaf__action"><span class="tag tag--full">Groupe principal complet</span></p> }
+    @case ('managed') { <p class="leaf__action leaf__hint">Un organisateur ou le responsable affecte les membres de ce groupe.</p> }
+    @case ('waiting') { <p class="leaf__action leaf__hint">Une demande est déjà en attente : annulez-la pour en faire une autre.</p> }
+    @case ('join') {
+      <p class="leaf__action"><button type="button" class="primary" [disabled]="busy()" (click)="join.emit(group)">{{ composition().myGroupId === null ? 'Rejoindre' : 'Passer dans ce groupe' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+    }
+    @case ('request') {
+      <p class="leaf__action"><button type="button" [disabled]="busy()" (click)="request.emit(group)">{{ composition().myGroupId === null ? 'Demander à rejoindre' : 'Demander le transfert' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+    }
+  }
+</ng-template>

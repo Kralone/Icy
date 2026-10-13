@@ -1,0 +1,31 @@
+<div class="preview" role="region" aria-label="Aperçu de la fiche participant">
+  <app-operation-hero [operation]="operation()" [presentCount]="presentCount()" [preview]="true" />
+  <div class="sheet">
+    <app-operation-my-assignment [preview]="true" />
+    <section class="panel panel--presence" aria-label="Présence">
+      @if (showAnswers()) {
+        <app-participation-panel [participationsByStatus]="answers()" [finished]="true" [finishedLabel]="presenceNote()" actionsLabel="Réponse du participant (aperçu, inactif)" />
+      } @else {
+        <p class="preview__state" role="status">{{ participationsState() === 'error' ? 'Les réponses des membres n’ont pas pu être lues.' : 'Chargement des réponses des membres…' }}</p>
+      }
+    </section>
+    <app-operation-brief [briefing]="operation().briefing" [description]="operation().description" [objectives]="operation().objectives" [locked]="locked()" />
+    <section class="panel panel--organisation" aria-labelledby="operation-preview-organisation">
+      <h2 id="operation-preview-organisation"><app-operation-icon name="groups" /> Organisation</h2>
+      @if (organizationState() === 'ready') {
+        <app-operation-org-chart [composition]="composition()" [readOnly]="true" [preview]="!locked()" [ships]="ships()" />
+      } @else {
+        <p class="empty-state" role="status">{{ organizationState() === 'error' ? 'L’organisation n’a pas pu être chargée : voir l’onglet Organisation.' : 'Chargement de l’organisation…' }}</p>
+      }
+    </section>
+    <section class="panel panel--fleet" aria-labelledby="operation-preview-fleet">
+      <h2 id="operation-preview-fleet"><app-operation-icon name="ship" /> Flotte</h2>
+      @if (fleetError()) {
+        <p class="empty-state" role="status">La flotte n’a pas pu être chargée : voir l’onglet Organisation.</p>
+      } @else {
+        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="visibleRequirements()" [ships]="ships()" [groups]="groups()" [locked]="true" />
+        <p class="empty-state">{{ locked() ? 'Opération terminée : la flotte n’est plus modifiable.' : operation().allowShipProposals ? 'Les membres présents pourront proposer un vaisseau de leur hangar.' : 'Les propositions de vaisseaux sont désactivées.' }}</p>
+      }
+    </section>
+  </div>
+</div>

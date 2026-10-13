@@ -89,4 +89,80 @@ class DiscordEventParticipationListenerTest {
                 eq(com.icy.icy_backend.db.entity.event.OperationAssignmentRequest.Status.PENDING));
         verify(publisher).publishEventUpdated(event);
     }
+
+    private record Fixture(DiscordEventParticipationListener listener, EventRepository events, UserRepository users,
+                           EventParticipationRepository participations, EventPublisher publisher) {}
+
+    private static Fixture fixture() {
+        EventRepository events = mock(EventRepository.class);
+        UserRepository users = mock(UserRepository.class);
+        EventParticipationRepository participations = mock(EventParticipationRepository.class);
+        EventPublisher publisher = mock(EventPublisher.class);
+        DiscordEventParticipationListener listener = new DiscordEventParticipationListener(events, users, participations, publisher,
+                mock(OperationAssignmentRepository.class), mock(OperationAssignmentRequestRepository.class));
+        return new Fixture(listener, events, users, participations, publisher);
+    }
+
+    @Test
+    void anAcceptedAnswerIsReportedAsRecorded() {
+        Fixture f = fixture();
+        UUID eventId = UUID.randomUUID();
+        Event event = new Event();
+        event.setId(eventId);
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        when(f.events().findById(eventId)).thenReturn(Optional.of(event));
+        when(f.users().findByDiscordId("discord-1")).thenReturn(Optional.of(user));
+        when(f.participations().findByEventAndUser(event, user)).thenReturn(Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThat(f.listener().record(eventId, "discord-1", "pilot", 0))
+                .isEqualTo(DiscordEventParticipationListener.Outcome.RECORDED);
+        verify(f.participations()).save(any(EventParticipation.class));
+    }
+
+    @Test
+    void anUnknownOrInactiveDiscordAccountIsNeverReportedAsRecorded() {
+        Fixture f = fixture();
+        UUID eventId = UUID.randomUUID();
+        Event event = new Event();
+        event.setId(eventId);
+        when(f.events().findById(eventId)).thenReturn(Optional.of(event));
+        // Le dépôt ne rend que les comptes actifs : inconnu et inactif se présentent de la même façon.
+        when(f.users().findByDiscordId("discord-9")).thenReturn(Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThat(f.listener().record(eventId, "discord-9", "stranger", 1))
+                .isEqualTo(DiscordEventParticipationListener.Outcome.UNKNOWN_USER);
+        verify(f.participations(), never()).save(any());
+        verifyNoInteractions(f.publisher());
+    }
+
+    @Test
+    void aDeletedEventAndAnInvalidAnswerAreNotRecorded() {
+        Fixture f = fixture();
+        UUID gone = UUID.randomUUID();
+        when(f.events().findById(gone)).thenReturn(Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThat(f.listener().record(gone, "discord-1", "pilot", 1))
+                .isEqualTo(DiscordEventParticipationListener.Outcome.EVENT_NOT_FOUND);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> f.listener().record(gone, "discord-1", "pilot", 7))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> f.listener().record(gone, " ", "pilot", 1))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(f.participations(), never()).save(any());
+    }
+
+    @Test
+    void theBotEndpointReturnsTheRealOutcome() {
+        DiscordEventParticipationListener listener = mock(DiscordEventParticipationListener.class);
+        var controller = new com.icy.icy_backend.controller.event.BotEventParticipationController(listener);
+        UUID eventId = UUID.randomUUID();
+        when(listener.record(eventId, "discord-9", "stranger", 1)).thenReturn(DiscordEventParticipationListener.Outcome.UNKNOWN_USER);
+
+        var response = controller.record(new com.icy.icy_backend.controller.event.BotEventParticipationController.Request(eventId, "discord-9", "stranger", 1));
+
+        org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(200);
+        org.assertj.core.api.Assertions.assertThat(response.getBody()).containsEntry("outcome", "UNKNOWN_USER");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> controller.record(new com.icy.icy_backend.controller.event.BotEventParticipationController.Request(eventId, "discord-9", "stranger", null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

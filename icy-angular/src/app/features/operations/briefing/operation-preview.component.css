@@ -1,0 +1,6 @@
+:host { display: block; min-width: 0; }
+/* Le cadre est le conteneur de référence de la fiche : elle s'y adapte comme à une fenêtre de cette largeur. */
+.preview { container: sheet / inline-size; overflow: hidden; padding-bottom: 1rem; border: 1px solid rgba(103,232,249,.35); border-radius: 1rem; color: #e2e8f0; background: #0b1220; }
+.sheet { width: calc(100% - 2rem); margin-top: 1rem; }
+.preview__state { margin: 0; padding: 1.2rem 0 .4rem; color: #a9bfd0; }
+@container sheet (max-width: 640px) { .sheet { width: calc(100% - 1.25rem); } }

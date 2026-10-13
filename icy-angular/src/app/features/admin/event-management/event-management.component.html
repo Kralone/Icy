@@ -174,21 +174,31 @@
                 <tbody>
                   @for (e of paginatedEvents; track e) {
                     <tr class="hover:bg-white/5 transition border-b border-white/10">
-                      <td class="px-4 py-3 font-medium" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.title }}</td>
+                      <td class="px-4 py-3 font-medium" [ngClass]="{ 'italic text-gray-400': e.finished }">@if (e.activityType === 'OPERATION') { <span class="operation-mark mr-2 inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-300/10 px-2 py-0.5 align-middle text-[11px] font-semibold uppercase tracking-wider text-amber-200 not-italic"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c3 3 5 7 5 11l2 3v3l-4-2H9l-4 2v-3l2-3c0-4 2-8 5-11zM12 9v3" /></svg>Opération</span> }{{ e.title }}</td>
                       <td class="px-4 py-3" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.type.name }}</td>
                       <td class="px-4 py-3 whitespace-nowrap" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.startDateTime | date:'short' }}</td>
                       <td class="px-4 py-3 whitespace-nowrap" [ngClass]="{ 'italic text-gray-400': e.finished }">{{ e.endDateTime | date:'short' }}</td>
                       <td class="px-4 py-3">
                         <span
                 [ngClass]="{
-                  'text-green-400': !e.finished,
-                  'text-gray-400': e.finished
+                  'text-amber-300': e.draft,
+                  'text-green-400': !e.draft && !e.finished,
+                  'text-gray-400': !e.draft && e.finished
                 }">
-                          {{ e.finished ? 'Terminé' : 'À venir' }}
+                          {{ e.draft ? 'Brouillon' : e.finished ? 'Terminé' : 'À venir' }}
                         </span>
                       </td>
                       <td class="px-4 py-3 text-right">
-                        @if (!e.finished) {
+                        @if (e.activityType === 'OPERATION') {
+                          <a
+                            [routerLink]="['/icy/operations', e.id, 'edit']"
+              class="operation-edit inline-block whitespace-nowrap font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5
+                     hover:border-cyan-400/40"
+                            >
+                            ✏️ Modifier
+                          </a>
+                        }
+                        @if (e.activityType !== 'OPERATION' && !e.finished) {
                           <button
                             (click)="openEditEventModal(e)"
               class="font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5
@@ -197,7 +207,7 @@
                             ✏️ Modifier
                           </button>
                         }
-                        @if (e.finished) {
+                        @if (e.activityType !== 'OPERATION' && e.finished) {
                           <button
                             (click)="openViewEventModal(e)"
               class="font-semibold transition px-3 py-1.5 rounded-full border border-white/10 bg-white/5

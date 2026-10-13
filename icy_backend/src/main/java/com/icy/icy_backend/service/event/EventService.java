@@ -5,6 +5,9 @@ import com.icy.icy_backend.controller.dto.response.event.EventParticipationRespo
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.db.entity.event.ActivityType;
+import com.icy.icy_backend.db.entity.event.Operation;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.event.OperationAssignmentRepository;
 import com.icy.icy_backend.db.repository.event.OperationAssignmentRequestRepository;
 import com.icy.icy_backend.db.entity.event.OperationAssignmentRequest;
@@ -13,6 +16,7 @@ import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.EventRepository;
 import com.icy.icy_backend.db.repository.event.EventTypeRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.EventPublisher;
@@ -60,6 +64,79 @@ public class EventService {
     private OperationAssignmentRepository operationAssignmentRepository;
     private OperationAssignmentRequestRepository operationAssignmentRequestRepository;
 
+    private OperationRepository operationRepository;
+
+    @Autowired
+    public void setOperationRepository(OperationRepository operationRepository) {
+        this.operationRepository = operationRepository;
+    }
+
+    /**
+     * Une opération non publiée n'existe pas pour les membres : ni listes, ni temps réel, ni Discord, ni notifications.
+     * Les événements classiques ne sont jamais concernés.
+     */
+    public boolean isUnpublishedOperation(Event event) {
+        if (event.getActivityType() != ActivityType.OPERATION) return false;
+        return operationRepository == null || operationRepository.findById(event.getId())
+                .map(operation -> operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED)
+                .orElse(true);
+    }
+
+    private List<Event> withoutUnpublishedOperations(List<Event> events) {
+        if (events.stream().noneMatch(event -> event.getActivityType() == ActivityType.OPERATION)) return events;
+        Set<UUID> published = operationRepository == null ? Set.of()
+                : new HashSet<>(operationRepository.findEventIdsByPublicationStatus(Operation.PublicationStatus.PUBLISHED));
+        return events.stream()
+                .filter(event -> event.getActivityType() != ActivityType.OPERATION || published.contains(event.getId()))
+                .toList();
+    }
+
+    private static boolean currentUserIsOrganizer() {
+        return AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+    }
+
+    /** Lecture ou réponse par identifiant : un brouillon est introuvable pour qui ne l'organise pas. */
+    private Event findEventVisibleToCurrentUser(UUID eventId) {
+        Event event = findEventById(eventId);
+        if (isUnpublishedOperation(event) && !currentUserIsOrganizer()) {
+            throw new ResourceNotFoundException("Event introuvable avec ID: " + eventId);
+        }
+        return event;
+    }
+
+    /** Annonce d'un événement devenu visible : création d'un événement classique ou publication d'une opération. */
+    public void announceCreated(Event event) {
+        eventWebSocketService.sendEventUpdate(event, "ADD");
+        eventPublisher.publishEventCreated(event);
+        notificationPushService.sendBroadcast(
+                "Evenement : cree",
+                event.getTitle() + " est disponible.",
+                "/icy/events",
+                2
+        );
+    }
+
+    /** Une opération vient d'être publiée : elle est annoncée comme un événement qui vient d'apparaître. */
+    public void announcePublishedOperation(UUID eventId) {
+        announceCreated(findEventById(eventId));
+    }
+
+    /** Le contenu d'une opération publiée a changé : son annonce Discord existante est mise à jour, sans nouveau message. */
+    public void announceOperationContentChanged(UUID eventId) {
+        eventRepository.findById(eventId).filter(event -> !isUnpublishedOperation(event)).ifPresent(eventPublisher::publishEventUpdated);
+    }
+
+    /** Vrai si l'événement a déjà une annonce Discord ou des réponses de membres. */
+    public boolean isAnnouncedOrAnswered(Event event) {
+        return event.getDiscordMessageId() != null || participationRepository.countByEvent_Id(event.getId()) > 0;
+    }
+
+    /** Un événement visible redevient un brouillon d'opération : il est retiré des calendriers ouverts et de Discord. */
+    public void announceWithdrawn(Event event) {
+        eventWebSocketService.sendEventUpdate(event, "DELETE");
+        eventPublisher.publishEventDeleted(event);
+    }
+
     @Autowired
     public void setOperationAssignmentRepositories(OperationAssignmentRepository assignments, OperationAssignmentRequestRepository requests) {
         this.operationAssignmentRepository = assignments;
@@ -85,6 +162,19 @@ public class EventService {
             String description,
             LocalDateTime start,
             LocalDateTime end
+    ) {
+        return createEvent(type, title, description, start, end, true);
+    }
+
+    /** `announce` faux : support d'un brouillon d'opération, annoncé seulement à sa publication. */
+    @Transactional
+    public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
+            String type,
+            String title,
+            String description,
+            LocalDateTime start,
+            LocalDateTime end,
+            boolean announce
     ) {
         validateEventDates(start, end);
         // 🔹 Récupération du créateur (user connecté)
@@ -112,16 +202,10 @@ public class EventService {
         // Une opération est convertie dans la même transaction. Les effets externes
         // ne doivent partir qu’après le commit, sinon un rollback laisse un événement
         // visible sur le calendrier, Discord ou les notifications.
-        Runnable publish = () -> {
-            eventWebSocketService.sendEventUpdate(saved, "ADD");
-            eventPublisher.publishEventCreated(saved);
-            notificationPushService.sendBroadcast(
-                    "Evenement : cree",
-                    saved.getTitle() + " est disponible.",
-                    "/icy/events",
-                    2
-            );
-        };
+        Runnable publish = () -> announceCreated(saved);
+        if (!announce) {
+            return messageService.buildResponse("event.created", new EventResponseDTO(saved));
+        }
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -158,6 +242,17 @@ public class EventService {
 
         boolean dateChanged = !Objects.equals(oldStart, start) || !Objects.equals(oldEnd, end);
 
+        // Une opération publiée dont la fin est passée est clôturée : repousser ses dates la rouvrirait.
+        if (dateChanged && event.getActivityType() == ActivityType.OPERATION && !isUnpublishedOperation(event)
+                && com.icy.icy_backend.service.operation.OperationLock.isClosed(oldEnd, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE))) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException("Opération terminée : ses dates ne peuvent plus être modifiées.");
+        }
+        // Une fin déjà passée clôturerait l'opération sur-le-champ, sans retour possible.
+        if (dateChanged && event.getActivityType() == ActivityType.OPERATION && !isUnpublishedOperation(event)
+                && com.icy.icy_backend.service.operation.OperationLock.isClosed(end, LocalDateTime.now(com.icy.icy_backend.service.operation.OperationLock.ZONE))) {
+            throw new IllegalArgumentException("La fin d’une opération publiée doit être à venir.");
+        }
+
         // --- Mise à jour event
         event.setType(getEventTypeByName(type));
         event.setTitle(title);
@@ -167,8 +262,9 @@ public class EventService {
         event.setFinished(finished);
         event.setUpdatedAt(LocalDateTime.now());
 
-        // --- Si date changée : on purge les participations
-        if (dateChanged) {
+        // --- Si date changée : on purge les participations d'un événement classique.
+        // Une opération garde les siennes : ses affectations et ses vaisseaux en dépendent et ne sont pas réinitialisés.
+        if (dateChanged && event.getActivityType() != ActivityType.OPERATION) {
             logger.info("Date modifiée pour event {} ({}->{} / {}->{}). Suppression des participations.",
                     event.getId(), oldStart, start, oldEnd, end);
 
@@ -176,6 +272,9 @@ public class EventService {
         }
 
         Event saved = eventRepository.save(event);
+        if (isUnpublishedOperation(saved)) {
+            return messageService.buildResponse("event.updated", new EventResponseDTO(saved));
+        }
 
         // --- Realtime + Rabbit
         eventWebSocketService.sendEventUpdate(saved, "UPDATE");
@@ -231,8 +330,18 @@ public class EventService {
                 .map(User::getId)
                 .distinct()
                 .toList();
+        boolean unpublishedOperation = isUnpublishedOperation(event);
+        // L'historique d'une opération terminée est conservé tant qu'elle porte des présences ou des affectations.
+        if (event.getActivityType() == ActivityType.OPERATION && !unpublishedOperation
+                && (event.isFinished() || com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event))
+                && (participationRepository.countByEvent_Id(id) > 0 || (operationAssignmentRepository != null && !operationAssignmentRepository.findByOperationEventId(id).isEmpty()))) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException("Opération terminée : elle est conservée avec ses participations et ses affectations, et ne peut pas être supprimée.");
+        }
         participationRepository.deleteAllByEvent(event);
         eventRepository.delete(event);
+        if (unpublishedOperation) {
+            return messageService.buildResponse("event.deleted", null);
+        }
         eventWebSocketService.sendEventUpdate(event, "DELETE");
         eventPublisher.publishEventDeleted(event);
         notificationPushService.sendBroadcast(
@@ -254,13 +363,27 @@ public class EventService {
     }
 
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getAllEvents() {
-        List<EventResponseDTO> events = ((List<Event>) eventRepository.findAll()).stream()
-                .map(EventResponseDTO::new).collect(Collectors.toList());
+        return getAllEvents(false);
+    }
+
+    /** `includeDrafts` n'est honoré que pour un organisateur : c'est la liste de gestion de l'administration. */
+    public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getAllEvents(boolean includeDrafts) {
+        List<Event> all = (List<Event>) eventRepository.findAll();
+        List<Event> published = withoutUnpublishedOperations(all);
+        if (!includeDrafts || !currentUserIsOrganizer()) {
+            return messageService.buildResponse("event.list", published.stream().map(EventResponseDTO::new).collect(Collectors.toList()));
+        }
+        Set<UUID> publishedIds = published.stream().map(Event::getId).collect(Collectors.toSet());
+        List<EventResponseDTO> events = all.stream().map(event -> {
+            EventResponseDTO dto = new EventResponseDTO(event);
+            dto.setDraft(!publishedIds.contains(event.getId()));
+            return dto;
+        }).collect(Collectors.toList());
         return messageService.buildResponse("event.list", events);
     }
 
     public List<EventResponseDTO> getAllEventsAsMap() {
-        return ((List<Event>) eventRepository.findAll()).stream()
+        return withoutUnpublishedOperations((List<Event>) eventRepository.findAll()).stream()
                 .map(EventResponseDTO::new).collect(Collectors.toList());
     }
 
@@ -277,8 +400,8 @@ public class EventService {
     }
 
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getUpcomingEvents() {
-        List<EventResponseDTO> events = eventRepository
-                .findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now())
+        List<EventResponseDTO> events = withoutUnpublishedOperations(eventRepository
+                .findByStartDateTimeAfterOrderByStartDateTimeAsc(LocalDateTime.now()))
                 .stream()
                 .map(EventResponseDTO::new)
                 .toList();
@@ -286,7 +409,7 @@ public class EventService {
     }
 
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getRecentFinishedEvents() {
-        List<EventResponseDTO> events = eventRepository.findTop3ByFinishedTrueOrderByEndDateTimeDesc().stream()
+        List<EventResponseDTO> events = withoutUnpublishedOperations(eventRepository.findTop3ByFinishedTrueOrderByEndDateTimeDesc()).stream()
                 .map(EventResponseDTO::new)
                 .toList();
         return messageService.buildResponse("event.list", events);
@@ -297,7 +420,7 @@ public class EventService {
         LocalDateTime startDateTime = start.atStartOfDay();
         LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
 
-        List<Event> events = eventRepository.findByStartDateTimeBetweenOrderByStartDateTimeAsc(startDateTime, endDateTime);
+        List<Event> events = withoutUnpublishedOperations(eventRepository.findByStartDateTimeBetweenOrderByStartDateTimeAsc(startDateTime, endDateTime));
         logger.info("Récupération de {} événements entre {} et {}", events.size(), startDateTime, endDateTime);
 
         return events;
@@ -328,6 +451,7 @@ public class EventService {
         int updatedCount = 0;
         for (Event event : savedEvents) {
             updatedCount++;
+            if (isUnpublishedOperation(event)) continue;
             eventWebSocketService.sendEventUpdate(event, "UPDATE");
 
             try {
@@ -347,7 +471,7 @@ public class EventService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
-        List<Event> todaysEvents = eventRepository.findAllBetween(startOfDay, endOfDay);
+        List<Event> todaysEvents = withoutUnpublishedOperations(eventRepository.findAllBetween(startOfDay, endOfDay));
 
         if (todaysEvents.isEmpty()) {
             log.info("📭 Aucun événement prévu aujourd’hui — pas de ping global.");
@@ -383,7 +507,7 @@ public class EventService {
         ZonedDateTime from = now.plusMinutes(50);
         ZonedDateTime to = now.plusMinutes(70);
 
-        List<Event> upcomingEvents = eventRepository.findAllBetween(from.toLocalDateTime(), to.toLocalDateTime());
+        List<Event> upcomingEvents = withoutUnpublishedOperations(eventRepository.findAllBetween(from.toLocalDateTime(), to.toLocalDateTime()));
 
         if (upcomingEvents.isEmpty()) {
             return;
@@ -432,6 +556,26 @@ public class EventService {
 
 // ------------------------------Event Type Service--------------------------------------
 
+    /**
+     * Liste fermée des types d’opération : le type doit exister dans events.event_types.
+     * Réservé à la création d’opération ; les événements classiques gardent leur comportement historique.
+     */
+    public String requireExistingEventTypeName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Choisissez un type d’opération.");
+        }
+        String trimmed = name.trim();
+        if (eventTypeRepository.findByName(trimmed) != null) {
+            return trimmed;
+        }
+        // Tolère une différence de casse et renvoie le nom enregistré.
+        return eventTypeRepository.findAll().stream()
+                .map(EventType::getName)
+                .filter(trimmed::equalsIgnoreCase)
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Type d’opération inconnu : « " + trimmed + " ». Choisissez un type dans la liste."));
+    }
+
     private EventType getEventTypeByName(String name) {
         if (name == null) {
             return new EventType();
@@ -445,8 +589,15 @@ public class EventService {
         }
     }
 
+    /** La réponse et la libération éventuelle de la place sont enregistrées ensemble, ou pas du tout. */
+    @Transactional
     public ResponseEntity<MessageResponse<Void>> setParticipation(UUID eventId, int status) {
-        Event event = findEventById(eventId);
+        Event event = findEventVisibleToCurrentUser(eventId);
+        // Après l'heure de fin d'une opération publiée, la liste des présents est un historique : elle ne change plus.
+        // C'est l'heure qui fait foi, pas le drapeau « finished », posé avec retard. Un événement classique n'est pas concerné.
+        if (com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event) && !isUnpublishedOperation(event)) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException(com.icy.icy_backend.service.operation.OperationLock.PRESENCE_MESSAGE);
+        }
 
         User user = userService.findUserById(AuthUtils.getCurrentUserId());
 
@@ -459,7 +610,8 @@ public class EventService {
 
         participationRepository.save(participation);
 
-        if (status != 1 && operationAssignmentRepository != null) {
+        // Quitter « Présent » libère la place dans le groupe, sauf après la fin de l'opération : la composition reste telle qu'elle était.
+        if (status != 1 && operationAssignmentRepository != null && !(com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event) && !isUnpublishedOperation(event))) {
             UUID userId = user.getId();
             operationAssignmentRepository.deleteByOperationEventIdAndUserId(eventId, userId);
             if (operationAssignmentRequestRepository != null) {
@@ -467,14 +619,26 @@ public class EventService {
             }
         }
 
-        eventPublisher.publishEventUpdated(event);
+        if (!isUnpublishedOperation(event)) {
+            // Discord n'est prévenu qu'une fois la réponse validée en base, comme avant.
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        eventPublisher.publishEventUpdated(event);
+                    }
+                });
+            } else {
+                eventPublisher.publishEventUpdated(event);
+            }
+        }
 
         return messageService.buildResponse("event.participation.set", null);
     }
 
     public ResponseEntity<MessageResponse<List<EventParticipationResponseDTO>>> getEventParticipations(UUID eventId) {
 
-        Optional<List<EventParticipation>> participations = participationRepository.findAllByEvent(findEventById(eventId));
+        Optional<List<EventParticipation>> participations = participationRepository.findAllByEvent(findEventVisibleToCurrentUser(eventId));
         if (participations.isPresent()) {
             List<EventParticipationResponseDTO> response = participations.get().stream()
                     .map(EventParticipationResponseDTO::new)
