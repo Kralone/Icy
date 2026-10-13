@@ -168,6 +168,9 @@ avant toute reprise. Aucun `flyway repair` n'est prévu.
 ne démarre plus sur la base migrée (« missing column [source_sheet] », vérifié). Le retour
 automatique aux trois images précédentes ne suffit donc pas après les migrations. Il faut
 restaurer la sauvegarde chiffrée prise par le script, puis remettre les anciennes images.
+Le script ne tente donc plus ce retour automatique dès que la version Flyway a changé :
+il s'arrête avec ce message et laisse les services en l'état. Avant toute migration, le
+retour automatique aux images précédentes reste en place.
 Tout ce qui a été saisi entre-temps est perdu : prévoir une fenêtre courte et annoncée.
 
 ## Après déploiement : resynchronisation Wikelo
