@@ -180,6 +180,16 @@ printf 'BACKEND_IMAGE=%q\nBOT_IMAGE=%q\nFRONTEND_IMAGE=%q\n' \
 rollback() {
   local status=$?
   trap - ERR
+  # The previous backend cannot start on a migrated database: putting it back would turn a
+  # partial failure into a full outage. Once Flyway has moved, the rollback is a restore.
+  local reached_version
+  reached_version=$(db_psql -Atc     'SELECT max(version::integer) FROM public.flyway_schema_history WHERE success' 2>/dev/null || echo inconnue)
+  if [[ $reached_version != "$current_version" ]]; then
+    echo "Déploiement en échec après migration (V${current_version} -> V${reached_version})." >&2
+    echo "Aucun retour automatique: l'ancien backend ne démarre pas sur la base migrée." >&2
+    echo "Restaurer la sauvegarde prise avant ce déploiement, puis remettre les images consignées dans $rollback_file." >&2
+    exit "$status"
+  fi
   echo "Déploiement en échec; restauration des trois images applicatives précédentes." >&2
   export BACKEND_IMAGE=${previous[backend]} BOT_IMAGE=${previous[bot]} FRONTEND_IMAGE=${previous[frontend]}
   "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend bot frontend || true
