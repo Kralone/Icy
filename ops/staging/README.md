@@ -111,7 +111,7 @@ une erreur de droits y couperait l'accès d'exploitation en même temps.
    ```
 3. **Lire l'existant** avant d'écrire quoi que ce soit :
    ```bash
-   grep -rnEi '^\s*(Match|AllowTcpForwarding|PermitOpen|DisableForwarding|Include)' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
+   grep -rnEi '^\s*(Match|AllowTcpForwarding|PermitOpen|DisableForwarding|Include)' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
    sshd -T -C user=iceforge-ops,host=$(hostname),addr=127.0.0.1 | grep -Ei '^(allowtcpforwarding|permitopen|gatewayports|disableforwarding)'
    ```
    - Si un bloc `Match User iceforge-ops` existe déjà : le compléter, ne pas en créer un second.
