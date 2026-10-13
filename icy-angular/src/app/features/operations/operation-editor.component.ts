@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostLi
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OperationLoadFailure, operationLoadFailure } from './operation-load-failure';
-import { BehaviorSubject, catchError, debounceTime, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, debounceTime, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
@@ -19,6 +19,9 @@ import { OperationOverviewComponent } from './organization/operation-overview.co
 import { OperationCoordination, OperationCoordinationBoardComponent } from './organization/operation-coordination-board.component';
 import { FleetRequirement, FleetShip, OperationFleetCardsComponent } from './organization/operation-fleet-cards.component';
 import { OperationPreviewComponent } from './briefing/operation-preview.component';
+import { OperationCrew } from './organization/operation-crew.model';
+import { OperationCrewBuilderComponent } from './organization/operation-crew-builder.component';
+import { OperationCrewPanelComponent } from './organization/operation-crew-panel.component';
 import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
 import { eventColor, eventImage } from '../events/event-appearance';
@@ -45,7 +48,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, DatePipe, RouterLink, NgTemplateOutlet, OperationIconComponent, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
+  imports: [FormsModule, AsyncPipe, DatePipe, RouterLink, NgTemplateOutlet, OperationIconComponent, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationCrewBuilderComponent, OperationCrewPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrls: ['./operation-editor.component.css', './operation-requirement-form.css']
@@ -86,6 +89,7 @@ export class OperationEditorComponent implements OnDestroy {
   bannerImageFailed(url: string): void { this.bannerFailed.update(failed => new Set(failed).add(url)); }
 
   selectTab(tab: OperationEditorComponent['tab']): void {
+    if (this.crewBusy()) return;
     const open = () => {
       this.tab = tab;
       // Les inscriptions changent sans l'organisateur : la coordination est relue à chaque ouverture.
@@ -284,12 +288,81 @@ export class OperationEditorComponent implements OnDestroy {
   readonly groupSettingsDirty = signal(false);
   private organizationLoadSeq = 0;
 
+  /** Équipages de vaisseau de l'opération, lus avec la structure : un groupe absent de cette liste est un groupe ordinaire. */
+  readonly crews = signal<OperationCrew[]>([]);
+  readonly crewsError = signal(false);
+  readonly crewByGroup = computed(() => new Map(this.crews().map(crew => [crew.groupId, crew])));
+  readonly crewIds = computed<ReadonlySet<number>>(() => new Set(this.crews().map(crew => crew.groupId)));
+  readonly crewModels = computed<ReadonlyMap<number, string | null>>(() => new Map(this.crews().map(crew => [crew.groupId, crew.shipModelName])));
+  /** undefined : constructeur fermé ; null : équipage autonome ; sinon le groupe principal proposé. */
+  readonly crewBuilderParent = signal<number | null | undefined>(undefined);
+  /** Équipage tout juste créé avec des postes personnalisés : son formulaire de poste s'ouvre d'emblée. */
+  readonly crewPositionsFor = signal<number | null>(null);
+  private crewsLoadSeq = 0;
+
+  /** Une création ou une écriture d'équipage est en cours : son écran reste ouvert jusqu'à la réponse. */
+  readonly crewBusy = signal(false);
+
+  /** Nouvel essai après un échec : tant que les équipages ne sont pas lus, l'organisation reste en consultation. */
+  loadCrews(operationId: string): void {
+    const seq = ++this.crewsLoadSeq;
+    this.eventService.getOperationCrews(operationId).subscribe({
+      next: crews => { if (seq !== this.crewsLoadSeq) return; this.crews.set(crews); this.crewsError.set(false); },
+      error: () => { if (seq !== this.crewsLoadSeq) return; this.crewsError.set(true); }
+    });
+  }
+
+  openCrewBuilder(parentId: number | null): void {
+    if (this.organizationBusy() || this.crewBusy() || this.crewsError() || !this.organization()) return;
+    // Déjà ouvert : l'emplacement devient celui qui vient d'être demandé, le reste de la saisie est gardé.
+    if (this.crewBuilderParent() !== undefined) { this.crewBuilderParent.set(parentId); return; }
+    this.afterGroupSettings(() => { this.crewBuilderParent.set(parentId); this.groupOpenOnMobile.set(true); });
+  }
+
+  closeCrewBuilder(): void {
+    this.afterCrewBuilder(() => this.groupOpenOnMobile.set(false));
+  }
+
+  /** Le constructeur d'équipage contient une saisie qui serait perdue en le fermant. */
+  readonly crewBuilderDirty = signal(false);
+
+  /** Ferme le constructeur d'équipage puis exécute l'action : tout de suite s'il est vide ou fermé, sinon après abandon confirmé. */
+  private afterCrewBuilder(action: () => void): void {
+    const close = () => { this.crewBuilderParent.set(undefined); this.crewBuilderDirty.set(false); action(); };
+    if (this.crewBuilderParent() === undefined || !this.crewBuilderDirty()) { close(); return; }
+    this.confirmService.ask({ title: 'Abandonner la création de l’équipage ?', message: 'Le vaisseau et les réglages choisis ne sont pas enregistrés.', confirmLabel: 'Abandonner la création', cancelLabel: 'Continuer la saisie', danger: true }).then(confirmed => {
+      if (!confirmed) return;
+      close();
+      this.changeDetector.markForCheck();
+    });
+  }
+
+  onCrewCreated(operationId: string, result: { groupId: number; openPositions: boolean; warning?: string }): void {
+    this.crewBuilderParent.set(undefined);
+    this.crewBuilderDirty.set(false);
+    this.crewPositionsFor.set(result.openPositions ? result.groupId : null);
+    this.groupPanelTab.set('equipage');
+    this.groupOpenOnMobile.set(true);
+    this.notify(result.warning ? 'error' : 'success', result.warning ?? 'Équipage créé.');
+    this.loadOrganization(operationId, result.groupId);
+    this.requirementRefresh.next();
+  }
+
+  /** Une écriture sur un équipage (poste, attribution) : effectifs et postes sont relus, ainsi que la coordination si elle est ouverte. */
+  onCrewChanged(operationId: string): void {
+    this.loadOrganization(operationId);
+    if (this.coordination()) this.loadCoordination(operationId);
+  }
+
   loadOrganization(operationId: string, selectId?: number | null): void {
     const seq = ++this.organizationLoadSeq;
-    this.eventService.getOperationOrganization(operationId).subscribe({
-      next: organization => {
+    const crewsSeq = ++this.crewsLoadSeq;
+    // Structure et équipages arrivent ensemble : un équipage n'est jamais montré, même un instant, comme un groupe ordinaire.
+    forkJoin({ organization: this.eventService.getOperationOrganization(operationId), crews: this.eventService.getOperationCrews(operationId).pipe(catchError(() => of(null))) }).subscribe({
+      next: ({ organization, crews }) => {
         // Seule la lecture la plus récente compte.
         if (seq !== this.organizationLoadSeq) return;
+        if (crewsSeq === this.crewsLoadSeq) { if (crews) this.crews.set(crews); this.crewsError.set(!crews); }
         // Un mode par défaut choisi mais pas encore reçu par le serveur reste celui affiché.
         this.organization.set(this.withDefaultMode(organization, this.form.defaultAssignmentMode));
         this.organizationError.set('');
@@ -305,6 +378,8 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Exécute l'action si l'on peut quitter la fiche du groupe : tout de suite s'il n'y a rien à perdre, sinon après abandon confirmé. */
   private afterGroupSettings(action: () => void): void {
+    // Un constructeur d'équipage ouvert passe d'abord : il se ferme, après confirmation s'il contient une saisie.
+    if (this.crewBuilderParent() !== undefined) { this.afterCrewBuilder(() => this.afterGroupSettings(action)); return; }
     if (!this.groupSettingsDirty()) { action(); return; }
     this.confirmService.ask({ title: 'Abandonner les réglages du groupe ?', message: 'Les réglages de ce groupe ne sont pas enregistrés.', confirmLabel: 'Abandonner les réglages', cancelLabel: 'Continuer la saisie', danger: true }).then(confirmed => {
       if (!confirmed) return;
@@ -315,12 +390,16 @@ export class OperationEditorComponent implements OnDestroy {
   }
 
   selectGroup(id: number | null, tab: GroupPanelTab = 'equipage'): void {
-    if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
-    this.afterGroupSettings(() => {
-      this.groupPanelTab.set(tab);
-      this.selectedGroupId.set(id);
-      this.groupOpenOnMobile.set(id !== null);
-      if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+    if (this.crewBusy()) return;
+    this.afterCrewBuilder(() => {
+      if (id === this.selectedGroupId()) { this.groupOpenOnMobile.set(id !== null); return; }
+      this.afterGroupSettings(() => {
+        this.crewPositionsFor.set(null);
+        this.groupPanelTab.set(tab);
+        this.selectedGroupId.set(id);
+        this.groupOpenOnMobile.set(id !== null);
+        if (!this.editingRequirementId) this.requirementForm.groupId = id !== null && this.leafGroups().some(group => group.id === id) ? id : null;
+      });
     });
   }
 
@@ -341,7 +420,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Création rapide : le groupe existe tout de suite avec un nom provisoire, ses réglages s'ouvrent pour le nommer. */
   quickAddGroup(operationId: string, parentId: number | null): void {
-    if (this.organizationBusy() || !this.organization()) return;
+    if (this.organizationBusy() || this.crewBusy() || !this.organization()) return;
     this.afterGroupSettings(() => {
       if (this.organizationBusy()) return;
       const siblings = sortedChildren(this.organizationGroups(), parentId);
@@ -478,7 +557,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */
   private get leavingIsSafe(): boolean {
-    if (this.imageUrlPending || this.groupSettingsDirty()) return false;
+    if (this.imageUrlPending || this.groupSettingsDirty() || (this.crewBuilderParent() !== undefined && this.crewBuilderDirty())) return false;
     if (!this.autosave.hasUnsavedChanges) return true;
     return this.autosave.auto && (this.autosave.status === 'dirty' || this.autosave.status === 'saving');
   }

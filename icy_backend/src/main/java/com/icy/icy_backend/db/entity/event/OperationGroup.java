@@ -19,6 +19,17 @@ public class OperationGroup {
     @Builder.Default private AssignmentMode assignmentMode = AssignmentMode.INHERITED;
     @Column(name = "sort_order", nullable = false) @Builder.Default private int sortOrder = 0;
     @Column(name = "responsible_user_id") private UUID responsibleUserId;
+    /** CREW : équipage de vaisseau, toujours sans sous-groupe ; ses postes sont dans operation_group_positions. */
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
+    @Builder.Default private Kind kind = Kind.STANDARD;
+    @Column(name = "ship_model_id") private Long shipModelId;
+    /** Nom du modèle au moment du choix : il reste lisible si le catalogue change. */
+    @Column(name = "ship_model_name", length = 200) private String shipModelName;
+    @Enumerated(EnumType.STRING) @Column(name = "position_mode", nullable = false, length = 20)
+    @Builder.Default private PositionMode positionMode = PositionMode.SELF;
 
     public enum AssignmentMode { INHERITED, FREE, VALIDATION, MANAGED }
+    public enum Kind { STANDARD, CREW }
+    /** SELF : chaque membre choisit son poste. MANAGED : seuls les organisateurs et responsables les attribuent. */
+    public enum PositionMode { SELF, MANAGED }
 }

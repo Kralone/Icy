@@ -10,7 +10,13 @@ const ICONS = {
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01',
   groups: 'M9 3h6v5H9zM3 16h6v5H3zM15 16h6v5h-6zM12 8v4M6 16v-4h12v4',
   ship: 'M12 2c3 3 5 7 5 11l2 3v3l-4-2H9l-4 2v-3l2-3c0-4 2-8 5-11zM12 9v3',
-  assignment: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1'
+  assignment: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1',
+  pilot: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 14v7M3.5 10.5l6.6 1M20.5 10.5l-6.6 1',
+  wrench: 'M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18v3h3l6.5-6.5a4 4 0 0 0 5.2-5.2l-2.5 2.5-2.3-.7-.7-2.3z',
+  medic: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z',
+  cargo: 'M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9',
+  radar: 'M12 21a9 9 0 1 0-9-9M12 16a4 4 0 1 0-4-4M12 12l7-7M12 12h.01',
+  star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'
 } as const;
 
 export type OperationIconName = keyof typeof ICONS;

@@ -4,7 +4,7 @@
       <li class="root" [class.root--leaf]="!root.container" [class.root--mine]="action(root) === 'mine'">
         <header class="root__head">
           <div class="root__title">
-            <h3>{{ root.name }}</h3>
+            <h3>@if (crewOf(root)) { <app-operation-icon name="ship" /> }{{ root.name }}</h3>
             @if (root.description) { <p>{{ root.description }}</p> }
             @if (root.responsibleUsername) { <p class="root__responsible">Responsable : {{ root.responsibleUsername }}</p> }
           </div>
@@ -26,7 +26,7 @@
               @for (child of children(root.id); track child.id) {
                 <li class="leaf" [class.leaf--mine]="action(child) === 'mine'">
                   <div class="leaf__head">
-                    <h4>{{ child.name }}</h4>
+                    <h4>@if (crewOf(child)) { <app-operation-icon name="ship" /> }{{ child.name }}</h4>
                     <span class="leaf__count" [class.is-full]="isFull(child)">{{ occupancy(child) }}</span>
                   </div>
                   @if (fillPercent(child) !== null) { <span class="gauge" aria-hidden="true"><span [style.width.%]="fillPercent(child)" [class.is-full]="isFull(child)"></span></span> }
@@ -50,7 +50,9 @@
     <span class="mode" [attr.data-mode]="group.effectiveMode">{{ modeLabel(group) }}</span>
     @if (group.responsibleUsername && group.parentId !== null) { <span>Responsable : {{ group.responsibleUsername }}</span> }
   </p>
-  @if (group.members.length) {
+  @if (crewOf(group); as crew) {
+    <app-operation-crew-card [id]="'operation-crew-' + group.id" tabindex="-1" role="group" [attr.aria-label]="group.name + ', équipage de vaisseau'" [crew]="crew" [requirements]="requirements()" [currentUserId]="currentUserId()" [canChoose]="canChoosePosition(group, crew)" [canManage]="canManagePositions(crew)" [busy]="busy()" (choose)="position.emit($event)" (assign)="memberPosition.emit({ groupId: group.id, change: $event })" />
+  } @else if (group.members.length) {
     <ul class="members">
       @for (member of visibleMembers(group); track member.userId) {
         <li [class.is-me]="isMe(member)">{{ member.username }}@if (isMe(member)) { <span class="you">Vous</span> }</li>

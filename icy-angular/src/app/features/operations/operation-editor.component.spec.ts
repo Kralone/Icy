@@ -32,6 +32,7 @@ describe('OperationEditorComponent', () => {
         { provide: EventService, useValue: {
           getOperationForEdit: vi.fn(() => of(operation)),
           getOperationOrganization: vi.fn(() => of({ defaultAssignmentMode: 'FREE', groups: [...organizationGroups] })),
+          getOperationCrews: vi.fn(() => of([])),
           createOperationGroup,
           getOperationCoordination: vi.fn(() => of(coordinationData)),
           assignOperationMember,

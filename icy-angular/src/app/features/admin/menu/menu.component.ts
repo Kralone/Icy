@@ -98,6 +98,12 @@ export class AdminMenuComponent {
       route: '/icy/admin/operations',
     },
     {
+      label: 'Presets d’équipage',
+      imageUrl: 'assets/images/home/activities/cargo.jpg',
+      route: '/icy/admin/crew-presets',
+      requiredRoles: ['ADMIN'],
+    },
+    {
       label: 'SC World Event',
       imageUrl: 'https://robertsspaceindustries.com/i/20a2ccbe7f81fbe1a5512b046067441eaf57c220/resize(3000,1686,cover,crop(3050,1714,0,0,ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjReseXgqDduTjtPe7KFzRJ9FYxqKAAfoNREtv))/85/starcitizen-43-patch-thumbnail0101.webp',
       route: '/icy/admin/sc-world-events',

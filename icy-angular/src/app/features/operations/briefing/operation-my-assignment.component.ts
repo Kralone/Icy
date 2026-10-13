@@ -1,3 +1,4 @@
+import { OperationCrew } from '../organization/operation-crew.model';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { OperationIconComponent } from './operation-icon.component';
 import { MODE_LABELS } from '../operation-group.model';
@@ -23,6 +24,19 @@ export class OperationMyAssignmentComponent {
   /** Lecture en échec : l'état affiché ne doit pas passer pour « aucune affectation ». */
   readonly error = input('');
 
+  /** Mon équipage, si mon groupe est un équipage de vaisseau. */
+  readonly crew = input<OperationCrew | null>(null);
+  readonly currentUserId = input<string | null>(null);
+  readonly myPosition = computed(() => {
+    const crew = this.crew();
+    const mine = crew?.members.find(member => !!this.currentUserId() && member.userId === this.currentUserId());
+    return crew?.positions.find(position => position.id === mine?.positionId) ?? null;
+  });
+  /** Je peux choisir mon poste : l'équipage a des postes et laisse le choix à ses membres. */
+  readonly canChoosePosition = computed(() => { const crew = this.crew(); return !!crew && crew.positions.length > 0 && crew.positionMode === 'SELF'; });
+
+  /** Aller choisir mon poste dans mon équipage. */
+  readonly choosePosition = output<void>();
   readonly leave = output<void>();
   readonly cancelRequest = output<void>();
   /** Aller choisir un groupe dans l'organisation. */

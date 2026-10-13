@@ -38,7 +38,7 @@
         <div class="objective-list">@for (objective of form.objectives; track $index) { <div class="objective-row" [attr.data-kind]="objective.kind"><select [(ngModel)]="objective.kind" (ngModelChange)="touch()" aria-label="Nature de l’objectif"><option value="PRINCIPAL">Principal</option><option value="SECONDAIRE">Secondaire</option></select><input [(ngModel)]="objective.text" (ngModelChange)="touch()" maxlength="1000" [attr.aria-label]="'Objectif ' + ($index + 1)" [placeholder]="objective.kind === 'PRINCIPAL' ? 'Résultat indispensable' : 'Résultat complémentaire'"><div class="objective-order"><button type="button" (click)="moveObjective($index, -1)" [disabled]="$index === 0" aria-label="Monter l’objectif">↑</button><button type="button" (click)="moveObjective($index, 1)" [disabled]="$index === form.objectives.length - 1" aria-label="Descendre l’objectif">↓</button><button type="button" (click)="removeObjective($index)" [disabled]="form.objectives.length === 1" aria-label="Supprimer l’objectif">×</button></div></div> }</div>
       } @else if (tab === 'publication') {
         <h2>Aperçu de la fiche</h2>
-        <app-operation-preview [operation]="previewSheet(operation)" [groups]="organizationGroups()" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [participations]="previewParticipations()" [participationsState]="previewParticipationsState()"
+        <app-operation-preview [operation]="previewSheet(operation)" [crews]="crews()" [groups]="organizationGroups()" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [participations]="previewParticipations()" [participationsState]="previewParticipationsState()"
           [organizationState]="organizationError() ? 'error' : organization() ? 'ready' : 'loading'" [fleetError]="fleetLoadError()" />
         <div class="publish-bar">
           <p class="publication-state">Statut : <span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>
@@ -49,11 +49,17 @@
         </div>
       } @else if (tab === 'organisation') {
         <div class="organization" [class.organization--detail]="groupOpenOnMobile()">
-          <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy()" [locked]="!!operation.locked" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" />
+          <app-operation-structure-tree class="organization__tree" [groups]="organizationGroups()" [selectedId]="selectedGroupId()" [busy]="organizationBusy() || crewBusy()" [locked]="!!operation.locked || crewsError()" [loaded]="!!organization()" (select)="selectGroup($event)" (addGroup)="quickAddGroup(operation.id, null)" (addSubgroup)="quickAddGroup(operation.id, $event)" [crewModels]="crewModels()" (addCrew)="openCrewBuilder($event)" />
           <div class="organization__panel">
             @if (organizationError()) { <p class="organization__error" role="alert">{{ organizationError() }} <button type="button" (click)="loadOrganization(operation.id)">Réessayer</button></p> }
-            @if (selectedGroup(); as group) {
-              <app-operation-group-panel [group]="group" [groups]="organizationGroups()" [members]="(members$ | async) ?? []" [busy]="organizationBusy()" [locked]="!!operation.locked" [defaultMode]="form.defaultAssignmentMode" [openTab]="groupPanelTab()" (save)="saveGroup(operation.id, group.id, $event)" (remove)="deleteGroup(operation.id, group)" (move)="moveGroup(operation.id, group, $event)" (addSubgroup)="quickAddGroup(operation.id, group.id)" (back)="groupOpenOnMobile.set(false)" (selectGroup)="selectGroup($event)" (dirtyChange)="groupSettingsDirty.set($event)">
+            @if (crewsError()) { <p class="organization__error" role="alert">Les équipages n’ont pas pu être chargés. <button type="button" (click)="loadCrews(operation.id)">Réessayer</button></p> }
+            @if (crewBuilderParent() !== undefined) {
+              <app-operation-crew-builder [operationId]="operation.id" [groups]="organizationGroups()" [crewIds]="crewIds()" [initialParentId]="crewBuilderParent() ?? null" (created)="onCrewCreated(operation.id, $event)" (cancel)="closeCrewBuilder()" (busyChange)="crewBusy.set($event)" (dirtyChange)="crewBuilderDirty.set($event)" />
+            } @else if (selectedGroup(); as group) {
+              <app-operation-group-panel [group]="group" [groups]="organizationGroups()" [members]="(members$ | async) ?? []" [busy]="organizationBusy()" [locked]="!!operation.locked || crewsError()" [defaultMode]="form.defaultAssignmentMode" [openTab]="groupPanelTab()" (save)="saveGroup(operation.id, group.id, $event)" (remove)="deleteGroup(operation.id, group)" (move)="moveGroup(operation.id, group, $event)" (addSubgroup)="quickAddGroup(operation.id, group.id)" (back)="groupOpenOnMobile.set(false)" (selectGroup)="selectGroup($event)" (dirtyChange)="groupSettingsDirty.set($event)" [crew]="crewByGroup().has(group.id)">
+                @if (crewByGroup().get(group.id); as crew) {
+                  <app-operation-crew-panel crewSlot [operationId]="operation.id" [group]="group" [crew]="crew" [requirements]="(shipRequirements$ | async) ?? []" [locked]="!!operation.locked" [startWithPosition]="crewPositionsFor() === group.id" (changed)="onCrewChanged(operation.id)" (busyChange)="crewBusy.set($event)" />
+                }
                 <ng-container *ngTemplateOutlet="needs" />
               </app-operation-group-panel>
             } @else if (organization()) {

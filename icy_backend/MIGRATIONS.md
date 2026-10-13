@@ -69,11 +69,11 @@ un `flyway repair` aveugle. Après sauvegarde vérifiée et arrêt du backend, l
 `ops/production/backend-rollout/reconcile-flyway-v31.sql` contrôle l'état physique,
 sauvegarde la table d'historique puis la ramène transactionnellement à V1-V31.
 
-## Regroupement du module Opérations (V40 à V42)
+## Regroupement du module Opérations (V40 à V43)
 
-Les migrations de développement V40 à V53 du module Opérations n'ont jamais été
+Les migrations de développement V40 à V55 du module Opérations n'ont jamais été
 appliquées en production ni en préproduction : les deux historiques, lus le
-13 octobre 2026, s'arrêtaient à V38. Elles ont été remplacées par trois migrations
+13 octobre 2026, s'arrêtaient à V38. Elles ont été remplacées par quatre migrations
 qui créent directement le schéma final. V39 et les migrations antérieures ne sont
 pas modifiées.
 
@@ -82,6 +82,7 @@ pas modifiées.
 | `V40__create_operations_foundation.sql` | Type d'activité des événements, table des opérations, fonctions et déclencheurs de cohérence | V40, V41, V46, V47, V52, V53 |
 | `V41__create_operation_organisation.sql` | Groupes et sous-groupes, responsable, affectations, demandes d'affectation | V42, V44, V45, V48 |
 | `V42__create_operation_fleet.sql` | Besoins en vaisseaux, propositions, besoin lié et pilote | V43, V49, V50, V51 |
+| `V43__create_operation_crews.sql` | Équipages de vaisseau : colonnes des groupes, postes, poste d'une affectation, presets | V54, V55 |
 
 La contrainte unique créée par l'ancienne V44 puis retirée par l'ancienne V45 n'est
 plus créée : seul l'index unique partiel « une demande en attente » existe.
@@ -90,6 +91,6 @@ Les documents et preuves rédigés avant ce regroupement citent l'ancienne
 numérotation ; ce tableau donne la correspondance.
 
 Une base ayant joué l'ancienne série refuse le nouveau code : checksums différents
-pour V40 à V42 et versions appliquées sans fichier. Elle ne se corrige ni par
+pour V40 à V43 et versions appliquées sans fichier. Elle ne se corrige ni par
 `flyway repair` ni par une retouche de `flyway_schema_history` : le module y est
 reconstruit par les migrations regroupées, sur une copie, avant bascule.

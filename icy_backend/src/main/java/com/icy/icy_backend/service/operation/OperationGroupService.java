@@ -44,6 +44,23 @@ public class OperationGroupService {
         this.operationLock = operationLock;
     }
 
+    private OperationCrewService crewService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setCrewService(OperationCrewService crewService) {
+        this.crewService = crewService;
+    }
+
+    /**
+     * Un équipage de vaisseau reste une feuille : ses membres se répartissent en postes, pas en sous-groupes.
+     * À appeler sous le verrou du parent : le type est relu en base, il a pu changer depuis le chargement.
+     */
+    private void requireNotCrew(OperationGroup parent) {
+        if (parent.getKind() == OperationGroup.Kind.CREW || groupRepository.existsByIdAndKind(parent.getId(), OperationGroup.Kind.CREW)) {
+            throw new IllegalArgumentException("Un équipage ne peut pas contenir de sous-groupes");
+        }
+    }
+
     /** Clôture automatique à l'heure de fin : voir OperationLock. */
     private void requireOpen(UUID operationId) {
         if (operationLock != null) operationLock.requireOpen(operationId);
@@ -97,11 +114,15 @@ public class OperationGroupService {
             if (parent.getParentId() != null) throw new IllegalArgumentException("Deux niveaux de groupes maximum");
             // Même verrou que les affectations : une affectation en cours sur ce parent se termine avant le contrôle, ou attend la création.
             groupRepository.findLockedById(parent.getId());
+            requireNotCrew(parent);
             requireEmptyParent(operationId, parent);
         }
         OperationGroup group = OperationGroup.builder().operationEventId(operationId).parentId(request.getParentId()).name(request.getName().trim()).description(request.getDescription()).capacity(request.getCapacity()).assignmentMode(request.getAssignmentMode()).sortOrder(request.getSortOrder()).responsibleUserId(request.getResponsibleUserId()).build();
+        if (crewService != null) crewService.configure(group, request, true);
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
-        return messageService.buildResponse("operation.group.created", new OperationGroupResponseDTO(groupRepository.save(group)));
+        OperationGroup saved = groupRepository.save(group);
+        if (crewService != null) crewService.copyPresetPositions(saved, request.getPresetId());
+        return messageService.buildResponse("operation.group.created", new OperationGroupResponseDTO(saved));
     }
 
     @Transactional
@@ -124,6 +145,7 @@ public class OperationGroupService {
                 // sous-groupe ou une affectation en cours sur l'un d'eux se termine avant, ou attend la fin du déplacement.
                 java.util.stream.Stream.of(groupId, parent.getId()).sorted().forEach(groupRepository::findLockedById);
                 if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Deux niveaux de groupes maximum : ce groupe a déjà des sous-groupes");
+                requireNotCrew(parent);
                 requireEmptyParent(operationId, parent);
                 requireRoomInParent(operationId, group, parent);
             }
@@ -131,6 +153,7 @@ public class OperationGroupService {
         group.setName(request.getName().trim()); group.setDescription(request.getDescription()); group.setCapacity(request.getCapacity());
         group.setParentId(request.getParentId()); group.setAssignmentMode(request.getAssignmentMode()); group.setSortOrder(request.getSortOrder());
         group.setResponsibleUserId(request.getResponsibleUserId());
+        if (crewService != null) crewService.configure(group, request, false);
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.updated", new OperationGroupResponseDTO(groupRepository.save(group)));
     }

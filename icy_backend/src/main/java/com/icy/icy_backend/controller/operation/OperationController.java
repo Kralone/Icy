@@ -62,6 +62,7 @@ public class OperationController {
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
     private final com.icy.icy_backend.service.operation.OperationCoordinationService coordinationService;
+    private final com.icy.icy_backend.service.operation.OperationCrewService crewService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -83,6 +84,57 @@ public class OperationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<List<OperationShipProposalResponseDTO>>> ships(@PathVariable UUID id) {
         return messageService.buildResponse("operation.ships", fleetService.proposals(id));
+    }
+
+    /** Équipages de vaisseau de l'opération : modèle attendu, postes et poste de chaque membre. Un brouillon n'existe que pour un organisateur. */
+    @GetMapping("/{id}/crews")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<List<com.icy.icy_backend.controller.dto.response.event.OperationCrewDTO>>> crews(@PathVariable UUID id) {
+        return messageService.buildResponse("operation.crews", crewService.crews(id));
+    }
+
+    @PostMapping("/{id}/groups/{groupId}/positions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCrewDTO.Position>> addPosition(@PathVariable UUID id, @PathVariable Long groupId, @RequestBody com.icy.icy_backend.controller.dto.operation.OperationPositionRequest request) {
+        return crewService.addPosition(id, groupId, request);
+    }
+
+    @PutMapping("/{id}/groups/{groupId}/positions/{positionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCrewDTO.Position>> updatePosition(@PathVariable UUID id, @PathVariable Long groupId, @PathVariable Long positionId, @RequestBody com.icy.icy_backend.controller.dto.operation.OperationPositionRequest request) {
+        return crewService.updatePosition(id, groupId, positionId, request);
+    }
+
+    @DeleteMapping("/{id}/groups/{groupId}/positions/{positionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> deletePosition(@PathVariable UUID id, @PathVariable Long groupId, @PathVariable Long positionId) {
+        return crewService.deletePosition(id, groupId, positionId);
+    }
+
+    /** Le membre choisit ou change son poste dans son équipage, si celui-ci laisse le choix aux membres. */
+    @PutMapping("/{id}/assignments/me/position")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> setMyPosition(@PathVariable UUID id, @RequestParam Long positionId) {
+        return crewService.setMyPosition(id, positionId);
+    }
+
+    @DeleteMapping("/{id}/assignments/me/position")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> clearMyPosition(@PathVariable UUID id) {
+        return crewService.setMyPosition(id, null);
+    }
+
+    /** Les droits fins (organisateur ou responsable de l'équipage) sont contrôlés dans le service. */
+    @PutMapping("/{id}/assignments/members/{userId}/position")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> setMemberPosition(@PathVariable UUID id, @PathVariable UUID userId, @RequestParam Long positionId) {
+        return crewService.setMemberPosition(id, userId, positionId);
+    }
+
+    @DeleteMapping("/{id}/assignments/members/{userId}/position")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse<Void>> clearMemberPosition(@PathVariable UUID id, @PathVariable UUID userId) {
+        return crewService.setMemberPosition(id, userId, null);
     }
 
     @PostMapping("/{id}/groups")

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { OperationIconComponent } from '../briefing/operation-icon.component';
 import { MODE_LABELS, occupancyLabel, occupancyPercent } from '../operation-group.model';
 import { OrganizationGroup, sortedChildren } from './operation-organization.model';
 
@@ -7,7 +8,7 @@ import { OrganizationGroup, sortedChildren } from './operation-organization.mode
 @Component({
   selector: 'app-operation-structure-tree',
   standalone: true,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, OperationIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-structure-tree.component.html',
   styleUrl: './operation-structure-tree.component.css'
@@ -24,6 +25,10 @@ export class OperationStructureTreeComponent {
   readonly select = output<number | null>();
   readonly addGroup = output<void>();
   readonly addSubgroup = output<number>();
+  /** Groupes qui sont des équipages de vaisseau, avec le nom de leur modèle : ils n'acceptent pas de sous-groupe. */
+  readonly crewModels = input<ReadonlyMap<number, string | null>>(new Map());
+  /** Ouvre la création d'un équipage, autonome (null) ou dans un groupe principal. */
+  readonly addCrew = output<number | null>();
 
   readonly roots = computed(() => sortedChildren(this.groups(), null));
 

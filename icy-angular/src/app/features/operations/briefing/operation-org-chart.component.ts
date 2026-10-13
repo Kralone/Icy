@@ -1,3 +1,8 @@
+import { CrewPositionChange } from '../organization/operation-crew-members.component';
+import { OperationCrew } from '../organization/operation-crew.model';
+import { FleetRequirement } from '../organization/operation-fleet-cards.component';
+import { OperationCrewCardComponent } from './operation-crew-card.component';
+import { OperationIconComponent } from './operation-icon.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, input, output, signal } from '@angular/core';
 import { FleetShip } from '../organization/operation-fleet-cards.component';
@@ -13,7 +18,7 @@ const VISIBLE_MEMBERS = 8;
 @Component({
   selector: 'app-operation-org-chart',
   standalone: true,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, OperationIconComponent, OperationCrewCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-org-chart.component.html',
   styleUrl: './operation-org-chart.component.css'
@@ -28,6 +33,26 @@ export class OperationOrgChartComponent {
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
   readonly preview = input(false);
+
+  /** Équipages de vaisseau de l'opération : un groupe absent de cette liste est un groupe ordinaire. */
+  readonly crews = input<OperationCrew[]>([]);
+  /** Besoins en appareils : ils disent si le vaisseau d'un équipage est recherché, proposé ou confirmé. */
+  readonly requirements = input<FleetRequirement[]>([]);
+  private readonly crewByGroup = computed(() => new Map(this.crews().map(crew => [crew.groupId, crew])));
+  crewOf(group: CompositionGroup): OperationCrew | null { return this.crewByGroup().get(group.id) ?? null; }
+  /** Je choisis mon poste seulement dans mon propre équipage, s'il laisse le choix aux membres, tant que l'opération est ouverte. */
+  canChoosePosition(group: CompositionGroup, crew: OperationCrew): boolean {
+    const composition = this.composition();
+    return !this.readOnly() && !this.preview() && composition.present && group.id === composition.myGroupId && crew.positionMode === 'SELF';
+  }
+  /** Poste choisi pour moi dans mon équipage ; null : sans poste. */
+  readonly position = output<number | null>();
+  /** J'attribue les postes d'un équipage que le serveur me déclare gérable, tant que l'opération est ouverte. */
+  canManagePositions(crew: OperationCrew): boolean {
+    return crew.manageable && crew.positions.length > 0 && !this.readOnly() && !this.preview();
+  }
+  /** Poste attribué par un responsable ou un organisateur à un membre d'un équipage. */
+  readonly memberPosition = output<{ groupId: number; change: CrewPositionChange }>();
 
   readonly join = output<CompositionGroup>();
   readonly request = output<CompositionGroup>();
@@ -46,9 +71,31 @@ export class OperationOrgChartComponent {
   private readonly toggled = signal<ReadonlyMap<number, boolean>>(new Map());
   private readonly wide = signal(true);
 
+  private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
+  /**
+   * Amène à l'équipage d'un groupe : son groupe principal est déplié s'il le faut, puis la carte reçoit le focus.
+   * `scroll` faux : le focus seul, sans déplacer la page (retour après une action faite sur place).
+   */
+  reveal(groupId: number, scroll = true): boolean {
+    const group = this.composition().groups.find(candidate => candidate.id === groupId);
+    if (!group || !this.crewOf(group)) return false;
+    const root = this.roots().find(candidate => candidate.id === (group.parentId ?? group.id));
+    if (root?.container && !this.isOpen(root)) this.toggled.update(current => new Map(current).set(root.id, true));
+    // Après le rendu : un élément d'un groupe encore replié ne peut pas recevoir le focus.
+    setTimeout(() => {
+      const card = this.hostElement.querySelector<HTMLElement>(`#operation-crew-${groupId}`);
+      if (!card) return;
+      const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (scroll) card.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'center' });
+      card.focus({ preventScroll: true });
+    });
+    return true;
+  }
+
   constructor() {
     // Même seuil que les styles (conteneur de 700 px) : dans l'aperçu « Mobile » de l'éditeur, les groupes se replient comme sur un téléphone.
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const host = this.hostElement;
     const measure = (width: number): void => { if (width > 0) this.wide.set(width > 660); };
     // Première mesure dès l'affichage, sans attendre l'observateur.
     afterNextRender(() => measure(host.getBoundingClientRect().width));

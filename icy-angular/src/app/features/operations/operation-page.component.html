@@ -15,8 +15,8 @@
       @let fleetShips = (ships$ | async) ?? [];
       @let fleetNeeds = (shipRequirements$ | async) ?? [];
       @let fleetGroups = (groups$ | async) ?? [];
-      <app-operation-my-assignment [composition]="composition" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
-        (browse)="goTo('organisation')" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
+      <app-operation-my-assignment [composition]="composition" [crew]="myCrew" [currentUserId]="currentUserId" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
+        (browse)="goTo('organisation')" (choosePosition)="goToMyCrew()" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
       <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
         <app-participation-panel
           [participationsByStatus]="participationsByStatus"
@@ -37,8 +37,9 @@
           <p class="operation-coordination__error" role="alert">{{ compositionError }} <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p>
         } @else if (composition; as loaded) {
           @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
-          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips"
-            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" />
+          @if (crewsError) { <p class="operation-coordination__error" role="alert">Les équipages de vaisseau n’ont pas pu être lus : leurs postes peuvent manquer ou ne plus être à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
+          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips" [crews]="crews" [requirements]="fleetNeeds"
+            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" (position)="setMyPosition(operation.id, $event)" (memberPosition)="setMemberPosition(operation.id, $event.groupId, $event.change)" />
           @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
         } @else {
           <p class="empty-state" role="status">Chargement de l’organisation…</p>
