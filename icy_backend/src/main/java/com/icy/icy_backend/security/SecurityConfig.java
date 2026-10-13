@@ -14,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.http.HttpMethod;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -53,6 +54,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(restAuthenticationEntryPoint))
                 // 🔐 Règles d’autorisation
                 .authorizeHttpRequests(auth -> auth
+                        // Renvoi interne du conteneur vers la page d'erreur (sendError) : ce n'est pas une requête
+                        // du client. Sans cette règle il repasse sans identité par « authenticated() » et tout refus
+                        // (403, 404, 405…) ressort en 401. Une requête directe vers /error reste protégée.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // routes publiques
                         .requestMatchers(
                                 "/api/auth/login",
