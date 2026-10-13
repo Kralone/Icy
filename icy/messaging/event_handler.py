@@ -310,8 +310,6 @@ class EventHandler:
         operation_url = None
         if is_operation:
             operation_url = self._operation_url(event_id)
-            # Ce champ sert aussi à reconnaître une opération quand ses boutons sont reconstruits.
-            embed.add_field(name="Opération", value=f"[Consulter l’opération sur IceForge]({operation_url})", inline=False)
             objectives = format_objectives(operation_info.get("objectives"))
             if objectives:
                 embed.add_field(name="Objectifs", value=objectives, inline=False)
@@ -352,6 +350,7 @@ class EventHandler:
         existing = self.discord_link_store.list_events(channel_id)
         records = []
         old_messages = []
+        operation_ids = {str(event_id)} if any(getattr(item, "url", None) for item in view.children) else set()
         for old_event_id, old_link, old_key in existing:
             try:
                 old_message = await channel.fetch_message(old_link.message_id)
@@ -369,6 +368,8 @@ class EventHandler:
                 continue
             if old_embed is not None:
                 old_embed = discord.Embed.from_dict(old_embed.to_dict())
+            if self._is_operation_message(old_message):
+                operation_ids.add(str(old_event_id))
             records.append((old_key or "9999", old_event_id, old_embed))
             old_messages.append(old_link.message_id)
         needs_reorder = bool(sort_key and any(sort_key < key for key, _, _ in records))
@@ -383,7 +384,7 @@ class EventHandler:
                 continue
             current_message = await channel.send(
                 embed=current_embed,
-                view=self._view_for_embed(current_event_id, current_embed),
+                view=self._view_for(current_event_id, str(current_event_id) in operation_ids),
             )
             saved = self.discord_link_store.save("event", current_event_id, current_message.channel.id, current_message.id, key)
             new_links[current_event_id] = saved
@@ -400,13 +401,22 @@ class EventHandler:
                 })
         return new_links[str(event_id)]
 
-    def _view_for_embed(self, event_id, embed):
-        # Rebuilt messages have no original payload. The operation field is
-        # retained in the embed; reconstruct only our own canonical URL.
-        operation_url = None
-        if any(field.name == "Opération" for field in embed.fields):
-            operation_url = self._operation_url(event_id)
+    def _view_for(self, event_id, is_operation):
+        # Une annonce reconstruite n'a plus sa charge d'origine : seule notre propre adresse est recomposée.
+        operation_url = self._operation_url(event_id) if is_operation else None
         return EventParticipationView(self.rabbit, event_id, operation_url=operation_url)
+
+    @staticmethod
+    def _is_operation_message(message):
+        """Une annonce d'opération se reconnaît à son bouton de lien vers la fiche."""
+        rows = getattr(message, "components", None)
+        for row in rows if isinstance(rows, (list, tuple)) else []:
+            for child in getattr(row, "children", None) or []:
+                url = getattr(child, "url", None)
+                if isinstance(url, str) and "/icy/operations/" in url:
+                    return True
+        # Annonces publiées avant le retrait du champ « Opération ».
+        return any(field.name == "Opération" for embed in getattr(message, "embeds", None) or [] for field in embed.fields)
 
     @staticmethod
     def _is_finished_message(message):
@@ -466,10 +476,10 @@ class EventHandler:
                 self.discord_link_store.finish_event(event_id)
             if payload.get("activityType") == "OPERATION" and payload.get("operation") is not None:
                 # Briefing ou objectifs corrigés après la fin : le texte est actualisé, les boutons ne reviennent pas.
-                embed, _ = self._build_event_embed(event_id, payload)
+                embed, operation_url = self._build_event_embed(event_id, payload)
                 if self._is_finished_message(message):
                     self._mark_finished(embed)
-                await message.edit(embed=embed, view=None)
+                await message.edit(embed=embed, view=EventParticipationView(self.rabbit, event_id, operation_url=operation_url))
                 logger.info(f"✏️ Annonce d'une opération terminée mise à jour (eventId={event_id})")
                 return
             await message.edit(view=None)
@@ -480,8 +490,8 @@ class EventHandler:
             self.discord_link_store.reopen_event(event_id)
 
         title = payload.get("title", "Sans titre")
-        embed, _ = self._build_event_embed(event_id, payload)
-        view = self._view_for_embed(event_id, embed)
+        embed, operation_url = self._build_event_embed(event_id, payload)
+        view = EventParticipationView(self.rabbit, event_id, operation_url=operation_url)
         await message.edit(embed=embed, view=view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, message.channel.id, message.id, self._event_sort_key(payload.get("date")))
@@ -496,6 +506,7 @@ class EventHandler:
         channel_id = getattr(channel, "id", self.channel_id)
         existing = self.discord_link_store.list_events(channel_id, include_finished=True)
         records = []
+        operation_ids = set()
         last_finished_message = 0
         for event_id, link, key in existing:
             if self.discord_link_store.is_event_finished(event_id):
@@ -513,6 +524,8 @@ class EventHandler:
             key = self._event_sort_key(key) or self._legacy_sort_key(embed) if embed else None
             if embed is None or key is None:
                 continue
+            if self._is_operation_message(message):
+                operation_ids.add(str(event_id))
             records.append((key, event_id, link.message_id, discord.Embed.from_dict(embed.to_dict())))
 
         desired = sorted(records, key=lambda record: (record[0], record[1]))
@@ -525,7 +538,7 @@ class EventHandler:
         old_message_ids = [message_id for _, _, message_id, _ in records]
         new_links = {}
         for key, event_id, _, embed in desired:
-            sent = await channel.send(embed=embed, view=self._view_for_embed(event_id, embed))
+            sent = await channel.send(embed=embed, view=self._view_for(event_id, str(event_id) in operation_ids))
             new_links[event_id] = self.discord_link_store.save("event", event_id, sent.channel.id, sent.id, key)
         for message_id in old_message_ids:
             try:
@@ -583,8 +596,9 @@ class EventHandler:
             inline=False,
         )
 
-        # ❌ Retrait des boutons
-        await message.edit(embed=embed, view=None)
+        # ❌ Retrait des boutons de réponse ; une opération garde son lien vers la fiche.
+        closed_view = self._view_for(event_id, True) if self._is_operation_message(message) else None
+        await message.edit(embed=embed, view=closed_view)
         if self.discord_link_store:
             self.discord_link_store.save("event", event_id, int(channel_id), int(message_id))
             self.discord_link_store.finish_event(event_id)
@@ -868,8 +882,10 @@ class EventHandler:
             if self._is_finished_message(message):
                 # Nettoie les boutons laissés par une ancienne reconstruction.
                 event_id = self._extract_event_id_from_message_components(message)
+                if not event_id:
+                    continue
                 try:
-                    await message.edit(view=None)
+                    await message.edit(view=self._view_for(event_id, True) if self._is_operation_message(message) else None)
                 except Exception as exc:
                     logger.warning("Impossible de retirer les boutons d'un événement terminé (%s)", type(exc).__name__)
                 if event_id and self.discord_link_store:
