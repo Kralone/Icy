@@ -74,10 +74,17 @@ Le navigateur peut alors ouvrir `http://127.0.0.1:19088`.
 Les annonces Discord d'une opération portent un bouton « Consulter l'opération ». Le bot
 de staging construit ce lien avec `STAGING_PUBLIC_URL`, par défaut
 `http://127.0.0.1:19088` : c'est l'adresse du staging **vue depuis le poste du testeur,
-tunnel SSH ouvert**. Sans tunnel, le lien ne s'ouvre pas ; il ne mène jamais à la
-production. `deploy.sh --with-bot` refuse de démarrer le bot si cette adresse n'est pas
-une adresse locale. Si le tunnel est ouvert sur un autre port local, donner la même
-valeur à `STAGING_PUBLIC_URL` dans le fichier d'environnement.
+tunnel SSH ouvert**. Sans tunnel, le lien ne s'ouvre pas. `deploy.sh` contrôle cette
+adresse avant toute modification et refuse de continuer si ce n'est pas une adresse
+locale ; il supprime aussi tout bot laissé par une release précédente, qui garderait
+son ancien lien. Le bot ne doit donc être démarré que par `deploy.sh --with-bot`.
+
+Si le tunnel est ouvert sur un autre port local, donner la même valeur à
+`STAGING_PUBLIC_URL` dans le fichier d'environnement, puis relancer
+`deploy.sh --with-bot` : l'adresse n'est lue qu'à la création du bot.
+
+Le message privé de mot de passe temporaire envoyé par le bot contient encore l'adresse
+de la production : ne pas tester cette fonction avec un vrai compte sur le staging.
 
 La redirection de port est interdite par défaut à la clé d'exploitation
 (`administratively prohibited`). Elle doit être autorisée par un administrateur avant
