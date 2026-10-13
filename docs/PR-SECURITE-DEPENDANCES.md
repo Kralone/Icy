@@ -20,6 +20,8 @@ Le workflow Security échoue depuis plusieurs semaines. Cette PR corrige ce que 
 | Spring Boot 4.1.1 | Tomcat 11.0.27, Jackson 2.21.7 et 3.1.7, client RabbitMQ 5.34.0 imposés à leur correctif |
 | Images de base | Empreintes rafraîchies sur les mêmes étiquettes : Maven, Temurin 25 JRE, Python 3.14.7, nginx 1.30.4 |
 | Images d'exécution | Paquets système Alpine mis à niveau à la construction (serveur, frontend, SSR, proxy) |
+| PostgreSQL | Même version 18.6 (`18.6-bookworm`), empreinte rafraîchie : paquets Debian corrigés (Perl, PCRE2) |
+| RabbitMQ | 4.3.5 vers 4.3.6 (`4.3.6-management`) : OpenSSL corrigé |
 
 Aucune version de Java, Python, Node ou nginx ne change.
 
@@ -35,6 +37,18 @@ Mêmes version et paramètres que GitHub Actions, sur cette branche fusionnée a
 | Image frontend | 19 | 0 |
 | Image frontend SSR | non relevé | 0 |
 | Image proxy | non relevé | 0 |
+
+## PostgreSQL et RabbitMQ
+
+Le contrôle « Runtime image vulnerabilities » analyse aussi les deux images officielles épinglées par empreinte. Leurs empreintes dataient d'août 2026 : 32 alertes HIGH ou CRITICAL corrigeables sur PostgreSQL (Perl, PCRE2, paquets Debian) et 2 sur RabbitMQ (OpenSSL). Ces étapes n'étaient jamais atteintes tant que l'analyse de l'image serveur échouait avant elles.
+
+- PostgreSQL : même étiquette et même version du serveur (18.6-1.pgdg12+2), image reconstruite le 6 octobre 2026. 0 alerte corrigeable. 68 alertes sans correctif Debian restent listées par l'étape d'information, non bloquante, comme avant.
+- RabbitMQ : l'image 4.3.5 la plus récente garde l'alerte OpenSSL ; 4.3.6 n'en a aucune.
+- Des données créées par les anciennes images sont relues par les nouvelles (essai sur volumes jetables).
+
+Fichiers changés : `docker-compose.yml`, `docker-compose.backup-test.yml`, `ops/staging/docker-compose.staging.yml` et le workflow Security. Non changés : l'image utilitaire des sauvegardes (`ops/backups/lib.sh`, exécutée sans réseau et en lecture seule) et les scripts de migration historiques.
+
+**La production n'est pas corrigée par cette PR.** Ses images PostgreSQL et RabbitMQ sont fixées par un fichier d'exécution sur le serveur, et le script de livraison applicative ne recrée pas ces deux services. Tant qu'une intervention dédiée n'a pas remplacé ces images sur le serveur, le contrôle GitHub analyse les empreintes du dépôt, pas celles en service.
 
 ## `async-http-client` 3.0.14
 
