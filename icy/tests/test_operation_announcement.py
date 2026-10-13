@@ -171,6 +171,68 @@ class OperationAnnouncementUpdateTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("Area18", next(field.value for field in embed.fields if field.name == "Lieu"))
         self.assertEqual("Consulter l’opération", message.edit.await_args.kwargs["view"].children[3].label)
 
+    @staticmethod
+    def _finished_fixture(existing_embed):
+        bot = MagicMock()
+        channel = MagicMock()
+        channel.name = "events"
+        channel.send = AsyncMock()
+        message = MagicMock()
+        message.id = 555
+        message.channel.id = 42
+        message.embeds = [existing_embed]
+        message.edit = AsyncMock()
+        channel.fetch_message = AsyncMock(return_value=message)
+        bot.get_channel.return_value = channel
+        store = MagicMock()
+        store.get.return_value = None
+        return EventHandler(bot, MagicMock(), store), channel, message, store
+
+    async def test_a_finished_operation_gets_its_text_updated_without_buttons(self):
+        closed = discord.Embed(title="🧊 [TERMINÉ] Opération : Escorte Nyx")
+        closed.add_field(name="Statut", value="✅ Cet événement est terminé automatiquement.", inline=False)
+        event_handler, channel, message, store = self._finished_fixture(closed)
+
+        payload = operation_payload(channelId="42", messageId="555", finished=True)
+        payload["operation"]["briefing"] = "<p>Compte rendu corrigé.</p>"
+        payload["operation"]["objectives"] = json.dumps([{"kind": "PRINCIPAL", "text": "Convoi arrivé"}])
+        await event_handler.handle_event_updated(payload)
+
+        channel.send.assert_not_awaited()
+        message.edit.assert_awaited_once()
+        self.assertIsNone(message.edit.await_args.kwargs["view"])
+        embed = message.edit.await_args.kwargs["embed"]
+        self.assertEqual("🧊 [TERMINÉ] Opération : Escorte Nyx", embed.title)
+        self.assertIn("Compte rendu corrigé.", embed.description)
+        fields = {field.name: field.value for field in embed.fields}
+        self.assertEqual("**Principaux**\n• Convoi arrivé", fields["Objectifs"])
+        self.assertIn("terminé", fields["Statut"])
+        self.assertEqual(1, [field.name for field in embed.fields].count("Statut"))
+        store.finish_event.assert_called_once_with(payload["id"])
+        store.reopen_event.assert_not_called()
+        store.save.assert_not_called()
+
+    async def test_an_operation_closed_before_its_end_signal_loses_its_buttons_and_is_marked_once(self):
+        event_handler, _, message, _ = self._finished_fixture(discord.Embed(title="Opération : Escorte Nyx"))
+
+        await event_handler.handle_event_updated(operation_payload(channelId="42", messageId="555", finished=True))
+
+        self.assertIsNone(message.edit.await_args.kwargs["view"])
+        embed = message.edit.await_args.kwargs["embed"]
+        # Le signal de fin posera le marquage : il ne doit pas être doublé.
+        self.assertEqual("Opération : Escorte Nyx", embed.title)
+        self.assertNotIn("Statut", [field.name for field in embed.fields])
+
+    async def test_a_finished_classic_event_only_loses_its_buttons(self):
+        event_handler, _, message, _ = self._finished_fixture(discord.Embed(title="Minage : Soirée minage"))
+
+        await event_handler.handle_event_updated({
+            "id": "22222222-2222-2222-2222-222222222222", "title": "Soirée minage", "date": "2026-11-20T20:30:00",
+            "activityType": "EVENT", "finished": True, "channelId": "42", "messageId": "555", "participants": [],
+        })
+
+        message.edit.assert_awaited_once_with(view=None)
+
     async def test_a_deleted_discord_message_is_acknowledged_without_error(self):
         bot = MagicMock()
         channel = MagicMock()

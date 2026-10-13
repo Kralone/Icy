@@ -416,6 +416,16 @@ class EventHandler:
         ) for embed in message.embeds)
 
     @staticmethod
+    def _mark_finished(embed):
+        embed.color = discord.Color.dark_grey()
+        embed.title = truncate_text(f"🧊 [TERMINÉ] {embed.title}", EMBED_TITLE_LIMIT)
+        embed.add_field(
+            name="Statut",
+            value="✅ Cet événement est terminé automatiquement.",
+            inline=False,
+        )
+
+    @staticmethod
     def _legacy_sort_key(embed):
         months = "janvier février mars avril mai juin juillet août septembre octobre novembre décembre".split()
         match = re.search(r"Date\s*:\*\*\s*\w+\s+(\d{1,2})\s+(\w+)\s+(\d{4})\s+à\s+(\d{2})h(\d{2})", embed.description or "", re.IGNORECASE)
@@ -454,6 +464,14 @@ class EventHandler:
         if is_finished:
             if self.discord_link_store:
                 self.discord_link_store.finish_event(event_id)
+            if payload.get("activityType") == "OPERATION" and payload.get("operation") is not None:
+                # Briefing ou objectifs corrigés après la fin : le texte est actualisé, les boutons ne reviennent pas.
+                embed, _ = self._build_event_embed(event_id, payload)
+                if self._is_finished_message(message):
+                    self._mark_finished(embed)
+                await message.edit(embed=embed, view=None)
+                logger.info(f"✏️ Annonce d'une opération terminée mise à jour (eventId={event_id})")
+                return
             await message.edit(view=None)
             return
         if self.discord_link_store:
