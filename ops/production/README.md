@@ -142,10 +142,17 @@ le serveur par `POST /api/events/bot/participation`, avec sa clé.
 La production est en V38. Cette release applique cinq migrations au démarrage du backend :
 V39 (offres Wikelo par l'API) puis V40 à V43 (module Opérations et équipages).
 
-Fichiers à déposer dans `/root/iceforge/ops/backend-rollout/` avant le précontrôle, avec
-`verify.sh` : `verify-flyway-v38-checksums.sql` et `verify-flyway-v43.sql`. Le dépôt les
-porte dans `ops/backend-rollout/`. Le dossier `ops/production/backend-rollout/` en est une
-copie ancienne : il ne sert pas à cette release.
+Le dossier `/root/iceforge/ops/backend-rollout/` du serveur se compose de deux dossiers du
+dépôt, qui n'ont aucun nom de fichier en commun :
+
+- `ops/production/backend-rollout/` : fichier Compose, `verify-compose.py`, préparation des
+  volumes et vérifications historiques V28 à V32 ;
+- `ops/backend-rollout/` : `verify.sh` et les vérifications Flyway en service
+  (`verify-flyway-v33.sql`, `verify-flyway-v38-checksums.sql`, `verify-flyway-v43.sql`).
+
+Avant le précontrôle, déposer les quatre fichiers de `ops/backend-rollout/` sur le serveur,
+depuis la révision livrée. Le script de déploiement refuse de continuer si `verify.sh` ou
+une vérification est une version antérieure à cette release.
 
 | Moment | Contrôle | Refus |
 |---|---|---|
@@ -176,7 +183,9 @@ La resynchronisation n'est pas automatique : un administrateur la lance et valid
    `POST /api/admin/catalog-sync/scrape-and-map`, portée `WIKELO`). Aucun autre traitement
    de catalogue ne doit être en cours ou en attente : un seul est admis à la fois.
 2. **Récupération.** Environ 10 secondes mesurées sur une copie isolée : véhicules et
-   missions lus sur l'API Star Citizen Wiki, 42 offres pour la version 4.10.1.
+   missions lus sur l'API Star Citizen Wiki. Le nombre d'offres dépend de la version du jeu
+   publiée par l'API ce jour-là (42 lors de l'essai, version 4.10.1) : ce n'est pas une
+   valeur attendue.
 3. **Choix de correspondance.** Le traitement s'arrête en « attente de validation » quand
    un vaisseau a plusieurs variantes possibles. 8 choix sur la copie de la base de
    développement (Avenger Stalker, cinq Constellation, Skylark) ; 36 sur une base au
@@ -187,11 +196,15 @@ La resynchronisation n'est pas automatique : un administrateur la lance et valid
    secondes. Conditions : récupération complète, aucun identifiant de mission en double,
    quantités valides. Sinon rien n'est publié et les offres précédentes restent en place.
 5. **Vérifier.**
-   - le traitement est « réussi », étape 6 sur 6 ;
-   - `GET /api/wikelo/ships` rend les offres (42 attendues pour 4.10.1), chacune avec sa
-     mission et sa récompense ;
+   - le traitement est « réussi », étape 6 sur 6, sans message d'erreur ;
+   - tous les choix de correspondance sont validés : aucun ne reste en attente ;
+   - le nombre d'offres publiées est celui annoncé par le traitement (« N offres
+     publiées ») et celui rendu par `GET /api/wikelo/ships` ;
+   - chaque offre porte une mission, une récompense et la version source du jour ; aucun
+     vaisseau n'apparaît deux fois pour la même mission ;
    - `GET /api/wikelo/equipment` répond ;
-   - la page Wikelo du site affiche les vaisseaux, images comprises.
+   - sur la page Wikelo du site, quelques vaisseaux pris au hasard affichent le bon nom,
+     leur image et un coût cohérent avec la source.
 
 **Si la synchronisation échoue.** Le traitement passe en échec avec son message ; la liste
 reste vide, le reste du site n'est pas affecté. Corriger la cause (API injoignable, réponse

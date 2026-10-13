@@ -87,6 +87,11 @@ required_files=(
 for file in "${required_files[@]}"; do
   [[ -f $file && ! -L $file ]] || { echo "Fichier requis absent ou invalide: $file" >&2; exit 1; }
 done
+# An older copy of the checks must never stand in for the ones this release was tested with.
+grep -Fq 'EXPECTED_FLYWAY_VERSION' "$BACKEND_DIR/verify.sh"   || { echo 'verify.sh du backend trop ancien pour cette release.' >&2; exit 1; }
+grep -Fq 'generate_series(1, 38)' "$BACKEND_DIR/verify-flyway-v33.sql"   || { echo 'verify-flyway-v33.sql trop ancien: il doit controler V1-V38.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V43_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v43.sql"   || { echo 'verify-flyway-v43.sql invalide.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V38_CHECKSUMS_OK' "$BACKEND_DIR/verify-flyway-v38-checksums.sql"   || { echo 'verify-flyway-v38-checksums.sql invalide.' >&2; exit 1; }
 for image in "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE"; do
   docker image inspect "$image" >/dev/null || { echo "Image candidate absente: $image" >&2; exit 1; }
 done
