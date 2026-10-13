@@ -87,7 +87,77 @@ Le message privé de mot de passe temporaire envoyé par le bot utilise la même
 
 La redirection de port est interdite par défaut à la clé d'exploitation
 (`administratively prohibited`). Elle doit être autorisée par un administrateur avant
-tout test dans un navigateur, en la limitant à `127.0.0.1:19088`.
+tout test dans un navigateur, en la limitant à `127.0.0.1:19088` : voir la procédure
+ci-dessous.
+
+### Autoriser le tunnel vers le staging (intervention root)
+
+État relevé le 13 octobre 2026 : pour `iceforge-ops`, sshd applique
+`AllowTcpForwarding no`, et la clé porte `restrict`. Les deux niveaux doivent être
+ouverts, uniquement vers `127.0.0.1:19088`. Le port du staging reste lié à l'adresse
+locale du serveur : rien n'est exposé publiquement.
+
+Ne pas changer dans la même intervention le propriétaire du fichier `authorized_keys` :
+une erreur de droits y couperait l'accès d'exploitation en même temps.
+
+1. **Garder une session root ouverte** dans un premier terminal, jusqu'à la fin. Toutes
+   les vérifications se font depuis un second terminal.
+2. **Sauvegarder** :
+   ```bash
+   stamp=$(date -u +%Y%m%dT%H%M%SZ)
+   cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.backup-$stamp
+   cp -a /etc/ssh/sshd_config.d /etc/ssh/sshd_config.d.backup-$stamp
+   cp -a /home/iceforge-ops/.ssh/authorized_keys /home/iceforge-ops/.ssh/authorized_keys.backup-$stamp
+   ```
+3. **Lire l'existant** avant d'écrire quoi que ce soit :
+   ```bash
+   grep -rnEi '^\s*(Match|AllowTcpForwarding|PermitOpen|DisableForwarding|Include)' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
+   sshd -T -C user=iceforge-ops,host=$(hostname),addr=127.0.0.1 | grep -Ei '^(allowtcpforwarding|permitopen|gatewayports|disableforwarding)'
+   ```
+   - Si un bloc `Match User iceforge-ops` existe déjà : le compléter, ne pas en créer un second.
+   - Si `DisableForwarding yes` s'applique au compte : il l'emporte sur tout le reste ;
+     s'arrêter et revoir la procédure.
+   - Un bloc `Match` s'étend jusqu'au `Match` suivant ou à la fin du fichier : le nouveau
+     bloc se place en fin de fichier, pour ne capturer aucune directive existante.
+4. **Ajouter le bloc**, dans un fichier dédié lu en dernier
+   (`/etc/ssh/sshd_config.d/90-iceforge-ops-staging-tunnel.conf`, mode `0600`, root) si la
+   directive `Include` du fichier principal couvre ce dossier, sinon en fin de
+   `sshd_config` :
+   ```
+   Match User iceforge-ops
+       AllowTcpForwarding local
+       PermitOpen 127.0.0.1:19088
+       GatewayPorts no
+   ```
+5. **Tester la syntaxe et le résultat, sans recharger** :
+   ```bash
+   sshd -t
+   sshd -T -C user=iceforge-ops,host=$(hostname),addr=127.0.0.1 | grep -Ei '^(allowtcpforwarding|permitopen|gatewayports)'
+   sshd -T -C user=root,host=$(hostname),addr=127.0.0.1 | grep -Ei '^(allowtcpforwarding|permitopen)'
+   ```
+   Attendu pour `iceforge-ops` : `allowtcpforwarding local`, `permitopen 127.0.0.1:19088`,
+   `gatewayports no`. Pour `root` et tout autre compte : valeurs inchangées par rapport à
+   l'étape 3. En cas d'écart, retirer le bloc et s'arrêter.
+6. **Modifier l'option de la clé**, sur la seule ligne de la clé d'exploitation : ajouter
+   `port-forwarding,permitopen="127.0.0.1:19088"` après `restrict`. La ligne devient :
+   ```
+   expiry-time="AAAAMMJJhhmmss",restrict,port-forwarding,permitopen="127.0.0.1:19088" ssh-ed25519 …
+   ```
+   Vérifier ensuite `ls -l` (propriétaire et mode inchangés) et `ssh-keygen -lf` sur le fichier.
+   Le script de renouvellement conserve ces options.
+7. **Recharger** : `systemctl reload sshd`, puis `systemctl is-active sshd`. Les sessions
+   ouvertes ne sont pas coupées.
+8. **Contrôler une nouvelle connexion**, depuis le poste de travail, sans fermer la session root :
+   ```powershell
+   ssh -T iceforge-ops@SERVEUR "echo ICEFORGE_SSH_ACCESS_OK"
+   ssh -N -L 19088:127.0.0.1:19088 iceforge-ops@SERVEUR
+   ```
+   Le premier doit répondre comme avant. Avec le second ouvert, `http://127.0.0.1:19088`
+   doit afficher le staging. Un tunnel vers un autre port, par exemple
+   `-L 15432:127.0.0.1:5432`, doit être refusé (`administratively prohibited`).
+9. **Retour arrière**, si un contrôle échoue : restaurer les trois sauvegardes de
+   l'étape 2, `sshd -t`, `systemctl reload sshd`, puis revérifier la connexion
+   d'exploitation. Ne fermer la session root qu'après ce contrôle.
 
 ## Vérification et nettoyage
 
