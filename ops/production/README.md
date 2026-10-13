@@ -173,6 +173,81 @@ il s'arrête avec ce message et laisse les services en l'état. Avant toute migr
 retour automatique aux images précédentes reste en place.
 Tout ce qui a été saisi entre-temps est perdu : prévoir une fenêtre courte et annoncée.
 
+### Restauration après un échec postérieur aux migrations
+
+À suivre quand le script s'arrête sur « Déploiement en échec après migration », ou quand la
+release doit être retirée après coup. Deux éléments sont nécessaires, tous deux produits par
+le script avant la bascule :
+
+- l'archive chiffrée `/var/backups/iceforge/iceforge-<horodatage>.tar.gz.age` et son
+  fichier `.sha256` ;
+- le fichier `/var/backups/iceforge/application-rollback.XXXXXX`, qui consigne les trois
+  images en service avant le déploiement. Son chemin est affiché par le message d'arrêt.
+
+L'identité `age` qui déchiffre l'archive ne reste pas sur le serveur : l'apporter pour
+l'étape 2 et la retirer ensuite, ou déchiffrer sur le poste d'administration et ne
+transférer que le dossier extrait.
+
+1. **Arrêter les écritures.** Le frontend peut rester en place.
+
+   ```bash
+   docker stop iceforge_backend iceforge_bot
+   ```
+
+2. **Vérifier puis déchiffrer l'archive**, dans un dossier réservé à root.
+
+   ```bash
+   (cd /var/backups/iceforge && sha256sum -c iceforge-<horodatage>.tar.gz.age.sha256)
+   install -d -m 700 /root/restore
+   age -d -i <identité> /var/backups/iceforge/iceforge-<horodatage>.tar.gz.age | tar -xzf - -C /root/restore
+   (cd /root/restore/<dossier extrait> && sha256sum -c SHA256SUMS)
+   ```
+
+3. **Restaurer dans une base neuve**, à côté de la base migrée, qui n'est pas touchée.
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'createdb -U "$POSTGRES_USER" -T template0 "${POSTGRES_DB}_restauree"'
+   docker exec -i iceforge_db sh -ceu 'pg_restore --exit-on-error -U "$POSTGRES_USER" -d "${POSTGRES_DB}_restauree"' \
+     < /root/restore/<dossier extrait>/postgresql.dump
+   ```
+
+4. **Contrôler la base restaurée** : la version doit être celle d'avant la release (38).
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'psql -X -At -U "$POSTGRES_USER" -d "${POSTGRES_DB}_restauree" \
+     -c "SELECT max(version::integer) FROM public.flyway_schema_history WHERE success"'
+   ```
+
+5. **Échanger les deux bases par renommage.** La base migrée est conservée sous un autre
+   nom tant que l'incident n'est pas clos ; aucune donnée n'est supprimée.
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres \
+     -c "ALTER DATABASE \"$POSTGRES_DB\" RENAME TO \"${POSTGRES_DB}_migree\"" \
+     -c "ALTER DATABASE \"${POSTGRES_DB}_restauree\" RENAME TO \"$POSTGRES_DB\""'
+   ```
+
+   Le renommage échoue tant qu'une session est ouverte sur la base : vérifier que le
+   backend et le bot sont bien arrêtés.
+
+6. **Remettre les trois anciennes images**, avec la commande Compose du script (tableau
+   `compose` de `deploy-application-release.sh`).
+
+   ```bash
+   set -a; . /var/backups/iceforge/application-rollback.XXXXXX; set +a
+   <commande compose du script> up -d --no-deps --no-build --pull never --wait backend bot frontend
+   ```
+
+7. **Vérifier** : `verify.sh runtime` de la révision remise en service, connexion au site,
+   journal du backend sans erreur Flyway.
+
+Ce qui a été saisi après la sauvegarde reste dans la base `<nom>_migree` et n'est pas
+repris automatiquement.
+
+Cette procédure n'a jamais été exécutée en production. La restauration de ce format de dump
+est rejouée en instance isolée à chaque sauvegarde (`ops/backups/verify-postgres-isolated.sh`)
+et l'échange par renommage a été répété sur la base de développement le 13 octobre 2026.
+
 ## Après déploiement : resynchronisation Wikelo
 
 V39 vide les offres de vaisseaux Wikelo : 35 offres publiées et 36 enregistrements bruts en
