@@ -55,8 +55,9 @@ public class SecurityConfig {
                 // 🔐 Règles d’autorisation
                 .authorizeHttpRequests(auth -> auth
                         // Renvoi interne du conteneur vers la page d'erreur (sendError) : ce n'est pas une requête
-                        // du client. Sans cette règle il repasse sans identité par « authenticated() » et tout refus
-                        // (403, 404, 405…) ressort en 401. Une requête directe vers /error reste protégée.
+                        // du client. Sans cette règle il repasse sans identité par « authenticated() » et un refus de
+                        // rôle (403) ressort en 401. Une requête directe vers /error reste protégée ; la page d'erreur
+                        // ne donne que le statut et le chemin (server.error.* dans application.yml).
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // routes publiques
                         .requestMatchers(

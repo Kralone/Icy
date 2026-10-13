@@ -163,13 +163,35 @@ class AccessDeniedOverHttpTest {
 
     @Test
     void aRefusalDecidedInAServiceIsForbiddenToo() throws Exception {
-        assertThat(call("GET", "/api/probe/delegation", "jeton-membre").statusCode()).isEqualTo(403);
+        HttpResponse<String> refused = call("GET", "/api/probe/delegation", "jeton-membre");
+        assertThat(refused.statusCode()).isEqualTo(403);
+        // La page d'erreur ne répète ni le message de l'exception ni une trace.
+        assertThat(refused.body()).doesNotContain("délégation").doesNotContain("AccessDeniedException").doesNotContain("\"trace\"").doesNotContain("at com.icy");
         assertThat(call("GET", "/api/probe/delegation", null).statusCode()).isEqualTo(401);
     }
 
     @Test
     void theErrorPageItselfStaysProtectedFromDirectRequests() throws Exception {
         assertThat(call("GET", "/error", null).statusCode()).isEqualTo(401);
+        HttpResponse<String> direct = call("GET", "/error", "jeton-membre");
+        assertThat(direct.body()).doesNotContain("\"trace\"").doesNotContain("Exception");
+    }
+
+    @Test
+    void routesWithoutIdentityNeverRevealWhetherTheyExist() throws Exception {
+        assertThat(call("GET", "/api/probe/absente", null).statusCode()).isEqualTo(401);
+        assertThat(call("DELETE", "/api/probe/member", null).statusCode()).isEqualTo(401);
+        HttpResponse<String> anonymous = call("GET", "/api/probe/admin", null);
+        assertThat(anonymous.body()).doesNotContain("\"trace\"").doesNotContain("Exception");
+    }
+
+    @Test
+    void theBotEndpointsStayClosedWithoutTheBotKey() throws Exception {
+        assertThat(call("POST", "/api/events/bot/participation", null).statusCode()).isEqualTo(401);
+        assertThat(call("POST", "/api/events/bot/participation", "jeton-admin").statusCode()).isEqualTo(401);
+        HttpRequest wrongKey = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/events/bot/participation"))
+                .header("Authorization", "Bot mauvaise-cle").POST(HttpRequest.BodyPublishers.noBody()).build();
+        assertThat(client.send(wrongKey, HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(401);
     }
 
     @Test
@@ -198,7 +220,8 @@ class AccessDeniedOverHttpTest {
     void aPilotWhoIsNotPresentIsRefusedWithoutAServerError() throws Exception {
         UUID absent = UUID.randomUUID();
         HttpResponse<String> response = call("PUT", pilotPath(absent), "jeton-officier");
-        assertThat(response.statusCode()).isBetween(400, 499);
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).contains("inscrit Présent");
         assertThat(proposal.getPilotUserId()).isNull();
         verify(proposals, never()).save(any());
     }
