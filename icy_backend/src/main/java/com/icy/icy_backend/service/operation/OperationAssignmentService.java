@@ -26,14 +26,29 @@ public class OperationAssignmentService {
     private final MessageService messageService;
     private final OperationAssignmentRequestRepository requestRepository;
 
+    private OperationLock operationLock;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationLock(OperationLock operationLock) {
+        this.operationLock = operationLock;
+    }
+
+    /** Clôture automatique à l'heure de fin : voir OperationLock. */
+    private void requireOpen(UUID operationId) {
+        if (operationLock != null) operationLock.requireOpen(operationId);
+    }
+
     @Transactional
     public ResponseEntity<MessageResponse<Void>> request(UUID operationId, Long groupId) {
         Operation operation = operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         OperationGroup group = groupRepository.findLockedById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Groupe feuille invalide");
         if (effectiveMode(operationId, groupId) != OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Ce groupe ne demande pas de validation");
         UUID user = AuthUtils.getCurrentUserId();
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
+        requireActiveAccount(operationId, user);
+        if (assignmentRepository.findByOperationEventIdAndUserId(operationId, user).map(current -> groupId.equals(current.getGroupId())).orElse(false)) throw new IllegalStateException("Vous êtes déjà dans ce groupe");
         if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
         requestRepository.save(OperationAssignmentRequest.builder().operationEventId(operationId).groupId(groupId).userId(user).build());
         return messageService.buildResponse("operation.assignment.requested", null);
@@ -48,15 +63,106 @@ public class OperationAssignmentService {
         if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
+        // Après la fin, une demande restée en attente n'est plus ni acceptée ni refusée : elle reste telle quelle.
+        requireOpen(request.getOperationEventId());
         if (!approve) { request.setStatus(OperationAssignmentRequest.Status.REFUSED); requestRepository.save(request); return messageService.buildResponse("operation.assignment.refused", null); }
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(request.getOperationEventId(), request.getUserId(), 1)) throw new IllegalStateException("Ce membre n’est plus inscrit Présent : la demande ne peut pas être acceptée.");
+        requireActiveAccount(request.getOperationEventId(), request.getUserId());
         ensureCapacity(request.getOperationEventId(), group.getId(), request.getUserId());
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(request.getOperationEventId(), request.getUserId()).orElseGet(OperationAssignment::new);
-        assignment.setOperationEventId(request.getOperationEventId()); assignment.setGroupId(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
+        assignment.setOperationEventId(request.getOperationEventId()); assignment.moveTo(request.getGroupId()); assignment.setUserId(request.getUserId()); assignment.setStatus(OperationAssignment.Status.CONFIRMED); assignmentRepository.save(assignment);
         request.setStatus(OperationAssignmentRequest.Status.APPROVED); requestRepository.save(request);
         return messageService.buildResponse("operation.assignment.approved", null);
     }
 
-    private boolean hasResponsibleScope(UUID userId, OperationGroup target) {
+    /** Organisateur : place ou déplace un membre présent. Responsable : uniquement entre des groupes de sa délégation. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> assignMember(UUID operationId, UUID userId, Long groupId) {
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        operationRepository.findById(operationId)
+                .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        OperationGroup group = groupRepository.findById(groupId).filter(value -> operationId.equals(value.getOperationEventId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
+        UUID currentUser = AuthUtils.getCurrentUserId();
+        if (!organizer && !hasResponsibleScope(currentUser, group)) {
+            throw new org.springframework.security.access.AccessDeniedException("Groupe hors de votre délégation");
+        }
+        requireOpen(operationId);
+        if (groupRepository.existsByParentId(groupId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
+        if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) throw new IllegalStateException("Ce membre n’est pas inscrit Présent");
+        requireActiveAccount(operationId, userId);
+        java.util.Optional<OperationAssignment> existing = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId);
+        if (existing.isPresent() && groupId.equals(existing.get().getGroupId())) {
+            return messageService.buildResponse("operation.assignment.confirmed", null);
+        }
+        if (!organizer && existing.isPresent()) {
+            OperationGroup source = groupRepository.findById(existing.get().getGroupId()).orElse(null);
+            if (source == null || !hasResponsibleScope(currentUser, source)) {
+                throw new org.springframework.security.access.AccessDeniedException("Ce membre appartient à un groupe hors de votre délégation");
+            }
+        }
+        ensureCapacity(operationId, groupId, userId);
+        OperationAssignment assignment = existing.orElseGet(OperationAssignment::new);
+        assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+        assignmentRepository.save(assignment);
+        requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
+        return messageService.buildResponse("operation.assignment.confirmed", null);
+    }
+
+    /** Retire un membre de son groupe : il reste inscrit Présent et redevient « sans affectation ». */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> removeMember(UUID operationId, UUID userId) {
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        operationRepository.findById(operationId)
+                .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        java.util.Optional<OperationAssignment> found = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId);
+        if (!organizer) {
+            OperationGroup group = found.flatMap(value -> groupRepository.findById(value.getGroupId())).orElse(null);
+            if (group == null || !hasResponsibleScope(AuthUtils.getCurrentUserId(), group)) {
+                throw new org.springframework.security.access.AccessDeniedException("Ce membre appartient à un groupe hors de votre délégation");
+            }
+        }
+        requireOpen(operationId);
+        OperationAssignment assignment = found.orElseThrow(() -> new ResourceNotFoundException("Affectation introuvable"));
+        assignmentRepository.delete(assignment);
+        return messageService.buildResponse("operation.assignment.removed", null);
+    }
+
+    /** Le participant quitte lui-même son groupe : il reste inscrit Présent, sa demande éventuelle et ses vaisseaux ne changent pas. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> leave(UUID operationId) {
+        operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
+        OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, AuthUtils.getCurrentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vous n’avez pas d’affectation sur cette opération"));
+        assignmentRepository.delete(assignment);
+        return messageService.buildResponse("operation.assignment.left", null);
+    }
+
+    /** Le participant annule sa propre demande en attente ; son affectation actuelle n'est pas touchée. */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> cancelRequest(UUID operationId) {
+        operationRepository.findById(operationId).filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
+        OperationAssignmentRequest request = requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, AuthUtils.getCurrentUserId(), OperationAssignmentRequest.Status.PENDING)
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune demande en attente"));
+        requestRepository.delete(request);
+        return messageService.buildResponse("operation.assignment.request.cancelled", null);
+    }
+
+    /** Une réponse « Présent » laissée par un compte désactivé ne permet ni nouvelle affectation ni transfert. Les affectations déjà en place ne sont pas touchées. */
+    private void requireActiveAccount(UUID operationId, UUID userId) {
+        if (participationRepository.isDeactivatedParticipant(operationId, userId)) {
+            throw new IllegalStateException("Ce compte est désactivé : il ne peut pas recevoir d’affectation.");
+        }
+    }
+
+    /** Vrai si l'utilisateur est responsable du groupe ou de son groupe parent. */
+    boolean hasResponsibleScope(UUID userId, OperationGroup target) {
         OperationGroup cursor = target;
         int depth = 0;
         while (cursor != null && depth++ < 2) {
@@ -73,9 +179,11 @@ public class OperationAssignmentService {
      */
     @Transactional(readOnly = true)
     public List<OperationAssignmentRequest> visibleRequests(UUID operationId) {
-        operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        if (!organizer && operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) throw new ResourceNotFoundException("Opération introuvable");
         List<OperationAssignmentRequest> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId);
-        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER")) return requests;
+        if (organizer) return requests;
 
         UUID currentUser = AuthUtils.getCurrentUserId();
         List<OperationGroup> groups = groupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId);
@@ -100,6 +208,7 @@ public class OperationAssignmentService {
         Operation operation = operationRepository.findById(operationId)
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId()) || groupRepository.existsByParentId(groupId)) {
             throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
@@ -109,13 +218,16 @@ public class OperationAssignmentService {
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)) {
             throw new IllegalStateException("La participation Présent est requise");
         }
+        requireActiveAccount(operationId, userId);
         OperationGroup.AssignmentMode mode = effectiveMode(operationId, groupId);
         if (mode == OperationGroup.AssignmentMode.MANAGED) throw new IllegalStateException("Groupe géré par les organisateurs");
         if (mode == OperationGroup.AssignmentMode.VALIDATION) throw new IllegalStateException("Une demande de validation sera disponible dans l’éditeur");
         ensureCapacity(operationId, groupId, userId);
         OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, userId).orElseGet(OperationAssignment::new);
-        assignment.setOperationEventId(operationId); assignment.setGroupId(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+        assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(userId); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
         assignmentRepository.save(assignment);
+        // Une place prise directement rend caduque une demande encore en attente ailleurs dans l'opération.
+        requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
         return messageService.buildResponse("operation.assignment.confirmed", null);
     }
 
@@ -130,6 +242,12 @@ public class OperationAssignmentService {
         // order. This serializes sibling assignments through their shared
         // parent and prevents two transactions from overshooting its limit.
         ancestors.stream().sorted().forEach(id -> groupRepository.findLockedById(id));
+        // Sous verrou : un sous-groupe créé entre-temps fait de ce groupe un conteneur.
+        if (groupRepository.existsByParentId(leafId)) throw new IllegalArgumentException("Affectation possible uniquement sur une feuille");
+        // Sous verrou aussi : si le groupe a changé de parent pendant l'attente, les plafonds lus ne sont plus les bons.
+        OperationGroup leaf = byId.get(leafId);
+        boolean moved = leaf != null && (leaf.getParentId() == null ? groupRepository.existsByIdAndParentIdIsNotNull(leafId) : groupRepository.hasMovedFrom(leafId, leaf.getParentId()));
+        if (moved) throw new IllegalStateException("L’organisation vient d’être modifiée : réessayez.");
         List<OperationAssignment> assignments = assignmentRepository.findByOperationEventId(operationId);
         for (Long groupId : ancestors) {
             OperationGroup group = byId.get(groupId);
@@ -163,6 +281,7 @@ public class OperationAssignmentService {
             if (cursor.getAssignmentMode() != OperationGroup.AssignmentMode.INHERITED) return cursor.getAssignmentMode();
             cursor = cursor.getParentId() == null ? null : byId.get(cursor.getParentId());
         }
-        return OperationGroup.AssignmentMode.FREE;
+        // Aucun groupe de la branche ne fixe de mode : c'est celui de l'opération qui s'applique.
+        return operationRepository.findById(operationId).map(Operation::getDefaultAssignmentMode).orElse(OperationGroup.AssignmentMode.FREE);
     }
 }

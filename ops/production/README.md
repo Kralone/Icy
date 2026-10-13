@@ -112,3 +112,183 @@ la recréation ou les contrôles du backend/bot échouent.
 La release ressources regroupe les anciennes migrations de développement V33 à V37 dans `V33__resources_catalogue.sql`. La production reste en V32 avant promotion et applique une seule migration transactionnelle PostgreSQL. Le précontrôle accepte V32 ou V33 ; le contrôle runtime vérifie V1–V33 et les structures ressources.
 
 Le staging anciennement V37 fait l’objet d’une réconciliation explicite et sauvegardée de son historique ; cette opération est interdite sur la production. La base de développement V32 migre normalement. Aucun `repair` aveugle ni suppression de données métier.
+
+## Réponses Discord : clé du bot et ordre de déploiement
+
+Un clic sur Présent, Peut-être ou Absent d'un événement classique n'est confirmé au
+membre que si le serveur a réellement enregistré sa réponse. Le bot interroge pour cela
+le serveur par `POST /api/events/bot/participation`, avec sa clé.
+
+- `BOT_API_KEY` doit être renseignée **à l'identique** pour le backend et pour le bot.
+  Sans elle, le bot refuse de démarrer. Vide côté backend (réponse 503) ou différente
+  (réponse 401), tous les clics reçoivent un message d'échec : aucune réponse n'est
+  enregistrée, et aucun succès n'est annoncé à tort.
+- **À contrôler à la main avant une livraison** : le précontrôle de
+  `deploy-application-release.sh` ne vérifie pas cette clé, et le `docker-compose.yml`
+  qu'il utilise accepte une valeur vide. Seul `vault/configure-production-secrets.sh`
+  la contrôle, au moment où les secrets sont posés (32 caractères au moins, identique
+  pour le backend et le bot). Les secrets restent sur le serveur ; cette procédure ne
+  les modifie pas.
+- Ordre obligatoire : **backend, puis bot** — celui que suit déjà
+  `deploy-application-release.sh`. Un nouveau bot face à un ancien backend refuse toutes
+  les réponses (401). Un ancien bot face au nouveau backend continue de fonctionner par
+  RabbitMQ, avec l'ancien défaut de confirmation.
+- Les annonces d'opération n'ont pas de bouton de réponse : la présence s'y gère sur la
+  fiche. Après l'heure de fin d'une opération publiée, le serveur refuse tout changement
+  de présence, par le site comme par le bot.
+
+## Release Opérations et Équipages : Flyway V39 à V43
+
+La production est en V38. Cette release applique cinq migrations au démarrage du backend :
+V39 (offres Wikelo par l'API) puis V40 à V43 (module Opérations et équipages).
+
+Le dossier `/root/iceforge/ops/backend-rollout/` du serveur se compose de deux dossiers du
+dépôt, qui n'ont aucun nom de fichier en commun :
+
+- `ops/production/backend-rollout/` : fichier Compose, `verify-compose.py`, préparation des
+  volumes et vérifications historiques V28 à V32 ;
+- `ops/backend-rollout/` : `verify.sh` et les vérifications Flyway en service
+  (`verify-flyway-v33.sql`, `verify-flyway-v38-checksums.sql`, `verify-flyway-v43.sql`).
+
+Avant le précontrôle, déposer les quatre fichiers de `ops/backend-rollout/` sur le serveur,
+depuis la révision livrée. Le script de déploiement refuse de continuer si `verify.sh` ou
+une vérification est une version antérieure à cette release.
+
+| Moment | Contrôle | Refus |
+|---|---|---|
+| Précontrôle (`--preflight`), base en V38 | `verify-flyway-v33.sql` : historique exact V1 à V38 et structure | Autre version, migration en échec |
+| Précontrôle, base en V38 | `verify-flyway-v38-checksums.sql` : scripts et checksums V31 à V38 | Historique différent de celui livré |
+| Précontrôle, base déjà en V43 | `verify-flyway-v43.sql` | Release incomplète |
+| Après démarrage du backend | `verify.sh runtime`, version V43 exigée, puis `verify-flyway-v43.sql` | Base restée en V38, checksum V31 à V43 différent, structure Wikelo ou Opérations incomplète |
+
+Une base en V39, V40, V41 ou V42 est refusée : c'est une migration interrompue, à analyser
+avant toute reprise. Aucun `flyway repair` n'est prévu.
+
+**Retour arrière.** V39 supprime la colonne `source_sheet`, que l'ancien backend lit : il
+ne démarre plus sur la base migrée (« missing column [source_sheet] », vérifié). Le retour
+automatique aux trois images précédentes ne suffit donc pas après les migrations. Il faut
+restaurer la sauvegarde chiffrée prise par le script, puis remettre les anciennes images.
+Le script ne tente donc plus ce retour automatique dès que la version Flyway a changé :
+il s'arrête avec ce message et laisse les services en l'état. Avant toute migration, le
+retour automatique aux images précédentes reste en place.
+Tout ce qui a été saisi entre-temps est perdu : prévoir une fenêtre courte et annoncée.
+
+### Restauration après un échec postérieur aux migrations
+
+À suivre quand le script s'arrête sur « Déploiement en échec après migration », ou quand la
+release doit être retirée après coup. Deux éléments sont nécessaires, tous deux produits par
+le script avant la bascule :
+
+- l'archive chiffrée `/var/backups/iceforge/iceforge-<horodatage>.tar.gz.age` et son
+  fichier `.sha256` ;
+- le fichier `/var/backups/iceforge/application-rollback.XXXXXX`, qui consigne les trois
+  images en service avant le déploiement. Son chemin est affiché par le message d'arrêt.
+
+L'identité `age` qui déchiffre l'archive ne reste pas sur le serveur : l'apporter pour
+l'étape 2 et la retirer ensuite, ou déchiffrer sur le poste d'administration et ne
+transférer que le dossier extrait.
+
+1. **Arrêter les écritures.** Le frontend peut rester en place.
+
+   ```bash
+   docker stop iceforge_backend iceforge_bot
+   ```
+
+2. **Vérifier puis déchiffrer l'archive**, dans un dossier réservé à root.
+
+   ```bash
+   (cd /var/backups/iceforge && sha256sum -c iceforge-<horodatage>.tar.gz.age.sha256)
+   install -d -m 700 /root/restore
+   age -d -i <identité> /var/backups/iceforge/iceforge-<horodatage>.tar.gz.age | tar -xzf - -C /root/restore
+   (cd /root/restore/<dossier extrait> && sha256sum -c SHA256SUMS)
+   ```
+
+3. **Restaurer dans une base neuve**, à côté de la base migrée, qui n'est pas touchée.
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'createdb -U "$POSTGRES_USER" -T template0 "${POSTGRES_DB}_restauree"'
+   docker exec -i iceforge_db sh -ceu 'pg_restore --exit-on-error -U "$POSTGRES_USER" -d "${POSTGRES_DB}_restauree"' \
+     < /root/restore/<dossier extrait>/postgresql.dump
+   ```
+
+4. **Contrôler la base restaurée** : la version doit être celle d'avant la release (38).
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'psql -X -At -U "$POSTGRES_USER" -d "${POSTGRES_DB}_restauree" \
+     -c "SELECT max(version::integer) FROM public.flyway_schema_history WHERE success"'
+   ```
+
+5. **Échanger les deux bases par renommage.** La base migrée est conservée sous un autre
+   nom tant que l'incident n'est pas clos ; aucune donnée n'est supprimée.
+
+   ```bash
+   docker exec -i iceforge_db sh -ceu 'psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres \
+     -c "ALTER DATABASE \"$POSTGRES_DB\" RENAME TO \"${POSTGRES_DB}_migree\"" \
+     -c "ALTER DATABASE \"${POSTGRES_DB}_restauree\" RENAME TO \"$POSTGRES_DB\""'
+   ```
+
+   Le renommage échoue tant qu'une session est ouverte sur la base : vérifier que le
+   backend et le bot sont bien arrêtés.
+
+6. **Remettre les trois anciennes images**, avec la commande Compose du script (tableau
+   `compose` de `deploy-application-release.sh`).
+
+   ```bash
+   set -a; . /var/backups/iceforge/application-rollback.XXXXXX; set +a
+   <commande compose du script> up -d --no-deps --no-build --pull never --wait backend bot frontend
+   ```
+
+7. **Vérifier** : `verify.sh runtime` de la révision remise en service, connexion au site,
+   journal du backend sans erreur Flyway.
+
+Ce qui a été saisi après la sauvegarde reste dans la base `<nom>_migree` et n'est pas
+repris automatiquement.
+
+Cette procédure n'a jamais été exécutée en production. La restauration de ce format de dump
+est rejouée en instance isolée à chaque sauvegarde (`ops/backups/verify-postgres-isolated.sh`)
+et l'échange par renommage a été répété sur la base de développement le 13 octobre 2026.
+
+## Après déploiement : resynchronisation Wikelo
+
+V39 vide les offres de vaisseaux Wikelo : 35 offres publiées et 36 enregistrements bruts en
+production (relevé du 13 octobre 2026). Les recettes d'équipement, les comptes et les
+objectifs des membres ne sont pas touchés. Tant que la resynchronisation n'est pas publiée,
+la page Wikelo répond normalement et affiche une liste de vaisseaux vide.
+
+La resynchronisation n'est pas automatique : un administrateur la lance et valide des choix.
+
+1. **Lancer.** Page d'administration du catalogue, traitement « Wikelo » (API :
+   `POST /api/admin/catalog-sync/scrape-and-map`, portée `WIKELO`). Aucun autre traitement
+   de catalogue ne doit être en cours ou en attente : un seul est admis à la fois.
+2. **Récupération.** Environ 10 secondes mesurées sur une copie isolée : véhicules et
+   missions lus sur l'API Star Citizen Wiki. Le nombre d'offres dépend de la version du jeu
+   publiée par l'API ce jour-là (42 lors de l'essai, version 4.10.1) : ce n'est pas une
+   valeur attendue.
+3. **Choix de correspondance.** Le traitement s'arrête en « attente de validation » quand
+   un vaisseau a plusieurs variantes possibles. 8 choix sur la copie de la base de
+   développement (Avenger Stalker, cinq Constellation, Skylark) ; 36 sur une base au
+   catalogue vide. Le nombre en production dépend de son catalogue : il n'a pas été mesuré.
+   Chaque choix se tranche dans la page d'administration ; plusieurs variantes peuvent être
+   retenues pour un même nom.
+4. **Publication.** Elle part seule quand le dernier choix est enregistré, en quelques
+   secondes. Conditions : récupération complète, aucun identifiant de mission en double,
+   quantités valides. Sinon rien n'est publié et les offres précédentes restent en place.
+5. **Vérifier.**
+   - le traitement est « réussi », étape 6 sur 6, sans message d'erreur ;
+   - tous les choix de correspondance sont validés : aucun ne reste en attente ;
+   - le nombre d'offres publiées est celui annoncé par le traitement (« N offres
+     publiées ») et celui rendu par `GET /api/wikelo/ships` ;
+   - chaque offre porte une mission, une récompense et la version source du jour ; aucun
+     vaisseau n'apparaît deux fois pour la même mission ;
+   - `GET /api/wikelo/equipment` répond ;
+   - sur la page Wikelo du site, quelques vaisseaux pris au hasard affichent le bon nom,
+     leur image et un coût cohérent avec la source.
+
+**Si la synchronisation échoue.** Le traitement passe en échec avec son message ; la liste
+reste vide, le reste du site n'est pas affecté. Corriger la cause (API injoignable, réponse
+incomplète) puis relancer : un traitement en échec ne bloque pas le suivant. Un traitement
+laissé en attente de validation, lui, bloque tout autre traitement de catalogue jusqu'à ce
+que ses choix soient faits.
+
+La durée réelle est donc celle de la revue par l'administrateur, pas celle de la machine.
+Ne pas lancer ce traitement avant que le contrôle après démarrage ait réussi.

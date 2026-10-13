@@ -3,57 +3,100 @@
     @if (operationState.status === 'LOADING') {
       <section class="operation-loading" role="status" aria-live="polite"><p>Chargement de l’opération…</p></section>
     } @else if (operationState.status === 'ERROR') {
-      <section class="operation-error" role="alert"><h1>Opération indisponible</h1><p>La fiche n’a pas pu être chargée. Vérifiez votre connexion puis réessayez.</p><a routerLink="/icy/events">Retour au calendrier</a></section>
+      <section class="operation-error" role="alert"><h1>{{ operationState.failure.title }}</h1><p>{{ operationState.failure.detail }}</p><p class="operation-error__actions">@if (operationState.failure.retry) { <button type="button" (click)="retryOperation()">Réessayer</button> }<a routerLink="/icy/events">Retour au calendrier</a></p></section>
     } @else if (operationState.status === 'READY') {
       @if (operationState.data; as operation) {
-    <header class="operation-hero" [style.background-image]="operation.imageUrl ? 'linear-gradient(180deg, transparent 28%, rgba(11,18,32,.95)), url(' + operation.imageUrl + ')' : null">
-      <div class="operation-hero__veil"></div>
-      <div class="operation-hero__content">
-        <a routerLink="/icy/events" class="operation-back">← Calendrier</a>
-        <span class="operation-badge">Opération</span>
-        <h1>{{ operation.title }}</h1>
-        <p class="operation-meta">{{ operation.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm' }} · {{ operation.meetingPoint || 'Rendez-vous à préciser' }}</p>
-      </div>
-    </header>
-    <section class="operation-status" aria-label="Situation de l'opération">
-      <strong>Situation</strong>
-      <span>{{ operation.finished ? 'Opération terminée' : 'Opération publiée' }}</span>
-      @if (participationSummary$ | async; as participation) {
-        <span class="operation-counts">{{ participation.total }} inscrit(s) · {{ participation.present }} présent(s)</span>
-      }
-      <div class="participation-actions" aria-label="Participation">
-        <button type="button" [class.active]="participationStatus === 1" (click)="setParticipation(operation.id, 1)">Présent</button>
-        <button type="button" [class.active]="participationStatus === 0" (click)="setParticipation(operation.id, 0)">Peut-être</button>
-        <button type="button" [class.active]="participationStatus === -1" (click)="setParticipation(operation.id, -1)">Absent</button>
-      </div>
-    </section>
-    <div class="operation-grid">
-      <article class="operation-card operation-card--briefing">
-        <p class="eyebrow">Briefing</p>
-        <h2>Ordres de mission</h2>
-        <p>{{ operation.briefing || operation.description || 'Le briefing sera publié par l’organisateur.' }}</p>
-      </article>
-      <article class="operation-card">
-        <p class="eyebrow">Objectifs</p>
-        <h2>Mission accomplie si…</h2>
-        @if (objectiveItems(operation.objectives); as objectives) { @if (objectives.length) { <ul class="objective-display">@for (objective of objectives; track $index) { <li><span>{{ objective.kind === 'PRINCIPAL' ? 'Principal' : 'Secondaire' }}</span>{{ objective.text }}</li> }</ul> } @else { <p>Les objectifs seront précisés par l’organisateur.</p> } }
-      </article>
-      <article class="operation-card">
-        <p class="eyebrow">Organisation</p>
-        <h2>Composition</h2>
-        @if (groups$ | async; as groups) {
-          @if (groups.length) { <div class="group-list">@for (group of groups; track group.id) { <div class="group-item" [class.group-item--child]="group.parentId"><div><strong>{{ group.name }}</strong><span>{{ group.capacity === null || group.capacity === undefined ? 'Capacité libre' : group.capacity + ' places' }} · {{ groupModeLabel(group, groups) }}</span></div>@if (isLeaf(group, groups)) { @if (effectiveGroupMode(group, groups) === 'VALIDATION') { <button type="button" (click)="requestAssignment(operation.id, group.id)">Demander</button> } @else { <button type="button" (click)="assign(operation.id, group.id)" [disabled]="effectiveGroupMode(group, groups) === 'MANAGED'">Choisir</button> } }</div> }</div> }
-          @else { <p class="empty-state">Les groupes seront affichés ici.</p> }
+    <app-operation-hero [operation]="operation" [presentCount]="presentCount" />
+    <nav class="section-nav" aria-label="Sections de la fiche">
+      @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
+      @if (canManage) { <a class="section-nav__manage" [routerLink]="['/icy/operations', operation.id, 'edit']">Gérer l’opération</a> }
+    </nav>
+    <div class="sheet">
+      @let fleetShips = (ships$ | async) ?? [];
+      @let fleetNeeds = (shipRequirements$ | async) ?? [];
+      @let fleetGroups = (groups$ | async) ?? [];
+      <app-operation-my-assignment [composition]="composition" [crew]="myCrew" [currentUserId]="currentUserId" [error]="compositionError" [locked]="!!operation.locked" [busy]="assignmentBusy"
+        (browse)="goTo('organisation')" (choosePosition)="goToMyCrew()" (leave)="leaveGroup(operation.id)" (cancelRequest)="cancelRequest(operation.id)" />
+      <section class="panel panel--presence" id="presence" tabindex="-1" aria-label="Présence">
+        <app-participation-panel
+          [participationsByStatus]="participationsByStatus"
+          [selectedStatus]="participationStatus"
+          [finished]="operation.finished || !!operation.locked"
+          finishedLabel="Opération terminée."
+          actionsLabel="Votre réponse à cette opération"
+          [loading]="participationLoading"
+          [saving]="participationSaving"
+          [error]="participationError"
+          (statusChange)="setParticipation(operation.id, $event)"
+          (retry)="retryParticipations()" />
+      </section>
+      <app-operation-brief [briefing]="operation.briefing" [description]="operation.description" [objectives]="operation.objectives" [locked]="!!operation.locked" />
+      <section class="panel panel--organisation" id="organisation" tabindex="-1" aria-labelledby="operation-organisation-title">
+        <h2 id="operation-organisation-title"><app-operation-icon name="groups" /> Organisation</h2>
+        @if (compositionError) {
+          <p class="operation-coordination__error" role="alert">{{ compositionError }} <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p>
+        } @else if (composition; as loaded) {
+          @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
+          @if (crewsError) { <p class="operation-coordination__error" role="alert">Les équipages de vaisseau n’ont pas pu être lus : leurs postes peuvent manquer ou ne plus être à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
+          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips" [crews]="crews" [requirements]="fleetNeeds"
+            (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" (position)="setMyPosition(operation.id, $event)" (memberPosition)="setMemberPosition(operation.id, $event.groupId, $event.change)" />
+          @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
+        } @else {
+          <p class="empty-state" role="status">Chargement de l’organisation…</p>
         }
-        @if (assignmentMessage) { <p role="status">{{ assignmentMessage }}</p> }
-      </article>
-      <article class="operation-card">
-        <p class="eyebrow">Flotte</p>
-        <h2>Ressources</h2>
-        @if (shipRequirements$ | async; as requirements) { @if (requirements.length) { <div class="ship-requirements" aria-label="Besoins annoncés"><h3>Besoins annoncés</h3>@for (requirement of requirements; track requirement.id) { @if (requirement.status !== 'CANCELLED') { <div class="ship-requirement"><strong>{{ requirement.quantity }} × {{ requirement.shipModelId ? ('modèle #' + requirement.shipModelId) : 'modèle à préciser' }}</strong>@if (requirement.notes) { <span>{{ requirement.notes }}</span> }</div> } }</div> } }
-        @if (ships$ | async; as ships) { @if (ships.length) { <div class="ship-list">@for (ship of ships; track ship.id) { <div class="ship-item">@if (ship.shipImageUrl) { <img [src]="ship.shipImageUrl" [alt]="ship.shipName || 'Vaisseau'" loading="lazy"> }<div><strong>{{ ship.shipName || ('Vaisseau #' + ship.shipId) }}</strong><span>{{ ship.status === 'UNAVAILABLE' ? 'Indisponible' : 'Proposé · propriétaire : ' + (ship.ownerUsername || 'membre') }}</span>@if (ship.requirementId) { <span class="ship-link">Lié à un besoin annoncé</span> }@if (ship.ownerUserId === currentUserId && ship.status !== 'UNAVAILABLE') { <button type="button" class="secondary" (click)="withdrawShip(operation.id, ship.id)">Retirer ma proposition</button> }</div></div> }</div> } @else { <p class="empty-state">Aucun vaisseau n’est encore renseigné.</p> } }
-        @if (operation.allowShipProposals) { @if (hangar$ | async; as hangar) { @if (hangar.length) { <div class="ship-proposal"><label>Proposer un vaisseau du hangar<select [(ngModel)]="selectedShipId"><option [ngValue]="null">Choisir un appareil</option>@for (owned of hangar; track owned.id?.shipId || owned.ship?.id) { <option [ngValue]="owned.id?.shipId || owned.ship?.id">{{ owned.ship?.name || ('Vaisseau #' + (owned.id?.shipId || owned.ship?.id)) }}</option> }</select></label><label>Besoin ou poste (facultatif)<select [(ngModel)]="selectedShipRequirementId"><option [ngValue]="null">Aucun besoin précis</option>@if (shipRequirements$ | async; as requirements) { @for (requirement of requirements; track requirement.id) { @if (requirement.status !== 'CANCELLED') { <option [ngValue]="requirement.id">{{ requirement.quantity }} × {{ requirement.shipModelId ? ('modèle #' + requirement.shipModelId) : 'modèle à préciser' }}</option> } } }</select></label><label>Feuille (facultatif)<input type="number" [(ngModel)]="selectedShipGroupId" placeholder="ID du groupe"></label><button type="button" class="primary" (click)="proposeShip(operation.id)" [disabled]="selectedShipId === null">Proposer</button></div> } @else { <p class="empty-state">Votre hangar ne contient aucun vaisseau proposé.</p> } } } @else { <p class="empty-state">Les propositions de vaisseaux sont désactivées par l’organisateur.</p> }
-      </article>
+      </section>
+      @if (coordination; as board) {
+        <section class="panel panel--coordination" id="coordination" tabindex="-1" aria-labelledby="operation-coordination-title">
+          <h2 id="operation-coordination-title"><app-operation-icon name="assignment" /> {{ board.organizer ? 'Coordination' : 'Coordination de mes groupes' }}</h2>
+          <button type="button" class="fold" [attr.aria-expanded]="coordinationOpen" aria-controls="operation-coordination-board" (click)="coordinationOpen = !coordinationOpen">{{ coordinationOpen ? 'Replier le tableau' : 'Ouvrir le tableau' }}@if (!coordinationOpen && board.requests.length) { <span class="fold__badge">{{ board.requests.length }} demande{{ board.requests.length > 1 ? 's' : '' }} en attente</span> }@if (!coordinationOpen && board.unassigned.length) { <span class="fold__badge">{{ board.unassigned.length }} sans affectation</span> }</button>
+          @if (coordinationError) { <p class="operation-coordination__error" role="alert">{{ coordinationError }} <button type="button" (click)="loadCoordination(operation.id)">Réessayer</button></p> }
+          <app-operation-coordination-board id="operation-coordination-board" [hidden]="!coordinationOpen" [coordination]="board" [busy]="coordinationBusy" [locked]="!!operation.locked" (assign)="assignMember(operation.id, $event.userId, $event.groupId)" (remove)="removeMember(operation.id, $event)" (decide)="decideRequest(operation.id, $event.requestId, $event.approve)" />
+        </section>
+      }
+      <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
+        <h2 id="operation-fleet-title"><app-operation-icon name="ship" /> Flotte</h2>
+        @if (fleetLoadError) { <p class="operation-coordination__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="reloadFleet()">Réessayer</button></p> }
+        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" [requirementsUnavailable]="requirementsLoadError" [shipsUnavailable]="shipsLoadError" (withdraw)="withdrawShip(operation.id, $event)" />
+        @if (operation.locked) {
+          <p class="empty-state">Opération terminée : la flotte n’est plus modifiable.</p>
+        } @else if (!operation.allowShipProposals) {
+          <p class="empty-state">Les propositions de vaisseaux sont désactivées par l’organisateur.</p>
+        } @else if (participationLoading || participationError) {
+        } @else if (participationStatus !== 1) {
+          <p class="empty-state">Inscrivez-vous « Présent » pour proposer un vaisseau de votre hangar.</p>
+        } @else {
+          <section class="hangar" aria-label="Proposer un vaisseau de mon hangar">
+            <h3>Mon hangar</h3>
+            @if (hangar$ | async; as hangar) {
+              @if (hangar.length) {
+                <ul class="hangar__ships">
+                  @for (owned of hangar; track ownedId(owned)) {
+                    <li>
+                      <button type="button" class="hangar__ship" [attr.aria-pressed]="selectedShipId === ownedId(owned)" [disabled]="fleetBusy || isProposed(ownedId(owned), fleetShips)" (click)="selectShip(ownedId(owned))">
+                        @if (owned.ship?.imageUrl) { <img [src]="owned.ship.imageUrl" alt="" loading="lazy"> } @else { <span class="hangar__noimage">Sans image</span> }
+                        <strong>{{ owned.ship?.name || 'Vaisseau inconnu' }}</strong>
+                        @if (isProposed(ownedId(owned), fleetShips)) { <small>Déjà proposé</small> }
+                      </button>
+                    </li>
+                  }
+                </ul>
+                @if (selectedShipId !== null) {
+                  <div class="hangar__form">
+                    <label>Besoin couvert (facultatif)<select [(ngModel)]="selectedShipRequirementId"><option [ngValue]="null">Aucun besoin précis</option>@for (need of compatibleNeeds(fleetNeeds); track need.id) { <option [ngValue]="need.id">{{ need.shipModelName || 'Tout modèle' }} · manque {{ need.missing }}</option> }</select></label>
+                    <label>Groupe (facultatif)<select [(ngModel)]="selectedShipGroupId"><option [ngValue]="null">Toute l’opération</option>@for (group of leafGroups(fleetGroups); track group.id) { <option [ngValue]="group.id">{{ group.name }}</option> }</select></label>
+                    <button type="button" class="primary" [disabled]="fleetBusy" (click)="proposeShip(operation.id)">Proposer ce vaisseau</button>
+                    <small>Proposer un vaisseau ne vous affecte à aucun groupe.</small>
+                  </div>
+                }
+              } @else if (hangarError) {
+                <p class="operation-coordination__error" role="alert">Votre hangar n’a pas pu être chargé. <button type="button" (click)="reloadHangar()">Réessayer</button></p>
+              } @else {
+                <p class="empty-state">Votre hangar est vide : ajoutez-y vos vaisseaux pour pouvoir les proposer.</p>
+              }
+            }
+          </section>
+        }
+      </section>
     </div>
       }
     }

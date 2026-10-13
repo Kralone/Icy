@@ -1,0 +1,43 @@
+:host { display: block; min-width: 0; container: crewcard / inline-size; }
+.crewcard { display: grid; gap: .6rem; min-width: 0; }
+.crewcard__ship { display: flex; align-items: center; gap: .75rem; min-width: 0; padding: .5rem; border: 1px solid rgba(244,205,125,.35); border-radius: .6rem; background: #0f1b2d; }
+.crewcard__ship img, .crewcard__noimage { flex: none; width: 6.5rem; aspect-ratio: 16 / 9; border-radius: .4rem; object-fit: cover; background: #111827; }
+.crewcard__noimage { display: grid; place-items: center; color: #94a3b8; font-size: 1.4rem; }
+.crewcard__text { display: grid; gap: .3rem; min-width: 0; overflow-wrap: anywhere; }
+.crewcard__text strong { color: #f8fafc; font-size: 1.05rem; }
+.crewcard__status { width: fit-content; padding: .15rem .6rem; border: 1px solid #475569; border-radius: 999px; color: #cbd5e1; background: #111827; font-size: .8rem; font-weight: 600; }
+.crewcard__status[data-tone="wanted"] { border-color: #f4cd7d; color: #fde9b8; background: #2a2110; }
+.crewcard__status[data-tone="proposed"] { border-color: #67e8f9; color: #cffafe; background: #12283a; }
+.crewcard__status[data-tone="confirmed"] { border-color: #80e5b8; color: #d1fae5; background: #10261f; }
+.crewcard__mode, .crewcard__nobody { margin: 0; color: #a9bfd0; font-size: .84rem; }
+.crewcard__positions { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.crewcard__positions li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .6rem; align-items: center; min-width: 0; padding: .5rem .6rem; border: 1px solid rgba(148,163,184,.22); border-radius: .55rem; background: #0f172a; }
+.crewcard__positions li.is-mine { border-color: #67e8f9; background: #0d2433; }
+.crewcard__icon { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: .45rem; color: #67e8f9; background: #12283a; font-size: 1.1rem; }
+.crewcard__position { display: grid; gap: .15rem; min-width: 0; }
+.crewcard__line { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; min-width: 0; }
+.crewcard__line strong { min-width: 0; color: #f8fafc; overflow-wrap: anywhere; }
+.crewcard__count { flex: none; color: #bae6fd; font-weight: 700; font-variant-numeric: tabular-nums; }
+li.is-full .crewcard__count { color: #f4cd7d; }
+.crewcard__names { color: #cbd5e1; font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; }
+.crewcard__nobody { font-size: .82rem; }
+.is-me { color: #67e8f9; font-weight: 700; }
+.you { margin-left: .3rem; padding: .05rem .4rem; border-radius: 999px; color: #082f49; background: #67e8f9; font-size: .72rem; font-weight: 700; }
+.crewcard__more { min-height: 2rem; margin-left: .35rem; border: 1px solid #36546a; border-radius: .4rem; padding: .15rem .55rem; color: #bae6fd; background: #122235; font-size: .8rem; }
+.crewcard__action { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .35rem; }
+.crewcard__action button { min-height: 2.5rem; border: 1px solid #36546a; border-radius: .45rem; padding: .35rem .8rem; color: #bae6fd; background: #122235; font-size: .88rem; }
+.crewcard__action button.primary { border-color: #67e8f9; color: #082f49; background: #67e8f9; font-weight: 700; }
+.crewcard__action button:disabled { opacity: .5; }
+.tag { padding: .2rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+.tag--mine { color: #082f49; background: #67e8f9; }
+.tag--full { border: 1px solid #f4cd7d; color: #fde9b8; background: #2a2110; }
+.crewcard__unplaced { margin: 0; color: #cbd5e1; font-size: .86rem; line-height: 1.5; overflow-wrap: anywhere; }
+.crewcard__label { margin-right: .35rem; color: #f4cd7d; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.crewcard__manage { border: 1px solid rgba(244,205,125,.45); border-radius: .55rem; background: #0f1b2d; }
+.crewcard__manage summary { cursor: pointer; min-height: 2.6rem; padding: .6rem .8rem; color: #f4cd7d; font-weight: 700; }
+.crewcard__manage summary:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+.crewcard__manage[open] summary { border-bottom: 1px solid rgba(148,163,184,.18); }
+.crewcard__manage > app-operation-crew-members { margin: .6rem .7rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+@container crewcard (max-width: 22rem) { .crewcard__positions li { grid-template-columns: auto minmax(0, 1fr); } .crewcard__action { grid-column: 1 / -1; justify-content: flex-start; } .crewcard__ship img, .crewcard__noimage { width: 5rem; } }

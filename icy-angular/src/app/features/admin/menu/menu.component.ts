@@ -93,9 +93,15 @@ export class AdminMenuComponent {
       route: '/icy/admin/events',
     },
     {
-      label: 'Nouvelle opération',
-      imageUrl: 'assets/images/home/activities/mining.jpg',
-      route: '/icy/operations/new',
+      label: 'Opérations',
+      imageUrl: 'assets/images/home/activities/space-combat.jpg',
+      route: '/icy/admin/operations',
+    },
+    {
+      label: 'Presets d’équipage',
+      imageUrl: 'assets/images/home/activities/cargo.jpg',
+      route: '/icy/admin/crew-presets',
+      requiredRoles: ['ADMIN'],
     },
     {
       label: 'SC World Event',

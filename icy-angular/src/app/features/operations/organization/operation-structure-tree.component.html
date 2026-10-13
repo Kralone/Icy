@@ -1,0 +1,58 @@
+<nav class="structure" aria-label="Structure de l’opération">
+  <div class="structure__head">
+    <h3>Structure</h3>
+    @if (!locked()) {
+      <div class="structure__adds">
+        <button type="button" class="structure__add" [disabled]="busy() || !loaded()" (click)="addGroup.emit()"><span aria-hidden="true">+</span> Groupe</button>
+        <button type="button" class="structure__add structure__add--crew" [disabled]="busy() || !loaded()" (click)="addCrew.emit(null)"><span aria-hidden="true">+</span> Équipage</button>
+      </div>
+    }
+  </div>
+
+  @if (!loaded()) {
+    <p class="structure__empty" role="status">Structure en cours de chargement…</p>
+  } @else if (!roots().length) {
+    <p class="structure__empty">Aucun groupe pour l’instant. Un groupe réunit des participants autour d’une mission ; un équipage les réunit à bord d’un vaisseau, avec des postes si vous le souhaitez.</p>
+  }
+
+  <ul class="structure__list">
+    @for (root of roots(); track root.id) {
+      <li>
+        <ng-container *ngTemplateOutlet="node; context: { $implicit: root, child: false }" />
+        <ul class="structure__children">
+          @for (child of children(root.id); track child.id) {
+            <li><ng-container *ngTemplateOutlet="node; context: { $implicit: child, child: true }" /></li>
+          }
+          @if (!locked() && !crewModels().has(root.id)) {
+            <li class="structure__child-adds">
+              <button type="button" class="structure__add-child" [disabled]="busy()" (click)="addSubgroup.emit(root.id)"><span aria-hidden="true">+</span> Sous-groupe <span class="sr-only">dans {{ root.name }}</span></button>
+              <button type="button" class="structure__add-child" [disabled]="busy()" (click)="addCrew.emit(root.id)"><span aria-hidden="true">+</span> Équipage <span class="sr-only">dans {{ root.name }}</span></button>
+            </li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+
+  <button type="button" class="structure__overview" [class.is-selected]="selectedId() === null" [attr.aria-current]="selectedId() === null ? 'true' : null" (click)="select.emit(null)">
+    <span aria-hidden="true">▦</span> Vue d’ensemble
+  </button>
+</nav>
+
+<ng-template #node let-group let-child="child">
+  <button type="button" class="node" [class.node--child]="child" [class.is-selected]="selectedId() === group.id" [attr.aria-current]="selectedId() === group.id ? 'true' : null" (click)="select.emit(group.id)">
+    <span class="node__line">
+      <span class="node__name">{{ group.name }}</span>
+      <span class="node__count" [class.is-full]="isFull(group)">{{ occupancy(group) }}</span>
+    </span>
+    @if (percent(group) !== null) {
+      <span class="node__gauge" aria-hidden="true"><span [style.width.%]="percent(group)" [class.is-full]="isFull(group)"></span></span>
+    }
+    <span class="node__meta">
+      @if (crewModels().has(group.id)) { <span class="node__crew"><app-operation-icon name="ship" /> {{ crewModels().get(group.id) || 'Équipage' }}</span> }
+      <span>{{ group.container ? 'Répartit dans ses sous-groupes' : modeLabel(group) }}</span>
+      @if (group.responsibleUsername) { <span class="node__responsible"><span aria-hidden="true">★</span> {{ group.responsibleUsername }}</span> }
+      @if (group.pendingRequests) { <span class="node__pending">{{ group.pendingRequests }} demande{{ group.pendingRequests > 1 ? 's' : '' }}</span> }
+    </span>
+  </button>
+</ng-template>

@@ -63,8 +63,23 @@ public class UserShipService {
         return messageService.buildResponse("user.found", userShips);
     }
 
+    private com.icy.icy_backend.db.repository.event.OperationRepository operationRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationRepository(com.icy.icy_backend.db.repository.event.OperationRepository operationRepository) {
+        this.operationRepository = operationRepository;
+    }
+
+    /** Une opération non publiée n'existe pas pour un membre : même refus que pour un participant non confirmé. */
+    private boolean isDraftOperationHiddenFromCurrentUser(UUID eventId) {
+        if (operationRepository == null || com.icy.icy_backend.security.AuthUtils.isAdmin() || com.icy.icy_backend.security.AuthUtils.hasRole("OFFICIER")) return false;
+        return operationRepository.findById(eventId)
+                .map(operation -> operation.getPublicationStatus() != com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED)
+                .orElse(false);
+    }
+
     public ResponseEntity<MessageResponse<List<UserShipDTO>>> getConfirmedParticipantShips(UUID eventId, UUID userId) {
-        if (!eventParticipationRepository.existsByEvent_IdAndUser_IdAndStatus(eventId, userId, 1)) {
+        if (isDraftOperationHiddenFromCurrentUser(eventId) || !eventParticipationRepository.existsByEvent_IdAndUser_IdAndStatus(eventId, userId, 1)) {
             throw new ForbiddenException("La flotte demandée n'appartient pas à un participant confirmé.");
         }
         List<UserShipDTO> ships = getShipsByUserIdDTO(userId);

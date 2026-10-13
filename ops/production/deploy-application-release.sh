@@ -7,6 +7,8 @@ AGE_RECIPIENT=
 BACKUP_ARCHIVE=
 PREFLIGHT_ONLY=0
 MAX_BACKUP_AGE_SECONDS=86400
+# Flyway version this release must reach. V39 to V43 are applied by the backend at startup.
+TARGET_FLYWAY_VERSION=43
 
 usage() {
   echo "Usage: $0 --revision <git-sha> [--age-recipient 'age1...'|\"ssh-ed25519 AAAA...\"] [--verified-backup /var/backups/iceforge/iceforge-*.tar.gz.age] [--preflight]" >&2
@@ -76,6 +78,8 @@ required_files=(
   "$BACKEND_DIR/verify-flyway-v31.sql"
   "$BACKEND_DIR/verify-flyway-v32.sql"
   "$BACKEND_DIR/verify-flyway-v33.sql"
+  "$BACKEND_DIR/verify-flyway-v38-checksums.sql"
+  "$BACKEND_DIR/verify-flyway-v43.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -83,6 +87,11 @@ required_files=(
 for file in "${required_files[@]}"; do
   [[ -f $file && ! -L $file ]] || { echo "Fichier requis absent ou invalide: $file" >&2; exit 1; }
 done
+# An older copy of the checks must never stand in for the ones this release was tested with.
+grep -Fq 'EXPECTED_FLYWAY_VERSION' "$BACKEND_DIR/verify.sh"   || { echo 'verify.sh du backend trop ancien pour cette release.' >&2; exit 1; }
+grep -Fq 'generate_series(1, 38)' "$BACKEND_DIR/verify-flyway-v33.sql"   || { echo 'verify-flyway-v33.sql trop ancien: il doit controler V1-V38.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V43_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v43.sql"   || { echo 'verify-flyway-v43.sql invalide.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V38_CHECKSUMS_OK' "$BACKEND_DIR/verify-flyway-v38-checksums.sql"   || { echo 'verify-flyway-v38-checksums.sql invalide.' >&2; exit 1; }
 for image in "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE"; do
   docker image inspect "$image" >/dev/null || { echo "Image candidate absente: $image" >&2; exit 1; }
 done
@@ -137,6 +146,12 @@ case "$current_version" in
     ;;
   33|34|35|36|37|38)
     db_psql <"$BACKEND_DIR/verify-flyway-v33.sql" >/dev/null
+    # Flyway would refuse to start on a different history: say so before the backup and the switch.
+    db_psql <"$BACKEND_DIR/verify-flyway-v38-checksums.sql" >/dev/null
+    ;;
+  43)
+    # Release already applied: the same command can be run again.
+    db_psql <"$BACKEND_DIR/verify-flyway-v43.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
@@ -165,6 +180,16 @@ printf 'BACKEND_IMAGE=%q\nBOT_IMAGE=%q\nFRONTEND_IMAGE=%q\n' \
 rollback() {
   local status=$?
   trap - ERR
+  # The previous backend cannot start on a migrated database: putting it back would turn a
+  # partial failure into a full outage. Once Flyway has moved, the rollback is a restore.
+  local reached_version
+  reached_version=$(db_psql -Atc     'SELECT max(version::integer) FROM public.flyway_schema_history WHERE success' 2>/dev/null || echo inconnue)
+  if [[ $reached_version != "$current_version" ]]; then
+    echo "Déploiement en échec après migration (V${current_version} -> V${reached_version})." >&2
+    echo "Aucun retour automatique: l'ancien backend ne démarre pas sur la base migrée." >&2
+    echo "Restaurer la sauvegarde prise avant ce déploiement, puis remettre les images consignées dans $rollback_file." >&2
+    exit "$status"
+  fi
   echo "Déploiement en échec; restauration des trois images applicatives précédentes." >&2
   export BACKEND_IMAGE=${previous[backend]} BOT_IMAGE=${previous[bot]} FRONTEND_IMAGE=${previous[frontend]}
   "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend bot frontend || true
@@ -182,7 +207,7 @@ fi
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 900 libretranslate
 trap rollback ERR
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait backend
-BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" runtime
+EXPECTED_FLYWAY_VERSION=$TARGET_FLYWAY_VERSION BACKEND_ROLLOUT_DIR=$BACKEND_DIR "$BACKEND_DIR/verify.sh" runtime
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait bot
 BOT_ROLLOUT_DIR=$BOT_DIR "$BOT_DIR/verify.sh" runtime
 "${compose[@]}" up -d --no-deps --no-build --pull never --wait frontend

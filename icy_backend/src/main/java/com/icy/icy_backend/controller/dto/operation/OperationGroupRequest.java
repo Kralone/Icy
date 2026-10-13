@@ -11,4 +11,10 @@ public class OperationGroupRequest {
     private OperationGroup.AssignmentMode assignmentMode = OperationGroup.AssignmentMode.INHERITED;
     private int sortOrder;
     private UUID responsibleUserId;
+    /** Null : le type du groupe n'est pas modifié (STANDARD à la création). */
+    private OperationGroup.Kind kind;
+    private Long shipModelId;
+    private OperationGroup.PositionMode positionMode;
+    /** À la création d'un équipage seulement : preset dont la capacité, le mode et les postes sont copiés. */
+    private UUID presetId;
 }

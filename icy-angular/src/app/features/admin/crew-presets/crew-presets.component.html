@@ -1,0 +1,109 @@
+<div class="presets-page">
+  <header class="heading">
+    <div>
+      <a class="back" routerLink="/icy/admin">← Administration</a>
+      <h1>Presets d’équipage</h1>
+      <p class="lead">Un preset décrit un équipage type pour un vaisseau. Il est copié dans l’opération quand un organisateur l’utilise : le modifier ou l’archiver ici ne change aucune opération.</p>
+    </div>
+    @if (!draft()) { <button type="button" class="primary" (click)="create()"><span aria-hidden="true">+</span> Nouveau preset</button> }
+  </header>
+
+  @if (draft(); as current) {
+    <section class="editor" aria-labelledby="preset-editor-title">
+      <h2 id="preset-editor-title">{{ current.id ? 'Modifier le preset' : 'Nouveau preset' }}</h2>
+
+      <div class="editor__ship">
+        @if (current.model; as model) {
+          <div class="ship-card">
+            @if (model.imageUrl) { <img [src]="model.imageUrl" alt="" loading="lazy"> } @else { <span class="ship-card__noimage">Sans image</span> }
+            <div><small>Vaisseau</small><strong>{{ model.name }}</strong></div>
+            <button type="button" (click)="set('model', null)" [disabled]="busy()">Changer de vaisseau</button>
+          </div>
+        } @else {
+          <app-operation-ship-picker (chosen)="chooseModel($event)" />
+        }
+      </div>
+
+      <div class="fields">
+        <label>Nom du preset<input name="presetName" [ngModel]="current.name" (ngModelChange)="set('name', $event)" maxlength="120" placeholder="Carrack — Exploration"></label>
+        <label>Capacité de l’équipage<input name="presetCapacity" type="number" min="0" max="10000" step="1" [ngModel]="current.capacity" (ngModelChange)="set('capacity', toNumber($event))" placeholder="Libre"><small>Choix d’organisation, modifiable dans chaque opération. Vide : pas de limite.</small></label>
+        <label class="fields__wide">Description<textarea name="presetDescription" rows="2" maxlength="2000" [ngModel]="current.description" (ngModelChange)="set('description', $event)" placeholder="Usage prévu de cet équipage"></textarea></label>
+      </div>
+
+      <div class="block">
+        <h3>Attribution des postes</h3>
+        <div class="mode" role="radiogroup" aria-label="Attribution des postes">
+          @for (mode of modes; track mode) { <button type="button" role="radio" [attr.aria-checked]="current.positionMode === mode" (click)="set('positionMode', mode)">{{ modeLabels[mode] }}</button> }
+        </div>
+        <p class="hint">{{ modeHints[current.positionMode] }}</p>
+      </div>
+
+      <div class="block">
+        <h3>Postes</h3>
+        @if (!current.positions.length) { <p class="empty">Aucun poste : ce preset décrit un équipage libre.</p> }
+        <ul class="rows">
+          @for (position of current.positions; track $index) {
+            <li class="row">
+              <label>Nom<input [ngModel]="position.label" (ngModelChange)="setPosition($index, { label: $event })" maxlength="80" placeholder="Pilote"></label>
+              <label>Places<input type="number" min="1" max="1000" step="1" [ngModel]="position.capacity" (ngModelChange)="setPosition($index, { capacity: toNumber($event) })" placeholder="Sans limite"></label>
+              <div class="row__icons" role="radiogroup" [attr.aria-label]="'Pictogramme du poste ' + (position.label || $index + 1)">
+                <button type="button" role="radio" [attr.aria-checked]="position.icon === null" (click)="setPosition($index, { icon: null })" aria-label="Sans pictogramme particulier"><app-operation-icon name="assignment" /></button>
+                @for (icon of icons; track icon.key) { <button type="button" role="radio" [attr.aria-checked]="position.icon === icon.key" (click)="setPosition($index, { icon: icon.key })" [attr.aria-label]="icon.label" [attr.title]="icon.label"><app-operation-icon [name]="icon.key" /></button> }
+              </div>
+              <div class="row__tools">
+                <button type="button" (click)="movePosition($index, -1)" [disabled]="$index === 0" [attr.aria-label]="'Monter le poste ' + (position.label || $index + 1)">↑</button>
+                <button type="button" (click)="movePosition($index, 1)" [disabled]="$index === current.positions.length - 1" [attr.aria-label]="'Descendre le poste ' + (position.label || $index + 1)">↓</button>
+                <button type="button" class="danger" (click)="removePosition($index)">Retirer<span class="sr-only"> le poste {{ position.label || $index + 1 }}</span></button>
+              </div>
+            </li>
+          }
+        </ul>
+        @if (current.positions.length < maxPositions) { <button type="button" class="add" (click)="addPosition()"><span aria-hidden="true">+</span> Ajouter un poste</button> }
+        @else { <p class="hint">Un équipage compte au plus {{ maxPositions }} postes.</p> }
+      </div>
+
+      @if (draftError()) { <p class="editor__error" role="status">{{ draftError() }}</p> }
+      <div class="editor__actions">
+        <button type="button" (click)="cancel()" [disabled]="busy()">Annuler</button>
+        <button type="button" class="primary" (click)="save()" [disabled]="busy() || !!draftError()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le preset' }}</button>
+      </div>
+    </section>
+  } @else {
+    <div class="toolbar">
+      <label class="toolbar__search">Filtrer<input type="search" [ngModel]="filter()" (ngModelChange)="filter.set($event)" placeholder="Nom du preset ou du vaisseau"></label>
+      @if (archivedCount()) { <label class="toolbar__check"><input type="checkbox" [ngModel]="showArchived()" (ngModelChange)="showArchived.set($event)"> Afficher les presets archivés</label> }
+    </div>
+
+    @if (error()) {
+      <p class="state state--error" role="alert">{{ error() }} <button type="button" (click)="load()">Réessayer</button></p>
+    } @else if (loading() && !presets().length) {
+      <p class="state" role="status">Chargement des presets…</p>
+    } @else if (!presets().length) {
+      <p class="state">Aucun preset pour l’instant. Créez-en un pour proposer aux organisateurs un équipage prêt à l’emploi.</p>
+    } @else if (!visible().length) {
+      <p class="state">Aucun preset ne correspond à ce filtre.</p>
+    }
+
+    <ul class="cards">
+      @for (preset of visible(); track preset.id) {
+        <li class="card" [class.card--archived]="preset.archived">
+          @if (preset.shipModelImageUrl) { <img [src]="preset.shipModelImageUrl" alt="" loading="lazy"> } @else { <span class="card__noimage">Sans image</span> }
+          <div class="card__body">
+            <p class="card__model">{{ preset.shipModelName }}@if (preset.shipModelId === null) { <span class="card__gone">hors catalogue</span> }</p>
+            <h3>{{ preset.name }}@if (preset.archived) { <span class="badge">Archivé</span> }</h3>
+            @if (preset.description) { <p class="card__description">{{ preset.description }}</p> }
+            <p class="card__facts">{{ preset.capacity === null ? 'Capacité libre' : preset.capacity + ' place' + (preset.capacity > 1 ? 's' : '') }} · {{ modeLabels[preset.positionMode] }}</p>
+            @if (preset.positions.length) {
+              <ul class="chips">@for (position of preset.positions; track position.label) { <li><app-operation-icon [name]="positionIcon(position.icon)" /> {{ position.label }}@if (position.capacity !== null) { <b>{{ position.capacity }}</b> }</li> }</ul>
+            } @else { <p class="card__free">Équipage libre, sans poste</p> }
+            <div class="card__actions">
+              <button type="button" (click)="edit(preset)" [disabled]="busy()">Modifier<span class="sr-only"> {{ preset.name }}</span></button>
+              @if (preset.archived) { <button type="button" (click)="setArchived(preset, false)" [disabled]="busy()">Rétablir<span class="sr-only"> {{ preset.name }}</span></button> }
+              @else { <button type="button" class="danger" (click)="setArchived(preset, true)" [disabled]="busy()">Archiver<span class="sr-only"> {{ preset.name }}</span></button> }
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

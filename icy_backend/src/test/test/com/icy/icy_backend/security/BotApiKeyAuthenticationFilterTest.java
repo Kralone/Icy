@@ -39,7 +39,7 @@ class BotApiKeyAuthenticationFilterTest {
     @Test
     void validCredentialCreatesOnlyBotAuthority() throws Exception {
         BotApiKeyAuthenticationFilter filter = new BotApiKeyAuthenticationFilter(KEY);
-        for (String path : new String[] {"/api/user-ships/bot", "/api/users/bot/create"}) {
+        for (String path : new String[] {"/api/user-ships/bot", "/api/users/bot/create", "/api/events/bot/participation"}) {
             MockHttpServletRequest request = request(path);
             request.addHeader("Authorization", "Bot " + KEY);
             MockHttpServletResponse response = new MockHttpServletResponse();
@@ -60,7 +60,8 @@ class BotApiKeyAuthenticationFilterTest {
     void botHeaderIsIgnoredOutsideStrictPathScope() throws Exception {
         BotApiKeyAuthenticationFilter filter = new BotApiKeyAuthenticationFilter(KEY);
         for (String path : new String[] {
-                "/api/user-ships", "/api/users/all", "/api/user-ships/bot-malicious", "/api/users/bot-malicious"
+                "/api/user-ships", "/api/users/all", "/api/user-ships/bot-malicious", "/api/users/bot-malicious",
+                "/api/events/participation", "/api/events/bot-malicious"
         }) {
             MockHttpServletRequest request = request(path);
             request.addHeader("Authorization", "Bot " + KEY);

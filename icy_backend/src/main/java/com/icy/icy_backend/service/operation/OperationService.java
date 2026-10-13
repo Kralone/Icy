@@ -15,8 +15,13 @@ import jakarta.persistence.EntityManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.icy.icy_backend.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -30,6 +35,12 @@ public class OperationService {
     private final MessageService messageService;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
+    private EventService eventService;
+
+    @Autowired
+    public void setEventService(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
@@ -64,19 +75,43 @@ public class OperationService {
         if (request.getBriefing() != null && request.getBriefing().length() > 50000) throw new IllegalArgumentException("Briefing trop long");
         if (request.getMeetingPoint() != null && request.getMeetingPoint().length() > 255) throw new IllegalArgumentException("Lieu trop long");
         if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
-            URI image = URI.create(request.getImageUrl());
+            URI image;
+            try {
+                image = URI.create(request.getImageUrl());
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("URL d’image invalide");
+            }
             if (!("https".equalsIgnoreCase(image.getScheme()) || "http".equalsIgnoreCase(image.getScheme())) || image.getHost() == null) throw new IllegalArgumentException("URL d’image invalide");
         }
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        if (request.getExpectedRevision() != null && request.getExpectedRevision() != operation.getRevision()) {
+            throw new ObjectOptimisticLockingFailureException(Operation.class, eventId);
+        }
+        // Ce que l'annonce Discord reprend : un changement ici doit l'actualiser, si l'opération est publiée.
+        boolean announcedContentChanged = operation.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED
+                && !(java.util.Objects.equals(operation.getBriefing(), request.getBriefing())
+                && java.util.Objects.equals(operation.getObjectives(), request.getObjectives())
+                && java.util.Objects.equals(operation.getMeetingPoint(), request.getMeetingPoint())
+                && java.util.Objects.equals(operation.getImageUrl(), request.getImageUrl()));
         operation.setBriefing(request.getBriefing());
         validateObjectives(request.getObjectives());
         operation.setObjectives(request.getObjectives());
         operation.setMeetingPoint(request.getMeetingPoint());
         operation.setImageUrl(request.getImageUrl());
-        if (request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
+        // Après la fin, seul le contenu éditorial se modifie : les réglages d'organisation restent ceux de l'opération.
+        boolean closed = OperationLock.isClosed(event, operation);
+        if (!closed && request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
+        if (!closed && request.getDefaultAssignmentMode() != null) {
+            if (request.getDefaultAssignmentMode() == com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode.INHERITED) throw new IllegalArgumentException("Mode d’affectation par défaut invalide");
+            operation.setDefaultAssignmentMode(request.getDefaultAssignmentMode());
+        }
         operation.setUpdatedAt(LocalDateTime.now());
-        return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, operationRepository.save(operation)));
+        Operation saved = operationRepository.save(operation);
+        // Écrit maintenant pour renvoyer la révision réellement enregistrée.
+        entityManager.flush();
+        if (announcedContentChanged) refreshAnnouncementAfterCommit(eventId);
+        return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, saved));
     }
 
     @Transactional
@@ -84,9 +119,51 @@ public class OperationService {
         Event event = findOperationEvent(eventId);
         Operation operation = operationRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brouillon introuvable"));
+        boolean becomesVisible = operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED;
+        // Publiée, elle serait aussitôt clôturée et annoncée comme disponible alors qu'elle est finie.
+        if (becomesVisible && OperationLock.isClosed(event.getEndDateTime(), LocalDateTime.now(OperationLock.ZONE))) {
+            throw new IllegalStateException("La fin de ce brouillon est déjà passée : corrigez ses dates avant de le publier.");
+        }
         operation.setPublicationStatus(Operation.PublicationStatus.PUBLISHED);
         operation.setUpdatedAt(LocalDateTime.now());
-        return messageService.buildResponse("operation.published", new OperationResponseDTO(event, operationRepository.save(operation)));
+        Operation saved = operationRepository.save(operation);
+        // Même raison que pour update : l'éditeur poursuit à partir de la révision renvoyée.
+        entityManager.flush();
+        if (becomesVisible) announceAfterCommit(eventId);
+        return messageService.buildResponse("operation.published", new OperationResponseDTO(event, saved));
+    }
+
+    /**
+     * C'est la publication qui rend l'opération visible : calendrier en direct, Discord et notification partent ici,
+     * une seule fois (le verrou optimiste refuse une seconde publication concurrente) et seulement si la transaction est validée.
+     */
+    private void announceAfterCommit(UUID eventId) {
+        if (eventService == null) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventService.announcePublishedOperation(eventId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventService.announcePublishedOperation(eventId);
+            }
+        });
+    }
+
+    /** Le message Discord existant est modifié, jamais doublé, et seulement si l'enregistrement est validé. Un brouillon ne passe pas ici. */
+    private void refreshAnnouncementAfterCommit(UUID eventId) {
+        if (eventService == null) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventService.announceOperationContentChanged(eventId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                eventService.announceOperationContentChanged(eventId);
+            }
+        });
     }
 
     private Event findOperationEvent(UUID id) {

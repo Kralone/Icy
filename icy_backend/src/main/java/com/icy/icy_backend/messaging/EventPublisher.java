@@ -7,6 +7,7 @@ import com.icy.icy_backend.db.entity.event.ActivityType;
 import com.icy.icy_backend.db.entity.event.Operation;
 import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.event.OperationRepository;
+import com.icy.icy_backend.service.operation.OperationLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -49,7 +50,10 @@ public class EventPublisher {
         payload.put("description", event.getDescription());
         payload.put("author", event.getCreator() != null ? event.getCreator().getUsername() : "Inconnu");
         payload.put("date", event.getStartDateTime().toString());
-        payload.put("finished", event.isFinished());
+        if (event.getEndDateTime() != null) payload.put("endDate", event.getEndDateTime().toString());
+        // Une opération dont la fin est passée est close, même si la tâche planifiée n'a pas encore posé le drapeau :
+        // le bot ne doit jamais lui rendre ses boutons.
+        payload.put("finished", event.isFinished() || OperationLock.isClosedNow(event));
         // Le bot doit distinguer une opération d’un événement classique pour
         // conserver le lien permanent vers la fiche opération.
         payload.put("activityType", event.getActivityType() != null

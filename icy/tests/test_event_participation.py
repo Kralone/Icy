@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from messaging.event_handler import EventParticipationView, is_supported_discord_image_url
 
@@ -16,51 +16,84 @@ class DiscordEventImageUrlTest(unittest.TestCase):
 
 
 class EventParticipationViewTest(unittest.IsolatedAsyncioTestCase):
-    def test_operation_view_keeps_three_choices_and_deep_link(self):
+    def test_operation_view_only_offers_the_deep_link(self):
         view = EventParticipationView(
             AsyncMock(),
             "operation-id",
             operation_url="https://iceforge.fr/icy/operations/operation-id",
         )
 
-        self.assertEqual(
-            ["Présent ✅", "Peut-être ❔", "Absent ❌"],
-            [item.label for item in view.children[:3]],
-        )
+        self.assertEqual(["Consulter l’opération"], [item.label for item in view.children])
         self.assertEqual(
             "https://iceforge.fr/icy/operations/operation-id",
-            view.children[3].url,
+            view.children[0].url,
         )
+        self.assertIsNone(view.children[0].custom_id)
 
-    async def test_publish_success_is_confirmed_to_user(self):
-        rabbit = AsyncMock()
-        rabbit.publish.return_value = True
+    @staticmethod
+    def _interaction(response=None, error=None, cog=True):
         interaction = AsyncMock()
         interaction.user.id = 123
         interaction.user.name = "member"
-        view = EventParticipationView(rabbit, "event-id")
+        api = MagicMock()
+        api.api_request = AsyncMock(return_value=response, side_effect=error)
+        interaction.client = MagicMock()
+        interaction.client.get_cog.return_value = api if cog else None
+        return interaction, api
 
-        await view._send_participation(interaction, 1)
+    async def _reply(self, **kwargs):
+        interaction, api = self._interaction(**kwargs)
+        rabbit = AsyncMock()
+        await EventParticipationView(rabbit, "event-id")._send_participation(interaction, 1)
+        # La réponse ne passe plus par RabbitMQ : le bot attend le verdict du serveur.
+        rabbit.publish.assert_not_awaited()
+        interaction.followup.send.assert_awaited_once()
+        self.assertTrue(interaction.followup.send.await_args.kwargs["ephemeral"])
+        return interaction.followup.send.await_args.args[0], api
 
-        interaction.followup.send.assert_awaited_once_with(
-            "✅ Votre choix a été enregistré !", ephemeral=True
+    async def test_success_is_confirmed_only_when_the_backend_recorded_the_answer(self):
+        reply, api = await self._reply(response={"httpCode": 200, "outcome": "RECORDED"})
+
+        self.assertEqual("✅ Votre choix a été enregistré !", reply)
+        api.api_request.assert_awaited_once_with(
+            "POST",
+            "api/events/bot/participation",
+            data={"eventId": "event-id", "discordUserId": "123", "username": "member", "status": 1},
         )
 
-    async def test_publish_failure_is_not_reported_as_success(self):
-        rabbit = AsyncMock()
-        rabbit.publish.side_effect = RuntimeError("broker unavailable with super-secret")
-        interaction = AsyncMock()
-        interaction.user.id = 123
-        interaction.user.name = "member"
-        view = EventParticipationView(rabbit, "event-id")
+    async def test_an_unknown_or_inactive_account_gets_an_explicit_failure(self):
+        reply, _ = await self._reply(response={"httpCode": 200, "outcome": "UNKNOWN_USER"})
 
+        self.assertTrue(reply.startswith("❌"))
+        self.assertIn("n'a pas été enregistré", reply)
+        self.assertIn("compte Discord", reply)
+
+    async def test_no_backend_verdict_is_never_reported_as_success(self):
+        cases = [
+            {"response": None},
+            {"response": {"httpCode": 503}},
+            {"response": {"httpCode": 400, "outcome": "RECORDED"}},
+            {"response": {"httpCode": 200}},
+            {"response": {"httpCode": 200, "outcome": "SOMETHING_NEW"}},
+            {"response": {"httpCode": 200, "outcome": "EVENT_NOT_FOUND"}},
+            {"response": {"httpCode": 200, "outcome": "NOT_PUBLISHED"}},
+            {"response": {"httpCode": 200, "outcome": "OPERATION_CLOSED"}},
+            {"cog": False},
+        ]
+        for case in cases:
+            with self.subTest(case=case):
+                if case.get("cog") is False:
+                    with self.assertLogs("icy.event_handler", level="ERROR"):
+                        reply, _ = await self._reply(**case)
+                else:
+                    reply, _ = await self._reply(**case)
+                self.assertTrue(reply.startswith("❌"), reply)
+
+    async def test_a_backend_error_is_not_reported_as_success_and_leaks_nothing(self):
         with self.assertLogs("icy.event_handler", level="ERROR") as logs:
-            await view._send_participation(interaction, 1)
+            reply, _ = await self._reply(error=RuntimeError("backend unavailable with super-secret"))
 
-        interaction.followup.send.assert_awaited_once_with(
-            "❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard.",
-            ephemeral=True,
-        )
+        self.assertEqual("❌ Votre choix n'a pas pu être enregistré. Réessayez plus tard.", reply)
         self.assertNotIn("super-secret", "\n".join(logs.output))
 
 

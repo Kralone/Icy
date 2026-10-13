@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.List;
 public interface OperationAssignmentRequestRepository extends JpaRepository<OperationAssignmentRequest, UUID> {
  Optional<OperationAssignmentRequest> findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(UUID operationId, UUID userId, OperationAssignmentRequest.Status status);
+ @org.springframework.transaction.annotation.Transactional
  void deleteByOperationEventIdAndUserIdAndStatus(UUID operationId, UUID userId, OperationAssignmentRequest.Status status);
  List<OperationAssignmentRequest> findByOperationEventIdOrderByCreatedAtAsc(UUID operationId);
 }

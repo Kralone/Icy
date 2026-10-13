@@ -27,6 +27,25 @@ public class OperationShipRequirementService {
     private final OperationShipRequirementRepository requirementRepository;
     private final MessageService messageService;
 
+    private OperationLock operationLock;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setOperationLock(OperationLock operationLock) {
+        this.operationLock = operationLock;
+    }
+
+    private com.icy.icy_backend.db.repository.event.OperationShipProposalRepository proposalRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setProposalRepository(com.icy.icy_backend.db.repository.event.OperationShipProposalRepository proposalRepository) {
+        this.proposalRepository = proposalRepository;
+    }
+
+    /** Clôture automatique à l'heure de fin : voir OperationLock. */
+    private void requireOpen(UUID operationId) {
+        if (operationLock != null) operationLock.requireOpen(operationId);
+    }
+
     @Transactional(readOnly = true)
     public List<OperationShipRequirementResponseDTO> list(UUID operationId) {
         Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -40,26 +59,51 @@ public class OperationShipRequirementService {
     @Transactional
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> create(UUID operationId, OperationShipRequirementRequest request) {
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        requireOpen(operationId);
         validate(operationId, request);
         OperationShipRequirement value = OperationShipRequirement.builder().operationEventId(operationId).groupId(request.getGroupId()).shipModelId(request.getShipModelId()).quantity(request.getQuantity()).notes(request.getNotes()).status(request.getStatus() == null ? OperationShipRequirement.Status.OPEN : request.getStatus()).build();
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.created", new OperationShipRequirementResponseDTO(requirementRepository.save(value)));
     }
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> update(UUID operationId, UUID requirementId, OperationShipRequirementRequest request) {
         OperationShipRequirement value = requirementRepository.findById(requirementId).filter(item -> operationId.equals(item.getOperationEventId())).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+        requireOpen(operationId);
         validate(operationId, request);
+        // Sous le même verrou que les acceptations : la quantité ne passe jamais sous le nombre de vaisseaux déjà acceptés.
+        value = requirementRepository.findLockedById(requirementId).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+        long accepted = acceptedShips(requirementId);
+        if (request.getQuantity() < accepted) {
+            throw new IllegalStateException(accepted + " vaisseau" + (accepted > 1 ? "x sont déjà acceptés" : " est déjà accepté")
+                    + " pour ce besoin : la quantité ne peut pas être inférieure. Refusez ou retirez d’abord un vaisseau.");
+        }
         value.setGroupId(request.getGroupId()); value.setShipModelId(request.getShipModelId()); value.setQuantity(request.getQuantity()); value.setNotes(request.getNotes());
         if (request.getStatus() != null) value.setStatus(request.getStatus());
         value.setUpdatedAt(LocalDateTime.now());
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.updated", new OperationShipRequirementResponseDTO(requirementRepository.save(value)));
     }
 
     @Transactional
     public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, UUID requirementId) {
         OperationShipRequirement value = requirementRepository.findById(requirementId).filter(item -> operationId.equals(item.getOperationEventId())).orElseThrow(() -> new ResourceNotFoundException("Besoin de vaisseau introuvable"));
+        requireOpen(operationId);
+        // Même règle que pour la quantité : un besoin couvert par des vaisseaux acceptés ne disparaît pas sous eux.
+        requirementRepository.findLockedById(requirementId);
+        long accepted = acceptedShips(requirementId);
+        if (accepted > 0) {
+            throw new IllegalStateException(accepted + " vaisseau" + (accepted > 1 ? "x acceptés répondent" : " accepté répond")
+                    + " à ce besoin. Refusez ou retirez d’abord " + (accepted > 1 ? "ces vaisseaux." : "ce vaisseau."));
+        }
         requirementRepository.delete(value);
+        operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.ship.requirement.deleted", null);
+    }
+
+    private long acceptedShips(UUID requirementId) {
+        return proposalRepository == null ? 0 : proposalRepository.countByRequirementIdAndStatusIn(requirementId,
+                List.of(com.icy.icy_backend.db.entity.event.OperationShipProposal.Status.ACCEPTED));
     }
 
     private void validate(UUID operationId, OperationShipRequirementRequest request) {

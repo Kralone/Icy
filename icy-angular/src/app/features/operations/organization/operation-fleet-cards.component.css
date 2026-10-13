@@ -1,0 +1,68 @@
+:host { display: block; min-width: 0; }
+.fleet { display: grid; gap: 1.1rem; min-width: 0; }
+.fleet__block { display: grid; gap: .6rem; min-width: 0; }
+h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
+.fleet__empty { margin: 0; padding: .8rem 1rem; border: 1px dashed #36546a; border-radius: .6rem; color: #acc2d5; font-size: .9rem; }
+.fleet__empty--error { border-color: #774457; color: #ffd0d4; }
+/* Cartes larges sans s'étirer à l'excès : jusqu'à 24rem, alignées à gauche. */
+.fleet__cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .8rem; }
+.card { display: grid; grid-template-rows: auto 1fr auto; width: 100%; max-width: 24rem; min-width: 0; overflow: hidden; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
+/* Un besoin est une intention, pas un appareil : contour en pointillés, image atténuée, mention « Recherché ». */
+.card--need { border: 1px dashed #f4cd7d; background: #0e1726; }
+.card--need.is-covered { border: 1px solid #80e5b8; background: linear-gradient(180deg, #10261f, #0e1726 9rem); }
+.card--need.is-off { border-color: #64748b; }
+.card--need .card__image { position: relative; }
+.card--need .card__image img { opacity: .6; }
+.card__wanted { position: absolute; left: .6rem; bottom: .6rem; padding: .15rem .6rem; border-radius: 999px; color: #1c1503; background: #f4cd7d; font-size: .8rem; font-weight: 700; }
+.card--need.is-covered .card__wanted { color: #052e1f; background: #80e5b8; }
+.card--ship { border-top: 3px solid #22d3ee; }
+.card--ship[data-status="ACCEPTED"] { border-top-color: #80e5b8; }
+.card.is-off { border-top-color: #64748b; }
+.card.is-off .card__image img { filter: grayscale(1); opacity: .55; }
+.card__image { display: grid; place-items: center; aspect-ratio: 16 / 9; background: #111827; color: #94a3b8; font-size: .8rem; }
+.card__image img { width: 100%; height: 100%; object-fit: cover; }
+.card__body { display: grid; align-content: start; gap: .3rem; min-width: 0; padding: .7rem .8rem; color: #e2e8f0; }
+.card__body strong { color: #f8fafc; font-size: 1rem; overflow-wrap: anywhere; }
+.card__meta { color: #cbd5e1; font-size: .85rem; overflow-wrap: anywhere; }
+.card__tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+.card__notes { margin: 0; color: #cbd5e1; font-size: .85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.card__pilot { display: grid; gap: .2rem; margin-top: .2rem; color: #94a3b8; font-size: .8rem; }
+.card__pilot select { width: 100%; padding: .35rem .5rem; border: 1px solid #36546a; border-radius: .4rem; color: #e2e8f0; background: #122235; font-size: .9rem; }
+.card__actions { display: flex; flex-wrap: wrap; gap: .4rem; padding: 0 .8rem .8rem; }
+.card__actions button { flex: 1 1 auto; }
+.tag { padding: .1rem .55rem; border: 1px solid #64748b; border-radius: 999px; color: #cbd5e1; font-size: .8rem; }
+.tag--ok { border-color: #80e5b8; color: #80e5b8; }
+/* Besoin couvert : pastille pleine, lisible d'un coup d'œil. */
+.tag--covered { border-color: #80e5b8; color: #052e1f; background: #80e5b8; font-weight: 700; }
+.tag--warn, .tag--pending { border-color: #f4cd7d; color: #f4cd7d; }
+.tag--alert { border-color: #fda4af; color: #ffd0d4; background: #351f2a; }
+.tag--off { border-color: #64748b; color: #94a3b8; }
+button { min-height: 2.5rem; border: 1px solid #36546a; border-radius: .4rem; padding: .4rem .7rem; color: #bae6fd; background: #122235; font-size: .85rem; }
+button:disabled { opacity: .45; }
+button.accept { border-color: #80e5b8; color: #082f49; background: #80e5b8; font-weight: 700; }
+button.refuse { border-color: #774457; color: #ffbbc5; background: #311f2b; }
+button:focus-visible, select:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+/* Les besoins portent leurs appareils : cartes plus larges que celles des appareils isolés. */
+.fleet__cards--needs { grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.fleet__cards--needs .card { max-width: 28rem; }
+.need-ships { list-style: none; display: grid; gap: .5rem; margin: .4rem 0 0; padding: .6rem 0 0; border-top: 1px solid rgba(148,163,184,.22); }
+.need-ship { display: grid; gap: .3rem; min-width: 0; padding: .55rem .65rem; border: 1px solid rgba(103,232,249,.22); border-left: 3px solid #f4cd7d; border-radius: .5rem; background: #0b1525; }
+.need-ship[data-status="ACCEPTED"] { border-left-color: #80e5b8; }
+.need-ship.is-off { border-left-color: #64748b; opacity: .75; }
+.need-ship .card__actions { padding: .3rem 0 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Mobile : vignette à gauche, texte à droite, pour ne pas empiler de grandes images. */
+@media (max-width: 640px) {
+  .card { grid-template-columns: 7rem minmax(0, 1fr); grid-template-rows: auto auto; max-width: none; }
+  .card__image { aspect-ratio: auto; height: 100%; min-height: 6.5rem; }
+  .card__body { padding: .6rem .7rem; }
+  .card__actions { grid-column: 1 / -1; padding-top: .6rem; }
+  .card__wanted { left: .3rem; right: .3rem; bottom: .3rem; padding: .1rem .35rem; font-size: .75rem; text-align: center; }
+}
+@container sheet (max-width: 640px) {
+  .card { grid-template-columns: 7rem minmax(0, 1fr); grid-template-rows: auto auto; max-width: none; }
+  .card__image { aspect-ratio: auto; height: 100%; min-height: 6.5rem; }
+  .card__body { padding: .6rem .7rem; }
+  .card__actions { grid-column: 1 / -1; padding-top: .6rem; }
+  .card__wanted { left: .3rem; right: .3rem; bottom: .3rem; padding: .1rem .35rem; font-size: .75rem; text-align: center; }
+}

@@ -145,6 +145,28 @@ class UserShipServiceTest {
     }
 
     @Test
+    void memberFleetIsRefusedOnAnUnpublishedOperationEvenForAConfirmedParticipant() {
+        EventParticipationRepository eventParticipationRepository = Mockito.mock(EventParticipationRepository.class);
+        com.icy.icy_backend.db.repository.event.OperationRepository operationRepository = Mockito.mock(com.icy.icy_backend.db.repository.event.OperationRepository.class);
+        UserShipService service = new UserShipService(
+                Mockito.mock(UserShipRepository.class), Mockito.mock(MessageService.class), Mockito.mock(UserService.class), Mockito.mock(ShipService.class),
+                Mockito.mock(UserWebSocketService.class), Mockito.mock(ShipFleetWebSocketService.class), eventParticipationRepository
+        );
+        service.setOperationRepository(operationRepository);
+        UUID draftId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(eventParticipationRepository.existsByEvent_IdAndUser_IdAndStatus(draftId, userId, 1)).thenReturn(true);
+        when(operationRepository.findById(draftId)).thenReturn(java.util.Optional.of(
+                com.icy.icy_backend.db.entity.event.Operation.builder().eventId(draftId).build()));
+
+        // Sans rôle organisateur, la réponse est celle d'un participant non confirmé : rien ne distingue le brouillon.
+        assertThatThrownBy(() -> service.getConfirmedParticipantShips(draftId, userId))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("La flotte demandée n'appartient pas à un participant confirmé.");
+        verify(eventParticipationRepository, never()).existsByEvent_IdAndUser_IdAndStatus(any(), any(), Mockito.anyInt());
+    }
+
+    @Test
     void memberFleetRequiresConfirmedParticipationInRequestedEvent() {
         UserShipRepository userShipRepository = Mockito.mock(UserShipRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);

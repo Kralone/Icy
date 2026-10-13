@@ -1,0 +1,43 @@
+:host { display: block; min-width: 0; }
+.management-page { display: grid; gap: 22px; padding: clamp(16px, 2.4vw, 40px); color: #e6f2ff; }
+.page-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 18px; }
+.back { display: inline-block; margin-bottom: 8px; color: #9fdcee; font-size: 13px; text-decoration: none; }
+.back:hover { color: #fff; }
+h1 { font-size: clamp(25px, 2vw, 34px); font-weight: 750; letter-spacing: -.035em; margin: 0; }
+h2 { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--tone); margin: 0; }
+h3 { font-size: 18px; font-weight: 650; margin: 0; overflow-wrap: anywhere; }
+button, .primary, .secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; border: 1px solid #38546d; background: #152b40; color: #bed5e8; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+button:hover, .secondary:hover { background: #24445e; color: #fff; }
+.primary { border-color: #67e8f9; background: #67e8f9; color: #082f49; }
+.primary:hover { background: #a5f3fc; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
+
+/* Une teinte par section : prévues en vert, brouillons en ambre, historique en gris-bleu. */
+.block { --tone: #80e5b8; display: grid; gap: 14px; min-width: 0; padding: clamp(14px, 1.6vw, 22px); border: 1px solid color-mix(in srgb, var(--tone) 28%, #24384d); border-left: 3px solid var(--tone); border-radius: 14px; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 6%, #0e1c2c), #0e1c2c 12rem); }
+.block--drafts { --tone: #f4cd7d; }
+.block--past { --tone: #94a3b8; }
+.fold > summary { display: flex; align-items: center; gap: 10px; min-height: 38px; cursor: pointer; list-style: none; border-radius: 8px; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before { content: ''; flex: none; width: 8px; height: 8px; border-right: 2px solid var(--tone); border-bottom: 2px solid var(--tone); transform: rotate(-45deg); transition: transform .15s; }
+.fold[open] > summary::before { transform: rotate(45deg); }
+.fold__count { padding: 1px 9px; border: 1px solid var(--tone); border-radius: 999px; color: var(--tone); font-size: 12px; font-weight: 700; }
+
+.feedback { border: 1px solid #42617a; border-radius: 10px; padding: 13px 16px; font-size: 13px; }
+.feedback button { margin-left: 10px; }
+.error { background: #351f2a; border-color: #774457; color: #ffbbc5; }
+.empty { text-align: center; padding: 28px 20px; border: 1px dashed #38546d; border-radius: 14px; color: #acc2d5; font-size: 14px; }
+.draft-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 18px; }
+.draft-grid:empty { display: none; }
+.draft-card { display: grid; grid-template-columns: minmax(96px, 150px) minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid #32516a; border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(120deg, #132e43, #0e1c2c 85%); }
+.draft-card--past .draft-card__visual img { filter: grayscale(.6); opacity: .6; }
+.draft-card__visual { position: relative; min-height: 150px; }
+.draft-card__visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .85; }
+.draft-card__type { position: absolute; left: 10px; top: 10px; max-width: calc(100% - 20px); padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.draft-card__body { display: grid; gap: 14px; align-content: start; padding: 18px; min-width: 0; }
+.draft-card__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+dl { display: grid; gap: 8px; margin: 0; }
+dt { font-size: 11px; color: #9db6cb; text-transform: uppercase; letter-spacing: .08em; }
+dd { margin: 2px 0 0; font-size: 14px; color: #e7f2ff; }
+dd::first-letter { text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .fold > summary::before { transition: none; } }
+@media (max-width: 480px) { .draft-card { grid-template-columns: 1fr; } .draft-card__visual { min-height: 110px; } .draft-card__actions > a { flex: 1 1 100%; } }

@@ -7,4 +7,5 @@ public interface OperationShipProposalRepository extends JpaRepository<Operation
     List<OperationShipProposal> findByOperationEventIdOrderByCreatedAtAsc(UUID operationEventId);
     java.util.Optional<OperationShipProposal> findByIdAndOperationEventId(UUID id, UUID operationEventId);
     long countByRequirementIdAndStatusIn(UUID requirementId, List<OperationShipProposal.Status> statuses);
+    boolean existsByOperationEventIdAndOwnerUserIdAndShipId(UUID operationEventId, UUID ownerUserId, Long shipId);
 }

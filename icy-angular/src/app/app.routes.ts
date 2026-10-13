@@ -285,6 +285,8 @@ export const routes: Routes = [
         path: 'operations/:id/edit',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'OFFICIER'] },
+        // Demande confirmation si des saisies ne peuvent pas être enregistrées en quittant l'éditeur.
+        canDeactivate: [(component: { canLeave?: () => boolean }) => component.canLeave?.() ?? true],
         loadComponent: () => import('./features/operations/operation-editor.component').then(m => m.OperationEditorComponent)
       },
       {
@@ -318,6 +320,19 @@ export const routes: Routes = [
           {
             path: 'events',
             loadComponent: () => import('./features/admin/event-management/event-management.component').then(m => m.EventManagementComponent)
+          },
+          {
+            path: 'operations',
+            loadComponent: () => import('./features/admin/operation-drafts/operation-drafts.component').then(m => m.OperationDraftsComponent)
+          },
+          { path: 'operation-drafts', redirectTo: 'operations', pathMatch: 'full' },
+          {
+            path: 'crew-presets',
+            // La bibliothèque de presets est réservée aux administrateurs ; le serveur applique la même règle.
+            data: { roles: ['ADMIN'] },
+            // Demande confirmation si un preset en cours de saisie n'est pas enregistré.
+            canDeactivate: [(component: { canLeave?: () => boolean | Promise<boolean> }) => component.canLeave?.() ?? true],
+            loadComponent: () => import('./features/admin/crew-presets/crew-presets.component').then(m => m.CrewPresetsComponent)
           },
           {
             path: 'sc-world-events',

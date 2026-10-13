@@ -3,13 +3,12 @@ import com.icy.icy_backend.db.entity.event.OperationShipProposal;
 import lombok.Value;
 import lombok.AllArgsConstructor;
 import java.util.UUID;
-import com.icy.icy_backend.db.entity.user.UserShip;
+/**
+ * Vaisseau du hangar d'un membre, mis à disposition de l'opération. Le nom et l'image viennent du catalogue : ils restent
+ * connus même si l'appareil a quitté le hangar (inHangar faux) ou si son propriétaire n'est plus inscrit Présent.
+ */
 @Value
 @AllArgsConstructor
 public class OperationShipProposalResponseDTO {
- UUID id; Long shipId; UUID ownerUserId; String ownerUsername; UUID pilotUserId; String pilotUsername; Long groupId; UUID requirementId; OperationShipProposal.Status status; String shipName; String shipImageUrl;
- public OperationShipProposalResponseDTO(OperationShipProposal value) { this(value, null, null); }
- public OperationShipProposalResponseDTO(OperationShipProposal value, UserShip ownedShip, String pilotUsername) {
-  this(value.getId(), value.getShipId(), value.getOwnerUserId(), ownedShip == null || ownedShip.getUser() == null ? null : ownedShip.getUser().getUsername(), value.getPilotUserId(), pilotUsername, value.getGroupId(), value.getRequirementId(), value.getStatus(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getName(), ownedShip == null || ownedShip.getShip() == null ? null : ownedShip.getShip().getImageUrl());
- }
+ UUID id; Long shipId; UUID ownerUserId; String ownerUsername; UUID pilotUserId; String pilotUsername; Long groupId; UUID requirementId; OperationShipProposal.Status status; String shipName; String shipImageUrl; boolean inHangar; boolean ownerPresent;
 }
