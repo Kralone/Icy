@@ -68,7 +68,18 @@
   } @else {
     <p class="leaf__nobody">Personne pour l’instant.</p>
   }
-  @if (acceptedShips(group); as fleet) { <p class="leaf__ships"><span>Vaisseaux</span> {{ fleet }}</p> }
+  @if (acceptedShips(group); as fleet) {
+    @if (fleet.length) {
+      <ul class="ships" aria-label="Vaisseaux acceptés">
+        @for (ship of fleet; track ship.id) {
+          <li class="ship" tabindex="0" [attr.aria-label]="shipTip(ship)">
+            @if (ship.shipImageUrl) { <img [src]="ship.shipImageUrl" alt="" loading="lazy"> } @else { <app-operation-icon name="ship" /> }
+            <span class="ship__tip" aria-hidden="true"><strong>{{ ship.shipName || 'Vaisseau inconnu' }}</strong> {{ ship.ownerUsername || 'propriétaire inconnu' }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
   @switch (action(group)) {
     @case ('requested') { <p class="leaf__action"><span class="tag tag--pending">Demande envoyée</span></p> }
     @case ('full') { <p class="leaf__action"><span class="tag tag--full">Complet</span></p> }

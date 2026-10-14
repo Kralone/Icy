@@ -52,7 +52,7 @@ describe('OperationPreviewComponent', () => {
     expect(text('.panel--objectives')).toContain('Convoi arrivé');
     expect(text('app-operation-org-chart')).toContain('Alpha');
     expect(text('app-operation-org-chart')).toContain('Mira');
-    expect(text('app-operation-org-chart')).toContain('Vaisseaux Prospector de Mira');
+    expect(fixture.nativeElement.querySelector('app-operation-org-chart .ship').getAttribute('aria-label')).toBe('Prospector · Mira');
     expect(text('app-operation-fleet-cards')).toContain('Flotte prévue');
     expect(text('app-operation-fleet-cards')).toContain('Manque 1 sur 2');
     expect(text('app-operation-fleet-cards')).toContain('Autres appareils proposés');

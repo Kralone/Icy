@@ -36,7 +36,15 @@
             <strong>Dans {{ parent.name }}</strong><small>Sous-groupe de ce groupe principal</small>
           </button>
         }
+        @for (parent of blockedParents(); track parent.id) {
+          <button type="button" class="choice" role="radio" aria-checked="false" disabled>
+            <strong>Dans {{ parent.name }}</strong><small>Impossible : {{ parent.members.length }} membre{{ parent.members.length > 1 ? 's y sont affectés' : ' y est affecté' }} directement. Retirez-les du groupe, ou créez l’équipage puis déplacez-les.</small>
+          </button>
+        }
       </div>
+      @if (requestedParentBlocked(); as blocked) {
+        <p class="builder__warning" role="alert">« {{ blocked.name }} » a déjà des membres affectés directement : l’équipage ne peut pas y être rangé tant qu’ils y sont. Il sera créé au premier niveau si vous continuez.</p>
+      }
     </div>
 
     <div class="step">
