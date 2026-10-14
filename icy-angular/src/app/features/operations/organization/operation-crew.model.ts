@@ -66,11 +66,11 @@ export const POSITION_MODE_HINTS: Record<PositionMode, string> = {
 export const POSITION_ICONS: ReadonlyArray<{ key: OperationIconName; label: string }> = [
   { key: 'pilot', label: 'Pilotage' },
   { key: 'target', label: 'Tir' },
+  { key: 'missile', label: 'Missiles' },
   { key: 'wrench', label: 'Technique' },
   { key: 'medic', label: 'Soins' },
   { key: 'cargo', label: 'Cargaison' },
-  { key: 'radar', label: 'Détection' },
-  { key: 'star', label: 'Commandement' }
+  { key: 'radar', label: 'Détection' }
 ];
 
 /** Pictogramme d'un poste ; un nom inconnu ou absent rend le pictogramme neutre. */

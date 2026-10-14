@@ -42,18 +42,18 @@
         <h3>Postes</h3>
         @if (!current.positions.length) { <p class="empty">Aucun poste : ce preset décrit un équipage libre.</p> }
         <ul class="rows">
-          @for (position of current.positions; track $index) {
+          @for (position of current.positions; track $index; let row = $index) {
             <li class="row">
-              <label>Nom<input [ngModel]="position.label" (ngModelChange)="setPosition($index, { label: $event })" maxlength="80" placeholder="Pilote"></label>
-              <label>Places<input type="number" min="1" max="1000" step="1" [ngModel]="position.capacity" (ngModelChange)="setPosition($index, { capacity: toNumber($event) })" placeholder="Sans limite"></label>
-              <div class="row__icons" role="radiogroup" [attr.aria-label]="'Pictogramme du poste ' + (position.label || $index + 1)">
-                <button type="button" role="radio" [attr.aria-checked]="position.icon === null" (click)="setPosition($index, { icon: null })" aria-label="Sans pictogramme particulier"><app-operation-icon name="assignment" /></button>
-                @for (icon of icons; track icon.key) { <button type="button" role="radio" [attr.aria-checked]="position.icon === icon.key" (click)="setPosition($index, { icon: icon.key })" [attr.aria-label]="icon.label" [attr.title]="icon.label"><app-operation-icon [name]="icon.key" /></button> }
+              <label>Nom<input [ngModel]="position.label" (ngModelChange)="setPosition(row, { label: $event })" maxlength="80" placeholder="Pilote"></label>
+              <label>Places<input type="number" min="1" max="1000" step="1" [ngModel]="position.capacity" (ngModelChange)="setPosition(row, { capacity: toNumber($event) })" placeholder="Sans limite"></label>
+              <div class="row__icons" role="radiogroup" [attr.aria-label]="'Pictogramme du poste ' + (position.label || row + 1)">
+                <button type="button" role="radio" [attr.aria-checked]="position.icon === null" (click)="setPosition(row, { icon: null })" aria-label="Sans pictogramme particulier"><app-operation-icon name="assignment" /></button>
+                @for (icon of icons; track icon.key) { <button type="button" role="radio" [attr.aria-checked]="position.icon === icon.key" (click)="setPosition(row, { icon: icon.key })" [attr.aria-label]="icon.label" [attr.title]="icon.label"><app-operation-icon [name]="icon.key" /></button> }
               </div>
               <div class="row__tools">
-                <button type="button" (click)="movePosition($index, -1)" [disabled]="$index === 0" [attr.aria-label]="'Monter le poste ' + (position.label || $index + 1)">↑</button>
-                <button type="button" (click)="movePosition($index, 1)" [disabled]="$index === current.positions.length - 1" [attr.aria-label]="'Descendre le poste ' + (position.label || $index + 1)">↓</button>
-                <button type="button" class="danger" (click)="removePosition($index)">Retirer<span class="sr-only"> le poste {{ position.label || $index + 1 }}</span></button>
+                <button type="button" (click)="movePosition(row, -1)" [disabled]="row === 0" [attr.aria-label]="'Monter le poste ' + (position.label || row + 1)">↑</button>
+                <button type="button" (click)="movePosition(row, 1)" [disabled]="row === current.positions.length - 1" [attr.aria-label]="'Descendre le poste ' + (position.label || row + 1)">↓</button>
+                <button type="button" class="danger" (click)="removePosition(row)">Retirer<span class="sr-only"> le poste {{ position.label || row + 1 }}</span></button>
               </div>
             </li>
           }
@@ -62,10 +62,10 @@
         @else { <p class="hint">Un équipage compte au plus {{ maxPositions }} postes.</p> }
       </div>
 
-      @if (draftError()) { <p class="editor__error" role="status">{{ draftError() }}</p> }
+      @if (attempted() && draftError()) { <p class="editor__error" role="alert">{{ draftError() }}</p> }
       <div class="editor__actions">
         <button type="button" (click)="cancel()" [disabled]="busy()">Annuler</button>
-        <button type="button" class="primary" (click)="save()" [disabled]="busy() || !!draftError()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le preset' }}</button>
+        <button type="button" class="primary" (click)="save()" [disabled]="busy()">{{ busy() ? 'Enregistrement…' : 'Enregistrer le preset' }}</button>
       </div>
     </section>
   } @else {
