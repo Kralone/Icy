@@ -31,4 +31,20 @@ describe('OperationConfirmService', () => {
     expect(await escaped).toBe(false);
     expect(dialog()).toBeNull();
   });
+
+  it('keeps the confirmation disabled until the acknowledgement is checked', async () => {
+    const service = TestBed.inject(OperationConfirmService);
+    const answer = service.ask({ title: 'Supprimer « Équipage Polaris » ?', message: 'Le groupe sera supprimé avec 1 besoin de vaisseau.', acknowledge: 'Je comprends que cette suppression est définitive.', confirmLabel: 'Supprimer', danger: true });
+    const dialog = document.querySelector('dialog.operation-confirm')!;
+    const confirm = dialog.querySelector('button[data-confirm]') as HTMLButtonElement;
+    const box = dialog.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(dialog.textContent).toContain('Je comprends que cette suppression est définitive.');
+    expect(confirm.disabled).toBe(true);
+    confirm.click();
+    expect(document.querySelector('dialog.operation-confirm')).not.toBeNull();
+    box.click();
+    expect(confirm.disabled).toBe(false);
+    confirm.click();
+    await expect(answer).resolves.toBe(true);
+  });
 });

@@ -24,6 +24,7 @@ required_files=(
   "${rollout_dir}/verify-flyway-v31.sql"
   "${rollout_dir}/verify-flyway-v33.sql"
   "${rollout_dir}/verify-flyway-v43.sql"
+  "${rollout_dir}/verify-flyway-v44.sql"
 )
 for file in "${required_files[@]}"; do
   [[ -f "$file" ]] || { echo "ERROR: required file is missing: $file" >&2; exit 1; }
@@ -103,6 +104,7 @@ expected_flyway_version="${EXPECTED_FLYWAY_VERSION:-$flyway_version}"
 case "$flyway_version" in
   38) flyway_check=verify-flyway-v33.sql ;;
   43) flyway_check=verify-flyway-v43.sql ;;
+  44) flyway_check=verify-flyway-v44.sql ;;
   *) echo "ERROR: unsupported Flyway version: V$flyway_version" >&2; exit 1 ;;
 esac
 docker exec -i iceforge_db sh -ceu \

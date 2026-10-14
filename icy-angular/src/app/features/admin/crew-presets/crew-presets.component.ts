@@ -21,7 +21,7 @@ interface PresetDraft {
 
 const MAX_POSITIONS = 30;
 
-/** Bibliothèque des presets d'équipage, réservée aux administrateurs. Un preset est copié dans une opération : le modifier ici ne change aucune opération. */
+/** Bibliothèque des presets d'équipage, réservée aux administrateurs. Les équipages qui suivent un preset sont mis à jour par le serveur dans les opérations à venir. */
 @Component({
   selector: 'app-crew-presets',
   standalone: true,
@@ -49,8 +49,12 @@ export class CrewPresetsComponent implements OnInit {
 
   private open(draft: PresetDraft): void {
     this.baseline = JSON.stringify(draft);
+    this.attempted.set(false);
     this.draft.set(draft);
   }
+
+  /** Un enregistrement a été tenté : ce qui manque est dit à ce moment-là, pas pendant la saisie. */
+  readonly attempted = signal(false);
 
   /** Ferme le formulaire : tout de suite s'il n'y a rien à perdre, sinon après abandon confirmé. */
   cancel(): void {
@@ -171,6 +175,7 @@ export class CrewPresetsComponent implements OnInit {
 
   save(): void {
     const draft = this.draft();
+    this.attempted.set(true);
     if (!draft || !draft.model || this.draftError() || this.busy()) return;
     this.busy.set(true);
     this.eventService.saveCrewPreset(draft.id, {

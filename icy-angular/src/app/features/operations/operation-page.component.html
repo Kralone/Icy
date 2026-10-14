@@ -67,16 +67,25 @@
           <p class="empty-state">Inscrivez-vous « Présent » pour proposer un vaisseau de votre hangar.</p>
         } @else {
           <section class="hangar" aria-label="Proposer un vaisseau de mon hangar">
-            <h3>Mon hangar</h3>
             @if (hangar$ | async; as hangar) {
+              <header class="hangar__head">
+                <span class="hangar__icon" aria-hidden="true"><app-operation-icon name="ship" /></span>
+                <div>
+                  <h3>Mon hangar @if (hangar.length) { <span class="hangar__count">{{ hangar.length }} vaisseau{{ hangar.length > 1 ? 'x' : '' }}</span> }</h3>
+                  @if (hangar.length) { <p>Choisissez un vaisseau à proposer pour cette opération.</p> }
+                </div>
+              </header>
               @if (hangar.length) {
                 <ul class="hangar__ships">
                   @for (owned of hangar; track ownedId(owned)) {
                     <li>
-                      <button type="button" class="hangar__ship" [attr.aria-pressed]="selectedShipId === ownedId(owned)" [disabled]="fleetBusy || isProposed(ownedId(owned), fleetShips)" (click)="selectShip(ownedId(owned))">
-                        @if (owned.ship?.imageUrl) { <img [src]="owned.ship.imageUrl" alt="" loading="lazy"> } @else { <span class="hangar__noimage">Sans image</span> }
+                      @let status = myProposalStatus(ownedId(owned), fleetShips);
+                      <button type="button" class="hangar__ship" [class.hangar__ship--proposed]="!!status" [attr.data-status]="status" [attr.aria-pressed]="selectedShipId === ownedId(owned)" [disabled]="fleetBusy || !!status" (click)="selectShip(ownedId(owned))">
+                        <span class="hangar__media">
+                          @if (owned.ship?.imageUrl) { <img [src]="owned.ship.imageUrl" alt="" loading="lazy"> } @else { <span class="hangar__noimage">Sans image</span> }
+                          @if (status) { <span class="hangar__badge" [attr.data-status]="status">{{ statusLabel(status) }}</span> }
+                        </span>
                         <strong>{{ owned.ship?.name || 'Vaisseau inconnu' }}</strong>
-                        @if (isProposed(ownedId(owned), fleetShips)) { <small>Déjà proposé</small> }
                       </button>
                     </li>
                   }

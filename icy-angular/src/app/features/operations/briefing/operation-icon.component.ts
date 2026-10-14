@@ -16,7 +16,8 @@ const ICONS = {
   medic: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z',
   cargo: 'M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9',
   radar: 'M12 21a9 9 0 1 0-9-9M12 16a4 4 0 1 0-4-4M12 12l7-7M12 12h.01',
-  star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'
+  star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
+  missile: 'M20 4l-1.6 5.6-8 8-4-4 8-8zM14 8h.01M8.4 15.6L4 20M6.4 11.6L3.5 11l2-3.5M12.4 17.6l.6 2.9 3.5-2'
 } as const;
 
 export type OperationIconName = keyof typeof ICONS;

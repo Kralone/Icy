@@ -9,6 +9,8 @@ export interface ConfirmRequest {
   cancelLabel?: string;
   /** Action destructrice : bouton de confirmation en rouge. */
   danger?: boolean;
+  /** Case à cocher qui doit l'être pour pouvoir confirmer : l'utilisateur reconnaît ce qui sera perdu. */
+  acknowledge?: string;
 }
 
 const STYLE_ID = 'operation-confirm-style';
@@ -25,6 +27,9 @@ const STYLE = `
 .operation-confirm button[data-confirm] { border-color: #67e8f9; color: #082f49; background: #67e8f9; font-weight: 700; }
 .operation-confirm[data-danger] button[data-confirm] { border-color: #fda4af; color: #351f2a; background: #fda4af; }
 .operation-confirm button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
+.operation-confirm button:disabled { opacity: .45; cursor: not-allowed; }
+.operation-confirm__ack { display: flex; align-items: flex-start; gap: .55rem; margin-top: .3rem; color: #f8fafc; font-size: .92rem; line-height: 1.45; cursor: pointer; }
+.operation-confirm__ack input { width: 1.1rem; height: 1.1rem; margin-top: .15rem; flex: none; accent-color: #fda4af; }
 @media (max-width: 480px) { .operation-confirm__actions button { flex: 1 1 100%; } }
 `;
 
@@ -57,6 +62,15 @@ export class OperationConfirmService {
       message.textContent = request.message;
       body.appendChild(message);
     }
+    let acknowledge: HTMLInputElement | null = null;
+    if (request.acknowledge) {
+      const label = document.createElement('label');
+      label.className = 'operation-confirm__ack';
+      acknowledge = document.createElement('input');
+      acknowledge.type = 'checkbox';
+      label.append(acknowledge, document.createTextNode(request.acknowledge));
+      body.appendChild(label);
+    }
     const actions = document.createElement('div');
     actions.className = 'operation-confirm__actions';
     const cancel = document.createElement('button');
@@ -66,6 +80,12 @@ export class OperationConfirmService {
     confirm.type = 'button';
     confirm.setAttribute('data-confirm', '');
     confirm.textContent = request.confirmLabel;
+    // Avec une case à cocher, la confirmation reste impossible tant qu'elle n'est pas cochée.
+    if (acknowledge) {
+      const box = acknowledge;
+      confirm.disabled = true;
+      box.addEventListener('change', () => { confirm.disabled = !box.checked; });
+    }
     actions.append(cancel, confirm);
     dialog.append(body, actions);
     document.body.appendChild(dialog);
@@ -81,7 +101,7 @@ export class OperationConfirmService {
         resolve(value);
       };
       cancel.addEventListener('click', () => answer(false));
-      confirm.addEventListener('click', () => answer(true));
+      confirm.addEventListener('click', () => { if (!confirm.disabled) answer(true); });
       dialog.addEventListener('cancel', event => { event.preventDefault(); answer(false); });
       // Un clic sur le fond (hors du contenu) vaut annulation.
       dialog.addEventListener('click', event => { if (event.target === dialog) answer(false); });

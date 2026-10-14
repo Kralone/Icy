@@ -42,7 +42,7 @@ label small, .hint { color: #94a3b8; font-size: .8rem; }
 .chips b { color: #f4cd7d; }
 .card__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .3rem; }
 
-.editor { display: grid; gap: 1.1rem; min-width: 0; max-width: 72rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid rgba(244,205,125,.45); border-radius: .8rem; background: #0b1525; container: preseteditor / inline-size; }
+.editor { display: grid; gap: 1.1rem; min-width: 0; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid rgba(244,205,125,.45); border-radius: .8rem; background: #0b1525; container: preseteditor / inline-size; }
 .ship-card { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem; padding: .7rem; border: 1px solid rgba(128,229,184,.55); border-radius: .7rem; background: #10261f; }
 .ship-card img, .ship-card__noimage { flex: none; width: min(100%, 12rem); aspect-ratio: 16 / 9; border-radius: .5rem; object-fit: cover; background: #111827; }
 .ship-card > div { display: grid; gap: .15rem; flex: 1 1 10rem; min-width: 0; overflow-wrap: anywhere; }

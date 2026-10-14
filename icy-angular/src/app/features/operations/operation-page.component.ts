@@ -504,6 +504,13 @@ export class OperationPageComponent {
   // --- Flotte : proposer un appareil de son hangar. Cela n'affecte personne à un groupe.
   ownedId(owned: any): number { return owned?.id?.shipId ?? owned?.ship?.id; }
   isProposed(shipId: number, ships: FleetShip[]): boolean { return ships.some(ship => ship.shipId === shipId && ship.ownerUserId === this.currentUserId); }
+  /** État de ma proposition pour ce vaisseau de mon hangar ; null : pas encore proposé. */
+  myProposalStatus(shipId: number, ships: FleetShip[]): FleetShip['status'] | null {
+    return ships.find(ship => ship.shipId === shipId && ship.ownerUserId === this.currentUserId)?.status ?? null;
+  }
+  statusLabel(status: FleetShip['status']): string {
+    return { PROPOSED: 'Proposé', ACCEPTED: 'Accepté', DECLINED: 'Refusé', UNAVAILABLE: 'Indisponible' }[status];
+  }
   leafGroups<T extends { id: number; parentId?: number }>(groups: T[]): T[] { return groups.filter(group => this.isLeaf(group, groups)); }
   /** Besoins encore ouverts auxquels l'appareil choisi peut répondre. */
   compatibleNeeds(requirements: FleetRequirement[]): FleetRequirement[] {

@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface OperationGroupRepository extends CrudRepository<OperationGroup, Long> {
     List<OperationGroup> findByOperationEventIdOrderBySortOrderAscIdAsc(UUID operationEventId);
+    /** Équipages qui suivent un preset. */
+    List<OperationGroup> findByCrewPresetId(UUID crewPresetId);
     boolean existsByParentId(Long parentId);
 
     /** Lecture directe en base : vrai si le parent du groupe n'est plus celui attendu (groupe déplacé par une autre transaction). */

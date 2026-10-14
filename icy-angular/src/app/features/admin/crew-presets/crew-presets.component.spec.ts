@@ -53,6 +53,38 @@ describe('CrewPresetsComponent', () => {
     expect(titles()).toEqual(['MOLE — Extraction [archivé]']);
   });
 
+  it('sets the icon of the row that was clicked, and only that one', () => {
+    const page = fixture.componentInstance;
+    page.create();
+    page.chooseModel({ id: 286, name: 'Polaris', imageUrl: null } as any);
+    page.addPosition(); page.addPosition(); page.addPosition(); page.addPosition();
+    fixture.detectChanges();
+    const rows = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('.row'));
+    const pick = (row: number, label: string) => (rows()[row].querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement).click();
+    // Avant correction, l'index de la boucle des pictogrammes remplaçait celui du poste : « Missiles » (2e) visait la 2e ligne.
+    pick(3, 'Missiles');
+    pick(0, 'Détection');
+    fixture.detectChanges();
+    expect(page.draft()!.positions.map(position => position.icon)).toEqual(['radar', null, null, 'missile']);
+    expect(rows()[3].querySelector('button[aria-label="Missiles"]')!.getAttribute('aria-checked')).toBe('true');
+    expect(rows()[1].querySelector('[aria-checked="true"]')!.getAttribute('aria-label')).toBe('Sans pictogramme particulier');
+    expect(page.icons.map(icon => icon.label)).toEqual(['Pilotage', 'Tir', 'Missiles', 'Technique', 'Soins', 'Cargaison', 'Détection']);
+  });
+
+  it('says what is missing only once a save has been attempted', () => {
+    const page = fixture.componentInstance;
+    page.create();
+    page.chooseModel({ id: 286, name: 'Polaris', imageUrl: null } as any);
+    page.set('name', 'Polaris — Standard');
+    page.addPosition();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.editor__error')).toBeNull();
+    (Array.from(fixture.nativeElement.querySelectorAll('.editor__actions button')) as HTMLButtonElement[]).find(button => button.textContent!.includes('Enregistrer'))!.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.editor__error').textContent).toContain('Chaque poste doit avoir un nom.');
+    expect(events['saveCrewPreset']).not.toHaveBeenCalled();
+  });
+
   it('refuses to save without a ship, a name, or with invalid positions, before any request', () => {
     const page = fixture.componentInstance;
     page.create();

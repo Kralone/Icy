@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostLi
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OperationLoadFailure, operationLoadFailure } from './operation-load-failure';
-import { BehaviorSubject, catchError, debounceTime, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, debounceTime, firstValueFrom, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, take, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
 import { CatalogService, CatalogEntry } from '../../core/services/catalog/catalog.service';
 import { UserService } from '../../core/services/user/user.service';
@@ -683,12 +683,29 @@ export class OperationEditorComponent implements OnDestroy {
 
   async deleteGroup(operationId: string, group: OrganizationGroup): Promise<void> {
     if (this.organizationBusy()) return;
-    if (!await this.confirmService.ask({ title: `Supprimer « ${group.name} » ?`, message: 'Cette action est définitive.', confirmLabel: 'Supprimer le groupe', danger: true })) return;
-    if (this.organizationBusy()) return;
+    // Besoins et vaisseaux rattachés au groupe : supprimés avec lui, après une confirmation explicite.
+    const [needs, ships] = await firstValueFrom(combineLatest([this.shipRequirements$, this.ships$]).pipe(take(1))).catch(() => [[], []] as [FleetRequirement[], FleetShip[]]);
+    const linkedNeeds = needs.filter(need => need.groupId === group.id);
+    const linkedNeedIds = new Set(linkedNeeds.map(need => need.id));
+    const linkedShips = ships.filter(ship => ship.groupId === group.id || (!!ship.requirementId && linkedNeedIds.has(ship.requirementId)));
+    const withLinkedShips = linkedNeeds.length + linkedShips.length > 0;
+    const linked = [
+      linkedNeeds.length ? `${linkedNeeds.length} besoin${linkedNeeds.length > 1 ? 's' : ''} de vaisseau` : '',
+      linkedShips.length ? `${linkedShips.length} vaisseau${linkedShips.length > 1 ? 'x' : ''} proposé${linkedShips.length > 1 ? 's' : ''}` : ''
+    ].filter(Boolean).join(' et ');
+    const confirmed = await this.confirmService.ask(withLinkedShips
+      ? { title: `Supprimer « ${group.name} » ?`, message: `Le groupe sera supprimé avec ${linked}.`, acknowledge: 'Je comprends que cette suppression est définitive.', confirmLabel: 'Supprimer', danger: true }
+      : { title: `Supprimer « ${group.name} » ?`, message: 'Cette action est définitive.', confirmLabel: 'Supprimer le groupe', danger: true });
+    if (!confirmed || this.organizationBusy()) return;
     this.groupSettingsDirty.set(false);
     this.organizationBusy.set(true);
-    this.eventService.deleteOperationGroup(operationId, group.id).subscribe({
-      next: () => { this.notify('success', 'Groupe supprimé.'); this.groupOpenOnMobile.set(false); this.loadOrganization(operationId, group.parentId ?? null); },
+    this.eventService.deleteOperationGroup(operationId, group.id, withLinkedShips).subscribe({
+      next: () => {
+        this.notify('success', withLinkedShips ? `Groupe supprimé, avec ${linked}.` : 'Groupe supprimé.');
+        this.groupOpenOnMobile.set(false);
+        this.loadOrganization(operationId, group.parentId ?? null);
+        if (withLinkedShips) { this.requirementRefresh.next(); this.shipRefresh.next(); }
+      },
       error: error => { this.organizationBusy.set(false); this.notify('error', this.organizationErrorMessage(error, 'Suppression impossible.')); }
     });
   }

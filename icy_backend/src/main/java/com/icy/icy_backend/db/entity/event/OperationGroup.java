@@ -27,6 +27,8 @@ public class OperationGroup {
     @Column(name = "ship_model_name", length = 200) private String shipModelName;
     @Enumerated(EnumType.STRING) @Column(name = "position_mode", nullable = false, length = 20)
     @Builder.Default private PositionMode positionMode = PositionMode.SELF;
+    /** Preset dont l'équipage suit les modifications ; null : équipage indépendant (créé sans preset, ou retouché à la main). */
+    @Column(name = "crew_preset_id") private UUID crewPresetId;
 
     public enum AssignmentMode { INHERITED, FREE, VALIDATION, MANAGED }
     public enum Kind { STANDARD, CREW }

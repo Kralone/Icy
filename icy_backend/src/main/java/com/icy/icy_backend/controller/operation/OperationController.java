@@ -151,8 +151,9 @@ public class OperationController {
 
     @DeleteMapping("/{id}/groups/{groupId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
-    public ResponseEntity<MessageResponse<Void>> deleteGroup(@PathVariable UUID id, @PathVariable Long groupId) {
-        return groupService.delete(id, groupId);
+    public ResponseEntity<MessageResponse<Void>> deleteGroup(@PathVariable UUID id, @PathVariable Long groupId,
+                                                             @RequestParam(name = "withLinkedShips", defaultValue = "false") boolean withLinkedShips) {
+        return groupService.delete(id, groupId, withLinkedShips);
     }
 
     @PutMapping("/{id}/groups/reorder")
