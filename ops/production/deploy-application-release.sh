@@ -8,8 +8,8 @@ PREFLIGHT_ONLY=0
 FRESH_BACKUP=0
 # Une archive complète de moins de 7 jours est réutilisée : voir select-predeploy-backup.sh.
 MAX_BACKUP_AGE_DAYS=7
-# Flyway version this release must reach. V39 to V43 are applied by the backend at startup.
-TARGET_FLYWAY_VERSION=43
+# Flyway version this release must reach. Missing migrations (V39 to V44) are applied by the backend at startup.
+TARGET_FLYWAY_VERSION=44
 
 usage() {
   echo "Usage: $0 --revision <git-sha> --age-recipient 'age1...'|\"ssh-ed25519 AAAA...\" [--fresh-backup] [--preflight]" >&2
@@ -61,6 +61,7 @@ required_files=(
   "$BACKEND_DIR/verify-flyway-v33.sql"
   "$BACKEND_DIR/verify-flyway-v38-checksums.sql"
   "$BACKEND_DIR/verify-flyway-v43.sql"
+  "$BACKEND_DIR/verify-flyway-v44.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -73,6 +74,7 @@ done
 grep -Fq 'EXPECTED_FLYWAY_VERSION' "$BACKEND_DIR/verify.sh"   || { echo 'verify.sh du backend trop ancien pour cette release.' >&2; exit 1; }
 grep -Fq 'generate_series(1, 38)' "$BACKEND_DIR/verify-flyway-v33.sql"   || { echo 'verify-flyway-v33.sql trop ancien: il doit controler V1-V38.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V43_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v43.sql"   || { echo 'verify-flyway-v43.sql invalide.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V44_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v44.sql"   || { echo 'verify-flyway-v44.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V38_CHECKSUMS_OK' "$BACKEND_DIR/verify-flyway-v38-checksums.sql"   || { echo 'verify-flyway-v38-checksums.sql invalide.' >&2; exit 1; }
 for image in "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE"; do
   docker image inspect "$image" >/dev/null || { echo "Image candidate absente: $image" >&2; exit 1; }
@@ -132,8 +134,12 @@ case "$current_version" in
     db_psql <"$BACKEND_DIR/verify-flyway-v38-checksums.sql" >/dev/null
     ;;
   43)
-    # Release already applied: the same command can be run again.
+    # V44 reste à appliquer : l'historique V1-V43 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v43.sql" >/dev/null
+    ;;
+  44)
+    # Release already applied: the same command can be run again.
+    db_psql <"$BACKEND_DIR/verify-flyway-v44.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
