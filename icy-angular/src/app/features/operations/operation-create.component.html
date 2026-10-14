@@ -26,7 +26,7 @@
         </label>
         <label class="wide">
           <span class="field-label" id="operation-create-briefing">Briefing</span>
-          <textarea [(ngModel)]="form.description" rows="5" maxlength="50000" aria-labelledby="operation-create-briefing" aria-describedby="operation-create-briefing-count" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>
+          <textarea class="briefing-field" [(ngModel)]="form.description" rows="12" maxlength="50000" aria-labelledby="operation-create-briefing" aria-describedby="operation-create-briefing-count" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>
           <small id="operation-create-briefing-count">{{ form.description.length }} / 50000</small>
         </label>
         <label>

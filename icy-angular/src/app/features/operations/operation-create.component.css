@@ -17,6 +17,7 @@ h1 { margin: .45rem 0; color: #f8fafc; font-size: clamp(1.9rem, 3.6vw, 3.2rem); 
 label { display: grid; gap: .4rem; align-content: start; color: #cbd5e1; }
 .wide { grid-column: 1 / -1; }
 input, select, textarea { width: 100%; border: 1px solid #475569; border-radius: .45rem; background: #111827; color: #f8fafc; padding: .75rem; }
+textarea.briefing-field { resize: vertical; min-height: 12rem; max-height: 80vh; }
 small { color: #7893a3; text-align: right; }
 .primary { margin-top: 1.5rem; border: 1px solid #67e8f9; border-radius: .45rem; padding: .8rem 1.3rem; font-weight: 700; background: #67e8f9; color: #082f49; }
 .primary:hover:not(:disabled) { background: #a5f3fc; }
