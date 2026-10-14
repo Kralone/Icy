@@ -159,6 +159,28 @@ une erreur de droits y couperait l'accès d'exploitation en même temps.
    l'étape 2, `sshd -t`, `systemctl reload sshd`, puis revérifier la connexion
    d'exploitation. Ne fermer la session root qu'après ce contrôle.
 
+## Mise en veille et réveil
+
+Une fois la production livrée et stable, le staging est mis en veille pour libérer les ressources du VPS.
+`suspend.sh` refuse d'agir si la production n'est pas saine : service absent ou arrêté, contrôle de santé
+non vert, backend démarré depuis moins de 10 minutes ou erreur dans ses journaux sur cette période. Il
+n'utilise que `docker compose stop` : conteneurs, volumes, réseaux, images, configuration et sauvegardes
+restent en place, puis il vérifie que la production n'a pas bougé.
+
+```bash
+sudo /opt/iceforge-staging/current/suspend.sh
+```
+
+Réveil pour une recette, avec les mêmes conteneurs et volumes :
+
+```bash
+sudo /opt/iceforge-staging/current/resume.sh
+```
+
+Pour une nouvelle release, la procédure habituelle (`install-release.sh` puis `deploy.sh`) s'applique,
+staging en veille ou non. Les deux scripts n'acceptent que le projet `iceforge_staging` (ou un projet
+`iceforge_staging_test…` pour les essais), jamais `iceforge`.
+
 ## Vérification et nettoyage
 
 LibreTranslate est démarré avec le backend, sans port publié sur l’hôte. Les
