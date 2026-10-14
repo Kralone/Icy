@@ -1,7 +1,7 @@
 <section class="panel panel--briefing" id="briefing" tabindex="-1" aria-labelledby="operation-briefing-title">
   <h2 id="operation-briefing-title"><app-operation-icon name="briefing" /> Briefing</h2>
   @if (text()) {
-    <p class="briefing" id="operation-briefing-text" [class.is-clamped]="long() && !expanded()">{{ text() }}</p>
+    <div class="briefing" id="operation-briefing-text" [class.is-clamped]="long() && !expanded()" [innerHTML]="html()"></div>
     @if (long()) {
       <button type="button" class="briefing__toggle" [attr.aria-expanded]="expanded()" aria-controls="operation-briefing-text" (click)="expanded.set(!expanded())">{{ expanded() ? 'Réduire' : 'Lire tout le briefing' }}</button>
     }

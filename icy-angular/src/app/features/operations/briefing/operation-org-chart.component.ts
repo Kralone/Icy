@@ -29,6 +29,8 @@ export class OperationOrgChartComponent {
   /** Opération terminée, ou aperçu : lecture seule. */
   readonly readOnly = input(false);
   readonly busy = input(false);
+  /** Organisateur : rejoindre un groupe à validation le place directement, le bouton le dit. */
+  readonly selfApprove = input(false);
   /** Vaisseaux de l'opération : ceux qui sont acceptés sont rappelés sous leur groupe (le détail est dans la section Flotte). */
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */
@@ -132,11 +134,12 @@ export class OperationOrgChartComponent {
     this.expanded.update(current => { const next = new Set(current); if (next.has(group.id)) next.delete(group.id); else next.add(group.id); return next; });
   }
 
-  acceptedShips(group: CompositionGroup): string {
+  acceptedShips(group: CompositionGroup): FleetShip[] {
     // Seulement les appareils réellement disponibles : acceptés, encore au hangar, propriétaire présent.
-    return this.ships().filter(ship => ship.groupId === group.id && ship.status === 'ACCEPTED' && ship.inHangar && ship.ownerPresent)
-      .map(ship => `${ship.shipName || 'Vaisseau inconnu'} de ${ship.ownerUsername || 'propriétaire inconnu'}`).join(', ');
+    return this.ships().filter(ship => ship.groupId === group.id && ship.status === 'ACCEPTED' && ship.inHangar && ship.ownerPresent);
   }
+  /** Texte de l'infobulle et du lecteur d'écran : le modèle et son propriétaire. */
+  shipTip(ship: FleetShip): string { return `${ship.shipName || 'Vaisseau inconnu'} · ${ship.ownerUsername || 'propriétaire inconnu'}`; }
 
   isMe(member: GroupMember): boolean { return !!this.currentUserId() && member.userId === this.currentUserId(); }
   /** Plein selon sa propre capacité : c'est ce que la jauge et le compteur montrent. */

@@ -54,6 +54,8 @@ export class OperationFleetCardsComponent {
   /** Groupe affiché (avec ses sous-groupes) ; null : toute l'opération. */
   readonly scopeGroupId = input<number | null>(null);
   readonly organizer = input(false);
+  /** Modifier ou supprimer un besoin : seulement là où l'éditeur des besoins existe. La fiche ne garde que l'arbitrage des vaisseaux. */
+  readonly requirementActions = input(true);
   readonly currentUserId = input<string | null>(null);
   /** Opération terminée : lecture seule. */
   readonly locked = input(false);

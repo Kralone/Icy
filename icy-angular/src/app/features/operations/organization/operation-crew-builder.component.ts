@@ -60,6 +60,10 @@ export class OperationCrewBuilderComponent {
 
   /** Un groupe principal accueille un équipage s'il n'est pas lui-même un équipage et n'a pas de membres affectés directement. */
   readonly parents = computed(() => sortedChildren(this.groups(), null).filter(group => !this.crewIds().has(group.id) && (group.container || group.members.length === 0)));
+  /** Groupes principaux qui ont déjà des membres affectés directement : un sous-groupe les laisserait hors de toute feuille. Montrés, non choisissables. */
+  readonly blockedParents = computed(() => sortedChildren(this.groups(), null).filter(group => !this.crewIds().has(group.id) && !group.container && group.members.length > 0));
+  /** L'équipage était demandé dans un groupe qui ne peut pas le recevoir : le dire, plutôt que de le créer au premier niveau sans prévenir. */
+  readonly requestedParentBlocked = computed(() => this.blockedParents().find(group => group.id === this.initialParentId()) ?? null);
   readonly selectedPreset = computed(() => this.presets().find(preset => preset.id === this.presetId()) ?? null);
   readonly ready = computed(() => !!this.model() && !!this.name().trim() && (this.setup() !== 'preset' || !!this.selectedPreset())
     && !this.capacityOutOfRange());

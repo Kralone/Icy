@@ -48,7 +48,8 @@ describe('OperationPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
-        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)), getOperationCrews: vi.fn(() => of([])) } },
+        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)), getOperationCrews: vi.fn(() => of([])),
+          approveOperationAssignment: vi.fn(() => of({})), requestOperationGroup: vi.fn(() => of({ code: 2033 })) } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
       ]
@@ -159,6 +160,85 @@ describe('OperationPageComponent', () => {
     } finally { confirmSpy.mockRestore(); }
   });
 
+  describe('mise à jour sans recharger la page', () => {
+    const group = { id: 3, parentId: null, name: 'Minage FPS', capacity: 4, effectiveMode: 'VALIDATION', container: false, memberCount: 0, freeSeats: 4, ownFreeSeats: 4, responsibleUsername: null, members: [] as Array<{ userId: string; username: string }> };
+    const joined = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'me', username: 'Moi' }] };
+
+    async function renderWith(composition: object): Promise<void> {
+      fixture = TestBed.createComponent(OperationPageComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+      http.expectOne('/api/operations/op/composition').flush({ data: composition });
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    it('reads my assignment and the chart again once a request is decided from the coordination board', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: { id: 'r1', groupId: 3, groupName: 'Minage FPS' }, groups: [group] });
+      expect(fixture.nativeElement.querySelector('#affectation').textContent).toContain('Minage FPS');
+
+      component.decideRequest('op', 'r1', true);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [joined] } });
+      fixture.detectChanges();
+
+      expect(component.composition?.myGroupId).toBe(3);
+      expect(component.composition?.myRequest).toBeNull();
+      expect(fixture.nativeElement.querySelector('#organisation').textContent).toContain('Moi');
+      expect(toast.success).toHaveBeenCalledWith('Demande acceptée.');
+    });
+
+    it('clears my pending request and keeps the counters once it is refused', async () => {
+      const eventService = TestBed.inject(EventService) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+      eventService['refuseOperationAssignment'] = vi.fn(() => of({}));
+      await renderWith({ present: true, myGroupId: null, myRequest: { id: 'r1', groupId: 3, groupName: 'Minage FPS' }, groups: [group] });
+
+      component.decideRequest('op', 'r1', false);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [group] } });
+      fixture.detectChanges();
+
+      expect(eventService['refuseOperationAssignment']).toHaveBeenCalledWith('r1');
+      expect(component.composition?.myRequest).toBeNull();
+      expect(component.composition?.groups[0].memberCount).toBe(0);
+      expect(toast.success).toHaveBeenCalledWith('Demande refusée.');
+    });
+
+    it('does not send a second read while the previous one is still waiting for the server', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.refreshQuietly();
+      component.refreshQuietly();
+      expect(http.match('/api/operations/op/composition').length).toBe(1);
+    });
+
+    it('shows what other members did at the next quiet refresh, without a loading state', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      const someoneElse = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'u7', username: 'Nova' }] };
+
+      component.refreshQuietly();
+      expect(component.participationLoading).toBe(false);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [someoneElse] } });
+      http.match(() => true).filter(request => !request.cancelled).forEach(request => request.flush({ data: [] }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#organisation').textContent).toContain('Nova');
+    });
+
+    it('waits for an action in progress instead of refreshing over it', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.assignmentBusy = true;
+      component.refreshQuietly();
+      http.expectNone('/api/operations/op/composition');
+    });
+
+    it('says the place is taken when the server places an organizer directly instead of filing a request', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.requestGroup('op', group as never);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [joined] } });
+      expect(toast.success).toHaveBeenCalledWith('Vous avez rejoint Minage FPS.');
+    });
+  });
+
   it('keeps the coordination board folded until asked, and says what is waiting in it', async () => {
     fixture = TestBed.createComponent(OperationPageComponent);
     fixture.detectChanges();
@@ -193,14 +273,59 @@ describe('OperationPageComponent', () => {
     fixture.detectChanges();
     const hangar = (): string => fixture.nativeElement.querySelector('.hangar').textContent;
     expect(hangar()).toContain('Votre hangar n’a pas pu être chargé.');
-    expect(hangar()).not.toContain('Votre hangar est vide');
+    expect(hangar()).not.toContain('aucun vaisseau dans votre hangar');
 
     (fixture.nativeElement.querySelector('.hangar button') as HTMLButtonElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(getMyHangar).toHaveBeenCalledTimes(2);
-    expect(hangar()).toContain('Votre hangar est vide');
+    expect(hangar()).toContain('aucun vaisseau dans votre hangar');
     expect(hangar()).not.toContain('n’a pas pu être chargé');
+  });
+
+  it('treats the 404 the server sends for an empty hangar as an empty hangar, not a failure', async () => {
+    getMyHangar.mockReturnValue(throwError(() => ({ status: 404 })));
+    getParticipations.mockReturnValue(of({ data: [me] }));
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const hangar: string = fixture.nativeElement.querySelector('.hangar').textContent;
+    expect(hangar).toContain('Vous n’avez encore aucun vaisseau dans votre hangar.');
+    expect(hangar).not.toContain('n’a pas pu être chargé');
+    expect(fixture.nativeElement.querySelector('.hangar a').getAttribute('href')).toBe('/icy/hangar');
+  });
+
+  it('lets an organizer accept a proposed ship from the sheet, and nobody else', async () => {
+    const eventService = TestBed.inject(EventService) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+    eventService['acceptOperationShipProposal'] = vi.fn(() => of({}));
+    const proposed = [{ id: 's1', shipId: 7, shipName: 'Prospector', status: 'PROPOSED', ownerUserId: 'other', ownerUsername: 'Autre', ownerPresent: true, inHangar: true, groupId: null, requirementId: null }];
+    const open = async (roles: string[]): Promise<void> => {
+      fixture = TestBed.createComponent(OperationPageComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      http.expectOne('/api/users/me/profile').flush({ data: { roles } });
+      http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      fixture.detectChanges();
+      // La flotte n'est demandée qu'une fois la fiche affichée.
+      http.match(request => request.url === '/api/operations/op/ships').forEach(request => request.flush({ data: proposed }));
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+    const accept = (): HTMLButtonElement | undefined => (Array.from(fixture.nativeElement.querySelectorAll('#flotte button')) as HTMLButtonElement[]).find(button => button.textContent!.startsWith('Accepter'));
+
+    await open(['USER']);
+    expect(accept()).toBeUndefined();
+
+    await open(['OFFICIER']);
+    expect(fixture.nativeElement.querySelector('#flotte').textContent).not.toContain('Modifier le besoin');
+    accept()!.click();
+    expect(eventService['acceptOperationShipProposal']).toHaveBeenCalledWith('op', 's1');
+    expect(toast.success).toHaveBeenCalledWith('Vaisseau accepté.');
   });
 
   it('locks the answers of a finished operation', async () => {

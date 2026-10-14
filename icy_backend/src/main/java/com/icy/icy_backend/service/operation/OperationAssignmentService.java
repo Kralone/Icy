@@ -49,6 +49,15 @@ public class OperationAssignmentService {
         if (!participationRepository.existsByEvent_IdAndUser_IdAndStatus(operationId, user, 1)) throw new IllegalStateException("La participation Présent est requise");
         requireActiveAccount(operationId, user);
         if (assignmentRepository.findByOperationEventIdAndUserId(operationId, user).map(current -> groupId.equals(current.getGroupId())).orElse(false)) throw new IllegalStateException("Vous êtes déjà dans ce groupe");
+        // Celui qui accepterait la demande n'a pas à valider la sienne : il prend la place directement.
+        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER") || hasResponsibleScope(user, group)) {
+            ensureCapacity(operationId, groupId, user);
+            OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, user).orElseGet(OperationAssignment::new);
+            assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(user); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
+            assignmentRepository.save(assignment);
+            requestRepository.deleteByOperationEventIdAndUserIdAndStatus(operationId, user, OperationAssignmentRequest.Status.PENDING);
+            return messageService.buildResponse("operation.assignment.confirmed", null);
+        }
         if (requestRepository.findFirstByOperationEventIdAndUserIdAndStatusOrderByCreatedAtDesc(operationId, user, OperationAssignmentRequest.Status.PENDING).isPresent()) throw new IllegalStateException("Demande déjà en attente");
         requestRepository.save(OperationAssignmentRequest.builder().operationEventId(operationId).groupId(groupId).userId(user).build());
         return messageService.buildResponse("operation.assignment.requested", null);

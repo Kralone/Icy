@@ -308,6 +308,50 @@ class OperationAssignmentServiceTest {
     }
 
     @Test
+    void organizerJoiningValidationGroupIsPlacedWithoutRequest() {
+        assertJoinsDirectly(null, "ROLE_ADMIN");
+    }
+
+    @Test
+    void responsibleJoiningOwnValidationGroupIsPlacedWithoutRequest() {
+        assertJoinsDirectly("self", "ROLE_USER");
+    }
+
+    private void assertJoinsDirectly(String responsible, String role) {
+        UUID operationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        var operations = mock(OperationRepository.class);
+        var groups = mock(OperationGroupRepository.class);
+        var participation = mock(EventParticipationRepository.class);
+        var requests = mock(OperationAssignmentRequestRepository.class);
+        var assignments = mock(OperationAssignmentRepository.class);
+        var leaf = OperationGroup.builder().id(2L).operationEventId(operationId).capacity(4)
+                .responsibleUserId(responsible == null ? null : userId)
+                .assignmentMode(OperationGroup.AssignmentMode.VALIDATION).build();
+        when(operations.findById(operationId)).thenReturn(Optional.of(Operation.builder().eventId(operationId)
+                .publicationStatus(Operation.PublicationStatus.PUBLISHED).build()));
+        when(groups.findLockedById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.findById(2L)).thenReturn(Optional.of(leaf));
+        when(groups.existsByParentId(2L)).thenReturn(false);
+        when(groups.findByOperationEventIdOrderBySortOrderAscIdAsc(operationId)).thenReturn(List.of(leaf));
+        when(participation.existsByEvent_IdAndUser_IdAndStatus(operationId, userId, 1)).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new UserAuthDetails(userId, "chef", "password", List.of()), "", List.of(new SimpleGrantedAuthority(role))));
+
+        var service = new OperationAssignmentService(operations, groups, assignments, mock(EventRepository.class),
+                participation, mock(MessageService.class), requests);
+        service.request(operationId, 2L);
+
+        var saved = org.mockito.ArgumentCaptor.forClass(OperationAssignment.class);
+        verify(assignments).save(saved.capture());
+        assertThat(saved.getValue().getGroupId()).isEqualTo(2L);
+        assertThat(saved.getValue().getUserId()).isEqualTo(userId);
+        assertThat(saved.getValue().getStatus()).isEqualTo(OperationAssignment.Status.CONFIRMED);
+        verify(requests, never()).save(any());
+        verify(requests).deleteByOperationEventIdAndUserIdAndStatus(operationId, userId, OperationAssignmentRequest.Status.PENDING);
+    }
+
+    @Test
     void approvingTransferMovesExistingAssignmentAndMarksRequestApproved() {
         UUID operationId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();

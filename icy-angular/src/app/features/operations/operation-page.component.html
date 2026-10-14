@@ -38,7 +38,7 @@
         } @else if (composition; as loaded) {
           @if (compositionStale) { <p class="operation-coordination__error" role="alert">L’organisation n’a pas pu être relue : elle n’est peut-être plus à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
           @if (crewsError) { <p class="operation-coordination__error" role="alert">Les équipages de vaisseau n’ont pas pu être lus : leurs postes peuvent manquer ou ne plus être à jour. <button type="button" (click)="loadComposition(operation.id)">Réessayer</button></p> }
-          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [ships]="fleetShips" [crews]="crews" [requirements]="fleetNeeds"
+          <app-operation-org-chart [composition]="loaded" [currentUserId]="currentUserId" [readOnly]="!!operation.locked" [busy]="assignmentBusy" [selfApprove]="canManage" [ships]="fleetShips" [crews]="crews" [requirements]="fleetNeeds"
             (join)="joinGroup(operation.id, $event)" (request)="requestGroup(operation.id, $event)" (position)="setMyPosition(operation.id, $event)" (memberPosition)="setMemberPosition(operation.id, $event.groupId, $event.change)" />
           @if (operation.locked) { <p class="empty-state">Opération terminée : la composition n’est plus modifiable.</p> }
         } @else {
@@ -56,7 +56,8 @@
       <section class="panel panel--fleet" id="flotte" tabindex="-1" aria-labelledby="operation-fleet-title">
         <h2 id="operation-fleet-title"><app-operation-icon name="ship" /> Flotte</h2>
         @if (fleetLoadError) { <p class="operation-coordination__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="reloadFleet()">Réessayer</button></p> }
-        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [locked]="!!operation.locked" [busy]="fleetBusy" [requirementsUnavailable]="requirementsLoadError" [shipsUnavailable]="shipsLoadError" (withdraw)="withdrawShip(operation.id, $event)" />
+        <app-operation-fleet-cards needsTitle="Flotte prévue" [requirements]="fleetNeeds" [ships]="fleetShips" [groups]="fleetGroups" [currentUserId]="currentUserId" [organizer]="canManage" [requirementActions]="false" [locked]="!!operation.locked" [busy]="fleetBusy" [requirementsUnavailable]="requirementsLoadError" [shipsUnavailable]="shipsLoadError"
+          (withdraw)="withdrawShip(operation.id, $event)" (accept)="decideShip(operation.id, $event, true)" (decline)="decideShip(operation.id, $event, false)" />
         @if (operation.locked) {
           <p class="empty-state">Opération terminée : la flotte n’est plus modifiable.</p>
         } @else if (!operation.allowShipProposals) {
@@ -91,7 +92,7 @@
               } @else if (hangarError) {
                 <p class="operation-coordination__error" role="alert">Votre hangar n’a pas pu être chargé. <button type="button" (click)="reloadHangar()">Réessayer</button></p>
               } @else {
-                <p class="empty-state">Votre hangar est vide : ajoutez-y vos vaisseaux pour pouvoir les proposer.</p>
+                <p class="empty-state">Vous n’avez encore aucun vaisseau dans votre hangar. <a routerLink="/icy/hangar">Ajouter mes vaisseaux</a> pour pouvoir les proposer.</p>
               }
             }
           </section>
