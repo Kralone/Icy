@@ -36,4 +36,22 @@ describe('OperationBriefComponent', () => {
     expect(text.querySelector('img')).toBeNull();
     expect(text.textContent).toContain('plan du site');
   });
+
+  it('shows the mission image next to the briefing, then the type image, and never a non-web address', () => {
+    const fixture = TestBed.createComponent(OperationBriefComponent);
+    const image = (): string | null => fixture.nativeElement.querySelector('.briefing-layout__image')?.getAttribute('src') ?? null;
+    fixture.componentRef.setInput('briefing', 'Texte');
+    fixture.componentRef.setInput('imageUrl', 'javascript:alert(1)');
+    fixture.componentRef.setInput('typeImageUrl', 'https://iceforge.fr/type.webp');
+    fixture.detectChanges();
+    expect(image()).toBe('https://iceforge.fr/type.webp');
+
+    fixture.componentRef.setInput('imageUrl', 'https://iceforge.fr/mission.webp');
+    fixture.detectChanges();
+    expect(image()).toBe('https://iceforge.fr/mission.webp');
+
+    fixture.componentInstance.imageFailed('https://iceforge.fr/mission.webp');
+    fixture.detectChanges();
+    expect(image()).toBe('https://iceforge.fr/type.webp');
+  });
 });

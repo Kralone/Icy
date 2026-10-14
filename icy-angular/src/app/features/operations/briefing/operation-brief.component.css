@@ -5,6 +5,14 @@
 .panel:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
 .panel--briefing { --section: #67e8f9; grid-column: span 8; }
 .panel--objectives { --section: #f4cd7d; grid-column: span 4; }
+/* Image de l'opération à droite du briefing ; sous le texte quand la place manque. */
+.briefing-layout { display: grid; gap: 1rem 1.4rem; }
+.briefing-layout--image { grid-template-columns: minmax(0, 1fr) minmax(12rem, 34%); align-items: start; }
+.briefing-layout__text { min-width: 0; }
+.briefing-layout__image { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid rgba(148,163,184,.2); border-radius: .7rem; background: #0b1525; }
+@container sheet (max-width: 700px) {
+  .briefing-layout--image { grid-template-columns: minmax(0, 1fr); }
+}
 h2 { display: flex; align-items: center; gap: .5rem; margin: 0 0 .9rem; color: #f8fafc; font-size: 1.15rem; font-weight: 700; }
 h2 app-operation-icon { color: var(--section); }
 h3 { margin: .9rem 0 .45rem; color: #94a3b8; font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }

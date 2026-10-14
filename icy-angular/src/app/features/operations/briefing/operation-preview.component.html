@@ -9,7 +9,7 @@
         <p class="preview__state" role="status">{{ participationsState() === 'error' ? 'Les réponses des membres n’ont pas pu être lues.' : 'Chargement des réponses des membres…' }}</p>
       }
     </section>
-    <app-operation-brief [briefing]="operation().briefing" [description]="operation().description" [objectives]="operation().objectives" [locked]="locked()" />
+    <app-operation-brief [briefing]="operation().briefing" [description]="operation().description" [objectives]="operation().objectives" [locked]="locked()" [imageUrl]="operation().imageUrl" [typeImageUrl]="operation().typeImageUrl" />
     <section class="panel panel--organisation" aria-labelledby="operation-preview-organisation">
       <h2 id="operation-preview-organisation"><app-operation-icon name="groups" /> Organisation</h2>
       @if (organizationState() === 'ready') {

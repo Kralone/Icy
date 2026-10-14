@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, finalize } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable({
@@ -31,6 +31,10 @@ export class WebSocketService {
   private notificationsListenerCount = 0;
   private notificationsUserId: string | null = null;
   private subscribedNotificationsUserId: string | null = null;
+  /** Fiches d'opération ouvertes : un abonnement par opération, partagé entre les lecteurs. */
+  private readonly operationSubjects = new Map<string, Subject<void>>();
+  private readonly operationSubscriptions = new Map<string, StompSubscription>();
+  private readonly operationListenerCounts = new Map<string, number>();
 
   constructor(
     private readonly ngZone: NgZone,
@@ -108,6 +112,24 @@ export class WebSocketService {
     this.shipListenerCounts.delete(userId);
     this.unsubscribe(this.shipSubscriptions, userId);
     this.shipUpdatesSubjects.delete(userId);
+  }
+
+  /**
+   * Signal « cette opération a changé », envoyé par le serveur après chaque modification validée.
+   * L'abonnement suit la vie de l'observable : il est ouvert à la souscription, fermé quand le dernier lecteur s'en va.
+   */
+  watchOperation(operationId: string): Observable<void> {
+    let subject = this.operationSubjects.get(operationId);
+    if (!subject) { subject = new Subject<void>(); this.operationSubjects.set(operationId, subject); }
+    this.operationListenerCounts.set(operationId, (this.operationListenerCounts.get(operationId) ?? 0) + 1);
+    this.ensureConnected();
+    return subject.asObservable().pipe(finalize(() => {
+      const left = Math.max(0, (this.operationListenerCounts.get(operationId) ?? 0) - 1);
+      if (left > 0) { this.operationListenerCounts.set(operationId, left); return; }
+      this.operationListenerCounts.delete(operationId);
+      this.unsubscribe(this.operationSubscriptions, operationId);
+      this.operationSubjects.delete(operationId);
+    }));
   }
 
   connectFleetUpdate(): void {
@@ -198,6 +220,9 @@ export class WebSocketService {
         this.subscribeToShipUpdates(userId);
       }
     }
+    for (const [operationId, listenerCount] of this.operationListenerCounts) {
+      if (listenerCount > 0 && !this.operationSubscriptions.has(operationId)) this.subscribeToOperation(operationId);
+    }
     if (this.fleetListenerCount > 0 && !this.fleetSubscription) this.subscribeToFleetUpdate();
     if (this.eventListenerCount > 0 && !this.eventSubscription) this.subscribeToEvent();
     if (this.goalsListenerCount > 0 && !this.goalsSubscription) this.subscribeToGoals();
@@ -207,6 +232,7 @@ export class WebSocketService {
 
   private clearSubscriptionHandles(): void {
     this.shipSubscriptions.clear();
+    this.operationSubscriptions.clear();
     this.fleetSubscription = null;
     this.eventSubscription = null;
     this.goalsSubscription = null;
@@ -227,6 +253,13 @@ export class WebSocketService {
       this.ngZone.run(() => this.getShipUpdatesSubject(userId).next(message.body));
     });
     this.shipSubscriptions.set(userId, subscription);
+  }
+
+  private subscribeToOperation(operationId: string): void {
+    const subscription = this.stompClient.subscribe(`/topic/operations/${operationId}`, () => {
+      this.ngZone.run(() => this.operationSubjects.get(operationId)?.next());
+    });
+    this.operationSubscriptions.set(operationId, subscription);
   }
 
   private subscribeToFleetUpdate(): void {

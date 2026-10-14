@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { eventImage } from '../../events/event-appearance';
 import { OperationIconComponent } from './operation-icon.component';
 import { parseObjectiveItems } from './operation-sheet.model';
 import { Marked } from 'marked';
@@ -40,6 +41,13 @@ export class OperationBriefComponent {
   readonly objectives = input<string | null | undefined>('');
   /** Opération terminée : ce qui manque ne viendra plus. */
   readonly locked = input(false);
+  /** Image de mission, à défaut celle du type : montrée à côté du briefing. Une adresse non web est ignorée. */
+  readonly imageUrl = input<string | null | undefined>(null);
+  readonly typeImageUrl = input<string | null | undefined>(null);
+  private readonly failedImages = signal<ReadonlySet<string>>(new Set());
+  readonly image = computed(() => [this.imageUrl(), this.typeImageUrl()].map(eventImage)
+    .find((url): url is string => !!url && !this.failedImages().has(url)) ?? null);
+  imageFailed(url: string): void { this.failedImages.update(failed => new Set(failed).add(url)); }
 
   readonly text = computed(() => this.briefing()?.trim() || this.description()?.trim() || '');
   /**

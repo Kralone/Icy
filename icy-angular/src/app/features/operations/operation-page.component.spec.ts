@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { OperationPageComponent } from './operation-page.component';
 import { EventService } from '../../core/services/event/event.service';
@@ -19,6 +20,7 @@ describe('OperationPageComponent', () => {
   let getMyHangar: ReturnType<typeof vi.fn>;
   const board = { organizer: false, present: [], maybe: [], unavailable: [], unassigned: [{ userId: 'u9', username: 'Syl' }], groups: [], requests: [{ id: 'r1', member: { userId: 'u8', username: 'Jax' }, groupId: 3, groupName: 'Escadrille', currentGroupId: null, currentGroupName: null, createdAt: null }] };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  let live: Subject<void>;
   const me = { status: 1, user: { id: 'me', username: 'Moi' } };
   const other = { status: 0, user: { id: 'other', username: 'Autre' } };
 
@@ -42,6 +44,7 @@ describe('OperationPageComponent', () => {
     leaveOperationGroup = vi.fn(() => of({}));
     getMyHangar = vi.fn(() => of({ data: [] }));
     toast = { success: vi.fn(), error: vi.fn() };
+    live = new Subject<void>();
     await TestBed.configureTestingModule({
       imports: [OperationPageComponent],
       providers: [
@@ -52,6 +55,7 @@ describe('OperationPageComponent', () => {
           approveOperationAssignment: vi.fn(() => of({})), requestOperationGroup: vi.fn(() => of({ code: 2033 })) } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
+        { provide: WebSocketService, useValue: { watchOperation: vi.fn(() => live.asObservable()) } },
       ]
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
@@ -218,6 +222,23 @@ describe('OperationPageComponent', () => {
       component.refreshQuietly();
       expect(component.participationLoading).toBe(false);
       http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [someoneElse] } });
+      http.match(() => true).filter(request => !request.cancelled).forEach(request => request.flush({ data: [] }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#organisation').textContent).toContain('Nova');
+    });
+
+    it('reads the sheet again as soon as the server reports a change made by someone else', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      expect(TestBed.inject(WebSocketService).watchOperation).toHaveBeenCalledWith('op');
+      const someoneElse = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'u7', username: 'Nova' }] };
+
+      live.next(); live.next(); live.next();
+      await new Promise(resolve => setTimeout(resolve, OperationPageComponent.LIVE_DEBOUNCE_MS + 50));
+      // Trois signaux rapprochés : une seule relecture.
+      const reads = http.match('/api/operations/op/composition');
+      expect(reads.length).toBe(1);
+      reads[0].flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [someoneElse] } });
       http.match(() => true).filter(request => !request.cancelled).forEach(request => request.flush({ data: [] }));
       fixture.detectChanges();
 
