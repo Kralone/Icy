@@ -1,11 +1,16 @@
 :host { display: block; min-width: 0; }
 .chart, .root__children, .members { list-style: none; margin: 0; padding: 0; }
-.chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; align-items: start; }
+/* Les groupes d'une même rangée ont la même hauteur ; leur contenu reste en haut. */
+.chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; align-items: stretch; }
 .chart__empty { margin: 0; padding: .9rem 1rem; border: 1px dashed #36546a; border-radius: .6rem; color: #acc2d5; }
 
 /* Groupe principal */
-.root { display: grid; gap: .75rem; min-width: 0; padding: .9rem; border: 1px solid rgba(165,180,252,.3); border-left: 4px solid #a5b4fc; border-radius: .8rem; background: #0b1525; }
-.root--mine { border-color: #67e8f9; border-left-color: #67e8f9; }
+.root { display: grid; align-content: start; gap: .75rem; min-width: 0; padding: .9rem; border: 1px solid rgba(165,180,252,.3); border-left: 4px solid #a5b4fc; border-radius: .8rem; background: #0b1525; }
+.root--mine { border-color: #67e8f9; border-left-color: #67e8f9; background: #0d2433; box-shadow: 0 0 0 1px #67e8f9; }
+
+/* Mon groupe : une coche à côté du nom, visible sans lire le reste de la carte. */
+.mine-badge { display: inline-flex; align-items: center; gap: .35rem; width: fit-content; margin: .35rem 0 0; padding: .15rem .6rem; border-radius: 999px; color: #082f49; background: #67e8f9; font-size: .82rem; font-weight: 800; }
+.mine-badge span { font-size: .95rem; line-height: 1; }
 .root__head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: start; }
 .root__title h3 { margin: 0; color: #f8fafc; font-size: 1.15rem; font-weight: 800; overflow-wrap: anywhere; }
 .root__title p { margin: .2rem 0 0; color: #a9bfd0; font-size: .88rem; line-height: 1.45; overflow-wrap: anywhere; }
@@ -22,8 +27,9 @@
 .root__children { display: grid; gap: .6rem; margin-left: .35rem; padding-left: .8rem; border-left: 2px solid rgba(165,180,252,.35); }
 .leaf { position: relative; display: grid; gap: .45rem; min-width: 0; padding: .7rem .8rem; border: 1px solid rgba(148,163,184,.22); border-radius: .65rem; background: #111c2e; }
 .leaf::before { content: ''; position: absolute; top: 1.35rem; left: -.85rem; width: .8rem; border-top: 2px solid rgba(165,180,252,.35); }
-.leaf--mine { border-color: #67e8f9; background: #0d2433; }
+.leaf--mine { border-color: #67e8f9; background: #0d2433; box-shadow: 0 0 0 1px #67e8f9; }
 .leaf__head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+.leaf__title { min-width: 0; }
 .leaf__head h4 { margin: 0; color: #f8fafc; font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
 .leaf__count { flex: none; color: #bae6fd; font-weight: 700; font-variant-numeric: tabular-nums; }
 .leaf__count.is-full { color: #f4cd7d; }

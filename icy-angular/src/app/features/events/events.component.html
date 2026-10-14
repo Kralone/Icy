@@ -19,7 +19,7 @@
   } @else if (viewMode === 'upcoming') {
     <div class="events-agenda">
       @for (event of upcomingEvents; track event.id) {
-        <button type="button" class="agenda-event" (click)="openEventOrOperation(event)"
+        <button type="button" class="agenda-event" [class.agenda-event--operation]="event.activityType === 'OPERATION'" (click)="openEventOrOperation(event)"
           [style.--event-accent]="eventColor(event.type?.backgroundColor)" [style.--event-label]="eventColor(event.type?.textColor, '#e3f4fb')">
           @if (eventImage(event.type?.imageUrl); as image) {
             <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
@@ -29,7 +29,7 @@
             <span>{{ event.startDateTime | date:'MMM yyyy':'':'fr' }}</span>
           </time>
           <div class="agenda-content">
-            <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
+            <span class="agenda-type">@if (event.activityType === 'OPERATION') { <span class="operation-badge">Opération</span> }{{ event.type?.name || 'Événement' }}</span>
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -38,7 +38,7 @@
               <span class="agenda-participation">{{ participationLabels[event.id] }}</span>
             }
           </div>
-          <span class="agenda-open">Détails <span aria-hidden="true">↗</span></span>
+          <span class="agenda-open">{{ event.activityType === 'OPERATION' ? 'Voir l’opération' : 'Détails' }} <span aria-hidden="true">↗</span></span>
         </button>
       } @empty {
         <div class="events-state events-state--empty" role="status">
@@ -73,11 +73,12 @@
     </div>
     <full-calendar [options]="calendarOptions">
       <ng-template #eventContent let-arg>
-        <div class="calendar-event-card" [class.calendar-event-card--finished]="arg.event.extendedProps.finished"
+        <div class="calendar-event-card" [class.calendar-event-card--finished]="arg.event.extendedProps.finished" [class.calendar-event-card--operation]="arg.event.extendedProps.activityType === 'OPERATION'"
           [style.--event-accent]="eventColor(arg.event.extendedProps.type?.backgroundColor)" [style.--event-label]="eventColor(arg.event.extendedProps.type?.textColor, '#e3f4fb')">
           @if (eventImage(arg.event.extendedProps.type?.imageUrl); as image) {
             <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
           }
+          @if (arg.event.extendedProps.activityType === 'OPERATION') { <span class="operation-badge">Opération</span> }
           <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
           <strong>{{ arg.event.title }}</strong>
           <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>

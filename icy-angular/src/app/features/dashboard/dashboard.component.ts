@@ -22,6 +22,8 @@ interface IcyEvent {
   typeTextColor?: string;
   typeBackgroundColor?: string;
   typeImageUrl?: string;
+  /** Opération : badge dans la liste et ouverture directe de sa fiche. */
+  isOperation?: boolean;
 }
 
 interface ShipSummary {
@@ -263,7 +265,8 @@ export class DashboardComponent {
         type: evt.type.name,
         typeTextColor: evt.type.textColor,
         typeBackgroundColor: evt.type.backgroundColor,
-        typeImageUrl: evt.type.imageUrl
+        typeImageUrl: evt.type.imageUrl,
+        isOperation: evt.activityType === 'OPERATION'
       }));
       console.log('📅 Events loaded');
       this.isEventsLoading = false;
@@ -324,6 +327,8 @@ export class DashboardComponent {
 
   openEvent(event: any): void {
     if (!event?.id) return;
+    // Une opération a sa propre fiche : pas de détour par le calendrier.
+    if (event.isOperation) { this.router.navigate(['/icy/operations', event.id]); return; }
     this.router.navigate(['/icy/events'], {
       queryParams: { eventId: event.id }
     });

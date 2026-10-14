@@ -251,14 +251,59 @@ describe('OperationPageComponent', () => {
     fixture.detectChanges();
     const hangar = (): string => fixture.nativeElement.querySelector('.hangar').textContent;
     expect(hangar()).toContain('Votre hangar n’a pas pu être chargé.');
-    expect(hangar()).not.toContain('Votre hangar est vide');
+    expect(hangar()).not.toContain('aucun vaisseau dans votre hangar');
 
     (fixture.nativeElement.querySelector('.hangar button') as HTMLButtonElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(getMyHangar).toHaveBeenCalledTimes(2);
-    expect(hangar()).toContain('Votre hangar est vide');
+    expect(hangar()).toContain('aucun vaisseau dans votre hangar');
     expect(hangar()).not.toContain('n’a pas pu être chargé');
+  });
+
+  it('treats the 404 the server sends for an empty hangar as an empty hangar, not a failure', async () => {
+    getMyHangar.mockReturnValue(throwError(() => ({ status: 404 })));
+    getParticipations.mockReturnValue(of({ data: [me] }));
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const hangar: string = fixture.nativeElement.querySelector('.hangar').textContent;
+    expect(hangar).toContain('Vous n’avez encore aucun vaisseau dans votre hangar.');
+    expect(hangar).not.toContain('n’a pas pu être chargé');
+    expect(fixture.nativeElement.querySelector('.hangar a').getAttribute('href')).toBe('/icy/hangar');
+  });
+
+  it('lets an organizer accept a proposed ship from the sheet, and nobody else', async () => {
+    const eventService = TestBed.inject(EventService) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+    eventService['acceptOperationShipProposal'] = vi.fn(() => of({}));
+    const proposed = [{ id: 's1', shipId: 7, shipName: 'Prospector', status: 'PROPOSED', ownerUserId: 'other', ownerUsername: 'Autre', ownerPresent: true, inHangar: true, groupId: null, requirementId: null }];
+    const open = async (roles: string[]): Promise<void> => {
+      fixture = TestBed.createComponent(OperationPageComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      http.expectOne('/api/users/me/profile').flush({ data: { roles } });
+      http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      fixture.detectChanges();
+      // La flotte n'est demandée qu'une fois la fiche affichée.
+      http.match(request => request.url === '/api/operations/op/ships').forEach(request => request.flush({ data: proposed }));
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+    const accept = (): HTMLButtonElement | undefined => (Array.from(fixture.nativeElement.querySelectorAll('#flotte button')) as HTMLButtonElement[]).find(button => button.textContent!.startsWith('Accepter'));
+
+    await open(['USER']);
+    expect(accept()).toBeUndefined();
+
+    await open(['OFFICIER']);
+    expect(fixture.nativeElement.querySelector('#flotte').textContent).not.toContain('Modifier le besoin');
+    accept()!.click();
+    expect(eventService['acceptOperationShipProposal']).toHaveBeenCalledWith('op', 's1');
+    expect(toast.success).toHaveBeenCalledWith('Vaisseau accepté.');
   });
 
   it('locks the answers of a finished operation', async () => {

@@ -34,7 +34,7 @@
                   }
                 }
               </div>
-              @if (organizer() && !locked()) {
+              @if (organizer() && requirementActions() && !locked()) {
                 <div class="card__actions">
                   <button type="button" [disabled]="busy()" (click)="editRequirement.emit(requirement)">Modifier le besoin<span class="sr-only"> {{ modelName(requirement) }}</span></button>
                   <button type="button" class="refuse" [disabled]="busy()" (click)="deleteRequirement.emit(requirement)">Supprimer le besoin<span class="sr-only"> {{ modelName(requirement) }}</span></button>

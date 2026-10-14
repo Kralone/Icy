@@ -29,6 +29,8 @@ export class OperationOrgChartComponent {
   /** Opération terminée, ou aperçu : lecture seule. */
   readonly readOnly = input(false);
   readonly busy = input(false);
+  /** Organisateur : rejoindre un groupe à validation le place directement, le bouton le dit. */
+  readonly selfApprove = input(false);
   /** Vaisseaux de l'opération : ceux qui sont acceptés sont rappelés sous leur groupe (le détail est dans la section Flotte). */
   readonly ships = input<FleetShip[]>([]);
   /** Aperçu de l'éditeur : les statuts de places sont montrés comme aux participants, sans aucun bouton. */

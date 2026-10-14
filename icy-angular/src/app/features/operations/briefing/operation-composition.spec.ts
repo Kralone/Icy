@@ -47,7 +47,7 @@ describe('OperationOrgChartComponent', () => {
     expect(alpha.querySelectorAll('.leaf').length).toBe(2);
     expect(card('Polaris').textContent).toContain('Sur validation');
     expect(card('Polaris').querySelector('.members .is-me')!.textContent).toContain('Vous');
-    expect(card('Polaris').textContent).toContain('Votre groupe');
+    expect(card('Polaris').textContent).toContain('Vous y êtes');
     expect(card('Escadrille').textContent).toContain('4 / 4');
     expect(card('Charlie').textContent).toContain('Soutien médical');
     expect(card('Charlie').textContent).toContain('Personne pour l’instant.');
@@ -78,7 +78,7 @@ describe('OperationOrgChartComponent', () => {
     show(composition({ myGroupId: 5, myRequest: { id: 'r1', groupId: 2, groupName: 'Polaris' } }));
     expect(card('Polaris').textContent).toContain('Demande envoyée');
     expect(card('Polaris').querySelector('.leaf__action button')).toBeNull();
-    expect(card('Charlie').textContent).toContain('Votre groupe');
+    expect(card('Charlie').textContent).toContain('Vous y êtes');
   });
 
   it('explains a group blocked by its main group, keeps my name visible, and offers nothing when all is managed', () => {
@@ -101,7 +101,7 @@ describe('OperationOrgChartComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.leaf__action button').length).toBe(0);
     show(composition({ myGroupId: 2 }), { readOnly: true, currentUserId: 'me' });
     expect(fixture.nativeElement.querySelectorAll('.leaf__action button').length).toBe(0);
-    expect(card('Polaris').textContent).toContain('Votre groupe');
+    expect(card('Polaris').textContent).toContain('Vous y êtes');
   });
 
   it('stays readable with many members: the first names, then the rest on demand', () => {

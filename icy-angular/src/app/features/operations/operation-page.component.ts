@@ -110,7 +110,8 @@ export class OperationPageComponent {
     startWith(undefined),
     switchMap(() => this.eventService.getMyHangar().pipe(
       map(response => { this.hangarError = false; return response.data; }),
-      catchError(() => { this.hangarError = true; this.changeDetector.markForCheck(); return of([] as any[]); }))),
+      // Le serveur répond 404 à un hangar vide : c'est un hangar vide, pas une panne.
+      catchError(error => { this.hangarError = error?.status !== 404; this.changeDetector.markForCheck(); return of([] as any[]); }))),
     // Une seule lecture, même si la section est redessinée après un changement de présence.
     shareReplay({ bufferSize: 1, refCount: false })
   );
@@ -500,6 +501,13 @@ export class OperationPageComponent {
     if (this.selectedShipId == null) return;
     this.fleetAction(this.eventService.proposeOperationShip(operationId, this.selectedShipId, this.selectedShipGroupId ?? undefined, this.selectedShipRequirementId ?? undefined),
       'Vaisseau proposé : l’organisateur doit encore l’accepter.', 'Proposition impossible.', () => { this.selectedShipId = null; this.selectedShipRequirementId = null; this.selectedShipGroupId = null; });
+  }
+
+  /** Organisateur : accepte ou refuse un vaisseau proposé sans passer par l'éditeur. */
+  decideShip(operationId: string, proposalId: string, accept: boolean): void {
+    if (!this.canManage) return;
+    const action = accept ? this.eventService.acceptOperationShipProposal(operationId, proposalId) : this.eventService.declineOperationShipProposal(operationId, proposalId);
+    this.fleetAction(action, accept ? 'Vaisseau accepté.' : 'Vaisseau refusé.', accept ? 'Acceptation impossible.' : 'Refus impossible.');
   }
 
   async withdrawShip(operationId: string, ship: FleetShip): Promise<void> {
