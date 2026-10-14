@@ -88,6 +88,8 @@ class AccessDeniedOverHttpTest {
         @GetMapping("/api/probe/admin") @PreAuthorize("hasRole('ADMIN')") String admin() { return "ok"; }
         /** Refus décidé dans un service, comme pour un responsable hors de sa délégation. */
         @GetMapping("/api/probe/delegation") String delegation() { throw new AccessDeniedException("Groupe hors de votre délégation"); }
+        /** Une vraie panne : elle doit rester une erreur serveur, sans détail. */
+        @GetMapping("/api/probe/panne") String failure() { throw new UnsupportedOperationException("secret-interne-de-test"); }
     }
 
     @LocalServerPort private int port;
@@ -175,6 +177,30 @@ class AccessDeniedOverHttpTest {
         assertThat(call("GET", "/error", null).statusCode()).isEqualTo(401);
         HttpResponse<String> direct = call("GET", "/error", "jeton-membre");
         assertThat(direct.body()).doesNotContain("\"trace\"").doesNotContain("Exception");
+    }
+
+    @Test
+    void anUnknownAddressIsNotFoundForAnAuthenticatedUser() throws Exception {
+        HttpResponse<String> unknown = call("GET", "/api/probe/absente", "jeton-membre");
+        assertThat(unknown.statusCode()).isEqualTo(404);
+        assertThat(unknown.body()).contains("Adresse inconnue").doesNotContain("Exception").doesNotContain("\"trace\"");
+        assertThat(call("GET", "/api/operations/" + operationId + "/inexistant", "jeton-admin").statusCode()).isEqualTo(404);
+    }
+
+    @Test
+    void aWrongMethodIsNotAllowedRatherThanAServerError() throws Exception {
+        HttpResponse<String> wrong = call("DELETE", "/api/probe/member", "jeton-membre");
+        assertThat(wrong.statusCode()).isEqualTo(405);
+        assertThat(wrong.headers().firstValue("Allow")).hasValueSatisfying(allow -> assertThat(allow).contains("GET"));
+    }
+
+    @Test
+    void aRealFailureStaysAServerErrorWithoutDetails() throws Exception {
+        HttpResponse<String> failure = call("GET", "/api/probe/panne", "jeton-membre");
+        assertThat(failure.statusCode()).isEqualTo(500);
+        assertThat(failure.body()).doesNotContain("secret-interne-de-test").doesNotContain("UnsupportedOperationException").doesNotContain("\"trace\"");
+        // Sans identité, ni une panne ni une adresse inconnue ne se distinguent d'une route protégée.
+        assertThat(call("GET", "/api/probe/panne", null).statusCode()).isEqualTo(401);
     }
 
     @Test

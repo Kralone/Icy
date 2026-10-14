@@ -20,6 +20,9 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import jakarta.persistence.OptimisticLockException;
@@ -125,6 +128,26 @@ public class GlobalExceptionHandler {
         }
     }
 
+
+    /**
+     * Aucune route ne correspond : c'est une adresse inconnue, pas une panne. Sans ce gestionnaire, l'exception
+     * levée par Spring tombait dans le cas générique et répondait 500. Une requête sans identité n'arrive pas
+     * jusqu'ici : la chaîne de sécurité la refuse avant, en 401.
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<Map<String, String>> handleUnknownRoute(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not Found", "message", "Adresse inconnue."));
+    }
+
+    /** La route existe mais pas pour cette méthode : 405 et les méthodes admises, au lieu d'un 500. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (ex.getSupportedHttpMethods() != null && !ex.getSupportedHttpMethods().isEmpty()) {
+            response.allow(ex.getSupportedHttpMethods().toArray(org.springframework.http.HttpMethod[]::new));
+        }
+        return response.body(Map.of("error", "Method Not Allowed", "message", "Méthode non admise pour cette adresse."));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<MessageResponse<Void>> handleGenericException(Exception ex) {
