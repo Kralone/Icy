@@ -3,6 +3,12 @@
     <div>
       <h1>Calendrier</h1>
     </div>
+    @if (canManage) {
+      <nav class="events-manage" aria-label="Gestion">
+        <a routerLink="/icy/admin/events" class="events-button">Gérer les événements <span aria-hidden="true">↗</span></a>
+        <a routerLink="/icy/admin/operations" class="events-button events-button--operation"><span class="operation-mark" aria-hidden="true">◆</span> Gérer les opérations <span aria-hidden="true">↗</span></a>
+      </nav>
+    }
   </header>
 
   <div class="events-toolbar">
@@ -29,7 +35,7 @@
             <span>{{ event.startDateTime | date:'MMM yyyy':'':'fr' }}</span>
           </time>
           <div class="agenda-content">
-            <span class="agenda-type">@if (event.activityType === 'OPERATION') { <span class="operation-badge">Opération</span> }{{ event.type?.name || 'Événement' }}</span>
+            <span class="agenda-type">@if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }{{ event.type?.name || 'Événement' }}</span>
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -78,7 +84,7 @@
           @if (eventImage(arg.event.extendedProps.type?.imageUrl); as image) {
             <img class="event-type-image" [src]="image" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
           }
-          @if (arg.event.extendedProps.activityType === 'OPERATION') { <span class="operation-badge">Opération</span> }
+          @if (arg.event.extendedProps.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }
           <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
           <strong>{{ arg.event.title }}</strong>
           <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>

@@ -1,4 +1,4 @@
-import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, HostListener, ViewChild, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -9,7 +9,8 @@ import { EventService, EventDTO } from '../../core/services/event/event.service'
 import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { EventType } from '../../model/event-type.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UserService } from '../../core/services/user/user.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ShipService } from '../../core/services/ship/ship.service';
 import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
@@ -27,7 +28,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [FormsModule, DatePipe, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent],
+  imports: [FormsModule, DatePipe, RouterLink, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
@@ -42,7 +43,9 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   selectedEvent: any = null;
   showDetailsModal = false;
   isLoading = true;
-  isAdmin = false;
+  /** Administrateur ou officier : accès à la gestion des événements et des opérations. */
+  canManage = false;
+  private readonly userService = inject(UserService);
   viewMode: 'upcoming' | 'calendar' = 'upcoming';
   loadError = '';
   upcomingEvents: EventDTO[] = [];
@@ -128,7 +131,14 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit() {
-    this.authService.isAdmin().subscribe(isAdmin => (this.isAdmin = isAdmin));
+    this.userService.getMyProfile().subscribe({
+      next: response => {
+        const roles = (response?.data?.roles ?? []).map(role => (role ?? '').trim().toUpperCase());
+        this.canManage = roles.includes('ADMIN') || roles.includes('OFFICIER');
+        this.changeDetector.markForCheck();
+      },
+      error: () => { this.canManage = false; }
+    });
 
     this.listenForUpdates();
     this.wsService.connectEvent();

@@ -43,6 +43,9 @@ export class GoalComponent implements OnInit, OnDestroy {
 
     this.goalService.getPinnedGoal().subscribe({
       next: (goal) => {
+        // L'objectif épinglé montre toutes ses étapes ; le membre peut les réduire.
+        const wasExpanded = this.goals.find(current => current.id === goal?.id)?.__expanded;
+        if (goal) goal.__expanded = wasExpanded ?? true;
         this.goals = goal ? [goal] : [];
         if (fromWebSocket) {
           this.updateAnimatedProgressTargets();

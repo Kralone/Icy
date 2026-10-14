@@ -138,6 +138,49 @@ class EventServiceTest {
     }
 
     @Test
+    void updateEventKeepsAnswersWhenTheOrganizerAsksForIt() {
+        EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
+        EventTypeRepository eventTypeRepository = Mockito.mock(EventTypeRepository.class);
+        EventParticipationRepository participationRepository = Mockito.mock(EventParticipationRepository.class);
+        UserService userService = Mockito.mock(UserService.class);
+        AuthService authService = Mockito.mock(AuthService.class);
+        EventPublisher eventPublisher = Mockito.mock(EventPublisher.class);
+        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+
+        EventService service = new EventService(eventRepository, messageService, eventWebSocketService,
+                eventTypeRepository, participationRepository, userService, authService, eventPublisher, notificationPushService);
+
+        Event event = new Event();
+        event.setId(UUID.randomUUID());
+        event.setStartDateTime(LocalDateTime.now().minusDays(1));
+        event.setEndDateTime(LocalDateTime.now().minusDays(1).plusHours(1));
+        when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(participationRepository.findAllByEvent(event)).thenReturn(Optional.of(List.of()));
+
+        ResponseEntity<MessageResponse<EventResponseDTO>> response = okResponse(new EventResponseDTO(event));
+        Mockito.doReturn(response).when(messageService).buildResponse(eq("event.updated"), any());
+
+        ResponseEntity<MessageResponse<EventResponseDTO>> actual = service.updateEvent(
+                event.getId(),
+                "Type",
+                "Title",
+                "Desc",
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                false,
+                true
+        );
+
+        assertThat(actual).isEqualTo(response);
+        verify(participationRepository, Mockito.never()).deleteAllByEvent(any());
+        verify(eventPublisher).publishEventUpdated(event);
+        verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
+    }
+
+    @Test
     void updateEventPublishesEndedWhenMarkedFinished() {
         EventRepository eventRepository = Mockito.mock(EventRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);

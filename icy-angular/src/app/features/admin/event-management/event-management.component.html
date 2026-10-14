@@ -69,17 +69,11 @@
         <!-- Dates -->
         <div>
           <label class="block text-sm mb-1 text-gray-300">Début</label>
-          <input
-            [(ngModel)]="newEvent.startDateTime"
-            type="datetime-local"
-          class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-            />
+          <app-date-time-field [(ngModel)]="newEvent.startDateTime" label="Début" />
           </div>
           <div>
             <label class="block text-sm mb-1 text-gray-300">Fin</label>
-            <input [(ngModel)]="newEvent.endDateTime" type="datetime-local"
-              class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" />
+            <app-date-time-field [(ngModel)]="newEvent.endDateTime" label="Fin" />
           </div>
         </div>
         <aside class="rounded-2xl border border-cyan-300/20 bg-[#071525] overflow-hidden min-h-[260px]">
@@ -460,24 +454,16 @@
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                                   ></textarea>
                                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input
-                                      [(ngModel)]="editingEvent.startDateTime"
-                                      type="datetime-local"
-                                      [disabled]="isViewMode"
-            class="px-4 py-2 rounded-xl bg-[#0b1324]
-                 border border-white/10 text-white focus:outline-none focus:ring-2
-                 focus:ring-cyan-400 transition"
-                                      />
-                                      <input
-                                        [(ngModel)]="editingEvent.endDateTime"
-                                        type="datetime-local"
-                                        [disabled]="isViewMode"
-            class="px-4 py-2 rounded-xl bg-[#0b1324]
-                 border border-white/10 text-white focus:outline-none focus:ring-2
-                 focus:ring-cyan-400 transition"
-                                        />
+                                    <app-date-time-field [(ngModel)]="editingEvent.startDateTime" [disabled]="isViewMode" label="Début" />
+                                      <app-date-time-field [(ngModel)]="editingEvent.endDateTime" [disabled]="isViewMode" label="Fin" />
                                       </div>
                                     </div>
+                                    @if (!isViewMode && datesChanged) {
+                                      <label class="mt-4 flex items-start gap-3 rounded-xl border border-amber-300/30 bg-amber-300/5 p-3 text-sm text-amber-100">
+                                        <input type="checkbox" class="mt-1 h-4 w-4 accent-amber-300" [(ngModel)]="keepParticipants">
+                                        <span><strong>Conserver les inscriptions</strong><br><span class="text-amber-100/70">Décochez pour effacer les réponses déjà données : chaque membre devra répondre à nouveau pour la nouvelle date.</span></span>
+                                      </label>
+                                    }
                                     @if (!isViewMode) {
                                       <div class="mt-6 flex flex-col sm:flex-row justify-between gap-4 items-center">
                                         <button

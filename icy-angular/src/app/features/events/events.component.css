@@ -17,12 +17,23 @@ h1 { font-size: clamp(1.65rem, 3vw, 2.4rem); font-weight: 700; line-height: 1.2;
 .agenda-content { flex: 1; min-width: 0; }
 .agenda-type { color: #81cedb; font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; }
 
-/* Opération : badge doré et liseré, distincts d'un événement classique dans la liste comme dans la grille. */
-.operation-badge { display: inline-block; width: fit-content; margin-right: .5rem; padding: .12rem .55rem; border-radius: 999px; color: #2a1d05; background: #f4cd7d; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.agenda-event--operation { border-color: #f4cd7d; border-left: 4px solid #f4cd7d; }
+.events-manage { display: flex; flex-wrap: wrap; gap: .6rem; }
+.events-button--operation { border-color: #f4cd7d; color: #fde7b0; background: #2a2110; }
+.events-button--operation:hover { background: #3a2d12; }
+
+/* Opération : marque dorée, liseré et halo ; un événement classique garde son apparence. */
+.operation-mark { color: inherit; font-size: .9em; line-height: 1; }
+.operation-badge { display: inline-flex; align-items: center; gap: .3rem; width: fit-content; margin-right: .5rem; padding: .16rem .6rem; border-radius: 999px; color: #2a1d05; background: linear-gradient(135deg, #fde68a, #f4cd7d 55%, #e0a93b); box-shadow: 0 0 0 1px rgba(253,230,138,.6), 0 0 12px rgba(244,205,125,.45); font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.agenda-event--operation { border-color: #f4cd7d; border-left: 5px solid #f4cd7d; background: linear-gradient(115deg, #2a2110, #132b3d 45%, #101f2f); box-shadow: 0 0 0 1px rgba(244,205,125,.35), 0 0 22px rgba(244,205,125,.18); }
+.agenda-event--operation:hover { border-color: #fde68a; }
 .agenda-event--operation .agenda-type { display: inline-flex; align-items: center; }
-.calendar-event-card--operation { border-color: #f4cd7d; border-left: 3px solid #f4cd7d; }
-.calendar-event-card--operation .operation-badge { margin: 0; padding: .05rem .45rem; font-size: .62rem; }
+.agenda-event--operation h2 { color: #fff7e0; }
+.calendar-event-card--operation { border-color: #f4cd7d; border-left: 4px solid #f4cd7d; background: linear-gradient(135deg, #3a2d12, #1c3c50); box-shadow: 0 0 10px rgba(244,205,125,.3); }
+.calendar-event-card--operation .operation-badge { margin: 0; padding: .06rem .45rem; font-size: .62rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .agenda-event--operation .operation-badge { animation: operation-glow 2.8s ease-in-out infinite; }
+}
+@keyframes operation-glow { 50% { box-shadow: 0 0 0 1px rgba(253,230,138,.8), 0 0 18px rgba(244,205,125,.7); } }
 .agenda-content h2 { font-size: 1.1rem; font-weight: 600; margin: .3rem 0; overflow-wrap: anywhere; }
 .agenda-content p { color: #b3c4d3; font-size: .85rem; }
 .agenda-participation { display: inline-block; margin-top: .6rem; font-size: .75rem; padding: .2rem .6rem; border: 1px solid #3e6475; border-radius: 2rem; color: #cfedf2; }
