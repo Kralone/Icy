@@ -45,6 +45,9 @@ button:disabled, select:disabled { opacity: .45; }
 .add { min-height: 2.6rem; border: 1px dashed #67e8f9; border-radius: .5rem; padding: .5rem 1rem; color: #a5f3fc; background: transparent; font-weight: 600; }
 .add:hover { background: #12283a; }
 .preset-pick { display: grid; gap: .25rem; color: #94a3b8; font-size: .8rem; }
+.preset-link { margin: .5rem 0 0; padding: .55rem .75rem; border: 1px solid rgba(110,231,183,.35); border-radius: .5rem; color: #cbd5e1; background: rgba(16,185,129,.08); font-size: .85rem; }
+.preset-link strong { color: #6ee7b7; }
+.preset-link--off { border-color: rgba(148,163,184,.3); background: transparent; color: #94a3b8; }
 select { min-height: 2.5rem; max-width: 100%; border: 1px solid #475569; border-radius: .45rem; padding: .4rem .6rem; color: #f8fafc; background: #111827; color-scheme: dark; }
 
 .pform { display: grid; grid-template-columns: minmax(0, 1fr); gap: .7rem; min-width: 0; }

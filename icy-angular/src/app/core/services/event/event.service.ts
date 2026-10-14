@@ -214,6 +214,8 @@ export class EventService {
   }
   addOperationPosition(operationId: string, groupId: number, payload: PositionDraft & { sortOrder: number }) { return this.http.post(`/api/operations/${operationId}/groups/${groupId}/positions`, payload); }
   updateOperationPosition(operationId: string, groupId: number, positionId: number, payload: PositionDraft & { sortOrder: number }) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}/positions/${positionId}`, payload); }
+  /** L'équipage reprend les postes du preset et le suit ensuite. */
+  followCrewPreset(operationId: string, groupId: number, presetId: string) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}/preset`, {}, { params: { presetId } }); }
   deleteOperationPosition(operationId: string, groupId: number, positionId: number) { return this.http.delete(`/api/operations/${operationId}/groups/${groupId}/positions/${positionId}`); }
   /** positionId null : le membre reste dans l'équipage, sans poste. */
   setOperationMemberPosition(operationId: string, userId: string, positionId: number | null) {

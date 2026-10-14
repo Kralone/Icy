@@ -18,6 +18,9 @@ public record OperationCrewDTO(
         OperationGroup.PositionMode positionMode,
         /** Vrai si l'utilisateur peut attribuer les postes des autres membres de cet équipage. */
         boolean manageable,
+        /** Preset suivi par l'équipage ; null si l'équipage a été créé ou retouché à la main. */
+        UUID presetId,
+        String presetName,
         List<Position> positions,
         List<Member> members) {
 

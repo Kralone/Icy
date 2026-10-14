@@ -29,6 +29,9 @@ export interface OperationCrew {
   shipModelImageUrl: string | null;
   positionMode: PositionMode;
   manageable: boolean;
+  /** Preset suivi : ses modifications se répercutent sur l'équipage. Null après une retouche à la main. */
+  presetId?: string | null;
+  presetName?: string | null;
   positions: CrewPosition[];
   members: CrewMember[];
 }

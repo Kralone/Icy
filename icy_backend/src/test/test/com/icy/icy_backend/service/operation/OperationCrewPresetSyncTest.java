@@ -54,7 +54,7 @@ class OperationCrewPresetSyncTest {
 
     @Test
     void updatesLinkedCrewsOfUpcomingOperationsAndLeavesFinishedOnesAlone() {
-        service.setCrewSync(groups, crewPositions, events, null);
+        service.setCrewSync(groups, new CrewPresetApplier(groups, crewPositions), events, null);
         Ship polaris = new Ship();
         polaris.setId(286L);
         polaris.setName("Polaris");

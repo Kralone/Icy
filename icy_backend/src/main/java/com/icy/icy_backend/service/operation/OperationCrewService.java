@@ -63,6 +63,7 @@ public class OperationCrewService {
     private final OperationAssignmentService assignmentService;
     private final OperationLock operationLock;
     private final MessageService messageService;
+    private final CrewPresetApplier presetApplier;
 
     private static boolean organizer() {
         return AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
@@ -97,6 +98,8 @@ public class OperationCrewService {
                 .stream().collect(Collectors.toMap(User::getId, User::getUsername));
         Map<Long, Ship> ships = shipRepository.findAllById(crews.stream().map(OperationGroup::getShipModelId).filter(Objects::nonNull).collect(Collectors.toSet()))
                 .stream().collect(Collectors.toMap(Ship::getId, Function.identity()));
+        Map<UUID, String> presetNames = presetRepository.findAllById(crews.stream().map(OperationGroup::getCrewPresetId).filter(Objects::nonNull).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(OperationCrewPreset::getId, OperationCrewPreset::getName));
         boolean organizer = organizer();
         UUID currentUser = AuthUtils.getCurrentUserId();
 
@@ -111,7 +114,8 @@ public class OperationCrewService {
                     .toList();
             return new OperationCrewDTO(group.getId(), ship == null ? null : group.getShipModelId(),
                     ship == null ? group.getShipModelName() : ship.getName(), ship == null ? null : ship.getImageUrl(),
-                    group.getPositionMode(), organizer || assignmentService.hasResponsibleScope(currentUser, group), crewPositions, members);
+                    group.getPositionMode(), organizer || assignmentService.hasResponsibleScope(currentUser, group),
+                    group.getCrewPresetId(), group.getCrewPresetId() == null ? null : presetNames.get(group.getCrewPresetId()), crewPositions, members);
         }).toList();
     }
 
@@ -178,6 +182,24 @@ public class OperationCrewService {
             positionRepository.save(OperationGroupPosition.builder().groupId(group.getId()).label(position.getLabel()).icon(position.getIcon())
                     .capacity(position.getCapacity()).sortOrder(position.getSortOrder()).build());
         }
+    }
+
+    /**
+     * L'équipage prend les postes, la capacité et l'attribution des postes du preset, puis le suit : ses modifications s'y répercuteront.
+     * Les membres d'un poste qui disparaît restent dans l'équipage, sans poste.
+     */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> followPreset(UUID operationId, Long groupId, UUID presetId) {
+        OperationGroup group = crewGroup(operationId, groupId);
+        operationLock.requireOpen(operationId);
+        if (presetId == null) throw new IllegalArgumentException("Choisissez un preset");
+        OperationCrewPreset preset = activePreset(presetId);
+        if (!Objects.equals(preset.getShipModelId(), group.getShipModelId())) {
+            throw new IllegalArgumentException("Ce preset est prévu pour un autre modèle de vaisseau");
+        }
+        presetApplier.apply(group, preset, presetPositionRepository.findByPresetIdOrderBySortOrderAscIdAsc(presetId));
+        operationRepository.markModified(operationId, LocalDateTime.now());
+        return messageService.buildResponse("operation.crew.preset.followed", null);
     }
 
     private OperationCrewPreset activePreset(UUID presetId) {

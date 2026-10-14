@@ -48,7 +48,8 @@ describe('OperationCrewPanelComponent', () => {
       updateOperationPosition: vi.fn(() => of({})),
       deleteOperationPosition: vi.fn(() => of({})),
       setOperationMemberPosition: vi.fn(() => of({})),
-      updateOperationGroup: vi.fn(() => of({}))
+      updateOperationGroup: vi.fn(() => of({})),
+      followCrewPreset: vi.fn(() => of({}))
     };
     toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
     await TestBed.configureTestingModule({
@@ -147,11 +148,21 @@ describe('OperationCrewPanelComponent', () => {
     expect(events['updateOperationGroup']).toHaveBeenCalledWith('op', 2, { name: 'Équipage Carrack', description: '', capacity: 6, parentId: 1, assignmentMode: 'INHERITED', sortOrder: 0, responsibleUserId: null, positionMode: 'MANAGED' });
   });
 
-  it('copies only the missing positions of a preset', async () => {
-    await render();
+  it('applies a preset after confirmation: the crew takes its positions and follows it', async () => {
+    const element = await render();
+    expect(element.querySelector('.preset-link--off')!.textContent).toContain('ne suit aucun preset');
+    const confirm = TestBed.inject(OperationConfirmService) as unknown as { ask: ReturnType<typeof vi.fn> };
     fixture.componentInstance.applyPreset('p1');
-    expect(events['addOperationPosition']).toHaveBeenCalledTimes(1);
-    expect(events['addOperationPosition']).toHaveBeenCalledWith('op', 2, { label: 'Ingénieur', icon: 'wrench', capacity: 2, sortOrder: 2 });
+    // « Artilleur » n'est pas dans le preset : la confirmation le dit, et dit que Mira reste dans l'équipage.
+    expect(confirm.ask.mock.calls[0][0].message).toContain('Supprimé : Artilleur');
+    expect(confirm.ask.mock.calls[0][0].message).toContain('1 membre reste');
+    await fixture.whenStable();
+    expect(events['followCrewPreset']).toHaveBeenCalledWith('op', 2, 'p1');
+    expect(events['addOperationPosition']).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('crew', { ...crew, presetId: 'p1', presetName: 'Carrack — Exploration' });
+    fixture.detectChanges();
+    expect(element.querySelector('.preset-link')!.textContent).toContain('Suit le preset « Carrack — Exploration »');
   });
 
   it('is read-only once the operation is over', async () => {
