@@ -61,6 +61,21 @@ describe('EventsComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.agenda-event').length).toBe(2);
   });
 
+  it('marks an operation in the agenda and leaves a classic event as it was', () => {
+    TestBed.inject(HttpTestingController).expectOne('/api/events/all').flush({data: [
+      {id: 'classic', title: 'Soirée minage', type: {name: 'Minage'}, startDateTime: '2099-06-01T20:00:00', finished: false, activityType: 'EVENT'},
+      {id: 'op', title: 'Carinite pure', type: {name: 'Minage'}, startDateTime: '2099-06-02T20:00:00', finished: false, activityType: 'OPERATION'}
+    ]});
+    fixture.detectChanges();
+    const [classic, operation] = Array.from(fixture.nativeElement.querySelectorAll('.agenda-event')) as HTMLElement[];
+    expect(classic.classList).not.toContain('agenda-event--operation');
+    expect(classic.querySelector('.operation-badge')).toBeNull();
+    expect(classic.querySelector('.agenda-open')!.textContent).toContain('Détails');
+    expect(operation.classList).toContain('agenda-event--operation');
+    expect(operation.querySelector('.operation-badge')!.textContent).toBe('Opération');
+    expect(operation.querySelector('.agenda-open')!.textContent).toContain('Voir l’opération');
+  });
+
   it('offers retry after failure and distinguishes an empty agenda', () => {
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/events/all').flush({}, {status: 503, statusText: 'Unavailable'});

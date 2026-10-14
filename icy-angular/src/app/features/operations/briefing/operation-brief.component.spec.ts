@@ -22,4 +22,18 @@ describe('OperationBriefComponent', () => {
     expect(text.textContent).toContain('<img src=x');
     expect(text.querySelector('strong')!.textContent).toBe('ok');
   });
+
+  it('keeps only web and mail links, opened in a new tab without access to the sheet', () => {
+    const text = render('[carte](https://iceforge.fr/carte?a=1&b=2) [piège](javascript:alert(1)) [écrire](mailto:orga@iceforge.fr)');
+    const links = Array.from(text.querySelectorAll('a'));
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['https://iceforge.fr/carte?a=1&b=2', 'mailto:orga@iceforge.fr']);
+    expect(links.every(link => link.getAttribute('target') === '_blank' && link.getAttribute('rel') === 'noopener noreferrer nofollow')).toBe(true);
+    expect(text.textContent).toContain('piège');
+  });
+
+  it('never loads an image from the briefing, it shows its description', () => {
+    const text = render('![plan du site](https://exemple.test/suivi.png)');
+    expect(text.querySelector('img')).toBeNull();
+    expect(text.textContent).toContain('plan du site');
+  });
 });

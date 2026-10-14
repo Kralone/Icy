@@ -141,6 +141,8 @@ export class OperationPageComponent {
       this.coordinationOpen = false;
       this.presentCount = null;
       this.compositionLoadSeq++;
+      // Les lectures de la fiche précédente ne comptent plus : leurs réponses seront ignorées.
+      this.inFlight.clear();
       this.composition = null;
       this.compositionError = '';
       this.compositionStale = false;
@@ -178,11 +180,15 @@ export class OperationPageComponent {
     if (!id || this.assignmentBusy || this.coordinationBusy || this.participationSaving || this.fleetBusy) return;
     const active = document.activeElement?.tagName;
     if (active === 'SELECT' || active === 'INPUT' || active === 'TEXTAREA') return;
-    this.loadParticipations(id, true);
-    this.loadComposition(id);
-    if (this.coordination) this.loadCoordination(id);
+    // Une lecture encore en cours n'est pas doublée : un serveur lent ne reçoit pas une seconde vague de requêtes.
+    if (!this.inFlight.has('participations')) this.loadParticipations(id, true);
+    if (!this.inFlight.has('composition')) this.loadComposition(id);
+    if (this.coordination && !this.inFlight.has('coordination')) this.loadCoordination(id);
     this.shipsRefresh$.next();
   }
+
+  /** Lectures en cours, toutes origines confondues. */
+  private readonly inFlight = new Set<'participations' | 'composition' | 'coordination'>();
 
   /** Administrateur ou officier : accès à l'éditeur et au tableau de coordination complet. */
   canManage = false;
@@ -191,6 +197,7 @@ export class OperationPageComponent {
   loadParticipations(operationId: string, quiet = false): void {
     const seq = ++this.participationLoadSeq;
     this.participationOperationId = operationId;
+    this.inFlight.add('participations');
     if (!quiet) {
       this.participationLoading = true;
       this.participationError = '';
@@ -199,6 +206,7 @@ export class OperationPageComponent {
     this.eventService.getParticipations(operationId).subscribe({
       next: (response: any) => {
         if (seq !== this.participationLoadSeq) return;
+        this.inFlight.delete('participations');
         const participations = (response?.data ?? []) as ParticipationRow[];
         const currentUserId = this.authService.getUserIdFromToken();
         const own = currentUserId ? participations.find(item => String(item.user?.id ?? item.userId) === String(currentUserId)) : undefined;
@@ -214,6 +222,7 @@ export class OperationPageComponent {
       },
       error: () => {
         if (seq !== this.participationLoadSeq) return;
+        this.inFlight.delete('participations');
         if (quiet) { this.participationLoading = false; this.changeDetector.markForCheck(); return; }
         this.presentCount = null;
         this.participationLoading = false;
@@ -233,10 +242,11 @@ export class OperationPageComponent {
 
   loadCoordination(operationId: string): void {
     const seq = ++this.coordinationLoadSeq;
+    this.inFlight.add('coordination');
     this.eventService.getOperationCoordination(operationId).subscribe({
-      next: coordination => { if (seq !== this.coordinationLoadSeq) return; this.coordination = coordination; this.coordinationError = ''; this.coordinationBusy = false; this.changeDetector.markForCheck(); },
+      next: coordination => { if (seq !== this.coordinationLoadSeq) return; this.inFlight.delete('coordination'); this.coordination = coordination; this.coordinationError = ''; this.coordinationBusy = false; this.changeDetector.markForCheck(); },
       // Le dernier tableau lu reste affiché, avec l'erreur et un moyen de relire.
-      error: () => { if (seq !== this.coordinationLoadSeq) return; this.coordinationError = 'La coordination n’a pas pu être relue.'; this.coordinationBusy = false; this.changeDetector.markForCheck(); }
+      error: () => { if (seq !== this.coordinationLoadSeq) return; this.inFlight.delete('coordination'); this.coordinationError = 'La coordination n’a pas pu être relue.'; this.coordinationBusy = false; this.changeDetector.markForCheck(); }
     });
   }
 
@@ -317,6 +327,7 @@ export class OperationPageComponent {
   /** `afterAction` : la relecture qui suit une action, seule autorisée à rendre la main aux boutons. */
   loadComposition(operationId: string, afterAction = false): void {
     const seq = ++this.compositionLoadSeq;
+    this.inFlight.add('composition');
     // Composition et équipages arrivent ensemble : un équipage n'est jamais montré, même un instant, comme un groupe ordinaire.
     forkJoin({
       response: this.http.get<{ data: OperationComposition }>(`/api/operations/${operationId}/composition`),
@@ -324,6 +335,7 @@ export class OperationPageComponent {
     }).subscribe({
       next: ({ response, crews }) => {
         if (seq !== this.compositionLoadSeq) return;
+        this.inFlight.delete('composition');
         if (crews) this.crews = crews;
         this.crewsError = !crews;
         const data = response?.data;
@@ -351,6 +363,7 @@ export class OperationPageComponent {
       // La dernière composition lue reste affichée si elle existe ; sinon l'erreur est dite, pas une organisation vide.
       error: () => {
         if (seq !== this.compositionLoadSeq) return;
+        this.inFlight.delete('composition');
         if (!this.composition) this.compositionError = 'L’organisation n’a pas pu être chargée.';
         else this.compositionStale = true;
         if (afterAction) this.assignmentBusy = false;

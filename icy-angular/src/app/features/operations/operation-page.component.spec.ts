@@ -189,6 +189,28 @@ describe('OperationPageComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('Demande acceptée.');
     });
 
+    it('clears my pending request and keeps the counters once it is refused', async () => {
+      const eventService = TestBed.inject(EventService) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+      eventService['refuseOperationAssignment'] = vi.fn(() => of({}));
+      await renderWith({ present: true, myGroupId: null, myRequest: { id: 'r1', groupId: 3, groupName: 'Minage FPS' }, groups: [group] });
+
+      component.decideRequest('op', 'r1', false);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [group] } });
+      fixture.detectChanges();
+
+      expect(eventService['refuseOperationAssignment']).toHaveBeenCalledWith('r1');
+      expect(component.composition?.myRequest).toBeNull();
+      expect(component.composition?.groups[0].memberCount).toBe(0);
+      expect(toast.success).toHaveBeenCalledWith('Demande refusée.');
+    });
+
+    it('does not send a second read while the previous one is still waiting for the server', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.refreshQuietly();
+      component.refreshQuietly();
+      expect(http.match('/api/operations/op/composition').length).toBe(1);
+    });
+
     it('shows what other members did at the next quiet refresh, without a loading state', async () => {
       await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
       const someoneElse = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'u7', username: 'Nova' }] };
