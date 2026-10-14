@@ -81,7 +81,7 @@ class OperationCrewServiceTest {
     private final OperationAssignment mine = OperationAssignment.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(2L).userId(memberId).build();
 
     private final OperationCrewService service = new OperationCrewService(operations, groups, positions, assignments, presets, presetPositions,
-            participation, users, ships, assignmentService, lock, mock(MessageService.class));
+            participation, users, ships, assignmentService, lock, mock(MessageService.class), new CrewPresetApplier(groups, positions));
 
     OperationCrewServiceTest() {
         when(operations.findById(operationId)).thenReturn(Optional.of(operation));
@@ -381,6 +381,43 @@ class OperationCrewServiceTest {
         polaris.setCrewPresetId(presetId);
         service.updatePosition(operationId, 2L, 10L, position("Pilote", 1));
         assertThat(polaris.getCrewPresetId()).isNull();
+    }
+
+    @Test void anExistingCrewTakesThePresetPositionsAndFollowsIt() {
+        UUID presetId = UUID.randomUUID();
+        OperationCrewPreset preset = OperationCrewPreset.builder().id(presetId).name("Polaris — Standard").shipModelId(70L)
+                .capacity(10).positionMode(OperationGroup.PositionMode.SELF).build();
+        when(presets.findById(presetId)).thenReturn(Optional.of(preset));
+        when(presetPositions.findByPresetIdOrderBySortOrderAscIdAsc(presetId)).thenReturn(List.of(
+                OperationCrewPresetPosition.builder().presetId(presetId).label("Pilote").icon("pilot").capacity(1).sortOrder(0).build(),
+                OperationCrewPresetPosition.builder().presetId(presetId).label("Torpilleur").icon("missile").capacity(1).sortOrder(1).build(),
+                OperationCrewPresetPosition.builder().presetId(presetId).label("Ingénieur").icon("wrench").capacity(1).sortOrder(2).build()));
+        when(positions.findByGroupIdOrderBySortOrderAscIdAsc(2L)).thenReturn(new java.util.ArrayList<>(List.of(pilot, gunner)));
+
+        service.followPreset(operationId, 2L, presetId);
+
+        // « Artilleur » n'est pas dans le preset : supprimé, ses membres restent dans l'équipage sans poste.
+        verify(positions).delete(gunner);
+        verify(positions).save(argThat(saved -> Long.valueOf(10L).equals(saved.getId()) && "pilot".equals(saved.getIcon())));
+        verify(positions).save(argThat(saved -> saved.getId() == null && saved.getLabel().equals("Ingénieur") && "wrench".equals(saved.getIcon()) && Integer.valueOf(1).equals(saved.getCapacity())));
+        assertThat(polaris.getCrewPresetId()).isEqualTo(presetId);
+        assertThat(polaris.getCapacity()).isEqualTo(10);
+        assertThat(polaris.getPositionMode()).isEqualTo(OperationGroup.PositionMode.SELF);
+        // Aucune affectation n'est réécrite : « Pilote » garde son identifiant, donc ses membres ; personne n'est déplacé vers un autre poste.
+        verify(assignments, never()).setPosition(any(), any(), any());
+        verify(assignments, never()).save(any());
+
+        assertThatThrownBy(() -> service.followPreset(operationId, 3L, presetId)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("autre modèle");
+
+        // Opération terminée : l'équipage ne change plus.
+        doThrow(new OperationClosedException("Opération terminée")).when(lock).requireOpen(operationId);
+        assertThatThrownBy(() -> service.followPreset(operationId, 2L, presetId)).isInstanceOf(OperationClosedException.class);
+        verify(positions, org.mockito.Mockito.times(1)).delete(any());
+    }
+
+    @Test void onlyOrganizersApplyAPresetToACrew() throws Exception {
+        var method = com.icy.icy_backend.controller.operation.OperationController.class.getDeclaredMethod("followPreset", UUID.class, Long.class, UUID.class);
+        assertThat(method.getAnnotation(PreAuthorize.class).value()).isEqualTo("hasAnyRole('ADMIN', 'OFFICIER')");
     }
 
     @Test void theCrewReadShowsPositionsTakenSeatsAndMembersWithoutPosition() {

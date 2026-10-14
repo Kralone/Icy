@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotToastService } from '@ngxpert/hot-toast';
-import { concat, Observable, toArray } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EventService } from '../../../core/services/event/event.service';
 import { OperationIconComponent } from '../briefing/operation-icon.component';
 import { OperationConfirmService } from '../operation-confirm.service';
@@ -172,16 +172,21 @@ export class OperationCrewPanelComponent {
       undefined, () => { select.value = member.positionId === null ? '' : String(member.positionId); });
   }
 
-  /** Copie dans l'équipage les postes du preset qu'il n'a pas déjà ; le preset lui-même n'est pas modifié. */
+  /** L'équipage prend les postes, la capacité et l'attribution des postes du preset, puis suit ses modifications. */
   applyPreset(presetId: string): void {
     const preset = this.presets().find(candidate => candidate.id === presetId);
-    if (!preset) return;
-    const taken = new Set(this.crew().positions.map(position => position.label.trim().toLocaleLowerCase()));
-    const missing = preset.positions.filter(position => !taken.has(position.label.trim().toLocaleLowerCase()));
-    if (!missing.length) { this.toast.info('Cet équipage a déjà tous les postes de ce preset.'); return; }
-    const start = this.crew().positions.reduce((max, position) => Math.max(max, position.sortOrder + 1), 0);
-    this.run(concat(...missing.map((position, index) => this.eventService.addOperationPosition(this.operationId(), this.crew().groupId,
-      { label: position.label, icon: position.icon, capacity: position.capacity, sortOrder: start + index }))).pipe(toArray()),
-      `${missing.length} poste${missing.length > 1 ? 's ajoutés' : ' ajouté'} depuis « ${preset.name} ».`, 'Les postes du preset n’ont pas tous pu être ajoutés.');
+    if (!preset || this.busy()) return;
+    const kept = new Set(preset.positions.map(position => position.label.trim().toLocaleLowerCase()));
+    const dropped = this.crew().positions.filter(position => !kept.has(position.label.trim().toLocaleLowerCase()));
+    const displaced = dropped.reduce((sum, position) => sum + position.taken, 0);
+    const message = [
+      `Les postes de l’équipage deviennent ceux du preset (${preset.positions.map(position => position.label).join(', ')}), avec ses pictogrammes et ses places.`,
+      dropped.length ? `Supprimé${dropped.length > 1 ? 's' : ''} : ${dropped.map(position => position.label).join(', ')}.` : '',
+      displaced ? `${displaced} membre${displaced > 1 ? 's restent' : ' reste'} dans l’équipage, sans poste.` : '',
+      'Les prochaines modifications du preset s’appliqueront ici, tant que les postes ne sont pas retouchés à la main.'
+    ].filter(Boolean).join(' ');
+    this.confirmService.ask({ title: `Appliquer « ${preset.name} » ?`, message, confirmLabel: 'Appliquer le preset', cancelLabel: 'Annuler' }).then(confirmed => {
+      if (confirmed) this.run(this.eventService.followCrewPreset(this.operationId(), this.crew().groupId, preset.id), `L’équipage suit « ${preset.name} ».`, 'Le preset n’a pas pu être appliqué.');
+    });
   }
 }

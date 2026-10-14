@@ -21,6 +21,11 @@
       } @else { <span class="mode__read">{{ modeLabels[crew().positionMode] }}</span> }
     </div>
     <p class="hint">{{ modeHints[crew().positionMode] }}</p>
+    @if (crew().presetId) {
+      <p class="preset-link"><strong>Suit le preset « {{ crew().presetName || 'archivé' }} »</strong> : ses modifications s’appliquent ici. Retoucher un poste à la main détache l’équipage.</p>
+    } @else if (presets().length && !locked()) {
+      <p class="preset-link preset-link--off">Cet équipage ne suit aucun preset : modifier un preset ne le change pas.</p>
+    }
 
     @if (!crew().positions.length && editing() !== 'new') {
       <p class="empty">Équipage libre : aucun poste n’est défini. Les membres rejoignent l’équipage sans fonction attitrée.</p>
@@ -58,7 +63,7 @@
       <div class="block__actions">
         <button type="button" class="add" [disabled]="busy()" (click)="startAdd()"><span aria-hidden="true">+</span> Ajouter un poste</button>
         @if (presets().length) {
-          <label class="preset-pick">Ajouter les postes d’un preset
+          <label class="preset-pick">Appliquer un preset
             <select #presetSelect [disabled]="busy()" (change)="applyPreset(presetSelect.value); presetSelect.value = ''">
               <option value="">Choisir un preset</option>
               @for (preset of presets(); track preset.id) { <option [value]="preset.id">{{ preset.name }} ({{ preset.positions.length }} poste{{ preset.positions.length > 1 ? 's' : '' }})</option> }

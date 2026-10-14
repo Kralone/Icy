@@ -59,10 +59,10 @@
           <label class="block text-sm mb-1 text-gray-300">Description</label>
           <textarea
             [(ngModel)]="newEvent.description"
-            rows="3"
+            rows="10"
             placeholder="Détails de l’événement..."
           class="w-full px-4 py-2 rounded-xl bg-[#0b1324] border border-white/10 text-white placeholder-gray-500
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-none"
+                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition resize-y min-h-[10rem] max-h-[80vh]"
           ></textarea>
         </div>
 
@@ -447,10 +447,10 @@
                                   <textarea
                                     [(ngModel)]="editingEvent.description"
                                     [readonly]="isViewMode"
-                                    rows="3"
+                                    rows="10"
                                     placeholder="Description de l’événement..."
           class="w-full px-4 py-2 rounded-xl bg-[#0b1324]
-               border border-white/10 text-white placeholder-gray-500 resize-none
+               border border-white/10 text-white placeholder-gray-500 resize-y min-h-[10rem] max-h-[80vh]
                focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                                   ></textarea>
                                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

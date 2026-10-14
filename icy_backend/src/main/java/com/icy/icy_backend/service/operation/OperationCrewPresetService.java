@@ -43,17 +43,16 @@ public class OperationCrewPresetService {
 
     // Facultatifs : sans eux (tests construits à la main), un preset enregistré ne met aucun équipage à jour.
     private com.icy.icy_backend.db.repository.event.OperationGroupRepository groupRepository;
-    private com.icy.icy_backend.db.repository.event.OperationGroupPositionRepository groupPositionRepository;
+    private CrewPresetApplier applier;
     private com.icy.icy_backend.db.repository.event.EventRepository eventRepository;
     private com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    public void setCrewSync(com.icy.icy_backend.db.repository.event.OperationGroupRepository groups,
-                            com.icy.icy_backend.db.repository.event.OperationGroupPositionRepository positions,
+    public void setCrewSync(com.icy.icy_backend.db.repository.event.OperationGroupRepository groups, CrewPresetApplier applier,
                             com.icy.icy_backend.db.repository.event.EventRepository events,
                             com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates) {
         this.groupRepository = groups;
-        this.groupPositionRepository = positions;
+        this.applier = applier;
         this.eventRepository = events;
         this.liveUpdates = liveUpdates;
     }
@@ -110,7 +109,7 @@ public class OperationCrewPresetService {
      * sans poste. Un équipage d'un autre modèle de vaisseau que le preset ne le suit plus.
      */
     private void syncLinkedCrews(OperationCrewPreset preset, List<OperationCrewPresetPosition> positions) {
-        if (groupRepository == null || groupPositionRepository == null || eventRepository == null) return;
+        if (groupRepository == null || applier == null || eventRepository == null) return;
         LocalDateTime now = LocalDateTime.now(OperationLock.ZONE);
         for (OperationGroup crew : groupRepository.findByCrewPresetId(preset.getId())) {
             boolean upcoming = eventRepository.findById(crew.getOperationEventId())
@@ -121,29 +120,7 @@ public class OperationCrewPresetService {
                 groupRepository.save(crew);
                 continue;
             }
-            groupRepository.findLockedById(crew.getId());
-            Map<String, com.icy.icy_backend.db.entity.event.OperationGroupPosition> existing = groupPositionRepository
-                    .findByGroupIdOrderBySortOrderAscIdAsc(crew.getId()).stream()
-                    .collect(Collectors.toMap(position -> position.getLabel().trim().toLowerCase(java.util.Locale.ROOT), Function.identity(), (first, second) -> first));
-            java.util.Set<String> wanted = positions.stream().map(position -> position.getLabel().trim().toLowerCase(java.util.Locale.ROOT)).collect(Collectors.toSet());
-            // Suppressions d'abord : un nom libéré peut être repris juste après sans heurter l'unicité des noms.
-            existing.entrySet().stream().filter(entry -> !wanted.contains(entry.getKey())).map(Map.Entry::getValue).toList()
-                    .forEach(groupPositionRepository::delete);
-            groupPositionRepository.flush();
-            for (OperationCrewPresetPosition source : positions) {
-                var target = existing.get(source.getLabel().trim().toLowerCase(java.util.Locale.ROOT));
-                if (target == null) {
-                    target = com.icy.icy_backend.db.entity.event.OperationGroupPosition.builder().groupId(crew.getId()).build();
-                }
-                target.setLabel(source.getLabel());
-                target.setIcon(source.getIcon());
-                target.setCapacity(source.getCapacity());
-                target.setSortOrder(source.getSortOrder());
-                groupPositionRepository.save(target);
-            }
-            crew.setCapacity(preset.getCapacity());
-            crew.setPositionMode(preset.getPositionMode());
-            groupRepository.save(crew);
+            applier.apply(crew, preset, positions);
             if (liveUpdates != null) liveUpdates.changed(crew.getOperationEventId());
         }
     }

@@ -105,6 +105,13 @@ public class OperationController {
         return crewService.updatePosition(id, groupId, positionId, request);
     }
 
+    /** L'équipage reprend les postes du preset et le suit ensuite. */
+    @PutMapping("/{id}/groups/{groupId}/preset")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    public ResponseEntity<MessageResponse<Void>> followPreset(@PathVariable UUID id, @PathVariable Long groupId, @RequestParam UUID presetId) {
+        return crewService.followPreset(id, groupId, presetId);
+    }
+
     @DeleteMapping("/{id}/groups/{groupId}/positions/{positionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<Void>> deletePosition(@PathVariable UUID id, @PathVariable Long groupId, @PathVariable Long positionId) {
