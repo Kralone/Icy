@@ -35,6 +35,13 @@ public class DiscordEventParticipationListener {
     private final OperationAssignmentRepository operationAssignmentRepository;
     private final OperationAssignmentRequestRepository operationAssignmentRequestRepository;
     private com.icy.icy_backend.db.repository.event.OperationRepository operationRepository;
+    private com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates;
+
+    /** Facultatif : sans lui (tests construits à la main), rien n'est signalé aux fiches ouvertes. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLiveUpdates(com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates) {
+        this.liveUpdates = liveUpdates;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired
     public void setOperationRepository(com.icy.icy_backend.db.repository.event.OperationRepository operationRepository) {
@@ -111,6 +118,8 @@ public class DiscordEventParticipationListener {
             participation.setUser(user);
             participation.setStatus(status);
             participationRepository.save(participation);
+            // Réponse donnée sur Discord : les fiches ouvertes la voient aussi.
+            if (liveUpdates != null) liveUpdates.changed(event.getId());
             if (status != 1 && !com.icy.icy_backend.service.operation.OperationLock.isClosedNow(event)) {
                 operationAssignmentRepository.deleteByOperationEventIdAndUserId(event.getId(), user.getId());
                 operationAssignmentRequestRepository.deleteByOperationEventIdAndUserIdAndStatus(event.getId(), user.getId(), OperationAssignmentRequest.Status.PENDING);

@@ -4,8 +4,7 @@
       <li class="root" [class.root--leaf]="!root.container" [class.root--mine]="action(root) === 'mine'">
         <header class="root__head">
           <div class="root__title">
-            <h3>@if (crewOf(root)) { <app-operation-icon name="ship" /> }{{ root.name }}</h3>
-            @if (action(root) === 'mine') { <p class="mine-badge"><span aria-hidden="true">✓</span> Vous y êtes</p> }
+            <h3>@if (crewOf(root)) { <app-operation-icon name="ship" /> }{{ root.name }}@if (action(root) === 'mine') { <span class="mine-check" title="Vous êtes dans ce groupe"><span aria-hidden="true">✓</span><span class="sr-only">Vous êtes dans ce groupe</span></span> }</h3>
             @if (root.description) { <p>{{ root.description }}</p> }
             @if (root.responsibleUsername) { <p class="root__responsible">Responsable : {{ root.responsibleUsername }}</p> }
           </div>
@@ -28,8 +27,7 @@
                 <li class="leaf" [class.leaf--mine]="action(child) === 'mine'">
                   <div class="leaf__head">
                     <div class="leaf__title">
-                      <h4>@if (crewOf(child)) { <app-operation-icon name="ship" /> }{{ child.name }}</h4>
-                      @if (action(child) === 'mine') { <p class="mine-badge"><span aria-hidden="true">✓</span> Vous y êtes</p> }
+                      <h4>@if (crewOf(child)) { <app-operation-icon name="ship" /> }{{ child.name }}@if (action(child) === 'mine') { <span class="mine-check" title="Vous êtes dans ce groupe"><span aria-hidden="true">✓</span><span class="sr-only">Vous êtes dans ce groupe</span></span> }</h4>
                     </div>
                     <span class="leaf__count" [class.is-full]="isFull(child)">{{ occupancy(child) }}</span>
                   </div>

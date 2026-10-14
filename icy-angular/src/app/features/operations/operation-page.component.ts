@@ -5,7 +5,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, filter, forkJoin, fromEvent, interval, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
+import { catchError, debounceTime, EMPTY, filter, forkJoin, fromEvent, interval, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
+import { WebSocketService } from '../../core/services/websocket/websocket.service';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -49,6 +50,7 @@ export class OperationPageComponent {
   private readonly confirmService = inject(OperationConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
+  private readonly webSocket = inject(WebSocketService);
   private readonly shipsRefresh$ = new Subject<void>();
   private readonly operationReload$ = new Subject<void>();
   readonly operationState$ = this.operationReload$.pipe(
@@ -161,6 +163,15 @@ export class OperationPageComponent {
     });
     // Les réponses et affectations des autres membres arrivent sans recharger la page : relecture régulière tant que l'onglet est visible,
     // et dès qu'on y revient.
+    // Temps réel : le serveur signale chaque modification validée de l'opération affichée ; la fiche se relit aussitôt.
+    // Plusieurs signaux rapprochés ne donnent qu'une relecture. La relecture régulière ci-dessous reste le filet de sécurité.
+    this.route.paramMap.pipe(
+      map(params => params.get('id')),
+      switchMap(id => id ? this.webSocket.watchOperation(id).pipe(catchError(() => EMPTY)) : EMPTY),
+      debounceTime(OperationPageComponent.LIVE_DEBOUNCE_MS),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.liveRefresh());
+    this.destroyRef.onDestroy(() => { if (this.liveRetry !== null) clearTimeout(this.liveRetry); });
     // La minuterie tourne hors d'Angular : elle ne rend jamais la page « instable » ; chaque relecture y revient.
     if (typeof document !== 'undefined') {
       this.zone.runOutsideAngular(() => merge(interval(OperationPageComponent.REFRESH_MS), fromEvent(document, 'visibilitychange'))
@@ -170,21 +181,34 @@ export class OperationPageComponent {
   }
 
   static readonly REFRESH_MS = 15000;
+  static readonly LIVE_DEBOUNCE_MS = 250;
+  static readonly LIVE_RETRY_MS = 1500;
+  private liveRetry: ReturnType<typeof setTimeout> | null = null;
+
+  /** Signal reçu : relire maintenant, ou dès que l'action, la saisie ou la lecture en cours le permet. */
+  liveRefresh(attempt = 0): void {
+    if (this.liveRetry !== null) { clearTimeout(this.liveRetry); this.liveRetry = null; }
+    if (this.refreshQuietly() || attempt >= 20) return;
+    this.liveRetry = setTimeout(() => { this.liveRetry = null; this.liveRefresh(attempt + 1); }, OperationPageComponent.LIVE_RETRY_MS);
+  }
 
   /**
    * Relecture silencieuse : ni état de chargement ni message d'erreur. Elle attend la fin d'une action en cours,
    * et ne redessine pas une liste ou un champ que le membre est en train d'utiliser.
    */
-  refreshQuietly(): void {
+  /** Vrai si tout a été relu ; faux si la relecture a dû attendre (action, saisie ou lecture encore en cours). */
+  refreshQuietly(): boolean {
     const id = this.shownOperationId;
-    if (!id || this.assignmentBusy || this.coordinationBusy || this.participationSaving || this.fleetBusy) return;
+    if (!id || this.assignmentBusy || this.coordinationBusy || this.participationSaving || this.fleetBusy) return false;
     const active = document.activeElement?.tagName;
-    if (active === 'SELECT' || active === 'INPUT' || active === 'TEXTAREA') return;
+    if (active === 'SELECT' || active === 'INPUT' || active === 'TEXTAREA') return false;
+    const complete = !this.inFlight.size;
     // Une lecture encore en cours n'est pas doublée : un serveur lent ne reçoit pas une seconde vague de requêtes.
     if (!this.inFlight.has('participations')) this.loadParticipations(id, true);
     if (!this.inFlight.has('composition')) this.loadComposition(id);
     if (this.coordination && !this.inFlight.has('coordination')) this.loadCoordination(id);
     this.shipsRefresh$.next();
+    return complete;
   }
 
   /** Lectures en cours, toutes origines confondues. */

@@ -1,3 +1,4 @@
+import { DateTimeFieldComponent } from '../../../shared/date-time-field/date-time-field.component';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { EventType } from '../../../model/event-type.model';
 @Component({
   selector: 'app-event-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-management.component.html',
 })
@@ -178,6 +179,19 @@ export class EventManagementComponent implements OnInit {
       startDateTime: event.startDateTime.slice(0, 16),
       endDateTime: event.endDateTime.slice(0, 16),
     };
+    this.originalDates = { start: this.editingEvent.startDateTime, end: this.editingEvent.endDateTime };
+    this.keepParticipants = true;
+  }
+
+  /** Dates à l'ouverture de la modification : un changement propose de garder ou d'effacer les inscriptions. */
+  private originalDates: { start: string; end: string } | null = null;
+  /** Par défaut, les réponses déjà données sont gardées. */
+  keepParticipants = true;
+  /** Vrai pour un événement classique dont la date a été modifiée ; une opération garde toujours ses inscrits. */
+  get datesChanged(): boolean {
+    const editing = this.editingEvent;
+    if (!editing || !this.originalDates || (editing as any).activityType === 'OPERATION') return false;
+    return editing.startDateTime !== this.originalDates.start || editing.endDateTime !== this.originalDates.end;
   }
 
   openViewEventModal(event: EventDTO) {
@@ -205,7 +219,8 @@ export class EventManagementComponent implements OnInit {
       startDateTime: this.editingEvent.startDateTime,
       endDateTime: this.editingEvent.endDateTime,
       finished: this.editingEvent.finished ?? false,
-      type: this.editingEvent.type?.name || (this.editingEvent as any).type
+      type: this.editingEvent.type?.name || (this.editingEvent as any).type,
+      keepParticipants: this.keepParticipants
     };
 
     this.eventService.updateEvent(payload).subscribe({

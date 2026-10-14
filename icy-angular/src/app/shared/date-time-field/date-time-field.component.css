@@ -1,0 +1,17 @@
+:host { display: block; min-width: 0; }
+.field { display: grid; gap: .45rem; }
+.inputs { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: .5rem; }
+input { width: 100%; min-height: 44px; padding: .5rem .75rem; border: 1px solid rgba(255,255,255,.14); border-radius: .7rem; color: #f1f5f9; background: #0b1324; color-scheme: dark; font-size: .95rem; font-variant-numeric: tabular-nums; }
+input:focus { outline: none; border-color: #67e8f9; box-shadow: 0 0 0 2px rgba(103,232,249,.35); }
+input:disabled { opacity: .65; }
+input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .85; filter: invert(.8) sepia(1) hue-rotate(150deg); }
+.field--invalid input { border-color: #f87171; }
+.shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.shortcuts button { min-height: 2rem; padding: .2rem .65rem; border: 1px solid #2f4a60; border-radius: 999px; color: #bae6fd; background: #0f2233; font-size: .8rem; cursor: pointer; }
+.shortcuts button:hover { border-color: #67e8f9; }
+.shortcuts button[aria-pressed="true"] { border-color: #67e8f9; color: #082f49; background: #67e8f9; font-weight: 700; }
+.shortcuts button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+.separator { width: 1px; height: 1.2rem; margin: 0 .2rem; background: #2f4a60; }
+.summary { margin: 0; color: #94a3b8; font-size: .82rem; }
+.summary::first-letter { text-transform: uppercase; }
+@media (max-width: 420px) { .inputs { grid-template-columns: minmax(0, 1fr); } }

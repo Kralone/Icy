@@ -63,7 +63,7 @@ class EventControllerTest {
     void eventEndpointsReturnOk() throws Exception {
         when(eventService.createEvent(any(), any(), any(), any(), any()))
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
-        when(eventService.updateEvent(any(), any(), any(), any(), any(), any(), anyBoolean()))
+        when(eventService.updateEvent(any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
         when(eventService.deleteEvent(any())).thenReturn(okResponse(null));
         when(eventService.getAllEvents()).thenReturn(okResponse(List.of(new EventResponseDTO(new Event()))));

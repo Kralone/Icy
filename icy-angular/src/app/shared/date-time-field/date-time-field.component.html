@@ -1,0 +1,20 @@
+<div class="field" role="group" [attr.aria-label]="label()" [class.field--invalid]="invalid()">
+  <div class="inputs">
+    <input type="date" [value]="date" [disabled]="disabled" [attr.aria-label]="label() + ' : date'" [attr.aria-invalid]="invalid() || null" [attr.aria-describedby]="describedBy()"
+      (change)="setDate($any($event.target).value)" (blur)="touched()">
+    <input type="time" step="300" [value]="time" [disabled]="disabled" [attr.aria-label]="label() + ' : heure'" [attr.aria-invalid]="invalid() || null" [attr.aria-describedby]="describedBy()"
+      (change)="setTime($any($event.target).value)" (blur)="touched()">
+  </div>
+  @if (!disabled) {
+    <div class="shortcuts">
+      @for (day of days; track day.label) {
+        <button type="button" [attr.aria-pressed]="isDay(day.offset())" (click)="pickDay(day.offset())">{{ day.label }}</button>
+      }
+      <span class="separator" aria-hidden="true"></span>
+      @for (hour of hours(); track hour) {
+        <button type="button" [attr.aria-pressed]="isHour(hour)" (click)="pickHour(hour)">{{ hour }} h</button>
+      }
+    </div>
+  }
+  <p class="summary" aria-live="polite">{{ summary || 'Date et heure à choisir' }}</p>
+</div>

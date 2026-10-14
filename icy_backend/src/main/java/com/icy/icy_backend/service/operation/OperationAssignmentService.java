@@ -27,6 +27,13 @@ public class OperationAssignmentService {
     private final OperationAssignmentRequestRepository requestRepository;
 
     private OperationLock operationLock;
+    private com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates;
+
+    /** Facultatif : sans lui (tests construits à la main), rien n'est signalé aux fiches ouvertes. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLiveUpdates(com.icy.icy_backend.websocket.OperationLiveUpdateService liveUpdates) {
+        this.liveUpdates = liveUpdates;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired
     public void setOperationLock(OperationLock operationLock) {
@@ -66,6 +73,8 @@ public class OperationAssignmentService {
     @Transactional
     public ResponseEntity<MessageResponse<Void>> decide(UUID requestId, boolean approve) {
         OperationAssignmentRequest request = requestRepository.findById(requestId).orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
+        // Route sans identifiant d'opération : le signal part d'ici, et seulement si la décision est validée en base.
+        if (liveUpdates != null) liveUpdates.changed(request.getOperationEventId());
         if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
         OperationGroup group = groupRepository.findById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         UUID currentUser = AuthUtils.getCurrentUserId();

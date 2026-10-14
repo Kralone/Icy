@@ -31,11 +31,11 @@
         </label>
         <label>
           <span class="field-label" id="operation-create-start">Début <span class="req" aria-hidden="true">*</span></span>
-          <input type="datetime-local" [(ngModel)]="form.startDateTime" required aria-label="Date et heure de début">
+          <app-date-time-field [(ngModel)]="form.startDateTime" required label="Date et heure de début" />
         </label>
         <label>
           <span class="field-label" id="operation-create-end">Fin <span class="req" aria-hidden="true">*</span></span>
-          <input type="datetime-local" [(ngModel)]="form.endDateTime" required aria-label="Date et heure de fin" [attr.aria-invalid]="datesInvalid" [attr.aria-describedby]="datesInvalid ? 'operation-create-end-error' : null">
+          <app-date-time-field [(ngModel)]="form.endDateTime" required label="Date et heure de fin" [invalid]="datesInvalid" [describedBy]="datesInvalid ? 'operation-create-end-error' : null" />
           @if (datesInvalid) { <span id="operation-create-end-error" class="field-error" role="alert">La fin doit être postérieure au début.</span> }
         </label>
         <label class="wide">

@@ -1,13 +1,20 @@
 <section class="panel panel--briefing" id="briefing" tabindex="-1" aria-labelledby="operation-briefing-title">
   <h2 id="operation-briefing-title"><app-operation-icon name="briefing" /> Briefing</h2>
-  @if (text()) {
-    <div class="briefing" id="operation-briefing-text" [class.is-clamped]="long() && !expanded()" [innerHTML]="html()"></div>
-    @if (long()) {
-      <button type="button" class="briefing__toggle" [attr.aria-expanded]="expanded()" aria-controls="operation-briefing-text" (click)="expanded.set(!expanded())">{{ expanded() ? 'Réduire' : 'Lire tout le briefing' }}</button>
+  <div class="briefing-layout" [class.briefing-layout--image]="!!image()">
+    <div class="briefing-layout__text">
+      @if (text()) {
+        <div class="briefing" id="operation-briefing-text" [class.is-clamped]="long() && !expanded()" [innerHTML]="html()"></div>
+        @if (long()) {
+          <button type="button" class="briefing__toggle" [attr.aria-expanded]="expanded()" aria-controls="operation-briefing-text" (click)="expanded.set(!expanded())">{{ expanded() ? 'Réduire' : 'Lire tout le briefing' }}</button>
+        }
+      } @else {
+        <p class="empty">{{ locked() ? 'Aucun briefing.' : 'Le briefing sera publié par l’organisateur.' }}</p>
+      }
+    </div>
+    @if (image(); as url) {
+      <img class="briefing-layout__image" [src]="url" alt="" loading="lazy" (error)="imageFailed(url)">
     }
-  } @else {
-    <p class="empty">{{ locked() ? 'Aucun briefing.' : 'Le briefing sera publié par l’organisateur.' }}</p>
-  }
+  </div>
 </section>
 
 <section class="panel panel--objectives" aria-labelledby="operation-objectives-title">

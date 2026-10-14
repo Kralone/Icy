@@ -1,7 +1,11 @@
 <section class="management-page">
   <header class="page-heading">
     <div><a routerLink="/icy/admin" class="back">← Administration</a><h1>Opérations</h1></div>
-    <a routerLink="/icy/operations/new" class="primary">Nouvelle opération</a>
+    <div class="page-actions">
+      <!-- Les presets d'équipage servent à toutes les opérations : configurés une fois par vaisseau, appliqués à la création d'un équipage. -->
+      <a routerLink="/icy/admin/crew-presets" class="secondary">Presets d’équipage</a>
+      <a routerLink="/icy/operations/new" class="primary">Nouvelle opération</a>
+    </div>
   </header>
 
   <section class="block block--planned" aria-labelledby="operations-planned-title">

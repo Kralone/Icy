@@ -30,7 +30,7 @@
           (statusChange)="setParticipation(operation.id, $event)"
           (retry)="retryParticipations()" />
       </section>
-      <app-operation-brief [briefing]="operation.briefing" [description]="operation.description" [objectives]="operation.objectives" [locked]="!!operation.locked" />
+      <app-operation-brief [briefing]="operation.briefing" [description]="operation.description" [objectives]="operation.objectives" [locked]="!!operation.locked" [imageUrl]="operation.imageUrl" [typeImageUrl]="operation.typeImageUrl" />
       <section class="panel panel--organisation" id="organisation" tabindex="-1" aria-labelledby="operation-organisation-title">
         <h2 id="operation-organisation-title"><app-operation-icon name="groups" /> Organisation</h2>
         @if (compositionError) {

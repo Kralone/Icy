@@ -33,7 +33,8 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<EventResponseDTO>> update(@RequestBody UpdateEventRequest req) {
-        return eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished());
+        return eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished(),
+                Boolean.TRUE.equals(req.getKeepParticipants()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")

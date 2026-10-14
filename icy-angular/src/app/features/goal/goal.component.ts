@@ -130,7 +130,8 @@ export class GoalComponent implements OnInit, OnDestroy {
     const cloned: Goal = {
       ...goal,
       // ✅ réinjecte l'état depuis la map (pas depuis les clones)
-      __expanded: this.expandedById[goal.id],
+      // L'objectif épinglé s'ouvre avec ses étapes, tant que le membre ne l'a pas replié lui-même.
+      __expanded: this.expandedById[goal.id] ?? (goal.pinned ? true : undefined),
       __allSubGoals: goal.subGoals ?? [],
       subGoals: goal.subGoals ? [...goal.subGoals] : [],
     };

@@ -1,3 +1,4 @@
+import { DateTimeFieldComponent } from '../../../../../shared/date-time-field/date-time-field.component';
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +7,7 @@ import { ScWorldEventService, ScWorldEvent, ScWorldEventType, Page } from '../..
 @Component({
   selector: 'app-scwe-events-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [DateTimeFieldComponent, CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-events-admin.component.html',
 })

@@ -72,7 +72,7 @@ describe('EventsComponent', () => {
     expect(classic.querySelector('.operation-badge')).toBeNull();
     expect(classic.querySelector('.agenda-open')!.textContent).toContain('Détails');
     expect(operation.classList).toContain('agenda-event--operation');
-    expect(operation.querySelector('.operation-badge')!.textContent).toBe('Opération');
+    expect(operation.querySelector('.operation-badge')!.textContent!.trim()).toBe('◆ Opération');
     expect(operation.querySelector('.agenda-open')!.textContent).toContain('Voir l’opération');
   });
 

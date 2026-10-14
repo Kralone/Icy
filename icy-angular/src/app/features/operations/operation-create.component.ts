@@ -1,3 +1,4 @@
+import { DateTimeFieldComponent } from '../../shared/date-time-field/date-time-field.component';
 import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +11,7 @@ import { OperationIconComponent } from './briefing/operation-icon.component';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, OperationIconComponent],
+  imports: [DateTimeFieldComponent, FormsModule, RouterLink, DatePipe, OperationIconComponent],
   templateUrl: './operation-create.component.html',
   styleUrl: './operation-create.component.css'
 })
