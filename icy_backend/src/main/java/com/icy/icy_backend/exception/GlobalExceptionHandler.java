@@ -21,6 +21,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.security.access.AccessDeniedException;
@@ -148,6 +152,33 @@ public class GlobalExceptionHandler {
             response.allow(ex.getSupportedHttpMethods().toArray(org.springframework.http.HttpMethod[]::new));
         }
         return response.body(Map.of("error", "Method Not Allowed", "message", "Méthode non admise pour cette adresse."));
+    }
+
+    /**
+     * Statut choisi par le code de l'application (410 de la gestion des vaisseaux, synchronisée par le catalogue).
+     * La raison est un texte écrit dans le code, jamais un message d'exception tiers.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        String error = status != null ? status.getReasonPhrase() : "Error";
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", error, "message", ex.getReason() != null ? ex.getReason() : error));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(Map.of("error", "Unsupported Media Type", "message", "Format de contenu non pris en charge."));
+    }
+
+    /** Le client refuse JSON : aucun corps n'est lisible pour lui, seul le statut répond. */
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<Void> handleNotAcceptable(HttpMediaTypeNotAcceptableException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(Map.of("error", "Content Too Large", "message", "Fichier trop volumineux."));
     }
 
     @ExceptionHandler(Exception.class)

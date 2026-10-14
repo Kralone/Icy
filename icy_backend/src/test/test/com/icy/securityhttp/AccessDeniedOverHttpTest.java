@@ -64,6 +64,8 @@ import static org.mockito.Mockito.when;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = AccessDeniedOverHttpTest.App.class, properties = {
         "bot.api-key=cle-de-test-du-bot",
+        "spring.servlet.multipart.max-file-size=1KB",
+        "spring.servlet.multipart.max-request-size=1KB",
         "spring.main.banner-mode=off",
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
                 + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
@@ -85,6 +87,10 @@ class AccessDeniedOverHttpTest {
     @RestController
     static class Probe {
         @GetMapping("/api/probe/member") String member() { return "ok"; }
+        @GetMapping("/api/probe/objet") java.util.Map<String, String> object() { return java.util.Map.of("etat", "ok"); }
+        @GetMapping("/api/probe/retire") String gone() { throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.GONE, "Ressource retirée."); }
+        @org.springframework.web.bind.annotation.PostMapping(value = "/api/probe/json", consumes = "application/json") String json(@org.springframework.web.bind.annotation.RequestBody java.util.Map<String, Object> body) { return "ok"; }
+        @org.springframework.web.bind.annotation.PostMapping("/api/probe/envoi") String upload(@org.springframework.web.bind.annotation.RequestParam("file") org.springframework.web.multipart.MultipartFile file) { return "ok"; }
         /** Sous un préfixe public de SecurityConfig : joignable sans identité. */
         @GetMapping("/api/front/probe") String publicProbe() { return "ok"; }
         @GetMapping("/api/probe/admin") @PreAuthorize("hasRole('ADMIN')") String admin() { return "ok"; }
@@ -216,6 +222,40 @@ class AccessDeniedOverHttpTest {
         assertThat(failure.body()).doesNotContain("secret-interne-de-test").doesNotContain("UnsupportedOperationException").doesNotContain("\"trace\"");
         // Sans identité, une panne sur une route protégée ne se distingue pas d'un refus.
         assertThat(call("GET", "/api/probe/panne", null).statusCode()).isEqualTo(401);
+    }
+
+    private HttpResponse<String> send(String method, String path, String token, String contentType, String accept, byte[] body) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).method(method, HttpRequest.BodyPublishers.ofByteArray(body));
+        if (token != null) request.header("Authorization", "Bearer " + token);
+        if (contentType != null) request.header("Content-Type", contentType);
+        if (accept != null) request.header("Accept", accept);
+        return client.send(request.build(), HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void statusesChosenBySpringOrTheApplicationAreKeptInsteadOfAServerError() throws Exception {
+        HttpResponse<String> gone = call("GET", "/api/probe/retire", "jeton-membre");
+        assertThat(gone.statusCode()).isEqualTo(410);
+        assertThat(gone.body()).contains("Ressource retirée.").doesNotContain("Exception");
+
+        HttpResponse<String> media = send("POST", "/api/probe/json", "jeton-membre", "text/plain", null, "texte".getBytes());
+        assertThat(media.statusCode()).isEqualTo(415);
+        assertThat(media.body()).contains("Format de contenu non pris en charge").doesNotContain("text/plain").doesNotContain("Exception");
+        assertThat(send("POST", "/api/probe/json", "jeton-membre", "application/json", null, "{}".getBytes()).statusCode()).isEqualTo(200);
+
+        assertThat(send("GET", "/api/probe/objet", "jeton-membre", null, "application/xml", new byte[0]).statusCode()).isEqualTo(406);
+        assertThat(send("GET", "/api/probe/objet", "jeton-membre", null, "application/json", new byte[0]).statusCode()).isEqualTo(200);
+
+        String boundary = "----recette";
+        byte[] big = new byte[4096];
+        byte[] multipart = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"gros.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n" + new String(big) + "\r\n--" + boundary + "--\r\n").getBytes();
+        HttpResponse<String> large = send("POST", "/api/probe/envoi", "jeton-membre", "multipart/form-data; boundary=" + boundary, null, multipart);
+        assertThat(large.statusCode()).isEqualTo(413);
+        assertThat(large.body()).contains("Fichier trop volumineux").doesNotContain("Exception");
+
+        // Sans identité, ces routes protégées restent refusées avant tout traitement.
+        assertThat(send("POST", "/api/probe/json", null, "text/plain", null, "texte".getBytes()).statusCode()).isEqualTo(401);
+        assertThat(call("GET", "/api/probe/retire", null).statusCode()).isEqualTo(401);
     }
 
     @Test
