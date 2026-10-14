@@ -9,7 +9,7 @@ Avant la première modification, le script :
 - valide les trois images et la configuration Compose durcie ;
 - vérifie en lecture seule l'historique Flyway, la continuité administrateur et
   les préconditions de V30 ;
-- crée et vérifie une sauvegarde chiffrée complète ;
+- applique la politique de sauvegarde des 7 jours (ci-dessous) ;
 - conserve les trois références d'images précédentes dans un fichier `0600`.
 
 Les composants sont ensuite recréés et vérifiés dans l'ordre backend, bot,
@@ -33,14 +33,41 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
   --age-recipient 'ssh-ed25519 AAAA...'
 ```
 
-Après un rollback applicatif sans restauration de données, une nouvelle
-tentative peut réutiliser pendant vingt-quatre heures une sauvegarde créée et validée
-par ce même processus. Son chemin et son fichier `.sha256` sont revérifiés :
+## Politique de sauvegarde : 7 jours
+
+Le contrôle de sauvegarde reste obligatoire, mais une nouvelle archive n'est plus créée à chaque
+livraison. `select-predeploy-backup.sh` décide en lecture seule, et le précontrôle affiche sa décision
+(`BACKUP-PLAN=REUSE archive=…` ou `BACKUP-PLAN=FRESH reason=…`).
+
+La plus récente archive `/var/backups/iceforge/iceforge-AAAAMMJJTHHMMSSZ.tar.gz.age` est réutilisée si :
+
+- elle a moins de 7 jours, d'après son horodatage ;
+- c'est un fichier ordinaire non vide, et son `.sha256` est conforme ;
+- son en-tête age contient une entrée pour le destinataire passé en `--age-recipient` (étiquette de la
+  clé `ssh-ed25519`) : l'identité validée la déchiffre ;
+- elle est postérieure à la dernière migration Flyway appliquée : elle contient le schéma en place et
+  se restaure avec les images actuelles. La restauration PostgreSQL de chaque archive est par ailleurs
+  vérifiée en instance isolée au moment de sa création.
+
+Une archive écartée est signalée avec sa raison, et la précédente est examinée. Sinon, ou si la release
+applique une migration (`TARGET_FLYWAY_VERSION` différent de la version en base), une sauvegarde complète
+est prise avec `backup-before-deploy.sh` ; son échec arrête le déploiement avant toute modification des
+services. Une sauvegarde fraîche peut aussi être imposée :
 
 ```bash
 sudo /root/iceforge/ops/production/deploy-application-release.sh \
   --revision <sha-git> \
-  --verified-backup /var/backups/iceforge/iceforge-<horodatage>.tar.gz.age
+  --age-recipient 'ssh-ed25519 AAAA...' \
+  --fresh-backup
+```
+
+Aucune archive n'est supprimée ni écrasée. Une restauration depuis une archive réutilisée perd ce qui a
+été saisi depuis sa date : c'est le compromis accepté pour une release sans changement de schéma.
+
+Essais isolés de la politique (dossier temporaire et projet Compose de test, production seulement lue) :
+
+```bash
+sudo ops/production/tests/deploy-policy-test.sh /chemin/du/destinataire-age.txt
 ```
 
 Les migrations de PostgreSQL 15 vers 18 et de RabbitMQ 3 vers 4 sont des

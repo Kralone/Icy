@@ -44,6 +44,8 @@ $releaseFiles = @(
     'verify.sh',
     'verify-discord-e2e.sh',
     'destroy.sh',
+    'suspend.sh',
+    'resume.sh',
     'README.md'
 )
 foreach ($file in $releaseFiles) {

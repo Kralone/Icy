@@ -4,21 +4,22 @@ set -Eeuo pipefail
 ROOT_DIR=${ICEFORGE_ROOT:-/root/iceforge}
 REVISION=
 AGE_RECIPIENT=
-BACKUP_ARCHIVE=
 PREFLIGHT_ONLY=0
-MAX_BACKUP_AGE_SECONDS=86400
+FRESH_BACKUP=0
+# Une archive complète de moins de 7 jours est réutilisée : voir select-predeploy-backup.sh.
+MAX_BACKUP_AGE_DAYS=7
 # Flyway version this release must reach. V39 to V43 are applied by the backend at startup.
 TARGET_FLYWAY_VERSION=43
 
 usage() {
-  echo "Usage: $0 --revision <git-sha> [--age-recipient 'age1...'|\"ssh-ed25519 AAAA...\"] [--verified-backup /var/backups/iceforge/iceforge-*.tar.gz.age] [--preflight]" >&2
+  echo "Usage: $0 --revision <git-sha> --age-recipient 'age1...'|\"ssh-ed25519 AAAA...\" [--fresh-backup] [--preflight]" >&2
 }
 
 while (($#)); do
   case "$1" in
     --revision) REVISION=${2:?}; shift 2 ;;
     --age-recipient) AGE_RECIPIENT=${2:?}; shift 2 ;;
-    --verified-backup) BACKUP_ARCHIVE=${2:?}; shift 2 ;;
+    --fresh-backup) FRESH_BACKUP=1; shift ;;
     --preflight) PREFLIGHT_ONLY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
@@ -27,31 +28,11 @@ done
 
 [[ $EUID -eq 0 ]] || { echo 'Ce script doit être exécuté en root.' >&2; exit 1; }
 [[ $REVISION =~ ^[0-9a-f]{40}$ ]] || { echo 'Révision Git invalide.' >&2; exit 1; }
-if [[ -z $BACKUP_ARCHIVE ]]; then
-  [[ $AGE_RECIPIENT == age1* || $AGE_RECIPIENT == 'ssh-ed25519 '* ]] || {
-    echo 'Destinataire age invalide.' >&2
-    exit 1
-  }
-else
-  [[ $BACKUP_ARCHIVE == /var/backups/iceforge/iceforge-*.tar.gz.age ]] || {
-    echo 'Archive de reprise hors du répertoire autorisé.' >&2
-    exit 1
-  }
-  [[ -f $BACKUP_ARCHIVE && ! -L $BACKUP_ARCHIVE ]] || {
-    echo 'Archive de reprise absente ou invalide.' >&2
-    exit 1
-  }
-  [[ -f $BACKUP_ARCHIVE.sha256 && ! -L $BACKUP_ARCHIVE.sha256 ]] || {
-    echo 'Checksum de reprise absent ou invalide.' >&2
-    exit 1
-  }
-  archive_age=$(( $(date +%s) - $(stat -c %Y "$BACKUP_ARCHIVE") ))
-  ((archive_age >= 0 && archive_age <= MAX_BACKUP_AGE_SECONDS)) || {
-    echo "Archive de reprise trop ancienne: ${archive_age}s." >&2
-    exit 1
-  }
-  (cd /var/backups/iceforge && sha256sum -c "$(basename -- "$BACKUP_ARCHIVE.sha256")")
-fi
+# Le destinataire vérifie qu'une archive réutilisée lui est bien chiffrée, et chiffre une nouvelle sauvegarde.
+[[ $AGE_RECIPIENT == age1* || $AGE_RECIPIENT == 'ssh-ed25519 '* ]] || {
+  echo 'Destinataire age invalide.' >&2
+  exit 1
+}
 
 BACKEND_IMAGE="iceforge/backend:${REVISION}"
 BOT_IMAGE="iceforge/bot:${REVISION}"
@@ -83,6 +64,7 @@ required_files=(
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
+  "$ROOT_DIR/ops/production/select-predeploy-backup.sh"
 )
 for file in "${required_files[@]}"; do
   [[ -f $file && ! -L $file ]] || { echo "Fichier requis absent ou invalide: $file" >&2; exit 1; }
@@ -156,6 +138,20 @@ case "$current_version" in
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
 
+# Politique de sauvegarde, décidée avant toute action et affichée dès le précontrôle.
+# Date de la dernière migration appliquée : une archive plus ancienne ne contient pas le schéma actuel.
+last_migration_epoch=$(db_psql -Atc \
+  "SELECT coalesce(extract(epoch FROM max(installed_on) AT TIME ZONE current_setting('TimeZone'))::bigint, 0) FROM public.flyway_schema_history WHERE success")
+backup_args=(--age-recipient "$AGE_RECIPIENT" --max-age-days "$MAX_BACKUP_AGE_DAYS"
+  --current-version "$current_version" --target-version "$TARGET_FLYWAY_VERSION" --last-migration-epoch "$last_migration_epoch")
+if ((FRESH_BACKUP)); then backup_args+=(--force-fresh); fi
+backup_plan=$("$ROOT_DIR/ops/production/select-predeploy-backup.sh" "${backup_args[@]}")
+[[ $backup_plan == 'BACKUP-PLAN=REUSE '* || $backup_plan == 'BACKUP-PLAN=FRESH '* ]] || {
+  echo "Décision de sauvegarde illisible : $backup_plan" >&2
+  exit 1
+}
+echo "$backup_plan"
+
 if ((PREFLIGHT_ONLY)); then
   printf 'PRODUCTION-APPLICATION-PREFLIGHT=OK revision=%s flyway=%s\n' "$REVISION" "$current_version"
   exit 0
@@ -197,9 +193,11 @@ rollback() {
   exit "$status"
 }
 
-if [[ -n $BACKUP_ARCHIVE ]]; then
-  printf 'PREDEPLOY-BACKUP=REUSED archive=%s age_seconds=%s\n' "$BACKUP_ARCHIVE" "$archive_age"
+if [[ $backup_plan == 'BACKUP-PLAN=REUSE '* ]]; then
+  # Archive récente, intègre, chiffrée pour le destinataire validé et postérieure à la dernière migration : pas de nouvelle archive.
+  printf 'PREDEPLOY-BACKUP=REUSED %s\n' "${backup_plan#BACKUP-PLAN=REUSE }"
 else
+  # Sauvegarde complète habituelle ; un échec arrête le script avant toute modification des services.
   "$ROOT_DIR/ops/production/backup-before-deploy.sh" --age-recipient "$AGE_RECIPIENT"
 fi
 # Application rollouts with --no-deps do not start a newly added translator.
