@@ -402,8 +402,22 @@ class OperationCrewServiceTest {
         verify(positions).save(argThat(saved -> saved.getId() == null && saved.getLabel().equals("Ingénieur") && "wrench".equals(saved.getIcon()) && Integer.valueOf(1).equals(saved.getCapacity())));
         assertThat(polaris.getCrewPresetId()).isEqualTo(presetId);
         assertThat(polaris.getCapacity()).isEqualTo(10);
+        assertThat(polaris.getPositionMode()).isEqualTo(OperationGroup.PositionMode.SELF);
+        // Aucune affectation n'est réécrite : « Pilote » garde son identifiant, donc ses membres ; personne n'est déplacé vers un autre poste.
+        verify(assignments, never()).setPosition(any(), any(), any());
+        verify(assignments, never()).save(any());
 
         assertThatThrownBy(() -> service.followPreset(operationId, 3L, presetId)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("autre modèle");
+
+        // Opération terminée : l'équipage ne change plus.
+        doThrow(new OperationClosedException("Opération terminée")).when(lock).requireOpen(operationId);
+        assertThatThrownBy(() -> service.followPreset(operationId, 2L, presetId)).isInstanceOf(OperationClosedException.class);
+        verify(positions, org.mockito.Mockito.times(1)).delete(any());
+    }
+
+    @Test void onlyOrganizersApplyAPresetToACrew() throws Exception {
+        var method = com.icy.icy_backend.controller.operation.OperationController.class.getDeclaredMethod("followPreset", UUID.class, Long.class, UUID.class);
+        assertThat(method.getAnnotation(PreAuthorize.class).value()).isEqualTo("hasAnyRole('ADMIN', 'OFFICIER')");
     }
 
     @Test void theCrewReadShowsPositionsTakenSeatsAndMembersWithoutPosition() {
