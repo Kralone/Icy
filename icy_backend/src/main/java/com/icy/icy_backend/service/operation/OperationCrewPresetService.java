@@ -99,7 +99,7 @@ public class OperationCrewPresetService {
             throw new IllegalArgumentException("Nom de preset invalide");
         }
         if (request.getDescription() != null && request.getDescription().length() > 2000) throw new IllegalArgumentException("Description trop longue");
-        if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
+        if (request.getCapacity() != null && (request.getCapacity() < 1 || request.getCapacity() > 10000)) throw new IllegalArgumentException("La capacité doit être comprise entre 1 et 10 000 ; laissez-la vide pour ne pas limiter");
         if (request.getShipModelId() == null) throw new IllegalArgumentException("Choisissez le modèle de vaisseau de ce preset");
         List<OperationPositionRequest> positions = request.getPositions() == null ? List.of() : request.getPositions();
         if (positions.size() > OperationCrewService.MAX_POSITIONS) {

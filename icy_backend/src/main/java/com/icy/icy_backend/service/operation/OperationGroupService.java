@@ -103,7 +103,7 @@ public class OperationGroupService {
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> create(UUID operationId, OperationGroupRequest request) {
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
         if (request.getDescription() != null && request.getDescription().length() > 5000) throw new IllegalArgumentException("Description trop longue");
-        if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
+        if (request.getCapacity() != null && (request.getCapacity() < 1 || request.getCapacity() > 10000)) throw new IllegalArgumentException("La capacité doit être comprise entre 1 et 10 000 ; laissez-la vide pour ne pas limiter");
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
         if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");
         operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -132,7 +132,7 @@ public class OperationGroupService {
         requireOpen(operationId);
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 120) throw new IllegalArgumentException("Nom de groupe invalide");
         if (request.getDescription() != null && request.getDescription().length() > 5000) throw new IllegalArgumentException("Description trop longue");
-        if (request.getCapacity() != null && (request.getCapacity() < 0 || request.getCapacity() > 10000)) throw new IllegalArgumentException("Capacité invalide");
+        if (request.getCapacity() != null && (request.getCapacity() < 1 || request.getCapacity() > 10000)) throw new IllegalArgumentException("La capacité doit être comprise entre 1 et 10 000 ; laissez-la vide pour ne pas limiter");
         if (request.getCapacity() != null && request.getCapacity() < confirmedAssignmentCount(operationId, groupId)) throw new IllegalArgumentException("La capacité ne peut pas être inférieure aux affectations confirmées");
         if (request.getAssignmentMode() == null) throw new IllegalArgumentException("Mode d’affectation requis");
         if (request.getSortOrder() < 0 || request.getSortOrder() > 10000) throw new IllegalArgumentException("Ordre invalide");

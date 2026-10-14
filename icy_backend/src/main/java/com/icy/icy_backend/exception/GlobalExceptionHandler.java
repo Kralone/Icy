@@ -20,6 +20,13 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import jakarta.persistence.OptimisticLockException;
@@ -125,6 +132,54 @@ public class GlobalExceptionHandler {
         }
     }
 
+
+    /**
+     * Aucune route ne correspond : c'est une adresse inconnue, pas une panne. Sans ce gestionnaire, l'exception
+     * levée par Spring tombait dans le cas générique et répondait 500. Sur une route protégée, une requête sans
+     * identité n'arrive pas jusqu'ici (401 par la chaîne de sécurité) ; sous un préfixe public (/api/front, /api/auth…),
+     * un visiteur anonyme reçoit ce 404, sans détail.
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<Map<String, String>> handleUnknownRoute(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not Found", "message", "Adresse inconnue."));
+    }
+
+    /** La route existe mais pas pour cette méthode : 405 et les méthodes admises, au lieu d'un 500. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (ex.getSupportedHttpMethods() != null && !ex.getSupportedHttpMethods().isEmpty()) {
+            response.allow(ex.getSupportedHttpMethods().toArray(org.springframework.http.HttpMethod[]::new));
+        }
+        return response.body(Map.of("error", "Method Not Allowed", "message", "Méthode non admise pour cette adresse."));
+    }
+
+    /**
+     * Statut choisi par le code de l'application (410 de la gestion des vaisseaux, synchronisée par le catalogue).
+     * La raison est un texte écrit dans le code, jamais un message d'exception tiers.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        String error = status != null ? status.getReasonPhrase() : "Error";
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", error, "message", ex.getReason() != null ? ex.getReason() : error));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(Map.of("error", "Unsupported Media Type", "message", "Format de contenu non pris en charge."));
+    }
+
+    /** Le client refuse JSON : aucun corps n'est lisible pour lui, seul le statut répond. */
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<Void> handleNotAcceptable(HttpMediaTypeNotAcceptableException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(Map.of("error", "Content Too Large", "message", "Fichier trop volumineux."));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<MessageResponse<Void>> handleGenericException(Exception ex) {

@@ -97,6 +97,8 @@ export class OperationEditorComponent implements OnDestroy {
       if (tab === 'publication') this.loadPreviewParticipations();
       // Un brouillon ne garde pas de saisie en attente derrière un onglet.
       if (this.autosave.auto) this.autosave.flush();
+      // Barre défilante sur petit écran : l'onglet ouvert revient à l'écran, sans déplacer la page.
+      setTimeout(() => document.querySelector('.tabs button[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'center' }));
     };
     if (tab === this.tab) open(); else this.afterGroupSettings(open);
   }

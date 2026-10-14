@@ -58,7 +58,9 @@ export class OperationGroupPanelComponent {
     return !!name && this.siblings().some(candidate => candidate.id !== this.group().id && candidate.name.trim().toLocaleLowerCase() === name);
   });
   readonly capacityTooLow = computed(() => this.settings().capacity !== null && this.settings().capacity! < this.group().memberCount);
-  readonly invalid = computed(() => !this.settings().name.trim() || this.nameTaken() || this.capacityTooLow() || (this.settings().capacity !== null && this.settings().capacity! < 0));
+  /** Vide : sans limite. Renseignée : de 1 à 10 000, comme le serveur l'exige. */
+  readonly capacityOutOfRange = computed(() => this.settings().capacity !== null && (this.settings().capacity! < 1 || this.settings().capacity! > 10000));
+  readonly invalid = computed(() => !this.settings().name.trim() || this.nameTaken() || this.capacityTooLow() || this.capacityOutOfRange());
   readonly changed = computed(() => {
     const group = this.group();
     const settings = this.settings();

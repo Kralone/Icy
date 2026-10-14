@@ -84,6 +84,14 @@ icy:
 
 server:
     port: 8080
+    # La page d'erreur est servie à tout client, connecté ou non : elle ne donne que le statut et le chemin.
+    error:
+        include-message: never
+        include-stacktrace: never
+        include-binding-errors: never
+        include-exception: false
+        whitelabel:
+            enabled: false
 
 logging:
     level:

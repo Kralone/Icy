@@ -85,7 +85,7 @@
   </span>
   @if (organizer() && !locked() && members().length) {
     <label class="card__pilot">Pilote
-      <select [value]="ship.pilotUserId || ''" [disabled]="busy()" (change)="pilot.emit({ proposalId: ship.id, userId: $any($event.target).value || null })">
+      <select [value]="ship.pilotUserId || ''" [disabled]="busy()" (change)="choosePilot(ship, $any($event.target))">
         <option value="">Non désigné</option>
         @for (member of members(); track member.id) { <option [value]="member.id" [selected]="member.id === ship.pilotUserId">{{ member.username }}</option> }
       </select>

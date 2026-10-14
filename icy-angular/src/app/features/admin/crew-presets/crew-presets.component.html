@@ -26,7 +26,7 @@
 
       <div class="fields">
         <label>Nom du preset<input name="presetName" [ngModel]="current.name" (ngModelChange)="set('name', $event)" maxlength="120" placeholder="Carrack — Exploration"></label>
-        <label>Capacité de l’équipage<input name="presetCapacity" type="number" min="0" max="10000" step="1" [ngModel]="current.capacity" (ngModelChange)="set('capacity', toNumber($event))" placeholder="Libre"><small>Choix d’organisation, modifiable dans chaque opération. Vide : pas de limite.</small></label>
+        <label>Capacité de l’équipage<input name="presetCapacity" type="number" min="1" max="10000" step="1" [ngModel]="current.capacity" (ngModelChange)="set('capacity', toNumber($event))" placeholder="Libre"><small>Choix d’organisation, modifiable dans chaque opération. Vide : pas de limite.</small></label>
         <label class="fields__wide">Description<textarea name="presetDescription" rows="2" maxlength="2000" [ngModel]="current.description" (ngModelChange)="set('description', $event)" placeholder="Usage prévu de cet équipage"></textarea></label>
       </div>
 
