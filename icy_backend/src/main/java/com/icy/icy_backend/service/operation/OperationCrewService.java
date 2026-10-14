@@ -133,6 +133,7 @@ public class OperationCrewService {
                 positionRepository.deleteByGroupId(group.getId());
             }
             group.setKind(OperationGroup.Kind.STANDARD);
+            group.setCrewPresetId(null);
             group.setShipModelId(null);
             group.setShipModelName(null);
             group.setPositionMode(OperationGroup.PositionMode.SELF);
@@ -158,6 +159,15 @@ public class OperationCrewService {
         else if (preset != null) group.setPositionMode(preset.getPositionMode());
         else if (group.getPositionMode() == null) group.setPositionMode(OperationGroup.PositionMode.SELF);
         if (preset != null && request.getCapacity() == null) group.setCapacity(preset.getCapacity());
+        // Créé à partir d'un preset : l'équipage suivra ses modifications tant qu'il n'est pas retouché à la main.
+        if (preset != null) group.setCrewPresetId(preset.getId());
+    }
+
+    /** Postes retouchés à la main : l'équipage garde ses réglages et ne suit plus le preset. */
+    private void detachFromPreset(OperationGroup group) {
+        if (group.getCrewPresetId() == null) return;
+        group.setCrewPresetId(null);
+        groupRepository.save(group);
     }
 
     /** Copie les postes du preset dans l'équipage qui vient d'être créé : le preset n'est plus consulté ensuite. */
@@ -185,13 +195,14 @@ public class OperationCrewService {
         String label = validate(request, existing.stream().map(OperationGroupPosition::getLabel).toList());
         OperationGroupPosition saved = positionRepository.save(OperationGroupPosition.builder().groupId(group.getId()).label(label)
                 .icon(blankToNull(request.getIcon())).capacity(request.getCapacity()).sortOrder(request.getSortOrder()).build());
+        detachFromPreset(group);
         operationRepository.markModified(operationId, LocalDateTime.now());
         return messageService.buildResponse("operation.crew.position.saved", toDto(saved, 0));
     }
 
     @Transactional
     public ResponseEntity<MessageResponse<OperationCrewDTO.Position>> updatePosition(UUID operationId, Long groupId, Long positionId, OperationPositionRequest request) {
-        crewGroup(operationId, groupId);
+        OperationGroup group = crewGroup(operationId, groupId);
         operationLock.requireOpen(operationId);
         // Même verrou que les prises de poste : la capacité n'est jamais abaissée pendant qu'une place est attribuée.
         groupRepository.findLockedById(groupId);
@@ -206,13 +217,14 @@ public class OperationCrewService {
         position.setIcon(blankToNull(request.getIcon()));
         position.setCapacity(request.getCapacity());
         position.setSortOrder(request.getSortOrder());
+        detachFromPreset(group);
         operationRepository.markModified(operationId, LocalDateTime.now());
         return messageService.buildResponse("operation.crew.position.saved", toDto(positionRepository.save(position), (int) taken));
     }
 
     @Transactional
     public ResponseEntity<MessageResponse<Void>> deletePosition(UUID operationId, Long groupId, Long positionId) {
-        crewGroup(operationId, groupId);
+        OperationGroup group = crewGroup(operationId, groupId);
         operationLock.requireOpen(operationId);
         groupRepository.findLockedById(groupId);
         OperationGroupPosition position = positionOf(groupId, positionId);
@@ -220,6 +232,7 @@ public class OperationCrewService {
             throw new IllegalStateException("Ce poste est occupé : changez le poste de ses membres avant de le supprimer.");
         }
         positionRepository.delete(position);
+        detachFromPreset(group);
         operationRepository.markModified(operationId, LocalDateTime.now());
         return messageService.buildResponse("operation.crew.position.deleted", null);
     }

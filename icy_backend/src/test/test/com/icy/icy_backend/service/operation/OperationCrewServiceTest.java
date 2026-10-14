@@ -353,6 +353,8 @@ class OperationCrewServiceTest {
 
         assertThat(group.getCapacity()).isEqualTo(12);
         assertThat(group.getPositionMode()).isEqualTo(OperationGroup.PositionMode.MANAGED);
+        // L'équipage suit désormais le preset.
+        assertThat(group.getCrewPresetId()).isEqualTo(presetId);
         verify(positions).save(argThat(saved -> saved.getGroupId().equals(9L) && saved.getLabel().equals("Pilote") && Integer.valueOf(1).equals(saved.getCapacity())));
         verify(positions).save(argThat(saved -> saved.getGroupId().equals(9L) && saved.getLabel().equals("Artilleur") && saved.getCapacity() == null));
         // Le preset n'est que lu : la copie ne l'écrit jamais.
@@ -367,6 +369,18 @@ class OperationCrewServiceTest {
 
         preset.setArchived(true);
         assertThatThrownBy(() -> service.configure(OperationGroup.builder().build(), request, true)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test void retouchingAPositionByHandDetachesTheCrewFromItsPreset() {
+        UUID presetId = UUID.randomUUID();
+        polaris.setCrewPresetId(presetId);
+        service.addPosition(operationId, 2L, position("Ingénieur", null));
+        assertThat(polaris.getCrewPresetId()).isNull();
+        verify(groups).save(polaris);
+
+        polaris.setCrewPresetId(presetId);
+        service.updatePosition(operationId, 2L, 10L, position("Pilote", 1));
+        assertThat(polaris.getCrewPresetId()).isNull();
     }
 
     @Test void theCrewReadShowsPositionsTakenSeatsAndMembersWithoutPosition() {

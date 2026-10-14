@@ -21,7 +21,7 @@ interface PresetDraft {
 
 const MAX_POSITIONS = 30;
 
-/** Bibliothèque des presets d'équipage, réservée aux administrateurs. Un preset est copié dans une opération : le modifier ici ne change aucune opération. */
+/** Bibliothèque des presets d'équipage, réservée aux administrateurs. Les équipages qui suivent un preset sont mis à jour par le serveur dans les opérations à venir. */
 @Component({
   selector: 'app-crew-presets',
   standalone: true,

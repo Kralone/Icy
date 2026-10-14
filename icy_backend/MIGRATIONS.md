@@ -87,6 +87,10 @@ pas modifiées.
 La contrainte unique créée par l'ancienne V44 puis retirée par l'ancienne V45 n'est
 plus créée : seul l'index unique partiel « une demande en attente » existe.
 
+`V44__link_crews_to_presets.sql`, livrée après ce regroupement, ajoute le lien facultatif
+d'un équipage vers son preset (`operation_groups.crew_preset_id`, mis à NULL si le preset
+disparaît). Elle n'a rien à voir avec l'ancienne V44 de développement citée ci-dessus.
+
 Les documents et preuves rédigés avant ce regroupement citent l'ancienne
 numérotation ; ce tableau donne la correspondance.
 
