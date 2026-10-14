@@ -349,6 +349,27 @@ describe('OperationPageComponent', () => {
     expect(toast.success).toHaveBeenCalledWith('Vaisseau accepté.');
   });
 
+  it('shows the state of my proposal on each ship of my hangar', async () => {
+    getMyHangar.mockReturnValue(of({ data: [{ id: { shipId: 7 }, ship: { id: 7, name: 'ATLS GEO' } }, { id: { shipId: 8 }, ship: { id: 8, name: 'Nomad' } }] }));
+    getParticipations.mockReturnValue(of({ data: [me] }));
+    fixture = TestBed.createComponent(OperationPageComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: true, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    fixture.detectChanges();
+    http.match(request => request.url === '/api/operations/op/ships').forEach(request => request.flush({ data: [
+      { id: 's1', shipId: 7, shipName: 'ATLS GEO', status: 'ACCEPTED', ownerUserId: 'me', ownerUsername: 'Moi', ownerPresent: true, inHangar: true, groupId: null, requirementId: null }] }));
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const cards = Array.from(fixture.nativeElement.querySelectorAll('.hangar__ship')) as HTMLButtonElement[];
+    expect(fixture.nativeElement.querySelector('.hangar h3').textContent).toContain('2 vaisseaux');
+    expect(cards[0].querySelector('.hangar__badge')!.textContent!.trim()).toBe('Accepté');
+    expect(cards[0].disabled).toBe(true);
+    expect(cards[1].querySelector('.hangar__badge')).toBeNull();
+    expect(cards[1].disabled).toBe(false);
+  });
+
   it('locks the answers of a finished operation', async () => {
     await render(true);
 
