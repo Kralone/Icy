@@ -48,7 +48,8 @@ describe('OperationPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'op' })) } },
-        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)), getOperationCrews: vi.fn(() => of([])) } },
+        { provide: EventService, useValue: { getParticipations, setParticipationStatus, getMyHangar, leaveOperationGroup, getOperationCoordination: vi.fn(() => of(board)), getOperationCrews: vi.fn(() => of([])),
+          approveOperationAssignment: vi.fn(() => of({})), requestOperationGroup: vi.fn(() => of({ code: 2033 })) } },
         { provide: AuthService, useValue: { getUserIdFromToken: vi.fn(() => 'me') } },
         { provide: HotToastService, useValue: toast },
       ]
@@ -157,6 +158,63 @@ describe('OperationPageComponent', () => {
       expect(fixture.nativeElement.querySelector('.mine__group').textContent).toContain('Aucune affectation');
       expect(toast.success).toHaveBeenCalledWith('Vous avez quitté votre groupe.');
     } finally { confirmSpy.mockRestore(); }
+  });
+
+  describe('mise à jour sans recharger la page', () => {
+    const group = { id: 3, parentId: null, name: 'Minage FPS', capacity: 4, effectiveMode: 'VALIDATION', container: false, memberCount: 0, freeSeats: 4, ownFreeSeats: 4, responsibleUsername: null, members: [] as Array<{ userId: string; username: string }> };
+    const joined = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'me', username: 'Moi' }] };
+
+    async function renderWith(composition: object): Promise<void> {
+      fixture = TestBed.createComponent(OperationPageComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      http.expectOne('/api/operations/op').flush({ data: { id: 'op', title: 'QA', allowShipProposals: false, startDateTime: '2099-10-20T20:00:00', endDateTime: '2099-10-20T23:00:00', finished: false } });
+      http.expectOne('/api/operations/op/composition').flush({ data: composition });
+      http.match(() => true).forEach(request => request.flush({ data: [] }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    it('reads my assignment and the chart again once a request is decided from the coordination board', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: { id: 'r1', groupId: 3, groupName: 'Minage FPS' }, groups: [group] });
+      expect(fixture.nativeElement.querySelector('#affectation').textContent).toContain('Minage FPS');
+
+      component.decideRequest('op', 'r1', true);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [joined] } });
+      fixture.detectChanges();
+
+      expect(component.composition?.myGroupId).toBe(3);
+      expect(component.composition?.myRequest).toBeNull();
+      expect(fixture.nativeElement.querySelector('#organisation').textContent).toContain('Moi');
+      expect(toast.success).toHaveBeenCalledWith('Demande acceptée.');
+    });
+
+    it('shows what other members did at the next quiet refresh, without a loading state', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      const someoneElse = { ...group, memberCount: 1, freeSeats: 3, ownFreeSeats: 3, members: [{ userId: 'u7', username: 'Nova' }] };
+
+      component.refreshQuietly();
+      expect(component.participationLoading).toBe(false);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: null, myRequest: null, groups: [someoneElse] } });
+      http.match(() => true).filter(request => !request.cancelled).forEach(request => request.flush({ data: [] }));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#organisation').textContent).toContain('Nova');
+    });
+
+    it('waits for an action in progress instead of refreshing over it', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.assignmentBusy = true;
+      component.refreshQuietly();
+      http.expectNone('/api/operations/op/composition');
+    });
+
+    it('says the place is taken when the server places an organizer directly instead of filing a request', async () => {
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [group] });
+      component.requestGroup('op', group as never);
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [joined] } });
+      expect(toast.success).toHaveBeenCalledWith('Vous avez rejoint Minage FPS.');
+    });
   });
 
   it('keeps the coordination board folded until asked, and says what is waiting in it', async () => {

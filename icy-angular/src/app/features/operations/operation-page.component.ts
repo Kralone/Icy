@@ -1,11 +1,11 @@
 import { CrewPositionChange } from './organization/operation-crew-members.component';
 import { OperationCrew } from './organization/operation-crew.model';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, NgZone, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
+import { catchError, filter, forkJoin, fromEvent, interval, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -48,6 +48,7 @@ export class OperationPageComponent {
   private readonly toast = inject(HotToastService);
   private readonly confirmService = inject(OperationConfirmService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly zone = inject(NgZone);
   private readonly shipsRefresh$ = new Subject<void>();
   private readonly operationReload$ = new Subject<void>();
   readonly operationState$ = this.operationReload$.pipe(
@@ -155,17 +156,45 @@ export class OperationPageComponent {
       },
       error: () => { this.canManage = false; }
     });
+    // Les réponses et affectations des autres membres arrivent sans recharger la page : relecture régulière tant que l'onglet est visible,
+    // et dès qu'on y revient.
+    // La minuterie tourne hors d'Angular : elle ne rend jamais la page « instable » ; chaque relecture y revient.
+    if (typeof document !== 'undefined') {
+      this.zone.runOutsideAngular(() => merge(interval(OperationPageComponent.REFRESH_MS), fromEvent(document, 'visibilitychange'))
+        .pipe(filter(() => document.visibilityState === 'visible'), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.zone.run(() => this.refreshQuietly())));
+    }
+  }
+
+  static readonly REFRESH_MS = 15000;
+
+  /**
+   * Relecture silencieuse : ni état de chargement ni message d'erreur. Elle attend la fin d'une action en cours,
+   * et ne redessine pas une liste ou un champ que le membre est en train d'utiliser.
+   */
+  refreshQuietly(): void {
+    const id = this.shownOperationId;
+    if (!id || this.assignmentBusy || this.coordinationBusy || this.participationSaving || this.fleetBusy) return;
+    const active = document.activeElement?.tagName;
+    if (active === 'SELECT' || active === 'INPUT' || active === 'TEXTAREA') return;
+    this.loadParticipations(id, true);
+    this.loadComposition(id);
+    if (this.coordination) this.loadCoordination(id);
+    this.shipsRefresh$.next();
   }
 
   /** Administrateur ou officier : accès à l'éditeur et au tableau de coordination complet. */
   canManage = false;
 
-  loadParticipations(operationId: string): void {
+  /** `quiet` : relecture de fond, la liste affichée reste en place et un échec ne la remplace pas par une erreur. */
+  loadParticipations(operationId: string, quiet = false): void {
     const seq = ++this.participationLoadSeq;
     this.participationOperationId = operationId;
-    this.participationLoading = true;
-    this.participationError = '';
-    this.changeDetector.markForCheck();
+    if (!quiet) {
+      this.participationLoading = true;
+      this.participationError = '';
+      this.changeDetector.markForCheck();
+    }
     this.eventService.getParticipations(operationId).subscribe({
       next: (response: any) => {
         if (seq !== this.participationLoadSeq) return;
@@ -184,6 +213,7 @@ export class OperationPageComponent {
       },
       error: () => {
         if (seq !== this.participationLoadSeq) return;
+        if (quiet) { this.participationLoading = false; this.changeDetector.markForCheck(); return; }
         this.presentCount = null;
         this.participationLoading = false;
         this.participationError = 'Impossible de charger les participations.';
@@ -214,12 +244,18 @@ export class OperationPageComponent {
     this.coordinationBusy = true;
     this.changeDetector.markForCheck();
     action.subscribe({
-      next: () => { this.toast.success(success); this.loadCoordination(operationId); },
+      next: () => { this.toast.success(success); this.afterCoordination(operationId); },
       error: error => {
         this.toast.error(this.fleetError(error, failure));
-        this.loadCoordination(operationId);
+        this.afterCoordination(operationId);
       }
     });
+  }
+
+  /** Une décision change aussi l'organigramme et, si elle me concerne, « Mon affectation » : tout est relu, pas seulement le tableau. */
+  private afterCoordination(operationId: string): void {
+    this.loadCoordination(operationId);
+    if (this.shownOperationId === operationId) this.loadComposition(operationId);
   }
 
   assignMember(operationId: string, userId: string, groupId: number): void {
@@ -374,7 +410,7 @@ export class OperationPageComponent {
   }
 
   /** Une action sur ma propre affectation : résultat annoncé après la réponse du serveur, puis relecture. */
-  private assignmentAction(operationId: string, action: Observable<unknown>, success: string, failure: string, focusCrew = false): void {
+  private assignmentAction(operationId: string, action: Observable<unknown>, success: string | ((response: unknown) => string), failure: string, focusCrew = false): void {
     if (this.assignmentBusy) return;
     // Décidé à chaque action : un échec de relecture précédent ne laisse aucune cible de focus en attente.
     this.focusCrewAfterAction = focusCrew ? this.composition?.myGroupId ?? null : null;
@@ -382,7 +418,7 @@ export class OperationPageComponent {
     this.assignmentBusy = true;
     this.changeDetector.markForCheck();
     action.pipe(timeout(15000)).subscribe({
-      next: () => { this.toast.success(success); this.afterAssignmentChange(operationId); },
+      next: response => { this.toast.success(typeof success === 'function' ? success(response) : success); this.afterAssignmentChange(operationId); },
       error: error => { this.toast.error(this.fleetError(error, failure)); this.afterAssignmentChange(operationId); }
     });
   }
@@ -405,8 +441,16 @@ export class OperationPageComponent {
 
   requestGroup(operationId: string, group: CompositionGroup): void {
     const moving = this.composition?.myGroupId != null;
-    this.assignmentAction(operationId, this.eventService.requestOperationGroup(operationId, group.id), moving ? `Transfert demandé vers ${group.name} : vous gardez votre place en attendant.` : `Demande envoyée pour ${group.name}.`, 'Demande impossible.');
+    // Un organisateur ou le responsable du groupe est placé directement par le serveur : le message suit la réponse, pas le mode du groupe.
+    this.assignmentAction(operationId, this.eventService.requestOperationGroup(operationId, group.id),
+      response => (response as { code?: number } | null)?.code === OperationPageComponent.ASSIGNMENT_CONFIRMED_CODE
+        ? (moving ? `Vous êtes maintenant dans ${group.name}.` : `Vous avez rejoint ${group.name}.`)
+        : (moving ? `Transfert demandé vers ${group.name} : vous gardez votre place en attendant.` : `Demande envoyée pour ${group.name}.`),
+      'Demande impossible.');
   }
+
+  /** Code de `operation.assignment.confirmed` : la place est prise, sans demande. */
+  static readonly ASSIGNMENT_CONFIRMED_CODE = 2033;
 
   async leaveGroup(operationId: string): Promise<void> {
     const mine = this.composition?.groups.find(group => group.id === this.composition?.myGroupId);
