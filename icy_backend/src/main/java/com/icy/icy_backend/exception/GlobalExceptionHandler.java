@@ -131,8 +131,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Aucune route ne correspond : c'est une adresse inconnue, pas une panne. Sans ce gestionnaire, l'exception
-     * levée par Spring tombait dans le cas générique et répondait 500. Une requête sans identité n'arrive pas
-     * jusqu'ici : la chaîne de sécurité la refuse avant, en 401.
+     * levée par Spring tombait dans le cas générique et répondait 500. Sur une route protégée, une requête sans
+     * identité n'arrive pas jusqu'ici (401 par la chaîne de sécurité) ; sous un préfixe public (/api/front, /api/auth…),
+     * un visiteur anonyme reçoit ce 404, sans détail.
      */
     @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
     public ResponseEntity<Map<String, String>> handleUnknownRoute(Exception ex) {

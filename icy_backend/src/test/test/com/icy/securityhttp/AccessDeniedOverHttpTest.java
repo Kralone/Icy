@@ -85,6 +85,8 @@ class AccessDeniedOverHttpTest {
     @RestController
     static class Probe {
         @GetMapping("/api/probe/member") String member() { return "ok"; }
+        /** Sous un préfixe public de SecurityConfig : joignable sans identité. */
+        @GetMapping("/api/front/probe") String publicProbe() { return "ok"; }
         @GetMapping("/api/probe/admin") @PreAuthorize("hasRole('ADMIN')") String admin() { return "ok"; }
         /** Refus décidé dans un service, comme pour un responsable hors de sa délégation. */
         @GetMapping("/api/probe/delegation") String delegation() { throw new AccessDeniedException("Groupe hors de votre délégation"); }
@@ -192,6 +194,19 @@ class AccessDeniedOverHttpTest {
         HttpResponse<String> wrong = call("DELETE", "/api/probe/member", "jeton-membre");
         assertThat(wrong.statusCode()).isEqualTo(405);
         assertThat(wrong.headers().firstValue("Allow")).hasValueSatisfying(allow -> assertThat(allow).contains("GET"));
+        assertThat(wrong.body()).doesNotContain("Exception").doesNotContain("\"trace\"");
+    }
+
+    @Test
+    void underAPublicPrefixAnAnonymousVisitorGetsTheTrueStatusWithoutDetails() throws Exception {
+        assertThat(call("GET", "/api/front/probe", null).statusCode()).isEqualTo(200);
+        HttpResponse<String> unknown = call("GET", "/api/front/absente", null);
+        assertThat(unknown.statusCode()).isEqualTo(404);
+        assertThat(unknown.body()).contains("Adresse inconnue").doesNotContain("Exception").doesNotContain("\"trace\"").doesNotContain("/api/front/absente");
+        HttpResponse<String> wrong = call("DELETE", "/api/front/probe", null);
+        assertThat(wrong.statusCode()).isEqualTo(405);
+        assertThat(wrong.headers().firstValue("Allow")).hasValueSatisfying(allow -> assertThat(allow).contains("GET"));
+        assertThat(wrong.body()).doesNotContain("Exception").doesNotContain("\"trace\"");
     }
 
     @Test
@@ -199,7 +214,7 @@ class AccessDeniedOverHttpTest {
         HttpResponse<String> failure = call("GET", "/api/probe/panne", "jeton-membre");
         assertThat(failure.statusCode()).isEqualTo(500);
         assertThat(failure.body()).doesNotContain("secret-interne-de-test").doesNotContain("UnsupportedOperationException").doesNotContain("\"trace\"");
-        // Sans identité, ni une panne ni une adresse inconnue ne se distinguent d'une route protégée.
+        // Sans identité, une panne sur une route protégée ne se distingue pas d'un refus.
         assertThat(call("GET", "/api/probe/panne", null).statusCode()).isEqualTo(401);
     }
 
