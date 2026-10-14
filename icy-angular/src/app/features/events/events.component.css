@@ -26,7 +26,10 @@ h1 { font-size: clamp(1.65rem, 3vw, 2.4rem); font-weight: 700; line-height: 1.2;
 .operation-badge { display: inline-flex; align-items: center; gap: .3rem; width: fit-content; margin-right: .5rem; padding: .16rem .6rem; border-radius: 999px; color: #2a1d05; background: linear-gradient(135deg, #fde68a, #f4cd7d 55%, #e0a93b); box-shadow: 0 0 0 1px rgba(253,230,138,.6), 0 0 12px rgba(244,205,125,.45); font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .agenda-event--operation { border-color: #f4cd7d; border-left: 5px solid #f4cd7d; background: linear-gradient(115deg, #2a2110, #132b3d 45%, #101f2f); box-shadow: 0 0 0 1px rgba(244,205,125,.35), 0 0 22px rgba(244,205,125,.18); }
 .agenda-event--operation:hover { border-color: #fde68a; }
-.agenda-event--operation .agenda-type { display: inline-flex; align-items: center; }
+.agenda-event--operation .operation-badge { margin-bottom: .35rem; }
+/* Emblème des opérations, à droite des textes ; masqué sur les écrans étroits pour garder la place du titre. */
+.operation-emblem { flex: none; width: clamp(3.2rem, 4.5vw, 4.6rem); height: auto; filter: drop-shadow(0 0 10px rgba(244,205,125,.45)); }
+@media (max-width: 520px) { .operation-emblem { width: 2.6rem; } }
 .agenda-event--operation h2 { color: #fff7e0; }
 .calendar-event-card--operation { border-color: #f4cd7d; border-left: 4px solid #f4cd7d; background: linear-gradient(135deg, #3a2d12, #1c3c50); box-shadow: 0 0 10px rgba(244,205,125,.3); }
 .calendar-event-card--operation .operation-badge { margin: 0; padding: .06rem .45rem; font-size: .62rem; }

@@ -108,6 +108,27 @@ class OperationGroupServiceTest {
         verify(repository).delete(leaf);
     }
 
+    @Test void deletesTheGroupWithItsNeedsAndTheirShipsOnceConfirmed() {
+        OperationGroup crew = group(1, null);
+        var requirements = mock(com.icy.icy_backend.db.repository.event.OperationShipRequirementRepository.class);
+        var proposals = mock(com.icy.icy_backend.db.repository.event.OperationShipProposalRepository.class);
+        service.setShipRepositories(requirements, proposals);
+        UUID needId = UUID.randomUUID();
+        var need = com.icy.icy_backend.db.entity.event.OperationShipRequirement.builder().id(needId).operationEventId(operationId).groupId(1L).build();
+        var otherNeed = com.icy.icy_backend.db.entity.event.OperationShipRequirement.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(2L).build();
+        var forNeed = com.icy.icy_backend.db.entity.event.OperationShipProposal.builder().id(UUID.randomUUID()).operationEventId(operationId).requirementId(needId).build();
+        var forGroup = com.icy.icy_backend.db.entity.event.OperationShipProposal.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(1L).build();
+        var elsewhere = com.icy.icy_backend.db.entity.event.OperationShipProposal.builder().id(UUID.randomUUID()).operationEventId(operationId).groupId(2L).build();
+        when(requirements.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of(need, otherNeed));
+        when(proposals.findByOperationEventIdOrderByCreatedAtAsc(operationId)).thenReturn(List.of(forNeed, forGroup, elsewhere));
+
+        service.delete(operationId, 1L, true);
+
+        verify(proposals).deleteAll(List.of(forNeed, forGroup));
+        verify(requirements).deleteAll(List.of(need));
+        verify(repository).delete(crew);
+    }
+
     @Test void refusesASubgroupUnderAGroupThatAlreadyHasMembers() {
         OperationGroup parent = group(1, null);
         parent.setName("Alpha");

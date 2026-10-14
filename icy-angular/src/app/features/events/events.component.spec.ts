@@ -73,6 +73,10 @@ describe('EventsComponent', () => {
     expect(classic.querySelector('.agenda-open')!.textContent).toContain('Détails');
     expect(operation.classList).toContain('agenda-event--operation');
     expect(operation.querySelector('.operation-badge')!.textContent!.trim()).toBe('◆ Opération');
+    // Le type garde son libellé et son encadré habituels ; l'emblème est à droite du texte.
+    expect(operation.querySelector('.agenda-type')!.textContent!.trim()).toBe('Minage');
+    expect(operation.querySelector('.operation-emblem')).not.toBeNull();
+    expect(classic.querySelector('.operation-emblem')).toBeNull();
     expect(operation.querySelector('.agenda-open')!.textContent).toContain('Voir l’opération');
   });
 

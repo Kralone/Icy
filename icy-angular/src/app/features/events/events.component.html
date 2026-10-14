@@ -35,7 +35,8 @@
             <span>{{ event.startDateTime | date:'MMM yyyy':'':'fr' }}</span>
           </time>
           <div class="agenda-content">
-            <span class="agenda-type">@if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }{{ event.type?.name || 'Événement' }}</span>
+            @if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }
+            <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -44,6 +45,20 @@
               <span class="agenda-participation">{{ participationLabels[event.id] }}</span>
             }
           </div>
+          @if (event.activityType === 'OPERATION') {
+            <!-- Emblème des opérations : bouclier, réticule et appareil, à droite du texte. -->
+            <svg class="operation-emblem" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="operation-emblem-gold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#fde68a" /><stop offset=".55" stop-color="#f4cd7d" /><stop offset="1" stop-color="#d4952b" />
+                </linearGradient>
+              </defs>
+              <path d="M32 3 56 11v19c0 15-10.4 26.6-24 31C18.4 56.6 8 45 8 30V11z" fill="#2a1d05" fill-opacity=".72" stroke="url(#operation-emblem-gold)" stroke-width="2.6" stroke-linejoin="round" />
+              <circle cx="32" cy="31" r="13" fill="none" stroke="url(#operation-emblem-gold)" stroke-width="2" />
+              <path d="M32 13v8M32 41v8M14 31h8M42 31h8" stroke="url(#operation-emblem-gold)" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M32 22.5c2.6 2.6 4 6 4 9.6l2.4 3.4v2.6L35 36.6h-6l-3.4 1.5v-2.6L28 32.1c0-3.6 1.4-7 4-9.6z" fill="url(#operation-emblem-gold)" />
+            </svg>
+          }
           <span class="agenda-open">{{ event.activityType === 'OPERATION' ? 'Voir l’opération' : 'Détails' }} <span aria-hidden="true">↗</span></span>
         </button>
       } @empty {

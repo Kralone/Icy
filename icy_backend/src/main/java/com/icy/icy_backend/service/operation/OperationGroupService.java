@@ -73,6 +73,17 @@ public class OperationGroupService {
         return requirements || proposals;
     }
 
+    /** Besoins du groupe, puis vaisseaux proposés pour le groupe ou pour l'un de ces besoins : rien ne reste sans rattachement. */
+    private void deleteLinkedShips(UUID operationId, Long groupId) {
+        var requirements = requirementRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream()
+                .filter(requirement -> groupId.equals(requirement.getGroupId())).toList();
+        java.util.Set<UUID> requirementIds = requirements.stream().map(com.icy.icy_backend.db.entity.event.OperationShipRequirement::getId).collect(java.util.stream.Collectors.toSet());
+        var proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId).stream()
+                .filter(proposal -> groupId.equals(proposal.getGroupId()) || (proposal.getRequirementId() != null && requirementIds.contains(proposal.getRequirementId()))).toList();
+        proposalRepository.deleteAll(proposals);
+        requirementRepository.deleteAll(requirements);
+    }
+
     /** Membres affectés directement à ce groupe, ou demandes encore en attente sur lui. */
     private boolean isOccupied(UUID operationId, Long groupId) {
         boolean assigned = assignmentRepository.findByOperationEventId(operationId).stream().anyMatch(assignment -> groupId.equals(assignment.getGroupId()));
@@ -160,12 +171,24 @@ public class OperationGroupService {
 
     @Transactional
     public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, Long groupId) {
+        return delete(operationId, groupId, false);
+    }
+
+    /**
+     * {@code withLinkedShips} : l'organisateur a confirmé que les besoins de vaisseaux du groupe et les vaisseaux proposés
+     * pour lui (ou pour ces besoins) disparaissent avec lui. Sans cette confirmation, un groupe qui en porte n'est pas supprimé.
+     */
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> delete(UUID operationId, Long groupId, boolean withLinkedShips) {
         OperationGroup group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         if (!operationId.equals(group.getOperationEventId())) throw new ResourceNotFoundException("Groupe introuvable");
         requireOpen(operationId);
         if (groupRepository.existsByParentId(groupId)) throw new IllegalStateException("Supprimez d’abord les sous-groupes");
         if (isOccupied(operationId, groupId)) throw new IllegalStateException("Ce groupe a des membres ou des demandes en attente : libérez-le avant de le supprimer.");
-        if (hasLinkedShips(operationId, groupId)) throw new IllegalStateException("Ce groupe porte des besoins ou des vaisseaux proposés : rattachez-les à un autre groupe ou à toute l’opération avant de le supprimer.");
+        if (hasLinkedShips(operationId, groupId)) {
+            if (!withLinkedShips) throw new IllegalStateException("Ce groupe porte des besoins ou des vaisseaux proposés : confirmez leur suppression avec le groupe, ou rattachez-les ailleurs.");
+            deleteLinkedShips(operationId, groupId);
+        }
         groupRepository.delete(group);
         operationRepository.markModified(operationId, java.time.LocalDateTime.now());
         return messageService.buildResponse("operation.group.deleted", null);

@@ -187,7 +187,10 @@ export class EventService {
   removeOperationMember(operationId: string, userId: string) { return this.http.delete(`/api/operations/${operationId}/assignments/members/${userId}`); }
   createOperationGroup(operationId: string, payload: any) { return this.http.post(`/api/operations/${operationId}/groups`, payload); }
   updateOperationGroup(operationId: string, groupId: number, payload: any) { return this.http.put(`/api/operations/${operationId}/groups/${groupId}`, payload); }
-  deleteOperationGroup(operationId: string, groupId: number) { return this.http.delete(`/api/operations/${operationId}/groups/${groupId}`); }
+  /** {@code withLinkedShips} : les besoins de vaisseaux du groupe et les vaisseaux proposés pour lui sont supprimés avec lui. */
+  deleteOperationGroup(operationId: string, groupId: number, withLinkedShips = false) {
+    return this.http.delete(`/api/operations/${operationId}/groups/${groupId}`, withLinkedShips ? { params: { withLinkedShips: true } } : {});
+  }
   reorderOperationGroups(operationId: string, groupIds: number[]) { return this.http.put(`/api/operations/${operationId}/groups/reorder`, groupIds); }
   approveOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/approve`, {}); }
   refuseOperationAssignment(requestId: string) { return this.http.post(`/api/operations/assignment-requests/${requestId}/refuse`, {}); }
