@@ -61,6 +61,9 @@ public class Ship {
 
     @Transient
     private String catalogGroup;
+    /** Classe de taille de la source (1 à 6, au-delà : capital), pour les vaisseaux seulement ; null si la source ne la donne pas. */
+    @Transient
+    private Integer sizeClass;
     @Transient
     private String externalId;
     @Transient

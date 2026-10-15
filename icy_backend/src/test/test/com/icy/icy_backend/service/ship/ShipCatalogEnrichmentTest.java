@@ -23,8 +23,9 @@ class ShipCatalogEnrichmentTest {
         var row = mock(ResultSet.class);
         when(row.getLong("id")).thenReturn(12L);
         when(row.getString("source_payload")).thenReturn("""
-                {"uuid":"variant","image_source_vehicle_uuid":"base","executive_hangar":true}
+                {"uuid":"variant","image_source_vehicle_uuid":"base","executive_hangar":true,"size":null,"size_class":3}
                 """);
+        when(row.getString("family")).thenReturn("SHIP");
         when(row.getString("catalog_group")).thenReturn("WIKELO");
         when(row.getString("image_override_url")).thenReturn("/images/manual.webp");
         doAnswer(invocation -> {
@@ -42,6 +43,17 @@ class ShipCatalogEnrichmentTest {
         assertThat(first.getExecutiveHangar()).isTrue();
         assertThat(first.getImageIsBase()).isFalse();
         assertThat(second.getExecutiveHangar()).isNull();
+        // Variante Wikelo sans libellé de taille : la classe de la source est transmise.
+        assertThat(first.getSizeClass()).isEqualTo(3);
+    }
+
+    @Test
+    void sizeClassIsOnlyAPositiveWholeNumber() throws Exception {
+        assertThat(ShipCatalogEnrichment.sizeClass(mapper.readTree("{\"size_class\":6}"))).isEqualTo(6);
+        assertThat(ShipCatalogEnrichment.sizeClass(mapper.readTree("{\"size_class\":0}"))).isNull();
+        assertThat(ShipCatalogEnrichment.sizeClass(mapper.readTree("{\"size_class\":\"2\"}"))).isNull();
+        assertThat(ShipCatalogEnrichment.sizeClass(mapper.readTree("{}"))).isNull();
+        assertThat(ShipCatalogEnrichment.sizeClass(null)).isNull();
     }
 
     @Test
