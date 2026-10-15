@@ -5,7 +5,10 @@ import { CrewPositionChange, OperationCrewMembersComponent } from '../organizati
 import { FleetRequirement } from '../organization/operation-fleet-cards.component';
 import { OperationIconComponent } from './operation-icon.component';
 
-/** Équipage de vaisseau sur la fiche participant : appareil attendu, postes, occupants, et choix de mon propre poste. */
+/**
+ * Équipage de vaisseau sur la fiche participant, en version compacte : appareil attendu, postes en pastilles, membres à bord.
+ * Une pastille cliquable me place à ce poste ; si je ne suis pas encore dans l'équipage, elle me le fait rejoindre du même geste.
+ */
 @Component({
   selector: 'app-operation-crew-card',
   standalone: true,
@@ -30,6 +33,10 @@ export class OperationCrewCardComponent {
   readonly canManage = input(false);
   /** Poste attribué, changé ou retiré à un membre de l'équipage. */
   readonly assign = output<CrewPositionChange>();
+  /** Vrai si je peux rejoindre cet équipage directement : chaque pastille libre me fait alors rejoindre l'équipage à ce poste. */
+  readonly canJoinAt = input(false);
+  /** Rejoindre l'équipage et prendre ce poste. */
+  readonly joinAt = output<number>();
 
   readonly positionIcon = positionIcon;
   readonly isFull = isPositionFull;
@@ -37,8 +44,29 @@ export class OperationCrewCardComponent {
 
   readonly shipStatus = computed(() => crewShipStatus(this.crew(), this.requirements()));
   readonly me = computed(() => this.crew().members.find(member => !!this.currentUserId() && member.userId === this.currentUserId()) ?? null);
-  readonly unplaced = computed(() => membersAt(this.crew(), null));
-  readonly modeText = computed(() => this.crew().positionMode === 'SELF' ? 'Chaque membre choisit son poste' : 'Postes attribués par les responsables');
+  /** Une ligne : ce que je peux faire ici, ou comment les postes sont attribués. */
+  readonly hint = computed(() => {
+    if (this.crew().positionMode === 'MANAGED') return 'Postes attribués par les responsables.';
+    if (this.canJoinAt()) return 'Choisissez un poste pour rejoindre l’équipage.';
+    if (this.canChoose()) return this.me()?.positionId == null ? 'Choisissez votre poste.' : 'Cliquez sur un autre poste pour en changer.';
+    return 'Chaque membre choisit son poste.';
+  });
+
+  /** Ce qu'offre la pastille d'un poste : rien de cliquable s'il est le mien, complet, ou si je ne peux ni choisir ni rejoindre. */
+  chipAction(position: CrewPosition): 'choose' | 'join' | 'none' {
+    if (this.isMine(position) || this.isFull(position)) return 'none';
+    if (this.canChoose()) return 'choose';
+    if (this.canJoinAt() && this.crew().positionMode === 'SELF') return 'join';
+    return 'none';
+  }
+  /** Infobulle de la pastille : qui occupe le poste. */
+  occupantsTitle(position: CrewPosition): string {
+    const names = this.members(position).map(member => member.username);
+    return names.length ? `${position.label} : ${names.join(', ')}` : `${position.label} : libre`;
+  }
+  positionLabel(member: CrewMember): string {
+    return this.crew().positions.find(position => position.id === member.positionId)?.label ?? 'sans poste';
+  }
 
   members(position: CrewPosition): CrewMember[] { return membersAt(this.crew(), position.id); }
 

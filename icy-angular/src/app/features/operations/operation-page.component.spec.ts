@@ -258,6 +258,28 @@ describe('OperationPageComponent', () => {
       http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 3, myRequest: null, groups: [joined] } });
       expect(toast.success).toHaveBeenCalledWith('Vous avez rejoint Minage FPS.');
     });
+
+    it('joins a crew and takes the chosen position in one gesture, and says so when the position was just taken', async () => {
+      const eventService = TestBed.inject(EventService) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+      eventService['assignOperationGroup'] = vi.fn(() => of({}));
+      eventService['setMyOperationPosition'] = vi.fn(() => of({}));
+      const crewGroup = { ...group, id: 5, name: 'Équipage Polaris', effectiveMode: 'FREE' };
+      await renderWith({ present: true, myGroupId: null, myRequest: null, groups: [crewGroup] });
+      component.crews = [{ groupId: 5, shipModelId: 1, shipModelName: 'Polaris', shipModelImageUrl: null, positionMode: 'SELF', manageable: false, members: [],
+        positions: [{ id: 40, label: 'Artilleur', icon: 'target', capacity: 7, taken: 0, sortOrder: 0 }] }];
+
+      await component.joinAtPosition('op', crewGroup as never, 40);
+      expect(eventService['assignOperationGroup']).toHaveBeenCalledWith('op', 5);
+      expect(eventService['setMyOperationPosition']).toHaveBeenCalledWith('op', 40);
+      expect(toast.success).toHaveBeenCalledWith('Vous avez rejoint Équipage Polaris, au poste Artilleur.');
+      http.expectOne('/api/operations/op/composition').flush({ data: { present: true, myGroupId: 5, myRequest: null, groups: [crewGroup] } });
+      http.match(() => true).filter(request => !request.cancelled).forEach(request => request.flush({ data: [] }));
+
+      // Le poste vient d'être pris : je reste dans l'équipage, sans poste, et le message le dit.
+      eventService['setMyOperationPosition'] = vi.fn(() => throwError(() => ({ status: 409, error: { message: 'Poste complet' } })));
+      await component.joinAtPosition('op', crewGroup as never, 40);
+      expect(toast.error).toHaveBeenCalledWith('Vous avez rejoint Équipage Polaris, mais sans poste : Poste complet');
+    });
   });
 
   it('keeps the coordination board folded until asked, and says what is waiting in it', async () => {

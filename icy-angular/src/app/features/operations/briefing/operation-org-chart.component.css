@@ -1,7 +1,9 @@
 :host { display: block; min-width: 0; }
 .chart, .root__children, .members { list-style: none; margin: 0; padding: 0; }
-/* Les groupes d'une même rangée ont la même hauteur ; leur contenu reste en haut. */
-.chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; align-items: stretch; }
+/* Chaque groupe garde sa propre hauteur ; un groupe à sous-groupes reçoit deux fois plus de largeur pour les ranger côte à côte. */
+.chart { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.chart > .root { flex: 1 1 20rem; }
+.chart > .root:not(.root--leaf) { flex: 2 1 32rem; }
 .chart__empty { margin: 0; padding: .9rem 1rem; border: 1px dashed #36546a; border-radius: .6rem; color: #acc2d5; }
 
 /* Groupe principal */
@@ -23,9 +25,8 @@
 
 /* Sous-groupes rattachés à leur parent par un trait */
 .root__children[hidden] { display: none; }
-.root__children { display: grid; gap: .6rem; margin-left: .35rem; padding-left: .8rem; border-left: 2px solid rgba(165,180,252,.35); }
+.root__children { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: .6rem; align-items: start; margin-left: .35rem; padding-left: .8rem; border-left: 2px solid rgba(165,180,252,.35); }
 .leaf { position: relative; display: grid; gap: .45rem; min-width: 0; padding: .7rem .8rem; border: 1px solid rgba(148,163,184,.22); border-radius: .65rem; background: #111c2e; }
-.leaf::before { content: ''; position: absolute; top: 1.35rem; left: -.85rem; width: .8rem; border-top: 2px solid rgba(165,180,252,.35); }
 .leaf--mine { border-color: #67e8f9; background: #0d2433; box-shadow: 0 0 0 1px #67e8f9; }
 .leaf__head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
 .leaf__title { min-width: 0; }
@@ -67,6 +68,7 @@
 
 button { min-height: 2.5rem; padding: .4rem .85rem; border: 1px solid #36546a; border-radius: .45rem; color: #bae6fd; background: #122235; font-size: .88rem; }
 button.primary { border-color: #67e8f9; color: #082f49; background: #67e8f9; font-weight: 700; }
+button.quiet { min-height: 2.1rem; padding: .25rem .7rem; font-size: .82rem; }
 button:disabled { opacity: .5; }
 button:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

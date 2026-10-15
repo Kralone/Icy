@@ -53,7 +53,7 @@
     @if (group.responsibleUsername && group.parentId !== null) { <span>Responsable : {{ group.responsibleUsername }}</span> }
   </p>
   @if (crewOf(group); as crew) {
-    <app-operation-crew-card [id]="'operation-crew-' + group.id" tabindex="-1" role="group" [attr.aria-label]="group.name + ', équipage de vaisseau'" [crew]="crew" [requirements]="requirements()" [currentUserId]="currentUserId()" [canChoose]="canChoosePosition(group, crew)" [canManage]="canManagePositions(crew)" [busy]="busy()" (choose)="position.emit($event)" (assign)="memberPosition.emit({ groupId: group.id, change: $event })" />
+    <app-operation-crew-card [id]="'operation-crew-' + group.id" tabindex="-1" role="group" [attr.aria-label]="group.name + ', équipage de vaisseau'" [crew]="crew" [requirements]="requirements()" [currentUserId]="currentUserId()" [canChoose]="canChoosePosition(group, crew)" [canManage]="canManagePositions(crew)" [canJoinAt]="canJoinAt(group)" [busy]="busy()" (choose)="position.emit($event)" (joinAt)="joinAt.emit({ group: group, positionId: $event })" (assign)="memberPosition.emit({ groupId: group.id, change: $event })" />
   } @else if (group.members.length) {
     <ul class="members">
       @for (member of visibleMembers(group); track member.userId) {
@@ -85,12 +85,17 @@
     @case ('managed') { <p class="leaf__action leaf__hint">Un organisateur ou le responsable affecte les membres de ce groupe.</p> }
     @case ('waiting') { <p class="leaf__action leaf__hint">Une demande est déjà en attente : annulez-la pour en faire une autre.</p> }
     @case ('join') {
-      <p class="leaf__action"><button type="button" class="primary" [disabled]="busy()" (click)="join.emit(group)">{{ composition().myGroupId === null ? 'Rejoindre' : 'Passer dans ce groupe' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+      @if (choosesAtJoin(group)) {
+        <!-- Les pastilles de poste font rejoindre l'équipage ; ce bouton reste pour qui ne sait pas encore son poste. -->
+        <p class="leaf__action"><button type="button" class="quiet" [disabled]="busy()" (click)="join.emit(group)">{{ composition().myGroupId === null ? 'Rejoindre sans poste' : 'Passer dans ce groupe sans poste' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+      } @else {
+        <p class="leaf__action"><button type="button" class="primary" [disabled]="busy()" (click)="join.emit(group)">{{ composition().myGroupId === null ? 'Rejoindre' : 'Passer dans ce groupe' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+      }
     }
     @case ('request') {
       @if (selfApprove()) {
         <!-- Un organisateur n'attend la validation de personne : le serveur le place directement. -->
-        <p class="leaf__action"><button type="button" class="primary" [disabled]="busy()" (click)="request.emit(group)">{{ composition().myGroupId === null ? 'Rejoindre' : 'Passer dans ce groupe' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
+        <p class="leaf__action"><button type="button" [class.primary]="!choosesAtJoin(group)" [class.quiet]="choosesAtJoin(group)" [disabled]="busy()" (click)="request.emit(group)">{{ (composition().myGroupId === null ? 'Rejoindre' : 'Passer dans ce groupe') + (choosesAtJoin(group) ? ' sans poste' : '') }}<span class="sr-only"> : {{ group.name }}</span></button></p>
       } @else {
         <p class="leaf__action"><button type="button" [disabled]="busy()" (click)="request.emit(group)">{{ composition().myGroupId === null ? 'Demander à rejoindre' : 'Demander le transfert' }}<span class="sr-only"> : {{ group.name }}</span></button></p>
       }

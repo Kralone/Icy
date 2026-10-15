@@ -57,6 +57,19 @@ export class OperationOrgChartComponent {
   readonly memberPosition = output<{ groupId: number; change: CrewPositionChange }>();
 
   readonly join = output<CompositionGroup>();
+  /** Rejoindre un équipage et prendre un poste du même geste. */
+  readonly joinAt = output<{ group: CompositionGroup; positionId: number }>();
+
+  /** Je peux rejoindre ce groupe directement (sans validation à attendre) : ses pastilles de poste me le font rejoindre. */
+  canJoinAt(group: CompositionGroup): boolean {
+    const action = this.action(group);
+    return action === 'join' || (action === 'request' && this.selfApprove());
+  }
+  /** Équipage dont les membres choisissent leur poste et que je peux rejoindre : le poste se choisit en rejoignant. */
+  choosesAtJoin(group: CompositionGroup): boolean {
+    const crew = this.crewOf(group);
+    return !!crew && crew.positionMode === 'SELF' && crew.positions.length > 0 && this.canJoinAt(group);
+  }
   readonly request = output<CompositionGroup>();
 
   modeLabel(group: CompositionGroup): string { return MODE_LABELS[group.effectiveMode]; }
