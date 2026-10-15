@@ -1,9 +1,9 @@
 discord.py==2.7.1
-asyncpg==0.31.0
-python-dotenv==1.2.3
+asyncpg==0.32.0
+python-dotenv==1.2.4
 
 # Rabbit
-aio-pika==10.0.1
+aio-pika==10.1.0
 
 beautifulsoup4==4.15.0
-soupsieve==2.9.2
+soupsieve==2.10
