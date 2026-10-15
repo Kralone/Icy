@@ -2,7 +2,7 @@ import { NgZone } from '@angular/core';
 import { StompSubscription } from '@stomp/stompjs';
 
 import { AuthService } from '../auth/auth.service';
-import { WebSocketService } from './websocket.service';
+import { redactStompFrame, WebSocketService } from './websocket.service';
 
 describe('WebSocketService subscription lifecycle', () => {
   let service: WebSocketService;
@@ -121,5 +121,15 @@ describe('WebSocketService subscription lifecycle', () => {
 
     expect(aliceMessages).toEqual(['alice-ship']);
     expect(bobMessages).toEqual(['bob-ship']);
+  });
+});
+
+describe('STOMP debug output', () => {
+  it('never prints the bearer token of a CONNECT frame', () => {
+    const frame = '>>> CONNECT\nAuthorization:Bearer eyJhbGciOiJIUzI1NiJ9.payload.signature\naccept-version:1.2';
+    const shown = redactStompFrame(frame);
+    expect(shown).not.toContain('eyJhbGci');
+    expect(shown).toContain('Authorization:Bearer [masqué]');
+    expect(shown).toContain('accept-version:1.2');
   });
 });

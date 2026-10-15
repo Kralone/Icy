@@ -1,8 +1,13 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, isDevMode } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject, finalize } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+
+/** Masque le jeton d'une trame STOMP avant tout affichage. */
+export function redactStompFrame(frame: string): string {
+  return frame.replace(/(Authorization:\s*Bearer\s+)\S+/gi, '$1[masqué]');
+}
 
 @Injectable({
   providedIn: 'root',
@@ -45,7 +50,8 @@ export class WebSocketService {
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
-      debug: (msg: string) => console.log(`[STOMP] ${msg}`),
+      // Trames STOMP en développement seulement, jeton masqué : la trame CONNECT porte l'en-tête Authorization.
+      debug: isDevMode() ? (msg: string) => console.log(`[STOMP] ${redactStompFrame(msg)}`) : () => undefined,
     });
     this.stompClient.beforeConnect = () => {
       this.stompClient.connectHeaders = {
