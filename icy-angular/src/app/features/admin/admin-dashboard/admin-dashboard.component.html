@@ -90,9 +90,9 @@
               <td class="px-4 py-3 whitespace-nowrap text-slate-300">
                 @if (user.lastSeenAt) { <time [attr.datetime]="user.lastSeenAt" [attr.title]="user.lastSeenAt | date:'EEEE d MMMM yyyy, HH:mm'">{{ user.lastSeenAt | date:"d MMM yyyy, HH'h'mm" }}</time> } @else { <span class="text-slate-500 italic">Jamais</span> }
               </td>
-              <td class="px-4 py-3 break-all text-slate-400 font-mono text-xs">{{ user.discordId }}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-xs">{{ user.discordId }}</td>
               <td class="px-4 py-3">
-                <div class="flex flex-wrap justify-end gap-2">
+                <div class="flex flex-nowrap justify-end gap-2 whitespace-nowrap">
                   @if (showInactive) {
                     <button class="px-3 py-1 rounded-full border border-emerald-400/40 text-emerald-300 hover:border-emerald-400/70 transition" (click)="reactivateUser(user)">Réactiver</button>
                   } @else {
