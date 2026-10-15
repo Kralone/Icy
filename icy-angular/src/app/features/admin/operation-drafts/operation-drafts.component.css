@@ -17,6 +17,9 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px soli
 .block { --tone: #80e5b8; display: grid; gap: 14px; min-width: 0; padding: clamp(14px, 1.6vw, 22px); border: 1px solid color-mix(in srgb, var(--tone) 28%, #24384d); border-left: 3px solid var(--tone); border-radius: 14px; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 6%, #0e1c2c), #0e1c2c 12rem); }
 .block--drafts { --tone: #f4cd7d; }
 .block--past { --tone: #94a3b8; }
+.block--presets { --tone: #72ddf7; }
+.presets-entry { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.presets-entry p { margin: 4px 0 0; color: #94a3b8; }
 .fold > summary { display: flex; align-items: center; gap: 10px; min-height: 38px; cursor: pointer; list-style: none; border-radius: 8px; }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary::before { content: ''; flex: none; width: 8px; height: 8px; border-right: 2px solid var(--tone); border-bottom: 2px solid var(--tone); transform: rotate(-45deg); transition: transform .15s; }

@@ -3,11 +3,13 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { OperationDraftsComponent } from './operation-drafts.component';
 import { EventService } from '../../../core/services/event/event.service';
+import { UserService } from '../../../core/services/user/user.service';
 
 describe('OperationDraftsComponent', () => {
   let fixture: ComponentFixture<OperationDraftsComponent>;
   let getOperationDrafts: ReturnType<typeof vi.fn>;
   let getAll: ReturnType<typeof vi.fn>;
+  let roles: string[];
   const type = { name: 'Combat', textColor: '#ffffff', backgroundColor: '#123456', imageUrl: '' };
   const event = (id: string, title: string, start: string, finished: boolean, activityType = 'OPERATION') =>
     ({ id, title, type, description: '', startDateTime: start, endDateTime: start, createdAt: start, finished, activityType });
@@ -15,7 +17,7 @@ describe('OperationDraftsComponent', () => {
   async function render(): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [OperationDraftsComponent],
-      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts, getAll } }]
+      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts, getAll } }, { provide: UserService, useValue: { getMyProfile: () => of({ data: { roles } }) } }]
     }).compileComponents();
     fixture = TestBed.createComponent(OperationDraftsComponent);
     fixture.detectChanges();
@@ -27,6 +29,21 @@ describe('OperationDraftsComponent', () => {
   beforeEach(() => {
     getOperationDrafts = vi.fn(() => of([]));
     getAll = vi.fn(() => of([]));
+    roles = ['OFFICIER'];
+  });
+
+  it('shows the crew presets entry below the history, to administrators only', async () => {
+    await render();
+    expect(section('presets')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/icy/admin/crew-presets"]')).toBeNull();
+
+    TestBed.resetTestingModule();
+    roles = ['ADMIN'];
+    await render();
+    const blocks = Array.from(fixture.nativeElement.querySelectorAll('.block')).map(block => (block as HTMLElement).className);
+    expect(blocks.at(-1)).toContain('block--presets');
+    expect(blocks.at(-2)).toContain('block--past');
+    expect(section('presets').querySelector('a')!.getAttribute('href')).toBe('/icy/admin/crew-presets');
   });
 
   it('lists each draft with its title, dates and a link back to the editor', async () => {
