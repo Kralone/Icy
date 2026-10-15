@@ -4,6 +4,7 @@ import com.icy.icy_backend.db.entity.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,9 @@ public class UserResponseDTO {
     private List<String> roles;
     private String discordId;
     private Boolean active;
+    private LocalDateTime createdAt;
+    /** Dernière activité enregistrée (connexion ou navigation, à 30 secondes près) ; null si jamais vue. */
+    private LocalDateTime lastSeenAt;
 
     public UserResponseDTO(User user) {
         this.id = user.getId();
@@ -23,6 +27,8 @@ public class UserResponseDTO {
                 .toList();
         this.discordId = user.getDiscordId();
         this.active = user.getActive();
+        this.createdAt = user.getCreatedAt();
+        this.lastSeenAt = user.getLastSeenAt();
     }
 }
 

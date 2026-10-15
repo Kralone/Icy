@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 
 
 import { User } from '../../../model/user.model';
@@ -8,12 +9,21 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
 
+export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
+
+function toTime(value?: string | null): number | null {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
+    DatePipe,
     LoadingOverlayComponent
 ]
 })
@@ -22,8 +32,15 @@ export class AdminDashboardComponent implements OnInit {
   filteredUsers: User[] = [];
   paginatedUsers: User[] = [];
 
-  sortColumn: keyof User = 'username';
+  /** Colonnes triables : nom, rôle (par rang), date de création et dernière connexion. */
+  sortColumn: MemberSortColumn = 'username';
   sortAsc: boolean = true;
+  readonly sortableColumns: { key: MemberSortColumn; label: string }[] = [
+    { key: 'username', label: 'Nom' },
+    { key: 'role', label: 'Rôle' },
+    { key: 'createdAt', label: 'Compte créé' },
+    { key: 'lastSeenAt', label: 'Dernière connexion' }
+  ];
 
   currentPage: number = 1;
   itemsPerPage: number = 10;
@@ -126,26 +143,50 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   // ==== Sorting ====
-  sortBy(column: keyof User): void {
+  /** Un premier clic sur une date montre les plus récentes d'abord ; sur le nom ou le rôle, l'ordre croissant. */
+  sortBy(column: MemberSortColumn): void {
     if (this.sortColumn === column) {
       this.sortAsc = !this.sortAsc;
     } else {
       this.sortColumn = column;
-      this.sortAsc = true;
+      this.sortAsc = column === 'username' || column === 'role';
     }
     this.sortUsers();
   }
 
-  sortUsers(): void {
-    this.filteredUsers.sort((a: any, b: any) => {
-      const aVal = (a?.[this.sortColumn] ?? '') as any;
-      const bVal = (b?.[this.sortColumn] ?? '') as any;
+  ariaSort(column: MemberSortColumn): 'ascending' | 'descending' | 'none' {
+    return this.sortColumn !== column ? 'none' : this.sortAsc ? 'ascending' : 'descending';
+  }
 
-      if (aVal === bVal) return 0;
-      return (aVal < bVal ? -1 : 1) * (this.sortAsc ? 1 : -1);
+  sortUsers(): void {
+    const direction = this.sortAsc ? 1 : -1;
+    this.filteredUsers.sort((a, b) => {
+      const left = this.sortValue(a);
+      const right = this.sortValue(b);
+      // Une date absente reste en fin de liste, quel que soit le sens du tri.
+      if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1;
+      const compared = typeof left === 'string' && typeof right === 'string'
+        ? left.localeCompare(right, 'fr', { sensitivity: 'base' })
+        : (left as number) - (right as number);
+      return (compared || (a.username ?? '').localeCompare(b.username ?? '', 'fr', { sensitivity: 'base' })) * direction;
     });
 
     this.updatePagination();
+  }
+
+  private sortValue(user: User): string | number | null {
+    switch (this.sortColumn) {
+      case 'role': return this.rankOrder(user);
+      case 'createdAt': return toTime(user.createdAt);
+      case 'lastSeenAt': return toTime(user.lastSeenAt);
+      default: return user.username ?? '';
+    }
+  }
+
+  /** Rang le plus élevé du membre : Directeur d'abord. */
+  private rankOrder(user: User): number {
+    const ranks = (user.roles ?? []).map(role => this.availableRoles.indexOf(this.roleAliases[role?.toUpperCase()] ?? role?.toUpperCase())).filter(index => index >= 0);
+    return ranks.length ? Math.min(...ranks) : this.availableRoles.length;
   }
 
   // ==== Pagination ====
