@@ -2,6 +2,7 @@
 <div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-6 sm:p-10 space-y-8">
 
   <!-- Header -->
+  <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-white">Membres</h1>
   <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
     <div class="flex rounded-full border border-white/10 bg-[#0b1324] p-1" role="tablist" aria-label="État des membres">
       <button
@@ -53,52 +54,60 @@
         [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
-      <table class="min-w-[700px] w-full text-sm text-gray-200">
-        <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
+      <table class="min-w-[860px] w-full text-sm text-slate-200">
+        <thead class="bg-[#0b1324]/90 text-xs text-cyan-200/90 uppercase tracking-[0.14em] border-b border-white/10">
           <tr>
-            <th class="px-4 py-3 text-left cursor-pointer select-none" (click)="sortBy('username')">
-              Nom
-              @if (sortColumn === 'username') {
-                <span class="ml-1 opacity-70">{{ sortAsc ? '▲' : '▼' }}</span>
-              }
-            </th>
-            <th class="px-4 py-3 text-left">Discord ID</th>
-            <th class="px-4 py-3 text-left">Rôles</th>
-            <th class="px-4 py-3 text-left">Actions</th>
+            @for (column of sortableColumns; track column.key) {
+              <th scope="col" class="px-4 py-3 text-left font-semibold" [attr.aria-sort]="ariaSort(column.key)">
+                <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.14em] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 rounded" [class.text-white]="sortColumn === column.key" (click)="sortBy(column.key)">
+                  {{ column.label }}
+                  <span aria-hidden="true" class="text-[10px]" [class.opacity-30]="sortColumn !== column.key">{{ sortColumn === column.key ? (sortAsc ? '▲' : '▼') : '▲▼' }}</span>
+                </button>
+              </th>
+            }
+            <th scope="col" class="px-4 py-3 text-left font-semibold">Discord ID</th>
+            <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
           </tr>
         </thead>
 
-        <tbody>
-          @for (user of paginatedUsers; track user) {
-            <tr
-              class="hover:bg-white/5 transition duration-200 border-b border-white/10"
-              >
-              <td class="px-4 py-3 font-medium break-words">{{ user.username }}</td>
-              <td class="px-4 py-3 break-all">{{ user.discordId }}</td>
+        <tbody class="divide-y divide-white/5">
+          @for (user of paginatedUsers; track user.id) {
+            <tr class="hover:bg-cyan-400/[0.04] transition-colors">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="flex-none w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-700/40 border border-cyan-300/20 grid place-items-center text-xs font-bold text-cyan-100" aria-hidden="true">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
+                  <span class="font-semibold text-white break-words">{{ user.username }}</span>
+                </div>
+              </td>
               <td class="px-4 py-3">
                 @for (role of user.roles; track role) {
-                  <span
-                    class="inline-block bg-gradient-to-r from-cyan-600 to-blue-700 text-white text-xs px-2 py-1 rounded-full mr-1 shadow-sm whitespace-nowrap"
-                    >
-                    {{ roleLabels[role] || role }}
-                  </span>
+                  <span class="inline-block bg-cyan-500/15 border border-cyan-300/30 text-cyan-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ roleLabels[role] || role }}</span>
                 }
               </td>
-              <td class="px-4 py-3 flex flex-wrap gap-2">
-                @if (showInactive) {
-                  <button class="px-3 py-1 rounded-full border border-emerald-400/40 text-emerald-300 hover:border-emerald-400/70 transition" (click)="reactivateUser(user)">Réactiver</button>
-                } @else {
-                  <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="editUser(user)">Modifier</button>
-                  <button class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition" (click)="deleteUser(user.id)">Désactiver</button>
-                  <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="resetPassword(user.id)">Reset PW</button>
-                }
+              <td class="px-4 py-3 whitespace-nowrap text-slate-300">
+                @if (user.createdAt) { <time [attr.datetime]="user.createdAt">{{ user.createdAt | date:'d MMM yyyy' }}</time> } @else { <span class="text-slate-500 italic">Non renseignée</span> }
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-300">
+                @if (user.lastSeenAt) { <time [attr.datetime]="user.lastSeenAt" [attr.title]="user.lastSeenAt | date:'EEEE d MMMM yyyy, HH:mm'">{{ user.lastSeenAt | date:"d MMM yyyy, HH'h'mm" }}</time> } @else { <span class="text-slate-500 italic">Jamais</span> }
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-xs">{{ user.discordId }}</td>
+              <td class="px-4 py-3">
+                <div class="flex flex-nowrap justify-end gap-2 whitespace-nowrap">
+                  @if (showInactive) {
+                    <button class="px-3 py-1 rounded-full border border-emerald-400/40 text-emerald-300 hover:border-emerald-400/70 transition" (click)="reactivateUser(user)">Réactiver</button>
+                  } @else {
+                    <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="editUser(user)">Modifier</button>
+                    <button class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition" (click)="deleteUser(user.id)">Désactiver</button>
+                    <button class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition" (click)="resetPassword(user.id)">Reset PW</button>
+                  }
+                </div>
               </td>
             </tr>
           }
 
           @if (!isLoading && loadError) {
             <tr data-testid="members-load-error">
-              <td colspan="4" class="py-8 text-center text-red-200">
+              <td colspan="6" class="py-8 text-center text-red-200">
                 <p>{{ loadError }}</p>
                 <button
                   type="button"
@@ -109,7 +118,7 @@
             </tr>
           } @else if (!isLoading && filteredUsers.length === 0) {
             <tr>
-              <td colspan="4" class="py-8 text-center text-gray-300">
+              <td colspan="6" class="py-8 text-center text-gray-300">
                 {{ showInactive ? 'Aucun membre désactivé.' : 'Aucun utilisateur trouvé.' }}
               </td>
             </tr>

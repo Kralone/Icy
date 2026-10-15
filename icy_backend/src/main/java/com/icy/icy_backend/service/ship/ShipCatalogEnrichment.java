@@ -30,7 +30,7 @@ public class ShipCatalogEnrichment {
         }
         if (byId.isEmpty()) return;
         jdbc.query("""
-                SELECT id, catalog_group, source_url, source_version, source_updated_at, last_seen_at, image_override_url,
+                SELECT id, family, catalog_group, source_url, source_version, source_updated_at, last_seen_at, image_override_url,
                        source_payload::text
                 FROM catalog.entries WHERE id IN (:ids)
                 """, Map.of("ids", byId.keySet()), rs -> {
@@ -47,6 +47,8 @@ public class ShipCatalogEnrichment {
                 ship.setSourceUpdatedAt(rs.getObject("source_updated_at", java.time.OffsetDateTime.class));
                 ship.setCatalogFetchedAt(rs.getObject("last_seen_at", java.time.OffsetDateTime.class));
                 applyPayload(ship, payload);
+                // La classe de taille d'un véhicule terrestre ne suit pas celle des vaisseaux : elle n'est pas transmise.
+                ship.setSizeClass("SHIP".equals(rs.getString("family")) ? sizeClass(payload) : null);
                 if (rs.getString("image_override_url") != null) ship.setImageIsBase(false);
             }
         });
@@ -85,6 +87,11 @@ public class ShipCatalogEnrichment {
             // Weapons can be nested beneath gimbals and turrets, even when their mount is not displayed.
             visitPorts(port.path("ports"), components, weapons);
         }
+    }
+
+    static Integer sizeClass(JsonNode payload) {
+        JsonNode value = payload == null ? null : payload.path("size_class");
+        return value != null && value.canConvertToInt() && value.isIntegralNumber() && value.intValue() > 0 ? value.intValue() : null;
     }
 
     private static String text(JsonNode node) {

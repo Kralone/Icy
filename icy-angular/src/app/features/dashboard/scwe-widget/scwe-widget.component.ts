@@ -1,4 +1,7 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
+import { WebSocketService } from '../../../core/services/websocket/websocket.service';
 import { CommonModule } from '@angular/common';
 import { ScWorldEventService } from '../../../core/services/scworldevent/sc-world-event.service';
 import { ScwePlayerService } from '../../../core/services/scworldevent/scwe-player.service';
@@ -27,13 +30,18 @@ export class ScweWidgetComponent implements OnInit {
     private router: Router
   ) {}
 
+  private readonly webSocket = inject(WebSocketService);
+  private readonly destroyRef = inject(DestroyRef);
+
   ngOnInit(): void {
     this.loadCurrentEvent();
+    // Le classement suit les participations enregistrées, sans recharger la page ni afficher de chargement.
+    this.webSocket.watchScWorldEvents().pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadCurrentEvent(true));
   }
 
-  private loadCurrentEvent(): void {
-    this.loadingEvent = true;
-    this.loadingLeaderboard = true;
+  private loadCurrentEvent(silent = false): void {
+    this.loadingEvent = !silent;
+    this.loadingLeaderboard = !silent;
     this.error = null;
 
     this.scweEvent.getCurrent().subscribe({

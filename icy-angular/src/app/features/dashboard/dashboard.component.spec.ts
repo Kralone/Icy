@@ -24,6 +24,7 @@ describe('DashboardComponent', () => {
             connectGoalUpdates: () => undefined,
             disconnectGoalUpdates: () => undefined,
             listenForGoalUpdates: () => NEVER,
+            watchScWorldEvents: () => NEVER,
           },
         },
       ]

@@ -32,6 +32,8 @@ export interface Ship {
   catalogFetchedAt?: string;
   notes?: string;
   size?: string;
+  /** Classe de taille de la source (vaisseaux seulement), utilisée quand le libellé manque. */
+  sizeClass?: number | null;
   scu?: number | null;
   oreCapacity?: number | null;
   flightReady?: boolean;

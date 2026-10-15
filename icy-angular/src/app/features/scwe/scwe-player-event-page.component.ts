@@ -1,6 +1,8 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core'; // ✅ Ajout OnDestroy
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { debounceTime, forkJoin } from 'rxjs';
+import { WebSocketService } from '../../core/services/websocket/websocket.service';
 
 import { ScweEventsListComponent } from './scwe-events-list/scwe-events-list.component';
 import { ScweLeaderboardComponent } from './scwe-leaderboard/scwe-leaderboard.component';
@@ -38,9 +40,9 @@ export class ScwePlayerPageComponent implements OnInit, OnDestroy {
   private loadedHistory = false;
   private loadedLeaderboard = false;
 
-  // ✅ AUTO REFRESH
-  timeLeft = 30;
-  private refreshInterval: any;
+  private readonly webSocket = inject(WebSocketService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly onVisible = () => { if (document.visibilityState === 'visible') this.refresh(); };
 
   constructor(
     private scwePlayer: ScwePlayerService,
@@ -49,32 +51,15 @@ export class ScwePlayerPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load(false);
-    this.startAutoRefresh(); // ✅ Lancement du timer
+    // Mise à jour en direct : le serveur signale chaque modification enregistrée, la page relit alors sa vue.
+    // Plusieurs signaux rapprochés ne donnent qu'une relecture ; aucune requête tant que rien ne change.
+    this.webSocket.watchScWorldEvents().pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.refresh());
+    // Un signal manqué pendant que l'onglet dormait (connexion coupée) est rattrapé au retour sur la page.
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.onVisible);
   }
 
   ngOnDestroy(): void {
-    this.stopAutoRefresh(); // ✅ Nettoyage impératif
-  }
-
-  // --- LOGIQUE TIMER ---
-  private startAutoRefresh() {
-    this.stopAutoRefresh(); // Sécurité
-    this.timeLeft = 30;
-
-    this.refreshInterval = setInterval(() => {
-      this.timeLeft--;
-      if (this.timeLeft <= 0) {
-        this.refresh();
-        this.timeLeft = 30; // Reset
-      }
-    }, 1000);
-  }
-
-  private stopAutoRefresh() {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
-    }
+    if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.onVisible);
   }
 
   switchMode(mode: ViewMode) {
@@ -82,15 +67,11 @@ export class ScwePlayerPageComponent implements OnInit, OnDestroy {
     this.load(false);
   }
 
+  /** Relit la vue affichée ; les deux autres seront relues quand on y reviendra. */
   refresh() {
-    if (this.viewMode === 'active') this.loadedActive = false;
-    // On ne force pas le reload de l'historique en auto-refresh car ça bouge peu
-    // Mais on reload le leaderboard
-    if (this.viewMode === 'leaderboard') this.loadedLeaderboard = false;
-
-    // On garde le timeLeft à 30 si c'est un refresh manuel (ou auto)
-    this.timeLeft = 30;
-
+    this.loadedActive = false;
+    this.loadedHistory = false;
+    this.loadedLeaderboard = false;
     this.load(true);
   }
 

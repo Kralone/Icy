@@ -33,15 +33,17 @@ describe('Wikelo equipment detail rendering', () => {
     await TestBed.inject(Router).navigate([], {queryParams: {view: 'armor'}});
     const fixture = TestBed.createComponent(WikeloComponent);
     fixture.detectChanges();
-    fixture.componentInstance.expandedEquipmentId = armor.id;
+    // Une armure se présente par set : « Ana Arms Endro » appartient au set « Ana Endro ».
+    expect(fixture.nativeElement.querySelector('.armor-set h3')?.textContent).toContain('Ana Endro');
+    fixture.componentInstance.toggleArmorSet('ana|endro');
     fixture.detectChanges();
     const detail = fixture.nativeElement.querySelector('.equipment-description') as HTMLElement;
     expect(detail.querySelectorAll('.recipe-rewards li').length).toBe(2);
     expect(detail.querySelector('.recipe-cost')?.textContent).toContain('3 SCU');
     expect(detail.querySelector('.recipe-rewards')?.textContent).toContain('Ana Helmet Endro');
     expect(detail.querySelector('.recipe-reputation')?.textContent).toContain('Aucune');
-    expect(detail.querySelector('.equipment-spec-grid')?.textContent).toContain('40%');
-    expect(detail.querySelector('.equipment-prose')?.textContent).toContain('Cette armure comporte des crocs.');
+    expect(detail.querySelector('.armor-piece__specs')?.textContent).toContain('40%');
+    expect(detail.querySelector('.armor-piece__prose')?.textContent).toContain('Cette armure comporte des crocs.');
     expect(detail.querySelectorAll('a').length).toBe(0);
     expect(fixture.nativeElement.textContent).not.toContain('Conditions d’échange indisponibles');
     fixture.destroy();

@@ -2,8 +2,6 @@
   <header class="page-heading">
     <div><a routerLink="/icy/admin" class="back">← Administration</a><h1>Opérations</h1></div>
     <div class="page-actions">
-      <!-- Les presets d'équipage servent à toutes les opérations : configurés une fois par vaisseau, appliqués à la création d'un équipage. -->
-      <a routerLink="/icy/admin/crew-presets" class="secondary">Presets d’équipage</a>
       <a routerLink="/icy/operations/new" class="primary">Nouvelle opération</a>
     </div>
   </header>
@@ -33,6 +31,19 @@
       @for (operation of past(); track operation.id) { <ng-container *ngTemplateOutlet="card; context: { $implicit: operation, kind: 'past' }" /> }
     </ul>
   </details>
+
+  <!-- Les presets d'équipage servent à toutes les opérations ; leur bibliothèque est réservée aux administrateurs. -->
+  @if (isAdmin()) {
+    <section class="block block--presets" aria-labelledby="operations-presets-title">
+      <div class="presets-entry">
+        <div>
+          <h2 id="operations-presets-title">Presets d’équipage</h2>
+          <p>Postes, places et attribution par vaisseau. Un équipage qui suit un preset reçoit ses modifications.</p>
+        </div>
+        <a routerLink="/icy/admin/crew-presets" class="secondary">Gérer les presets</a>
+      </div>
+    </section>
+  }
 </section>
 
 <ng-template #publishedState let-empty="empty" let-emptyText="emptyText">

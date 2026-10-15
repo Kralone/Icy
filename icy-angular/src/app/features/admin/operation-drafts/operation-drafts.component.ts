@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, PLATFORM_
 import { DatePipe, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EventDTO, EventService, OperationDraftSummary } from '../../../core/services/event/event.service';
+import { UserService } from '../../../core/services/user/user.service';
 
-/** Page « Opérations » de l'administration : opérations prévues, brouillons et historique. */
+/** Page « Opérations » de l'administration : opérations prévues, brouillons, historique et, pour un administrateur, les presets d'équipage. */
 @Component({
   selector: 'app-operation-drafts',
   standalone: true,
@@ -18,6 +19,9 @@ export class OperationDraftsComponent implements OnInit {
   readonly drafts = signal<OperationDraftSummary[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
+  private readonly userService = inject(UserService);
+  /** Seul un administrateur voit l'accès aux presets ; la route et le serveur appliquent la même règle. */
+  readonly isAdmin = signal(false);
 
   /** Opérations publiées, lues dans la liste des événements. */
   private readonly published = signal<OperationDraftSummary[]>([]);
@@ -35,6 +39,10 @@ export class OperationDraftsComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
     this.load();
     this.loadPublished();
+    this.userService.getMyProfile().subscribe({
+      next: response => this.isAdmin.set((response?.data?.roles ?? []).some(role => (role ?? '').trim().toUpperCase() === 'ADMIN')),
+      error: () => this.isAdmin.set(false)
+    });
   }
 
   load(): void {

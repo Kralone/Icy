@@ -66,4 +66,34 @@ describe('AdminDashboardComponent', () => {
 
     expect(component.isLoading).toBe(false);
   });
+
+  it('sorts by account and last connection dates, newest first, with missing dates last', () => {
+    component.loadUsers();
+    http.expectOne('/api/users/all').flush({ data: [
+      { id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['JUNIOR'], createdAt: '2025-03-01T10:00:00', lastSeenAt: null },
+      { id: 'b', username: 'bravo', discordId: '2', active: true, roles: ['ADMIN'], createdAt: '2026-01-15T10:00:00', lastSeenAt: '2026-10-14T21:05:00' },
+      { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['OFFICIER'], createdAt: null, lastSeenAt: '2026-10-01T08:00:00' }
+    ] });
+    fixture.detectChanges();
+    const names = () => component.paginatedUsers.map(user => user.username);
+    expect(names()).toEqual(['Alpha', 'bravo', 'Charlie']);
+
+    component.sortBy('createdAt');
+    expect(names()).toEqual(['bravo', 'Alpha', 'Charlie']);
+    component.sortBy('createdAt');
+    expect(names()).toEqual(['Alpha', 'bravo', 'Charlie']);
+
+    component.sortBy('lastSeenAt');
+    expect(names()).toEqual(['bravo', 'Charlie', 'Alpha']);
+    component.sortBy('role');
+    expect(names()).toEqual(['bravo', 'Charlie', 'Alpha']);
+
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('th[aria-sort="ascending"]')?.textContent).toContain('Rôle');
+    const alpha = Array.from(element.querySelectorAll('tbody tr')).find(row => row.textContent!.includes('Alpha'))!;
+    expect(alpha.textContent).toContain('Jamais');
+    const charlie = Array.from(element.querySelectorAll('tbody tr')).find(row => row.textContent!.includes('Charlie'))!;
+    expect(charlie.textContent).toContain('Non renseignée');
+  });
 });

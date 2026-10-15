@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, ActivatedRoute } from '@angular/router';
 import { DestroyRef } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { WikeloComponent } from './wikelo.component';
+import { groupArmorSets, shipSizeLabel, WikeloComponent } from './wikelo.component';
 import { WikeloEquipment } from '../../../model/wikelo-equipment.model';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
 import { Ship } from '../../../model/ship.model';
@@ -229,6 +229,55 @@ describe('Wikelo catalogue', () => {
     component.equipment = [unavailable, available];
     component.selectedView = 'weapons';
     expect(component.filteredEquipment).toEqual([available, unavailable]);
+  });
+
+  it('shows the source size, or the size class when the label is missing, and nothing invented otherwise', () => {
+    expect(shipSizeLabel('Medium', 5)).toBe('Moyen');
+    expect(shipSizeLabel(null, 2)).toBe('Petit');
+    expect(shipSizeLabel(undefined, 3)).toBe('Moyen');
+    expect(shipSizeLabel('', 5)).toBe('Grand');
+    expect(shipSizeLabel('undefined', 6)).toBe('Capital');
+    expect(shipSizeLabel(null, null)).toBeUndefined();
+    const wikeloVariant = { name: 'Nox Wikelo Special', size: undefined, sizeClass: 1, externalId: 'nox' } as unknown as Ship;
+    component.catalogShips = [wikeloVariant];
+    expect(component.getCatalogShip('Nox Wikelo Special', 'nox')?.size).toBe('Petit');
+  });
+
+  it('groups armor pieces by model and variant, in piece order, and keeps the set available when one piece is', () => {
+    const recipe = { id: 'testudo', name: 'Testudo trade', reputation: null, sourceUrl: '', sourceVersion: '4.10', ingredients: [], rewards: [] };
+    const piece = (id: number, name: string, recipes: unknown[] = []) => ({ id, name, family: 'ARMOR', manufacturer: 'Clark Defense Systems', recipes } as unknown as WikeloEquipment);
+    const sets = groupArmorSets([
+      piece(1, 'Testudo Legs Clanguard', [recipe]), piece(2, 'Testudo Helmet Clanguard', [recipe]), piece(3, 'Testudo Backpack Clanguard'),
+      piece(4, 'Geist Armor Core Snow Camo'), piece(5, 'Geist Backpack Snow Camo'),
+      piece(6, 'BUL-H4 Armor Snow Camo'), piece(7, 'BUL-H4 Helmet Snow Camo'),
+      piece(8, 'H4-PBF Ammo Carrier Snow Camo'), piece(9, 'Bokto Helmet')
+    ]);
+    expect(sets.map(set => set.name)).toEqual(['Bokto', 'BUL-H4 Snow Camo', 'Geist Snow Camo', 'H4-PBF Ammo Carrier Snow Camo', 'Testudo Clanguard']);
+    const testudo = sets.find(set => set.name === 'Testudo Clanguard')!;
+    expect(testudo.pieces.map(entry => entry.label)).toEqual(['Casque', 'Jambes', 'Sac à dos']);
+    expect(testudo.available).toBe(true);
+    expect(testudo.pieces.find(entry => entry.label === 'Sac à dos')!.available).toBe(false);
+    // Le même échange récompense deux pièces : il n'apparaît qu'une fois pour le set.
+    expect(testudo.recipes.map(entry => entry.id)).toEqual(['testudo']);
+    expect(sets.find(set => set.name === 'BUL-H4 Snow Camo')!.pieces.map(entry => entry.label)).toEqual(['Casque', 'Torse']);
+    expect(sets.find(set => set.name === 'Geist Snow Camo')!.available).toBe(false);
+  });
+
+  it('splits weapons and armor sets between available and unavailable exchanges', () => {
+    const recipe = { id: 'r', name: 'Trade', reputation: null, sourceUrl: '', sourceVersion: '4.10', ingredients: [], rewards: [] };
+    component.equipment = [
+      {id: 1, name: 'Zeta Weapon', family: 'FPS_WEAPON', recipes: [recipe]}, {id: 2, name: 'Alpha Weapon', family: 'FPS_WEAPON'},
+      {id: 3, name: 'Ana Helmet Endro', family: 'ARMOR', recipes: [recipe]}, {id: 4, name: 'Corbel Core Crush', family: 'ARMOR'}
+    ] as unknown as WikeloEquipment[];
+    component.selectedView = 'weapons';
+    expect(component.availableEquipment.map(item => item.name)).toEqual(['Zeta Weapon']);
+    expect(component.unavailableEquipment.map(item => item.name)).toEqual(['Alpha Weapon']);
+    component.selectedView = 'armor';
+    expect(component.availableArmorSets.map(set => set.name)).toEqual(['Ana Endro']);
+    expect(component.unavailableArmorSets.map(set => set.name)).toEqual(['Corbel Crush']);
+    component.searchTerm = 'corbel';
+    expect(component.availableArmorSets).toEqual([]);
+    expect(component.unavailableArmorSets.map(set => set.name)).toEqual(['Corbel Crush']);
   });
 
   it('extracts armor specifications without changing units or discarding descriptive prose', () => {
