@@ -17,7 +17,8 @@ import { Subscription } from 'rxjs';
 export class GoalComponent implements OnInit, OnDestroy {
   goals: Goal[] = [];
   isLoading = true;
-  readonly maxSubGoals = 3;
+  /** Objectifs dont le membre a déplié les détails ; replié par défaut, l'état survit aux mises à jour en direct. */
+  private readonly openGoalIds = new Set<number>();
   animatedProgressById: Record<number, number> = {};
   private goalUpdatesSubscription?: Subscription;
 
@@ -43,9 +44,6 @@ export class GoalComponent implements OnInit, OnDestroy {
 
     this.goalService.getPinnedGoal().subscribe({
       next: (goal) => {
-        // L'objectif épinglé montre toutes ses étapes ; le membre peut les réduire.
-        const wasExpanded = this.goals.find(current => current.id === goal?.id)?.__expanded;
-        if (goal) goal.__expanded = wasExpanded ?? true;
         this.goals = goal ? [goal] : [];
         if (fromWebSocket) {
           this.updateAnimatedProgressTargets();
@@ -110,11 +108,19 @@ export class GoalComponent implements OnInit, OnDestroy {
       if (aDone !== bDone) return aDone ? 1 : -1;
       return this.calculateProgress(b) - this.calculateProgress(a);
     });
-    return goal.__expanded ? sorted : sorted.slice(0, this.maxSubGoals);
+    return sorted;
   }
 
-  toggleSubGoals(goal: Goal): void {
-    goal.__expanded = !goal.__expanded;
+  doneSubGoals(goal: Goal): number {
+    return (goal.subGoals ?? []).filter(sub => this.isDone(sub)).length;
+  }
+
+  isOpen(goal: Goal): boolean {
+    return this.openGoalIds.has(goal.id);
+  }
+
+  toggleDetails(goal: Goal): void {
+    if (!this.openGoalIds.delete(goal.id)) this.openGoalIds.add(goal.id);
   }
 
   getTotalProgress(goal: Goal): { current: number; target: number } {
