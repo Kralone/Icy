@@ -1,12 +1,13 @@
 import { Component, OnInit, ChangeDetectionStrategy, HostListener, ElementRef, Optional } from '@angular/core';
 import { animate, style, transition, trigger, group, query, stagger } from '@angular/animations';
 import { A11yModule } from '@angular/cdk/a11y';
+import { NgTemplateOutlet } from '@angular/common';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, firstValueFrom } from 'rxjs';
 import { WikeloService } from '../../../core/services/wikelo/wikelo.service';
-import { WikeloEquipment } from '../../../model/wikelo-equipment.model';
+import { WikeloEquipment, WikeloEquipmentRecipe } from '../../../model/wikelo-equipment.model';
 import { WikeloShip } from '../../../model/wikelo-ship.model';
 import { UserService } from '../../../core/services/user/user.service';
 import { ShipService } from '../../../core/services/ship/ship.service';
@@ -20,6 +21,73 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { utilityRouteFor } from '../utility-route-context';
 
 type EquipmentView = 'weapons' | 'armor' | 'other';
+
+/** Pièce d'armure, dans l'ordre de présentation d'un set. */
+const ARMOR_PIECES: Record<string, { label: string; order: number }> = {
+  helmet: { label: 'Casque', order: 0 }, core: { label: 'Torse', order: 1 }, armor: { label: 'Torse', order: 1 },
+  arms: { label: 'Bras', order: 2 }, legs: { label: 'Jambes', order: 3 }, backpack: { label: 'Sac à dos', order: 4 }
+};
+const ARMOR_PIECE_PATTERN = /^(.*?)\s+(?:Armor\s+)?(Helmet|Core|Arms|Legs|Backpack|Armor)\b\s*(.*)$/i;
+
+export interface ArmorPiece { item: WikeloEquipment; label: string; order: number; available: boolean; }
+export interface ArmorSet {
+  key: string;
+  name: string;
+  manufacturer: string | null;
+  pieces: ArmorPiece[];
+  /** Échanges distincts du set : un même échange récompense souvent plusieurs pièces. */
+  recipes: WikeloEquipmentRecipe[];
+  available: boolean;
+  /** Jusqu'à cinq visuels, dans l'ordre des pièces. */
+  images: string[];
+}
+
+/**
+ * Regroupe les pièces d'armure par set : même modèle et même variante (« Testudo Helmet Clanguard » et « Testudo Core Clanguard »).
+ * Une pièce dont le nom ne suit pas ce schéma forme un set à elle seule ; les données ne sont jamais modifiées.
+ */
+export function groupArmorSets(items: WikeloEquipment[]): ArmorSet[] {
+  const sets = new Map<string, ArmorSet>();
+  for (const item of items) {
+    const match = item.name.trim().match(ARMOR_PIECE_PATTERN);
+    const piece = match ? ARMOR_PIECES[match[2].toLowerCase()] : undefined;
+    const model = match?.[1].trim() ?? item.name.trim();
+    const variant = match?.[3].trim() ?? '';
+    const key = (piece ? `${model}|${variant}` : `piece|${item.name}`).toLowerCase();
+    let set = sets.get(key);
+    if (!set) {
+      set = { key, name: piece ? [model, variant].filter(Boolean).join(' ') : item.name, manufacturer: item.manufacturer, pieces: [], recipes: [], available: false, images: [] };
+      sets.set(key, set);
+    }
+    set.manufacturer ??= item.manufacturer;
+    set.pieces.push({ item, label: piece?.label ?? 'Pièce', order: piece?.order ?? 5, available: !!item.recipes?.length });
+  }
+  for (const set of sets.values()) {
+    set.pieces.sort((left, right) => left.order - right.order || left.item.name.localeCompare(right.item.name, 'fr'));
+    const recipes = new Map<string, WikeloEquipmentRecipe>();
+    for (const piece of set.pieces) for (const recipe of piece.item.recipes ?? []) if (!recipes.has(recipe.id)) recipes.set(recipe.id, recipe);
+    set.recipes = [...recipes.values()];
+    set.available = set.pieces.some(piece => piece.available);
+  }
+  return [...sets.values()].sort((left, right) => left.name.localeCompare(right.name, 'fr', { sensitivity: 'base' }));
+}
+
+const SIZE_LABELS: Record<string, string> = {
+  small: 'Petit', s: 'Petit', medium: 'Moyen', m: 'Moyen', large: 'Grand', l: 'Grand',
+  capital: 'Capital', snub: 'Auxiliaire', vehicle: 'Véhicule'
+};
+
+/**
+ * Taille affichée : le libellé de la source, sinon sa classe de taille (variantes Wikelo et PYAM, dont la source ne donne
+ * que la classe). Correspondance relevée sur les vaisseaux qui ont les deux : 1-2 petit, 3 moyen, 4-5 grand, 6 et plus capital.
+ * Sans l'un ni l'autre, la taille reste absente.
+ */
+export function shipSizeLabel(size?: string | null, sizeClass?: number | null): string | undefined {
+  const label = size?.trim();
+  if (label && !['undefined', '-', 'null'].includes(label.toLowerCase())) return SIZE_LABELS[label.toLowerCase()] ?? label;
+  if (!sizeClass || sizeClass < 1) return undefined;
+  return sizeClass <= 2 ? 'Petit' : sizeClass === 3 ? 'Moyen' : sizeClass <= 5 ? 'Grand' : 'Capital';
+}
 type WikeloView = 'ships' | EquipmentView;
 type EquipmentCharacteristic = { label: string; value: string; tone: 'general' | 'protection' | 'radiation' | 'temperature' | 'capacity' | 'weapon' };
 type EquipmentPresentation = { characteristics: EquipmentCharacteristic[]; paragraphs: string[] };
@@ -27,9 +95,10 @@ type EquipmentPresentation = { characteristics: EquipmentCharacteristic[]; parag
 @Component({
   standalone: true,
   selector: 'app-wikelo',
-  imports: [FormsModule, RouterLink, A11yModule, AsyncStateComponent],
+  imports: [FormsModule, RouterLink, A11yModule, AsyncStateComponent, NgTemplateOutlet],
   templateUrl: './wikelo.component.html',
-  styleUrl: './wikelo.component.css',
+  // Sections de disponibilité et sets d'armure : feuille séparée, sous le budget de style par fichier.
+  styleUrls: ['./wikelo.component.css', './wikelo-sets.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   animations: [
     trigger('detailsExpand', [
@@ -90,6 +159,7 @@ export class WikeloComponent implements OnInit {
   selectedView: WikeloView = 'ships';
   private readonly equipmentPresentations = new WeakMap<WikeloEquipment, {description: string | null; manufacturer: string | null; presentation: EquipmentPresentation}>();
   expandedEquipmentId: number | null = null;
+  expandedArmorSet: string | null = null;
   equipmentLoading = false;
   equipmentLoaded = false;
   equipmentError = '';
@@ -157,6 +227,7 @@ export class WikeloComponent implements OnInit {
     this.selectedView = this.resolveView(view);
     this.expandedShipName = null;
     this.expandedEquipmentId = null;
+    this.expandedArmorSet = null;
     void this.router.navigate([], { relativeTo: this.route,
       queryParams: { view: this.selectedView === 'ships' ? null : this.selectedView }, queryParamsHandling: 'merge' });
     if (this.selectedView !== 'ships' && !this.equipmentLoaded && !this.equipmentLoading) this.loadEquipment();
@@ -198,6 +269,36 @@ export class WikeloComponent implements OnInit {
         const availability = Number((right.recipes?.length ?? 0) > 0) - Number((left.recipes?.length ?? 0) > 0);
         return availability || left.name.localeCompare(right.name, 'fr', {sensitivity: 'base'});
       });
+  }
+
+  /** Armes : celles qu'un échange permet d'obtenir, puis les autres. */
+  get availableEquipment(): WikeloEquipment[] { return this.filteredEquipment.filter(item => !!item.recipes?.length); }
+  get unavailableEquipment(): WikeloEquipment[] { return this.filteredEquipment.filter(item => !item.recipes?.length); }
+
+  private armorSetCache: { source: WikeloEquipment[]; sets: ArmorSet[] } | null = null;
+  /** Sets d'armure dont au moins une pièce correspond à la recherche. */
+  get filteredArmorSets(): ArmorSet[] {
+    const source = this.filteredEquipment;
+    const cached = this.armorSetCache;
+    if (cached && cached.source.length === source.length && cached.source.every((item, index) => item === source[index])) return cached.sets;
+    const sets = groupArmorSets(source).map(set => ({ ...set, images: set.pieces.map(piece => this.equipmentImage(piece.item)).filter((url): url is string => !!url).slice(0, 5) }));
+    this.armorSetCache = { source, sets };
+    return sets;
+  }
+  get availableArmorSets(): ArmorSet[] { return this.filteredArmorSets.filter(set => set.available); }
+  get unavailableArmorSets(): ArmorSet[] { return this.filteredArmorSets.filter(set => !set.available); }
+  get armorResultCount(): number { return this.filteredArmorSets.length; }
+
+  toggleArmorSet(key: string): void {
+    this.expandedArmorSet = this.expandedArmorSet === key ? null : key;
+    if (this.expandedArmorSet !== null) this.revealExpandedCard();
+  }
+
+  onArmorSetClick(event: MouseEvent, key: string): void {
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, a, input, select, textarea, [role="button"]')) return;
+    if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
+    this.toggleArmorSet(key);
   }
 
   equipmentPresentation(item: WikeloEquipment): EquipmentPresentation {
@@ -301,14 +402,10 @@ export class WikeloComponent implements OnInit {
   }
 
   private presentCatalogShip(ship: Ship): Ship {
-
-    const sizes: Record<string, string> = {
-      small: 'Petit', medium: 'Moyen', large: 'Grand', capital: 'Capital', snub: 'Auxiliaire', vehicle: 'Véhicule'
-    };
     return {
       ...ship,
       focus: ship.focus?.split('/').map(role => this.roleLabels[role.trim().toUpperCase()] ?? role.trim()).join(' / '),
-      size: ship.size ? sizes[ship.size.toLowerCase()] ?? ship.size : ship.size
+      size: shipSizeLabel(ship.size, ship.sizeClass)
     };
   }
 
@@ -324,12 +421,12 @@ export class WikeloComponent implements OnInit {
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest('.offer, .goal-modal, button, a, input, select, textarea')) return;
-    if (!this.isGoalModalOpen) { this.expandedShipName = null; this.expandedEquipmentId = null; }
+    if (!this.isGoalModalOpen) { this.expandedShipName = null; this.expandedEquipmentId = null; this.expandedArmorSet = null; }
   }
 
   @HostListener('document:keydown.escape')
   closeDetailsOnEscape(): void {
-    if (!this.isGoalModalOpen) { this.expandedShipName = null; this.expandedEquipmentId = null; }
+    if (!this.isGoalModalOpen) { this.expandedShipName = null; this.expandedEquipmentId = null; this.expandedArmorSet = null; }
   }
 
   ingredientDetails(ship: WikeloShip): Array<{ name: string; quantity: string | null }> {

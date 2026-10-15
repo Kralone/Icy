@@ -21,51 +21,37 @@
         @else if (equipmentError) { <app-async-state kind="error" [title]="equipmentError" actionLabel="Réessayer" (action)="loadEquipment()" /> }
         @else if (!categoryEquipment.length) { <app-async-state kind="empty" title="Aucune fiche publiée dans cette catégorie" /> }
         @else {
-          <div class="results-heading"><h2>{{ equipmentCategoryLabel }}</h2><span>{{ filteredEquipment.length }} fiche(s)</span></div>
+          <div class="results-heading"><h2>{{ equipmentCategoryLabel }}</h2><span>{{ selectedView === 'armor' ? armorResultCount + ' set(s)' : filteredEquipment.length + ' fiche(s)' }}</span></div>
           @if (!filteredEquipment.length) { <app-async-state kind="empty" title="Aucun équipement trouvé" actionLabel="Effacer la recherche" (action)="clearSearch()" /> }
-          <div class="offer-grid">
-            @for (item of filteredEquipment; track item.id) {
-              <article class="offer equipment-offer" [class.offer-expanded]="expandedEquipmentId === item.id" (click)="onEquipmentClick($event, item.id)">
-                <div class="offer-media">
-                  @if (equipmentImage(item); as image) { <img [src]="image" [alt]="item.name" loading="lazy" (error)="imageFailed(image)"> }
-                  @else { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
-                </div>
-                <div class="offer-body">
-                  <p class="manufacturer">{{ item.family === 'FPS_WEAPON' ? 'Arme' : item.family === 'ARMOR' ? 'Armure' : 'Vêtement' }} @if (item.manufacturer) { · {{ item.manufacturer }} }</p>
-                  <h3>{{ item.name }}</h3>
-                  @if (!item.recipes?.length) { <p class="conditions-unavailable">Indisponible</p> }
-                  <button type="button" class="primary details-toggle" [class.collapse-toggle]="expandedEquipmentId === item.id" [attr.aria-label]="expandedEquipmentId === item.id ? 'Réduire la fiche de ' + item.name : null" [attr.aria-expanded]="expandedEquipmentId === item.id" [attr.aria-controls]="'equipment-details-' + item.id" (click)="toggleEquipment(item.id)">@if (expandedEquipmentId !== item.id) { {{ item.recipes?.length ? 'Voir l’échange' : 'Voir la fiche' }} } <span aria-hidden="true">{{ expandedEquipmentId === item.id ? '−' : '+' }}</span></button>
-                </div>
-                @if (expandedEquipmentId === item.id) {
-                  <div class="offer-details equipment-description" [id]="'equipment-details-' + item.id" @detailsExpand>
-                    @if (item.recipes?.length) {
-                      <section class="equipment-recipes" aria-label="Conditions d’échange">
-                        @for (recipe of item.recipes; track recipe.id) {
-                          <article class="equipment-recipe">
-                            <header class="recipe-heading"><h4>{{ recipe.name }}</h4>@if (equipmentReputation(recipe.reputation); as reputation) { <span class="recipe-reputation">Réputation : {{ reputation }}</span> }</header>
-                            <div class="recipe-columns">
-                              <section><h5>À fournir</h5><ul class="recipe-items recipe-cost">@for (ingredient of recipe.ingredients; track $index) { <li>@if (ingredient.quantity) { <strong>{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> } @empty { <li>Ingrédients non renseignés.</li> }</ul></section>
-                              <section><h5>Récompenses de l’échange</h5><ul class="recipe-items recipe-rewards">@for (reward of recipe.rewards; track $index) { <li>@if (reward.quantity) { <strong>{{ reward.quantity }}</strong> }<span>{{ reward.name }}</span></li> } @empty { <li>Récompenses non renseignées.</li> }</ul></section>
-                            </div>
-                          </article>
-                        }
-                      </section>
-                    }
-                    @let presentation = equipmentPresentation(item);
-                    @if (presentation.characteristics.length) {
-                      <section class="equipment-characteristics" aria-label="Caractéristiques">
-                        <h4>Caractéristiques</h4>
-                        <dl class="equipment-spec-grid">@for (feature of presentation.characteristics; track $index) { <div [attr.data-tone]="feature.tone"><dt>{{ feature.label }}</dt><dd>{{ feature.value }}</dd></div> }</dl>
-                      </section>
-                    }
-                    @if (presentation.paragraphs.length) {
-                      <section class="equipment-prose" aria-label="Description"><h4>Description</h4>@for (paragraph of presentation.paragraphs; track $index) { <p>{{ paragraph }}</p> }</section>
-                    } @else if (!presentation.characteristics.length) { <p class="muted">Description non renseignée.</p> }
-                  </div>
-                }
-              </article>
+          @if (selectedView === 'armor') {
+            @if (availableArmorSets.length) {
+              <section class="availability-section availability-section--open" aria-labelledby="armor-available-title">
+                <h3 class="availability-title" id="armor-available-title">Échanges disponibles <span>{{ availableArmorSets.length }}</span></h3>
+                <div class="offer-grid">@for (set of availableArmorSets; track set.key) { <ng-container *ngTemplateOutlet="armorSetCard; context: { $implicit: set }" /> }</div>
+              </section>
             }
-          </div>
+            @if (unavailableArmorSets.length) {
+              <section class="availability-section availability-section--closed" aria-labelledby="armor-unavailable-title">
+                <h3 class="availability-title" id="armor-unavailable-title">Sans échange actuellement <span>{{ unavailableArmorSets.length }}</span></h3>
+                <div class="offer-grid">@for (set of unavailableArmorSets; track set.key) { <ng-container *ngTemplateOutlet="armorSetCard; context: { $implicit: set }" /> }</div>
+              </section>
+            }
+          } @else if (selectedView === 'weapons') {
+            @if (availableEquipment.length) {
+              <section class="availability-section availability-section--open" aria-labelledby="weapons-available-title">
+                <h3 class="availability-title" id="weapons-available-title">Échanges disponibles <span>{{ availableEquipment.length }}</span></h3>
+                <div class="offer-grid">@for (item of availableEquipment; track item.id) { <ng-container *ngTemplateOutlet="equipmentCard; context: { $implicit: item }" /> }</div>
+              </section>
+            }
+            @if (unavailableEquipment.length) {
+              <section class="availability-section availability-section--closed" aria-labelledby="weapons-unavailable-title">
+                <h3 class="availability-title" id="weapons-unavailable-title">Sans échange actuellement <span>{{ unavailableEquipment.length }}</span></h3>
+                <div class="offer-grid">@for (item of unavailableEquipment; track item.id) { <ng-container *ngTemplateOutlet="equipmentCard; context: { $implicit: item }" /> }</div>
+              </section>
+            }
+          } @else {
+            <div class="offer-grid">@for (item of filteredEquipment; track item.id) { <ng-container *ngTemplateOutlet="equipmentCard; context: { $implicit: item }" /> }</div>
+          }
         }
       } @else {
         @if (isLoading) { <app-async-state kind="loading" title="Chargement des échanges…" /> }
@@ -132,3 +118,102 @@
     </section>
   </div>
 }
+
+<ng-template #equipmentCard let-item>
+  <article class="offer equipment-offer" [class.offer-expanded]="expandedEquipmentId === item.id" (click)="onEquipmentClick($event, item.id)">
+    <div class="offer-media">
+      @if (equipmentImage(item); as image) { <img [src]="image" [alt]="item.name" loading="lazy" (error)="imageFailed(image)"> }
+      @else { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
+    </div>
+    <div class="offer-body">
+      <p class="manufacturer">{{ item.family === 'FPS_WEAPON' ? 'Arme' : item.family === 'ARMOR' ? 'Armure' : 'Vêtement' }} @if (item.manufacturer) { · {{ item.manufacturer }} }</p>
+      <h3>{{ item.name }}</h3>
+      <!-- Armes : la section dit déjà si un échange existe. -->
+      @if (!item.recipes?.length && selectedView === 'other') { <p class="conditions-unavailable">Indisponible</p> }
+      <button type="button" class="primary details-toggle" [class.collapse-toggle]="expandedEquipmentId === item.id" [attr.aria-label]="expandedEquipmentId === item.id ? 'Réduire la fiche de ' + item.name : null" [attr.aria-expanded]="expandedEquipmentId === item.id" [attr.aria-controls]="'equipment-details-' + item.id" (click)="toggleEquipment(item.id)">@if (expandedEquipmentId !== item.id) { {{ item.recipes?.length ? 'Voir l’échange' : 'Voir la fiche' }} } <span aria-hidden="true">{{ expandedEquipmentId === item.id ? '−' : '+' }}</span></button>
+    </div>
+    @if (expandedEquipmentId === item.id) {
+      <div class="offer-details equipment-description" [id]="'equipment-details-' + item.id" @detailsExpand>
+        @if (item.recipes?.length) {
+          <section class="equipment-recipes" aria-label="Conditions d’échange">
+            @for (recipe of item.recipes; track recipe.id) {
+              <article class="equipment-recipe">
+                <header class="recipe-heading"><h4>{{ recipe.name }}</h4>@if (equipmentReputation(recipe.reputation); as reputation) { <span class="recipe-reputation">Réputation : {{ reputation }}</span> }</header>
+                <div class="recipe-columns">
+                  <section><h5>À fournir</h5><ul class="recipe-items recipe-cost">@for (ingredient of recipe.ingredients; track $index) { <li>@if (ingredient.quantity) { <strong>{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> } @empty { <li>Ingrédients non renseignés.</li> }</ul></section>
+                  <section><h5>Récompenses de l’échange</h5><ul class="recipe-items recipe-rewards">@for (reward of recipe.rewards; track $index) { <li>@if (reward.quantity) { <strong>{{ reward.quantity }}</strong> }<span>{{ reward.name }}</span></li> } @empty { <li>Récompenses non renseignées.</li> }</ul></section>
+                </div>
+              </article>
+            }
+          </section>
+        }
+        @let presentation = equipmentPresentation(item);
+        @if (presentation.characteristics.length) {
+          <section class="equipment-characteristics" aria-label="Caractéristiques">
+            <h4>Caractéristiques</h4>
+            <dl class="equipment-spec-grid">@for (feature of presentation.characteristics; track $index) { <div [attr.data-tone]="feature.tone"><dt>{{ feature.label }}</dt><dd>{{ feature.value }}</dd></div> }</dl>
+          </section>
+        }
+        @if (presentation.paragraphs.length) {
+          <section class="equipment-prose" aria-label="Description"><h4>Description</h4>@for (paragraph of presentation.paragraphs; track $index) { <p>{{ paragraph }}</p> }</section>
+        } @else if (!presentation.characteristics.length) { <p class="muted">Description non renseignée.</p> }
+      </div>
+    }
+  </article>
+</ng-template>
+
+<ng-template #armorSetCard let-set>
+  <article class="offer equipment-offer armor-set" [class.offer-expanded]="expandedArmorSet === set.key" (click)="onArmorSetClick($event, set.key)">
+    <div class="offer-media armor-collage" [attr.data-count]="set.images.length">
+      @for (image of set.images; track image) { <img [src]="image" alt="" loading="lazy" (error)="imageFailed(image)"> }
+      @empty { <div class="image-placeholder"><span aria-hidden="true">◇</span><span>Visuel non disponible</span></div> }
+    </div>
+    <div class="offer-body">
+      <p class="manufacturer">Set d’armure @if (set.manufacturer) { · {{ set.manufacturer }} }</p>
+      <h3>{{ set.name }}</h3>
+      <ul class="armor-pieces" aria-label="Pièces du set">
+        @for (piece of set.pieces; track piece.item.id) { <li [class.piece-unavailable]="!piece.available" [attr.title]="piece.item.name">{{ piece.label }}</li> }
+      </ul>
+      <button type="button" class="primary details-toggle" [class.collapse-toggle]="expandedArmorSet === set.key" [attr.aria-label]="expandedArmorSet === set.key ? 'Réduire le set ' + set.name : null" [attr.aria-expanded]="expandedArmorSet === set.key" [attr.aria-controls]="'armor-set-' + set.key" (click)="toggleArmorSet(set.key)">@if (expandedArmorSet !== set.key) { {{ set.available ? 'Voir les échanges' : 'Voir les pièces' }} } <span aria-hidden="true">{{ expandedArmorSet === set.key ? '−' : '+' }}</span></button>
+    </div>
+    @if (expandedArmorSet === set.key) {
+      <div class="offer-details equipment-description" [id]="'armor-set-' + set.key" @detailsExpand>
+        @if (set.recipes.length) {
+          <section class="equipment-recipes" aria-label="Conditions d’échange">
+            @for (recipe of set.recipes; track recipe.id) {
+              <article class="equipment-recipe">
+                <header class="recipe-heading"><h4>{{ recipe.name }}</h4>@if (equipmentReputation(recipe.reputation); as reputation) { <span class="recipe-reputation">Réputation : {{ reputation }}</span> }</header>
+                <div class="recipe-columns">
+                  <section><h5>À fournir</h5><ul class="recipe-items recipe-cost">@for (ingredient of recipe.ingredients; track $index) { <li>@if (ingredient.quantity) { <strong>{{ ingredient.quantity }}</strong> }<span>{{ ingredient.name }}</span></li> } @empty { <li>Ingrédients non renseignés.</li> }</ul></section>
+                  <section><h5>Récompenses de l’échange</h5><ul class="recipe-items recipe-rewards">@for (reward of recipe.rewards; track $index) { <li>@if (reward.quantity) { <strong>{{ reward.quantity }}</strong> }<span>{{ reward.name }}</span></li> } @empty { <li>Récompenses non renseignées.</li> }</ul></section>
+                </div>
+              </article>
+            }
+          </section>
+        }
+        <section class="armor-piece-list" aria-label="Pièces du set">
+          <h4>Pièces <span>{{ set.pieces.length }}</span></h4>
+          <ul>
+            @for (piece of set.pieces; track piece.item.id) {
+              @let presentation = equipmentPresentation(piece.item);
+              <li class="armor-piece" [class.piece-unavailable]="!piece.available">
+                <div class="armor-piece__media">@if (equipmentImage(piece.item); as image) { <img [src]="image" alt="" loading="lazy" (error)="imageFailed(image)"> } @else { <span aria-hidden="true">◇</span> }</div>
+                <div class="armor-piece__body">
+                  <span class="armor-piece__label">{{ piece.label }}</span>
+                  <strong>{{ piece.item.name }}</strong>
+                  <span class="armor-piece__state">{{ piece.available ? 'Échange disponible' : 'Sans échange actuellement' }}</span>
+                  @if (presentation.characteristics.length) {
+                    <dl class="armor-piece__specs">@for (feature of presentation.characteristics; track $index) { <div [attr.data-tone]="feature.tone"><dt>{{ feature.label }}</dt><dd>{{ feature.value }}</dd></div> }</dl>
+                  }
+                  @if (presentation.paragraphs.length) {
+                    <details class="armor-piece__prose"><summary>Description</summary>@for (paragraph of presentation.paragraphs; track $index) { <p>{{ paragraph }}</p> }</details>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+  </article>
+</ng-template>

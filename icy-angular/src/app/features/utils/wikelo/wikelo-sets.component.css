@@ -1,0 +1,43 @@
+/* Disponibilité : deux sections distinctes, la seconde en retrait. */
+.availability-section { margin-top: 8px; }
+.availability-section + .availability-section { margin-top: 34px; padding-top: 26px; border-top: 1px dashed #34495a; }
+.availability-title { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font-size: 15px; font-weight: 700; letter-spacing: .02em; }
+.availability-title > span { padding: 1px 9px; border-radius: 999px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.availability-section--open .availability-title { color: var(--accent); }
+.availability-section--open .availability-title > span { border: 1px solid #5d9d8b; background: #163a31; }
+.availability-section--closed .availability-title { color: #d2bc92; }
+.availability-section--closed .availability-title > span { border: 1px solid #6b5a38; background: #2a2416; }
+.availability-section--closed .offer:not(.offer-expanded) { background: #0e1823; }
+.availability-section--closed .offer:not(.offer-expanded) .offer-media { filter: saturate(.55); }
+
+/* Set d'armure : composition de 1 à 5 visuels, sans case vide. */
+.armor-collage { display: grid; gap: 2px; background: #0a1723; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+.armor-collage img { width: 100%; height: 100%; min-height: 0; object-fit: cover; background: radial-gradient(ellipse at center, #294657, #0a1723); }
+.armor-collage[data-count="2"] { --cols: 2; }
+.armor-collage[data-count="3"] { --cols: 2; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.armor-collage[data-count="3"] img:first-child { grid-row: span 2; }
+.armor-collage[data-count="4"] { --cols: 2; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.armor-collage[data-count="5"] { --cols: 3; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.armor-collage[data-count="5"] img:first-child { grid-row: span 2; }
+.armor-pieces { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 18px; padding: 0; }
+.armor-pieces li { padding: 3px 10px; border: 1px solid #3c6b5e; border-radius: 999px; background: #13302a; color: #c9f6e9; font-size: 12px; }
+.armor-pieces li.piece-unavailable { border-color: #4a4a3c; background: transparent; color: #a8a088; text-decoration: line-through; text-decoration-color: #a8a08880; }
+.armor-piece-list h4 > span { color: var(--muted); font-size: 11px; font-weight: 400; }
+.armor-piece-list ul { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.armor-piece { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px; border: 1px solid #2c435c; border-radius: 9px; background: #112131; }
+.armor-piece.piece-unavailable { border-style: dashed; background: #0f1a26; }
+.armor-piece__media { width: 72px; height: 72px; border-radius: 7px; overflow: hidden; display: grid; place-items: center; background: radial-gradient(ellipse at center, #294657, #0a1723); color: #93acbe; font-size: 26px; }
+.armor-piece__media img { width: 100%; height: 100%; object-fit: cover; }
+.armor-piece__body { display: grid; gap: 3px; min-width: 0; }
+.armor-piece__body strong { color: #eaf5ff; font-size: 14px; overflow-wrap: anywhere; }
+.armor-piece__label { color: #a7caeb; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.armor-piece__state { color: var(--accent); font-size: 12px; }
+.armor-piece.piece-unavailable .armor-piece__state { color: #d2bc92; }
+.armor-piece__specs { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 0; }
+.armor-piece__specs div { display: flex; gap: 6px; align-items: baseline; font-size: 12px; }
+.armor-piece__specs dt { color: #8fa5b8; }
+.armor-piece__specs dd { margin: 0; color: #dbe9f5; font-weight: 600; }
+@media (min-width: 700px) { .offer-expanded.armor-set .offer-details { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); } }
+.armor-piece__prose { margin-top: 6px; font-size: 12px; }
+.armor-piece__prose summary { cursor: pointer; color: #a7caeb; }
+.armor-piece__prose p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
