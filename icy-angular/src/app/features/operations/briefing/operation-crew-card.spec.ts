@@ -48,18 +48,22 @@ describe('OperationCrewCardComponent', () => {
     return fixture.nativeElement;
   }
 
-  it('shows the ship, its status, each position with its occupants, and who has no position', async () => {
+  const chips = (element: HTMLElement): string[] => Array.from(element.querySelectorAll('.crewcard__positions li'))
+    .map(item => `${item.querySelector('.chip__label')!.textContent!.trim()} ${item.querySelector('.chip__count')!.textContent!.trim()}${item.querySelector('button') ? ' [bouton]' : ''}${item.querySelector('.is-mine') ? ' [mien]' : ''}${item.querySelector('.is-full') ? ' [complet]' : ''}`);
+
+  it('shows the ship, its status, each position as a compact chip, and who is aboard with their position', async () => {
     const element = await render({ requirements: [{ id: 'r', groupId: 2, shipModelId: 286, quantity: 1, status: 'OPEN', accepted: 0, proposed: 1, missing: 1 }] });
     expect(element.querySelector('.crewcard__ship img')!.getAttribute('src')).toBe('/img/carrack.jpg');
     expect(element.querySelector('.crewcard__text strong')!.textContent).toBe('Carrack');
     expect(element.querySelector('.crewcard__status')!.textContent).toContain('proposé, à valider');
-    const rows = Array.from(element.querySelectorAll('.crewcard__positions li')).map(row => Array.from(row.querySelectorAll('strong, .crewcard__count, .crewcard__names, .crewcard__nobody, .tag')).map(node => node.textContent!.trim()).join(' | '));
-    expect(rows).toEqual(['Pilote | 1 / 1 | Kael | Complet', 'Artilleur | 1 / 2 | Moi Vous | Votre poste', 'Soutien | 0 · sans limite | Libre']);
-    expect(element.querySelector('.crewcard__unplaced')!.textContent).toContain('Tobias');
+    expect(chips(element)).toEqual(['Pilote 1 / 1 [complet]', 'Artilleur 1 / 2 [mien]', 'Soutien 0 · sans limite']);
+    expect(element.querySelector('.crewcard__positions li')!.querySelector('.chip')!.getAttribute('title')).toBe('Pilote : Kael');
+    // Moi d'abord, puis les autres, chacun avec son poste.
+    expect(element.querySelector('.crewcard__aboard')!.textContent!.replace(/\s+/g, ' ')).toContain('Moi Vous (Artilleur), Kael (Pilote), Tobias (sans poste)');
   });
 
   it('lets me change or leave my position only when the crew leaves the choice to its members', async () => {
-    let element = await render();
+    const element = await render();
     expect(element.querySelectorAll('button').length).toBe(0);
     expect(element.querySelector('.crewcard__mode')!.textContent).toContain('Chaque membre choisit son poste');
 
@@ -67,34 +71,45 @@ describe('OperationCrewCardComponent', () => {
     fixture.detectChanges();
     const asked: Array<number | null> = [];
     fixture.componentInstance.choose.subscribe(value => asked.push(value));
-    const buttons = Array.from(element.querySelectorAll<HTMLButtonElement>('button'));
-    // Le poste complet n'offre aucun bouton ; le mien offre « Quitter », le poste libre « Passer ici ».
-    expect(buttons.map(button => button.textContent!.replace(/\s+/g, ' ').trim())).toEqual(['Quitter le poste Artilleur', 'Passer ici : poste Soutien']);
-    buttons[1].click();
-    buttons[0].click();
+    // Le poste complet et le mien ne sont pas cliquables ; le poste libre l'est, et « Quitter mon poste » me laisse sans poste.
+    expect(chips(element)).toEqual(['Pilote 1 / 1 [complet]', 'Artilleur 1 / 2 [mien]', 'Soutien 0 · sans limite [bouton]']);
+    element.querySelector<HTMLButtonElement>('.chip--action')!.click();
+    Array.from(element.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent!.includes('Quitter mon poste'))!.click();
     expect(asked).toEqual([12, null]);
   });
 
-  it('says that positions are assigned by the responsibles, and shows a free crew without positions', async () => {
-    const element = await render({ crew: { ...crew, positionMode: 'MANAGED' } });
-    expect(element.querySelector('.crewcard__mode')!.textContent).toContain('attribués par les responsables');
+  it('joins the crew at the chosen position in one gesture, only when positions are chosen by members', async () => {
+    const outsider = { ...crew, members: crew.members.filter(member => member.userId !== 'me'), positions: crew.positions.map(position => position.id === 11 ? { ...position, taken: 0 } : position) };
+    const element = await render({ crew: outsider, canJoinAt: true });
+    const joined: number[] = [];
+    fixture.componentInstance.joinAt.subscribe(value => joined.push(value));
+    expect(element.querySelector('.crewcard__mode')!.textContent).toContain('Choisissez un poste pour rejoindre');
+    expect(chips(element)).toEqual(['Pilote 1 / 1 [complet]', 'Artilleur 0 / 2 [bouton]', 'Soutien 0 · sans limite [bouton]']);
+    element.querySelector<HTMLButtonElement>('.chip--action')!.click();
+    expect(joined).toEqual([11]);
 
-    fixture.componentRef.setInput('crew', { ...crew, positions: [], members: crew.members.map(member => ({ ...member, positionId: null })) });
+    // Postes attribués par les responsables : les pastilles informent seulement.
+    fixture.componentRef.setInput('crew', { ...outsider, positionMode: 'MANAGED' });
     fixture.detectChanges();
+    expect(element.querySelectorAll('.chip--action').length).toBe(0);
+    expect(element.querySelector('.crewcard__mode')!.textContent).toContain('attribués par les responsables');
+  });
+
+  it('shows a free crew without positions, my name first, and folds a long list', async () => {
+    const element = await render({ crew: { ...crew, positions: [], members: crew.members.map(member => ({ ...member, positionId: null })) } });
     expect(element.querySelector('.crewcard__positions')).toBeNull();
     expect(element.textContent).toContain('Équipage libre');
-    // Mon nom passe en premier, avec la mention « Vous ».
-    expect(element.querySelector('.crewcard__unplaced')!.textContent!.replace(/\s+/g, ' ')).toContain('Moi Vous, Kael, Tobias');
+    expect(element.querySelector('.crewcard__aboard')!.textContent!.replace(/\s+/g, ' ')).toContain('Moi Vous, Kael, Tobias');
 
     const many = Array.from({ length: 12 }, (_, index) => ({ userId: `m${index}`, username: `Membre ${index + 1}`, positionId: null }));
     fixture.componentRef.setInput('crew', { ...crew, positions: [], members: [...many, { userId: 'me', username: 'Moi', positionId: null }] });
     fixture.detectChanges();
     const more = element.querySelector<HTMLButtonElement>('.crewcard__more')!;
     expect(more.textContent).toContain('+ 5 autres');
-    expect(element.querySelectorAll('.crewcard__unplaced .you').length).toBe(1);
+    expect(element.querySelectorAll('.crewcard__aboard .you').length).toBe(1);
     more.click();
     fixture.detectChanges();
-    expect(element.querySelector('.crewcard__unplaced')!.textContent).toContain('Membre 12');
+    expect(element.querySelector('.crewcard__aboard')!.textContent).toContain('Membre 12');
   });
 });
 
@@ -115,8 +130,10 @@ describe('Crew on the participant sheet', () => {
     const panels = element.querySelectorAll('.crewcard__manage');
     expect(panels.length).toBe(1);
     expect(panels[0].closest('app-operation-crew-card')!.id).toBe('operation-crew-2');
-    // Aucun bouton pour prendre un poste moi-même : je ne suis pas membre de cet équipage.
-    expect(element.querySelectorAll('app-operation-crew-card .crewcard__action button').length).toBe(0);
+    // Je ne suis membre d'aucun des deux : les pastilles me proposent seulement de rejoindre l'équipage, jamais de changer un poste.
+    const offers = Array.from(element.querySelectorAll('app-operation-crew-card .chip--action'));
+    expect(offers.length).toBeGreaterThan(0);
+    expect(offers.every(offer => offer.textContent!.includes('rejoindre l’équipage'))).toBe(true);
     const select = panels[0].querySelector<HTMLSelectElement>('select[aria-label="Poste de Tobias"]')!;
     expect(Array.from(select.options).map(option => `${option.textContent!.trim()}:${option.disabled}`)).toEqual(['Sans poste:false', 'Pilote (complet):true', 'Artilleur:false', 'Soutien:false']);
     select.value = '12';
@@ -147,8 +164,7 @@ describe('Crew on the participant sheet', () => {
     expect(element.querySelectorAll('app-operation-crew-card').length).toBe(1);
     // Le groupe ordinaire garde sa liste de membres.
     expect(Array.from(element.querySelectorAll('.members li')).map(item => item.textContent!.trim())).toEqual(['Syl']);
-    const take = Array.from(element.querySelectorAll<HTMLButtonElement>('app-operation-crew-card button')).find(button => button.textContent!.includes('Passer ici'))!;
-    take.click();
+    element.querySelector<HTMLButtonElement>('app-operation-crew-card .chip--action')!.click();
     expect(chosen).toEqual([12]);
 
     // « Choisir mon poste » : le groupe principal replié se déplie et la carte de mon équipage reçoit le focus.
@@ -168,8 +184,33 @@ describe('Crew on the participant sheet', () => {
       fixture.componentRef.setInput('readOnly', false);
       for (const [name, value] of Object.entries(change)) fixture.componentRef.setInput(name, value);
       fixture.detectChanges();
-      expect(element.querySelectorAll('app-operation-crew-card button').length).toBe(0);
+      // Membre d'un autre groupe : les pastilles me font rejoindre l'équipage, elles ne changent pas mon poste.
+      const joinable = change['composition'] === undefined ? false : (change['composition'] as OperationComposition).present && (change['composition'] as OperationComposition).myGroupId === 3;
+      expect(element.querySelectorAll('app-operation-crew-card .chip--action').length).toBe(joinable ? 1 : 0);
     }
+  });
+
+  it('turns a free position into « join at this position », and keeps a quiet button to join without one', async () => {
+    await TestBed.configureTestingModule({ imports: [OperationOrgChartComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(OperationOrgChartComponent);
+    fixture.componentRef.setInput('composition', composition({ myGroupId: null }));
+    fixture.componentRef.setInput('currentUserId', 'nouveau');
+    fixture.componentRef.setInput('crews', [crew]);
+    const joinedAt: Array<{ group: number; position: number }> = [];
+    const joined: number[] = [];
+    fixture.componentInstance.joinAt.subscribe(event => joinedAt.push({ group: event.group.id, position: event.positionId }));
+    fixture.componentInstance.join.subscribe(group => joined.push(group.id));
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    const card = element.querySelector('#operation-crew-2')!;
+    // Pilote est complet ; Artilleur et Soutien me font rejoindre l'équipage à ce poste.
+    const chips = Array.from(card.querySelectorAll<HTMLButtonElement>('.chip--action'));
+    expect(chips.map(chip => chip.querySelector('.chip__label')!.textContent)).toEqual(['Artilleur', 'Soutien']);
+    chips[1].click();
+    const quiet = Array.from(element.querySelectorAll<HTMLButtonElement>('.leaf__action button')).find(button => button.textContent!.includes('Rejoindre sans poste'))!;
+    quiet.click();
+    expect(joinedAt).toEqual([{ group: 2, position: 12 }]);
+    expect(joined).toEqual([2]);
   });
 
   it('tells me my ship and my position, and whether I can choose it', async () => {

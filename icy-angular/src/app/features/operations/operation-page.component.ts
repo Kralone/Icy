@@ -477,6 +477,40 @@ export class OperationPageComponent {
     this.assignmentAction(operationId, this.eventService.assignOperationGroup(operationId, group.id), moving ? `Vous êtes maintenant dans ${group.name}.` : `Vous avez rejoint ${group.name}.`, 'Affectation impossible.');
   }
 
+  /**
+   * Rejoindre un équipage et prendre un poste du même geste : les deux écritures existantes, l'une après l'autre.
+   * Si le poste vient d'être pris, je reste dans l'équipage, sans poste, et le message le dit.
+   */
+  async joinAtPosition(operationId: string, group: CompositionGroup, positionId: number): Promise<void> {
+    if (this.assignmentBusy) return;
+    const pending = this.composition?.myRequest;
+    if (pending && !await this.confirmService.ask({ title: `Rejoindre ${group.name} ?`, message: `Votre demande en attente pour ${pending.groupName} sera annulée.`, confirmLabel: `Rejoindre ${group.name}` })) return;
+    const label = this.crews.find(crew => crew.groupId === group.id)?.positions.find(position => position.id === positionId)?.label ?? 'choisi';
+    // Un organisateur rejoint un groupe à validation par la demande, que le serveur confirme aussitôt.
+    const placing = group.effectiveMode === 'VALIDATION' ? this.eventService.requestOperationGroup(operationId, group.id) : this.eventService.assignOperationGroup(operationId, group.id);
+    this.assignmentBusy = true;
+    this.focusCrewAfterAction = group.id;
+    this.focusMemberAfterAction = null;
+    this.changeDetector.markForCheck();
+    placing.pipe(timeout(15000)).subscribe({
+      next: response => {
+        if (group.effectiveMode === 'VALIDATION' && (response as { code?: number } | null)?.code !== OperationPageComponent.ASSIGNMENT_CONFIRMED_CODE) {
+          this.toast.success(`Demande envoyée pour ${group.name}. Vous choisirez votre poste une fois accepté.`);
+          this.afterAssignmentChange(operationId);
+          return;
+        }
+        this.eventService.setMyOperationPosition(operationId, positionId).pipe(timeout(15000)).subscribe({
+          next: () => { this.toast.success(`Vous avez rejoint ${group.name}, au poste ${label}.`); this.afterAssignmentChange(operationId); },
+          error: error => {
+            this.toast.error(`Vous avez rejoint ${group.name}, mais sans poste : ${this.fleetError(error, `le poste ${label} n’a pas pu être pris`)}`);
+            this.afterAssignmentChange(operationId);
+          }
+        });
+      },
+      error: error => { this.toast.error(this.fleetError(error, 'Affectation impossible.')); this.afterAssignmentChange(operationId); }
+    });
+  }
+
   requestGroup(operationId: string, group: CompositionGroup): void {
     const moving = this.composition?.myGroupId != null;
     // Un organisateur ou le responsable du groupe est placé directement par le serveur : le message suit la réponse, pas le mode du groupe.
