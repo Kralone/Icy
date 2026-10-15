@@ -423,14 +423,13 @@ emoji-picker {
   display: inline-block;
 }
 
+/* Chargement d'un widget du tableau de bord : seule l'opacité change. Une hauteur plafonnée puis animée laissait le contenu
+   déborder par-dessus les widgets voisins pendant l'animation (« fantôme » de l'objectif épinglé ou des actualités). */
 .dashboard-widget {
-  max-height: 1400px;
-  transition: max-height 900ms ease, opacity 500ms ease;
-  will-change: max-height, opacity;
+  transition: opacity 500ms ease;
 }
 
 .dashboard-widget[data-loading="true"] {
-  max-height: 260px;
   opacity: 0.85;
 }
 
