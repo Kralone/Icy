@@ -19,7 +19,6 @@ export class WebSocketService {
   private fleetUpdatesSubject = new Subject<any>();
   private eventSubject = new Subject<string>();
   private goalSubject = new Subject<string>();
-  private miningSheetsSubject = new Subject<string>();
   private notificationSubject = new Subject<any>();
   private readonly shipSubscriptions = new Map<string, StompSubscription>();
   private readonly shipListenerCounts = new Map<string, number>();
@@ -29,8 +28,6 @@ export class WebSocketService {
   private eventListenerCount = 0;
   private goalsSubscription: StompSubscription | null = null;
   private goalsListenerCount = 0;
-  private miningSheetsSubscription: StompSubscription | null = null;
-  private miningSheetsListenerCount = 0;
   private notificationsSubscription: StompSubscription | null = null;
   private userNotificationsSubscription: StompSubscription | null = null;
   private notificationsListenerCount = 0;
@@ -133,6 +130,16 @@ export class WebSocketService {
     return this.watchSignal('/topic/sc-world-events');
   }
 
+  /** Signal « une fiche de minage a changé » : la liste se relit. */
+  watchMiningSessions(): Observable<void> {
+    return this.watchSignal('/topic/sessions');
+  }
+
+  /** Signal « cette fiche de minage a changé » : la fiche ouverte se relit avec les droits de son lecteur. */
+  watchMiningSession(sheetId: string): Observable<void> {
+    return this.watchSignal(`/topic/sessions/${sheetId}`);
+  }
+
   private watchSignal(topic: string): Observable<void> {
     let subject = this.signalSubjects.get(topic);
     if (!subject) { subject = new Subject<void>(); this.signalSubjects.set(topic, subject); }
@@ -181,11 +188,6 @@ export class WebSocketService {
     this.ensureConnected();
   }
 
-  connectMiningSheets(): void {
-    this.miningSheetsListenerCount += 1;
-    this.ensureConnected();
-  }
-
   disconnectFleetUpdate(): void {
     this.fleetListenerCount = Math.max(0, this.fleetListenerCount - 1);
     if (this.fleetListenerCount === 0) {
@@ -207,14 +209,6 @@ export class WebSocketService {
     if (this.goalsListenerCount === 0 && this.goalsSubscription) {
       this.goalsSubscription.unsubscribe();
       this.goalsSubscription = null;
-    }
-  }
-
-  disconnectMiningSheets(): void {
-    this.miningSheetsListenerCount = Math.max(0, this.miningSheetsListenerCount - 1);
-    if (this.miningSheetsListenerCount === 0 && this.miningSheetsSubscription) {
-      this.miningSheetsSubscription.unsubscribe();
-      this.miningSheetsSubscription = null;
     }
   }
 
@@ -241,7 +235,6 @@ export class WebSocketService {
     if (this.fleetListenerCount > 0 && !this.fleetSubscription) this.subscribeToFleetUpdate();
     if (this.eventListenerCount > 0 && !this.eventSubscription) this.subscribeToEvent();
     if (this.goalsListenerCount > 0 && !this.goalsSubscription) this.subscribeToGoals();
-    if (this.miningSheetsListenerCount > 0 && !this.miningSheetsSubscription) this.subscribeToMiningSheets();
     if (this.notificationsListenerCount > 0) this.subscribeToNotifications(this.notificationsUserId ?? undefined);
   }
 
@@ -251,7 +244,6 @@ export class WebSocketService {
     this.fleetSubscription = null;
     this.eventSubscription = null;
     this.goalsSubscription = null;
-    this.miningSheetsSubscription = null;
     this.notificationsSubscription = null;
     this.userNotificationsSubscription = null;
     this.subscribedNotificationsUserId = null;
@@ -298,16 +290,6 @@ export class WebSocketService {
 
     this.goalsSubscription = this.stompClient.subscribe('/topic/goals', (message: IMessage) => {
       this.ngZone.run(() => this.goalSubject.next(message.body));
-    });
-  }
-
-  private subscribeToMiningSheets(): void {
-    if (this.miningSheetsSubscription) {
-      return;
-    }
-
-    this.miningSheetsSubscription = this.stompClient.subscribe('/topic/mining-sheets', (message: IMessage) => {
-      this.ngZone.run(() => this.miningSheetsSubject.next(message.body));
     });
   }
 
@@ -359,10 +341,6 @@ export class WebSocketService {
     return this.goalSubject.asObservable();
   }
 
-  getMiningSheetUpdates(): Observable<string> {
-    return this.miningSheetsSubject.asObservable();
-  }
-
   listenForUserShips(userId: string): Observable<string> {
     return this.getShipUpdates(userId);
   }
@@ -381,9 +359,5 @@ export class WebSocketService {
 
   listenForGoalUpdates(): Observable<string> {
     return this.getGoalUpdates();
-  }
-
-  listenForMiningSheets(): Observable<string> {
-    return this.getMiningSheetUpdates();
   }
 }

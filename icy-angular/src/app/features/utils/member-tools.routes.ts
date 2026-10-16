@@ -17,7 +17,15 @@ export const memberToolsRoutes: Routes = [
   },
   {
     path: 'fiches-minage',
-    loadComponent: () => import('./mining-sheets/mining-sheets.component').then(m => m.MiningSheetsComponent)
+    loadComponent: () => import('./mining-sessions/mining-sessions-list.component').then(m => m.MiningSessionsListComponent)
+  },
+  {
+    path: 'fiches-minage/operation/:operationId',
+    loadComponent: () => import('./mining-sessions/mining-session-by-operation.component').then(m => m.MiningSessionByOperationComponent)
+  },
+  {
+    path: 'fiches-minage/:id',
+    loadComponent: () => import('./mining-sessions/mining-session-page.component').then(m => m.MiningSessionPageComponent)
   },
   {
     path: 'executive-hangar',

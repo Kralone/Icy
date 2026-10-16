@@ -131,7 +131,7 @@ export class EventService {
   }
 
   /** `expectedRevision` : le serveur refuse (409) si l'opération a changé depuis cette révision. */
-  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
+  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; miningSession?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
     return this.http.put<any>(`/api/operations/${eventId}`, payload, options.keepalive ? { keepalive: true } : {}).pipe(map(res => res.data));
   }
 

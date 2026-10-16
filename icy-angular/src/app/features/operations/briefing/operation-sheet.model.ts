@@ -16,6 +16,8 @@ export interface OperationSheet {
   started?: boolean;
   publicationStatus?: 'DRAFT' | 'PUBLISHED';
   allowShipProposals: boolean;
+  /** Session de minage : une fiche de minage liée existe (ou sera créée à la publication). */
+  miningSession?: boolean;
   /** Mode des groupes qui n'en fixent pas un eux-mêmes. */
   defaultAssignmentMode?: string;
   /** Type d'événement choisi à la création : il donne son nom, ses couleurs et son image de repli. */

@@ -1,0 +1,349 @@
+<main class="page">
+  @switch (state()) {
+    @case ('loading') { <app-async-state kind="loading" title="Chargement de la fiche…" /> }
+    @case ('missing') { <app-async-state kind="error" title="Fiche de minage introuvable." description="Elle a peut-être été supprimée, ou le lien est incomplet." /> }
+    @case ('error') { <app-async-state kind="error" title="La fiche n’a pas pu être chargée." actionLabel="Réessayer" (action)="load()" /> }
+  }
+
+  @if (state() === 'ready' && sheet(); as s) {
+    <header class="hero">
+      <img class="hero__image" [src]="heroImage" alt="">
+      <div class="hero__veil"></div>
+      <div class="hero__content">
+        <a class="hero__back" routerLink="/icy/outils/fiches-minage"><span aria-hidden="true">←</span> Fiches de minage</a>
+        <p class="hero__tags">
+          <span class="hero__type">Session de minage</span>
+          <span class="hero__status" [attr.data-tone]="s.status === 'ACTIVE' ? 'live' : s.status === 'SETTLEMENT' || s.share.settlement?.closeKind === 'FORCED' ? 'settle' : 'done'">
+            @switch (s.status) {
+              @case ('ACTIVE') { En cours · {{ steps[stepIndex()].label.toLowerCase() }} }
+              @case ('SETTLEMENT') { Comptes arrêtés }
+              @default { @if (s.share.settlement?.closeKind === 'FORCED') { Clôturée · versement non confirmé } @else { Terminée } }
+            }
+          </span>
+        </p>
+        <h1 class="hero__title">{{ s.name }}</h1>
+        <dl class="hero__facts">
+          <div><dt><app-operation-icon name="calendar" /><span class="sr-only">Date</span></dt><dd>{{ dateLabel(s.sessionDate) }}</dd></div>
+          <div><dt><app-operation-icon name="users" /><span class="sr-only">Participants</span></dt><dd>{{ s.participants.length }} participant{{ s.participants.length > 1 ? 's' : '' }} · {{ s.share.totalSharesCenti / 100 }} part{{ s.share.totalSharesCenti > 100 ? 's' : '' }}</dd></div>
+          @if (s.orders.length) { <div><dt><app-operation-icon name="pin" /><span class="sr-only">Raffineries</span></dt><dd>{{ refineries(s) }}</dd></div> }
+          @if (s.operationEventId) { <div><dt><app-operation-icon name="briefing" /><span class="sr-only">Opération liée</span></dt><dd><a [routerLink]="['/icy/operations', s.operationEventId]">{{ s.operationTitle || 'Opération liée' }}</a></dd></div> }
+          <div><dt><app-operation-icon name="assignment" /><span class="sr-only">Organisateur</span></dt><dd>{{ s.organizer.username }}</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <nav class="section-nav" aria-label="Sections de la fiche">
+      <button type="button" style="--c: var(--cyan)" (click)="goTo('situation')"><app-operation-icon name="assignment" /> Ma situation</button>
+      <button type="button" style="--c: var(--s-refine)" (click)="goTo('raffinage')"><app-operation-icon name="flask" /> Raffinage</button>
+      <button type="button" style="--c: var(--s-sell)" (click)="goTo('vente')"><app-operation-icon name="cargo" /> Vente</button>
+      <button type="button" style="--c: var(--s-share)" (click)="goTo('partage')"><app-operation-icon name="coins" /> Partage</button>
+      <button type="button" style="--c: var(--s-costs)" (click)="goTo('frais')"><app-operation-icon name="wrench" /> Frais</button>
+      @if (s.permissions.organizer) { <button type="button" class="manage" (click)="open({ kind: 'manage' })">Gérer la fiche</button> }
+    </nav>
+
+    @if (actionError()) { <p class="alert sheet-alert" role="alert">{{ actionError() }}</p> }
+    <div class="sheet">
+
+      <!-- Ma situation -->
+      <section class="mine" id="situation" tabindex="-1" aria-labelledby="mine-h">
+        <h2 id="mine-h"><app-operation-icon name="assignment" /> Ma situation</h2>
+        @if (mine(); as m) {
+          <span class="tag" [class.tag--prov]="m.tagTone === 'prov'" [class.tag--fixed]="m.tagTone === 'fixed'">{{ m.tag }}</span>
+          <p class="mine__amount" [attr.data-tone]="m.amountTone">{{ m.amount }} <small>{{ m.unit }}</small></p>
+          <p class="mine__what">{{ m.what }}</p>
+          @if (m.kind === 'waiting') {
+            <p class="note">Votre part et vos versements s’afficheront dès la première vente enregistrée.</p>
+          } @else {
+            <dl class="facts">
+              <div><dt>Ma part ({{ parts(m.sharesCenti) }})</dt><dd class="num">{{ auec(m.share) }}</dd></div>
+              <div><dt>+ Mes frais avancés</dt><dd class="num">{{ auec(m.advanced) }}</dd></div>
+              <div><dt>− Déjà encaissé en vendant</dt><dd class="num">{{ auec(m.cashed) }}</dd></div>
+              <div class="res"><dt>{{ m.resultLabel }}</dt><dd class="num" [class.pos]="m.kind === 'balance' && m.gap > 0" [class.neg]="m.kind === 'balance' && m.gap < 0">{{ auec(m.gap < 0 ? -m.gap : m.gap) }}</dd></div>
+            </dl>
+          }
+        } @else {
+          <p class="mine__what">Vous ne participez pas à cette session.</p>
+          <p class="note">La fiche est consultable par tous les membres ; l’organisateur gère les participants.</p>
+        }
+        @if (s.permissions.canEdit) {
+          <div class="actions">
+            <button type="button" class="btn" (click)="open({ kind: 'expense', expense: null })">+ Frais</button>
+            <button type="button" class="btn" (click)="open({ kind: 'order', order: null })">+ Ordre de raffinage</button>
+            <button type="button" class="btn primary" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })">+ Vente</button>
+          </div>
+        }
+      </section>
+
+      <!-- Avancement -->
+      <section class="panel p-progress" id="avancement" aria-labelledby="progress-h">
+        <header><h2 id="progress-h"><app-operation-icon name="target" /> Avancement</h2><span>Mis à jour en direct</span></header>
+        <ol class="steps">
+          @for (step of steps; track step.phase; let i = $index) {
+            <li [class.done]="i < stepIndex() || (s.status === 'CLOSED' && i === stepIndex())" [class.now]="i === stepIndex() && s.status !== 'CLOSED'" [attr.aria-current]="i === stepIndex() ? 'step' : null">
+              <b>{{ step.label }}</b>{{ i < stepIndex() || (s.status === 'CLOSED' && i === stepIndex()) ? 'fait' : i === stepIndex() ? 'en cours' : 'à venir' }}
+            </li>
+          }
+        </ol>
+        @if (progress(); as p) {
+          <p class="headline">{{ p.headline }}</p>
+          @if (p.tasks.length) {
+            <ul class="tasks">
+              @for (task of p.tasks; track $index) { <li [class.mine]="task.userId === s.permissions.currentUserId" [class.later]="task.later">{{ task.text }}</li> }
+            </ul>
+          }
+        }
+      </section>
+
+      <!-- Raffinage -->
+      <section class="panel p-refine" id="raffinage" style="--section: var(--s-refine)" aria-labelledby="refine-h">
+        <header><h2 id="refine-h"><app-operation-icon name="flask" /> Raffinage</h2><span>@if (s.orders.length) { {{ s.orders.length }} ordre{{ s.orders.length > 1 ? 's' : '' }}@if (lastFinish(); as last) { · fin du dernier à {{ hour(last) }} } } @else { aucun ordre }</span></header>
+        @if (s.orders.length) {
+          <ul class="orders">
+            @for (order of s.orders; track order.id) {
+              <li class="order" [attr.data-state]="orderState(order)">
+                <div class="order__top">
+                  <div class="order__who"><h3>Ordre de {{ order.launcher.username }}</h3><span>{{ order.terminalLabel }}@if (order.methodLabel) { · {{ order.methodLabel }} }</span></div>
+                  <span class="badge" [class.badge--wait]="orderState(order) === 'wait'" [class.badge--ready]="orderState(order) === 'ready'" [class.badge--given]="orderState(order) === 'given'">{{ orderBadge(order) }}</span>
+                </div>
+                <div class="ores">
+                  @for (line of order.lines; track $index) {
+                    <span class="ore" [class.kept]="line.destination === 'KEEP'" [style.--c]="color(line.commodityName)"><b>{{ line.commodityName }}</b><span class="num">{{ scu(line.quantityCscu) }} SCU</span><span class="q">qualité {{ line.quality }}</span>@if (line.destination === 'KEEP') { <span class="k">conservé</span> }</span>
+                  }
+                </div>
+                <div class="order__foot">
+                  <span><app-operation-icon name="clock" /> {{ orderTimer(order) }}</span>
+                  <span>Coût <strong class="num">{{ auec(order.cost) }}</strong></span>
+                  <span>@if (order.launcher.id === order.recipient.id) { Vendu par <strong>{{ order.recipient.username }}</strong>, son lanceur } @else { À remettre à <strong>{{ order.recipient.username }}</strong> }</span>
+                  <span class="grow"></span>
+                  @if (order.canHandOver && !order.handedOverAt && orderState(order) === 'ready') {
+                    <button type="button" class="btn small" [disabled]="busy()" (click)="handOver(order)">{{ order.launcher.id === order.recipient.id ? 'Je l’ai récupéré' : 'Marquer remis' }}</button>
+                  }
+                  @if (order.canHandOver && order.handedOverAt) { <button type="button" class="btn small" [disabled]="busy()" (click)="cancelHandOver(order)">Annuler la remise</button> }
+                  @if (order.editable) { <button type="button" class="btn small" (click)="open({ kind: 'order', order })">Modifier</button> }
+                </div>
+              </li>
+            }
+          </ul>
+          @if (keptLines().length) {
+            <p class="note">Conservé, hors partage et hors stock à vendre :
+              @for (kept of keptLines(); track $index) { {{ kept.line.commodityName }} de {{ kept.order.launcher.username }} (qualité {{ kept.line.quality }}){{ $last ? '.' : ', ' }} }
+            </p>
+          }
+        } @else {
+          <p class="empty">Aucun ordre pour l’instant. Créez-en un à chaque lancement de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+        }
+      </section>
+
+      <!-- Frais -->
+      <section class="panel p-costs" id="frais" style="--section: var(--s-costs)" aria-labelledby="costs-h">
+        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés</h2><span>remboursés avant le partage</span></header>
+        @if (costs().length) {
+          <div class="rows">
+            @for (cost of costs(); track $index) {
+              <div class="row">
+                <span><span class="kind">{{ cost.kind }}</span><b>{{ cost.who }}</b></span>
+                <span class="num">{{ auec(cost.amount) }}</span>
+                @if (cost.note || cost.expense?.editable) {
+                  <span class="sub">{{ cost.note }}@if (cost.expense?.editable) { <button type="button" class="link" (click)="open({ kind: 'expense', expense: cost.expense })">Modifier</button> }</span>
+                }
+              </div>
+            }
+          </div>
+          <div class="total-line"><span>Total</span><span class="num">{{ auec(s.share.totalExpenses) }} aUEC</span></div>
+        } @else {
+          <p class="empty">Aucun frais déclaré. Carburant, réparations, matériel : chacun ajoute ce qu’il paie.</p>
+        }
+      </section>
+
+      <!-- Vente -->
+      <section class="panel p-sell" id="vente" style="--section: var(--s-sell)" aria-labelledby="sell-h">
+        <header><h2 id="sell-h"><app-operation-icon name="cargo" /> Vente</h2><span>@if (s.remaining.length) { {{ remainingTotal() > 0 ? 'reste ' + scu(remainingTotal()) + ' SCU à vendre' : 'tout est vendu' }} } @else { après le raffinage }</span></header>
+        @if (!s.remaining.length) {
+          <p class="empty">Les minerais à vendre et les suggestions de vente apparaîtront avec les premiers ordres de raffinage.</p>
+        } @else {
+          <div class="sell-grid">
+            <div class="sell-list">
+              @for (item of s.remaining; track item.commodityId) {
+                <article class="sell-ore" [class.is-open]="openSpots().has(item.commodityId)" [style.--c]="color(item.commodityName)">
+                  <div class="sell-ore__head"><b>{{ item.commodityName }}</b><span>@if (item.remainingCscu > 0) { reste <span class="num">{{ scu(item.remainingCscu) }}</span> SCU sur {{ scu(item.totalCscu) }} } @else { vendu · {{ scu(item.totalCscu) }} SCU }</span></div>
+                  <div class="bar" aria-hidden="true"><i [style.width.%]="soldRatio(item.totalCscu, item.remainingCscu)"></i></div>
+                  @if (item.remainingCscu > 0) {
+                    @if (holders(item.commodityId).length) {
+                      <p class="holders">@for (h of holders(item.commodityId); track h.name) { <span>Chez <b>{{ h.name }}</b> : @if (h.inStock) { <span class="num">{{ scu(h.inStock) }}</span> SCU en stock }@if (h.inStock && h.awaiting) { · }@if (h.awaiting) { <span class="num">{{ scu(h.awaiting) }}</span> SCU à recevoir }</span> }</p>
+                    }
+                    @if (points(item.commodityId).length) {
+                      <div class="table-wrap">
+                        <table>
+                          <thead><tr><th>Où vendre</th><th class="r">Prix / SCU</th><th class="r">Demande</th><th class="r">Estimation</th></tr></thead>
+                          <tbody>
+                            @for (point of points(item.commodityId); track $index; let k = $index) {
+                              <tr [class.extra]="k >= 2">
+                                <td><b>{{ point.terminalName }}</b>@if (k === 0) { <span class="best">meilleur prix</span> }@if (point.location) { <span class="place">{{ point.location }}</span> }</td>
+                                <td class="r num">{{ auec(point.pricePerScu) }}</td>
+                                <td class="r num">@if (point.demandScu !== null) { {{ auec(point.demandScu) }} SCU } @else { <span class="est">non renseignée</span> }</td>
+                                <td class="r num est">{{ auec(point.estimatedAuec) }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                      @if (points(item.commodityId).length > 2) {
+                        <button type="button" class="more-spots" [attr.aria-expanded]="openSpots().has(item.commodityId)" (click)="toggleSpots(item.commodityId)">{{ openSpots().has(item.commodityId) ? 'Masquer les autres lieux' : 'Voir ' + (points(item.commodityId).length - 2) + ' autres lieux' }}</button>
+                      }
+                    } @else if (suggestions()) {
+                      <p class="note">Aucun prix connu pour ce minerai dans les données UEX.</p>
+                    }
+                  }
+                </article>
+              }
+              @if (suggestions(); as sg) {
+                <p class="note">Estimations UEX@if (sg.pricesFetchedAt) { relevées le {{ dateTimeLabel(sg.pricesFetchedAt) }} }. Le prix réel dépend de l’offre, de la demande et de la qualité.@if (sg.singleStop; as stop) { Un seul arrêt : {{ stop.terminalName }} achète {{ stop.commodityNames.join(', ') }}. }</p>
+              }
+            </div>
+            <div class="sell-list">
+              @if (s.permissions.canEdit && remainingTotal() > 0) {
+                <div class="sale-cta">
+                  <h3>Vendre</h3>
+                  @if (myStock(); as stock) {
+                    <div class="ores">@for (line of stock.lines; track line.commodityId) { @if (line.inStockCscu > 0) { <span class="ore" [style.--c]="color(line.commodityName)"><b>{{ line.commodityName }}</b><span class="num">{{ scu(line.inStockCscu) }} SCU</span></span> } }</div>
+                  }
+                  <p class="note">Le montant saisi est celui reçu en jeu ; seul le minerai remis au vendeur peut être vendu.</p>
+                  <button type="button" class="btn primary" (click)="open({ kind: 'sale', sale: null })">Enregistrer une vente</button>
+                </div>
+              }
+              <div class="sales-done">
+                <h3>Ventes enregistrées</h3>
+                @if (s.sales.length) {
+                  <div class="rows">
+                    @for (sale of s.sales; track sale.id) {
+                      <div class="row">
+                        <span><b>{{ sale.seller.username }}</b> · {{ sale.terminalLabel }}</span>
+                        <b class="num pos">+ {{ auec(sale.amount) }}</b>
+                        <span class="sub">{{ dateTimeLabel(sale.soldAt) }} · @for (line of sale.lines; track $index) { {{ line.commodityName }} {{ scu(line.quantityCscu) }} SCU{{ $last ? '' : ', ' }} }@if (sale.editable) { <button type="button" class="link" (click)="open({ kind: 'sale', sale })">Modifier</button> }</span>
+                      </div>
+                    }
+                  </div>
+                } @else { <p class="empty">Aucune vente pour l’instant.</p> }
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Partage -->
+      <section class="panel p-share" id="partage" style="--section: var(--s-share)" aria-labelledby="share-h">
+        <header>
+          <h2 id="share-h"><app-operation-icon name="coins" /> Partage</h2>
+          <span>@switch (s.share.source) { @case ('NONE') { en attente de la première vente } @case ('PREVIEW') { provisoire, recalculé à chaque saisie } @default { {{ s.status === 'CLOSED' ? 'bilan final' : 'comptes arrêtés' }} } }</span>
+        </header>
+        @if (s.share.settlement; as settlement) {
+          <p class="locked">
+            @if (s.status === 'SETTLEMENT') { <b>Comptes arrêtés par {{ settlement.createdBy.username }} le {{ dateTimeLabel(settlement.createdAt) }}.</b> Frais, ventes et parts sont figés. }
+            @else if (settlement.closeKind === 'FORCED') { <b>Clôture forcée le {{ dateTimeLabel(settlement.closedAt!) }}.</b> Des versements n’ont pas été confirmés par leur receveur. La fiche peut être rouverte. }
+            @else { <b>Terminée le {{ dateTimeLabel(settlement.closedAt!) }}.</b> Tous les versements ont été confirmés. La fiche peut être rouverte pour corriger une erreur. }
+          </p>
+        }
+        <div class="share-grid">
+          <div class="share-col">
+            <div class="totals">
+              <div><span>Ventes</span><strong class="num">{{ auec(s.share.totalSales) }}</strong></div>
+              <div><span>Frais avancés</span><strong class="num">{{ auec(s.share.totalExpenses) }}</strong></div>
+              <div><span>Bénéfice net</span>@if (s.share.source === 'NONE') { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net) }}</strong> }</div>
+              <div class="key"><span>Une part</span>@if (s.share.source === 'NONE' || !s.share.totalSharesCenti) { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net * 100 / s.share.totalSharesCenti) }}</strong> }</div>
+            </div>
+            @if (s.share.source === 'NONE') {
+              <p class="formula">Le partage se calcule dès la première vente. D’ici là, la fiche tient le compte des frais avancés par chacun.</p>
+              <div class="rows">
+                @for (row of s.share.rows; track row.user.id) { <div class="row"><span><b>{{ row.user.username }}</b> <small class="muted">{{ parts(row.sharesCenti) }}</small></span><span class="num">{{ row.advanced ? auec(row.advanced) + ' avancés' : '—' }}</span></div> }
+              </div>
+            } @else {
+              <p class="formula">Bénéfice net ÷ {{ s.share.totalSharesCenti / 100 }} parts, arrondi à l’aUEC par plus grand reste. Chacun reçoit sa part, plus les frais qu’il a avancés.</p>
+              <div class="people">
+                @for (row of s.share.rows; track row.user.id) {
+                  <details class="person" [class.me]="row.user.id === s.permissions.currentUserId">
+                    <summary><span class="who">{{ row.user.username }}<small>{{ parts(row.sharesCenti) }}</small></span><span class="num">{{ auec(row.balance) }}</span><span class="chev" aria-hidden="true">›</span></summary>
+                    <dl class="facts">
+                      <div><dt>Part du bénéfice net</dt><dd class="num">{{ auec(row.share) }}</dd></div>
+                      <div><dt>+ Frais avancés</dt><dd class="num">{{ auec(row.advanced) }}</dd></div>
+                      <div class="res"><dt>Solde</dt><dd class="num">{{ auec(row.balance) }}</dd></div>
+                      <div><dt>− Déjà encaissé en vendant</dt><dd class="num">{{ auec(row.cashed) }}</dd></div>
+                      <div class="res"><dt>{{ s.status === 'CLOSED' ? (row.gap >= 0 ? 'Reçu' : 'Versé') : row.gap >= 0 ? 'À recevoir' : 'À verser' }}</dt><dd class="num" [class.pos]="s.status !== 'CLOSED' && row.gap > 0" [class.neg]="s.status !== 'CLOSED' && row.gap < 0">{{ auec(row.gap < 0 ? -row.gap : row.gap) }}</dd></div>
+                    </dl>
+                  </details>
+                }
+              </div>
+            }
+            @if (s.permissions.organizer && s.status === 'ACTIVE') {
+              <button type="button" class="btn small" style="justify-self: start" (click)="open({ kind: 'participants' })">Participants et parts</button>
+            }
+          </div>
+          <div class="share-col">
+            <h3>{{ s.status === 'CLOSED' ? 'Versements effectués' : 'Versements' }}@if (s.share.source === 'PREVIEW') { <span class="tag tag--prov">provisoires</span> }</h3>
+            @if (s.share.source === 'NONE') {
+              <p class="empty">Les versements apparaîtront dès la première vente enregistrée.</p>
+            } @else if (!s.share.transfers.length) {
+              <p class="empty">Aucun versement nécessaire.</p>
+            } @else {
+              <ul class="transfers">
+                @for (transfer of s.share.transfers; track $index) {
+                  <li class="transfer">
+                    <span><b>{{ transfer.from.username }}</b><span class="arrow" aria-hidden="true">→</span><span class="sr-only"> verse à </span><b>{{ transfer.to.username }}</b></span>
+                    <span class="amt num">{{ auec(transfer.amount) }}</span>
+                    @if (s.status === 'CLOSED') {
+                      @if (transfer.receivedAt) { <span class="receipt">Reçu le {{ dateTimeLabel(transfer.receivedAt) }}</span> } @else { <span class="receipt receipt--missing">Non confirmé</span> }
+                    } @else if (s.status === 'SETTLEMENT') {
+                      @if (transfer.receivedAt) {
+                        <button type="button" class="check" aria-pressed="true" [disabled]="busy() || !canConfirm(transfer)" (click)="withdraw(transfer)">Reçu ✓</button>
+                      } @else if (canConfirm(transfer)) {
+                        <button type="button" class="check primary" aria-pressed="false" [disabled]="busy()" (click)="confirm(transfer)">{{ transfer.to.id === s.permissions.currentUserId ? 'J’ai reçu' : 'Confirmer pour ' + transfer.to.username }}</button>
+                      } @else { <span class="receipt receipt--wait">En attente</span> }
+                    }
+                  </li>
+                }
+              </ul>
+              <app-session-flow [transfers]="s.share.transfers" [rows]="s.share.rows" [closed]="s.status === 'CLOSED'" />
+            }
+            <p class="note">
+              @switch (s.status) {
+                @case ('ACTIVE') { Les versements sont figés quand l’organisateur arrête les comptes. }
+                @case ('SETTLEMENT') { Seul le receveur confirme. La fiche se termine au moment où la dernière confirmation est donnée. }
+                @default { Historique conservé : montants, confirmations et réouvertures restent consultables. }
+              }
+            </p>
+          </div>
+        </div>
+        @if (s.history.length || s.cancelledSettlements.length) {
+          <details class="history">
+            <summary>Historique de la fiche</summary>
+            <div class="rows">
+              @for (entry of s.history; track $index) {
+                <div class="row"><span><b>{{ historyLabel(entry.action) }}</b> · {{ entry.actor.username }}</span><span class="muted">{{ dateTimeLabel(entry.at) }}</span>@if (entry.reason) { <span class="sub">{{ entry.reason }}</span> }</div>
+              }
+            </div>
+            @for (cancelled of s.cancelledSettlements; track cancelled.id) {
+              <p class="note">Règlement du {{ dateTimeLabel(cancelled.createdAt) }}, annulé le {{ dateTimeLabel(cancelled.cancelledAt) }} : ventes {{ auec(cancelled.totalSales) }}, net {{ auec(cancelled.net) }} aUEC, {{ cancelled.transfers.length }} versement{{ cancelled.transfers.length > 1 ? 's' : '' }}.</p>
+            }
+          </details>
+        }
+      </section>
+    </div>
+
+    @if (s.permissions.canEdit) {
+      <div class="quickbar">
+        <button type="button" class="btn" (click)="open({ kind: 'expense', expense: null })">+ Frais</button>
+        <button type="button" class="btn" (click)="open({ kind: 'order', order: null })">+ Raffinage</button>
+        <button type="button" class="btn primary" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })">+ Vente</button>
+      </div>
+    }
+
+    @if (dialog(); as d) {
+      @switch (d.kind) {
+        @case ('expense') { <app-expense-dialog [sheet]="s" [expense]="$any(d).expense" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
+        @case ('order') { @if (reference(); as ref) { <app-order-dialog [sheet]="s" [reference]="ref" [order]="$any(d).order" (saved)="saved($event)" (closed)="dialog.set(null)" /> } }
+        @case ('sale') { @if (reference(); as ref) { <app-sale-dialog [sheet]="s" [reference]="ref" [suggestions]="suggestions()" [sale]="$any(d).sale" (saved)="saved($event)" (changed)="apply($event)" (closed)="dialog.set(null)" /> } }
+        @case ('participants') { <app-participants-dialog [sheet]="s" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
+        @case ('manage') { <app-manage-dialog [sheet]="s" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
+      }
+    }
+  }
+</main>

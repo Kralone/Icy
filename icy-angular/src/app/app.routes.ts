@@ -214,7 +214,7 @@ export const routes: Routes = [
             robots: 'noindex,nofollow'
           }
         },
-        loadComponent: () => import('./features/utils/mining-sheets/mining-sheets.component').then(m => m.MiningSheetsComponent)
+        loadComponent: () => import('./features/utils/mining-sessions/mining-sessions-list.component').then(m => m.MiningSessionsListComponent)
       },
       {
         path: 'guides',
