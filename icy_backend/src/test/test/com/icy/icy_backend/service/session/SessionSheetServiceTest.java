@@ -202,6 +202,36 @@ class SessionSheetServiceTest {
         assertThat(fixture.participants).filteredOn(p -> p.getUserId().equals(TORIN)).singleElement().extracting(p -> p.getSharesCenti()).isEqualTo(0);
     }
 
+    // ----- Lien avec les Opérations -----
+
+    @Test
+    void operationSheetIsCreatedOnceWithEveryPresentMember() {
+        java.util.UUID operationId = java.util.UUID.randomUUID();
+        org.mockito.Mockito.when(fixture.sheets.findByOperationEventId(operationId)).thenReturn(java.util.Optional.empty());
+        org.mockito.Mockito.when(fixture.sheets.save(org.mockito.ArgumentMatchers.any(SessionSheet.class))).thenAnswer(invocation -> {
+            SessionSheet created = invocation.getArgument(0);
+            if (created.getId() == null) created.setId(java.util.UUID.randomUUID());
+            return created;
+        });
+        fixture.participants.clear();
+
+        java.util.UUID created = fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "Quanta du jeudi", java.time.LocalDate.of(2026, 10, 22), KRALONE, List.of(VEXA, TORIN));
+
+        assertThat(created).isNotNull();
+        assertThat(fixture.participants).extracting(p -> p.getUserId()).containsExactly(VEXA, TORIN);
+        assertThat(fixture.participants).allSatisfy(p -> assertThat(p.getSharesCenti()).isEqualTo(100));
+    }
+
+    @Test
+    void existingOperationSheetIsReturnedInsteadOfASecondOne() {
+        java.util.UUID operationId = java.util.UUID.randomUUID();
+        org.mockito.Mockito.when(fixture.sheets.findByOperationEventId(operationId)).thenReturn(java.util.Optional.of(fixture.sheet));
+
+        assertThat(fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "x", java.time.LocalDate.now(), KRALONE, List.of(XENO)))
+                .isEqualTo(fixture.sheet.getId());
+        org.mockito.Mockito.verify(fixture.participantRepository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
     @Test
     void onlyTheOrganizerManagesParticipants() {
         assertThatThrownBy(() -> fixture.as(VEXA).sheetService.setParticipants(fixture.sheet.getId(),
