@@ -55,6 +55,11 @@ public class Operation {
     @Builder.Default
     private boolean allowShipProposals = false;
 
+    /** Session de minage : une fiche de minage liée est créée à la publication (ou dès que l'option est cochée après). */
+    @Column(name = "mining_session", nullable = false)
+    @Builder.Default
+    private boolean miningSession = false;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
