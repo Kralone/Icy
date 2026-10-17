@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Spring Boot : port de gestion, jamais relayé par Nginx.
+  - job_name: backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["backend:8091"]
+
+  # Métriques agrégées du nœud RabbitMQ (mémoire, disque, connexions, débits).
+  - job_name: rabbitmq
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["rabbitmq:15692"]
+
+  # Profondeur et consommateurs par file : détecte une file qui s'accumule sans bot pour la lire.
+  - job_name: rabbitmq-queues
+    metrics_path: /metrics/detailed
+    params:
+      family: [queue_coarse_metrics, queue_consumer_count]
+    static_configs:
+      - targets: ["rabbitmq:15692"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+    metric_relabel_configs:
+      # Ne garder que les conteneurs Compose : les cgroups système n'ont pas de service.
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: ""
+        action: drop
+      - source_labels: [container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [container_label_com_docker_compose_project]
+        target_label: project
+      - regex: container_label_com_docker_compose_(service|project)|id
+        action: labeldrop

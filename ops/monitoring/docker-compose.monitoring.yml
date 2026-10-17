@@ -1,0 +1,115 @@
+# Supervision technique d'IceForge : Prometheus, node-exporter, cAdvisor et Grafana.
+# Projet Compose séparé : un déploiement applicatif ne le redémarre pas, et inversement.
+# Il rejoint le réseau interne de la stack ciblée pour lire backend:8091 et rabbitmq:15692.
+# Mode d'emploi : ops/monitoring/README.md.
+name: ${ICEFORGE_MONITORING_PROJECT:-iceforge_monitoring}
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-30d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-4GB}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    cpus: "0.5"
+    mem_limit: 768m
+    pids_limit: 100
+    networks: [monitoring, target]
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run|var/lib/docker/.+)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    cpus: "0.25"
+    mem_limit: 64m
+    pids_limit: 50
+    networks: [monitoring]
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6@sha256:b8e7d1093144fd088f425ff003d75a4aa405de075db78dae3bc563730b1bd07a
+    restart: unless-stopped
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=30s
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+      # Familles inutiles ici : réduit la mémoire et le nombre de séries.
+      - --disable_metrics=advtcp,cpu_topology,cpuset,hugetlb,memory_numa,percpu,process,referenced_memory,resctrl,sched,tcp,udp
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices: ["/dev/kmsg"]
+    security_opt: ["no-new-privileges:true"]
+    cpus: "0.5"
+    mem_limit: 256m
+    pids_limit: 100
+    networks: [monitoring]
+
+  grafana:
+    image: grafana/grafana:13.2.4@sha256:dbbc38ea21103cefb50396340cd88afec779c7e070b0a7bf5a75b4ce46651d3f
+    restart: unless-stopped
+    depends_on: [prometheus]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_COOKIE_SECURE: ${GRAFANA_COOKIE_SECURE:-false}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://127.0.0.1:3000/}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_DEFAULT_LANGUAGE: fr-FR
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/iceforge/vue-ensemble.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards/iceforge:ro
+      - grafana_data:/var/lib/grafana
+    # Jamais exposé sur Internet : accès par tunnel SSH en production.
+    ports: ["127.0.0.1:${GRAFANA_PORT:-3000}:3000"]
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    cpus: "0.5"
+    # Les plugins de source de données sont des processus séparés : 100 threads ne suffisent pas.
+    mem_limit: 512m
+    pids_limit: 300
+    networks: [monitoring, ui]
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  # Réseau des collecteurs, sans sortie vers Internet.
+  monitoring:
+    internal: true
+  # Sert uniquement à publier le port de Grafana sur 127.0.0.1.
+  ui:
+    driver: bridge
+  # Réseau interne de la stack applicative supervisée.
+  target:
+    name: ${ICEFORGE_TARGET_NETWORK:-iceforge_internal}
+    external: true
