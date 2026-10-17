@@ -1,5 +1,11 @@
 # Configuration des secrets applicatifs de production
 
+Pour récupérer et sauvegarder la clé de déverrouillage, déverrouiller Vault après
+un redémarrage et vérifier les applications, suivre
+[la procédure de reprise Vault](../../../docs/PRODUCTION-VAULT-RECOVERY.md).
+Les scripts `show-unseal-key-window.ps1` et `unseal-from-windows.ps1` utilisent
+le programme serveur `vault-recovery.py` ; la procédure décrit son installation.
+
 `configure-production-secrets.sh` configure les deux chemins KV v2 et les deux
 AppRoles utilises par IceForge. Il ne redemarre et ne recree aucun service.
 

@@ -16,6 +16,8 @@ Cette documentation décrit l'état du projet audité le **24 août 2026**. Elle
 - [Promotion de sécurité V29](PRODUCTION-V29-SECURITY.md) — continuité administrateur, neutralisation du seed historique et contrôles avant/après.
 - [Sécurisation des logs AMQP du bot](PRODUCTION-BOT-AMQP-REDACTION.md) — suppression des identifiants, déploiement isolé et rotation coordonnée.
 - [Sauvegardes et reprise de production](PRODUCTION-BACKUPS.md) — scripts chiffrés, restaurations et répétitions PostgreSQL, RabbitMQ, Vault et images.
+- [Déverrouillage Vault](PRODUCTION-VAULT-RECOVERY.md) — incident du 17 octobre, sauvegarde de la clé dans une fenêtre séparée et reprise après redémarrage.
+- [Alertes de production](PRODUCTION-MONITORING.md) — surveillance indépendante de Vault, diagnostic et mails de panne/rétablissement.
 - [Baseline de modernisation](BASELINE.md) — runtimes déclarés et contrat de validation de chaque branche.
 - [Exploitation Docker et rollback](DOCKER.md) — profils local/production, validation isolée, données persistantes et retour arrière.
 - [Migration PostgreSQL 15 vers 18](POSTGRESQL-18-MIGRATION.md) — répétition dump/restore, contrôles de bascule et rollback de production.
