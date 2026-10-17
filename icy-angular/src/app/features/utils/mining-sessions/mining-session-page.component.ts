@@ -9,9 +9,10 @@ import {
 import { WebSocketService } from '../../../core/services/websocket/websocket.service';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 import { OperationIconComponent } from '../../operations/briefing/operation-icon.component';
-import { EXPENSE_KINDS, ExpenseDialogComponent } from './expense-dialog.component';
+import { CostKind, EXPENSE_KINDS, ExpenseDialogComponent, REFINING_COST } from './expense-dialog.component';
+import { HintComponent } from './hint.component';
 import { ManageDialogComponent } from './manage-dialog.component';
-import { STEPS, durationLabel, hourLabel, mySituation, progress } from './mining-session-view';
+import { STEPS, countdownLabel, hourLabel, mySituation, progress, stepState } from './mining-session-view';
 import { OrderDialogComponent } from './order-dialog.component';
 import { ParticipantsDialogComponent } from './participants-dialog.component';
 import { SaleDialogComponent } from './sale-dialog.component';
@@ -28,7 +29,7 @@ type Dialog =
 @Component({
   selector: 'app-mining-session-page',
   standalone: true,
-  imports: [RouterLink, AsyncStateComponent, OperationIconComponent, SessionFlowComponent, ExpenseDialogComponent, OrderDialogComponent,
+  imports: [RouterLink, AsyncStateComponent, OperationIconComponent, HintComponent, SessionFlowComponent, ExpenseDialogComponent, OrderDialogComponent,
     SaleDialogComponent, ParticipantsDialogComponent, ManageDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mining-session-page.component.html',
@@ -52,7 +53,7 @@ export class MiningSessionPageComponent {
   readonly now = signal(Date.now());
 
   readonly steps = STEPS;
-  readonly kinds = new Map(EXPENSE_KINDS.map(kind => [kind.value, kind.label]));
+  private readonly kinds = new Map<string, CostKind>(EXPENSE_KINDS.map(kind => [kind.value, kind]));
   readonly auec = formatAuec;
   readonly scu = formatScu;
   readonly color = oreColor;
@@ -66,8 +67,8 @@ export class MiningSessionPageComponent {
   readonly costs = computed(() => {
     const sheet = this.sheet();
     if (!sheet) return [];
-    const orders = sheet.orders.filter(order => order.cost > 0).map(order => ({ kind: 'Raffinage', who: order.launcher.username, amount: order.cost, note: order.terminalLabel, expense: null as SessionExpense | null }));
-    const expenses = sheet.expenses.map(expense => ({ kind: this.kinds.get(expense.kind) ?? expense.kind, who: expense.payer.username, amount: expense.amount, note: expense.note ?? '', expense }));
+    const orders = sheet.orders.filter(order => order.cost > 0).map(order => ({ kind: REFINING_COST, who: order.launcher.username, amount: order.cost, note: order.terminalLabel, expense: null as SessionExpense | null }));
+    const expenses = sheet.expenses.map(expense => ({ kind: this.kinds.get(expense.kind) ?? { ...EXPENSE_KINDS[3], label: expense.kind }, who: expense.payer.username, amount: expense.amount, note: expense.note ?? '', expense }));
     return [...orders, ...expenses];
   });
   readonly lastFinish = computed(() => this.sheet()?.lastOrderFinishesAt ?? null);
@@ -86,7 +87,8 @@ export class MiningSessionPageComponent {
       error: () => this.reference.set({ commodities: [], refineries: [], methods: [], saleTerminals: [], pricesFetchedAt: null })
     });
     if (this.sheetId) inject(WebSocketService).watchMiningSession(this.sheetId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load(false));
-    interval(30_000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.now.set(Date.now() + this.clockOffset));
+    // Comptes à rebours des ordres : à la seconde.
+    interval(1_000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.now.set(Date.now() + this.clockOffset));
   }
 
   load(showLoading = true): void {
@@ -172,10 +174,15 @@ export class MiningSessionPageComponent {
     return 'En raffinage';
   }
 
-  orderTimer(order: RefineryOrder): string {
-    const finish = new Date(order.finishesAt).getTime();
-    if (finish <= this.now()) return `Prêt depuis ${hourLabel(order.finishesAt)}`;
-    return `Prêt à ${hourLabel(order.finishesAt)} · dans ${durationLabel(finish - this.now())}`;
+  /** Temps restant affiché en direct (« 1:12:05 »), ou null une fois prêt. */
+  orderCountdown(order: RefineryOrder): string | null {
+    const left = new Date(order.finishesAt).getTime() - this.now();
+    return left > 0 ? countdownLabel(left) : null;
+  }
+
+  stepClass(index: number): 'done' | 'now' | 'next' {
+    const sheet = this.sheet();
+    return sheet ? stepState(sheet, index) : 'next';
   }
 
   holders(commodityId: number): { name: string; inStock: number; awaiting: number }[] {

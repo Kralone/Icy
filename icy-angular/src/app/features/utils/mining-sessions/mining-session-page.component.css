@@ -46,7 +46,16 @@
 .mine__amount[data-tone="in"] { color: var(--ok); }
 .mine__amount[data-tone="out"] { color: var(--rose); }
 .mine__what { margin: 0; color: var(--fg-strong); font-weight: 600; }
-.mine .actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.mine .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
+/* Actions de saisie : une couleur par section (frais, raffinage, vente). */
+.act { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.75rem; padding: .45rem .7rem; border: 1px solid color-mix(in srgb, var(--a) 70%, transparent);
+  border-radius: .55rem; color: var(--a); background: color-mix(in srgb, var(--a) 12%, var(--panel-2)); font: inherit; font-size: .92rem; font-weight: 600; cursor: pointer;
+  transition: background-color .12s, color .12s; }
+.act app-operation-icon { font-size: 1.15rem; }
+.act:hover:not(:disabled) { color: #0b1220; background: var(--a); }
+.act--main { color: #042f2e; background: var(--a); font-weight: 700; }
+.act--main:hover:not(:disabled) { background: color-mix(in srgb, var(--a) 85%, white); }
+.act:disabled { opacity: .45; cursor: not-allowed; }
 .facts { display: grid; gap: .3rem; margin: 0; }
 .facts > div { display: flex; justify-content: space-between; gap: .5rem; }
 .facts dt { color: var(--muted); font-size: .86rem; }
@@ -65,13 +74,14 @@
 .steps li.now { border-color: var(--cyan); background: linear-gradient(rgba(103,232,249,.12), transparent); }
 .steps li.now b { color: var(--fg-strong); }
 .headline { margin: 0; color: var(--fg-strong); font-size: clamp(1.15rem, 1.7cqi, 1.45rem); font-weight: 700; line-height: 1.3; }
-.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
-.tasks li { display: flex; gap: .6rem; align-items: baseline; padding: .5rem .7rem; border: 1px solid #23384c; border-radius: .55rem; background: var(--panel-2); color: var(--text); }
-.tasks li::before { content: ""; flex: none; width: .5rem; height: .5rem; border-radius: 50%; background: var(--gold); transform: translateY(-.05rem); }
-.tasks li.mine { border-color: rgba(103,232,249,.55); color: var(--fg-strong); }
-.tasks li.mine::before { background: var(--cyan); }
-.tasks li.later { opacity: .85; }
-.tasks li.later::before { background: var(--muted); }
+/* Consignes : du texte à lire, pas des champs. */
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.tasks li { display: flex; gap: .7rem; align-items: baseline; color: var(--text); }
+.tasks .when { flex: none; min-width: 6.2rem; color: var(--gold); font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.tasks li.task--mine { color: var(--fg-strong); }
+.tasks li.task--mine .when { color: var(--cyan); }
+.tasks li.later { color: var(--muted); }
+.tasks li.later .when { color: var(--muted); }
 
 /* Raffinage */
 .orders { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
@@ -84,6 +94,10 @@
 .order__foot { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1.1rem; color: var(--muted); font-size: .84rem; }
 .order__foot strong { color: var(--fg); font-weight: 600; }
 .order__foot .grow { flex: 1; }
+.timer { display: inline-flex; align-items: center; gap: .45rem; color: var(--muted); }
+.timer app-operation-icon { color: var(--s-refine); }
+.timer b { color: var(--s-refine); font-size: 1.05rem; font-weight: 700; }
+.timer--ready, .timer--ready app-operation-icon { color: var(--cyan); }
 
 /* Frais */
 .total-line { display: flex; justify-content: space-between; padding-top: .55rem; border-top: 1px solid var(--line-strong); color: var(--fg-strong); font-weight: 600; }
@@ -170,7 +184,7 @@ td { padding: .45rem .7rem .45rem 0; border-top: 1px solid var(--line); vertical
   .mine .actions { display: none; }
   /* Barre fixe : la page garde une marge au moins égale à sa hauteur ; elle ne recouvre aucun champ de saisie (fenêtres au-dessus). */
   .quickbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; gap: .45rem; padding: .6rem .65rem calc(.6rem + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(103,232,249,.25); background: rgba(11,18,32,.97); }
-  .quickbar .btn { flex: 1; padding-inline: .4rem; }
+  .quickbar .btn, .quickbar .act { flex: 1; padding-inline: .4rem; }
   .page { padding-bottom: 5.5rem; }
   /* Mobile : les 2 meilleurs lieux, les autres sur demande. */
   .sell-ore:not(.is-open) tr.extra { display: none; }

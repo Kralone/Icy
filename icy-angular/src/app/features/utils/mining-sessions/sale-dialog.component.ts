@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MarketReference, MiningSessionService, RefineryOrder, SaleSuggestions, SessionSale, SessionSheet, formatAuec, formatScu, oreColor, serverMessage } from '../../../core/services/mining/mining-session.service';
-import { parseAmount, parseScu, scuInput } from './session-input';
+import { groupDigits, parseAmount, parseScu, scuInput } from './session-input';
 
 interface SaleLineForm { commodityId: number; name: string; availableCscu: number; scu: string; include: boolean; }
 
@@ -58,7 +58,7 @@ interface SaleLineForm { commodityId: number; name: string; availableCscu: numbe
             @if (terminalId === null) { <label class="field">Nom du lieu<input name="label" [(ngModel)]="otherLabel" maxlength="200" placeholder="Terminal, ville ou station"></label> }
           </div>
           <label class="field">Montant reçu en jeu (aUEC)
-            <input name="amount" class="big" inputmode="numeric" autocomplete="off" [(ngModel)]="amount" placeholder="236 000" required>
+            <input name="amount" class="big" inputmode="numeric" autocomplete="off" [ngModel]="amount" (ngModelChange)="amount = group($event)" placeholder="236 000" required>
             <small>{{ estimateLabel() }} Seul le montant reçu compte dans le partage.</small>
           </label>
         }
@@ -100,6 +100,7 @@ export class SaleDialogComponent implements OnInit {
   amount = '';
 
   readonly scu = formatScu;
+  readonly group = groupDigits;
   readonly color = oreColor;
   readonly sellerName = computed(() => this.current().participants.find(p => p.user.id === this.sellerId())?.user.username ?? 'vous');
   private readonly sellerId = signal('');
@@ -112,7 +113,7 @@ export class SaleDialogComponent implements OnInit {
     if (sale) {
       this.terminalId = sale.terminalId;
       this.otherLabel = sale.terminalId === null ? sale.terminalLabel : '';
-      this.amount = String(sale.amount);
+      this.amount = groupDigits(sale.amount);
     }
     this.rebuild();
     // Nouvelle vente : meilleur lieu suggéré pour le premier minerai, modifiable.

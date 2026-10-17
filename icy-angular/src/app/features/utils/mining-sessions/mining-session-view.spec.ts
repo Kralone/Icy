@@ -1,6 +1,6 @@
 import { SessionSheet, UserRef } from '../../../core/services/mining/mining-session.service';
-import { mySituation, progress } from './mining-session-view';
-import { parseAmount, parseScu } from './session-input';
+import { countdownLabel, mySituation, progress, stepState } from './mining-session-view';
+import { clampQuality, groupDigits, parseAmount, parseScu, stepDuration, typedDuration } from './session-input';
 
 const kralone: UserRef = { id: 'k', username: 'Kralone', avatarUrl: null };
 const vexa: UserRef = { id: 'v', username: 'Vexa', avatarUrl: null };
@@ -101,5 +101,58 @@ describe('Saisie', () => {
     expect(parseAmount('1 250 000')).toBe(1_250_000);
     expect(parseAmount('0')).toBeNull();
     expect(parseAmount('12a')).toBeNull();
+  });
+});
+
+describe('Saisie rapide', () => {
+  it('groupe les montants par milliers pendant la frappe', () => {
+    expect(groupDigits('236000')).toBe('236 000');
+    expect(groupDigits('1 2500 00')).toBe('1 250 000');
+    expect(groupDigits('007')).toBe('7');
+    expect(groupDigits('')).toBe('');
+    expect(parseAmount(groupDigits('236000'))).toBe(236_000);
+  });
+
+  it('fait avancer la durée heure par heure et minute par minute', () => {
+    expect(stepDuration({ hours: 2, minutes: 0 }, 'minutes', -1)).toEqual({ hours: 1, minutes: 59 });
+    expect(stepDuration({ hours: 1, minutes: 59 }, 'minutes', 1)).toEqual({ hours: 2, minutes: 0 });
+    expect(stepDuration({ hours: 0, minutes: 0 }, 'minutes', -1)).toEqual({ hours: 0, minutes: 0 });
+    expect(stepDuration({ hours: 0, minutes: 30 }, 'hours', -1)).toEqual({ hours: 0, minutes: 30 });
+    expect(stepDuration({ hours: 30, minutes: 0 }, 'hours', 1)).toEqual({ hours: 31, minutes: 0 });
+    expect(stepDuration({ hours: 99, minutes: 30 }, 'hours', 1)).toEqual({ hours: 100, minutes: 0 });
+    expect(stepDuration({ hours: 100, minutes: 0 }, 'minutes', 1)).toEqual({ hours: 100, minutes: 0 });
+  });
+
+  it('borne les heures et minutes tapées', () => {
+    expect(typedDuration({ hours: 2, minutes: 15 }, 'minutes', '75')).toEqual({ hours: 2, minutes: 59 });
+    expect(typedDuration({ hours: 2, minutes: 15 }, 'hours', '250')).toEqual({ hours: 100, minutes: 0 });
+    expect(typedDuration({ hours: 2, minutes: 15 }, 'hours', '012')).toEqual({ hours: 12, minutes: 15 });
+    expect(typedDuration({ hours: 2, minutes: 15 }, 'minutes', '')).toEqual({ hours: 2, minutes: 0 });
+  });
+
+  it('ramène la qualité entre 0 et 1000', () => {
+    expect(clampQuality('1500')).toBe('1000');
+    expect(clampQuality('-20')).toBe('0');
+    expect(clampQuality('-')).toBe('0');
+    expect(clampQuality('742')).toBe('742');
+    expect(clampQuality('')).toBe('');
+  });
+});
+
+describe('Avancement en direct', () => {
+  it('affiche un compte à rebours à la seconde', () => {
+    expect(countdownLabel(4_305_000)).toBe('1:11:45');
+    expect(countdownLabel(249_000)).toBe('4:09');
+    expect(countdownLabel(400)).toBe('0:01');
+  });
+
+  it('garde le minage en cours pendant le raffinage', () => {
+    const refining = sheet({ phase: 'REFINING' });
+    expect(stepState(refining, 0)).toBe('now');
+    expect(stepState(refining, 1)).toBe('now');
+    expect(stepState(refining, 2)).toBe('next');
+    const selling = sheet({ phase: 'SELLING' });
+    expect(stepState(selling, 0)).toBe('done');
+    expect(stepState(sheet({ status: 'CLOSED', phase: 'DONE' }), 5)).toBe('done');
   });
 });

@@ -21,10 +21,12 @@
 .history__row { color: var(--fg); text-decoration: none; }
 .history__row:hover b { color: var(--cyan); }
 .pager { display: flex; align-items: center; justify-content: center; gap: .7rem; }
-.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
-.chip { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .3rem .15rem .6rem; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--panel-2); font-size: .84rem; }
-.chip button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 1rem; line-height: 1; }
-.matches { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .3rem .2rem .7rem; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg); background: var(--panel-2); font-size: .86rem; }
+.chip small { color: var(--muted); font-size: .74rem; }
+.chip--me { border-color: rgba(103, 232, 249, .55); }
+.chip button { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; font-size: 1rem; line-height: 1; }
+.chip button:hover { color: var(--rose); background: rgba(253, 164, 175, .12); }
 @container sheets (max-width: 640px) { .sessions { width: calc(100% - 1.25rem); } }
 @container sheets (min-width: 2400px) { .sessions { width: min(2400px, calc(100% - 4rem)); } }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }

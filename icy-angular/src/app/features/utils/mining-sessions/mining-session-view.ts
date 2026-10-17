@@ -26,6 +26,27 @@ export function durationLabel(ms: number): string {
   return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
 }
 
+/** Compte à rebours « 1:12:05 », « 4:09 » sous une heure. */
+export function countdownLabel(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor(total % 3600 / 60);
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`;
+}
+
+/**
+ * État d'une étape du bandeau d'avancement. Le minage continue tant que des ordres raffinent :
+ * il n'est terminé qu'à la remise du cargo.
+ */
+export function stepState(sheet: SessionSheet, index: number): 'done' | 'now' | 'next' {
+  const current = STEPS.findIndex(step => step.phase === sheet.phase);
+  if (sheet.status === 'CLOSED') return 'done';
+  if (index === 0 && sheet.phase === 'REFINING') return 'now';
+  if (index < current) return 'done';
+  return index === current ? 'now' : 'next';
+}
+
 export function joinNames(names: string[]): string {
   if (names.length <= 1) return names.join('');
   return `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`;
@@ -41,10 +62,10 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
   switch (sheet.phase) {
     case 'MINING':
       return {
-        headline: 'Session en cours. Déclarez vos frais au fil de l’eau.',
+        headline: 'Minage en cours.',
         tasks: [
-          { text: 'Chacun : ajouter ses pleins, réparations et achats', userId: null, later: false },
-          { text: 'À la raffinerie : créer un ordre à chaque lancement', userId: null, later: true }
+          { text: 'Chacun déclare ses pleins, réparations et achats.', userId: null, later: false },
+          { text: 'À chaque lancement en raffinerie, créer un ordre de raffinage.', userId: null, later: true }
         ]
       };
     case 'REFINING': {

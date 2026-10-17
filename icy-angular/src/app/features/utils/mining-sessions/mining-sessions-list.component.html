@@ -63,25 +63,22 @@
       <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="create()" aria-labelledby="create-title">
         <h2 id="create-title">Nouvelle fiche de minage</h2>
         <div class="fields">
-          <label class="field">Nom<input name="name" [(ngModel)]="form.name" maxlength="160" placeholder="Session du jour"><small>Vide : « Session du » suivi de la date.</small></label>
-          <label class="field">Date<input name="date" type="date" [(ngModel)]="form.date" required></label>
+          <label class="field">Nom de la fiche<input name="name" [(ngModel)]="form.name" maxlength="160" [placeholder]="defaultName()"></label>
+          <label class="field">Date de la session<input name="date" type="date" [(ngModel)]="form.date" required></label>
         </div>
         <div class="field">
-          <span>Participants</span>
-          <div class="chips">
-            @for (member of chosenMembers(); track member.id) {
-              <span class="chip">{{ member.username }} <button type="button" (click)="removeMember(member.id)" [attr.aria-label]="'Retirer ' + member.username">×</button></span>
-            } @empty { <small>Aucun participant : vous serez ajouté.</small> }
-          </div>
-          <input name="search" [(ngModel)]="form.search" placeholder="Rechercher un membre" autocomplete="off">
-          @if (form.search) {
-            <div class="matches">
-              @for (user of memberMatches(); track user.id) {
-                <button type="button" class="btn small" (click)="addMember(user)">+ {{ user.username }}</button>
-              } @empty { <small>Aucun membre trouvé.</small> }
-            </div>
+          <span>Participants ({{ form.participantIds.length }})<app-hint label="Participants" text="Chacun compte pour une part. Depuis la fiche, l’organisateur peut donner une demi-part ou exclure quelqu’un du partage." /></span>
+          @if (chosenMembers().length) {
+            <ul class="chips" aria-label="Participants choisis">
+              @for (member of chosenMembers(); track member.id) {
+                <li class="chip" [class.chip--me]="member.id === currentUserId">{{ member.username }}@if (member.id === currentUserId) { <small>vous</small> }
+                  <button type="button" (click)="removeMember(member.id)" [attr.aria-label]="'Retirer ' + member.username">×</button></li>
+              }
+            </ul>
+          } @else {
+            <small>Personne pour l’instant : vous serez ajouté.</small>
           }
-          <small>Chacun a 1 part. Les parts se règlent ensuite depuis la fiche.</small>
+          <app-search-select name="member" [ngModel]="null" (ngModelChange)="addMemberId($event)" [options]="memberOptions()" [clearOnPick]="true" placeholder="Ajouter un membre" ariaLabel="Ajouter un membre" />
         </div>
         @if (createError()) { <p class="alert" role="alert">{{ createError() }}</p> }
         <div class="dialog-actions">

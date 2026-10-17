@@ -70,17 +70,19 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .row:first-child { border-top: 0; }
 .row .sub { grid-column: 1 / -1; color: var(--muted); font-size: .8rem; }
 .row .actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .4rem; }
-.kind { display: inline-block; margin-right: .45rem; padding: .02rem .5rem; border: 1px solid var(--line-strong); border-radius: .35rem; color: var(--soft); font-size: .74rem; }
+.kind { display: inline-flex; align-items: center; gap: .3rem; margin-right: .5rem; padding: .08rem .5rem; border: 1px solid color-mix(in srgb, var(--k, #94a3b8) 60%, transparent);
+  border-radius: .35rem; color: var(--k, var(--soft)); background: color-mix(in srgb, var(--k, #94a3b8) 12%, transparent); font-size: .76rem; font-weight: 600; vertical-align: .1rem; }
 
 .alert { margin: 0; padding: .6rem .8rem; border: 1px solid #774457; border-radius: .6rem; color: #ffd0d4; background: #351f2a; }
 .locked { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 0; padding: .6rem .8rem; border: 1px solid var(--gold); border-radius: .6rem; color: var(--fg); background: #2a2618; font-size: .88rem; }
 
 /* Fenêtre de saisie */
 .dialog-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 1rem; background: rgba(2, 8, 23, .72); }
-.dialog { width: min(40rem, 100%); max-height: calc(100dvh - 2rem); overflow: auto; display: grid; gap: .9rem; padding: 1.2rem; border: 1px solid rgba(103, 232, 249, .35); border-top: 3px solid var(--section, var(--cyan)); border-radius: .9rem; background: var(--panel); box-shadow: 0 24px 60px rgba(2, 8, 23, .6); }
+.dialog { width: min(40rem, 100%); max-height: calc(100dvh - 2rem); overflow: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: .9rem; padding: 1.2rem; border: 1px solid rgba(103, 232, 249, .35); border-top: 3px solid var(--section, var(--cyan)); border-radius: .9rem; background: var(--panel); box-shadow: 0 24px 60px rgba(2, 8, 23, .6); }
 .dialog h2 { margin: 0; color: var(--fg-strong); font-size: 1.15rem; }
 .dialog .dialog-actions { position: sticky; bottom: -1.2rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; padding: .7rem 0 0; background: var(--panel); }
-.field { display: grid; gap: .3rem; color: var(--text); font-size: .88rem; min-width: 0; }
+.field { display: grid; gap: .3rem; align-content: start; color: var(--text); font-size: .88rem; min-width: 0; }
+.field > span, .field > label { display: inline-flex; align-items: center; }
 .field small { color: var(--muted); }
 .field input, .field select, .field textarea { width: 100%; padding: .55rem .65rem; border: 1px solid var(--line-strong); border-radius: .4rem; color: var(--fg); background: var(--field); font: inherit; }
 .field input[type="checkbox"], .field input[type="radio"] { width: auto; padding: 0; accent-color: var(--cyan); }

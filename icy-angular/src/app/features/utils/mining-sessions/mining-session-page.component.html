@@ -67,20 +67,20 @@
         }
         @if (s.permissions.canEdit) {
           <div class="actions">
-            <button type="button" class="btn" (click)="open({ kind: 'expense', expense: null })">+ Frais</button>
-            <button type="button" class="btn" (click)="open({ kind: 'order', order: null })">+ Ordre de raffinage</button>
-            <button type="button" class="btn primary" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })">+ Vente</button>
+            <button type="button" class="act" style="--a: var(--s-costs)" (click)="open({ kind: 'expense', expense: null })"><app-operation-icon name="coins" /> Frais</button>
+            <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'order', order: null })"><app-operation-icon name="flask" /> Raffinage</button>
+            <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length" [attr.title]="s.orders.length ? null : 'Disponible après le premier ordre de raffinage'" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
           </div>
         }
       </section>
 
       <!-- Avancement -->
       <section class="panel p-progress" id="avancement" aria-labelledby="progress-h">
-        <header><h2 id="progress-h"><app-operation-icon name="target" /> Avancement</h2><span>Mis à jour en direct</span></header>
+        <header><h2 id="progress-h"><app-operation-icon name="target" /> Avancement</h2></header>
         <ol class="steps">
           @for (step of steps; track step.phase; let i = $index) {
-            <li [class.done]="i < stepIndex() || (s.status === 'CLOSED' && i === stepIndex())" [class.now]="i === stepIndex() && s.status !== 'CLOSED'" [attr.aria-current]="i === stepIndex() ? 'step' : null">
-              <b>{{ step.label }}</b>{{ i < stepIndex() || (s.status === 'CLOSED' && i === stepIndex()) ? 'fait' : i === stepIndex() ? 'en cours' : 'à venir' }}
+            <li [class.done]="stepClass(i) === 'done'" [class.now]="stepClass(i) === 'now'" [attr.aria-current]="stepClass(i) === 'now' ? 'step' : null">
+              <b>{{ step.label }}</b>{{ stepClass(i) === 'done' ? 'Terminé' : stepClass(i) === 'now' ? 'En cours' : 'À venir' }}
             </li>
           }
         </ol>
@@ -88,7 +88,7 @@
           <p class="headline">{{ p.headline }}</p>
           @if (p.tasks.length) {
             <ul class="tasks">
-              @for (task of p.tasks; track $index) { <li [class.mine]="task.userId === s.permissions.currentUserId" [class.later]="task.later">{{ task.text }}</li> }
+              @for (task of p.tasks; track $index) { <li [class.task--mine]="task.userId === s.permissions.currentUserId" [class.later]="task.later"><span class="when">{{ task.later ? 'Ensuite' : 'Maintenant' }}</span><span>{{ task.text }}</span></li> }
             </ul>
           }
         }
@@ -111,7 +111,11 @@
                   }
                 </div>
                 <div class="order__foot">
-                  <span><app-operation-icon name="clock" /> {{ orderTimer(order) }}</span>
+                  @if (orderCountdown(order); as left) {
+                    <span class="timer" role="timer" [attr.aria-label]="'Prêt à ' + hour(order.finishesAt)"><app-operation-icon name="clock" /><b class="num">{{ left }}</b><span>prêt à {{ hour(order.finishesAt) }}</span></span>
+                  } @else {
+                    <span class="timer timer--ready"><app-operation-icon name="clock" />Prêt depuis {{ hour(order.finishesAt) }}</span>
+                  }
                   <span>Coût <strong class="num">{{ auec(order.cost) }}</strong></span>
                   <span>@if (order.launcher.id === order.recipient.id) { Vendu par <strong>{{ order.recipient.username }}</strong>, son lanceur } @else { À remettre à <strong>{{ order.recipient.username }}</strong> }</span>
                   <span class="grow"></span>
@@ -136,12 +140,12 @@
 
       <!-- Frais -->
       <section class="panel p-costs" id="frais" style="--section: var(--s-costs)" aria-labelledby="costs-h">
-        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés</h2><span>remboursés avant le partage</span></header>
+        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés<app-hint label="Frais avancés" text="Payés par un participant pour le groupe, raffinage compris. Chacun récupère ce qu’il a avancé avant le partage du bénéfice." /></h2></header>
         @if (costs().length) {
           <div class="rows">
             @for (cost of costs(); track $index) {
               <div class="row">
-                <span><span class="kind">{{ cost.kind }}</span><b>{{ cost.who }}</b></span>
+                <span><span class="kind" [style.--k]="cost.kind.color"><app-operation-icon [name]="cost.kind.icon" />{{ cost.kind.label }}</span><b>{{ cost.who }}</b></span>
                 <span class="num">{{ auec(cost.amount) }}</span>
                 @if (cost.note || cost.expense?.editable) {
                   <span class="sub">{{ cost.note }}@if (cost.expense?.editable) { <button type="button" class="link" (click)="open({ kind: 'expense', expense: cost.expense })">Modifier</button> }</span>
@@ -174,7 +178,7 @@
                     @if (points(item.commodityId).length) {
                       <div class="table-wrap">
                         <table>
-                          <thead><tr><th>Où vendre</th><th class="r">Prix / SCU</th><th class="r">Demande</th><th class="r">Estimation</th></tr></thead>
+                          <thead><tr><th>Où vendre</th><th class="r">Prix / SCU</th><th class="r">Demande<app-hint label="Demande" text="Quantité que ce terminal peut encore acheter, d’après UEX. Au-delà, il refuse la vente ou baisse son prix." /></th><th class="r">Estimation<app-hint label="Estimation" text="Prix UEX multiplié par la quantité qui reste à vendre. Le montant reçu en jeu peut différer." /></th></tr></thead>
                           <tbody>
                             @for (point of points(item.commodityId); track $index; let k = $index) {
                               <tr [class.extra]="k >= 2">
@@ -234,7 +238,11 @@
       <section class="panel p-share" id="partage" style="--section: var(--s-share)" aria-labelledby="share-h">
         <header>
           <h2 id="share-h"><app-operation-icon name="coins" /> Partage</h2>
-          <span>@switch (s.share.source) { @case ('NONE') { en attente de la première vente } @case ('PREVIEW') { provisoire, recalculé à chaque saisie } @default { {{ s.status === 'CLOSED' ? 'bilan final' : 'comptes arrêtés' }} } }</span>
+          @switch (s.share.source) {
+            @case ('NONE') { <span>après la première vente</span> }
+            @case ('PREVIEW') { <span class="tag tag--prov">Provisoire<app-hint label="Provisoire" text="Les montants bougent à chaque frais ou vente saisi, jusqu’à ce que l’organisateur arrête les comptes." /></span> }
+            @default { <span>{{ s.status === 'CLOSED' ? 'Bilan final' : 'Comptes arrêtés' }}</span> }
+          }
         </header>
         @if (s.share.settlement; as settlement) {
           <p class="locked">
@@ -248,16 +256,14 @@
             <div class="totals">
               <div><span>Ventes</span><strong class="num">{{ auec(s.share.totalSales) }}</strong></div>
               <div><span>Frais avancés</span><strong class="num">{{ auec(s.share.totalExpenses) }}</strong></div>
-              <div><span>Bénéfice net</span>@if (s.share.source === 'NONE') { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net) }}</strong> }</div>
-              <div class="key"><span>Une part</span>@if (s.share.source === 'NONE' || !s.share.totalSharesCenti) { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net * 100 / s.share.totalSharesCenti) }}</strong> }</div>
+              <div><span>Bénéfice net<app-hint label="Bénéfice net" text="Ventes moins frais avancés." /></span>@if (s.share.source === 'NONE') { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net) }}</strong> }</div>
+              <div class="key"><span>Une part<app-hint label="Une part" [text]="'Bénéfice net divisé par ' + s.share.totalSharesCenti / 100 + ' parts, à l’aUEC près. Chacun reçoit ses parts plus ses frais avancés.'" /></span>@if (s.share.source === 'NONE' || !s.share.totalSharesCenti) { <strong class="empty">à venir</strong> } @else { <strong class="num" [class.neg]="s.share.net < 0">{{ auec(s.share.net * 100 / s.share.totalSharesCenti) }}</strong> }</div>
             </div>
             @if (s.share.source === 'NONE') {
-              <p class="formula">Le partage se calcule dès la première vente. D’ici là, la fiche tient le compte des frais avancés par chacun.</p>
               <div class="rows">
                 @for (row of s.share.rows; track row.user.id) { <div class="row"><span><b>{{ row.user.username }}</b> <small class="muted">{{ parts(row.sharesCenti) }}</small></span><span class="num">{{ row.advanced ? auec(row.advanced) + ' avancés' : '—' }}</span></div> }
               </div>
             } @else {
-              <p class="formula">Bénéfice net ÷ {{ s.share.totalSharesCenti / 100 }} parts, arrondi à l’aUEC par plus grand reste. Chacun reçoit sa part, plus les frais qu’il a avancés.</p>
               <div class="people">
                 @for (row of s.share.rows; track row.user.id) {
                   <details class="person" [class.me]="row.user.id === s.permissions.currentUserId">
@@ -278,7 +284,7 @@
             }
           </div>
           <div class="share-col">
-            <h3>{{ s.status === 'CLOSED' ? 'Versements effectués' : 'Versements' }}@if (s.share.source === 'PREVIEW') { <span class="tag tag--prov">provisoires</span> }</h3>
+            <h3>{{ s.status === 'CLOSED' ? 'Versements effectués' : 'Versements' }}</h3>
             @if (s.share.source === 'NONE') {
               <p class="empty">Les versements apparaîtront dès la première vente enregistrée.</p>
             } @else if (!s.share.transfers.length) {
@@ -330,9 +336,9 @@
 
     @if (s.permissions.canEdit) {
       <div class="quickbar">
-        <button type="button" class="btn" (click)="open({ kind: 'expense', expense: null })">+ Frais</button>
-        <button type="button" class="btn" (click)="open({ kind: 'order', order: null })">+ Raffinage</button>
-        <button type="button" class="btn primary" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })">+ Vente</button>
+        <button type="button" class="act" style="--a: var(--s-costs)" (click)="open({ kind: 'expense', expense: null })"><app-operation-icon name="coins" /> Frais</button>
+        <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'order', order: null })"><app-operation-icon name="flask" /> Raffinage</button>
+        <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
       </div>
     }
 

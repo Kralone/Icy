@@ -9,6 +9,8 @@ import { WebSocketService } from '../../../core/services/websocket/websocket.ser
 import { User } from '../../../model/user.model';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 import { OperationIconComponent } from '../../operations/briefing/operation-icon.component';
+import { HintComponent } from './hint.component';
+import { SearchOption, SearchSelectComponent } from './search-select.component';
 
 export const PHASE_LABELS: Record<SessionPhase, string> = {
   MINING: 'Minage',
@@ -23,7 +25,7 @@ export const PHASE_LABELS: Record<SessionPhase, string> = {
 @Component({
   selector: 'app-mining-sessions-list',
   standalone: true,
-  imports: [FormsModule, RouterLink, AsyncStateComponent, OperationIconComponent],
+  imports: [FormsModule, RouterLink, AsyncStateComponent, OperationIconComponent, HintComponent, SearchSelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'creating.set(false)' },
   templateUrl: './mining-sessions-list.component.html',
@@ -50,11 +52,13 @@ export class MiningSessionsListComponent {
   readonly creating = signal(false);
   readonly saving = signal(false);
   readonly createError = signal('');
-  form = { name: '', date: new Date().toISOString().slice(0, 10), search: '', participantIds: [] as string[] };
+  form = { name: '', date: new Date().toISOString().slice(0, 10), participantIds: [] as string[] };
 
   readonly phaseLabels = PHASE_LABELS;
   readonly formatAuec = formatAuec;
-  private currentUserId = '';
+  currentUserId = '';
+  /** Les membres pas encore ajoutés, recalculés à chaque ajout ou retrait. */
+  readonly memberOptions = signal<SearchOption<string>[]>([]);
 
   constructor() {
     try { this.currentUserId = this.authService.getUserIdFromToken(); } catch { this.currentUserId = ''; }
@@ -78,18 +82,29 @@ export class MiningSessionsListComponent {
   }
 
   openCreate(): void {
-    this.form = { name: '', date: new Date().toISOString().slice(0, 10), search: '', participantIds: this.currentUserId ? [this.currentUserId] : [] };
+    this.form = { name: '', date: new Date().toISOString().slice(0, 10), participantIds: this.currentUserId ? [this.currentUserId] : [] };
     this.createError.set('');
     this.creating.set(true);
     if (!this.users().length) {
-      this.userService.getAllUsers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: response => this.users.set((response?.data ?? []).filter(user => user.active !== false)) });
+      this.userService.getAllUsers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: response => { this.users.set((response?.data ?? []).filter(user => user.active !== false)); this.refreshOptions(); } });
     }
+    this.refreshOptions();
   }
 
-  memberMatches(): User[] {
-    const query = this.normalize(this.form.search);
+  /** Nom donné par le serveur quand le champ reste vide (SessionSheetService : « Session du jj/mm/aaaa »). */
+  defaultName(): string {
+    const [year, month, day] = (this.form.date || '').split('-');
+    return day ? `Session du ${day}/${month}/${year}` : 'Session du jour';
+  }
+
+  addMemberId(id: string | null): void {
+    const user = id ? this.users().find(candidate => candidate.id === id) : undefined;
+    if (user) this.addMember(user);
+  }
+
+  private refreshOptions(): void {
     const chosen = new Set(this.form.participantIds);
-    return this.users().filter(user => !chosen.has(user.id) && (!query || this.normalize(user.username).includes(query))).slice(0, 8);
+    this.memberOptions.set(this.users().filter(user => !chosen.has(user.id)).map(user => ({ value: user.id, label: user.username })));
   }
 
   chosenMembers(): User[] {
@@ -99,11 +114,12 @@ export class MiningSessionsListComponent {
 
   addMember(user: User): void {
     this.form.participantIds = [...this.form.participantIds, user.id];
-    this.form.search = '';
+    this.refreshOptions();
   }
 
   removeMember(id: string): void {
     this.form.participantIds = this.form.participantIds.filter(existing => existing !== id);
+    this.refreshOptions();
   }
 
   create(): void {
@@ -119,9 +135,5 @@ export class MiningSessionsListComponent {
 
   dateLabel(value: string): string {
     return new Date(`${value}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
-
-  private normalize(value: string): string {
-    return (value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   }
 }
