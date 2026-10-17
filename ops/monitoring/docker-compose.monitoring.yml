@@ -81,7 +81,10 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/iceforge/vue-ensemble.json
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/iceforge/metier/utilisation.json
+      # Tableaux métier : rôle PostgreSQL en lecture seule (postgres/grafana-reader.sql).
+      ICEFORGE_DB_NAME: ${POSTGRES_DB:-iceforgedb}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards/iceforge:ro
@@ -96,7 +99,8 @@ services:
     # Les plugins de source de données sont des processus séparés : 100 threads ne suffisent pas.
     mem_limit: 512m
     pids_limit: 300
-    networks: [monitoring, ui]
+    # target : accès à PostgreSQL (db:5432) pour les tableaux métier.
+    networks: [monitoring, ui, target]
 
 volumes:
   prometheus_data:

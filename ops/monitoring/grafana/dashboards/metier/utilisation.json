@@ -1,0 +1,1510 @@
+{
+  "uid": "iceforge-utilisation",
+  "title": "Utilisation du site",
+  "description": "Appels à l'API par fonctionnalité : ce que les visiteurs et les membres utilisent vraiment. Historique limité à la rétention de Prometheus.",
+  "tags": [
+    "iceforge",
+    "metier"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "1h"
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "metier"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux métier",
+      "includeVars": false,
+      "keepTime": false
+    },
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "technique"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux techniques",
+      "includeVars": false,
+      "keepTime": false
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Connexions et formulaires publics",
+      "collapsed": false,
+      "panels": [],
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Connexions réussies",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/auth/login\", outcome=\"SUCCESS\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Connexions refusées",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Mot de passe erroné, compte inconnu ou limite de tentatives (429).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/auth/login\", outcome=\"CLIENT_ERROR\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 20,
+                "color": "orange"
+              },
+              {
+                "value": 100,
+                "color": "red"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Sessions prolongées",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Renouvellements automatiques du jeton (toutes les 15 minutes d'utilisation).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/auth/refresh\", outcome=\"SUCCESS\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Réinitialisations de mot de passe",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/auth/reset-password\", outcome=\"SUCCESS\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Candidatures envoyées",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/recruitment\", method=\"POST\", outcome=\"SUCCESS\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Actions venues de Discord",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Appels du bot : participation par bouton, liaison de compte, flotte déclarée sur Discord.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\".*/bot.*\", outcome=\"SUCCESS\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "__auto",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "row",
+      "title": "Outils publics",
+      "collapsed": false,
+      "panels": [],
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Appels par outil public",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Nombre d'appels sur la période. Une visite de page déclenche en général plusieurs appels.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/(resources/.*|ore-locations|celestial-bodies|stations|location-images)\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "Ressources de minage",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/vehicles/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "B",
+          "legendFormat": "Achat et location de vaisseaux",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/items\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "C",
+          "legendFormat": "Objets",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/wikelo/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "D",
+          "legendFormat": "Wikelo",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/guides.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "E",
+          "legendFormat": "Guides",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/utils/executive-hangar/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "F",
+          "legendFormat": "Hangar exécutif",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/ships.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "G",
+          "legendFormat": "Catalogue des vaisseaux",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/(members|recent-events)\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "H",
+          "legendFormat": "Accueil (membres, derniers événements)",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/news(/types)?\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "I",
+          "legendFormat": "Actualités",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 10
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Outils publics dans le temps",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Appels par heure.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/(resources/.*|ore-locations|celestial-bodies|stations|location-images)\"}[$__rate_interval])) * 3600",
+          "refId": "A",
+          "legendFormat": "Ressources de minage"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/vehicles/.*\"}[$__rate_interval])) * 3600",
+          "refId": "B",
+          "legendFormat": "Achat et location de vaisseaux"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/items\"}[$__rate_interval])) * 3600",
+          "refId": "C",
+          "legendFormat": "Objets"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/wikelo/.*\"}[$__rate_interval])) * 3600",
+          "refId": "D",
+          "legendFormat": "Wikelo"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/guides.*\"}[$__rate_interval])) * 3600",
+          "refId": "E",
+          "legendFormat": "Guides"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/utils/executive-hangar/.*\"}[$__rate_interval])) * 3600",
+          "refId": "F",
+          "legendFormat": "Hangar exécutif"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/ships.*\"}[$__rate_interval])) * 3600",
+          "refId": "G",
+          "legendFormat": "Catalogue des vaisseaux"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/front/(members|recent-events)\"}[$__rate_interval])) * 3600",
+          "refId": "H",
+          "legendFormat": "Accueil (membres, derniers événements)"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/news(/types)?\"}[$__rate_interval])) * 3600",
+          "refId": "I",
+          "legendFormat": "Actualités"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "barAlignment": -1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 10
+      }
+    },
+    {
+      "type": "row",
+      "title": "Espace membre",
+      "collapsed": false,
+      "panels": [],
+      "id": 11,
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Appels par fonctionnalité",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/events.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "Événements",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/operations.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "B",
+          "legendFormat": "Opérations",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sessions.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "C",
+          "legendFormat": "Fiches de minage",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/goals.*|/api/goal-templates.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "D",
+          "legendFormat": "Objectifs",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/user-ships.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "E",
+          "legendFormat": "Flotte",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/collections.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "F",
+          "legendFormat": "Collections",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sc-world-events.*|/api/sc-world-event-types.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "G",
+          "legendFormat": "Événements Star Citizen",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/users.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "H",
+          "legendFormat": "Profil et membres",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/news/cig/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "I",
+          "legendFormat": "Veille CIG",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/icelink.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "J",
+          "legendFormat": "IceLink",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/notifications/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "K",
+          "legendFormat": "Notifications push",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/images.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "L",
+          "legendFormat": "Images",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/admin/.*|/api/utils/uex/.*\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "M",
+          "legendFormat": "Administration (catalogue, données)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 11
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Modifications par fonctionnalité",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Créations, modifications et suppressions (POST, PUT, PATCH, DELETE) réussies ou non.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/events.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "A",
+          "legendFormat": "Événements",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/operations.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "B",
+          "legendFormat": "Opérations",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sessions.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "C",
+          "legendFormat": "Fiches de minage",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/goals.*|/api/goal-templates.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "D",
+          "legendFormat": "Objectifs",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/user-ships.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "E",
+          "legendFormat": "Flotte",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/collections.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "F",
+          "legendFormat": "Collections",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sc-world-events.*|/api/sc-world-event-types.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "G",
+          "legendFormat": "Événements Star Citizen",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/users.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "H",
+          "legendFormat": "Profil et membres",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/news/cig/.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "I",
+          "legendFormat": "Veille CIG",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/icelink.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "J",
+          "legendFormat": "IceLink",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/notifications/.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "K",
+          "legendFormat": "Notifications push",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/images.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "L",
+          "legendFormat": "Images",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "round(sum(increase(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/admin/.*|/api/utils/uex/.*\", method=~\"POST|PUT|PATCH|DELETE\"}[$__range]))) or on () (0 * max(up{job=\"backend\"} == 1))",
+          "refId": "M",
+          "legendFormat": "Administration (catalogue, données)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 11
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Espace membre dans le temps",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Appels par heure.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/events.*\"}[$__rate_interval])) * 3600",
+          "refId": "A",
+          "legendFormat": "Événements"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/operations.*\"}[$__rate_interval])) * 3600",
+          "refId": "B",
+          "legendFormat": "Opérations"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sessions.*\"}[$__rate_interval])) * 3600",
+          "refId": "C",
+          "legendFormat": "Fiches de minage"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/goals.*|/api/goal-templates.*\"}[$__rate_interval])) * 3600",
+          "refId": "D",
+          "legendFormat": "Objectifs"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/user-ships.*\"}[$__rate_interval])) * 3600",
+          "refId": "E",
+          "legendFormat": "Flotte"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/collections.*\"}[$__rate_interval])) * 3600",
+          "refId": "F",
+          "legendFormat": "Collections"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/sc-world-events.*|/api/sc-world-event-types.*\"}[$__rate_interval])) * 3600",
+          "refId": "G",
+          "legendFormat": "Événements Star Citizen"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/users.*\"}[$__rate_interval])) * 3600",
+          "refId": "H",
+          "legendFormat": "Profil et membres"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/news/cig/.*\"}[$__rate_interval])) * 3600",
+          "refId": "I",
+          "legendFormat": "Veille CIG"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/icelink.*\"}[$__rate_interval])) * 3600",
+          "refId": "J",
+          "legendFormat": "IceLink"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/notifications/.*\"}[$__rate_interval])) * 3600",
+          "refId": "K",
+          "legendFormat": "Notifications push"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/images.*\"}[$__rate_interval])) * 3600",
+          "refId": "L",
+          "legendFormat": "Images"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"backend\", uri=~\"/api/admin/.*|/api/utils/uex/.*\"}[$__rate_interval])) * 3600",
+          "refId": "M",
+          "legendFormat": "Administration (catalogue, données)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "barAlignment": -1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 14,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 10
+      }
+    },
+    {
+      "type": "row",
+      "title": "Détail",
+      "collapsed": false,
+      "panels": [],
+      "id": 15,
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Routes les plus appelées",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(20, round(sum by (method, uri) (increase(http_server_requests_seconds_count{job=\"backend\", uri!~\"/ws.*|/actuator.*\"}[$__range]))))",
+          "refId": "A",
+          "legendFormat": "{{method}} {{uri}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 14
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Routes en erreur",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "401 sur une route membre : visiteur non connecté ou session expirée.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(20, round(sum by (method, uri, status) (increase(http_server_requests_seconds_count{job=\"backend\", uri!~\"/ws.*|/actuator.*\", outcome=~\"CLIENT_ERROR|SERVER_ERROR\"}[$__range]))) > 0)",
+          "refId": "A",
+          "legendFormat": "{{status}} {{method}} {{uri}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "orange"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 17,
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 14
+      }
+    }
+  ]
+}

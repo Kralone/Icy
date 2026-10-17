@@ -3,7 +3,8 @@
   "title": "RabbitMQ",
   "description": "Files entre le backend et le bot Discord, débits et ressources du broker.",
   "tags": [
-    "iceforge"
+    "iceforge",
+    "technique"
   ],
   "timezone": "browser",
   "editable": false,
@@ -20,7 +21,8 @@
       "30s",
       "1m",
       "5m",
-      "15m"
+      "15m",
+      "1h"
     ]
   },
   "templating": {
@@ -30,12 +32,24 @@
     {
       "type": "dashboards",
       "tags": [
-        "iceforge"
+        "iceforge",
+        "metier"
       ],
       "asDropdown": true,
-      "title": "Tableaux IceForge",
+      "title": "Tableaux métier",
       "includeVars": false,
-      "keepTime": true
+      "keepTime": false
+    },
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "technique"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux techniques",
+      "includeVars": false,
+      "keepTime": false
     }
   ],
   "annotations": {
@@ -535,8 +549,15 @@
         "displayMode": "basic",
         "showUnfilled": true,
         "valueMode": "color",
-        "namePlacement": "left",
-        "sizing": "auto",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -603,8 +624,15 @@
         "displayMode": "basic",
         "showUnfilled": true,
         "valueMode": "color",
-        "namePlacement": "left",
-        "sizing": "auto",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 14,
+        "maxVizHeight": 22,
+        "minVizWidth": 8,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -647,6 +675,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -711,6 +740,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -814,6 +844,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -923,6 +954,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -1004,6 +1036,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -1076,6 +1109,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {

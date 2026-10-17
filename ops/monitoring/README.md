@@ -1,12 +1,18 @@
-# Supervision technique
+# Supervision et statistiques
 
-Prometheus collecte les métriques, Grafana les affiche. La stack tourne dans un projet Compose séparé de l'application : un déploiement applicatif ne la redémarre pas.
+Grafana affiche deux familles de tableaux de bord :
+
+- **Métier** : ce qui se passe sur IceForge (utilisation du site, membres, événements, minage, contenu). Source : PostgreSQL en lecture seule, et les appels d'API comptés par Prometheus.
+- **Technique** : l'état des serveurs (API, JVM, RabbitMQ, hôte, conteneurs). Source : Prometheus.
+
+La stack tourne dans un projet Compose séparé de l'application : un déploiement applicatif ne la redémarre pas.
 
 ```mermaid
 flowchart LR
     subgraph cible[Réseau interne de la stack applicative]
         Backend[backend:8091<br>/actuator/prometheus]
         Rabbit[rabbitmq:15692<br>/metrics]
+        DB[(db:5432<br>rôle iceforge_grafana)]
     end
     subgraph supervision[Réseau monitoring, sans Internet]
         Prom[Prometheus]
@@ -19,40 +25,68 @@ flowchart LR
     Prom --> Node
     Prom --> Cad
     Graf --> Prom
+    Graf -->|lecture seule| DB
     Ops[Exploitant] -->|127.0.0.1:3000, tunnel SSH| Graf
 ```
 
-| Source | Contenu |
+## Tableaux de bord
+
+### Métier
+
+| Tableau | Contenu |
 |---|---|
-| Backend (`backend:8091`) | requêtes HTTP par route et statut, latences, JVM, pool Hikari, client RabbitMQ, tâches planifiées, journaux WARN/ERROR |
-| RabbitMQ (`rabbitmq:15692`) | messages prêts et en cours par file, consommateurs, débits, lettres mortes, mémoire, disque, alarmes |
-| node-exporter | CPU, charge, mémoire, disques et entrées-sorties du serveur |
-| cAdvisor | CPU, bridage, mémoire, réseau et disque de chaque conteneur Compose |
+| Utilisation du site (accueil) | appels par outil public (ressources de minage, achat de vaisseaux, Wikelo, guides, hangar exécutif…) et par fonctionnalité membre, modifications, connexions réussies et refusées, candidatures, actions venues de Discord, routes en erreur |
+| Communauté | comptes actifs, membres vus sur 7 et 30 jours, inscriptions, membres connectés par jour et par semaine, heures de connexion, rôles, candidatures et délai de traitement, flottes déclarées, vaisseaux exécutifs, préférences de notification |
+| Événements et opérations | prochains événements avec présents, peut-être, absents et affectés ; réponses par mois ; membres les plus présents ; opérations (groupes, places, vaisseaux demandés et acceptés) ; demandes d'affectation ; publication Discord ; objectifs ; événements Star Citizen |
+| Minage | fiches, ventes, frais avancés (raffinage compris), bénéfice net ; virements en attente ; raffinage prêt non remis ; détail par fiche ; frais avancés et remboursement par participant ; virements entre participants ; minerais, terminaux, méthodes ; réouvertures et clôtures forcées |
+| Contenu et données | actualités, veille CIG (collecte, traduction, envoi Discord), synchronisations du catalogue, conflits à arbitrer, fraîcheur des données UEX, emplacements de minerai, Wikelo, images |
 
-## Exposition
+### Technique
 
-- Le backend sert l'actuator sur un port de gestion distinct (`MANAGEMENT_PORT`, 8091 par défaut). Nginx ne relaie que le port 8080 : `/actuator` n'est jamais joignable depuis Internet.
-- Sur ce port, seuls `/actuator/health` et `/actuator/prometheus` répondent sans jeton ; le reste est refusé (403). Sur le port 8080, `/actuator/**` demande toujours une authentification.
-- Le plugin `rabbitmq_prometheus` est actif dans l'image officielle ; le port 15692 n'est pas publié.
+| Tableau | Contenu |
+|---|---|
+| Vue d'ensemble | services joignables, files RabbitMQ sans lecteur, débit, erreurs et latence de l'API, ressources de l'hôte |
+| Backend Spring | routes les plus appelées et les plus lentes, refus d'accès, JVM, pool PostgreSQL, messagerie, tâches planifiées, journaux |
+| RabbitMQ | messages prêts et consommateurs par file, débits, lettres mortes, mémoire, disque, alarmes |
+| Hôte et conteneurs | CPU, charge, mémoire, disques du serveur ; CPU, bridage, mémoire, réseau et disque par conteneur |
+
+Chaque tableau donne accès aux autres par les menus « Tableaux métier » et « Tableaux techniques ».
+
+## Exposition et données lues
+
+- Le backend sert l'actuator sur un port de gestion distinct (`MANAGEMENT_PORT`, 8091 par défaut). Nginx ne relaie que le port 8080 : `/actuator` n'est jamais joignable depuis Internet. Sur ce port, seuls `/actuator/health` et `/actuator/prometheus` répondent sans jeton.
+- Grafana lit PostgreSQL avec le rôle `iceforge_grafana` ([`postgres/grafana-reader.sql`](postgres/grafana-reader.sql)) : transactions en lecture seule, délai de 15 s par requête, 5 connexions au plus. Les droits portent sur des colonnes choisies : ni mots de passe, ni identifiants Discord, ni empreintes de jetons, ni clés de notification, ni textes des candidatures.
+- Les tableaux métier affichent des pseudos de membres (présences, minage, virements). Grafana est donc réservé aux administrateurs.
 - Prometheus, node-exporter et cAdvisor ne publient aucun port. Grafana n'écoute que sur `127.0.0.1`.
 
 ## Lancer en production
 
-Le backend déployé doit contenir le port de gestion (version qui inclut ce dossier).
+Le backend déployé doit contenir le port de gestion.
 
 1. Créer `.secrets/monitoring.env` (non versionné), en `chmod 600` :
 
    ```bash
    GRAFANA_ADMIN_PASSWORD=<mot de passe long et unique>
+   GRAFANA_DB_PASSWORD=<autre mot de passe long et unique>
+   POSTGRES_DB=<nom de la base>
    ```
 
-2. Démarrer :
+2. Créer le rôle de lecture (à rejouer après une migration qui recrée une table lue) :
+
+   ```bash
+   set -a; . .secrets/monitoring.env; set +a
+   docker exec -i iceforge_db sh -c 'psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v grafana_password="$1" -f -' -- "$GRAFANA_DB_PASSWORD" < ops/monitoring/postgres/grafana-reader.sql
+   ```
+
+   Le script s'arrête à la première colonne absente : un écart de schéma se voit tout de suite.
+
+3. Démarrer :
 
    ```bash
    docker compose --env-file .secrets/monitoring.env -f ops/monitoring/docker-compose.monitoring.yml up -d
    ```
 
-3. Ouvrir Grafana depuis le poste d'exploitation :
+4. Ouvrir Grafana depuis le poste d'exploitation :
 
    ```bash
    ssh -N -L 3000:127.0.0.1:3000 <compte-ops>@<serveur>
@@ -60,38 +94,44 @@ Le backend déployé doit contenir le port de gestion (version qui inclut ce dos
 
    puis `http://127.0.0.1:3000`.
 
-Le réseau supervisé par défaut est `iceforge_internal` (production). La rétention est de 30 jours, plafonnée à 4 Go (`PROMETHEUS_RETENTION_TIME`, `PROMETHEUS_RETENTION_SIZE`).
+Le réseau supervisé par défaut est `iceforge_internal` (production). Prometheus garde 30 jours, plafonnés à 4 Go (`PROMETHEUS_RETENTION_TIME`, `PROMETHEUS_RETENTION_SIZE`). Les tableaux tirés de PostgreSQL couvrent tout l'historique de la base.
 
 ## Lancer contre la stack de dev
+
+Les identifiants locaux sont dans `secrets/grafana-dev.env` (ignoré par git) : `GRAFANA_ADMIN_PASSWORD`, `GRAFANA_DB_PASSWORD`.
 
 ```powershell
 $env:ICEFORGE_TARGET_NETWORK = 'iceforge_dev_internal'
 $env:ICEFORGE_MONITORING_PROJECT = 'iceforge_dev_monitoring'
 $env:GRAFANA_PORT = '13000'
-$env:GRAFANA_ADMIN_PASSWORD = '<mot de passe local>'
-docker compose -f ops/monitoring/docker-compose.monitoring.yml up -d
+docker compose --env-file secrets/grafana-dev.env -f ops/monitoring/docker-compose.monitoring.yml up -d
 ```
 
-Grafana : `http://127.0.0.1:13000`. Arrêt : même commande avec `down` (ajouter `-v` pour effacer l'historique).
+Grafana : `http://127.0.0.1:13000`. Créer le rôle avec la commande de l'étape 2, conteneur `iceforge_dev-db-1`. Arrêt : même commande Compose avec `down` (ajouter `-v` pour effacer l'historique).
 
-## Tableaux de bord
+## Modifier les tableaux
 
-Quatre tableaux, dossier « IceForge » : Vue d'ensemble (accueil), Backend Spring, RabbitMQ, Hôte et conteneurs.
-
-Ils sont provisionnés en lecture seule depuis `grafana/dashboards/`. Pour les modifier, éditer [`grafana/generate_dashboards.py`](grafana/generate_dashboards.py), puis :
+Ils sont provisionnés en lecture seule depuis `grafana/dashboards/metier/` et `grafana/dashboards/technique/`. Pour les modifier, éditer [`grafana/generate_dashboards.py`](grafana/generate_dashboards.py), puis :
 
 ```bash
 python ops/monitoring/grafana/generate_dashboards.py
+docker restart iceforge_monitoring-grafana-1
 ```
 
-et committer le script et les JSON. Grafana recharge les fichiers sans redémarrage.
+et committer le script et les JSON. Sous Docker Desktop, Grafana ne voit pas les fichiers modifiés sans redémarrage.
 
-Un panneau sans série affiche « Pas de donnée », jamais 0. Les seuls zéros affichés sont mesurés ; « Files sans lecteur » vaut 0 seulement si RabbitMQ répond.
+Les frais d'une fiche de minage suivent [la spécification V3](../../docs/mining-v3/SPEC.md) : frais saisis et coût des ordres de raffinage, remboursés à celui qui les a avancés. Dans les requêtes, `mining_fees` désigne cette somme.
+
+Un panneau sans donnée affiche « Pas de donnée », jamais 0. Un 0 n'est affiché que s'il est mesuré.
 
 ## Limites connues
 
-- node-exporter tourne dans le réseau de supervision : le trafic réseau du serveur n'est pas mesuré. Le trafic par conteneur l'est, via cAdvisor.
-- cAdvisor ne voit que les conteneurs en marche : un conteneur arrêté disparaît des courbes au lieu d'apparaître à zéro.
-- « Traitement des messages reçus » n'a de données qu'après le premier message consommé par le backend.
-- Sous Docker Desktop, l'hôte est la machine virtuelle WSL, pas Windows, et la propagation de montage `rslave` n'est pas disponible.
-- Pas encore d'alertes, ni de métriques PostgreSQL (postgres-exporter), ni de métriques du bot Discord.
+- **Pages vues :** elles ne sont pas comptées. « Utilisation du site » compte les appels d'API que chaque page déclenche. Pour compter les pages, il faudrait lire les journaux Nginx (Loki).
+- **Premier appel non compté :** Prometheus ne compte pas le premier appel d'une route après un redémarrage du backend, car le compteur naît avec la valeur 1. Un 0 sur une route rarement utilisée peut cacher un appel isolé.
+- **Historique d'usage :** il ne remonte pas au-delà de la rétention de Prometheus (30 jours).
+- **Réponses aux événements :** la base ne les date pas. Elles sont rattachées à la date de l'événement, et « présent » est une intention, pas une présence vérifiée.
+- **Membres vus récemment :** cette mesure repose sur `last_seen_at`, mis à jour à l'activité. Les membres connectés par jour viennent des jetons de session émis.
+- **Bot Discord :** il ne garde aucune donnée et n'expose pas de métriques. Seuls ses appels à l'API sont visibles.
+- **Réseau du serveur :** node-exporter tourne dans le réseau de supervision, donc le trafic réseau du serveur n'est pas mesuré. Celui de chaque conteneur l'est, via cAdvisor.
+- **Conteneurs arrêtés :** cAdvisor ne voit que les conteneurs en marche.
+- **Alertes :** il n'y a pas encore d'alertes Grafana. La sonde de [docs/PRODUCTION-MONITORING.md](../../docs/PRODUCTION-MONITORING.md) envoie les mails de panne.

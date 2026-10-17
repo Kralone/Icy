@@ -3,7 +3,8 @@
   "title": "Backend Spring",
   "description": "API HTTP, JVM, pool PostgreSQL, messagerie RabbitMQ et journaux du backend.",
   "tags": [
-    "iceforge"
+    "iceforge",
+    "technique"
   ],
   "timezone": "browser",
   "editable": false,
@@ -20,7 +21,8 @@
       "30s",
       "1m",
       "5m",
-      "15m"
+      "15m",
+      "1h"
     ]
   },
   "templating": {
@@ -30,12 +32,24 @@
     {
       "type": "dashboards",
       "tags": [
-        "iceforge"
+        "iceforge",
+        "metier"
       ],
       "asDropdown": true,
-      "title": "Tableaux IceForge",
+      "title": "Tableaux métier",
       "includeVars": false,
-      "keepTime": true
+      "keepTime": false
+    },
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "technique"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux techniques",
+      "includeVars": false,
+      "keepTime": false
     }
   ],
   "annotations": {
@@ -81,6 +95,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -144,6 +159,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -207,6 +223,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -271,6 +288,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -620,6 +638,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -684,6 +703,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -787,6 +807,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -859,6 +880,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -962,6 +984,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -1026,6 +1049,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -1103,6 +1127,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
@@ -1166,6 +1191,7 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
+            "barAlignment": -1,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
