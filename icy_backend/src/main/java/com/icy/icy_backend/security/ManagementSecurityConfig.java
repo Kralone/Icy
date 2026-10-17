@@ -33,7 +33,7 @@ public class ManagementSecurityConfig {
     public SecurityFilterChain managementSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher(managementPortMatcher())
-                .csrf(csrf -> csrf.disable())
+                // CSRF reste actif : seules des lectures GET sont permises ici, toute écriture est refusée.
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
