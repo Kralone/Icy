@@ -106,10 +106,24 @@ logging:
 
 
 management:
+    # Port séparé : Nginx ne relaie que le port 8080, les métriques restent sur le réseau Docker interne.
+    server:
+        port: ${MANAGEMENT_PORT:8091}
     endpoints:
         web:
             exposure:
-                include: health, info, metrics
+                include: health, info, metrics, prometheus
+    endpoint:
+        health:
+            show-details: never
+    metrics:
+        tags:
+            application: ${spring.application.name}
+        distribution:
+            percentiles-histogram:
+                http.server.requests: true
+            slo:
+                http.server.requests: 100ms, 300ms, 1s, 3s
 
 vault:
   enabled: ${VAULT_ENABLED:false}

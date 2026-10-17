@@ -2,6 +2,7 @@ import logging
 from messaging.news_handler import NewsHandler
 from messaging.event_handler import EventHandler  # à venir
 from messaging.scwe_handler import ScweHandler
+from messaging.mining_handler import MiningHandler
 from messaging.user_handler import UserHandler  # 👈 nouveau import
 
 logger = logging.getLogger("icy.handler")
@@ -19,6 +20,7 @@ class MessageHandler:
         self.event_handler = EventHandler(bot, rabbit, discord_link_store)
         self.user_handler = UserHandler(bot)  # 👈 ajouté
         self.scwe_handler = ScweHandler(bot, rabbit)
+        self.mining_handler = MiningHandler(bot, rabbit)
 
     async def handle_message(self, routing_key: str, payload: dict):
 
@@ -46,6 +48,10 @@ class MessageHandler:
         # --- SCWE ---
         elif routing_key.startswith("scwe."):
             await self.scwe_handler.handle(routing_key, payload)
+
+        # --- FICHES DE MINAGE ---
+        elif routing_key.startswith("mining."):
+            await self.mining_handler.handle(routing_key, payload)
 
         # --- AUCUN MATCH ---
         else:

@@ -9,6 +9,8 @@
 .section-nav button:hover { border-color: #67e8f9; background: #12283a; }
 .section-nav__manage { display: inline-flex; flex: none; align-items: center; min-height: 2.5rem; margin-left: auto; padding: .4rem .95rem; border: 1px solid #f4cd7d; border-radius: 999px; color: #f4cd7d; background: #2a2110; font-size: .9rem; font-weight: 600; white-space: nowrap; text-decoration: none; }
 .section-nav__manage:hover { color: #1a1406; background: #f4cd7d; }
+.section-nav__mining { display: inline-flex; flex: none; align-items: center; gap: .4rem; min-height: 2.5rem; padding: .4rem .85rem; border: 1px solid #fdba74; border-radius: 999px; color: #fed7aa; background: #2a1a10; font-size: .9rem; white-space: nowrap; text-decoration: none; }
+.section-nav__mining:hover { border-color: #fdba74; background: #3b2412; }
 
 
 .fold { justify-self: start; display: inline-flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 2.5rem; padding: .45rem .9rem; border: 1px solid #36546a; border-radius: .45rem; color: #bae6fd; background: #122235; font-size: .9rem; }

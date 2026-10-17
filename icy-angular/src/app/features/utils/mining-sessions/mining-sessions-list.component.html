@@ -1,0 +1,91 @@
+<main class="sessions">
+  <header class="sessions__head">
+    <div>
+      <h1>Fiches de minage</h1>
+      <p class="muted">Raffinage, ventes et partage d’une session, pour toute l’équipe.</p>
+    </div>
+    @if (canCreate()) {
+      <button type="button" class="btn primary" (click)="openCreate()">+ Nouvelle fiche</button>
+    }
+  </header>
+
+  @if (state() === 'loading') {
+    <app-async-state kind="loading" title="Chargement des fiches…" />
+  } @else if (state() === 'error') {
+    <app-async-state kind="error" title="Les fiches n’ont pas pu être chargées." actionLabel="Réessayer" (action)="load()" />
+  } @else {
+    <section class="panel" style="--section: var(--s-progress)" aria-labelledby="sessions-active">
+      <header><h2 id="sessions-active"><app-operation-icon name="target" /> En cours</h2><span>{{ active().length }} fiche{{ active().length > 1 ? 's' : '' }}</span></header>
+      @if (!active().length) {
+        <p class="empty">Aucune session en cours.@if (canCreate()) { Créez une fiche, ou cochez « Session de minage » sur une opération. }</p>
+      } @else {
+        <ul class="cards">
+          @for (sheet of active(); track sheet.id) {
+            <li>
+              <a class="card" [routerLink]="['/icy/outils/fiches-minage', sheet.id]" [class.card--mine]="sheet.mine">
+                <span class="card__phase" [attr.data-phase]="sheet.phase">{{ phaseLabels[sheet.phase] }}</span>
+                <strong>{{ sheet.name }}</strong>
+                <span class="card__meta">{{ dateLabel(sheet.sessionDate) }} · {{ sheet.participantCount }} participant{{ sheet.participantCount > 1 ? 's' : '' }}</span>
+                <span class="card__meta">@if (sheet.totalSales) { Ventes <b class="num">{{ formatAuec(sheet.totalSales) }}</b> aUEC } @else { Aucune vente }@if (sheet.mine) { · <span class="you">vous participez</span> }</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <details class="panel history" style="--section: var(--line-strong)">
+      <summary><h2><app-operation-icon name="briefing" /> Historique</h2><span>{{ closed().length }} fiche{{ closed().length > 1 ? 's' : '' }} terminée{{ closed().length > 1 ? 's' : '' }}</span></summary>
+      @if (!closed().length) {
+        <p class="empty">Aucune fiche terminée.</p>
+      } @else {
+        <div class="rows">
+          @for (sheet of historyVisible(); track sheet.id) {
+            <a class="row history__row" [routerLink]="['/icy/outils/fiches-minage', sheet.id]">
+              <span><b>{{ sheet.name }}</b> <span class="muted">· {{ dateLabel(sheet.sessionDate) }}</span></span>
+              <span class="num">{{ formatAuec(sheet.totalSales) }} aUEC</span>
+            </a>
+          }
+        </div>
+        @if (historyPages() > 1) {
+          <div class="pager">
+            <button type="button" class="btn small" [disabled]="historyPage() === 0" (click)="historyPage.set(historyPage() - 1)">Précédent</button>
+            <span class="muted">Page {{ historyPage() + 1 }} / {{ historyPages() }}</span>
+            <button type="button" class="btn small" [disabled]="historyPage() + 1 >= historyPages()" (click)="historyPage.set(historyPage() + 1)">Suivant</button>
+          </div>
+        }
+      }
+    </details>
+  }
+
+  @if (creating()) {
+    <div class="dialog-backdrop" (click)="creating.set(false)">
+      <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="create()" aria-labelledby="create-title">
+        <h2 id="create-title">Nouvelle fiche de minage</h2>
+        <div class="fields">
+          <label class="field">Nom de la fiche<input name="name" [(ngModel)]="form.name" maxlength="160" [placeholder]="defaultName()"></label>
+          <label class="field">Date de la session<input name="date" type="date" [(ngModel)]="form.date" required></label>
+        </div>
+        <div class="field">
+          <span>Participants ({{ form.participantIds.length }})<app-hint label="Participants" text="Chacun compte pour une part. Depuis la fiche, l’organisateur peut donner une demi-part ou exclure quelqu’un du partage." /></span>
+          @if (chosenMembers().length) {
+            <ul class="chips" aria-label="Participants choisis">
+              @for (member of chosenMembers(); track member.id) {
+                <li class="chip" [class.chip--me]="member.id === currentUserId">{{ member.username }}@if (member.id === currentUserId) { <small>vous</small> }
+                  <button type="button" (click)="removeMember(member.id)" [attr.aria-label]="'Retirer ' + member.username">×</button></li>
+              }
+            </ul>
+          } @else {
+            <small>Personne pour l’instant : vous serez ajouté.</small>
+          }
+          <app-search-select name="member" [ngModel]="null" (ngModelChange)="addMemberId($event)" [options]="memberOptions()" [clearOnPick]="true" placeholder="Ajouter un membre" ariaLabel="Ajouter un membre" />
+        </div>
+        @if (createError()) { <p class="alert" role="alert">{{ createError() }}</p> }
+        <div class="dialog-actions">
+          <button type="button" class="btn" (click)="creating.set(false)">Annuler</button>
+          <button type="submit" class="btn primary" [disabled]="saving() || !form.date">{{ saving() ? 'Création…' : 'Créer la fiche' }}</button>
+        </div>
+      </form>
+    </div>
+  }
+</main>

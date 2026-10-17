@@ -38,6 +38,7 @@ interface OperationFormPayload {
   meetingPoint: string;
   imageUrl: string;
   allowShipProposals: boolean;
+  miningSession: boolean;
   defaultAssignmentMode: EffectiveAssignmentMode;
 }
 
@@ -228,7 +229,7 @@ export class OperationEditorComponent implements OnDestroy {
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!), this.shipsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
-  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
+  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, miningSession: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
 
   // --- Organisation : structure lue sur le serveur, un seul groupe édité à la fois.
   readonly organization = signal<OperationOrganization | null>(null);
@@ -523,7 +524,7 @@ export class OperationEditorComponent implements OnDestroy {
     this.previewCache = null;
     if (this.tab === 'publication') this.loadPreviewParticipations();
     this.lastValidImageUrl = operation.imageUrl || '';
-    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
+    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, miningSession: operation.miningSession ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
     this.loadOrganization(operation.id);
     this.autosave.auto = operation.publicationStatus !== 'PUBLISHED';
     this.autosave.reset(this.payload(), operation.revision ?? null, operation.updatedAt ? new Date(operation.updatedAt) : null);

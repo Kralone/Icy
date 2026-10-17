@@ -120,9 +120,10 @@ class RabbitManagerTest(unittest.IsolatedAsyncioTestCase):
             "icy.exchange.bot.dlx", aio_pika.ExchangeType.TOPIC, durable=True
         )
         channel.set_qos.assert_awaited_once_with(prefetch_count=10)
-        self.assertEqual(6, channel.declare_queue.await_count)
-        self.assertEqual(6, queue.bind.await_count)
-        self.assertEqual(4, queue.consume.await_count)
+        # news, events, users, scwe, mining, plus les files de nouvel essai et morte.
+        self.assertEqual(7, channel.declare_queue.await_count)
+        self.assertEqual(7, queue.bind.await_count)
+        self.assertEqual(5, queue.consume.await_count)
         publisher_type.assert_called_once_with(connection, "icy.exchange")
         handler_type.assert_called_once_with(bot, publisher_type.return_value, ANY)
         rendered_logs = "\n".join(captured_logs.output)

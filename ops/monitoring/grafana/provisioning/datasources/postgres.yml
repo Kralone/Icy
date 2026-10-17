@@ -1,0 +1,20 @@
+apiVersion: 1
+
+# Rôle iceforge_grafana : lecture seule, colonnes limitées (ops/monitoring/postgres/grafana-reader.sql).
+datasources:
+  - name: IceForge (PostgreSQL)
+    uid: postgres
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: db:5432
+    user: iceforge_grafana
+    editable: false
+    jsonData:
+      database: $ICEFORGE_DB_NAME
+      sslmode: disable
+      postgresVersion: 1500
+      maxOpenConns: 4
+      maxIdleConns: 2
+      timeInterval: 1h
+    secureJsonData:
+      password: $GRAFANA_DB_PASSWORD

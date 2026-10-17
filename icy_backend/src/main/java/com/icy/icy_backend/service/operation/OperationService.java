@@ -42,6 +42,16 @@ public class OperationService {
         this.eventService = eventService;
     }
 
+    private com.icy.icy_backend.service.session.SessionSheetService sessionSheetService;
+    private com.icy.icy_backend.db.repository.event.EventParticipationRepository participationRepository;
+
+    @Autowired
+    public void setMiningSessionLink(com.icy.icy_backend.service.session.SessionSheetService sessionSheetService,
+                                     com.icy.icy_backend.db.repository.event.EventParticipationRepository participationRepository) {
+        this.sessionSheetService = sessionSheetService;
+        this.participationRepository = participationRepository;
+    }
+
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(UUID eventId) {
         Event event = eventRepository.findById(eventId)
@@ -102,6 +112,8 @@ public class OperationService {
         // Après la fin, seul le contenu éditorial se modifie : les réglages d'organisation restent ceux de l'opération.
         boolean closed = OperationLock.isClosed(event, operation);
         if (!closed && request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
+        // Décocher l'option ne supprime jamais une fiche déjà créée.
+        if (request.getMiningSession() != null) operation.setMiningSession(request.getMiningSession());
         if (!closed && request.getDefaultAssignmentMode() != null) {
             if (request.getDefaultAssignmentMode() == com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode.INHERITED) throw new IllegalArgumentException("Mode d’affectation par défaut invalide");
             operation.setDefaultAssignmentMode(request.getDefaultAssignmentMode());
@@ -111,6 +123,7 @@ public class OperationService {
         // Écrit maintenant pour renvoyer la révision réellement enregistrée.
         entityManager.flush();
         if (announcedContentChanged) refreshAnnouncementAfterCommit(eventId);
+        ensureMiningSheet(event, saved);
         return messageService.buildResponse("operation.updated", new OperationResponseDTO(event, saved));
     }
 
@@ -130,6 +143,7 @@ public class OperationService {
         // Même raison que pour update : l'éditeur poursuit à partir de la révision renvoyée.
         entityManager.flush();
         if (becomesVisible) announceAfterCommit(eventId);
+        ensureMiningSheet(event, saved);
         return messageService.buildResponse("operation.published", new OperationResponseDTO(event, saved));
     }
 
@@ -164,6 +178,21 @@ public class OperationService {
                 eventService.announceOperationContentChanged(eventId);
             }
         });
+    }
+
+    /**
+     * Opération publiée avec l'option « Session de minage » : sa fiche de minage est créée une seule fois,
+     * avec tous les membres « Présent », affectés à un groupe ou non. Ensuite la fiche se gère seule.
+     */
+    private void ensureMiningSheet(Event event, Operation operation) {
+        if (sessionSheetService == null || !operation.isMiningSession() || operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) return;
+        java.util.List<UUID> present = participationRepository == null ? java.util.List.of()
+                : participationRepository.findAllByEvent(event).orElse(java.util.List.of()).stream()
+                .filter(participation -> participation.getStatus() == 1 && participation.getUser() != null)
+                .map(participation -> participation.getUser().getId()).toList();
+        java.time.LocalDate date = event.getStartDateTime() != null ? event.getStartDateTime().toLocalDate() : LocalDateTime.now(OperationLock.ZONE).toLocalDate();
+        sessionSheetService.ensureForOperation(event.getId(), event.getTitle(), date,
+                com.icy.icy_backend.security.AuthUtils.getCurrentUserId(), present);
     }
 
     private Event findOperationEvent(UUID id) {

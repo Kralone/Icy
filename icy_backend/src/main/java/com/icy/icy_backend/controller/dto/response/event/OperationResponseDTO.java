@@ -27,6 +27,7 @@ public class OperationResponseDTO {
     private String imageUrl;
     private Operation.PublicationStatus publicationStatus;
     private boolean allowShipProposals;
+    private boolean miningSession;
     private long revision;
     private com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode defaultAssignmentMode;
     private Instant updatedAt;
@@ -51,6 +52,7 @@ public class OperationResponseDTO {
         this.imageUrl = operation.getImageUrl();
         this.publicationStatus = operation.getPublicationStatus();
         this.allowShipProposals = operation.isAllowShipProposals();
+        this.miningSession = operation.isMiningSession();
         this.revision = operation.getRevision();
         this.defaultAssignmentMode = operation.getDefaultAssignmentMode();
         com.icy.icy_backend.db.entity.event.EventType type = event.getType();

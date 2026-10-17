@@ -1,0 +1,17 @@
+[Unit]
+Description=Surveillance IceForge et alertes mail
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/iceforge-monitor/config.json
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /root/iceforge/ops/production/monitoring/production-monitor.py check
+TimeoutStartSec=90
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/iceforge-monitor

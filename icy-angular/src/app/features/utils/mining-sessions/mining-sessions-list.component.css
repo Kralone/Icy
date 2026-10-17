@@ -1,0 +1,32 @@
+:host { display: block; container: sheets / inline-size; }
+.sessions { display: grid; gap: 1rem; width: min(1600px, calc(100% - 2rem)); margin: 1.25rem auto 3rem; }
+.sessions__head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .8rem; }
+.sessions__head h1 { margin: 0; color: var(--fg-strong); font-size: clamp(1.6rem, 3cqi, 2.4rem); font-weight: 800; }
+.sessions__head p { margin: .2rem 0 0; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: .7rem; }
+.card { display: grid; gap: .3rem; height: 100%; padding: .9rem 1rem; border: 1px solid var(--line-strong); border-radius: .7rem; color: var(--fg); background: var(--panel-2); text-decoration: none; transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--cyan); transform: translateY(-1px); }
+.card--mine { border-color: rgba(103, 232, 249, .55); }
+.card strong { color: var(--fg-strong); font-size: 1.05rem; }
+.card__meta { color: var(--muted); font-size: .86rem; }
+.card__meta b { color: var(--fg); }
+.card .you { color: var(--cyan); }
+.card__phase { justify-self: start; padding: .1rem .6rem; border: 1px solid var(--cyan); border-radius: 999px; color: var(--cyan); font-size: .76rem; font-weight: 700; }
+.card__phase[data-phase="PAYMENTS"] { border-color: var(--gold); color: var(--gold); }
+.card__phase[data-phase="REFINING"] { border-color: var(--s-refine); color: var(--s-refine); }
+.card__phase[data-phase="SELLING"] { border-color: var(--s-sell); color: var(--s-sell); }
+.history summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .4rem 1rem; cursor: pointer; list-style: none; }
+.history summary::-webkit-details-marker { display: none; }
+.history summary > span { color: var(--muted); font-size: .86rem; }
+.history__row { color: var(--fg); text-decoration: none; }
+.history__row:hover b { color: var(--cyan); }
+.pager { display: flex; align-items: center; justify-content: center; gap: .7rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .3rem .2rem .7rem; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg); background: var(--panel-2); font-size: .86rem; }
+.chip small { color: var(--muted); font-size: .74rem; }
+.chip--me { border-color: rgba(103, 232, 249, .55); }
+.chip button { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; font-size: 1rem; line-height: 1; }
+.chip button:hover { color: var(--rose); background: rgba(253, 164, 175, .12); }
+@container sheets (max-width: 640px) { .sessions { width: calc(100% - 1.25rem); } }
+@container sheets (min-width: 2400px) { .sessions { width: min(2400px, calc(100% - 4rem)); } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }

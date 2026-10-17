@@ -1,0 +1,11 @@
+[Unit]
+Description=Contrôle IceForge chaque minute
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=iceforge-monitor.service
+
+[Install]
+WantedBy=timers.target

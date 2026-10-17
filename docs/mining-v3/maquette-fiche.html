@@ -1,0 +1,776 @@
+<title>Fiche de minage V3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+/* Reprend le langage des fiches d'opération : bannière photo, barre de sections collante, grille 12 colonnes,
+   panneaux à liseré coloré par section, encart personnel cyan à droite. Thème sombre unique, comme l'application. */
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --panel: #0f1b2d;
+  --panel-2: #0b1525;
+  --field: #122235;
+  --line: rgba(148, 163, 184, .2);
+  --line-strong: #36546a;
+  --fg: #e2e8f0;
+  --fg-strong: #f8fafc;
+  --text: #cbd5e1;
+  --muted: #94a3b8;
+  --soft: #a9bfd0;
+  --cyan: #67e8f9;
+  --cyan-ink: #082f49;
+  --sky: #bae6fd;
+  --gold: #f4cd7d;
+  --green: #80e5b8;
+  --ok: #4ade80;
+  --rose: #fda4af;
+  --s-progress: #67e8f9;
+  --s-refine: #fdba74;
+  --s-sell: #5eead4;
+  --s-share: #a5b4fc;
+  --s-costs: #f4cd7d;
+  --ore-quant: #c4b5fd;
+  --ore-tara: #7dd3fc;
+  --ore-bexa: #f9a8d4;
+  --ore-gold: #fde047;
+  --ore-lara: #fdba74;
+  --font: "Space Grotesk", "Sora", "Noto Sans", system-ui, sans-serif;
+  --mono: "Space Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+html { scroll-padding-bottom: 6rem; }
+[hidden] { display: none !important; }
+body { color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+.page { container: sheet / inline-size; min-height: 100%; padding-bottom: 3rem; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #72ddf7; outline-offset: 2px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ico { display: inline-flex; flex: none; width: 1.15em; height: 1.15em; vertical-align: -.2em; }
+.ico svg { width: 100%; height: 100%; }
+
+/* Bandeau de démonstration : hors maquette */
+.demo { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; padding: .6rem max(1rem, calc((100% - 1600px) / 2)); border-bottom: 1px dashed var(--line-strong); color: var(--muted); font-size: .82rem; background: #08101c; }
+.demo b { color: var(--gold); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .72rem; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: .3rem; }
+.seg button { padding: .2rem .65rem; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--muted); background: transparent; font-size: .8rem; }
+.seg button[aria-pressed="true"] { border-color: var(--cyan); color: var(--fg-strong); background: #12283a; }
+
+/* Bannière */
+.hero { position: relative; display: flex; align-items: flex-end; min-height: clamp(14rem, 30cqi, 26rem); overflow: hidden; background: #3b2412; isolation: isolate; }
+.hero__image { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 30% 40%; }
+.hero__veil { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(11,18,32,.3) 0%, rgba(11,18,32,.6) 45%, rgba(11,18,32,.97) 100%); }
+.hero__content { width: min(1600px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(1.25rem, 3cqi, 2.6rem) 0; }
+.hero__back { display: inline-flex; align-items: center; gap: .35rem; min-height: 2.25rem; margin-bottom: clamp(1rem, 3cqi, 2.2rem); padding: .3rem .7rem; border: 1px solid rgba(148,163,184,.3); border-radius: .6rem; color: #a5f3fc; background: rgba(11,18,32,.72); text-decoration: none; }
+.hero__tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.hero__type { padding: .25rem .7rem; border: 1px solid #fb923c; border-radius: 999px; color: #ffedd5; background: rgba(124,45,18,.85); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.hero__status { padding: .25rem .7rem; border: 1px solid var(--green); border-radius: 999px; color: var(--green); background: rgba(24,77,61,.8); font-size: .8rem; font-weight: 600; }
+.hero__status[data-tone="settle"] { border-color: var(--gold); color: var(--gold); background: rgba(81,64,39,.85); }
+.hero__status[data-tone="done"] { border-color: var(--muted); color: var(--text); background: rgba(30,41,59,.85); }
+.hero__title { margin: .7rem 0 .9rem; color: var(--fg-strong); font-size: clamp(1.9rem, 4.6cqi, 4rem); font-weight: 800; line-height: 1.02; overflow-wrap: anywhere; text-shadow: 0 2px 18px rgba(2,8,23,.7); }
+.hero__facts { display: flex; flex-wrap: wrap; gap: .5rem .6rem; margin: 0; }
+.hero__facts > div { display: flex; align-items: center; gap: .45rem; padding: .4rem .75rem; border: 1px solid rgba(148,163,184,.3); border-radius: .6rem; background: rgba(11,18,32,.72); }
+.hero__facts dt { color: var(--cyan); display: flex; }
+.hero__facts dd { margin: 0; font-size: .95rem; }
+.hero__facts a { color: var(--fg); text-decoration: underline; text-decoration-color: rgba(103,232,249,.5); text-underline-offset: 3px; }
+
+/* Barre de sections */
+.section-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; gap: .4rem; padding: .55rem max(1rem, calc((100% - 1600px) / 2)); overflow-x: auto; border-bottom: 1px solid rgba(103,232,249,.18); background: rgba(11,18,32,.94); scrollbar-width: none; }
+.section-nav::-webkit-scrollbar { display: none; }
+.section-nav a { display: inline-flex; flex: none; align-items: center; gap: .4rem; min-height: 2.5rem; padding: .4rem .85rem; border: 1px solid #2b445a; border-radius: 999px; color: var(--sky); background: var(--panel); font-size: .9rem; white-space: nowrap; text-decoration: none; }
+.section-nav a:hover { border-color: var(--cyan); background: #12283a; }
+.section-nav a .ico { color: var(--c); }
+.section-nav .manage { margin-left: auto; border-color: var(--gold); color: var(--gold); background: #2a2110; font-weight: 600; }
+.section-nav .manage:hover { color: #1a1406; background: var(--gold); }
+
+/* Grille et panneaux */
+.sheet { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; width: min(1600px, calc(100% - 2rem)); margin: 1.25rem auto 0; }
+.panel { grid-column: 1 / -1; min-width: 0; display: grid; gap: .9rem; align-content: start; padding: clamp(1rem, 1.8cqi, 1.6rem); border: 1px solid var(--line); border-top: 3px solid var(--section); border-radius: .9rem; background: var(--panel); scroll-margin-top: 4.5rem; }
+.panel > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .4rem 1rem; }
+.panel h2 { display: flex; align-items: center; gap: .5rem; color: var(--fg-strong); font-size: 1.15rem; font-weight: 700; }
+.panel h2 .ico { color: var(--section); }
+.panel header > span { color: var(--muted); font-size: .86rem; }
+.panel h3 { color: var(--fg-strong); font-size: .98rem; font-weight: 700; }
+.p-progress { --section: var(--s-progress); grid-column: 1 / 9; grid-row: 1; background: #101f2e; }
+.p-refine { --section: var(--s-refine); grid-column: 1 / 8; }
+.p-costs { --section: var(--s-costs); grid-column: 8 / -1; }
+.p-sell { --section: var(--s-sell); }
+.p-share { --section: var(--s-share); }
+.empty { color: var(--muted); }
+.note { color: var(--muted); font-size: .84rem; }
+
+/* Avancement */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .35rem; counter-reset: s; }
+.steps li { display: grid; gap: .1rem; padding: .45rem .5rem .5rem; border-top: 3px solid #23384c; color: var(--muted); font-size: .76rem; min-width: 0; }
+.steps li b { color: var(--muted); font-size: .86rem; font-weight: 600; overflow-wrap: anywhere; }
+.steps li.done { border-color: rgba(128,229,184,.7); }
+.steps li.done b { color: var(--text); }
+.steps li.now { border-color: var(--cyan); background: linear-gradient(rgba(103,232,249,.12), transparent); }
+.steps li.now b { color: var(--fg-strong); }
+.headline { color: var(--fg-strong); font-size: clamp(1.15rem, 1.7cqi, 1.45rem); font-weight: 700; line-height: 1.3; }
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.tasks li { display: flex; gap: .6rem; align-items: baseline; padding: .5rem .7rem; border: 1px solid #23384c; border-radius: .55rem; background: var(--panel-2); color: var(--text); }
+.tasks li::before { content: ""; flex: none; width: .5rem; height: .5rem; border-radius: 50%; background: var(--gold); transform: translateY(-.05rem); }
+.tasks li.mine { border-color: rgba(103,232,249,.55); color: var(--fg-strong); }
+.tasks li.mine::before { background: var(--cyan); }
+.tasks li.later { opacity: .8; }
+.tasks li.later::before { background: var(--muted); }
+
+/* Ma situation, comme « Mon affectation » */
+.mine { grid-column: 9 / -1; grid-row: 1; display: grid; align-content: start; gap: .7rem; min-width: 0; padding: clamp(1rem, 1.8cqi, 1.6rem); border: 1px solid var(--cyan); border-top: 3px solid var(--cyan); border-radius: .9rem; background: #0d2433; box-shadow: inset 0 0 0 1px rgba(103,232,249,.2); }
+.mine h2 { display: flex; align-items: center; gap: .5rem; color: var(--fg-strong); font-size: 1.15rem; font-weight: 700; }
+.mine h2 .ico { color: var(--cyan); }
+.mine__amount { font-family: var(--mono); font-size: clamp(1.6rem, 2.6cqi, 2.2rem); font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mine__amount small { font-size: .9rem; color: var(--muted); font-weight: 400; }
+.mine__amount.in { color: var(--ok); }
+.mine__amount.out { color: var(--rose); }
+.mine__what { color: var(--fg-strong); font-weight: 600; }
+.facts { display: grid; gap: .3rem; margin: 0; }
+.facts > div { display: flex; justify-content: space-between; gap: .5rem; }
+.facts dt { color: var(--muted); font-size: .86rem; }
+.facts dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.facts .res { padding-top: .3rem; border-top: 1px dashed var(--line-strong); }
+.facts .res dt { color: var(--fg); }
+.tag { justify-self: start; display: inline-block; padding: .1rem .6rem; border: 1px solid; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+.tag--prov { border-color: var(--gold); color: var(--gold); }
+.tag--fixed { border-color: var(--green); color: var(--green); }
+.actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.btn { min-height: 2.5rem; padding: .45rem .9rem; border: 1px solid var(--line-strong); border-radius: .45rem; color: var(--sky); background: var(--field); font-size: .9rem; }
+.btn:hover:not(:disabled) { border-color: var(--cyan); }
+.btn.primary { border-color: var(--cyan); color: var(--cyan-ink); background: var(--cyan); font-weight: 700; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Raffinage */
+.orders { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+.order { display: grid; gap: .65rem; padding: .85rem .9rem; border: 1px solid var(--line-strong); border-radius: .7rem; background: var(--panel-2); }
+.order[data-state="ready"] { border-color: rgba(103,232,249,.6); }
+.order[data-state="given"] { border-color: rgba(74,222,128,.35); }
+.order__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem .8rem; align-items: start; }
+.order__who { display: grid; gap: .05rem; }
+.order__who span { color: var(--muted); font-size: .84rem; }
+.badge { padding: .14rem .6rem; border-radius: 999px; font-size: .76rem; font-weight: 800; white-space: nowrap; }
+.badge--wait { color: #2a1d05; background: var(--gold); }
+.badge--ready { color: var(--cyan-ink); background: var(--cyan); }
+.badge--picked { color: #2a1d05; background: #fdba74; }
+.badge--given { color: #052e16; background: var(--ok); }
+.ores { display: flex; flex-wrap: wrap; gap: .4rem; }
+.ore { display: inline-flex; gap: .5rem; align-items: baseline; padding: .25rem .6rem; border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); border-radius: .45rem; background: color-mix(in srgb, var(--c) 14%, transparent); font-size: .84rem; }
+.ore b { color: var(--c); font-weight: 700; }
+.ore .q { color: var(--muted); font-size: .74rem; }
+.ore.kept { border-style: dashed; background: transparent; }
+.ore.kept .k { color: var(--muted); font-size: .72rem; }
+.order__foot { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1.1rem; color: var(--muted); font-size: .84rem; }
+.order__foot strong { color: var(--fg); font-weight: 600; }
+.order__foot .grow { flex: 1; }
+.timer { color: var(--fg-strong); font-family: var(--mono); }
+
+/* Frais */
+.rows { display: grid; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem .8rem; padding: .55rem 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .sub { grid-column: 1 / -1; color: var(--muted); font-size: .8rem; }
+.kind { display: inline-block; margin-right: .45rem; padding: .02rem .5rem; border: 1px solid var(--line-strong); border-radius: .35rem; color: var(--soft); font-size: .74rem; }
+.total-line { display: flex; justify-content: space-between; padding-top: .55rem; border-top: 1px solid var(--line-strong); color: var(--fg-strong); font-weight: 600; }
+
+/* Vente */
+.sell-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.sell-ore { display: grid; gap: .5rem; padding: .85rem .9rem; border: 1px solid var(--line-strong); border-radius: .7rem; background: var(--panel-2); }
+.sell-list { display: grid; gap: .7rem; }
+.sell-ore__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .3rem .8rem; align-items: baseline; }
+.sell-ore__head b { color: var(--c); font-size: 1rem; }
+.sell-ore__head span { color: var(--muted); font-size: .86rem; }
+.bar { height: .4rem; border-radius: 999px; background: #1b2b40; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--c); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th { padding: .2rem .7rem .4rem 0; color: var(--muted); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+td { padding: .45rem .7rem .45rem 0; border-top: 1px solid var(--line); vertical-align: top; }
+.r { text-align: right; }
+.place { display: block; color: var(--muted); font-size: .76rem; }
+.best { margin-left: .4rem; padding: 0 .45rem; border-radius: 999px; color: #052e16; background: var(--ok); font-size: .68rem; font-weight: 800; }
+.est { color: var(--soft); }
+.sale-form { display: grid; gap: .7rem; padding: .95rem; border: 1px solid rgba(94,234,212,.35); border-radius: .7rem; background: linear-gradient(160deg, rgba(94,234,212,.08), rgba(11,21,37,0) 55%); }
+.field { display: grid; gap: .3rem; color: var(--text); font-size: .88rem; }
+.field .input { padding: .55rem .65rem; border: 1px solid var(--line-strong); border-radius: .4rem; color: var(--fg); background: var(--field); font-family: var(--mono); }
+.field .input.big { font-size: 1.15rem; color: var(--fg-strong); border-color: var(--s-sell); }
+.field small { color: var(--muted); }
+.sales-done { display: grid; gap: .4rem; }
+
+.holders { display: flex; flex-wrap: wrap; gap: .3rem .9rem; margin: 0; color: var(--soft); font-size: .84rem; }
+.holders b { color: var(--fg); font-weight: 600; }
+.more-spots { display: none; justify-self: start; min-height: 2.25rem; padding: .3rem .75rem; border: 1px solid var(--line-strong); border-radius: .45rem; color: var(--sky); background: var(--field); font-size: .84rem; }
+.waiting { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; padding: .45rem .6rem; border: 1px dashed var(--gold); border-radius: .5rem; color: var(--fg); font-size: .84rem; }
+.waiting .btn { min-height: 2.1rem; padding: .25rem .7rem; }
+.receipt { color: var(--ok); font-size: .82rem; font-weight: 600; white-space: nowrap; }
+.receipt--missing { color: var(--gold); }
+.mine__amount.done { color: var(--fg-strong); }
+
+/* Partage */
+.share-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+.totals div { display: grid; gap: .1rem; min-width: 0; padding: .6rem .7rem; border: 1px solid #23384c; border-radius: .55rem; background: var(--panel-2); }
+.totals span { color: var(--muted); font-size: .76rem; }
+.totals strong { font-family: var(--mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.totals .key { border-color: rgba(165,180,252,.55); }
+.totals .key strong { color: var(--s-share); }
+.formula { color: var(--text); font-size: .88rem; }
+.people { display: grid; }
+.person { border-top: 1px solid var(--line); }
+.person summary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .7rem; align-items: baseline; padding: .6rem 0; cursor: pointer; }
+.person summary::-webkit-details-marker { display: none; }
+.person .who { font-weight: 600; color: var(--fg-strong); }
+.person .who small { margin-left: .4rem; color: var(--muted); font-weight: 400; font-size: .8rem; }
+.person.me .who { color: var(--cyan); }
+.chev { color: var(--muted); transition: transform .15s; }
+.person[open] .chev { transform: rotate(90deg); }
+.person .facts { padding: 0 0 .8rem; font-size: .88rem; }
+.pos { color: var(--ok); }
+.neg { color: var(--rose); }
+.locked { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .6rem .8rem; border: 1px solid var(--gold); border-radius: .6rem; color: var(--fg); background: #2a2618; font-size: .88rem; }
+.transfers { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.transfer { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .7rem; align-items: center; padding: .55rem .7rem; border: 1px solid #23384c; border-radius: .55rem; background: var(--panel-2); }
+.transfer .amt { font-family: var(--mono); font-weight: 700; color: var(--fg-strong); }
+.transfer .arrow { margin: 0 .35rem; color: var(--muted); }
+.check { min-height: 2.25rem; padding: .3rem .75rem; border: 1px solid var(--line-strong); border-radius: .45rem; color: var(--sky); background: var(--field); font-size: .84rem; font-weight: 600; white-space: nowrap; }
+.check[aria-pressed="true"] { border-color: var(--ok); color: var(--ok); background: rgba(74,222,128,.1); }
+.check.primary { border-color: var(--cyan); color: var(--cyan-ink); background: var(--cyan); }
+.check:disabled { cursor: default; }
+.flow { display: block; width: 100%; max-width: 40rem; height: auto; margin: .4rem auto 0; }
+.flow text { fill: var(--fg); font-family: var(--font); font-size: 13px; }
+.flow text.m { fill: var(--muted); font-size: 11.5px; font-family: var(--mono); }
+
+/* Barre d'actions rapides, mobile seulement */
+.quickbar { display: none; }
+
+@container sheet (max-width: 1100px) {
+  .p-refine, .p-costs { grid-column: 1 / -1; }
+  .sell-grid, .share-grid { grid-template-columns: 1fr; }
+}
+@container sheet (max-width: 960px) {
+  /* Ma situation reste en tête, l'avancement passe dessous. */
+  .mine { grid-column: 1 / -1; grid-row: 1; }
+  .p-progress { grid-column: 1 / -1; grid-row: 2; }
+}
+@container sheet (max-width: 640px) {
+  .sheet { gap: .75rem; width: calc(100% - 1.25rem); margin-top: .9rem; }
+  .hero__content { width: calc(100% - 1.25rem); }
+  .section-nav { padding-inline: .65rem 1.5rem; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); }
+  .section-nav .manage { order: -1; margin-left: 0; }
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .transfer { grid-template-columns: minmax(0, 1fr) auto; }
+  .transfer .check { grid-column: 1 / -1; }
+  .mine .actions { display: none; }
+  .quickbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; gap: .45rem; padding: .6rem .65rem calc(.6rem + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(103,232,249,.25); background: rgba(11,18,32,.97); }
+  .quickbar .btn { flex: 1; padding-inline: .4rem; }
+  /* La marge du bas et le scroll-padding gardent champs et boutons de validation au-dessus de la barre. */
+  .page { padding-bottom: 5.5rem; }
+  body.typing .quickbar { display: none; }
+  /* Mobile : les 2 meilleurs lieux, les autres sur demande. */
+  .sell-ore:not(.is-open) tr.extra { display: none; }
+  .more-spots { display: inline-flex; align-items: center; }
+}
+@container sheet (min-width: 2400px) {
+  .sheet, .hero__content { width: min(2400px, calc(100% - 4rem)); }
+  .section-nav, .demo { padding-inline: max(2rem, calc((100% - 2400px) / 2)); }
+  body { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+</style>
+
+<div class="page">
+  <div class="demo" role="group" aria-label="Contrôles de la maquette">
+    <b>Maquette</b>
+    <span>Étape</span><span class="seg" id="phaseSeg"></span>
+    <span>Vu par</span><span class="seg" id="viewerSeg"></span>
+    <span id="closeSeg" style="display:inline-flex;gap:.5rem;align-items:center"></span>
+    <span>Données et prix d'exemple.</span>
+  </div>
+
+  <header class="hero">
+    <img class="hero__image" src="mining.jpg" alt="" onerror="if (!this.dataset.retry) { this.dataset.retry = '1'; this.src = '../../icy-angular/src/assets/images/home/activities/mining.jpg'; } else { this.remove(); }">
+    <div class="hero__veil"></div>
+    <div class="hero__content">
+      <a class="hero__back" href="#fiches"><span aria-hidden="true">←</span> Fiches de minage</a>
+      <p class="hero__tags"><span class="hero__type">Session de minage</span><span class="hero__status" id="heroStatus"></span></p>
+      <h1 class="hero__title">Quanta du jeudi</h1>
+      <dl class="hero__facts">
+        <div><dt><span class="ico" data-i="calendar"></span><span class="sr-only">Date</span></dt><dd>Jeudi 22 octobre 2026</dd></div>
+        <div><dt><span class="ico" data-i="users"></span><span class="sr-only">Participants</span></dt><dd>4 participants · 3,5 parts</dd></div>
+        <div><dt><span class="ico" data-i="pin"></span><span class="sr-only">Raffineries</span></dt><dd>CRU-L1 · ARC-L1</dd></div>
+        <div><dt><span class="ico" data-i="briefing"></span><span class="sr-only">Opération liée</span></dt><dd><a href="#operation">Opération du 22/10</a></dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <nav class="section-nav" aria-label="Sections de la fiche">
+    <a href="#situation" style="--c:var(--cyan)"><span class="ico" data-i="assignment"></span> Ma situation</a>
+    <a href="#raffinage" style="--c:var(--s-refine)"><span class="ico" data-i="flask"></span> Raffinage</a>
+    <a href="#vente" style="--c:var(--s-sell)"><span class="ico" data-i="cargo"></span> Vente</a>
+    <a href="#partage" style="--c:var(--s-share)"><span class="ico" data-i="coins"></span> Partage</a>
+    <a href="#frais" style="--c:var(--s-costs)"><span class="ico" data-i="wrench"></span> Frais</a>
+    <a class="manage" href="#gerer">Gérer la fiche</a>
+  </nav>
+
+  <div class="sheet">
+    <section class="mine" id="situation" aria-labelledby="mine-h"></section>
+    <section class="panel p-progress" id="avancement" aria-labelledby="progress-h"></section>
+    <section class="panel p-refine" id="raffinage" aria-labelledby="refine-h"></section>
+    <section class="panel p-costs" id="frais" aria-labelledby="costs-h"></section>
+    <section class="panel p-sell" id="vente" aria-labelledby="sell-h"></section>
+    <section class="panel p-share" id="partage" aria-labelledby="share-h"></section>
+  </div>
+
+  <div class="quickbar" id="quickbar"></div>
+</div>
+
+<script>
+const ICONS = {
+  calendar: 'M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z',
+  clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  pin: 'M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  users: 'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 19v-1a4 4 0 0 0-3-3.9M15.5 3.2a3.5 3.5 0 0 1 0 6.6',
+  briefing: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6',
+  assignment: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1',
+  wrench: 'M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18v3h3l6.5-6.5a4 4 0 0 0 5.2-5.2l-2.5 2.5-2.3-.7-.7-2.3z',
+  cargo: 'M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01',
+  flask: 'M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M7.5 14h9',
+  coins: 'M12 8c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3zM4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6'
+};
+const svg = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${ICONS[n]}"/></svg>`;
+const ico = n => `<span class="ico">${svg(n)}</span>`;
+
+/* calc:start — calcul du partage, identique à la spécification. Extrait tel quel par les tests. */
+/* Part de chaque membre en aUEC entiers, méthode du plus grand reste.
+   members : [{ id, centi }] dans l'ordre d'arrivée dans la fiche (sert au départage). */
+function allocateNet(net, members) {
+  const total = members.reduce((s, m) => s + BigInt(m.centi), 0n);
+  if (total === 0n) throw new Error('Il faut au moins une part non nulle.');
+  const N = BigInt(net);
+  const rows = members.map((m, order) => {
+    const num = N * BigInt(m.centi);
+    let q = num / total, r = num % total;
+    if (r < 0n) { q -= 1n; r += total; } // partie entière inférieure, aussi pour un net négatif
+    return { id: m.id, order, centi: m.centi, floor: q, rem: r };
+  });
+  let gap = N - rows.reduce((s, x) => s + x.floor, 0n);
+  const byRemainder = rows.filter(x => x.centi > 0)
+    .sort((a, b) => (b.rem > a.rem ? 1 : b.rem < a.rem ? -1 : a.order - b.order));
+  for (let k = 0; gap > 0n; k++, gap--) byRemainder[k].floor += 1n;
+  return Object.fromEntries(rows.map(x => [x.id, Number(x.floor)]));
+}
+/* Versements : le plus gros payeur verse au plus gros receveur, égalités départagées par ordre d'arrivée. */
+function planTransfers(gaps, order) {
+  const pos = id => order.indexOf(id);
+  const pick = list => list.filter(x => x.left > 0).sort((a, b) => b.left - a.left || pos(a.id) - pos(b.id))[0];
+  const payers = Object.entries(gaps).filter(([, g]) => g < 0).map(([id, g]) => ({ id, left: -g }));
+  const receivers = Object.entries(gaps).filter(([, g]) => g > 0).map(([id, g]) => ({ id, left: g }));
+  const out = [];
+  for (let p = pick(payers), r = pick(receivers); p && r; p = pick(payers), r = pick(receivers)) {
+    const a = Math.min(p.left, r.left);
+    out.push({ key: 't' + out.length, from: p.id, to: r.id, amount: a });
+    p.left -= a; r.left -= a;
+  }
+  return out;
+}
+/* people : [{ id, centi }] ; costs : [{ by, amount }] ; sales : [{ by, amount }] */
+function settle(people, costs, sales) {
+  const totalSales = sales.reduce((s, x) => s + x.amount, 0);
+  const totalCosts = costs.reduce((s, x) => s + x.amount, 0);
+  const net = totalSales - totalCosts;
+  const shares = allocateNet(net, people);
+  const rows = people.map(p => {
+    const advanced = costs.filter(c => c.by === p.id).reduce((s, c) => s + c.amount, 0);
+    const cashed = sales.filter(s => s.by === p.id).reduce((s, x) => s + x.amount, 0);
+    const balance = shares[p.id] + advanced;
+    return { id: p.id, centi: p.centi, share: shares[p.id], advanced, cashed, balance, gap: balance - cashed };
+  });
+  const transfers = planTransfers(Object.fromEntries(rows.map(r => [r.id, r.gap])), people.map(p => p.id));
+  return { totalSales, totalCosts, net, rows, transfers };
+}
+/* Stock d'un vendeur, en cSCU : lignes « à vendre » des ordres qui lui sont remis, moins ce qu'il a déjà vendu. */
+function stockOf(seller, orders, sales) {
+  const stock = {};
+  for (const o of orders) {
+    if (o.to !== seller || !o.handedOver) continue;
+    for (const l of o.lines) if (l.dest === 'SELL') stock[l.ore] = (stock[l.ore] || 0) + l.cscu;
+  }
+  for (const s of sales) {
+    if (s.by !== seller) continue;
+    for (const l of s.lines) stock[l.ore] = (stock[l.ore] || 0) - l.cscu;
+  }
+  return stock;
+}
+/* Refuse une vente qui dépasse le stock du vendeur. */
+/* Les lignes d'un même minerai sont cumulées avant la comparaison au stock. */
+function checkSale(sale, orders, sales) {
+  const stock = stockOf(sale.by, orders, sales);
+  const wanted = {};
+  let invalid = false;
+  for (const l of sale.lines) {
+    if (!(l.cscu > 0) || !Number.isInteger(l.cscu)) invalid = true;
+    wanted[l.ore] = (wanted[l.ore] || 0) + l.cscu;
+  }
+  const bad = Object.entries(wanted).filter(([ore, q]) => q > (stock[ore] || 0))
+    .map(([ore, q]) => ({ ore, wanted: q, available: Math.max(0, stock[ore] || 0) }));
+  return invalid || bad.length ? { ok: false, invalid, lines: bad } : { ok: true };
+}
+/* calc:end */
+
+const ORE = { Quantanium: 'var(--ore-quant)', Taranite: 'var(--ore-tara)', Bexalite: 'var(--ore-bexa)', Or: 'var(--ore-gold)', Laranite: 'var(--ore-lara)' };
+const PEOPLE = [
+  { id: 'kra', name: 'Kralone', centi: 100, note: 'organisateur' },
+  { id: 'vex', name: 'Vexa', centi: 100 },
+  { id: 'tor', name: 'Torin', centi: 100 },
+  { id: 'mir', name: 'Mira', centi: 50, note: 'arrivée tard' }
+];
+/* Lignes : [minerai, cSCU, qualité, conservé] */
+const ORDERS = [
+  { id: 1, by: 'kra', at: 'CRU-L1 Ambitious Dream', method: 'Dinyx Solventation', cost: 42000, ends: '21 h 05', to: 'kra',
+    ores: [['Quantanium', 1840, 812], ['Taranite', 910, 640], ['Or', 230, 905, true]] },
+  { id: 2, by: 'vex', at: 'CRU-L1 Ambitious Dream', method: 'Ferron Exchange', cost: 38500, ends: '21 h 40', to: 'kra',
+    ores: [['Quantanium', 1260, 744], ['Bexalite', 620, 588]] },
+  { id: 3, by: 'tor', at: 'ARC-L1 Wide Forest', method: 'Cormack', cost: 12000, ends: '22 h 40', to: 'vex',
+    ores: [['Laranite', 1480, 701], ['Taranite', 400, 512]] }
+];
+const COSTS = [
+  { type: 'Carburant', by: 'tor', amount: 8400, note: 'Plein du Prospector' },
+  { type: 'Réparation', by: 'vex', amount: 25000, note: 'Coque du MOLE après une fracture' }
+];
+const SALES = [
+  { by: 'kra', at: 'Area18 TDD', place: 'Stanton › ArcCorp › Area18', amount: 1284000, time: '23 h 12', lines: [['Quantanium', 3100], ['Taranite', 910], ['Bexalite', 620]] },
+  { by: 'vex', at: 'Lorville CBD', place: 'Stanton › Hurston › Lorville', amount: 236000, time: '23 h 48', lines: [['Laranite', 1480], ['Taranite', 400]] }
+];
+const SPOTS = {
+  Quantanium: [['Area18 TDD', 'Stanton › ArcCorp › Area18', 41200, 120], ['Orison TDD', 'Stanton › Crusader › Orison', 40850, 64], ['MIC-L1 Shallow Frontier', 'Stanton › Point de Lagrange microTech L1', 40100, null], ['Lorville CBD', 'Stanton › Hurston › Lorville', 39700, 32], ['CRU-L4 Shallow Fields', 'Stanton › Point de Lagrange Crusader L4', 38900, 18]],
+  Taranite: [['Area18 TDD', 'Stanton › ArcCorp › Area18', 33400, 80], ['Lorville CBD', 'Stanton › Hurston › Lorville', 33150, 40], ['New Babbage TDD', 'Stanton › microTech › New Babbage', 32600, 22], ['Orison TDD', 'Stanton › Crusader › Orison', 32100, null], ['HUR-L2 Faithful Dream', 'Stanton › Point de Lagrange Hurston L2', 31400, 12]],
+  Bexalite: [['Area18 TDD', 'Stanton › ArcCorp › Area18', 20900, 50], ['New Babbage TDD', 'Stanton › microTech › New Babbage', 20450, 30], ['Orison TDD', 'Stanton › Crusader › Orison', 19800, 26], ['ARC-L1 Wide Forest', 'Stanton › Point de Lagrange ArcCorp L1', 19200, null], ['Lorville CBD', 'Stanton › Hurston › Lorville', 18700, 10]],
+  Laranite: [['Lorville CBD', 'Stanton › Hurston › Lorville', 16100, 60], ['Area18 TDD', 'Stanton › ArcCorp › Area18', 15800, 45], ['Orison TDD', 'Stanton › Crusader › Orison', 15500, null], ['New Babbage TDD', 'Stanton › microTech › New Babbage', 15100, 20], ['CRU-L4 Shallow Fields', 'Stanton › Point de Lagrange Crusader L4', 14600, 8]]
+};
+const PHASES = [
+  { id: 'mine', label: 'Minage' }, { id: 'refine', label: 'Raffinage' }, { id: 'cargo', label: 'Remise du cargo' },
+  { id: 'sell', label: 'Vente' }, { id: 'pay', label: 'Versements' }, { id: 'done', label: 'Terminée' }
+];
+const RECEIVED_AT = { t0: '23/10 à 00 h 12', t1: '23/10 à 00 h 31', t2: '23/10 à 09 h 05' };
+const st = { phase: 'sell', viewer: 'tor', close: 'normal', received: new Set(['t0']), openSpots: new Set() };
+try { const s = JSON.parse(localStorage.getItem('mv3c') || '{}'); if (PHASES.some(p => p.id === s.phase)) st.phase = s.phase; if (PEOPLE.some(p => p.id === s.viewer)) st.viewer = s.viewer; if (s.close === 'forced') st.close = 'forced'; } catch (e) {}
+/* Lien direct vers un état, utilisé pour les captures : #e-<étape>-<participant>, et #e-done-<participant>-forced pour une clôture forcée. */
+const deep = /^#e-([a-z]+)-([a-z]+)(?:-(forced))?$/.exec(location.hash);
+if (deep && PHASES.some(p => p.id === deep[1]) && PEOPLE.some(p => p.id === deep[2])) { st.phase = deep[1]; st.viewer = deep[2]; st.close = deep[3] ? 'forced' : 'normal'; }
+
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('fr-FR').format(Math.round(n)).replace(/ | /g, ' ');
+const scu = cscu => (cscu / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+const nm = id => PEOPLE.find(p => p.id === id).name;
+const pi = () => PHASES.findIndex(p => p.id === st.phase);
+const parts = c => c === 100 ? '1 part' : c === 50 ? 'demi-part' : (c / 100).toLocaleString('fr-FR') + ' part';
+const forced = () => pi() === 5 && st.close === 'forced';
+
+const ordersShown = () => pi() === 0 ? [] : ORDERS;
+const salesShown = () => pi() < 3 ? [] : pi() === 3 ? SALES.slice(0, 1) : SALES;
+/* Remise : en raffinage → prêt → remis. Un ordre dont le lanceur est le destinataire est remis dès qu'il est prêt. */
+function orderState(o) {
+  const i = pi();
+  if (i === 1) return o.id === 1 ? 'ready' : 'wait';
+  if (i === 2) return o.by === o.to ? 'given' : 'ready';
+  return 'given';
+}
+/* Un ordre n'est en stock qu'une fois marqué remis, y compris quand le lanceur est le vendeur (il confirme l'avoir récupéré). */
+const handed = o => orderState(o) === 'given';
+const calcOrders = () => ordersShown().map(o => ({ to: o.to, handedOver: handed(o), lines: o.ores.map(([ore, cscu, , kept]) => ({ ore, cscu, dest: kept ? 'KEEP' : 'SELL' })) }));
+const calcSales = () => salesShown().map(s => ({ by: s.by, lines: s.lines.map(([ore, cscu]) => ({ ore, cscu })) }));
+/* En état Terminé, tous les versements sont reçus, sauf le dernier en clôture forcée. */
+const isReceived = t => pi() === 5 ? !(forced() && t.key === 't2') : pi() === 4 && st.received.has(t.key);
+
+function compute() {
+  const costs = [...ordersShown().map(o => ({ by: o.by, amount: o.cost })), ...COSTS];
+  const res = settle(PEOPLE.map(p => ({ id: p.id, centi: p.centi })), costs, salesShown());
+  res.nParts = PEOPLE.reduce((s, p) => s + p.centi, 0) / 100;
+  res.perPart = res.net / res.nParts;
+  res.rows = res.rows.map(r => ({ ...r, name: nm(r.id), note: PEOPLE.find(p => p.id === r.id).note }));
+  return res;
+}
+
+function renderDemo() {
+  $('phaseSeg').innerHTML = PHASES.map(p => `<button type="button" data-phase="${p.id}" aria-pressed="${p.id === st.phase}">${p.label}</button>`).join('');
+  $('viewerSeg').innerHTML = PEOPLE.map(p => `<button type="button" data-viewer="${p.id}" aria-pressed="${p.id === st.viewer}">${p.name}</button>`).join('');
+  $('closeSeg').hidden = pi() !== 5;
+  $('closeSeg').innerHTML = `<span>Clôture</span><span class="seg"><button type="button" data-close="normal" aria-pressed="${st.close === 'normal'}">Normale</button><button type="button" data-close="forced" aria-pressed="${st.close === 'forced'}">Forcée</button></span>`;
+  const i = pi();
+  const hs = $('heroStatus');
+  hs.textContent = i < 4 ? 'En cours · ' + PHASES[i].label.toLowerCase() : i === 4 ? 'Comptes arrêtés' : forced() ? 'Clôturée · 1 versement non confirmé' : 'Terminée';
+  hs.dataset.tone = i < 4 ? 'live' : i === 4 || forced() ? 'settle' : 'done';
+}
+
+function renderProgress(c) {
+  const i = pi(), me = st.viewer;
+  let head, tasks = [];
+  if (i === 0) {
+    head = 'Session en cours. Déclarez vos frais au fil de l’eau.';
+    tasks = [['all', 'Chacun : ajouter ses pleins, réparations et achats'], ['all', 'Au retour à la station : créer un ordre par lancement de raffinage', 'later']];
+  } else if (i === 1) {
+    head = 'Dernier raffinage prêt à 22 h 40, dans 1 h 12.';
+    tasks = [['kra', 'Kralone : récupérer l’ordre prêt à CRU-L1, puis le vendre'], ['vex', 'Vexa : ordre prêt à 21 h 40, dans 12 min', 'later'], ['tor', 'Torin : ordre prêt à 22 h 40 à ARC-L1', 'later']];
+  } else if (i === 2) {
+    head = 'Tous les ordres sont prêts. 2 remises de cargo restent à faire.';
+    tasks = [['vex', 'Vexa : apporter l’ordre de CRU-L1 à Kralone'], ['tor', 'Torin : récupérer l’ordre à ARC-L1 et l’apporter à Vexa'], ['kra', 'Kralone : vendre ce que vous avez déjà, sans attendre', 'later']];
+  } else if (i === 3) {
+    head = 'Reste à vendre : 18,8 SCU, chez Vexa.';
+    tasks = [['vex', 'Vexa : vendre Laranite et Taranite, puis saisir le montant reçu'], ['kra', 'Kralone : arrêter les comptes une fois tout vendu', 'later']];
+  } else if (i === 4) {
+    const ok = c.transfers.filter(isReceived).length;
+    head = `${ok} versement${ok > 1 ? 's' : ''} confirmé${ok > 1 ? 's' : ''} sur ${c.transfers.length}.`;
+    tasks = c.transfers.filter(t => !isReceived(t)).map(t => [t.to, `${nm(t.to)} : confirmer la réception de ${fmt(t.amount)} aUEC versés par ${nm(t.from)}`]);
+  } else if (forced()) {
+    head = 'Clôturée par Kralone avec 1 versement non confirmé.';
+    tasks = [['kra', 'Motif : « Mira absente jusqu’à la semaine prochaine, versement fait en jeu selon Kralone. »', 'later'], ['kra', 'L’organisateur peut rouvrir la fiche pour enregistrer la confirmation.', 'later']];
+  } else {
+    head = 'Session terminée : tous les versements ont été reçus.';
+    tasks = [['kra', 'Une erreur ? L’organisateur peut rouvrir la fiche depuis « Gérer la fiche ».', 'later']];
+  }
+  $('avancement').innerHTML = `<header><h2 id="progress-h">${ico('target')} Avancement</h2><span>Mis à jour en direct</span></header>
+    <ol class="steps">${PHASES.map((p, k) => `<li class="${k < i || (k === 5 && i === 5) ? 'done' : k === i ? 'now' : ''}" ${k === i ? 'aria-current="step"' : ''}><b>${p.label}</b>${k < i || (k === 5 && i === 5) ? 'fait' : k === i ? 'en cours' : 'à venir'}</li>`).join('')}</ol>
+    <p class="headline">${head}</p>
+    ${tasks.length ? `<ul class="tasks">${tasks.map(([who, t, later]) => `<li class="${who === me ? 'mine' : ''} ${later ? 'later' : ''}">${t}</li>`).join('')}</ul>` : ''}`;
+}
+
+function quickButtons(full) {
+  const i = pi(), locked = i >= 4;
+  return `<button class="btn" type="button" ${locked ? 'disabled' : ''}>+ Frais</button><button class="btn" type="button" ${locked ? 'disabled' : ''}>${full ? '+ Ordre de raffinage' : '+ Raffinage'}</button><button class="btn primary" type="button" ${i < 1 || locked ? 'disabled' : ''}>+ Vente</button>`;
+}
+
+function renderMine(c) {
+  const i = pi(), r = c.rows.find(x => x.id === st.viewer), out = r.gap < 0;
+  $('quickbar').innerHTML = quickButtons(false);
+  /* Avant la première vente, un solde serait un faux déficit : on montre seulement ce qui sera remboursé. */
+  if (!c.totalSales) {
+    $('situation').innerHTML = `<h2 id="mine-h">${ico('assignment')} Ma situation</h2>
+      <span class="tag tag--prov">En attente des ventes</span>
+      <p class="mine__amount">${fmt(r.advanced)} <small>aUEC avancés</small></p>
+      <p class="mine__what">${nm(r.id)} · ${r.advanced ? 'Ces frais vous seront remboursés avant le partage.' : 'Aucun frais avancé pour l’instant.'}</p>
+      <p class="note">Votre part et vos versements s’afficheront dès la première vente enregistrée.</p>
+      <div class="actions">${quickButtons(true)}</div>`;
+    return;
+  }
+  const mine = c.transfers.filter(t => (out ? t.from : t.to) === r.id);
+  const pending = mine.filter(t => !isReceived(t));
+  let tag, amountClass, amount, what;
+  if (i === 5) {
+    tag = forced() && pending.length ? '<span class="tag tag--prov">Clôturée · non confirmé</span>' : '<span class="tag tag--fixed">Soldé</span>';
+    amountClass = 'done';
+    amount = fmt(Math.abs(r.gap));
+    what = r.gap === 0 ? 'Rien à verser ni à recevoir.' : forced() && pending.length
+      ? (out ? `Versement à ${pending.map(t => nm(t.to)).join(', ')} non confirmé par le receveur.` : `Réception de ${pending.map(t => nm(t.from)).join(', ')} non confirmée.`)
+      : (out ? `Versé à ${mine.map(t => nm(t.to)).join(', ')}, réception confirmée.` : `Reçu de ${mine.map(t => nm(t.from)).join(', ')}.`);
+  } else {
+    tag = `<span class="tag ${i >= 4 ? 'tag--fixed' : 'tag--prov'}">${i >= 4 ? 'Comptes arrêtés' : 'Provisoire'}</span>`;
+    amountClass = r.gap === 0 ? '' : out ? 'out' : 'in';
+    amount = r.gap === 0 ? '0' : (out ? '− ' : '+ ') + fmt(Math.abs(r.gap));
+    what = r.gap === 0 ? 'Rien à verser ni à recevoir.' : out ? `Je verse à ${mine.map(t => nm(t.to)).join(', ')}.` : `Je reçois de ${mine.map(t => nm(t.from)).join(', ')}.`;
+  }
+  $('situation').innerHTML = `<h2 id="mine-h">${ico('assignment')} Ma situation</h2>
+    ${tag}
+    <p class="mine__amount ${amountClass}">${amount} <small>aUEC${i === 5 && r.gap ? (forced() && pending.length ? ' non confirmés' : out ? ' versés' : ' reçus') : ''}</small></p>
+    <p class="mine__what">${nm(r.id)} · ${what}</p>
+    <dl class="facts">
+      <div><dt>Ma part (${parts(r.centi)})</dt><dd>${fmt(r.share)}</dd></div>
+      <div><dt>+ Mes frais avancés</dt><dd>${fmt(r.advanced)}</dd></div>
+      <div><dt>− Déjà encaissé en vendant</dt><dd>${fmt(r.cashed)}</dd></div>
+      <div class="res"><dt>${i === 5 ? (forced() && pending.length ? 'Non confirmé' : out ? 'Versé' : 'Reçu') : out ? 'À verser' : 'À recevoir'}</dt><dd class="${i === 5 ? '' : out ? 'neg' : 'pos'}">${fmt(Math.abs(r.gap))}</dd></div>
+    </dl>
+    ${i < 4 ? `<div class="actions">${quickButtons(true)}</div>` : ''}`;
+}
+
+const ore = ([n, cscu, q, kept]) => `<span class="ore ${kept ? 'kept' : ''}" style="--c:${ORE[n]}"><b>${n}</b><span class="num">${scu(cscu)} SCU</span><span class="q">qualité ${q}</span>${kept ? '<span class="k">conservé</span>' : ''}</span>`;
+
+function renderRefine() {
+  const i = pi(), list = ordersShown();
+  const B = { wait: ['wait', 'En raffinage'], ready: ['ready', 'Prêt · à remettre'], given: ['given', 'Remis au vendeur'] };
+  const timer = o => i !== 1 ? `Prêt depuis ${o.ends}` : o.id === 1 ? 'Prêt depuis 21 h 05' : o.id === 2 ? `Prêt à ${o.ends} · <span class="timer">00:12:04</span>` : `Prêt à ${o.ends} · <span class="timer">01:12:30</span>`;
+  $('raffinage').innerHTML = `<header><h2 id="refine-h">${ico('flask')} Raffinage</h2><span>${list.length ? `${list.length} ordres · fin du dernier à 22 h 40` : 'aucun ordre'}</span></header>
+    ${list.length ? `<ul class="orders">${list.map(o => {
+      let s = orderState(o);
+      const own = o.by === o.to;
+      const badge = s === 'ready' && own ? ['ready', 'Prêt · à récupérer'] : B[s];
+      return `<li class="order" data-state="${s}">
+        <div class="order__top"><div class="order__who"><h3>Ordre de ${nm(o.by)}</h3><span>${o.at} · ${o.method}</span></div><span class="badge badge--${badge[0]}">${badge[1]}</span></div>
+        <div class="ores">${o.ores.map(ore).join('')}</div>
+        <div class="order__foot"><span>${ico('clock')} ${timer(o)}</span><span>Coût <strong class="num">${fmt(o.cost)}</strong></span><span>${own ? `Vendu par <strong>${nm(o.to)}</strong>, son lanceur` : `À remettre à <strong>${nm(o.to)}</strong>`}</span><span class="grow"></span>${s === 'ready' ? `<button class="btn" type="button">${own ? 'Je l’ai récupéré' : 'Marquer remis'}</button>` : ''}</div>
+      </li>`;
+    }).join('')}</ul>
+    <p class="note">L’or de Kralone, qualité 905, est conservé : il sort du partage et des stocks à vendre.</p>`
+    : `<p class="empty">Aucun ordre pour l’instant. Créez-en un à chaque lancement de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>`}`;
+}
+
+function renderCosts() {
+  const all = [...ordersShown().map(o => ({ type: 'Raffinage', by: o.by, amount: o.cost, note: o.at })), ...COSTS];
+  $('frais').innerHTML = `<header><h2 id="costs-h">${ico('wrench')} Frais avancés</h2><span>remboursés avant le partage</span></header>
+    <div class="rows">${all.map(x => `<div class="row"><span><span class="kind">${x.type}</span><b>${nm(x.by)}</b></span><span class="num">${fmt(x.amount)}</span><span class="sub">${x.note}</span></div>`).join('')}</div>
+    <div class="total-line"><span>Total</span><span class="num">${fmt(all.reduce((s, x) => s + x.amount, 0))} aUEC</span></div>`;
+}
+
+function renderSell() {
+  const i = pi();
+  if (i < 1) {
+    $('vente').innerHTML = `<header><h2 id="sell-h">${ico('cargo')} Vente</h2><span>après le raffinage</span></header>
+      <p class="empty">Les suggestions de vente apparaîtront avec les premiers ordres de raffinage.</p>`;
+    return;
+  }
+  const orders = calcOrders(), sales = calcSales();
+  const sellers = [...new Set(ordersShown().map(o => o.to))];
+  const stocks = Object.fromEntries(sellers.map(s => [s, stockOf(s, orders, sales)]));
+  const total = {}, sold = {};
+  orders.forEach(o => o.lines.forEach(l => { if (l.dest === 'SELL') total[l.ore] = (total[l.ore] || 0) + l.cscu; }));
+  sales.forEach(s => s.lines.forEach(l => { sold[l.ore] = (sold[l.ore] || 0) + l.cscu; }));
+  const ores = Object.keys(total);
+  const left = ores.filter(n => total[n] - (sold[n] || 0) > 0);
+  const settled = i >= 4;
+  /* Répartition du reste par vendeur : en stock (remis) ou en attente de remise. */
+  const where = n => sellers.map(s => {
+    const inStock = Math.max(0, stocks[s][n] || 0);
+    const waiting = ordersShown().filter(o => o.to === s && !handed(o)).reduce((a, o) => a + o.ores.filter(([on, , , k]) => on === n && !k).reduce((b, [, c]) => b + c, 0), 0);
+    return { s, inStock, waiting };
+  }).filter(x => x.inStock || x.waiting);
+  /* Formulaire d'exemple : celui du vendeur qui a encore quelque chose à vendre ou à recevoir. */
+  const formSeller = i === 1 ? 'kra' : 'vex';
+  const fStock = stocks[formSeller] || {};
+  const fWaiting = ordersShown().filter(o => o.to === formSeller && orderState(o) === 'ready');
+  const fLines = Object.entries(fStock).filter(([, q]) => q > 0);
+  $('vente').innerHTML = `<header><h2 id="sell-h">${ico('cargo')} Vente</h2><span>${left.length ? `${left.length} minerai${left.length > 1 ? 's' : ''} à vendre` : 'tout est vendu'}</span></header>
+    <div class="sell-grid">
+      <div class="sell-list">${ores.map(n => {
+        const l = total[n] - (sold[n] || 0), t = total[n], w = where(n), open = st.openSpots.has(n);
+        return `<article class="sell-ore ${open ? 'is-open' : ''}" style="--c:${ORE[n]}">
+          <div class="sell-ore__head"><b>${n}</b><span>${l > 0 ? `reste <span class="num">${scu(l)}</span> SCU sur ${scu(t)}` : `vendu · ${scu(t)} SCU`}</span></div>
+          <div class="bar" aria-hidden="true"><i style="width:${Math.round((1 - l / t) * 100)}%"></i></div>
+          ${l > 0 && w.length ? `<p class="holders">${w.map(x => `<span>Chez <b>${nm(x.s)}</b> : ${x.inStock ? `<span class="num">${scu(x.inStock)}</span> SCU en stock` : ''}${x.inStock && x.waiting ? ' · ' : ''}${x.waiting ? `<span class="num">${scu(x.waiting)}</span> SCU à recevoir` : ''}</span>`).join('')}</p>` : ''}
+          ${l > 0 ? `<div class="table-wrap"><table>
+            <thead><tr><th>Où vendre</th><th class="r">Prix / SCU</th><th class="r">Demande</th><th class="r">Estimation</th></tr></thead>
+            <tbody>${SPOTS[n].map((s, k) => `<tr class="${k >= 2 ? 'extra' : ''}"><td><b>${s[0]}</b>${k === 0 ? '<span class="best">meilleur prix</span>' : ''}<span class="place">${s[1]}</span></td><td class="r num">${fmt(s[2])}</td><td class="r num">${s[3] === null ? '<span class="est">non renseignée</span>' : s[3] + ' SCU'}</td><td class="r num est">${fmt(s[2] * Math.min(l / 100, s[3] ?? Infinity))}</td></tr>`).join('')}</tbody>
+          </table></div>
+          <button class="more-spots" type="button" data-spots="${n}" aria-expanded="${open}">${open ? 'Masquer les autres lieux' : 'Voir 3 autres lieux'}</button>` : ''}
+        </article>`;
+      }).join('')}
+        ${left.length ? `<p class="note">Estimations UEX relevées le 21/10 à 19 h 30. Le prix réel dépend de l’offre, de la demande et de la qualité. Un seul arrêt pour tout vendre : Area18 TDD achète ${left.join(', ').replace(/, ([^,]*)$/, ' et $1')}.</p>` : ''}
+      </div>
+      <div class="sell-list">
+        ${!settled && (fLines.length || fWaiting.length) ? `<form class="sale-form" onsubmit="return false" aria-label="Enregistrer une vente">
+          <h3>Enregistrer une vente · ${nm(formSeller)}</h3>
+          <div class="field"><span>Disponible chez ${nm(formSeller)}</span>
+            ${fLines.length ? `<div class="ores">${fLines.map(([n, q]) => `<span class="ore" style="--c:${ORE[n]}"><b>${n}</b><span class="num">${scu(q)} SCU</span></span>`).join('')}</div>` : '<small>Rien en stock pour l’instant.</small>'}
+            ${fWaiting.map(o => o.by === o.to
+              ? `<span class="waiting">Votre ordre est prêt à ${o.at.split(' ')[0]}. <button class="btn" type="button">Je l’ai récupéré</button></span>`
+              : `<span class="waiting">Ordre de ${nm(o.by)} prêt à ${o.at.split(' ')[0]}, pas encore remis. <button class="btn" type="button">Je l’ai reçu</button></span>`).join('')}
+          </div>
+          ${fLines.length ? `<label class="field" for="f-where">Lieu de vente<span class="input" id="f-where">${formSeller === 'vex' ? 'Lorville CBD · Stanton › Hurston' : 'Area18 TDD · Stanton › ArcCorp'}</span></label>
+          <label class="field" for="f-what">Minerais vendus<span class="input" id="f-what">${fLines.map(([n, q]) => `${n} ${scu(q)} SCU`).join(' · ')}</span><small>Au plus la quantité disponible. Une vente partielle laisse le reste en stock.</small></label>
+          <label class="field" for="f-amount">Montant reçu en jeu (aUEC)<span class="input big" id="f-amount">${formSeller === 'vex' ? '236 000' : '—'}</span><small>${formSeller === 'vex' ? 'Estimation pour ce lieu : 371 000. ' : ''}Seul le montant reçu compte dans le partage.</small></label>
+          <button class="btn primary" type="button">Enregistrer la vente</button>` : ''}
+        </form>` : ''}
+        <div class="sales-done">
+          <h3>Ventes enregistrées</h3>
+          ${salesShown().length ? `<div class="rows">${salesShown().map(s => `<div class="row"><span><b>${nm(s.by)}</b> · ${s.at}</span><b class="num pos">+ ${fmt(s.amount)}</b><span class="sub">${s.time} · ${s.place} · ${s.lines.map(([n, q]) => `${n} ${scu(q)} SCU`).join(', ')}</span></div>`).join('')}</div>` : '<p class="empty">Aucune vente pour l’instant.</p>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function flow(c) {
+  const T = c.transfers;
+  if (!T.length) return '';
+  const F = [...new Set(T.map(t => t.from))], R = [...new Set(T.map(t => t.to))];
+  const rowH = 58, H = Math.max(F.length, R.length) * rowH + 16, max = Math.max(...T.map(t => t.amount));
+  /* La colonne la plus courte est centrée verticalement face à l'autre. */
+  const n = Math.max(F.length, R.length);
+  const yOf = list => id => 8 + (n - list.length) * rowH / 2 + list.indexOf(id) * rowH + rowH / 2;
+  const yF = yOf(F), yR = yOf(R);
+  const paths = T.map(t => {
+    const w = 3 + 16 * t.amount / max, y1 = yF(t.from), y2 = yR(t.to), ok = isReceived(t);
+    return `<path d="M168 ${y1} C 300 ${y1}, 300 ${y2}, 432 ${y2}" fill="none" stroke="${ok ? 'var(--ok)' : 'var(--s-share)'}" stroke-opacity="${ok ? .6 : .45}" stroke-width="${w}"${pi() === 5 && !ok ? ' stroke-dasharray="6 5"' : ''}/>`;
+  }).join('');
+  const lab = (list, y, x, anchor, side) => list.map(id => {
+    const r = c.rows.find(z => z.id === id);
+    return `<text x="${x}" y="${y(id) - 3}" text-anchor="${anchor}">${nm(id)}</text><text class="m" x="${x}" y="${y(id) + 13}" text-anchor="${anchor}">${side ? '− ' + fmt(-r.gap) : '+ ' + fmt(r.gap)}</text>`;
+  }).join('');
+  return `<svg class="flow" viewBox="0 0 600 ${H}" role="img" aria-label="Flux des versements : payeurs à gauche, receveurs à droite">${paths}${lab(F, yF, 158, 'end', true)}${lab(R, yR, 442, 'start', false)}</svg>`;
+}
+
+function renderShare(c) {
+  const i = pi(), settled = i >= 4;
+  if (!c.totalSales) {
+    $('partage').innerHTML = `<header><h2 id="share-h">${ico('coins')} Partage</h2><span>en attente de la première vente</span></header>
+      <div class="totals">
+        <div><span>Ventes</span><strong>0</strong></div>
+        <div><span>Frais avancés</span><strong>${fmt(c.totalCosts)}</strong></div>
+        <div><span>Bénéfice net</span><strong class="empty">à venir</strong></div>
+        <div class="key"><span>Une part</span><strong class="empty">à venir</strong></div>
+      </div>
+      <p class="formula">Le partage se calcule dès la première vente. D’ici là, la fiche tient le compte des frais avancés par chacun.</p>
+      <div class="people">${c.rows.map(r => `<div class="row"><span class="who" style="font-weight:600">${r.name} <small class="empty">${parts(r.centi)}</small></span><span class="num">${r.advanced ? fmt(r.advanced) + ' avancés' : '—'}</span></div>`).join('')}</div>`;
+    return;
+  }
+  const lockNote = i === 4 ? '<b>Comptes arrêtés par Kralone le 22/10 à 23 h 55.</b> Frais, ventes et parts sont figés.'
+    : forced() ? '<b>Clôture forcée par Kralone le 23/10 à 10 h 02.</b> 1 versement n’a pas été confirmé par son receveur. La fiche peut être rouverte.'
+    : '<b>Terminée le 23/10 à 09 h 05.</b> Tous les versements ont été confirmés. La fiche peut être rouverte pour corriger une erreur.';
+  $('partage').innerHTML = `<header><h2 id="share-h">${ico('coins')} Partage</h2><span>${i === 5 ? 'bilan final' : settled ? 'comptes arrêtés' : 'provisoire, recalculé à chaque saisie'}</span></header>
+    ${settled ? `<p class="locked">${lockNote}</p>` : ''}
+    <div class="share-grid">
+      <div style="display:grid;gap:.8rem;min-width:0">
+        <div class="totals">
+          <div><span>Ventes</span><strong>${fmt(c.totalSales)}</strong></div>
+          <div><span>Frais avancés</span><strong>${fmt(c.totalCosts)}</strong></div>
+          <div><span>Bénéfice net</span><strong class="${c.net < 0 ? 'neg' : ''}">${fmt(c.net)}</strong></div>
+          <div class="key"><span>Une part</span><strong class="${c.perPart < 0 ? 'neg' : ''}">${fmt(Math.floor(c.perPart))}</strong></div>
+        </div>
+        <p class="formula">Bénéfice net ÷ ${c.nParts.toLocaleString('fr-FR')} parts, arrondi à l’aUEC par plus grand reste. Chacun reçoit sa part, plus les frais qu’il a avancés.</p>
+        <div class="people">${c.rows.map(r => `
+          <details class="person ${r.id === st.viewer ? 'me' : ''}">
+            <summary><span class="who">${r.name}<small>${parts(r.centi)}${r.note ? ' · ' + r.note : ''}</small></span><span class="num">${fmt(r.balance)}</span><span class="chev" aria-hidden="true">›</span></summary>
+            <dl class="facts">
+              <div><dt>Part du bénéfice net</dt><dd>${fmt(r.share)}</dd></div>
+              <div><dt>+ Frais avancés</dt><dd>${fmt(r.advanced)}</dd></div>
+              <div class="res"><dt>Solde</dt><dd>${fmt(r.balance)}</dd></div>
+              <div><dt>− Déjà encaissé en vendant</dt><dd>${fmt(r.cashed)}</dd></div>
+              <div class="res"><dt>${i === 5 ? (r.gap >= 0 ? 'Reçu' : 'Versé') : r.gap >= 0 ? 'À recevoir' : 'À verser'}</dt><dd class="${i === 5 ? '' : r.gap >= 0 ? 'pos' : 'neg'}">${fmt(Math.abs(r.gap))}</dd></div>
+            </dl>
+          </details>`).join('')}</div>
+      </div>
+      <div style="display:grid;gap:.6rem;min-width:0">
+        <h3>${i === 5 ? 'Versements effectués' : 'Versements'} ${settled ? '' : '<span class="tag tag--prov" style="margin-left:.4rem">provisoires</span>'}</h3>
+        ${c.transfers.length ? `<ul class="transfers">${c.transfers.map(t => {
+          const ok = isReceived(t), can = i === 4 && t.to === st.viewer;
+          let state = '';
+          if (i === 5) state = ok ? `<span class="receipt">Reçu le ${RECEIVED_AT[t.key]}</span>` : '<span class="receipt receipt--missing">Non confirmé</span>';
+          else if (i === 4) state = ok ? `<button class="check" type="button" data-t="${t.key}" aria-pressed="true" ${can ? '' : 'disabled'}>Reçu ✓</button>` : can ? `<button class="check primary" type="button" data-t="${t.key}" aria-pressed="false">J’ai reçu</button>` : '<button class="check" type="button" disabled aria-pressed="false">En attente</button>';
+          return `<li class="transfer ${i === 5 ? 'transfer--done' : ''}"><span><b>${nm(t.from)}</b><span class="arrow" aria-hidden="true">→</span><span class="sr-only"> a versé à </span><b>${nm(t.to)}</b></span><span class="amt">${fmt(t.amount)}</span>${state}</li>`;
+        }).join('')}</ul>${flow(c)}` : '<p class="empty">Aucun versement nécessaire.</p>'}
+        <p class="note">${i === 5 ? 'Historique conservé : montants, confirmations et réouvertures restent consultables.' : settled ? 'Seul le receveur confirme. La fiche se termine au moment où la dernière confirmation est donnée.' : 'Les versements sont figés quand l’organisateur arrête les comptes.'}</p>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const c = compute();
+  renderDemo(); renderProgress(c); renderMine(c); renderRefine(); renderCosts(); renderSell(); renderShare(c);
+  document.querySelectorAll('[data-i]').forEach(e => { e.innerHTML = svg(e.dataset.i); });
+  try { localStorage.setItem('mv3c', JSON.stringify({ phase: st.phase, viewer: st.viewer, close: st.close })); } catch (e) {}
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.phase) { st.phase = b.dataset.phase; render(); }
+  else if (b.dataset.viewer) { st.viewer = b.dataset.viewer; render(); }
+  else if (b.dataset.close) { st.close = b.dataset.close; render(); }
+  else if (b.dataset.spots) { const n = b.dataset.spots; st.openSpots.has(n) ? st.openSpots.delete(n) : st.openSpots.add(n); render(); }
+  else if (b.dataset.t && !b.disabled) { st.received.has(b.dataset.t) ? st.received.delete(b.dataset.t) : st.received.add(b.dataset.t); render(); }
+});
+/* Barre d'actions masquée pendant la saisie : elle ne recouvre jamais un champ ni un bouton de validation. */
+document.addEventListener('focusin', e => { if (e.target.closest('form, .sale-form')) document.body.classList.add('typing'); });
+document.addEventListener('focusout', () => document.body.classList.remove('typing'));
+render();
+</script>

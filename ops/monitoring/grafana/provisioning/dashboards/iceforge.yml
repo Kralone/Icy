@@ -1,0 +1,21 @@
+apiVersion: 1
+
+# Deux dossiers : l'activité du site (Métier) et l'état des serveurs (Technique).
+providers:
+  - name: IceForge métier
+    folder: Métier
+    folderUid: iceforge-metier
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/iceforge/metier
+
+  - name: IceForge technique
+    folder: Technique
+    folderUid: iceforge-technique
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/iceforge/technique
