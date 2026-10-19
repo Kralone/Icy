@@ -22,6 +22,8 @@ import java.util.Set;
 public class CatalogMapper {
     public static final String WIKI_SOURCE = "STAR_CITIZEN_WIKI";
     static final int BATCH_SIZE = 250;
+    /** UEX datasets read by uexPlaceFamilies(); a locations sync refreshes them first. */
+    static final List<String> UEX_PLACE_DATASETS = List.of("space_stations", "cities", "outposts");
     private static final String FALLBACK_IMAGE = "/assets/images/catalog/catalog-fallback.svg";
     private static final String UPSERT_ENTRY_SQL = """
             INSERT INTO catalog.entries (
