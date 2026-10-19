@@ -38,4 +38,15 @@ class CatalogBrowseServiceTest {
                 .contains("ORDER BY LOWER(e.name) ASC, e.id ASC")
                 .doesNotContain("ORDER BYLOWER");
     }
+
+    @Test
+    void resolvesOfferPlacesFromTheUexTerminalOfEachOffer() {
+        assertThat(CatalogBrowseService.OFFERS_SQL)
+                .contains("cache.dataset_key = 'terminals'")
+                .contains("LEFT JOIN terminals t ON o.source = 'UEX'")
+                .contains("t.terminal->>'id' = o.source_payload->>'id_terminal'")
+                .contains("AS planet_name")
+                .contains("AS place_name")
+                .contains("o.active = TRUE AND o.entry_id IN (:entryIds)");
+    }
 }

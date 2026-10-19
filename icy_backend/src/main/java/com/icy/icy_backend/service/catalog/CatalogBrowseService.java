@@ -166,17 +166,36 @@ public class CatalogBrowseService {
                 """.formatted(orderBy);
     }
 
+    // Le nom de terminal UEX ne suffit pas : la planète et le lieu viennent du dataset terminals.
+    static final String OFFERS_SQL = """
+            WITH terminals AS MATERIALIZED (
+                SELECT terminal
+                FROM utils.uex_dataset_cache cache,
+                     LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
+                         THEN cache.payload ELSE '[]'::jsonb END) terminal
+                WHERE cache.dataset_key = 'terminals'
+            )
+            SELECT o.id, o.entry_id, o.offer_type, o.location_name, o.price, o.currency,
+                   COALESCE(o.source_updated_at, o.last_seen_at) AS updated_at,
+                   NULLIF(BTRIM(t.terminal->>'star_system_name'), '') AS system_name,
+                   NULLIF(BTRIM(t.terminal->>'planet_name'), '') AS planet_name,
+                   COALESCE(NULLIF(BTRIM(t.terminal->>'space_station_name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'city_name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'outpost_name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'poi_name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'moon_name'), '')) AS place_name
+            FROM catalog.offers o
+            LEFT JOIN terminals t ON o.source = 'UEX'
+                AND t.terminal->>'id' = o.source_payload->>'id_terminal'
+            WHERE o.active = TRUE AND o.entry_id IN (:entryIds)
+            ORDER BY o.entry_id, o.offer_type, o.price, o.location_name
+            """;
+
     private Map<Long, List<CatalogOfferViewDTO>> loadOffers(List<EntryRow> rows) {
         if (rows.isEmpty()) return Map.of();
         List<Long> entryIds = rows.stream().map(EntryRow::id).toList();
         Map<Long, List<CatalogOfferViewDTO>> offers = new LinkedHashMap<>();
-        List<OfferRow> offerRows = jdbcTemplate.query("""
-                        SELECT id, entry_id, offer_type, location_name, price, currency,
-                               COALESCE(source_updated_at, last_seen_at) AS updated_at
-                        FROM catalog.offers
-                        WHERE active = TRUE AND entry_id IN (:entryIds)
-                        ORDER BY entry_id, offer_type, price, location_name
-                        """,
+        List<OfferRow> offerRows = jdbcTemplate.query(OFFERS_SQL,
                 new MapSqlParameterSource("entryIds", entryIds),
                 (resultSet, rowNumber) -> new OfferRow(
                         resultSet.getLong("entry_id"),
@@ -184,6 +203,9 @@ public class CatalogBrowseService {
                                 resultSet.getLong("id"),
                                 resultSet.getString("offer_type"),
                                 resultSet.getString("location_name"),
+                                resultSet.getString("system_name"),
+                                resultSet.getString("planet_name"),
+                                resultSet.getString("place_name"),
                                 resultSet.getBigDecimal("price"),
                                 resultSet.getString("currency"),
                                 resultSet.getObject("updated_at", OffsetDateTime.class)
