@@ -2,11 +2,14 @@ package com.icy.icy_backend.service.goal;
 
 import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalMemberDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationDTO;
 import com.icy.icy_backend.controller.dto.response.goal.GoalParticipationSummaryDTO;
 import com.icy.icy_backend.db.entity.goal.Goal;
+import com.icy.icy_backend.db.entity.goal.GoalMember;
 import com.icy.icy_backend.db.entity.goal.GoalParticipation;
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.repository.goal.GoalMemberRepository;
 import com.icy.icy_backend.db.repository.goal.GoalParticipationRepository;
 import com.icy.icy_backend.db.repository.goal.GoalRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
@@ -22,10 +25,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +39,7 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
     private final GoalParticipationRepository goalParticipationRepository;
+    private final GoalMemberRepository goalMemberRepository;
     private final UserRepository userRepository;
     private final NotificationPushService notificationPushService;
     private final GoalWebSocketService goalWebSocketService;
@@ -41,7 +47,8 @@ public class GoalService {
     public List<GoalDTO> getAllTopLevelGoals() {
         List<Goal> rootGoals = goalRepository.findByParentIsNullOrderByPinnedDescCreatedAtAsc();
         rootGoals.forEach(this::loadSubGoalsRecursively);
-        return rootGoals.stream().map(this::convertToDTO).toList();
+        Map<Long, List<GoalMemberDTO>> members = loadMembers(rootGoals);
+        return rootGoals.stream().map(goal -> convertToDTO(goal, members)).toList();
     }
 
     private void loadSubGoalsRecursively(Goal goal) {
@@ -196,7 +203,60 @@ public class GoalService {
         return false;
     }
 
-    private GoalDTO convertToDTO(Goal goal) {
+    private Map<Long, List<GoalMemberDTO>> loadMembers(List<Goal> goals) {
+        List<Long> goalIds = new ArrayList<>();
+        goals.forEach(goal -> collectGoalIds(goal, goalIds));
+        if (goalIds.isEmpty()) {
+            return Map.of();
+        }
+        return goalMemberRepository.findByGoal_IdInOrderByJoinedAtAsc(goalIds).stream()
+                .collect(Collectors.groupingBy(
+                        member -> member.getGoal().getId(),
+                        Collectors.mapping(this::convertMemberToDTO, Collectors.toList())
+                ));
+    }
+
+    private GoalMemberDTO convertMemberToDTO(GoalMember member) {
+        User user = member.getUser();
+        return GoalMemberDTO.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .avatarUrl(user.getAvatarUrl())
+                .joinedAt(member.getJoinedAt())
+                .build();
+    }
+
+    /** Le joueur connecté indique qu'il participe à l'objectif. Sans effet s'il est déjà inscrit. */
+    public void joinGoal(Long goalId) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Objectif introuvable"));
+        UUID userId = AuthUtils.getCurrentUserId();
+        if (goalMemberRepository.findByGoal_IdAndUser_Id(goalId, userId).isPresent()) {
+            return;
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+        goalMemberRepository.save(GoalMember.builder()
+                .goal(goal)
+                .user(user)
+                .joinedAt(LocalDateTime.now())
+                .build());
+        goalWebSocketService.sendGoalUpdate(goalId, "MEMBERS");
+    }
+
+    /** Le joueur connecté retire sa participation. Sans effet s'il n'était pas inscrit. */
+    public void leaveGoal(Long goalId) {
+        if (!goalRepository.existsById(goalId)) {
+            throw new ResourceNotFoundException("Objectif introuvable");
+        }
+        UUID userId = AuthUtils.getCurrentUserId();
+        goalMemberRepository.findByGoal_IdAndUser_Id(goalId, userId).ifPresent(member -> {
+            goalMemberRepository.delete(member);
+            goalWebSocketService.sendGoalUpdate(goalId, "MEMBERS");
+        });
+    }
+
+    private GoalDTO convertToDTO(Goal goal, Map<Long, List<GoalMemberDTO>> members) {
         return GoalDTO.builder()
                 .id(goal.getId())
                 .name(goal.getName())
@@ -210,7 +270,8 @@ public class GoalService {
                 .userId(goal.getUser() != null ? goal.getUser().getId() : null)
                 .username(goal.getUser() != null ? goal.getUser().getUsername() : null)
                 .avatarUrl(goal.getUser() != null ? goal.getUser().getAvatarUrl() : null)
-                .subGoals(goal.getSubGoals().stream().map(this::convertToDTO).toList())
+                .members(members.getOrDefault(goal.getId(), Collections.emptyList()))
+                .subGoals(goal.getSubGoals().stream().map(child -> convertToDTO(child, members)).toList())
                 .build();
     }
 
@@ -229,7 +290,7 @@ public class GoalService {
         Goal pinned = goalRepository.findFirstByPinnedTrue()
                 .orElseThrow(() -> new ResourceNotFoundException("Aucun objectif épinglé trouvé"));
         loadSubGoalsRecursively(pinned);
-        return convertToDTO(pinned);
+        return convertToDTO(pinned, loadMembers(List.of(pinned)));
     }
 
     public void pinGoal(Long id) {

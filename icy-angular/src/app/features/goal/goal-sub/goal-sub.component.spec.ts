@@ -67,11 +67,11 @@ describe('GoalSubComponent', () => {
     http.expectOne('/api/goals/1/participations?limit=6').flush({}, {status: 503, statusText: 'Unavailable'});
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Réessayer');
-    expect(fixture.nativeElement.textContent).not.toContain('Aucune participation.');
+    expect(fixture.nativeElement.textContent).not.toContain('Aucune contribution.');
     component.loadParticipations();
     http.expectOne('/api/goals/1/participations?limit=6').flush([]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Aucune participation.');
+    expect(fixture.nativeElement.textContent).toContain('Aucune contribution.');
   });
 
   it('removes collapsed children from keyboard navigation', () => {
@@ -82,5 +82,36 @@ describe('GoalSubComponent', () => {
     component.toggleChildrenVisibility();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-goal-sub')).toBeNull();
+  });
+
+  it('lists members and lets the current player join then leave', () => {
+    (component as any).currentUserId = 'u-1';
+    component.goal.members = [{userId: 'u-2', username: 'Bob', avatarUrl: null, joinedAt: new Date(0).toISOString()}];
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Bob');
+    expect(component.isMember).toBe(false);
+
+    const http = TestBed.inject(HttpTestingController);
+    component.toggleMembership();
+    const join = http.expectOne('/api/goals/1/members/me');
+    expect(join.request.method).toBe('PUT');
+    join.flush(null);
+    expect(component.isMember).toBe(true);
+
+    component.toggleMembership();
+    const leave = http.expectOne('/api/goals/1/members/me');
+    expect(leave.request.method).toBe('DELETE');
+    leave.flush(null);
+    expect(component.isMember).toBe(false);
+    expect(component.members.map(m => m.username)).toEqual(['Bob']);
+  });
+
+  it('keeps membership unchanged and shows an error when joining fails', () => {
+    (component as any).currentUserId = 'u-1';
+    component.toggleMembership();
+    TestBed.inject(HttpTestingController).expectOne('/api/goals/1/members/me').flush({}, {status: 503, statusText: 'Unavailable'});
+    fixture.detectChanges();
+    expect(component.isMember).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Impossible d’enregistrer votre participation.');
   });
 });

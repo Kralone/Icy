@@ -15,12 +15,26 @@
       <div class="progress-segments" [style.width]="progressWidth">@for (p of combinedSegments; track p; let i = $index) { <span [style.width.%]="getCombinedPercent(p)" [style.background]="getSegmentColor(i)"></span> }</div>
     } @else { <div class="progress-fill" [style.width]="progressWidth" [class.no-animation]="disableAnimation"></div> }
   </div>
+  <section class="members" [attr.aria-label]="'Participants de ' + goal.name">
+    <span class="members-label">Participants</span>
+    @if (members.length) {
+      <ul>
+        @for (m of members; track m.userId) {
+          <li [class.self]="m.userId === currentUserId">@if (m.avatarUrl) { <img [src]="m.avatarUrl" alt="" /> } @else { <span class="avatar">{{ getInitial(m.username) }}</span> }<span>{{ m.username || 'Inconnu' }}</span></li>
+        }
+      </ul>
+    } @else { <span class="members-empty">Aucun inscrit</span> }
+    @if (currentUserId) {
+      <button class="member-toggle" [class.joined]="isMember" (click)="toggleMembership()" [disabled]="membershipLoading" [attr.aria-pressed]="isMember">{{ isMember ? 'Me retirer' : 'Je participe' }}</button>
+    }
+  </section>
+  @if (membershipError) { <p class="error" role="alert">{{ membershipError }}</p> }
   <div class="card-actions">
     @if (!(goal.parentId === null && goal.target === 1)) {
       <div class="contribution-actions"><button (click)="increment(goal.id, -1)" [disabled]="goal.current <= 0 || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Retirer une unité à ' + goal.name">−1</button><div class="batch-contribution"><input type="number" min="1" step="1" [(ngModel)]="batchAmount" [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Quantité à ajouter à ' + goal.name" /><button class="primary" (click)="addBatch()" [disabled]="goal.current >= goal.target || loading || (!isAdmin && parentCompleted)" [attr.aria-label]="'Ajouter la quantité saisie à ' + goal.name">+</button></div></div>
     }
     @if (goal.subGoals.length) { <button class="children-toggle" (click)="toggleChildrenVisibility()" [attr.aria-expanded]="showChildren">{{ showChildren ? 'Masquer les étapes' : 'Voir les étapes' }} <span aria-hidden="true">{{ showChildren ? '−' : '+' }}</span></button> }
-    @if (isLeaf(goal)) { <button (click)="toggleParticipations()" [attr.aria-expanded]="showParticipations">Participations</button> }
+    @if (isLeaf(goal)) { <button (click)="toggleParticipations()" [attr.aria-expanded]="showParticipations">Historique</button> }
     @if (depth === 0 && !isLeaf(goal)) { <button (click)="toggleCombinedStack()" [attr.aria-expanded]="showCombinedStack">Contributions</button> }
     @if (isAdmin) {
       <button class="icon-action" (click)="togglePinned()" [disabled]="goal.pinned || loading" [attr.aria-label]="'Épingler ' + goal.name" title="Épingler">⌖</button>
@@ -38,10 +52,10 @@
     </section>
   }
   @if (isLeaf(goal) && showParticipations) {
-    <section class="participations" aria-label="Participations récentes">
-      @if (participationsLoading) { <app-async-state kind="loading" title="Chargement des participations…" /> }
+    <section class="participations" aria-label="Contributions récentes">
+      @if (participationsLoading) { <app-async-state kind="loading" title="Chargement des contributions…" /> }
       @if (participationsError) { <p class="error" role="alert">{{ participationsError }} <button (click)="loadParticipations()">Réessayer</button></p> }
-      @if (!participationsLoading && !participationsError && !participations.length) { <p>Aucune participation.</p> }
+      @if (!participationsLoading && !participationsError && !participations.length) { <p>Aucune contribution.</p> }
       @for (p of participations; track p) {
         <div class="participation-row"><div class="contributor">@if (p.avatarUrl) { <img [src]="p.avatarUrl" alt="" /> } @else { <span class="avatar">{{ getInitial(p.username) }}</span> }<span>{{ p.username || 'Inconnu' }}<time>{{ p.createdAt | date:'dd/MM/yyyy · HH:mm' }}</time></span></div><strong class="delta" [class.negative]="p.delta < 0">{{ formatDelta(p.delta) }}</strong></div>
       }

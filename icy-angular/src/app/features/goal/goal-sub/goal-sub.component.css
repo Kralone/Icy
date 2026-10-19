@@ -56,3 +56,18 @@ button { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.15);
   .batch-contribution input { width: 100%; min-width: 0; }
 }
 @media(prefers-reduced-motion:reduce) { .expand-toggle svg { transition: none; } }
+
+/* Joueurs inscrits sur l'objectif. */
+.members { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-top: 16px; font-size: 12px; color: #bac8d5; }
+.members-label { font-weight: 700; color: #ecfeff; }
+.members ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.members li { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); overflow-wrap: anywhere; }
+.members li.self { border-color: rgba(103,232,249,.6); color: #ecfeff; }
+.members li img, .members li .avatar { width: 22px; height: 22px; font-size: 11px; }
+.members li img { border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.members-empty { color: #8ca8bd; }
+.member-toggle { margin-left: auto; color: #052c35; background: #67e8f9; border-color: #67e8f9; font-weight: 700; }
+.member-toggle:hover { color: #052c35; background: #a5f3fc; }
+.member-toggle.joined { color: #bcd1e1; background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.15); }
+.member-toggle.joined:hover { color: #fff; background: #25445b; }
+@media(max-width:600px) { .member-toggle { margin-left: 0; width: 100%; } }

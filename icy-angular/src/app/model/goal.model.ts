@@ -1,3 +1,10 @@
+export interface GoalMember {
+  userId: string;
+  username: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+}
+
 export interface Goal {
   id: number;
   name: string;
@@ -11,6 +18,8 @@ export interface Goal {
   userId?: string | null;
   username?: string | null;
   avatarUrl?: string | null;
+  /** Joueurs inscrits sur l'objectif. Absent sur une API antérieure à la fonctionnalité. */
+  members?: GoalMember[];
   subGoals: Goal[];
 
   /** UI only */

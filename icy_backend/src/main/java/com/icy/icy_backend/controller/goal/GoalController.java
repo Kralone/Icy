@@ -71,6 +71,18 @@ public class GoalController {
         goalService.incrementGoal(id, delta);
     }
 
+    @PutMapping("/{id}/members/me")
+    public ResponseEntity<Void> joinGoal(@PathVariable Long id) {
+        goalService.joinGoal(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/members/me")
+    public ResponseEntity<Void> leaveGoal(@PathVariable Long id) {
+        goalService.leaveGoal(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/participations")
     public ResponseEntity<List<GoalParticipationDTO>> getParticipations(
             @PathVariable Long id,
