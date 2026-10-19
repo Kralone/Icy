@@ -71,9 +71,11 @@ updates:
     commit-message:
       prefix: "chore(docker)"
     ignore:
-      # Java 26 n'est pas LTS ; l'enforcer du backend exige [25,26).
+      # Java 26 à 28 ne sont pas LTS ; l'enforcer du backend exige [25,26).
       - dependency-name: eclipse-temurin
-        versions: [">= 26, < 27"]
+        versions: [">= 26, < 29"]
+      # Dependabot remplace le suffixe eclipse-temurin-25 de l'image de build par une version non LTS.
+      - dependency-name: maven
     groups:
       compatible-updates:
         patterns: ["*"]
