@@ -150,6 +150,24 @@ class CatalogMapperTest {
     }
 
     @Test
+    void usesExactUexPlaceNamesWhenTheWikiHasNoMarker() throws Exception {
+        var uexPlaces = java.util.Map.of("port tressler", "STATION", "new babbage", "CITY");
+        assertThat(mapper.family("locations", json("""
+                {"name":"  Port   Tressler ","type":{"name":"Manmade","classification":"Manmade"},
+                 "radar_contact_type":{"name":"CommArray"}}
+                """), uexPlaces)).isEqualTo("STATION");
+        assertThat(mapper.family("locations", json("""
+                {"name":"New Babbage","type":{"name":"Manmade"}}
+                """), uexPlaces)).isEqualTo("CITY");
+        assertThat(mapper.family("locations", json("""
+                {"name":"Port Tressler Hangar","type":{"name":"Manmade"}}
+                """), uexPlaces)).isEqualTo("LOCATION");
+        assertThat(mapper.family("locations", json("""
+                {"name":"Port Tressler","type":{"name":"JumpPoint"}}
+                """), uexPlaces)).isEqualTo("JUMP_POINT");
+    }
+
+    @Test
     void keepsGenericPlacesAndChildrenDistinctWithoutInferringFromNamesOrParents() throws Exception {
         assertThat(mapper.family("locations", json("""
                 {"name":"Everus Harbor Clinic","type":{"name":"Outpost","classification":"Outpost"},

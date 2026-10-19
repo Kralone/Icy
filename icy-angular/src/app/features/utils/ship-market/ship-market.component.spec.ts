@@ -205,6 +205,20 @@ describe('ShipMarketComponent', () => {
     expect(component.selectedLocationShips[0].location).toBe('Astro Armada');
   });
 
+  it('names the moon of a place under its planet and finds it by search', () => {
+    reload([
+      {vehicleName: ship.name, terminalName: 'Shubin Rentals', terminalId: '50', planetName: 'Crusader', moonName: 'Daymar', locationName: 'Shubin Mining SCD-1', systemName: 'Stanton', buyPrice: 100},
+      {vehicleName: prospector.name, terminalName: 'Seraphim', terminalId: '51', planetName: 'Crusader', moonName: null, locationName: 'Seraphim Station', systemName: 'Stanton', buyPrice: 200}
+    ]);
+    expect(component.majorLocationCards.map(card => card.majorLabel)).toEqual(['Crusader']);
+    const cards = component.subLocationCards;
+    expect(cards.find(card => card.titleLine === 'Shubin Mining SCD-1')!.bodyLine2).toBe('Daymar');
+    expect(cards.find(card => card.titleLine === 'Seraphim Station')!.bodyLine2).toBe('');
+    component.searchTerm = 'daymar';
+    component.onSearchTermChange();
+    expect(component.subLocationCards.map(card => card.titleLine)).toEqual(['Shubin Mining SCD-1']);
+  });
+
   it('keeps unassigned locations outside planets without inferring one from a terminal name', () => {
     reload([
       {vehicleName: ship.name, terminalName: "Teach's Levski", terminalId: '20', planetName: null, locationName: 'Levski', systemName: 'Nyx', buyPrice: 100},

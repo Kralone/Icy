@@ -58,6 +58,10 @@ describe('CatalogBrowserComponent offer places', () => {
     expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Hurston', placeName: 'Lorville'}))).toBe('Hurston → Lorville');
     expect(component.offerPlace(offer({systemName: 'Stanton', planetName: null, placeName: 'ARC-L1 Wide Forest Station'})))
       .toBe('Stanton → ARC-L1 Wide Forest Station');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Crusader', moonName: 'Daymar', placeName: 'Shubin Mining SCD-1'})))
+      .toBe('Crusader → Daymar → Shubin Mining SCD-1');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Crusader', moonName: 'Daymar', placeName: 'Daymar'})))
+      .toBe('Crusader → Daymar');
     expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Hurston', placeName: null}))).toBeNull();
     expect(component.offerPlace(offer({}))).toBeNull();
   });

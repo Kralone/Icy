@@ -29,8 +29,10 @@ public class CatalogVehicleMarketService {
                    COALESCE(NULLIF(BTRIM(t.terminal->>'space_station_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'city_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'outpost_name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'poi_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'moon_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'displayname'), '')) AS location_name,
+                   NULLIF(BTRIM(t.terminal->>'moon_name'), '') AS moon_name,
                    NULLIF(BTRIM(t.terminal->>'star_system_name'), '') AS system_name,
                    o.price::integer AS price
             FROM catalog.offers o
@@ -72,6 +74,7 @@ public class CatalogVehicleMarketService {
                     offer.setPlanetName(resultSet.getString("planet_name"));
                     offer.setLocationName(resultSet.getString("location_name"));
                     offer.setSystemName(resultSet.getString("system_name"));
+                    offer.setMoonName(resultSet.getString("moon_name"));
                     return offer;
                 }
         );
@@ -93,6 +96,7 @@ public class CatalogVehicleMarketService {
                     offer.setPlanetName(resultSet.getString("planet_name"));
                     offer.setLocationName(resultSet.getString("location_name"));
                     offer.setSystemName(resultSet.getString("system_name"));
+                    offer.setMoonName(resultSet.getString("moon_name"));
                     return offer;
                 }
         );

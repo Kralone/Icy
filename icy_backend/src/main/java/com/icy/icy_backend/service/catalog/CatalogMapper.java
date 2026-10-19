@@ -11,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 
@@ -93,6 +96,7 @@ public class CatalogMapper {
             if (distribution.isEmpty()) throw new IllegalStateException("Aucune distribution de minerai exploitable : publication annulée");
         }
 
+        Map<String, String> uexPlaceFamilies = "locations".equals(datasetKey) ? uexPlaceFamilies() : Map.of();
         List<MapSqlParameterSource> batch = new ArrayList<>(BATCH_SIZE);
         int mappedCount = 0;
         for (JsonNode record : records) {
@@ -111,7 +115,7 @@ public class CatalogMapper {
                             .map(this::firstImage).filter(java.util.Objects::nonNull).findFirst().orElse(null);
                 }
             }
-            String family = family(datasetKey, record);
+            String family = family(datasetKey, record, uexPlaceFamilies);
             batch.add(new MapSqlParameterSource()
                     .addValue("source", WIKI_SOURCE)
                     .addValue("datasetKey", datasetKey)
@@ -166,10 +170,14 @@ public class CatalogMapper {
     }
 
     String family(String datasetKey, JsonNode record) {
+        return family(datasetKey, record, Map.of());
+    }
+
+    String family(String datasetKey, JsonNode record, Map<String, String> uexPlaceFamilies) {
         return switch (datasetKey) {
             case "vehicles" -> vehicleFamily(record);
             case "items" -> itemFamily(record);
-            case "locations" -> locationFamily(record);
+            case "locations" -> locationFamily(record, uexPlaceFamilies);
             case "commodities" -> "COMMODITY";
             default -> throw new IllegalArgumentException("Dataset Wiki non mappable: " + datasetKey);
         };
@@ -214,9 +222,9 @@ public class CatalogMapper {
         return "ITEM";
     }
 
-    private String locationFamily(JsonNode node) {
+    private String locationFamily(JsonNode node, Map<String, String> uexPlaceFamilies) {
         // The source uses generic classifications (Manmade, Settlement) even for stations/cities.
-        // Prefer the explicit type, then the radar marker; never infer a family from the place name.
+        // Prefer the explicit type, then the radar marker; never guess a family from words in the place name.
         for (String value : new String[] {
                 text(node.path("type"), "name"),
                 text(node.path("radar_contact_type"), "name"),
@@ -226,7 +234,37 @@ public class CatalogMapper {
             String family = locationTypeFamily(value);
             if (family != null) return family;
         }
-        return "LOCATION";
+        // Without a marker, an exact name in the UEX station, city or outpost lists settles the family.
+        String uexFamily = uexPlaceFamilies.get(placeKey(text(node, "name")));
+        return uexFamily != null ? uexFamily : "LOCATION";
+    }
+
+    /** UEX place names by family; a name listed under two families is left out as ambiguous. */
+    Map<String, String> uexPlaceFamilies() {
+        Map<String, String> families = new HashMap<>();
+        Set<String> ambiguous = new HashSet<>();
+        jdbcTemplate.query("""
+                SELECT CASE cache.dataset_key
+                           WHEN 'space_stations' THEN 'STATION'
+                           WHEN 'cities' THEN 'CITY'
+                           ELSE 'OUTPOST' END AS family,
+                       place->>'name' AS name
+                FROM utils.uex_dataset_cache cache,
+                     LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
+                         THEN cache.payload ELSE '[]'::jsonb END) place
+                WHERE cache.dataset_key IN ('space_stations', 'cities', 'outposts')
+                """, resultSet -> {
+            String key = placeKey(resultSet.getString("name"));
+            if (key.isEmpty()) return;
+            String previous = families.putIfAbsent(key, resultSet.getString("family"));
+            if (previous != null && !previous.equals(resultSet.getString("family"))) ambiguous.add(key);
+        });
+        ambiguous.forEach(families::remove);
+        return families;
+    }
+
+    private String placeKey(String name) {
+        return lower(name).trim().replaceAll("\\s+", " ");
     }
 
     private String locationTypeFamily(String value) {

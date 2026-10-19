@@ -14,6 +14,7 @@ export interface CatalogOffer {
   location: string;
   systemName: string | null;
   planetName: string | null;
+  moonName: string | null;
   placeName: string | null;
   price: number;
   currency: string;

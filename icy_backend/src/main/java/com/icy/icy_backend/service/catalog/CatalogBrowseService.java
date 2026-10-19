@@ -183,7 +183,8 @@ public class CatalogBrowseService {
                             NULLIF(BTRIM(t.terminal->>'city_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'outpost_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'poi_name'), ''),
-                            NULLIF(BTRIM(t.terminal->>'moon_name'), '')) AS place_name
+                            NULLIF(BTRIM(t.terminal->>'moon_name'), '')) AS place_name,
+                   NULLIF(BTRIM(t.terminal->>'moon_name'), '') AS moon_name
             FROM catalog.offers o
             LEFT JOIN terminals t ON o.source = 'UEX'
                 AND t.terminal->>'id' = o.source_payload->>'id_terminal'
@@ -205,6 +206,7 @@ public class CatalogBrowseService {
                                 resultSet.getString("location_name"),
                                 resultSet.getString("system_name"),
                                 resultSet.getString("planet_name"),
+                                resultSet.getString("moon_name"),
                                 resultSet.getString("place_name"),
                                 resultSet.getBigDecimal("price"),
                                 resultSet.getString("currency"),

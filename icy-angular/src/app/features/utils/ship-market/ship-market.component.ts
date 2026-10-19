@@ -15,6 +15,7 @@ type MarketLocation = {
   terminalId?: string | null;
   terminalName: string;
   planetName?: string | null;
+  moonName?: string | null;
   locationName?: string | null;
   systemName?: string | null;
 };
@@ -26,6 +27,7 @@ type ShipByLocationCard = {
   offerType: 'ACHAT' | 'LOCATION';
   terminalId?: string | null;
   planetName?: string | null;
+  moonName?: string | null;
   locationName?: string | null;
   systemName?: string | null;
 };
@@ -543,6 +545,7 @@ export class ShipMarketComponent implements OnDestroy {
         terminalName, terminalId: offer.terminalId ?? null,
         locationName: offer.locationName?.trim() || null,
         planetName: offer.planetName?.trim() || null,
+        moonName: offer.moonName?.trim() || null,
         systemName: offer.systemName?.trim() || null
       };
       // Physical places share a card; terminals without a known place stay distinct.
@@ -551,7 +554,7 @@ export class ShipMarketComponent implements OnDestroy {
       this.locationMetadata[key] = metadata;
       (grouped[key] ??= []).push({ship, location: terminalName, price, offerType,
         terminalId: metadata.terminalId, locationName: metadata.locationName,
-        planetName: metadata.planetName, systemName: metadata.systemName});
+        planetName: metadata.planetName, moonName: metadata.moonName, systemName: metadata.systemName});
     };
     for (const purchase of purchases) addOffer(purchase, Number(purchase.buyPrice), 'ACHAT');
     for (const rental of rentals) addOffer(rental, Number(rental.rentPrice), 'LOCATION');
@@ -625,7 +628,8 @@ export class ShipMarketComponent implements OnDestroy {
     return {
       location, titleLine: placeName || metadata?.terminalName || 'Lieu non renseigné',
       bodyLine1: placeName ? terminalNames.join(' · ') : 'Lieu non renseigné',
-      bodyLine2: '', imageUrl, count: this.getFilteredShipsForLocation(location).length,
+      bodyLine2: metadata?.moonName && this.normalizeText(metadata.moonName) !== this.normalizeText(placeName) ? metadata.moonName : '',
+      imageUrl, count: this.getFilteredShipsForLocation(location).length,
       planetName, systemName, majorKey, majorLabel, majorImageUrl
     };
   }
@@ -686,7 +690,7 @@ export class ShipMarketComponent implements OnDestroy {
       if (this.selectedGameplays.length && !this.gameplayFilters.some(filter =>
         this.selectedGameplays.includes(filter.id) && filter.pattern.test(this.normalizeText(row.ship.focus ?? '')))) return false;
       const text = this.normalizeText(
-        `${row.ship.name} ${row.ship.brand?.name ?? ''} ${row.ship.focus ?? ''} ${row.ship.crew ?? ''} ${row.location} ${row.locationName ?? ''} ${row.planetName ?? ''} ${row.systemName ?? ''}`
+        `${row.ship.name} ${row.ship.brand?.name ?? ''} ${row.ship.focus ?? ''} ${row.ship.crew ?? ''} ${row.location} ${row.locationName ?? ''} ${row.moonName ?? ''} ${row.planetName ?? ''} ${row.systemName ?? ''}`
       );
       return text.includes(query);
     });

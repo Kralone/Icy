@@ -9,6 +9,7 @@ public record CatalogOfferViewDTO(
         String location,
         String systemName,
         String planetName,
+        String moonName,
         String placeName,
         BigDecimal price,
         String currency,

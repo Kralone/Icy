@@ -218,7 +218,7 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   }
 
   offerPlace(offer: CatalogOffer): string | null {
-    const parts = [offer.planetName ?? offer.systemName, offer.placeName]
+    const parts = [offer.planetName ?? offer.systemName, offer.moonName, offer.placeName]
       .map((part) => part?.trim())
       .filter((part): part is string => !!part);
     return offer.placeName?.trim() ? [...new Set(parts)].join(' → ') : null;
