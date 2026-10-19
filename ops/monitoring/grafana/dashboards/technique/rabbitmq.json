@@ -497,7 +497,7 @@
       }
     },
     {
-      "type": "bargauge",
+      "type": "table",
       "title": "Messages prêts par file",
       "datasource": {
         "type": "prometheus",
@@ -516,54 +516,120 @@
           "range": false
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "mode": "seriesToRows",
+            "reducers": [
+              "lastNotNull"
+            ],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Field": "File",
+              "Last *": "Messages prêts"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
               {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 50,
-                "color": "orange"
-              },
-              {
-                "value": 500,
-                "color": "red"
+                "field": "Messages prêts",
+                "desc": true
               }
             ]
           }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Messages prêts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 50,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 500,
+                      "color": "red"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "File"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 264
+              }
+            ]
+          }
+        ]
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         }
       },
       "id": 9,
@@ -575,7 +641,7 @@
       }
     },
     {
-      "type": "bargauge",
+      "type": "table",
       "title": "Consommateurs par file",
       "datasource": {
         "type": "prometheus",
@@ -595,50 +661,116 @@
           "range": false
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "mode": "seriesToRows",
+            "reducers": [
+              "lastNotNull"
+            ],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Field": "File",
+              "Last *": "Consommateurs"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
               {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 1,
-                "color": "green"
+                "field": "Consommateurs",
+                "desc": false
               }
             ]
           }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Consommateurs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 1,
+                      "color": "green"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "File"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 264
+              }
+            ]
+          }
+        ]
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         }
       },
       "id": 10,

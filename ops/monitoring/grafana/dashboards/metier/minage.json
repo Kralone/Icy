@@ -1,7 +1,7 @@
 {
   "uid": "iceforge-minage",
   "title": "Minage",
-  "description": "Fiches de minage : ventes, frais avancés, partage, virements entre participants et raffinage.",
+  "description": "Fiches de minage : activité, ventes, frais et raffinage. Le partage et les virements sont dans « Minage : partage ».",
   "tags": [
     "iceforge",
     "metier"
@@ -58,7 +58,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Période",
+      "title": "Sur la période",
       "collapsed": false,
       "panels": [],
       "id": 1,
@@ -133,7 +133,7 @@
     },
     {
       "type": "stat",
-      "title": "Ventes",
+      "title": "Ventes (aUEC)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -153,7 +153,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
+          "unit": "locale",
           "noValue": "Pas de donnée",
           "color": {
             "mode": "thresholds"
@@ -195,7 +195,7 @@
     },
     {
       "type": "stat",
-      "title": "Frais avancés",
+      "title": "Frais avancés (aUEC)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -216,7 +216,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
+          "unit": "locale",
           "noValue": "Pas de donnée",
           "color": {
             "mode": "thresholds"
@@ -258,7 +258,7 @@
     },
     {
       "type": "stat",
-      "title": "Bénéfice net",
+      "title": "Bénéfice net (aUEC)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -279,7 +279,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
+          "unit": "locale",
           "noValue": "Pas de donnée",
           "color": {
             "mode": "thresholds"
@@ -388,7 +388,7 @@
     },
     {
       "type": "row",
-      "title": "À traiter",
+      "title": "À traiter maintenant",
       "collapsed": false,
       "panels": [],
       "id": 7,
@@ -457,7 +457,7 @@
       "gridPos": {
         "x": 0,
         "y": 6,
-        "w": 4,
+        "w": 6,
         "h": 4
       }
     },
@@ -522,9 +522,76 @@
       },
       "id": 9,
       "gridPos": {
-        "x": 4,
+        "x": 6,
         "y": 6,
-        "w": 5,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Raffinage prêt, non remis",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Ordres terminés dont le minerai n'a pas été remis au destinataire.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT count(*) FROM mining.refinery_orders WHERE finishes_at <= localtimestamp AND handed_over_at IS NULL",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "orange"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
         "h": 4
       }
     },
@@ -586,144 +653,11 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 10,
-      "gridPos": {
-        "x": 9,
-        "y": 6,
-        "w": 5,
-        "h": 4
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Montant à verser",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT coalesce(sum(t.amount), 0) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id\n        WHERE s.cancelled_at IS NULL AND t.received_at IS NULL",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: aUEC",
-          "noValue": "Pas de donnée",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "orange"
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "textMode": "value",
-        "wideLayout": true
-      },
       "id": 11,
       "gridPos": {
-        "x": 14,
+        "x": 18,
         "y": 6,
-        "w": 5,
-        "h": 4
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Raffinage prêt, non remis",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Ordres de raffinage terminés dont le minerai n'a pas été remis au destinataire.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT count(*) FROM mining.refinery_orders WHERE finishes_at <= localtimestamp AND handed_over_at IS NULL",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "orange"
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "id": 12,
-      "gridPos": {
-        "x": 19,
-        "y": 6,
-        "w": 5,
+        "w": 6,
         "h": 4
       }
     },
@@ -750,7 +684,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "noValue": "Pas de donnée",
+          "noValue": "—",
           "custom": {
             "align": "auto",
             "filterable": false
@@ -781,7 +715,11 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "suffix: aUEC"
+                "value": "locale"
+              },
+              {
+                "id": "displayName",
+                "value": "Ventes (aUEC)"
               },
               {
                 "id": "decimals",
@@ -797,7 +735,11 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "suffix: aUEC"
+                "value": "locale"
+              },
+              {
+                "id": "displayName",
+                "value": "Frais avancés (aUEC)"
               },
               {
                 "id": "decimals",
@@ -813,7 +755,11 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "suffix: aUEC"
+                "value": "locale"
+              },
+              {
+                "id": "displayName",
+                "value": "Net (aUEC)"
               },
               {
                 "id": "decimals",
@@ -864,336 +810,10 @@
           "show": false
         }
       },
-      "id": 13,
+      "id": 12,
       "gridPos": {
         "x": 0,
         "y": 10,
-        "w": 24,
-        "h": 9
-      }
-    },
-    {
-      "type": "row",
-      "title": "Partage entre participants",
-      "collapsed": false,
-      "panels": [],
-      "id": 14,
-      "gridPos": {
-        "x": 0,
-        "y": 19,
-        "w": 24,
-        "h": 1
-      }
-    },
-    {
-      "type": "table",
-      "title": "Frais avancés et remboursement",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Photographie de l'arrêt des comptes. Dû au participant = part du bénéfice + remboursement de ses frais avancés. Il a déjà encaissé ses propres ventes : la différence est réglée par virements.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT sh.session_date AS \"Date\", sh.name AS \"Fiche\", u.username AS \"Participant\",\n               ss.shares_centi / 100.0 AS \"Parts\", ss.share AS \"Part du bénéfice\", ss.advanced AS \"Frais avancés\",\n               ss.balance AS \"Dû au participant\", ss.cashed AS \"Ventes encaissées\",\n               ss.balance - ss.cashed AS \"Reste à recevoir (+) ou à verser (−)\"\n        FROM session.settlement_shares ss\n        JOIN session.settlements s ON s.id = ss.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id\n        JOIN core.users u ON u.id = ss.user_id\n        WHERE s.cancelled_at IS NULL AND $__timeFilter(sh.session_date)\n        ORDER BY sh.session_date DESC, sh.name, ss.position LIMIT 200",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "noValue": "Pas de donnée",
-          "custom": {
-            "align": "auto",
-            "filterable": false
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Date"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 110
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Parts"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 2
-              },
-              {
-                "id": "custom.width",
-                "value": 70
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Part du bénéfice"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Frais avancés"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Dû au participant"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Ventes encaissées"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Reste à recevoir (+) ou à verser (−)"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "value": null,
-                      "color": "orange"
-                    },
-                    {
-                      "value": 0,
-                      "color": "green"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false
-        }
-      },
-      "id": 15,
-      "gridPos": {
-        "x": 0,
-        "y": 20,
-        "w": 24,
-        "h": 10
-      }
-    },
-    {
-      "type": "table",
-      "title": "Virements entre participants",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT sh.session_date AS \"Date\", sh.name AS \"Fiche\", f.username AS \"Verse\", t2.username AS \"Reçoit\",\n               t.amount AS \"Montant\",\n               CASE WHEN t.received_at IS NULL THEN 'En attente' ELSE 'Reçu' END AS \"État\",\n               t.received_at AS \"Confirmé le\"\n        FROM session.settlement_transfers t\n        JOIN session.settlements s ON s.id = t.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id\n        JOIN core.users f ON f.id = t.from_user_id JOIN core.users t2 ON t2.id = t.to_user_id\n        WHERE s.cancelled_at IS NULL AND $__timeFilter(sh.session_date)\n        ORDER BY (t.received_at IS NULL) DESC, sh.session_date DESC, t.position LIMIT 200",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "noValue": "Pas de donnée",
-          "custom": {
-            "align": "auto",
-            "filterable": false
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Date"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 110
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Montant"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "suffix: aUEC"
-              },
-              {
-                "id": "decimals",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "État"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 110
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "value": null,
-                      "color": "text"
-                    }
-                  ]
-                }
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "En attente": {
-                        "color": "orange"
-                      },
-                      "Reçu": {
-                        "color": "green"
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Confirmé le"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dateTimeAsLocal"
-              },
-              {
-                "id": "custom.width",
-                "value": 170
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false
-        }
-      },
-      "id": 16,
-      "gridPos": {
-        "x": 0,
-        "y": 30,
         "w": 24,
         "h": 10
       }
@@ -1203,17 +823,17 @@
       "title": "Activité",
       "collapsed": false,
       "panels": [],
-      "id": 17,
+      "id": 13,
       "gridPos": {
         "x": 0,
-        "y": 40,
+        "y": 20,
         "w": 24,
         "h": 1
       }
     },
     {
       "type": "timeseries",
-      "title": "Ventes et frais par semaine",
+      "title": "Ventes et frais par semaine (aUEC)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
@@ -1244,7 +864,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
+          "unit": "locale",
           "noValue": "Pas de donnée",
           "custom": {
             "drawStyle": "bars",
@@ -1280,16 +900,476 @@
           "sort": "desc"
         }
       },
-      "id": 18,
+      "id": 14,
       "gridPos": {
         "x": 0,
-        "y": 41,
+        "y": 21,
         "w": 12,
         "h": 8
       }
     },
     {
-      "type": "bargauge",
+      "type": "table",
+      "title": "Mineurs les plus présents",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT u.username AS metric, count(*) AS value\n        FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id JOIN core.users u ON u.id = pa.user_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Membre",
+              "value": "Fiches"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Fiches"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Membre"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 264
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 15,
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "table",
+      "title": "Minerais vendus",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT sl.commodity_name AS metric, sum(sl.quantity_cscu) / 100.0 AS value\n        FROM mining.sale_lines sl JOIN session.sales sa ON sa.id = sl.sale_id JOIN session.sheets sh ON sh.id = sa.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Minerai",
+              "value": "Vendu (SCU)"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vendu (SCU)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Minerai"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 8,
+        "h": 10
+      }
+    },
+    {
+      "type": "table",
+      "title": "Minerai raffiné",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT l.commodity_name AS metric, sum(l.quantity_cscu) / 100.0 AS value\n        FROM mining.refinery_order_lines l JOIN mining.refinery_orders ro ON ro.id = l.order_id\n        JOIN session.sheets sh ON sh.id = ro.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Minerai",
+              "value": "Raffiné (SCU)"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Raffiné (SCU)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Minerai"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 17,
+      "gridPos": {
+        "x": 8,
+        "y": 29,
+        "w": 8,
+        "h": 10
+      }
+    },
+    {
+      "type": "table",
+      "title": "Ventes par terminal",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT sa.terminal_label AS metric, sum(sa.amount) AS value\n        FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Terminal",
+              "value": "Ventes (aUEC)"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Pas de donnée",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ventes (aUEC)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Terminal"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 18,
+      "gridPos": {
+        "x": 16,
+        "y": 29,
+        "w": 8,
+        "h": 10
+      }
+    },
+    {
+      "type": "table",
       "title": "Frais par nature",
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -1308,198 +1388,103 @@
           "editorMode": "code"
         }
       ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Nature",
+              "value": "Montant (aUEC)"
+            }
+          }
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
           "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Montant (aUEC)"
+            },
+            "properties": [
               {
-                "value": null,
-                "color": "blue"
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nature"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         }
       },
       "id": 19,
       "gridPos": {
-        "x": 12,
-        "y": 41,
-        "w": 12,
+        "x": 0,
+        "y": 39,
+        "w": 8,
         "h": 8
       }
     },
     {
-      "type": "bargauge",
-      "title": "Minerais vendus",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT sl.commodity_name AS metric, sum(sl.quantity_cscu) / 100.0 AS value\n        FROM mining.sale_lines sl JOIN session.sales sa ON sa.id = sl.sale_id JOIN session.sheets sh ON sh.id = sa.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: SCU",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 20,
-      "gridPos": {
-        "x": 0,
-        "y": 49,
-        "w": 8,
-        "h": 10
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Ventes par terminal",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT sa.terminal_label AS metric, sum(sa.amount) AS value\n        FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: aUEC",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 21,
-      "gridPos": {
-        "x": 8,
-        "y": 49,
-        "w": 8,
-        "h": 10
-      }
-    },
-    {
-      "type": "bargauge",
+      "type": "table",
       "title": "Méthodes de raffinage",
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -1518,334 +1503,99 @@
           "editorMode": "code"
         }
       ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "metric": "Méthode",
+              "value": "Ordres"
+            }
+          }
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
           "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ordres"
+            },
+            "properties": [
               {
-                "value": null,
-                "color": "blue"
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "fieldMinMax",
+                "value": true
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Méthode"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         }
       },
-      "id": 22,
+      "id": 20,
       "gridPos": {
-        "x": 16,
-        "y": 49,
+        "x": 8,
+        "y": 39,
         "w": 8,
-        "h": 10
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Mineurs les plus présents",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Nombre de fiches auxquelles chaque membre a participé.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT u.username AS metric, count(*) AS value\n        FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id JOIN core.users u ON u.id = pa.user_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 23,
-      "gridPos": {
-        "x": 0,
-        "y": 59,
-        "w": 12,
         "h": 8
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Bénéfice reçu par membre",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Part du bénéfice des règlements en cours, hors remboursement des frais avancés.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT u.username AS metric, sum(ss.share) AS value\n        FROM session.settlement_shares ss JOIN session.settlements s ON s.id = ss.settlement_id\n        JOIN session.sheets sh ON sh.id = s.sheet_id JOIN core.users u ON u.id = ss.user_id\n        WHERE s.cancelled_at IS NULL AND $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: aUEC",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 24,
-      "gridPos": {
-        "x": 12,
-        "y": 59,
-        "w": 12,
-        "h": 8
-      }
-    },
-    {
-      "type": "row",
-      "title": "Déroulement des fiches",
-      "collapsed": false,
-      "panels": [],
-      "id": 25,
-      "gridPos": {
-        "x": 0,
-        "y": 67,
-        "w": 24,
-        "h": 1
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Fiches liées à une opération",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT round(count(*) FILTER (WHERE operation_event_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)\n        FROM session.sheets WHERE $__timeFilter(session_date)",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "noValue": "Pas de donnée",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "id": 26,
-      "gridPos": {
-        "x": 0,
-        "y": 68,
-        "w": 6,
-        "h": 4
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Délai moyen jusqu'à la clôture",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "De la création de la fiche à sa clôture : ventes, partage et confirmation de tous les virements.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT avg(extract(epoch FROM h.at - sh.created_at)) FROM session.sheets sh\n        JOIN session.history h ON h.sheet_id = sh.id AND h.action IN ('CLOSED', 'FORCED_CLOSE')\n        WHERE $__timeFilter(sh.session_date)",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "noValue": "Pas de donnée",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "id": 27,
-      "gridPos": {
-        "x": 6,
-        "y": 68,
-        "w": 6,
-        "h": 4
       }
     },
     {
@@ -1902,22 +1652,21 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 28,
+      "id": 21,
       "gridPos": {
-        "x": 12,
-        "y": 68,
-        "w": 6,
-        "h": 4
+        "x": 16,
+        "y": 39,
+        "w": 4,
+        "h": 8
       }
     },
     {
       "type": "stat",
-      "title": "Coût du raffinage",
+      "title": "Fiches liées à une opération",
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "postgres"
       },
-      "description": "Coût des ordres de raffinage : compris dans les frais avancés, remboursé au membre qui a lancé l'ordre.",
       "targets": [
         {
           "datasource": {
@@ -1925,7 +1674,7 @@
             "uid": "postgres"
           },
           "refId": "A",
-          "rawSql": "SELECT sum(ro.cost) FROM mining.refinery_orders ro JOIN session.sheets sh ON sh.id = ro.sheet_id\n        WHERE $__timeFilter(sh.session_date)",
+          "rawSql": "SELECT round(count(*) FILTER (WHERE operation_event_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)\n        FROM session.sheets WHERE $__timeFilter(session_date)",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -1933,7 +1682,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: aUEC",
+          "unit": "percentunit",
           "noValue": "Pas de donnée",
           "color": {
             "mode": "thresholds"
@@ -1965,152 +1714,11 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 29,
+      "id": 22,
       "gridPos": {
-        "x": 18,
-        "y": 68,
-        "w": 6,
-        "h": 4
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Étapes et corrections",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Réouvertures et clôtures forcées signalent des comptes corrigés après coup ou des virements jamais confirmés.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT CASE h.action WHEN 'SETTLED' THEN 'Comptes arrêtés' WHEN 'CLOSED' THEN 'Clôtures'\n                             WHEN 'FORCED_CLOSE' THEN 'Clôtures forcées' WHEN 'REOPENED_SETTLEMENT' THEN 'Réouvertures du règlement'\n                             WHEN 'REOPENED_ACTIVE' THEN 'Retours en cours' WHEN 'RECEIPT_CONFIRMED' THEN 'Virements confirmés'\n                             WHEN 'RECEIPT_WITHDRAWN' THEN 'Confirmations retirées' ELSE h.action END AS metric, count(*) AS value\n        FROM session.history h JOIN session.sheets sh ON sh.id = h.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 30,
-      "gridPos": {
-        "x": 0,
-        "y": 72,
-        "w": 12,
-        "h": 8
-      }
-    },
-    {
-      "type": "bargauge",
-      "title": "Minerai raffiné",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT l.commodity_name AS metric, sum(l.quantity_cscu) / 100.0 AS value\n        FROM mining.refinery_order_lines l JOIN mining.refinery_orders ro ON ro.id = l.order_id\n        JOIN session.sheets sh ON sh.id = ro.sheet_id\n        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: SCU",
-          "noValue": "Pas de donnée",
-          "min": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "namePlacement": "top",
-        "sizing": "manual",
-        "minVizHeight": 14,
-        "maxVizHeight": 22,
-        "minVizWidth": 8,
-        "text": {
-          "titleSize": 13,
-          "valueSize": 16
-        },
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": true
-        }
-      },
-      "id": 31,
-      "gridPos": {
-        "x": 12,
-        "y": 72,
-        "w": 12,
+        "x": 20,
+        "y": 39,
+        "w": 4,
         "h": 8
       }
     }

@@ -2,7 +2,7 @@
 
 Grafana affiche deux familles de tableaux de bord :
 
-- **Métier** : ce qui se passe sur IceForge (utilisation du site, membres, événements, minage, contenu). Source : PostgreSQL en lecture seule, et les appels d'API comptés par Prometheus.
+- **Métier** : ce qui se passe sur IceForge (utilisation du site, membres et leur activité, recrutement, flottes, événements, opérations, minage, contenu). Source : PostgreSQL en lecture seule, et les appels d'API comptés par Prometheus.
 - **Technique** : l'état des serveurs (API, JVM, RabbitMQ, hôte, conteneurs). Source : Prometheus.
 
 La stack tourne dans un projet Compose séparé de l'application : un déploiement applicatif ne la redémarre pas.
@@ -36,10 +36,18 @@ flowchart LR
 | Tableau | Contenu |
 |---|---|
 | Utilisation du site (accueil) | appels par outil public (ressources de minage, achat de vaisseaux, Wikelo, guides, hangar exécutif…) et par fonctionnalité membre, modifications, connexions réussies et refusées, candidatures, actions venues de Discord, routes en erreur |
-| Communauté | comptes actifs, membres vus sur 7 et 30 jours, inscriptions, membres connectés par jour et par semaine, heures de connexion, rôles, candidatures et délai de traitement, flottes déclarées, vaisseaux exécutifs, préférences de notification |
-| Événements et opérations | prochains événements avec présents, peut-être, absents et affectés ; réponses par mois ; membres les plus présents ; opérations (groupes, places, vaisseaux demandés et acceptés) ; demandes d'affectation ; publication Discord ; objectifs ; événements Star Citizen |
-| Minage | fiches, ventes, frais avancés (raffinage compris), bénéfice net ; virements en attente ; raffinage prêt non remis ; détail par fiche ; frais avancés et remboursement par participant ; virements entre participants ; minerais, terminaux, méthodes ; réouvertures et clôtures forcées |
-| Contenu et données | actualités, veille CIG (collecte, traduction, envoi Discord), synchronisations du catalogue, conflits à arbitrer, fraîcheur des données UEX, emplacements de minerai, Wikelo, images |
+| Membres | membres en ligne, vus sur 7 et 30 jours, connexions par jour et par heure, inscriptions, rôles, préférences de notification |
+| Activité des membres | filtre par membre : jours de connexion sur la période, connexions par jour, bilan (présences, affectations, fiches de minage, frais, ventes), journal daté de ce que le membre a fait, membres sans connexion. Réservé aux administrateurs Grafana |
+| Recrutement | candidatures en attente et attente la plus longue, candidatures reçues, taux d'acceptation, gameplay recherché |
+| Flottes et collections | vaisseaux déclarés, membres avec une flotte, achats en jeu et prêts, vaisseaux exécutifs, collections, vaisseaux et rôles les plus présents, plus grandes flottes |
+| Événements | événements à venir et passés, réponses, présents par événement, membres les plus présents, types, publication Discord, événements Star Citizen |
+| Opérations et objectifs | opérations publiées et brouillons, demandes de place et vaisseaux proposés, modèles d'équipage, objectifs et contributions |
+| Minage | fiches, ventes, frais avancés (raffinage compris), bénéfice net ; raffinage prêt non remis ; minerais, terminaux, méthodes |
+| Minage : partage et virements | virements en attente et montant restant, délai jusqu'à la clôture, frais avancés et remboursement par participant, bénéfice reçu par membre, réouvertures et clôtures forcées |
+| Actualités et veille | actualités et guides publiés, veille CIG (collecte, traduction), envois Discord |
+| Catalogue et données de jeu | synchronisations du catalogue, conflits à arbitrer, fraîcheur des données UEX, emplacements de minerai, Wikelo, images, IceLink |
+
+Les tableaux s'affichent en listes « nom | valeur » avec une barre dans la cellule, lisibles même avec beaucoup de lignes. Un tableau retiré du générateur n'est pas effacé de Grafana au redémarrage : le supprimer avec `DELETE /api/dashboards/uid/<uid>`.
 
 ### Technique
 
