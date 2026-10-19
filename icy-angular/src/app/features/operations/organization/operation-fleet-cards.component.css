@@ -6,7 +6,8 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .fleet__empty--error { border-color: #774457; color: #ffd0d4; }
 /* Cartes larges sans s'étirer à l'excès : jusqu'à 24rem, alignées à gauche. */
 .fleet__cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .8rem; }
-.card { display: grid; grid-template-rows: auto 1fr auto; width: 100%; max-width: 24rem; min-width: 0; overflow: hidden; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
+/* Colonne bornée à la largeur de la carte : une image ou un libellé ne peut plus élargir la carte au-delà de son cadre. */
+.card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto; width: 100%; max-width: 24rem; min-width: 0; overflow: hidden; border: 1px solid rgba(103,232,249,.22); border-radius: .7rem; background: #0b1525; }
 /* Un besoin est une intention, pas un appareil : contour en pointillés, image atténuée, mention « Recherché ». */
 .card--need { border: 1px dashed #f4cd7d; background: #0e1726; }
 .card--need.is-covered { border: 1px solid #80e5b8; background: linear-gradient(180deg, #10261f, #0e1726 9rem); }
@@ -19,8 +20,9 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .card--ship[data-status="ACCEPTED"] { border-top-color: #80e5b8; }
 .card.is-off { border-top-color: #64748b; }
 .card.is-off .card__image img { filter: grayscale(1); opacity: .55; }
-.card__image { display: grid; place-items: center; aspect-ratio: 16 / 9; background: #111827; color: #94a3b8; font-size: .8rem; }
-.card__image img { width: 100%; height: 100%; object-fit: cover; }
+.card > * { min-width: 0; }
+.card__image { display: grid; place-items: center; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; background: #111827; color: #94a3b8; font-size: .8rem; }
+.card__image img { display: block; width: 100%; min-width: 0; height: 100%; object-fit: cover; }
 .card__body { display: grid; align-content: start; gap: .3rem; min-width: 0; padding: .7rem .8rem; color: #e2e8f0; }
 .card__body strong { color: #f8fafc; font-size: 1rem; overflow-wrap: anywhere; }
 .card__meta { color: #cbd5e1; font-size: .85rem; overflow-wrap: anywhere; }
@@ -28,8 +30,8 @@ h4 { margin: 0; color: #f8fafc; font-size: 1rem; }
 .card__notes { margin: 0; color: #cbd5e1; font-size: .85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .card__pilot { display: grid; gap: .2rem; margin-top: .2rem; color: #94a3b8; font-size: .8rem; }
 .card__pilot select { width: 100%; padding: .35rem .5rem; border: 1px solid #36546a; border-radius: .4rem; color: #e2e8f0; background: #122235; font-size: .9rem; }
-.card__actions { display: flex; flex-wrap: wrap; gap: .4rem; padding: 0 .8rem .8rem; }
-.card__actions button { flex: 1 1 auto; }
+.card__actions { display: flex; flex-wrap: wrap; gap: .4rem; min-width: 0; padding: 0 .8rem .8rem; }
+.card__actions button { flex: 1 1 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .tag { padding: .1rem .55rem; border: 1px solid #64748b; border-radius: 999px; color: #cbd5e1; font-size: .8rem; }
 .tag--ok { border-color: #80e5b8; color: #80e5b8; }
 /* Besoin couvert : pastille pleine, lisible d'un coup d'œil. */

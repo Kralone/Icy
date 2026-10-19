@@ -1,9 +1,13 @@
 package com.icy.icy_backend.service.goal;
 
 import com.icy.icy_backend.controller.dto.goal.CreateGoalDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalDTO;
+import com.icy.icy_backend.controller.dto.response.goal.GoalMemberDTO;
 import com.icy.icy_backend.db.entity.goal.Goal;
+import com.icy.icy_backend.db.entity.goal.GoalMember;
 import com.icy.icy_backend.db.entity.goal.GoalParticipation;
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.repository.goal.GoalMemberRepository;
 import com.icy.icy_backend.db.repository.goal.GoalParticipationRepository;
 import com.icy.icy_backend.db.repository.goal.GoalRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
@@ -15,11 +19,14 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,11 +36,12 @@ class GoalServiceTest {
     void createGoalSavesAndBroadcasts() {
         GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
+        GoalMemberRepository memberRepository = Mockito.mock(GoalMemberRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
         GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
+        GoalService service = new GoalService(goalRepository, participationRepository, memberRepository, userRepository, notificationPushService, goalWebSocketService);
 
         CreateGoalDTO dto = new CreateGoalDTO();
         dto.setName("Goal");
@@ -49,11 +57,12 @@ class GoalServiceTest {
     void updateGoalRejectsSelfParent() {
         GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
+        GoalMemberRepository memberRepository = Mockito.mock(GoalMemberRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
         GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
+        GoalService service = new GoalService(goalRepository, participationRepository, memberRepository, userRepository, notificationPushService, goalWebSocketService);
 
         Goal goal = new Goal();
         goal.setId(1L);
@@ -71,11 +80,12 @@ class GoalServiceTest {
     void incrementGoalStoresParticipationAndNotifiesCompletion() {
         GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
         GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
+        GoalMemberRepository memberRepository = Mockito.mock(GoalMemberRepository.class);
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
         GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
 
-        GoalService service = new GoalService(goalRepository, participationRepository, userRepository, notificationPushService, goalWebSocketService);
+        GoalService service = new GoalService(goalRepository, participationRepository, memberRepository, userRepository, notificationPushService, goalWebSocketService);
 
         Goal goal = new Goal();
         goal.setId(1L);
@@ -100,5 +110,73 @@ class GoalServiceTest {
         verify(participationRepository).save(any(GoalParticipation.class));
         verify(goalWebSocketService).sendGoalUpdate(any(), any());
         verify(notificationPushService).sendBroadcast(any(), any(), any(), any());
+    }
+
+    @Test
+    void joinGoalAddsMemberOnceAndListsIt() {
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
+        GoalMemberRepository memberRepository = Mockito.mock(GoalMemberRepository.class);
+        UserRepository userRepository = Mockito.mock(UserRepository.class);
+        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
+
+        GoalService service = new GoalService(goalRepository, participationRepository, memberRepository, userRepository, notificationPushService, goalWebSocketService);
+
+        Goal goal = new Goal();
+        goal.setId(1L);
+        goal.setTarget(5);
+        when(goalRepository.findById(1L)).thenReturn(Optional.of(goal));
+
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        user.setUsername("alice");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(memberRepository.findByGoal_IdAndUser_Id(1L, userId)).thenReturn(Optional.empty());
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(userId);
+            service.joinGoal(1L);
+
+            GoalMember existing = GoalMember.builder().goal(goal).user(user).joinedAt(LocalDateTime.now()).build();
+            when(memberRepository.findByGoal_IdAndUser_Id(1L, userId)).thenReturn(Optional.of(existing));
+            service.joinGoal(1L);
+        }
+
+        verify(memberRepository, times(1)).save(any(GoalMember.class));
+        verify(goalWebSocketService, times(1)).sendGoalUpdate(1L, "MEMBERS");
+
+        GoalMember member = GoalMember.builder().goal(goal).user(user).joinedAt(LocalDateTime.now()).build();
+        when(goalRepository.findByParentIsNullOrderByPinnedDescCreatedAtAsc()).thenReturn(List.of(goal));
+        when(memberRepository.findByGoal_IdInOrderByJoinedAtAsc(List.of(1L))).thenReturn(List.of(member));
+
+        List<GoalDTO> goals = service.getAllTopLevelGoals();
+        assertThat(goals.get(0).getMembers()).extracting(GoalMemberDTO::getUsername).containsExactly("alice");
+    }
+
+    @Test
+    void leaveGoalRemovesOnlyCurrentUser() {
+        GoalRepository goalRepository = Mockito.mock(GoalRepository.class);
+        GoalParticipationRepository participationRepository = Mockito.mock(GoalParticipationRepository.class);
+        GoalMemberRepository memberRepository = Mockito.mock(GoalMemberRepository.class);
+        UserRepository userRepository = Mockito.mock(UserRepository.class);
+        NotificationPushService notificationPushService = Mockito.mock(NotificationPushService.class);
+        GoalWebSocketService goalWebSocketService = Mockito.mock(GoalWebSocketService.class);
+
+        GoalService service = new GoalService(goalRepository, participationRepository, memberRepository, userRepository, notificationPushService, goalWebSocketService);
+
+        UUID userId = UUID.randomUUID();
+        GoalMember member = GoalMember.builder().build();
+        when(goalRepository.existsById(1L)).thenReturn(true);
+        when(memberRepository.findByGoal_IdAndUser_Id(1L, userId)).thenReturn(Optional.of(member));
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(userId);
+            service.leaveGoal(1L);
+        }
+
+        verify(memberRepository).delete(member);
+        verify(goalWebSocketService).sendGoalUpdate(1L, "MEMBERS");
     }
 }
