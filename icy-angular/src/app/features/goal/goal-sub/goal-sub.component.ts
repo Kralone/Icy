@@ -65,6 +65,21 @@ export class GoalSubComponent implements OnChanges, DoCheck {
     return this.goal?.members ?? [];
   }
 
+  /** Avatars affichés avant la bulle « … ». */
+  static readonly MAX_VISIBLE_MEMBERS = 5;
+
+  get visibleMembers(): GoalMember[] {
+    return this.members.slice(0, GoalSubComponent.MAX_VISIBLE_MEMBERS);
+  }
+
+  get hiddenMembersCount(): number {
+    return Math.max(0, this.members.length - GoalSubComponent.MAX_VISIBLE_MEMBERS);
+  }
+
+  get membersLabel(): string {
+    return 'Participants : ' + this.members.map(m => m.username || 'Inconnu').join(', ');
+  }
+
   get isMember(): boolean {
     return !!this.currentUserId && this.members.some(m => m.userId === this.currentUserId);
   }

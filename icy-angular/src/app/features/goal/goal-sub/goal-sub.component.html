@@ -15,15 +15,16 @@
       <div class="progress-segments" [style.width]="progressWidth">@for (p of combinedSegments; track p; let i = $index) { <span [style.width.%]="getCombinedPercent(p)" [style.background]="getSegmentColor(i)"></span> }</div>
     } @else { <div class="progress-fill" [style.width]="progressWidth" [class.no-animation]="disableAnimation"></div> }
   </div>
-  <section class="members" [attr.aria-label]="'Participants de ' + goal.name">
-    <span class="members-label">Participants</span>
+  <section class="members">
     @if (members.length) {
-      <ul>
-        @for (m of members; track m.userId) {
-          <li [class.self]="m.userId === currentUserId">@if (m.avatarUrl) { <img [src]="m.avatarUrl" alt="" /> } @else { <span class="avatar">{{ getInitial(m.username) }}</span> }<span>{{ m.username || 'Inconnu' }}</span></li>
+      <div class="member-stack" tabindex="0" [attr.aria-label]="membersLabel">
+        @for (m of visibleMembers; track m.userId) {
+          <span class="member-avatar" [class.self]="m.userId === currentUserId" aria-hidden="true">@if (m.avatarUrl) { <img [src]="m.avatarUrl" alt="" /> } @else { {{ getInitial(m.username) }} }</span>
         }
-      </ul>
-    } @else { <span class="members-empty">Aucun inscrit</span> }
+        @if (hiddenMembersCount > 0) { <span class="member-avatar more" aria-hidden="true">…</span> }
+        <span class="member-tooltip" role="tooltip" aria-hidden="true"><strong>Participants :</strong>@for (m of members; track m.userId) { <span>{{ m.username || 'Inconnu' }}</span> }</span>
+      </div>
+    } @else { <span class="members-empty">Aucun participant</span> }
     @if (currentUserId) {
       <button class="member-toggle" [class.joined]="isMember" (click)="toggleMembership()" [disabled]="membershipLoading" [attr.aria-pressed]="isMember">{{ isMember ? 'Me retirer' : 'Je participe' }}</button>
     }

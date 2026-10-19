@@ -114,4 +114,21 @@ describe('GoalSubComponent', () => {
     expect(component.isMember).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('Impossible d’enregistrer votre participation.');
   });
+
+  it('shows at most five avatars, then an ellipsis, and lists every name in the tooltip', () => {
+    component.goal.members = Array.from({length: 7}, (_, i) => ({userId: `u-${i}`, username: `Joueur ${i}`, avatarUrl: null, joinedAt: new Date(0).toISOString()}));
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.member-avatar:not(.more)').length).toBe(5);
+    expect(el.querySelector('.member-avatar.more')?.textContent?.trim()).toBe('…');
+    const lines = Array.from(el.querySelectorAll('.member-tooltip span')).map(s => s.textContent?.trim());
+    expect(el.querySelector('.member-tooltip strong')?.textContent).toBe('Participants :');
+    expect(lines).toEqual(['Joueur 0', 'Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4', 'Joueur 5', 'Joueur 6']);
+  });
+
+  it('shows no ellipsis with five participants or fewer', () => {
+    component.goal.members = Array.from({length: 5}, (_, i) => ({userId: `u-${i}`, username: `Joueur ${i}`, avatarUrl: null, joinedAt: new Date(0).toISOString()}));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.member-avatar.more')).toBeNull();
+  });
 });
