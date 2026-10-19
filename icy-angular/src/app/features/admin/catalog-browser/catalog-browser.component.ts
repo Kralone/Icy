@@ -217,6 +217,13 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     return offers.length ? offers.reduce((best, offer) => offer.price < best.price ? offer : best) : null;
   }
 
+  offerPlace(offer: CatalogOffer): string | null {
+    const parts = [offer.planetName ?? offer.systemName, offer.placeName]
+      .map((part) => part?.trim())
+      .filter((part): part is string => !!part);
+    return offer.placeName?.trim() ? [...new Set(parts)].join(' → ') : null;
+  }
+
   offerLabel(type: string): string {
     return ({ BUY: 'Achat', SELL: 'Vente', RENT: 'Location', WIKELO: 'Wikelo' } as Record<string, string>)[type] ?? type;
   }

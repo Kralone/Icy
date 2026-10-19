@@ -7,6 +7,9 @@ public record CatalogOfferViewDTO(
         Long id,
         String type,
         String location,
+        String systemName,
+        String planetName,
+        String placeName,
         BigDecimal price,
         String currency,
         OffsetDateTime updatedAt
