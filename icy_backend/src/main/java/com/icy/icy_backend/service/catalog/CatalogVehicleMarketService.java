@@ -21,6 +21,14 @@ public class CatalogVehicleMarketService {
                      LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
                          THEN cache.payload ELSE '[]'::jsonb END) terminal
                 WHERE cache.dataset_key = 'terminals'
+            ),
+            -- UEX terminals only carry id_poi; the POI name comes from the poi dataset.
+            pois AS MATERIALIZED (
+                SELECT poi
+                FROM utils.uex_dataset_cache cache,
+                     LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
+                         THEN cache.payload ELSE '[]'::jsonb END) poi
+                WHERE cache.dataset_key = 'poi'
             )
             SELECT e.name AS vehicle_name,
                    o.location_name AS terminal_name,
@@ -29,7 +37,7 @@ public class CatalogVehicleMarketService {
                    COALESCE(NULLIF(BTRIM(t.terminal->>'space_station_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'city_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'outpost_name'), ''),
-                            NULLIF(BTRIM(t.terminal->>'poi_name'), ''),
+                            NULLIF(BTRIM(p.poi->>'name'), ''),
                             NULLIF(BTRIM(t.terminal->>'moon_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'displayname'), '')) AS location_name,
                    NULLIF(BTRIM(t.terminal->>'moon_name'), '') AS moon_name,
@@ -38,6 +46,7 @@ public class CatalogVehicleMarketService {
             FROM catalog.offers o
             JOIN catalog.entries e ON e.id = o.entry_id
             LEFT JOIN terminals t ON t.terminal->>'id' = o.source_payload->>'id_terminal'
+            LEFT JOIN pois p ON p.poi->>'id' = NULLIF(t.terminal->>'id_poi', '0')
             WHERE o.source = 'UEX'
               AND o.active = TRUE
               AND e.active = TRUE
