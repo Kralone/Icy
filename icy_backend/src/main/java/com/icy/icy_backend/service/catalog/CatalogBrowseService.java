@@ -174,6 +174,14 @@ public class CatalogBrowseService {
                      LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
                          THEN cache.payload ELSE '[]'::jsonb END) terminal
                 WHERE cache.dataset_key = 'terminals'
+            ),
+            -- UEX terminals only carry id_poi; the POI name comes from the poi dataset.
+            pois AS MATERIALIZED (
+                SELECT poi
+                FROM utils.uex_dataset_cache cache,
+                     LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(cache.payload) = 'array'
+                         THEN cache.payload ELSE '[]'::jsonb END) poi
+                WHERE cache.dataset_key = 'poi'
             )
             SELECT o.id, o.entry_id, o.offer_type, o.location_name, o.price, o.currency,
                    COALESCE(o.source_updated_at, o.last_seen_at) AS updated_at,
@@ -182,11 +190,13 @@ public class CatalogBrowseService {
                    COALESCE(NULLIF(BTRIM(t.terminal->>'space_station_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'city_name'), ''),
                             NULLIF(BTRIM(t.terminal->>'outpost_name'), ''),
-                            NULLIF(BTRIM(t.terminal->>'poi_name'), ''),
-                            NULLIF(BTRIM(t.terminal->>'moon_name'), '')) AS place_name
+                            NULLIF(BTRIM(p.poi->>'name'), ''),
+                            NULLIF(BTRIM(t.terminal->>'moon_name'), '')) AS place_name,
+                   NULLIF(BTRIM(t.terminal->>'moon_name'), '') AS moon_name
             FROM catalog.offers o
             LEFT JOIN terminals t ON o.source = 'UEX'
                 AND t.terminal->>'id' = o.source_payload->>'id_terminal'
+            LEFT JOIN pois p ON p.poi->>'id' = NULLIF(t.terminal->>'id_poi', '0')
             WHERE o.active = TRUE AND o.entry_id IN (:entryIds)
             ORDER BY o.entry_id, o.offer_type, o.price, o.location_name
             """;
@@ -205,6 +215,7 @@ public class CatalogBrowseService {
                                 resultSet.getString("location_name"),
                                 resultSet.getString("system_name"),
                                 resultSet.getString("planet_name"),
+                                resultSet.getString("moon_name"),
                                 resultSet.getString("place_name"),
                                 resultSet.getBigDecimal("price"),
                                 resultSet.getString("currency"),

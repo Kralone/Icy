@@ -54,6 +54,7 @@ export interface UexRefineryDatasets {
 export interface UexVehicleRental {
   terminalId?: string | null;
   planetName?: string | null;
+  moonName?: string | null;
   locationName?: string | null;
   systemName?: string | null;
   vehicleName: string;
@@ -64,6 +65,7 @@ export interface UexVehicleRental {
 export interface UexVehiclePurchase {
   terminalId?: string | null;
   planetName?: string | null;
+  moonName?: string | null;
   locationName?: string | null;
   systemName?: string | null;
   vehicleName: string;

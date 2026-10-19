@@ -16,6 +16,9 @@ class CatalogVehicleMarketServiceTest {
                 .contains("e.family IN ('SHIP', 'GROUND_VEHICLE')")
                 .contains("o.offer_type = :offerType")
                 .contains("o.price > 0")
-                .contains("BTRIM(o.location_name) <> ''");
+                .contains("BTRIM(o.location_name) <> ''")
+                .contains("cache.dataset_key = 'poi'")
+                .contains("p.poi->>'id' = NULLIF(t.terminal->>'id_poi', '0')")
+                .contains("AS moon_name");
     }
 }

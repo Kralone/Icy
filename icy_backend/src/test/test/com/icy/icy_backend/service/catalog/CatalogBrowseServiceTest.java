@@ -47,6 +47,7 @@ class CatalogBrowseServiceTest {
                 .contains("t.terminal->>'id' = o.source_payload->>'id_terminal'")
                 .contains("AS planet_name")
                 .contains("AS place_name")
+                .contains("p.poi->>'id' = NULLIF(t.terminal->>'id_poi', '0')")
                 .contains("o.active = TRUE AND o.entry_id IN (:entryIds)");
     }
 }
