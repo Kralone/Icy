@@ -348,7 +348,7 @@
         @case ('order') { @if (reference(); as ref) { <app-order-dialog [sheet]="s" [reference]="ref" [order]="$any(d).order" (saved)="saved($event)" (closed)="dialog.set(null)" /> } }
         @case ('sale') { @if (reference(); as ref) { <app-sale-dialog [sheet]="s" [reference]="ref" [suggestions]="suggestions()" [sale]="$any(d).sale" (saved)="saved($event)" (changed)="apply($event)" (closed)="dialog.set(null)" /> } }
         @case ('participants') { <app-participants-dialog [sheet]="s" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
-        @case ('manage') { <app-manage-dialog [sheet]="s" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
+        @case ('manage') { <app-manage-dialog [sheet]="s" (saved)="saved($event)" (deleted)="deleted()" (closed)="dialog.set(null)" /> }
       }
     }
   }

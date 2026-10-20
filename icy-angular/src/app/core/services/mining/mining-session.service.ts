@@ -126,6 +126,7 @@ export class MiningSessionService {
 
   create(payload: { name: string | null; sessionDate: string | null; participantIds: string[] }): Observable<SessionSheet> { return this.http.post<SessionSheet>(this.base, payload); }
   update(id: string, payload: { name?: string | null; sessionDate?: string | null }): Observable<SessionSheet> { return this.http.put<SessionSheet>(`${this.base}/${id}`, payload); }
+  delete(id: string): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
   setParticipants(id: string, participants: { userId: string; sharesCenti: number }[]): Observable<SessionSheet> { return this.http.put<SessionSheet>(`${this.base}/${id}/participants`, { participants }); }
 
   addExpense(id: string, payload: ExpensePayload): Observable<SessionSheet> { return this.http.post<SessionSheet>(`${this.base}/${id}/expenses`, payload); }
