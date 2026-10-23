@@ -68,6 +68,7 @@
       <div class="draft-card__actions">
         <a [routerLink]="['/icy/operations', operation.id, 'edit']" class="primary resume">{{ kind === 'draft' ? 'Reprendre l’édition' : 'Modifier' }}</a>
         @if (kind !== 'draft') { <a [routerLink]="['/icy/operations', operation.id]" class="secondary">Voir la fiche</a> }
+        @if (kind !== 'draft') { <a routerLink="/icy/operations/new" [queryParams]="{ from: operation.id }" class="secondary replan">Replanifier</a> }
       </div>
     </div>
   </li>
