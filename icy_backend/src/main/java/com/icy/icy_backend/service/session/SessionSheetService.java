@@ -153,6 +153,18 @@ public class SessionSheetService {
         return saved(sheet);
     }
 
+    /**
+     * Supprime la fiche, quel que soit son état. Participants, frais, ordres, ventes, règlements et historique
+     * partent avec elle (ON DELETE CASCADE, V45). Les fiches ouvertes se relisent et la trouvent introuvable.
+     */
+    @Transactional
+    public void delete(UUID sheetId) {
+        SessionData data = loader.lock(sheetId);
+        SessionAccess.requireOrganizer(data.sheet(), SessionAccess.currentUserId());
+        sheets.delete(data.sheet());
+        events.changed(sheetId);
+    }
+
     @Transactional
     public SessionSheetDTO setParticipants(UUID sheetId, SessionRequests.Participants request) {
         SessionData data = loader.lock(sheetId);

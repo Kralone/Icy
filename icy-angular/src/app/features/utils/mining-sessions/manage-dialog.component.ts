@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { MiningSessionService, SessionSheet, formatAuec, serverMessage } from '../../../core/services/mining/mining-session.service';
 
-export type ManageAction = 'settle' | 'close' | 'reopen' | 'rename';
+export type ManageAction = 'settle' | 'close' | 'reopen' | 'rename' | 'delete';
 
 /**
- * Actions de l'organisateur : renommer, arrêter les comptes, clôturer de force, rouvrir.
- * Chaque action dit ce qu'elle change avant d'être validée ; clôture et réouverture demandent un motif.
+ * Actions de l'organisateur : renommer, arrêter les comptes, clôturer de force, rouvrir, supprimer.
+ * Chaque action dit ce qu'elle change avant d'être validée ; clôture et réouverture demandent un motif,
+ * la suppression une confirmation explicite.
  */
 @Component({
   selector: 'app-manage-dialog',
@@ -47,13 +48,17 @@ export type ManageAction = 'settle' | 'close' | 'reopen' | 'rename';
             <label class="choice" [class.choice--on]="target === 'ACTIVE'"><input type="radio" name="target" value="ACTIVE" [(ngModel)]="target"> <span><b>Corriger un frais, une vente ou une part</b><small>Les versements seront recalculés et les confirmations refaites. Le règlement actuel reste dans l’historique.</small></span></label>
           </div>
         }
+        @if (action === 'delete') {
+          <p class="alert">La fiche « {{ sheet().name }} » sera effacée avec ses participants, frais, ordres de raffinage, ventes, versements et son historique. Cette suppression est définitive.</p>
+          <label class="confirm"><input type="checkbox" name="confirmDelete" [(ngModel)]="confirmDelete"> Je supprime définitivement cette fiche</label>
+        }
         @if (action === 'close' || action === 'reopen') {
           <label class="field">Motif<textarea name="reason" rows="2" maxlength="500" [(ngModel)]="reason" required placeholder="Visible dans l’historique de la fiche"></textarea></label>
         }
         @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
         <div class="dialog-actions">
           <button type="button" class="btn" (click)="closed.emit()">Annuler</button>
-          <button type="submit" class="btn primary" [disabled]="busy() || !action">{{ busy() ? 'Enregistrement…' : confirmLabel() }}</button>
+          <button type="submit" class="btn" [class.primary]="action !== 'delete'" [class.danger]="action === 'delete'" [disabled]="busy() || !action || (action === 'delete' && !confirmDelete)">{{ busy() ? 'Enregistrement…' : confirmLabel() }}</button>
         </div>
       </form>
     </div>
@@ -64,6 +69,7 @@ export type ManageAction = 'settle' | 'close' | 'reopen' | 'rename';
     .choice--on { border-color: var(--gold); }
     .choice span { display: grid; gap: .15rem; }
     .choice small { color: var(--muted); }
+    .confirm { display: flex; gap: .5rem; align-items: center; font-weight: 600; cursor: pointer; }
   `]
 })
 export class ManageDialogComponent implements OnInit {
@@ -72,11 +78,13 @@ export class ManageDialogComponent implements OnInit {
   readonly sheet = input.required<SessionSheet>();
   readonly saved = output<SessionSheet>();
   readonly closed = output<void>();
+  readonly deleted = output<void>();
   readonly busy = signal(false);
   readonly error = signal('');
   action: ManageAction | '' = '';
   target: 'SETTLEMENT' | 'ACTIVE' = 'ACTIVE';
   reason = '';
+  confirmDelete = false;
   name = '';
   date = '';
   readonly auec = formatAuec;
@@ -96,6 +104,7 @@ export class ManageDialogComponent implements OnInit {
     if (status === 'SETTLEMENT') list.push({ value: 'close', label: 'Clôturer sans toutes les confirmations', help: 'La fiche reste marquée « clôturée avec des versements non confirmés ».' });
     if (status !== 'ACTIVE') list.push({ value: 'reopen', label: 'Rouvrir la fiche', help: 'Pour corriger une erreur.' });
     list.push({ value: 'rename', label: 'Renommer ou changer la date', help: 'Sans effet sur les comptes.' });
+    list.push({ value: 'delete', label: 'Supprimer la fiche', help: 'Efface la fiche et tout son contenu, sans retour possible.' });
     return list;
   }
 
@@ -108,12 +117,23 @@ export class ManageDialogComponent implements OnInit {
       case 'settle': return 'Arrêter les comptes';
       case 'close': return 'Clôturer la fiche';
       case 'reopen': return 'Rouvrir la fiche';
+      case 'delete': return 'Supprimer la fiche';
       default: return 'Enregistrer';
     }
   }
 
   confirm(): void {
     const id = this.sheet().id;
+    if (this.action === 'delete') {
+      if (!this.confirmDelete) return;
+      this.busy.set(true);
+      this.error.set('');
+      this.sessions.delete(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => { this.busy.set(false); this.deleted.emit(); },
+        error: error => { this.busy.set(false); this.error.set(serverMessage(error, 'La fiche n’a pas pu être supprimée.')); }
+      });
+      return;
+    }
     let request: Observable<SessionSheet>;
     if (this.action === 'settle') request = this.sessions.settle(id);
     else if (this.action === 'rename') request = this.sessions.update(id, { name: this.name.trim() || null, sessionDate: this.date || null });

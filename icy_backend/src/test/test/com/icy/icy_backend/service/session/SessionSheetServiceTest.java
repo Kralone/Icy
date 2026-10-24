@@ -7,6 +7,7 @@ import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ForbiddenException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -77,6 +78,22 @@ class SessionSheetServiceTest {
 
         assertThatThrownBy(() -> fixture.as(VEXA).sheetService.addExpense(fixture.sheet.getId(), new SessionRequests.Expense(null, "FUEL", 100L, null)))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void organizerDeletesASettledSheet() {
+        fixture.sheet.setStatus(SessionSheet.Status.CLOSED);
+
+        fixture.as(KRALONE).sheetService.delete(fixture.sheet.getId());
+
+        Mockito.verify(fixture.sheets).delete(fixture.sheet);
+        Mockito.verify(fixture.events).changed(fixture.sheet.getId());
+    }
+
+    @Test
+    void participantCannotDeleteTheSheet() {
+        assertThatThrownBy(() -> fixture.as(VEXA).sheetService.delete(fixture.sheet.getId())).isInstanceOf(ForbiddenException.class);
+        Mockito.verify(fixture.sheets, Mockito.never()).delete(Mockito.any(SessionSheet.class));
     }
 
     @Test

@@ -62,6 +62,12 @@ public class SessionController {
         return sheets.update(id, request);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        sheets.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/participants")
     public SessionSheetDTO participants(@PathVariable UUID id, @RequestBody SessionRequests.Participants request) {
         return sheets.setParticipants(id, request);

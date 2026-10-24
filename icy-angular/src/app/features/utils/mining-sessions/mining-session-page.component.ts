@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 import {
   MarketReference, MiningSessionService, RefineryOrder, SaleSuggestions, SessionExpense, SessionSale, SessionSheet, Transfer,
@@ -38,6 +38,7 @@ type Dialog =
 export class MiningSessionPageComponent {
   private readonly sessions = inject(MiningSessionService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   private readonly sheetId = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
 
   readonly state = signal<'loading' | 'error' | 'missing' | 'ready'>('loading');
@@ -96,7 +97,12 @@ export class MiningSessionPageComponent {
     if (showLoading) this.state.set('loading');
     this.sessions.get(this.sheetId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: sheet => this.apply(sheet),
-      error: error => { if (showLoading || !this.sheet()) this.state.set((error as { status?: number })?.status === 404 ? 'missing' : 'error'); }
+      // Une fiche supprimée pendant qu'on la regarde devient introuvable, même lors d'une relecture silencieuse.
+      error: error => {
+        const missing = (error as { status?: number })?.status === 404;
+        if (missing) { this.dialog.set(null); this.sheet.set(null); this.state.set('missing'); }
+        else if (showLoading || !this.sheet()) this.state.set('error');
+      }
     });
   }
 
@@ -114,6 +120,11 @@ export class MiningSessionPageComponent {
     } else if (!remaining) {
       this.suggestions.set(null);
     }
+  }
+
+  deleted(): void {
+    this.dialog.set(null);
+    void this.router.navigate(['/icy/outils/fiches-minage']);
   }
 
   saved(sheet: SessionSheet): void {
