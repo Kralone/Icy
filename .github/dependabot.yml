@@ -32,6 +32,12 @@ updates:
       # Angular 22 exige typescript >=6.0 <6.1.
       - dependency-name: typescript
         versions: [">= 7, < 8"]
+      # Types de l'environnement d'exécution : Node 24 (CI et images).
+      - dependency-name: "@types/node"
+        versions: [">= 25"]
+      # FullCalendar 7 remplace @fullcalendar/core et daygrid par le paquet fullcalendar : migration à faire à part.
+      - dependency-name: "@fullcalendar/*"
+        versions: [">= 7"]
     groups:
       angular:
         patterns: ["@angular/*", "@angular-devkit/*"]
@@ -76,6 +82,9 @@ updates:
         versions: [">= 26, < 29"]
       # Dependabot remplace le suffixe eclipse-temurin-25 de l'image de build par une version non LTS.
       - dependency-name: maven
+      # Le bot est testé en CI sous Python 3.14 : passer à 3.15 ensemble, image et CI.
+      - dependency-name: python
+        versions: [">= 3.15"]
     groups:
       compatible-updates:
         patterns: ["*"]
