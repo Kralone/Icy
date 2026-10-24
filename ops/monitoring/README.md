@@ -43,11 +43,11 @@ flowchart LR
 | Événements | événements à venir et passés, réponses, présents par événement, membres les plus présents, types, publication Discord, événements Star Citizen |
 | Opérations et objectifs | opérations publiées et brouillons, demandes de place et vaisseaux proposés, modèles d'équipage, objectifs et contributions |
 | Minage | fiches, ventes, frais avancés (raffinage compris), bénéfice net ; raffinage prêt non remis ; minerais, terminaux, méthodes |
-| Minage : partage et virements | virements en attente et montant restant, délai jusqu'à la clôture, frais avancés et remboursement par participant, bénéfice reçu par membre, réouvertures et clôtures forcées |
+| Minage : partage et virements | virements en attente et montant restant, délai jusqu'à la clôture, frais avancés et remboursement par participant, part du bénéfice attribuée par membre, réouvertures et clôtures forcées |
 | Actualités et veille | actualités et guides publiés, veille CIG (collecte, traduction), envois Discord |
 | Catalogue et données de jeu | synchronisations du catalogue, conflits à arbitrer, fraîcheur des données UEX, emplacements de minerai, Wikelo, images, IceLink |
 
-Les tableaux s'affichent en listes « nom | valeur » avec une barre dans la cellule, lisibles même avec beaucoup de lignes. Un tableau retiré du générateur n'est pas effacé de Grafana au redémarrage : le supprimer avec `DELETE /api/dashboards/uid/<uid>`.
+Les tableaux s'affichent en listes « nom | valeur » avec une barre dans la cellule, lisibles même avec beaucoup de lignes. Un tableau retiré du générateur disparaît de Grafana dès que son fichier JSON quitte le dossier provisionné du serveur (`disableDeletion: false`). Copier le dossier ne supprime pas les anciens fichiers : les effacer sur le serveur, puis vérifier que le tableau a disparu.
 
 ### Technique
 

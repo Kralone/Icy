@@ -1069,13 +1069,13 @@ def mining_settlement():
                                                          "steps": [(None, ORANGE), (0, GREEN)]}},
         h=11, description="Photographie de l'arrêt des comptes. Dû au participant = part du bénéfice + remboursement de ses "
                           "frais avancés. Il a déjà encaissé ses propres ventes : la différence est réglée par virements.")
-    b.bars("Bénéfice reçu par membre", Sql(f'''
+    b.bars("Part du bénéfice attribuée par membre", Sql(f'''
         SELECT u.username AS metric, sum(ss.share) AS value
         FROM session.settlement_shares ss JOIN session.settlements s ON s.id = ss.settlement_id
         JOIN session.sheets sh ON sh.id = s.sheet_id JOIN core.users u ON u.id = ss.user_id
         WHERE {CURRENT_SETTLEMENT} AND $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "",
         unit=AUEC, h=10, label="Membre", value="Part du bénéfice",
-        description="Hors remboursement des frais avancés.")
+        description="Règlements en cours : part attribuée, que ses virements soient reçus ou non. Hors remboursement des frais avancés.")
     b.bars("Étapes et corrections", Sql('''
         SELECT CASE h.action WHEN 'SETTLED' THEN 'Comptes arrêtés' WHEN 'CLOSED' THEN 'Clôtures'
                              WHEN 'FORCED_CLOSE' THEN 'Clôtures forcées' WHEN 'REOPENED_SETTLEMENT' THEN 'Réouvertures du règlement'
