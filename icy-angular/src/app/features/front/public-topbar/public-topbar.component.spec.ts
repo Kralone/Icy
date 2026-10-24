@@ -12,6 +12,8 @@ describe('PublicTopbarComponent', () => {
     const fixture = TestBed.createComponent(PublicTopbarComponent);
     fixture.detectChanges();
     const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.public-topbar__menu-toggle');
+    // jsdom n'applique pas les media queries : le bouton, masqué en largeur desktop, ne pourrait pas recevoir le focus.
+    toggle.style.display = 'inline-flex';
     toggle.click();
     fixture.detectChanges();
     expect(toggle.getAttribute('aria-expanded')).toBe('true');

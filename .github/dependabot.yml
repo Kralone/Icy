@@ -28,6 +28,10 @@ updates:
     rebase-strategy: auto
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # Angular 22 exige typescript >=6.0 <6.1.
+      - dependency-name: typescript
+        versions: [">= 7, < 8"]
     groups:
       angular:
         patterns: ["@angular/*", "@angular-devkit/*"]
@@ -66,6 +70,12 @@ updates:
     rebase-strategy: auto
     commit-message:
       prefix: "chore(docker)"
+    ignore:
+      # Java 26 à 28 ne sont pas LTS ; l'enforcer du backend exige [25,26).
+      - dependency-name: eclipse-temurin
+        versions: [">= 26, < 29"]
+      # Dependabot remplace le suffixe eclipse-temurin-25 de l'image de build par une version non LTS.
+      - dependency-name: maven
     groups:
       compatible-updates:
         patterns: ["*"]

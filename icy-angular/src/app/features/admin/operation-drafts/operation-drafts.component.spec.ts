@@ -78,7 +78,7 @@ describe('OperationDraftsComponent', () => {
     expect((section('drafts') as HTMLDetailsElement).open).toBe(false);
     expect((section('past') as HTMLDetailsElement).open).toBe(false);
     const links = Array.from(section('planned').querySelector('.draft-card')!.querySelectorAll('a')).map(link => link.getAttribute('href'));
-    expect(links).toEqual(['/icy/operations/soon/edit', '/icy/operations/soon']);
+    expect(links).toEqual(['/icy/operations/soon/edit', '/icy/operations/soon', '/icy/operations/new?from=soon']);
   });
 
   it('says so when there is no draft', async () => {

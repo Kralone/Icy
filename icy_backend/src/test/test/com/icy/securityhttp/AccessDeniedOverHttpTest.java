@@ -117,6 +117,7 @@ class AccessDeniedOverHttpTest {
     @MockitoBean private OperationOrganizationService organizationService;
     @MockitoBean private OperationCoordinationService coordinationService;
     @MockitoBean private OperationCrewService crewService;
+    @MockitoBean private com.icy.icy_backend.service.operation.OperationReplanService replanService;
     @MockitoBean private UserShipRepository hangar;
     @MockitoBean private OperationShipProposalRepository proposals;
     @MockitoBean private EventParticipationRepository participations;

@@ -12,6 +12,10 @@ export interface CatalogOffer {
   id: number;
   type: 'BUY' | 'SELL' | 'RENT' | 'WIKELO';
   location: string;
+  systemName: string | null;
+  planetName: string | null;
+  moonName: string | null;
+  placeName: string | null;
   price: number;
   currency: string;
   updatedAt: string | null;

@@ -208,6 +208,13 @@ public class CatalogSyncWorker {
         if (scope.wikiDataset() != null) {
             int rawCount = wikiScraper.scrape(scope.wikiDataset(), run.getId());
             advance(run, "Scrape " + scope.wikiDataset() + " : " + rawCount + " lignes");
+            if (scope == CatalogSyncScope.LOCATIONS) {
+                for (String dataset : CatalogMapper.UEX_PLACE_DATASETS) {
+                    waitForUexQuota();
+                    int count = refreshUex(dataset);
+                    advance(run, "UEX " + dataset + " : " + count + " lignes");
+                }
+            }
             int mappedCount = catalogMapper.mapWikiDataset(scope.wikiDataset(), run.getId());
             advance(run, "Mapping " + scope.wikiDataset() + " : " + mappedCount + " fiches");
             return;
@@ -297,6 +304,9 @@ public class CatalogSyncWorker {
         }
         if (scope == CatalogSyncScope.ECONOMY) {
             return economyMapper.requiredDatasets().size() + 1;
+        }
+        if (scope == CatalogSyncScope.LOCATIONS) {
+            return CatalogMapper.UEX_PLACE_DATASETS.size() + 2;
         }
         return scope == CatalogSyncScope.WIKELO ? 6 : 2;
     }

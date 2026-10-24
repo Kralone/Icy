@@ -66,6 +66,14 @@ export class GoalService {
     return this.http.post<void>(`${this.apiUrl}/${id}/increment?delta=${delta}`, null);
   }
 
+  joinGoal(goalId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${goalId}/members/me`, null);
+  }
+
+  leaveGoal(goalId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${goalId}/members/me`);
+  }
+
   getParticipations(goalId: number, limit = 6): Observable<GoalParticipation[]> {
     return this.http.get<GoalParticipation[]>(`${this.apiUrl}/${goalId}/participations`, {
       params: { limit }

@@ -296,7 +296,13 @@
             @for (offer of entry.offers; track offer.id) {
               <div class="offer-row">
                 <span class="offer-type">{{ offerLabel(offer.type) }}</span>
-                <div><strong>{{ offer.location }}</strong><small>{{ offer.updatedAt ? (offer.updatedAt | date:'dd/MM/yyyy') : 'Date inconnue' }}</small></div>
+                <div>
+                  @if (offerPlace(offer); as place) {
+                    <strong>{{ place }}</strong><small>{{ offer.location }} · {{ offer.updatedAt ? (offer.updatedAt | date:'dd/MM/yyyy') : 'Date inconnue' }}</small>
+                  } @else {
+                    <strong>{{ offer.location }}</strong><small>{{ offer.updatedAt ? (offer.updatedAt | date:'dd/MM/yyyy') : 'Date inconnue' }}</small>
+                  }
+                </div>
                 <b>{{ formatPrice(offer.price, offer.currency) }}</b>
               </div>
             }
