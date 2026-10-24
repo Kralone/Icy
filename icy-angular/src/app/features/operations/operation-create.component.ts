@@ -2,7 +2,7 @@ import { DateTimeFieldComponent } from '../../shared/date-time-field/date-time-f
 import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { EventService } from '../../core/services/event/event.service';
 import { EventType } from '../../model/event-type.model';
@@ -18,6 +18,7 @@ import { OperationIconComponent } from './briefing/operation-icon.component';
 export class OperationCreateComponent implements OnInit {
   private readonly eventService = inject(EventService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(HotToastService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly changeDetector = inject(ChangeDetectorRef);
@@ -27,10 +28,46 @@ export class OperationCreateComponent implements OnInit {
   saving = false;
   error = '';
   form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false };
+  /** Replanification : opération dont le nouveau brouillon reprend le cadre et l'organisation, avec de nouvelles dates. */
+  sourceId: string | null = null;
+  sourceTitle = '';
+  sourceLoading = false;
+  sourceError = '';
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
+    this.sourceId = this.route.snapshot.queryParamMap.get('from');
+    if (this.sourceId) this.loadSource(this.sourceId);
     this.loadTypes();
+  }
+
+  /** Comme pour un événement replanifié : le formulaire est prérempli et les dates restent à renseigner. */
+  loadSource(sourceId: string): void {
+    this.sourceLoading = true;
+    this.sourceError = '';
+    this.eventService.getOperationForEdit(sourceId).subscribe({
+      next: operation => {
+        this.sourceLoading = false;
+        this.sourceTitle = operation?.title ?? '';
+        const type = operation?.typeName ?? '';
+        this.form = {
+          title: operation?.title ?? '',
+          // Un type supprimé depuis n'est pas repris : il doit être choisi dans la liste actuelle.
+          type: !this.types.length || this.isKnownType(type) ? type : '',
+          description: operation?.briefing ?? operation?.description ?? '',
+          startDateTime: '',
+          endDateTime: '',
+          imageUrl: operation?.imageUrl ?? '',
+          allowShipProposals: !!operation?.allowShipProposals
+        };
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.sourceLoading = false;
+        this.sourceError = 'Impossible de charger l’opération à replanifier.';
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   /** Liste fermée : uniquement les types enregistrés côté serveur, sans reconstruction à partir des événements. */
@@ -71,17 +108,19 @@ export class OperationCreateComponent implements OnInit {
   }
 
   get invalid(): boolean {
-    return !this.form.title.trim() || !this.isKnownType(this.form.type) || !this.form.startDateTime || !this.form.endDateTime || this.datesInvalid || this.saving;
+    return this.sourceLoading || !!this.sourceError || !this.form.title.trim() || !this.isKnownType(this.form.type) || !this.form.startDateTime || !this.form.endDateTime || this.datesInvalid || this.saving;
   }
 
   create(): void {
     if (this.invalid) return;
     this.saving = true;
     this.error = '';
-    this.eventService.createOperation({ ...this.form, title: this.form.title.trim() }).subscribe({
+    const payload = { ...this.form, title: this.form.title.trim() };
+    const request = this.sourceId ? this.eventService.replanOperation(this.sourceId, payload) : this.eventService.createOperation(payload);
+    request.subscribe({
       next: operation => {
         this.saving = false;
-        this.toast.success('Brouillon d’opération créé.');
+        this.toast.success(this.sourceId ? 'Opération replanifiée : nouveau brouillon créé.' : 'Brouillon d’opération créé.');
         this.router.navigate(['/icy/operations', operation.eventId || operation.id, 'edit']);
       },
       error: error => {

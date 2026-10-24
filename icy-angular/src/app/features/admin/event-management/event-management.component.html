@@ -191,6 +191,15 @@
                             >
                             ✏️ Modifier
                           </a>
+                          @if (e.finished && !e.draft) {
+                            <a
+                              routerLink="/icy/operations/new" [queryParams]="{ from: e.id }"
+              class="operation-replan ml-2 inline-block whitespace-nowrap font-semibold transition px-3 py-1.5 rounded-full border border-amber-300/40 text-amber-200
+                     hover:border-amber-300/70"
+                              >
+                              🔁 Replanifier
+                            </a>
+                          }
                         }
                         @if (e.activityType !== 'OPERATION' && !e.finished) {
                           <button

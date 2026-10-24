@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { OperationCreateComponent } from './operation-create.component';
@@ -112,5 +112,61 @@ describe('OperationCreateComponent', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('p.error').textContent).toContain('Type d’opération inconnu');
+  });
+});
+
+describe('OperationCreateComponent, replanification', () => {
+  let component: OperationCreateComponent;
+  let fixture: ComponentFixture<OperationCreateComponent>;
+  let replanOperation: ReturnType<typeof vi.fn>;
+  let createOperation: ReturnType<typeof vi.fn>;
+  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  const combat: EventType = { name: 'Combat', textColor: '#ffffff', backgroundColor: '#123456', imageUrl: '' };
+  const source = {
+    id: 'op-0', title: 'Escorte du convoi', typeName: 'Combat', description: 'Ancienne description', briefing: 'Briefing repris',
+    startDateTime: '2026-09-01T20:00:00', endDateTime: '2026-09-01T23:00:00', imageUrl: 'https://example.org/convoi.png', allowShipProposals: true
+  };
+
+  beforeAll(() => registerLocaleData(localeFr));
+
+  beforeEach(async () => {
+    replanOperation = vi.fn(() => of({ id: 'op-2' }));
+    createOperation = vi.fn();
+    toast = { success: vi.fn(), error: vi.fn() };
+    await TestBed.configureTestingModule({
+      imports: [OperationCreateComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({ from: 'op-0' }) } } },
+        { provide: EventService, useValue: { getAllTypes: vi.fn(() => of([combat])), getOperationForEdit: vi.fn(() => of(source)), replanOperation, createOperation } },
+        { provide: HotToastService, useValue: toast },
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(OperationCreateComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('prefills the form from the operation and leaves the dates to fill in', () => {
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain('Replanifier une opération');
+    expect(component.form).toEqual({
+      title: 'Escorte du convoi', type: 'Combat', description: 'Briefing repris', startDateTime: '', endDateTime: '',
+      imageUrl: 'https://example.org/convoi.png', allowShipProposals: true
+    });
+    expect(component.invalid).toBe(true);
+  });
+
+  it('creates the new draft from the source operation, then opens its editor', () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    component.form = { ...component.form, startDateTime: '2026-11-05T20:00', endDateTime: '2026-11-05T23:00' };
+
+    component.create();
+
+    expect(createOperation).not.toHaveBeenCalled();
+    expect(replanOperation).toHaveBeenCalledWith('op-0', expect.objectContaining({ title: 'Escorte du convoi', startDateTime: '2026-11-05T20:00' }));
+    expect(toast.success).toHaveBeenCalledWith('Opération replanifiée : nouveau brouillon créé.');
+    expect(navigate).toHaveBeenCalledWith(['/icy/operations', 'op-2', 'edit']);
   });
 });
