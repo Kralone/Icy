@@ -1,0 +1,27 @@
+@if (tutorials.active(); as active) {
+  @let step = active.steps[active.index];
+  @let current = frame();
+  <div class="tuto">
+    <div class="tuto__blocker" aria-hidden="true"></div>
+    @if (current?.spot; as spot) {
+      <div class="tuto__spot" aria-hidden="true" [style.top.px]="spot.top" [style.left.px]="spot.left" [style.width.px]="spot.width" [style.height.px]="spot.height"></div>
+    } @else {
+      <div class="tuto__veil" aria-hidden="true"></div>
+    }
+    <section #bubble class="tuto__bubble" role="dialog" aria-modal="true" aria-labelledby="tuto-title" aria-describedby="tuto-text"
+      [class.tuto__bubble--ready]="!!current"
+      [style.top.px]="current?.bubble?.top ?? 0" [style.left.px]="current?.bubble?.left ?? 0"
+      [attr.data-arrow]="current?.bubble?.arrow?.side" [style.--arrow-offset.px]="current?.bubble?.arrow?.offset">
+      <p class="tuto__meta"><span>{{ active.tutorial.title }}</span><span>{{ active.index + 1 }} / {{ active.steps.length }}</span></p>
+      <h2 id="tuto-title" class="tuto__title">{{ step.title }}</h2>
+      <p id="tuto-text" class="tuto__text" aria-live="polite">{{ step.text }}</p>
+      <div class="tuto__actions">
+        <button type="button" class="tuto__skip" (click)="tutorials.skip()">{{ active.index === active.steps.length - 1 ? 'Fermer' : 'Passer le tutoriel' }}</button>
+        <span class="tuto__nav">
+          @if (active.index > 0) { <button type="button" class="tuto__prev" (click)="tutorials.previous()">Précédent</button> }
+          <button type="button" class="tuto__next" data-primary (click)="tutorials.next()">{{ active.index === active.steps.length - 1 ? 'Terminer' : 'Suivant' }}</button>
+        </span>
+      </div>
+    </section>
+  </div>
+}

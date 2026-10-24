@@ -1,13 +1,15 @@
-import { Component, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, HostListener, ChangeDetectionStrategy, inject } from '@angular/core';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
+import { TutorialOverlayComponent } from '../tutorial/tutorial-overlay.component';
+import { TutorialService } from '../tutorial/tutorial.service';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-layout',
-  imports: [SidebarComponent, TopbarComponent, RouterOutlet, CommonModule],
+  imports: [SidebarComponent, TopbarComponent, TutorialOverlayComponent, RouterOutlet, CommonModule],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -70,6 +72,7 @@ export class LayoutComponent {
 
   constructor() {
     this.checkViewport();
+    inject(TutorialService).start();
   }
 
   @HostListener('window:resize')
