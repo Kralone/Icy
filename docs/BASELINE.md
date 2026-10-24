@@ -14,7 +14,7 @@ production ni un test des intégrations réelles Discord, PostgreSQL et RabbitMQ
 | Maven | 3.9.9 | Maven Wrapper |
 | Node.js | 24.19.0 LTS | `icy-angular/.nvmrc` (lu par la CI), `engines.node` et image Docker épinglée |
 | npm | 11.17.0 | `packageManager`, `engines.npm` et image Docker du frontend |
-| Python | 3.14.7 | `.python-version` et image Docker épinglée par digest |
+| Python | 3.14.8 | `.python-version` et image Docker épinglée par digest |
 
 Les images Docker du socle utilisent des tags exacts et des digests immuables.
 Les montées de version des runtimes restent isolées dans leurs branches dédiées.

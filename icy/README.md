@@ -2,7 +2,7 @@
 
 ## Runtime de référence
 
-- Python 3.14.7
+- Python 3.14.8
 - dépendances directes épinglées dans `requirement.txt`
 - environnement Docker reproductible épinglé dans `requirements.lock`
 
