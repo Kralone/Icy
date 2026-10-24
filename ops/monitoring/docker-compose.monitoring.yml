@@ -81,6 +81,9 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
+      # Système de fichiers en lecture seule : l’installation des plugins au démarrage échoue et laisse
+      # Prometheus non enregistré (« Plugin not registered »). Les plugins livrés dans l’image suffisent.
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/iceforge/metier/utilisation.json
       # Tableaux métier : rôle PostgreSQL en lecture seule (postgres/grafana-reader.sql).
       ICEFORGE_DB_NAME: ${POSTGRES_DB:-iceforgedb}
