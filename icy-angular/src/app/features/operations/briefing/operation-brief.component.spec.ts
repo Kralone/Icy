@@ -31,6 +31,13 @@ describe('OperationBriefComponent', () => {
     expect(text.textContent).toContain('piège');
   });
 
+  it('keeps the formatting and the title of a link', () => {
+    const link = render('[**carte** du site](https://iceforge.fr/carte "Plan")').querySelector('a')!;
+    expect(link.querySelector('strong')!.textContent).toBe('carte');
+    expect(link.textContent).toBe('carte du site');
+    expect(link.getAttribute('title')).toBe('Plan');
+  });
+
   it('never loads an image from the briefing, it shows its description', () => {
     const text = render('![plan du site](https://exemple.test/suivi.png)');
     expect(text.querySelector('img')).toBeNull();
