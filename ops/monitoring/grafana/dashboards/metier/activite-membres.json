@@ -1,0 +1,884 @@
+{
+  "uid": "iceforge-activite-membres",
+  "title": "Activité des membres",
+  "description": "Qui s'est connecté, quand, et tout ce que la base garde de ses actions. Filtrer un ou plusieurs membres en haut.",
+  "tags": [
+    "iceforge",
+    "metier"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "1h"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "membre",
+        "label": "Membre",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "postgres"
+        },
+        "query": "SELECT username AS __text, id::text AS __value FROM core.users ORDER BY lower(username)",
+        "definition": "SELECT username AS __text, id::text AS __value FROM core.users ORDER BY lower(username)",
+        "refresh": 1,
+        "sort": 0,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "metier"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux métier",
+      "includeVars": false,
+      "keepTime": false
+    },
+    {
+      "type": "dashboards",
+      "tags": [
+        "iceforge",
+        "technique"
+      ],
+      "asDropdown": true,
+      "title": "Tableaux techniques",
+      "includeVars": false,
+      "keepTime": false
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Connexions",
+      "collapsed": false,
+      "panels": [],
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "table",
+      "title": "Qui s'est connecté sur la période",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Jours connectés : jours (heure de Paris) où le membre a ouvert ou prolongé une session sur la période choisie. Vide : aucune connexion sur la période ; la dernière connexion connue dit depuis quand.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT u.username AS \"Membre\",\n               count(DISTINCT (rt.created_at AT TIME ZONE 'Europe/Paris')::date) AS \"Jours connectés\",\n               min(rt.created_at) AS \"Première connexion\", max(rt.created_at) AS \"Dernière connexion\",\n               (SELECT max(created_at) FROM core.refresh_tokens x WHERE x.user_id = u.id) AS \"Dernière connexion connue\",\n               CASE WHEN u.active THEN 'Actif' ELSE 'Désactivé' END AS \"Compte\", u.created_at AS \"Compte créé le\"\n        FROM core.users u LEFT JOIN core.refresh_tokens rt ON rt.user_id = u.id AND $__timeFilter(rt.created_at)\n        WHERE u.id::text IN ($membre)\n        GROUP BY u.id ORDER BY 2 DESC, lower(u.username)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Jours connectés"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "text"
+                    },
+                    {
+                      "value": 1,
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Première connexion"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dernière connexion"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dernière connexion connue"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Compte"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Compte créé le"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 24,
+        "h": 11
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Connexions par jour et par membre",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Une couleur par membre : la hauteur d'une barre est le nombre de membres connectés ce jour-là.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT date_trunc('day', rt.created_at) AS time, m.username AS metric, 1 AS value\n        FROM core.refresh_tokens rt JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = rt.user_id\n        WHERE $__timeFilter(rt.created_at) GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "barAlignment": -1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 9
+      }
+    },
+    {
+      "type": "row",
+      "title": "Bilan de la sélection sur la période",
+      "collapsed": false,
+      "panels": [],
+      "id": 4,
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Jours connectés",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT count(DISTINCT (rt.user_id, (rt.created_at AT TIME ZONE 'Europe/Paris')::date)) FROM core.refresh_tokens rt\n        WHERE rt.user_id::text IN ($membre) AND $__timeFilter(rt.created_at)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Présences annoncées",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Réponses « présent » à des événements de la période (intention, pas présence vérifiée).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT count(*) FROM events.event_participation p JOIN events.events e ON e.id = p.event_id\n        WHERE p.user_id::text IN ($membre) AND p.status = 1 AND $__timeFilter(e.start_date_time)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 4,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Affectations",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT count(*) FROM events.operation_assignments a WHERE a.user_id::text IN ($membre) AND $__timeFilter(a.created_at)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Fiches de minage",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT count(*) FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id\n        WHERE pa.user_id::text IN ($membre) AND $__timeFilter(sh.session_date)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Frais avancés (aUEC)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Frais de minage payés pour le groupe, raffinage compris.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT sum(ex.amount) FROM (SELECT sheet_id, payer_user_id, kind, amount FROM session.expenses\n       UNION ALL SELECT sheet_id, launcher_user_id, 'REFINING', cost FROM mining.refinery_orders WHERE cost > 0) ex JOIN session.sheets sh ON sh.id = ex.sheet_id\n        WHERE ex.payer_user_id::text IN ($membre) AND $__timeFilter(sh.session_date)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 16,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Ventes (aUEC)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT sum(sa.amount) FROM session.sales sa WHERE sa.seller_user_id::text IN ($membre) AND $__timeFilter(sa.sold_at)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "noValue": "Pas de donnée",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 20,
+        "y": 22,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "row",
+      "title": "Journal",
+      "collapsed": false,
+      "panels": [],
+      "id": 11,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "table",
+      "title": "Journal d'activité",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Tout ce que la base date et rattache à un membre. Ce qui n'est pas enregistré (pages consultées, messages Discord, lectures) n'y figure pas. Les connexions sont regroupées par jour.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT * FROM (\n          SELECT min(rt.created_at) AS \"Date\", m.username AS \"Membre\", 'Connexion' AS \"Action\",\n                 'de ' || to_char(min(rt.created_at) AT TIME ZONE 'Europe/Paris', 'HH24\"h\"MI') || ' à '\n                 || to_char(max(rt.created_at) AT TIME ZONE 'Europe/Paris', 'HH24\"h\"MI') || ' (heure de Paris)' AS \"Détail\"\n            FROM core.refresh_tokens rt JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = rt.user_id\n           WHERE $__timeFilter(rt.created_at) GROUP BY m.username, (rt.created_at AT TIME ZONE 'Europe/Paris')::date\n          UNION ALL SELECT u.created_at, m.username, 'Compte créé', NULL FROM core.users u JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = u.id\n          UNION ALL SELECT e.created_at, m.username, 'Événement créé', e.title\n            FROM events.events e JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = e.creator_id\n          UNION ALL SELECT e.start_date_time, m.username, 'Réponse à un événement',\n                 e.title || ' : ' || CASE p.status WHEN 1 THEN 'présent' WHEN 0 THEN 'peut-être' ELSE 'absent' END\n                 || ' (date de l''événement : la réponse n''est pas datée)'\n            FROM events.event_participation p JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = p.user_id JOIN events.events e ON e.id = p.event_id\n          UNION ALL SELECT a.created_at, m.username, 'Affectation à une opération',\n                 e.title || coalesce(' · ' || g.name, '') || CASE WHEN a.status = 'PENDING' THEN ' (en attente)' ELSE '' END\n            FROM events.operation_assignments a JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = a.user_id\n            JOIN events.events e ON e.id = a.operation_event_id LEFT JOIN events.operation_groups g ON g.id = a.group_id\n          UNION ALL SELECT r.created_at, m.username, 'Demande de place dans une opération',\n                 e.title || ' (' || CASE r.status WHEN 'PENDING' THEN 'en attente' WHEN 'APPROVED' THEN 'acceptée'\n                                                  WHEN 'REFUSED' THEN 'refusée' ELSE 'annulée' END || ')'\n            FROM events.operation_assignment_requests r JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = r.user_id\n            JOIN events.events e ON e.id = r.operation_event_id\n          UNION ALL SELECT sp.created_at, m.username, 'Vaisseau proposé à une opération',\n                 e.title || coalesce(' · ' || s.name, '') || ' (' || CASE sp.status WHEN 'PROPOSED' THEN 'proposé'\n                     WHEN 'ACCEPTED' THEN 'accepté' WHEN 'DECLINED' THEN 'refusé' ELSE 'indisponible' END || ')'\n            FROM events.operation_ship_proposals sp JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = sp.owner_user_id\n            JOIN events.events e ON e.id = sp.operation_event_id LEFT JOIN catalog.ship_compat s ON s.id = sp.ship_id\n          UNION ALL SELECT gp.created_at, m.username, 'Contribution à un objectif',\n                 g.name || ' : ' || CASE WHEN gp.delta >= 0 THEN '+' ELSE '' END || gp.delta\n            FROM goals.goal_participations gp JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = gp.user_id JOIN goals.goals g ON g.id = gp.goal_id\n          UNION ALL SELECT coalesce(w.updated_at, w.created_at), m.username, 'Événement Star Citizen',\n                 ev.title || ' : ' || w.total || ' points'\n            FROM scworld.sc_world_event_participation w JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = w.user_id\n            JOIN scworld.sc_world_event ev ON ev.id = w.scwe_id\n          UNION ALL SELECT us.created_at, m.username, 'Vaisseau ajouté à la flotte', coalesce(s.name, 'Vaisseau n°' || us.ship_id)\n            FROM fleet.user_ships us JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = us.user_id LEFT JOIN catalog.ship_compat s ON s.id = us.ship_id\n          UNION ALL SELECT c.updated_at, m.username, 'Collection mise à jour', NULL\n            FROM collections.user_collection c JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id::text = c.user_id\n          UNION ALL SELECT n.created_at, m.username, 'Notifications push activées', NULL\n            FROM core.notification_subscriptions n JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = n.user_id\n          UNION ALL SELECT i.uploaded_at, m.username, 'Image envoyée', i.category\n            FROM media.image_metadata i JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = i.uploader_id\n          UNION ALL SELECT sh.created_at, m.username, 'Fiche de minage créée', sh.name\n            FROM session.sheets sh JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = sh.organizer_user_id\n          UNION ALL SELECT pa.joined_at, m.username, 'Ajouté à une fiche de minage', sh.name\n            FROM session.participants pa JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = pa.user_id JOIN session.sheets sh ON sh.id = pa.sheet_id\n          UNION ALL SELECT ex.created_at, m.username, 'Frais avancé (minage)',\n                 sh.name || ' : ' || CASE ex.kind WHEN 'FUEL' THEN 'carburant' WHEN 'REPAIR' THEN 'réparation'\n                     WHEN 'MATERIAL' THEN 'matériel' ELSE 'autre' END || ' ' || replace(to_char(ex.amount, 'FM999,999,999,999'), ',', ' ') || ' aUEC'\n            FROM session.expenses ex JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = ex.payer_user_id JOIN session.sheets sh ON sh.id = ex.sheet_id\n          UNION ALL SELECT ro.created_at, m.username, 'Ordre de raffinage lancé',\n                 sh.name || ' : ' || ro.terminal_label || CASE WHEN ro.cost > 0 THEN ', ' || replace(to_char(ro.cost, 'FM999,999,999,999'), ',', ' ') || ' aUEC' ELSE '' END\n            FROM mining.refinery_orders ro JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = ro.launcher_user_id JOIN session.sheets sh ON sh.id = ro.sheet_id\n          UNION ALL SELECT sa.sold_at, m.username, 'Vente de minerai',\n                 sh.name || ' : ' || replace(to_char(sa.amount, 'FM999,999,999,999'), ',', ' ') || ' aUEC à ' || sa.terminal_label\n            FROM session.sales sa JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = sa.seller_user_id JOIN session.sheets sh ON sh.id = sa.sheet_id\n          UNION ALL SELECT t.received_at, m.username, 'Virement reçu (minage)',\n                 sh.name || ' : ' || replace(to_char(t.amount, 'FM999,999,999,999'), ',', ' ') || ' aUEC de ' || f.username\n            FROM session.settlement_transfers t JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = t.to_user_id JOIN core.users f ON f.id = t.from_user_id\n            JOIN session.settlements s ON s.id = t.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id\n           WHERE t.received_at IS NOT NULL\n          UNION ALL SELECT h.at, m.username, 'Fiche de minage : ' || CASE h.action WHEN 'SETTLED' THEN 'comptes arrêtés'\n                     WHEN 'CLOSED' THEN 'clôture' WHEN 'FORCED_CLOSE' THEN 'clôture forcée' WHEN 'REOPENED_SETTLEMENT' THEN 'réouverture du règlement'\n                     WHEN 'REOPENED_ACTIVE' THEN 'retour en cours' WHEN 'RECEIPT_CONFIRMED' THEN 'virement confirmé'\n                     ELSE 'confirmation retirée' END, sh.name\n            FROM session.history h JOIN (SELECT id, username FROM core.users WHERE id::text IN ($membre)) m ON m.id = h.actor_user_id JOIN session.sheets sh ON sh.id = h.sheet_id\n        ) journal\n        WHERE \"Date\" BETWEEN $__timeFrom() AND $__timeTo()\n        ORDER BY \"Date\" DESC LIMIT 2000",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Date"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Membre"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 280
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 18
+      }
+    },
+    {
+      "type": "table",
+      "title": "Membres sans connexion sur la période",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "description": "Comptes actifs du filtre sans aucune connexion sur la période. Vide en « Dernière connexion connue » : jamais connecté depuis la mise en place des jetons de session.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "refId": "A",
+          "rawSql": "SELECT u.username AS \"Membre\", (SELECT max(created_at) FROM core.refresh_tokens x WHERE x.user_id = u.id) AS \"Dernière connexion connue\",\n               u.created_at AS \"Compte créé le\"\n        FROM core.users u\n        WHERE u.active AND u.id::text IN ($membre)\n          AND NOT EXISTS (SELECT 1 FROM core.refresh_tokens rt WHERE rt.user_id = u.id AND $__timeFilter(rt.created_at))\n        ORDER BY 2 NULLS FIRST, lower(u.username)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dernière connexion connue"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 220
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Compte créé le"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              },
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 9
+      }
+    }
+  ]
+}

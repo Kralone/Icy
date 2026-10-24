@@ -1,4 +1,5 @@
 -- Rôle de lecture des tableaux de bord métier de Grafana.
+-- Le tableau « Activité des membres » rattache des actions datées à des pseudos : réservé aux administrateurs.
 -- Idempotent : à rejouer après chaque migration qui recrée une table lue ici.
 --
 --   psql -v ON_ERROR_STOP=1 -v grafana_password="$GRAFANA_DB_PASSWORD" -f grafana-reader.sql
@@ -35,7 +36,7 @@ GRANT SELECT (id, status, preferred_gameplay, created_at) ON recruitment.recruit
 
 -- Événements, opérations, objectifs, événements Star Citizen.
 -- event_type est la colonne de référence (V30) ; l'ancienne colonne « type » peut ne plus exister.
-GRANT SELECT (id, event_type, title, start_date_time, end_date_time, created_at, finished, activity_type, discord_message_id)
+GRANT SELECT (id, event_type, title, start_date_time, end_date_time, created_at, finished, activity_type, discord_message_id, creator_id)
     ON events.events TO iceforge_grafana;
 GRANT SELECT ON events.event_participation, events.operations, events.operation_groups,
     events.operation_assignments, events.operation_ship_requirements, events.operation_ship_proposals,
@@ -45,7 +46,7 @@ GRANT SELECT (id, name, target, current, pinned, completed, created_at, parent_i
 GRANT SELECT ON goals.goal_participations TO iceforge_grafana;
 GRANT SELECT (id, created_at) ON goals.goal_templates TO iceforge_grafana;
 GRANT SELECT (id, title, start_at, end_at, type_name) ON scworld.sc_world_event TO iceforge_grafana;
-GRANT SELECT (id, scwe_id, user_id, status, total) ON scworld.sc_world_event_participation TO iceforge_grafana;
+GRANT SELECT (id, scwe_id, user_id, status, total, created_at, updated_at) ON scworld.sc_world_event_participation TO iceforge_grafana;
 
 -- Flotte et collections.
 GRANT SELECT ON fleet.user_ships, catalog.ship_compat TO iceforge_grafana;
@@ -55,7 +56,7 @@ GRANT SELECT (id, user_id, created_at, updated_at) ON collections.user_collectio
 GRANT SELECT ON session.sheets, session.participants, session.expenses, session.sales, session.settlements,
     session.settlement_shares, session.settlement_transfers, mining.refinery_orders,
     mining.refinery_order_lines, mining.sale_lines TO iceforge_grafana;
-GRANT SELECT (sheet_id, action, at) ON session.history TO iceforge_grafana;
+GRANT SELECT (sheet_id, actor_user_id, action, at) ON session.history TO iceforge_grafana;
 
 -- Contenu et synchronisations.
 GRANT SELECT (id, title, type_id, created_at, discord_message_id) ON news.news TO iceforge_grafana;
@@ -79,4 +80,4 @@ GRANT SELECT (id, location_code, game_version, users_count, scans_count, updated
 GRANT SELECT (id, body_type, system_name) ON public.celestial_bodies TO iceforge_grafana;
 GRANT SELECT (id, system_name, station_kind) ON public.orbital_stations TO iceforge_grafana;
 GRANT SELECT (id) ON icelink.icelink_block TO iceforge_grafana;
-GRANT SELECT (id, size, uploaded_at, category, subcategory) ON media.image_metadata TO iceforge_grafana;
+GRANT SELECT (id, size, uploaded_at, category, subcategory, uploader_id) ON media.image_metadata TO iceforge_grafana;

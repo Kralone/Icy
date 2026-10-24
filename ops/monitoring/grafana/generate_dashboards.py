@@ -11,6 +11,9 @@ OUT = Path(__file__).resolve().parent / "dashboards"
 DS = {"type": "prometheus", "uid": "prometheus"}
 PG = {"type": "grafana-postgresql-datasource", "uid": "postgres"}
 NO_DATA = "Pas de donnée"
+# Unités métier : affichées en nombre localisé (1 250 000), l'unité passe dans le titre.
+AUEC = "suffix: aUEC"
+SCU = "suffix: SCU"
 
 
 class Sql(str):
@@ -68,6 +71,8 @@ class Board:
 
     def stat(self, title, expr, unit="short", steps=None, w=4, h=4, mappings=None, decimals=None,
              description=None):
+        if unit == AUEC:
+            unit, title = "locale", f"{title} (aUEC)"
         defaults = {
             "unit": unit,
             "noValue": NO_DATA,
@@ -90,7 +95,9 @@ class Board:
         }, w, h)
 
     def series(self, title, targets, unit="short", w=12, h=8, stack=False, min_zero=True,
-               description=None, overrides=None, bars=False):
+               description=None, overrides=None, bars=False, decimals=None):
+        if unit == AUEC:
+            unit, title = "locale", f"{title} (aUEC)"
         custom = {
             "drawStyle": "bars" if bars else "line", "lineWidth": 1 if bars else 2,
             "fillOpacity": 80 if bars else (15 if stack else 5), "barAlignment": -1,
@@ -101,6 +108,8 @@ class Board:
                     "color": {"mode": "palette-classic"}}
         if min_zero:
             defaults["min"] = 0
+        if decimals is not None:
+            defaults["decimals"] = decimals
         self._add({
             "type": "timeseries", "title": title, "datasource": _ds(targets[0][0]),
             **({"description": description} if description else {}),
@@ -113,26 +122,55 @@ class Board:
             },
         }, w, h)
 
-    def bars(self, title, expr, legend, unit="short", steps=None, w=12, h=8, description=None):
-        """expr : une requête, ou une liste de (PromQL, légende) pour une barre par requête."""
+    def bars(self, title, expr, legend, unit="short", steps=None, w=12, h=8, description=None,
+             label="Élément", value="Nombre", desc=True):
+        """Liste « nom | valeur » avec une barre dans la cellule : lisible même avec beaucoup de lignes.
+
+        expr : requête SQL (colonnes metric, value), PromQL (une série par ligne, nommée par legend),
+        ou liste de (PromQL, nom) pour une ligne par requête.
+        """
         pairs = expr if isinstance(expr, list) else [(expr, legend)]
         expr = pairs[0][0]
+        if unit in (AUEC, SCU):
+            value, unit = f"{value} ({'aUEC' if unit == AUEC else 'SCU'})", "locale"
+        if isinstance(expr, Sql):
+            transformations = [{"id": "organize", "options": {"renameByName": {"metric": label, "value": value}}}]
+        else:
+            transformations = [
+                {"id": "reduce", "options": {"mode": "seriesToRows", "reducers": ["lastNotNull"], "includeTimeField": False}},
+                {"id": "organize", "options": {"renameByName": {"Field": label, "Last *": value}}},
+                {"id": "sortBy", "options": {"sort": [{"field": value, "desc": desc}]}},
+            ]
         self._add({
-            "type": "bargauge", "title": title, "datasource": _ds(expr),
+            "type": "table", "title": title, "datasource": _ds(expr),
             **({"description": description} if description else {}),
             "targets": [_target(e, legend=l, instant=True, ref=_ref(i)) for i, (e, l) in enumerate(pairs)],
-            "fieldConfig": {"defaults": {
-                "unit": unit, "noValue": NO_DATA, "min": 0,
-                "color": {"mode": "thresholds"},
-                "thresholds": {"mode": "absolute", "steps": _steps(steps or [(None, BLUE)])},
-            }, "overrides": []},
-            "options": {"orientation": "horizontal", "displayMode": "basic", "showUnfilled": True,
-                        "valueMode": "color", "namePlacement": "top", "sizing": "manual",
-                        "minVizHeight": 14, "maxVizHeight": 22, "minVizWidth": 8,
-                        "text": {"titleSize": 13, "valueSize": 16},
-                        # Une ligne SQL par barre ; en PromQL, une série par barre.
-                        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "",
-                                          "values": isinstance(expr, Sql)}},
+            "transformations": transformations,
+            "fieldConfig": {"defaults": {"noValue": NO_DATA, "custom": {"align": "auto", "filterable": False}},
+                            "overrides": [{"matcher": {"id": "byName", "options": value}, "properties": [
+                                {"id": "unit", "value": unit}, {"id": "min", "value": 0}, {"id": "fieldMinMax", "value": True},
+                                {"id": "custom.cellOptions", "value": {"type": "gauge", "mode": "basic", "valueDisplayMode": "text"}},
+                                {"id": "color", "value": {"mode": "thresholds"}},
+                                {"id": "thresholds", "value": {"mode": "absolute", "steps": _steps(steps or [(None, BLUE)])}},
+                            ]}, {"matcher": {"id": "byName", "options": label}, "properties": [
+                                {"id": "custom.width", "value": max(140, w * 22)}]}]},
+            "options": {"showHeader": True, "cellHeight": "sm", "footer": {"show": False}},
+        }, w, h)
+
+    def columns(self, title, sql, unit="short", w=24, h=8, description=None, label="Élément", value="Nombre"):
+        """Histogramme vertical (colonnes metric, value), dans l'ordre de la requête : heures, jours…"""
+        self._add({
+            "type": "barchart", "title": title, "datasource": PG,
+            **({"description": description} if description else {}),
+            "targets": [_target(sql)],
+            "transformations": [{"id": "organize", "options": {"renameByName": {"metric": label, "value": value}}}],
+            "fieldConfig": {"defaults": {"unit": unit, "noValue": NO_DATA, "min": 0,
+                                         "color": {"mode": "fixed", "fixedColor": "#5794F2"},
+                                         "custom": {"fillOpacity": 80, "lineWidth": 0, "axisPlacement": "auto"}},
+                            "overrides": []},
+            "options": {"orientation": "vertical", "xField": label, "showValue": "auto", "barWidth": 0.8,
+                        "groupWidth": 0.7, "xTickLabelRotation": 0, "legend": {"showLegend": False},
+                        "tooltip": {"mode": "single"}},
         }, w, h)
 
     def table(self, title, sql, w=24, h=9, columns=None, description=None):
@@ -140,7 +178,9 @@ class Board:
         overrides = []
         for name, cfg in (columns or {}).items():
             props = []
-            if "unit" in cfg:
+            if cfg.get("unit") == AUEC:
+                props += [{"id": "unit", "value": "locale"}, {"id": "displayName", "value": f"{name} (aUEC)"}]
+            elif "unit" in cfg:
                 props.append({"id": "unit", "value": cfg["unit"]})
             if "decimals" in cfg:
                 props.append({"id": "decimals", "value": cfg["decimals"]})
@@ -156,7 +196,8 @@ class Board:
             "type": "table", "title": title, "datasource": PG,
             **({"description": description} if description else {}),
             "targets": [_target(sql)],
-            "fieldConfig": {"defaults": {"noValue": NO_DATA, "custom": {"align": "auto", "filterable": False}},
+            # Case vide : un tiret ; un tableau sans aucune ligne affiche « Pas de donnée ».
+            "fieldConfig": {"defaults": {"noValue": "—", "custom": {"align": "auto", "filterable": False}},
                             "overrides": overrides},
             "options": {"showHeader": True, "cellHeight": "sm", "footer": {"show": False}},
         }, w, h)
@@ -218,6 +259,15 @@ def alarm():
     return [{"type": "value", "options": {
         "0": {"text": "Aucune", "color": GREEN},
     }}, {"type": "range", "options": {"from": 1, "to": 1e9, "result": {"text": "Active", "color": RED}}}]
+
+
+def pg_var(name, label, sql):
+    """Filtre à choix multiple alimenté par PostgreSQL (colonnes __text et __value)."""
+    return {
+        "type": "query", "name": name, "label": label, "datasource": PG,
+        "query": sql, "definition": sql, "refresh": 1, "sort": 0, "multi": True, "includeAll": True,
+        "current": {"text": "All", "value": "$__all"},
+    }
 
 
 def query_var(name, label, query, include_all=True):
@@ -365,9 +415,9 @@ def rabbitmq():
            unit="percentunit", steps=PCT, w=4)
     b.row("Files")
     b.bars("Messages prêts par file", 'sort_desc(sum by (queue) (rabbitmq_detailed_queue_messages_ready))',
-           "{{queue}}", steps=[(None, GREEN), (50, ORANGE), (500, RED)], h=10)
+           "{{queue}}", steps=[(None, GREEN), (50, ORANGE), (500, RED)], h=10, label="File", value="Messages prêts")
     b.bars("Consommateurs par file", 'sort(sum by (queue) (rabbitmq_detailed_queue_consumers))',
-           "{{queue}}", steps=[(None, RED), (1, GREEN)], h=10,
+           "{{queue}}", steps=[(None, RED), (1, GREEN)], h=10, label="File", value="Consommateurs", desc=False,
            description="Rouge : aucun lecteur. Les files de retry et de lettres mortes n'en ont normalement pas.")
     b.series("Messages prêts", [
         ('sum by (queue) (rabbitmq_detailed_queue_messages_ready) > 0', "{{queue}}"),
@@ -420,7 +470,8 @@ def host():
     ], unit="bytes")
     b.bars("Occupation des disques",
            f'1 - node_filesystem_avail_bytes{{{DISKS}}} / node_filesystem_size_bytes{{{DISKS}}}',
-           "{{mountpoint}}", unit="percentunit", steps=[(None, GREEN), (0.8, ORANGE), (0.9, RED)])
+           "{{mountpoint}}", unit="percentunit", steps=[(None, GREEN), (0.8, ORANGE), (0.9, RED)],
+           label="Point de montage", value="Occupé")
     b.series("Lectures et écritures disque", [
         ('sum(rate(node_disk_read_bytes_total[5m]))', "lecture"),
         ('sum(rate(node_disk_written_bytes_total[5m]))', "écriture"),
@@ -458,160 +509,320 @@ def host():
 # Les dates sont des « timestamp without time zone » écrits par le backend : on les compare à
 # localtimestamp. Les montants sont en aUEC, entiers.
 
-AUEC = "suffix: aUEC"
 # Frais d'une fiche (docs/mining-v3/SPEC.md) : les frais saisis plus le coût de chaque ordre de raffinage,
 # avancé par le lanceur de l'ordre. Écrire « mining_fees » dans une requête insère cette sous-requête.
 MINING_FEES = """(SELECT sheet_id, payer_user_id, kind, amount FROM session.expenses
        UNION ALL SELECT sheet_id, launcher_user_id, 'REFINING', cost FROM mining.refinery_orders WHERE cost > 0)"""
-SCU = "suffix: SCU"
 PRESENT, MAYBE, ABSENT = 1, 0, -1
 # Les opérations n'ont pas de type d'événement : on les nomme par leur nature.
 EVENT_TYPE = "coalesce(e.event_type, CASE e.activity_type WHEN 'OPERATION' THEN 'Opération' ELSE 'Sans type' END)"
 
 
-def community():
-    b = Board("iceforge-communaute", "Communauté",
-              "Membres, activité, candidatures et flottes déclarées.",
-              time_from="now-1y", refresh="5m", kind="metier")
-    b.row("Membres")
-    b.stat("Comptes actifs", Sql("SELECT count(*) FROM core.users WHERE active"), w=4)
-    b.stat("Vus sur 7 jours", Sql(
-        "SELECT count(*) FROM core.users WHERE active AND last_seen_at >= localtimestamp - interval '7 days'"), w=4,
-        description="Comptes actifs avec une activité enregistrée (connexion ou action) dans les 7 derniers jours.")
-    b.stat("Vus sur 30 jours", Sql(
-        "SELECT count(*) FROM core.users WHERE active AND last_seen_at >= localtimestamp - interval '30 days'"), w=4)
-    b.stat("Sans activité depuis 30 jours", Sql(
-        "SELECT count(*) FROM core.users WHERE active AND (last_seen_at IS NULL OR last_seen_at < localtimestamp - interval '30 days')"),
-        steps=[(None, GREEN), (1, ORANGE)], w=4)
-    b.stat("Nouveaux sur la période", Sql("SELECT count(*) FROM core.users WHERE $__timeFilter(created_at)"), w=4)
+PARIS_DAY = "(rt.created_at AT TIME ZONE 'Europe/Paris')::date"
+# Membres retenus par le filtre « Membre » (variable $membre, identifiants).
+MEMBERS = "(SELECT id, username FROM core.users WHERE id::text IN ($membre))"
+MEMBER_VAR = pg_var("membre", "Membre", "SELECT username AS __text, id::text AS __value FROM core.users ORDER BY lower(username)")
+# Règlement en cours d'une fiche : le seul non annulé (index unique session_settlements_one_current).
+CURRENT_SETTLEMENT = "s.cancelled_at IS NULL"
+# Montant lisible dans un texte : 1 250 000.
+def _amount(column):
+    return f"replace(to_char({column}, 'FM999,999,999,999'), ',', ' ')"
+
+
+def members():
+    b = Board("iceforge-membres", "Membres",
+              "Comptes, connexions et habitudes des membres.", time_from="now-90d", refresh="5m", kind="metier")
+    b.row("En ce moment")
+    b.stat("Comptes actifs", Sql("SELECT count(*) FROM core.users WHERE active"), w=4,
+           description="Comptes non désactivés, qu'ils se connectent ou non.")
+    b.stat("Connectés ces 7 derniers jours", Sql(
+        "SELECT count(DISTINCT user_id) FROM core.refresh_tokens WHERE created_at >= now() - interval '7 days'"), w=4,
+        description="Membres ayant ouvert ou prolongé une session au moins une fois sur 7 jours.")
+    b.stat("Connectés ces 30 derniers jours", Sql(
+        "SELECT count(DISTINCT user_id) FROM core.refresh_tokens WHERE created_at >= now() - interval '30 days'"), w=4)
+    b.stat("Sans connexion depuis plus de 30 jours", Sql('''
+        SELECT count(*) FROM core.users u WHERE u.active AND NOT EXISTS (
+          SELECT 1 FROM core.refresh_tokens rt WHERE rt.user_id = u.id AND rt.created_at >= now() - interval '30 days')'''),
+        steps=[(None, GREEN), (1, ORANGE)], w=4,
+        description="Comptes actifs sans aucune connexion depuis 30 jours. Le détail est dans « Activité des membres ».")
+    b.stat("Comptes créés sur la période", Sql("SELECT count(*) FROM core.users WHERE $__timeFilter(created_at)"), w=4,
+           description="Selon la période choisie en haut à droite.")
     b.stat("Notifications push activées", Sql("SELECT count(DISTINCT user_id) FROM core.notification_subscriptions"), w=4,
-           description="Membres ayant au moins un appareil abonné aux notifications.")
-    b.series("Inscriptions par semaine", [(ts('''
-        SELECT date_trunc('week', created_at) AS time, count(*) AS "Inscriptions"
+           description="Membres ayant au moins un appareil abonné aux notifications du site.")
+    b.row("Connexions")
+    b.series("Membres connectés par jour", [(ts('''
+        SELECT date_trunc('day', created_at) AS time, count(DISTINCT user_id) AS "Membres connectés"
+        FROM core.refresh_tokens WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True, decimals=0,
+        description="Membres ayant ouvert ou prolongé une session ce jour-là.")
+    b.series("Membres connectés par semaine", [(ts('''
+        SELECT date_trunc('week', created_at) AS time, count(DISTINCT user_id) AS "Membres connectés"
+        FROM core.refresh_tokens WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True, decimals=0)
+    b.columns("Heures de connexion (heure de Paris)", Sql('''
+        SELECT lpad(h::text, 2, '0') || ' h' AS metric,
+               (SELECT count(DISTINCT (user_id, (created_at AT TIME ZONE 'Europe/Paris')::date)) FROM core.refresh_tokens
+                 WHERE $__timeFilter(created_at) AND extract(hour FROM created_at AT TIME ZONE 'Europe/Paris') = h) AS value
+        FROM generate_series(0, 23) AS h ORDER BY h'''), h=9, label="Heure", value="Connexions",
+        description="Pour chaque heure : combien de fois un membre était connecté à cette heure-là (un membre compte une fois par jour). "
+                    "Utile pour choisir l'horaire des événements.")
+    b.row("Comptes")
+    b.series("Comptes créés par semaine", [(ts('''
+        SELECT date_trunc('week', created_at) AS time, count(*) AS "Comptes créés"
         FROM core.users WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True)
-    b.series("Membres inscrits (cumul)", [(ts('''
-        SELECT day AS time, (SELECT count(*) FROM core.users u WHERE u.created_at < day + interval '1 day') AS "Membres"
+    b.series("Nombre total de comptes", [(ts('''
+        SELECT day AS time, (SELECT count(*) FROM core.users u WHERE u.created_at < day + interval '1 day') AS "Comptes"
         FROM generate_series(date_trunc('day', $__timeFrom()::timestamp), localtimestamp, interval '1 day') AS day
         ORDER BY 1'''), "")], min_zero=False,
         description="Comptes créés à chaque date, désactivés compris : la base ne date pas les désactivations.")
     b.bars("Rôles", Sql('''
         SELECT r.name AS metric, count(*) AS value FROM core.user_roles ur
         JOIN core.roles r ON r.id = ur.role_id JOIN core.users u ON u.id = ur.user_id
-        WHERE u.active GROUP BY 1 ORDER BY 2 DESC'''), "", w=8)
-    b.bars("Présence affichée", Sql('''
+        WHERE u.active GROUP BY 1 ORDER BY 2 DESC'''), "", w=8, label="Rôle", value="Membres actifs")
+    b.bars("Statut affiché sur le profil", Sql('''
         SELECT CASE status WHEN 'CONNECTE' THEN 'Connecté' WHEN 'ABSENT' THEN 'Absent'
                            WHEN 'HORS_LIGNE' THEN 'Hors ligne' ELSE status END AS metric, count(*) AS value
-        FROM core.users WHERE active GROUP BY status ORDER BY 2 DESC'''), "", w=8)
-    b.bars("Collections remplies", Sql('''
-        SELECT 'Membres avec une collection' AS metric, count(DISTINCT user_id) AS value FROM collections.user_collection
-        UNION ALL SELECT 'Collections', count(*) FROM collections.user_collection'''), "", w=8)
-    b.row("Recrutement")
+        FROM core.users WHERE active GROUP BY status ORDER BY 2 DESC'''), "", w=8, label="Statut", value="Membres",
+        description="Statut choisi ou calculé pour le profil au moment présent.")
+    b.bars("Notifications laissées actives", Sql('''
+        SELECT label AS metric, count(*) FILTER (WHERE on_) AS value FROM core.user_params p
+        JOIN core.users u ON u.id = p.user_id AND u.active
+        CROSS JOIN LATERAL (VALUES ('Toutes', p.notif_global), ('Événements', p.notif_events), ('Flotte', p.notif_fleet),
+                                   ('Objectifs', p.notif_goals), ('Discord', p.notif_discord)) AS v(label, on_)
+        GROUP BY label ORDER BY 2 DESC'''), "", w=8, label="Notification", value="Membres",
+        description="Membres actifs ayant laissé chaque type de notification activé dans leurs préférences.")
+    b.stat("Mot de passe provisoire non changé", Sql(
+        "SELECT count(*) FROM core.users WHERE active AND pwd_reset"), steps=[(None, GREEN), (1, ORANGE)], w=12,
+        description="Comptes créés ou réinitialisés par un administrateur dont le mot de passe provisoire n'a pas encore été remplacé.")
+    b.stat("Toutes notifications coupées", Sql(
+        "SELECT count(*) FROM core.user_params p JOIN core.users u ON u.id = p.user_id WHERE u.active AND NOT p.notif_global"),
+        w=12)
+    b.write()
+
+
+def member_activity():
+    b = Board("iceforge-activite-membres", "Activité des membres",
+              "Qui s'est connecté, quand, et tout ce que la base garde de ses actions. Filtrer un ou plusieurs membres en haut.",
+              variables=[MEMBER_VAR], time_from="now-30d", refresh="5m", kind="metier")
+    b.row("Connexions")
+    b.table("Qui s'est connecté sur la période", Sql(f'''
+        SELECT u.username AS "Membre",
+               count(DISTINCT {PARIS_DAY}) AS "Jours connectés",
+               min(rt.created_at) AS "Première connexion", max(rt.created_at) AS "Dernière connexion",
+               (SELECT max(created_at) FROM core.refresh_tokens x WHERE x.user_id = u.id) AS "Dernière connexion connue",
+               CASE WHEN u.active THEN 'Actif' ELSE 'Désactivé' END AS "Compte", u.created_at AS "Compte créé le"
+        FROM core.users u LEFT JOIN core.refresh_tokens rt ON rt.user_id = u.id AND $__timeFilter(rt.created_at)
+        WHERE u.id::text IN ($membre)
+        GROUP BY u.id ORDER BY 2 DESC, lower(u.username)'''),
+        columns={"Jours connectés": {"width": 140, "steps": [(None, "text"), (1, GREEN)]},
+                 "Première connexion": {"unit": "dateTimeAsLocal", "width": 170},
+                 "Dernière connexion": {"unit": "dateTimeAsLocal", "width": 170},
+                 "Dernière connexion connue": {"unit": "dateTimeAsLocal", "width": 200},
+                 "Compte": {"width": 100}, "Compte créé le": {"unit": "dateTimeAsLocal", "width": 170}},
+        h=11, description="Jours connectés : jours (heure de Paris) où le membre a ouvert ou prolongé une session sur la période choisie. "
+                          "Vide : aucune connexion sur la période ; la dernière connexion connue dit depuis quand.")
+    b.series("Connexions par jour et par membre", [(ts(f'''
+        SELECT date_trunc('day', rt.created_at) AS time, m.username AS metric, 1 AS value
+        FROM core.refresh_tokens rt JOIN {MEMBERS} m ON m.id = rt.user_id
+        WHERE $__timeFilter(rt.created_at) GROUP BY 1, 2 ORDER BY 1'''), "")], bars=True, stack=True, w=24, h=9, decimals=0,
+        description="Une couleur par membre : la hauteur d'une barre est le nombre de membres connectés ce jour-là.")
+    b.row("Bilan de la sélection sur la période")
+    b.stat("Jours connectés", Sql(f'''
+        SELECT count(DISTINCT (rt.user_id, {PARIS_DAY})) FROM core.refresh_tokens rt
+        WHERE rt.user_id::text IN ($membre) AND $__timeFilter(rt.created_at)'''), w=4)
+    b.stat("Présences annoncées", Sql(f'''
+        SELECT count(*) FROM events.event_participation p JOIN events.events e ON e.id = p.event_id
+        WHERE p.user_id::text IN ($membre) AND p.status = {PRESENT} AND $__timeFilter(e.start_date_time)'''), w=4,
+        description="Réponses « présent » à des événements de la période (intention, pas présence vérifiée).")
+    b.stat("Affectations", Sql('''
+        SELECT count(*) FROM events.operation_assignments a WHERE a.user_id::text IN ($membre) AND $__timeFilter(a.created_at)'''), w=4)
+    b.stat("Fiches de minage", Sql('''
+        SELECT count(*) FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id
+        WHERE pa.user_id::text IN ($membre) AND $__timeFilter(sh.session_date)'''), w=4)
+    b.stat("Frais avancés", Sql('''
+        SELECT sum(ex.amount) FROM mining_fees ex JOIN session.sheets sh ON sh.id = ex.sheet_id
+        WHERE ex.payer_user_id::text IN ($membre) AND $__timeFilter(sh.session_date)'''), unit=AUEC, w=4,
+        description="Frais de minage payés pour le groupe, raffinage compris.")
+    b.stat("Ventes", Sql('''
+        SELECT sum(sa.amount) FROM session.sales sa WHERE sa.seller_user_id::text IN ($membre) AND $__timeFilter(sa.sold_at)'''),
+        unit=AUEC, w=4)
+    b.row("Journal")
+    b.table("Journal d'activité", Sql(f'''
+        SELECT * FROM (
+          SELECT min(rt.created_at) AS "Date", m.username AS "Membre", 'Connexion' AS "Action",
+                 'de ' || to_char(min(rt.created_at) AT TIME ZONE 'Europe/Paris', 'HH24"h"MI') || ' à '
+                 || to_char(max(rt.created_at) AT TIME ZONE 'Europe/Paris', 'HH24"h"MI') || ' (heure de Paris)' AS "Détail"
+            FROM core.refresh_tokens rt JOIN {MEMBERS} m ON m.id = rt.user_id
+           WHERE $__timeFilter(rt.created_at) GROUP BY m.username, {PARIS_DAY}
+          UNION ALL SELECT u.created_at, m.username, 'Compte créé', NULL FROM core.users u JOIN {MEMBERS} m ON m.id = u.id
+          UNION ALL SELECT e.created_at, m.username, 'Événement créé', e.title
+            FROM events.events e JOIN {MEMBERS} m ON m.id = e.creator_id
+          UNION ALL SELECT e.start_date_time, m.username, 'Réponse à un événement',
+                 e.title || ' : ' || CASE p.status WHEN {PRESENT} THEN 'présent' WHEN {MAYBE} THEN 'peut-être' ELSE 'absent' END
+                 || ' (date de l''événement : la réponse n''est pas datée)'
+            FROM events.event_participation p JOIN {MEMBERS} m ON m.id = p.user_id JOIN events.events e ON e.id = p.event_id
+          UNION ALL SELECT a.created_at, m.username, 'Affectation à une opération',
+                 e.title || coalesce(' · ' || g.name, '') || CASE WHEN a.status = 'PENDING' THEN ' (en attente)' ELSE '' END
+            FROM events.operation_assignments a JOIN {MEMBERS} m ON m.id = a.user_id
+            JOIN events.events e ON e.id = a.operation_event_id LEFT JOIN events.operation_groups g ON g.id = a.group_id
+          UNION ALL SELECT r.created_at, m.username, 'Demande de place dans une opération',
+                 e.title || ' (' || CASE r.status WHEN 'PENDING' THEN 'en attente' WHEN 'APPROVED' THEN 'acceptée'
+                                                  WHEN 'REFUSED' THEN 'refusée' ELSE 'annulée' END || ')'
+            FROM events.operation_assignment_requests r JOIN {MEMBERS} m ON m.id = r.user_id
+            JOIN events.events e ON e.id = r.operation_event_id
+          UNION ALL SELECT sp.created_at, m.username, 'Vaisseau proposé à une opération',
+                 e.title || coalesce(' · ' || s.name, '') || ' (' || CASE sp.status WHEN 'PROPOSED' THEN 'proposé'
+                     WHEN 'ACCEPTED' THEN 'accepté' WHEN 'DECLINED' THEN 'refusé' ELSE 'indisponible' END || ')'
+            FROM events.operation_ship_proposals sp JOIN {MEMBERS} m ON m.id = sp.owner_user_id
+            JOIN events.events e ON e.id = sp.operation_event_id LEFT JOIN catalog.ship_compat s ON s.id = sp.ship_id
+          UNION ALL SELECT gp.created_at, m.username, 'Contribution à un objectif',
+                 g.name || ' : ' || CASE WHEN gp.delta >= 0 THEN '+' ELSE '' END || gp.delta
+            FROM goals.goal_participations gp JOIN {MEMBERS} m ON m.id = gp.user_id JOIN goals.goals g ON g.id = gp.goal_id
+          UNION ALL SELECT coalesce(w.updated_at, w.created_at), m.username, 'Événement Star Citizen',
+                 ev.title || ' : ' || w.total || ' points'
+            FROM scworld.sc_world_event_participation w JOIN {MEMBERS} m ON m.id = w.user_id
+            JOIN scworld.sc_world_event ev ON ev.id = w.scwe_id
+          UNION ALL SELECT us.created_at, m.username, 'Vaisseau ajouté à la flotte', coalesce(s.name, 'Vaisseau n°' || us.ship_id)
+            FROM fleet.user_ships us JOIN {MEMBERS} m ON m.id = us.user_id LEFT JOIN catalog.ship_compat s ON s.id = us.ship_id
+          UNION ALL SELECT c.updated_at, m.username, 'Collection mise à jour', NULL
+            FROM collections.user_collection c JOIN {MEMBERS} m ON m.id::text = c.user_id
+          UNION ALL SELECT n.created_at, m.username, 'Notifications push activées', NULL
+            FROM core.notification_subscriptions n JOIN {MEMBERS} m ON m.id = n.user_id
+          UNION ALL SELECT i.uploaded_at, m.username, 'Image envoyée', i.category
+            FROM media.image_metadata i JOIN {MEMBERS} m ON m.id = i.uploader_id
+          UNION ALL SELECT sh.created_at, m.username, 'Fiche de minage créée', sh.name
+            FROM session.sheets sh JOIN {MEMBERS} m ON m.id = sh.organizer_user_id
+          UNION ALL SELECT pa.joined_at, m.username, 'Ajouté à une fiche de minage', sh.name
+            FROM session.participants pa JOIN {MEMBERS} m ON m.id = pa.user_id JOIN session.sheets sh ON sh.id = pa.sheet_id
+          UNION ALL SELECT ex.created_at, m.username, 'Frais avancé (minage)',
+                 sh.name || ' : ' || CASE ex.kind WHEN 'FUEL' THEN 'carburant' WHEN 'REPAIR' THEN 'réparation'
+                     WHEN 'MATERIAL' THEN 'matériel' ELSE 'autre' END || ' ' || {_amount('ex.amount')} || ' aUEC'
+            FROM session.expenses ex JOIN {MEMBERS} m ON m.id = ex.payer_user_id JOIN session.sheets sh ON sh.id = ex.sheet_id
+          UNION ALL SELECT ro.created_at, m.username, 'Ordre de raffinage lancé',
+                 sh.name || ' : ' || ro.terminal_label || CASE WHEN ro.cost > 0 THEN ', ' || {_amount('ro.cost')} || ' aUEC' ELSE '' END
+            FROM mining.refinery_orders ro JOIN {MEMBERS} m ON m.id = ro.launcher_user_id JOIN session.sheets sh ON sh.id = ro.sheet_id
+          UNION ALL SELECT sa.sold_at, m.username, 'Vente de minerai',
+                 sh.name || ' : ' || {_amount('sa.amount')} || ' aUEC à ' || sa.terminal_label
+            FROM session.sales sa JOIN {MEMBERS} m ON m.id = sa.seller_user_id JOIN session.sheets sh ON sh.id = sa.sheet_id
+          UNION ALL SELECT t.received_at, m.username, 'Virement reçu (minage)',
+                 sh.name || ' : ' || {_amount('t.amount')} || ' aUEC de ' || f.username
+            FROM session.settlement_transfers t JOIN {MEMBERS} m ON m.id = t.to_user_id JOIN core.users f ON f.id = t.from_user_id
+            JOIN session.settlements s ON s.id = t.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id
+           WHERE t.received_at IS NOT NULL
+          UNION ALL SELECT h.at, m.username, 'Fiche de minage : ' || CASE h.action WHEN 'SETTLED' THEN 'comptes arrêtés'
+                     WHEN 'CLOSED' THEN 'clôture' WHEN 'FORCED_CLOSE' THEN 'clôture forcée' WHEN 'REOPENED_SETTLEMENT' THEN 'réouverture du règlement'
+                     WHEN 'REOPENED_ACTIVE' THEN 'retour en cours' WHEN 'RECEIPT_CONFIRMED' THEN 'virement confirmé'
+                     ELSE 'confirmation retirée' END, sh.name
+            FROM session.history h JOIN {MEMBERS} m ON m.id = h.actor_user_id JOIN session.sheets sh ON sh.id = h.sheet_id
+        ) journal
+        WHERE "Date" BETWEEN $__timeFrom() AND $__timeTo()
+        ORDER BY "Date" DESC LIMIT 2000'''),
+        columns={"Date": {"unit": "dateTimeAsLocal", "width": 170}, "Membre": {"width": 160}, "Action": {"width": 280}},
+        h=18, description="Tout ce que la base date et rattache à un membre. Ce qui n'est pas enregistré (pages consultées, "
+                          "messages Discord, lectures) n'y figure pas. Les connexions sont regroupées par jour.")
+    b.table("Membres sans connexion sur la période", Sql('''
+        SELECT u.username AS "Membre", (SELECT max(created_at) FROM core.refresh_tokens x WHERE x.user_id = u.id) AS "Dernière connexion connue",
+               u.created_at AS "Compte créé le"
+        FROM core.users u
+        WHERE u.active AND u.id::text IN ($membre)
+          AND NOT EXISTS (SELECT 1 FROM core.refresh_tokens rt WHERE rt.user_id = u.id AND $__timeFilter(rt.created_at))
+        ORDER BY 2 NULLS FIRST, lower(u.username)'''),
+        columns={"Dernière connexion connue": {"unit": "dateTimeAsLocal", "width": 220},
+                 "Compte créé le": {"unit": "dateTimeAsLocal", "width": 170}},
+        h=9, description="Comptes actifs du filtre sans aucune connexion sur la période. Vide en « Dernière connexion connue » : "
+                         "jamais connecté depuis la mise en place des jetons de session.")
+    b.write()
+
+
+def recruitment():
+    b = Board("iceforge-recrutement", "Recrutement", "Candidatures reçues et leur traitement.",
+              time_from="now-1y", refresh="5m", kind="metier")
     b.stat("Candidatures en attente", Sql("SELECT count(*) FROM recruitment.recruitment WHERE status = 'PENDING'"),
-           steps=[(None, GREEN), (1, ORANGE)], w=6)
-    b.stat("Candidatures sur la période", Sql("SELECT count(*) FROM recruitment.recruitment WHERE $__timeFilter(created_at)"), w=6)
-    b.stat("Acceptées sur la période", Sql('''
+           steps=[(None, GREEN), (1, ORANGE)], w=6, description="À traiter par un officier.")
+    b.stat("Attente la plus longue", Sql('''
+        SELECT extract(epoch FROM now() - min(created_at)) FROM recruitment.recruitment WHERE status = 'PENDING' '''),
+        unit="s", steps=[(None, GREEN), (3 * 86400, ORANGE), (7 * 86400, RED)], w=6,
+        description="Depuis quand la plus ancienne candidature en attente patiente.")
+    b.stat("Candidatures reçues sur la période", Sql("SELECT count(*) FROM recruitment.recruitment WHERE $__timeFilter(created_at)"), w=6)
+    b.stat("Taux d'acceptation", Sql('''
         SELECT round(count(*) FILTER (WHERE status = 'APPROVED')::numeric / nullif(count(*) FILTER (WHERE status <> 'PENDING'), 0), 3)
         FROM recruitment.recruitment WHERE $__timeFilter(created_at)'''), unit="percentunit", w=6,
-        description="Part des candidatures traitées (hors attente) qui ont été acceptées.")
-    b.stat("Délai depuis la plus ancienne en attente", Sql('''
-        SELECT extract(epoch FROM now() - min(created_at)) FROM recruitment.recruitment WHERE status = 'PENDING' '''),
-        unit="s", steps=[(None, GREEN), (3 * 86400, ORANGE), (7 * 86400, RED)], w=6)
+        description="Candidatures acceptées parmi celles déjà traitées, sur la période.")
     b.series("Candidatures par semaine", [(ts('''
         SELECT date_trunc('week', created_at) AS time,
                CASE status WHEN 'PENDING' THEN 'En attente' WHEN 'APPROVED' THEN 'Acceptée'
                            WHEN 'REFUSED' THEN 'Refusée' WHEN 'CANCELLED' THEN 'Annulée' ELSE status END AS metric,
                count(*) AS value
         FROM recruitment.recruitment WHERE $__timeFilter(created_at) GROUP BY 1, 2 ORDER BY 1'''), "")],
-        bars=True, stack=True)
+        bars=True, stack=True, w=14, h=10)
     b.bars("Gameplay recherché par les candidats", Sql('''
         SELECT coalesce(nullif(btrim(preferred_gameplay), ''), 'Non précisé') AS metric, count(*) AS value
-        FROM recruitment.recruitment WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 2 DESC LIMIT 10'''), "")
-    b.row("Flottes déclarées")
-    b.stat("Vaisseaux déclarés", Sql("SELECT count(*) FROM fleet.user_ships"), w=6)
-    b.stat("Membres avec une flotte", Sql("SELECT count(DISTINCT user_id) FROM fleet.user_ships"), w=6)
+        FROM recruitment.recruitment WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 2 DESC LIMIT 20'''), "",
+        w=10, h=10, label="Gameplay", value="Candidats")
+    b.write()
+
+
+def fleets():
+    b = Board("iceforge-flottes", "Flottes et collections", "Vaisseaux déclarés par les membres, hangar exécutif et collections.",
+              time_from="now-1y", refresh="5m", kind="metier")
+    b.stat("Vaisseaux déclarés", Sql("SELECT count(*) FROM fleet.user_ships"), w=4)
+    b.stat("Membres avec une flotte", Sql("SELECT count(DISTINCT user_id) FROM fleet.user_ships"), w=4)
     b.stat("Achetés en jeu", Sql('''
         SELECT round(count(*) FILTER (WHERE in_game_purchase)::numeric / nullif(count(*), 0), 3) FROM fleet.user_ships'''),
-        unit="percentunit", w=6)
-    b.stat("Prêts (loaners)", Sql("SELECT count(*) FILTER (WHERE loaner) FROM fleet.user_ships"), w=6)
+        unit="percentunit", w=4, description="Part des vaisseaux déclarés comme achetés en jeu (aUEC) plutôt qu'en pledge.")
+    b.stat("Prêts (loaners)", Sql("SELECT count(*) FILTER (WHERE loaner) FROM fleet.user_ships"), w=4)
+    b.stat("Vaisseau exécutif déclaré", Sql(
+        "SELECT count(*) FROM utils.exec_hangar_player_status WHERE has_exec_ship"), w=4,
+        description="Membres ayant coché un vaisseau exécutif dans l'outil Hangar exécutif.")
+    b.stat("Collections créées", Sql("SELECT count(*) FROM collections.user_collection"), w=4)
     b.bars("Vaisseaux les plus possédés", Sql('''
         SELECT coalesce(s.name, 'Vaisseau n°' || us.ship_id) AS metric, count(*) AS value
         FROM fleet.user_ships us LEFT JOIN catalog.ship_compat s ON s.id = us.ship_id
-        GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 15'''), "", h=10)
+        GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "", w=8, h=13, label="Vaisseau", value="Exemplaires")
     b.bars("Rôles des vaisseaux", Sql('''
         SELECT coalesce(nullif(s.focus, ''), 'Rôle non renseigné') AS metric, count(*) AS value
         FROM fleet.user_ships us LEFT JOIN catalog.ship_compat s ON s.id = us.ship_id
-        GROUP BY 1 ORDER BY 2 DESC LIMIT 15'''), "", h=10)
-    b.stat("Membres avec un vaisseau exécutif", Sql(
-        "SELECT count(*) FROM utils.exec_hangar_player_status WHERE has_exec_ship"), w=8,
-        description="Déclarés dans l'outil Hangar exécutif.")
-    b.stat("Comptes en attente d'un nouveau mot de passe", Sql(
-        "SELECT count(*) FROM core.users WHERE active AND pwd_reset"), steps=[(None, GREEN), (1, ORANGE)], w=8,
-        description="Comptes créés ou réinitialisés par un administrateur, dont le mot de passe provisoire n'a pas été changé.")
-    b.stat("Membres ayant coupé toutes les notifications", Sql(
-        "SELECT count(*) FROM core.user_params p JOIN core.users u ON u.id = p.user_id WHERE u.active AND NOT p.notif_global"),
-        w=8)
-    b.row("Connexions")
-    b.series("Membres connectés par jour", [(ts('''
-        SELECT date_trunc('day', created_at) AS time, count(DISTINCT user_id) AS "Membres connectés"
-        FROM core.refresh_tokens WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True,
-        description="Membres ayant ouvert ou prolongé une session ce jour-là (jetons de session émis).")
-    b.series("Membres connectés par semaine", [(ts('''
-        SELECT date_trunc('week', created_at) AS time, count(DISTINCT user_id) AS "Membres connectés"
-        FROM core.refresh_tokens WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True)
-    b.bars("Heures de connexion (heure de Paris)", Sql('''
-        SELECT lpad(extract(hour FROM created_at AT TIME ZONE 'Europe/Paris')::text, 2, '0') || ' h' AS metric,
-               count(DISTINCT (user_id, (created_at AT TIME ZONE 'Europe/Paris')::date)) AS value
-        FROM core.refresh_tokens WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "", h=14,
-        description="Pour chaque heure de la journée : nombre de fois où un membre était connecté (un membre compte une fois par jour). "
-                    "Utile pour choisir l'horaire des événements.")
-    b.bars("Préférences de notification", Sql('''
-        SELECT label AS metric, count(*) FILTER (WHERE on_) AS value FROM core.user_params p
-        JOIN core.users u ON u.id = p.user_id AND u.active
-        CROSS JOIN LATERAL (VALUES ('Toutes', p.notif_global), ('Événements', p.notif_events), ('Flotte', p.notif_fleet),
-                                   ('Objectifs', p.notif_goals), ('Discord', p.notif_discord)) AS v(label, on_)
-        GROUP BY label ORDER BY 2 DESC'''), "", description="Membres actifs ayant laissé chaque type de notification activé.")
+        GROUP BY 1 ORDER BY 2 DESC LIMIT 30'''), "", w=8, h=13, label="Rôle", value="Vaisseaux")
+    b.bars("Plus grandes flottes", Sql('''
+        SELECT u.username AS metric, count(*) AS value FROM fleet.user_ships us JOIN core.users u ON u.id = us.user_id
+        GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "", w=8, h=13, label="Membre", value="Vaisseaux")
+    b.series("Vaisseaux ajoutés par mois", [(ts('''
+        SELECT date_trunc('month', created_at) AS time, count(*) AS "Vaisseaux ajoutés"
+        FROM fleet.user_ships WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")], bars=True, w=24)
     b.write()
 
 
 def events():
-    b = Board("iceforge-evenements", "Événements et opérations",
-              "Calendrier, réponses des membres, opérations, objectifs et événements Star Citizen.",
+    b = Board("iceforge-evenements", "Événements",
+              "Calendrier, réponses des membres et événements Star Citizen.",
               time_from="now-6M", time_to="now+2M", refresh="5m", kind="metier")
-    b.row("Événements")
-    b.stat("À venir", Sql("SELECT count(*) FROM events.events WHERE start_date_time > localtimestamp AND NOT finished"), w=4)
-    b.stat("Sur la période", Sql("SELECT count(*) FROM events.events WHERE $__timeFilter(start_date_time)"), w=4)
+    b.stat("Événements à venir", Sql("SELECT count(*) FROM events.events WHERE start_date_time > localtimestamp AND NOT finished"), w=5)
+    b.stat("Événements sur la période", Sql("SELECT count(*) FROM events.events WHERE $__timeFilter(start_date_time)"), w=5)
     b.stat("Réponses « présent »", Sql(f'''
         SELECT count(*) FROM events.event_participation p JOIN events.events e ON e.id = p.event_id
-        WHERE p.status = {PRESENT} AND $__timeFilter(e.start_date_time)'''), w=4)
-    b.stat("Présents par événement", Sql(f'''
+        WHERE p.status = {PRESENT} AND $__timeFilter(e.start_date_time)'''), w=5)
+    b.stat("Présents par événement passé", Sql(f'''
         SELECT round(count(p.id) FILTER (WHERE p.status = {PRESENT})::numeric / nullif(count(DISTINCT e.id), 0), 1)
         FROM events.events e LEFT JOIN events.event_participation p ON p.event_id = e.id
-        WHERE $__timeFilter(e.start_date_time) AND e.start_date_time <= localtimestamp'''), decimals=1, w=4,
-        description="Moyenne des réponses « présent » par événement passé de la période. C'est une intention, pas une présence vérifiée.")
-    b.stat("Opérations publiées", Sql('''
-        SELECT count(*) FROM events.operations o JOIN events.events e ON e.id = o.event_id
-        WHERE o.publication_status = 'PUBLISHED' AND $__timeFilter(e.start_date_time)'''), w=4)
-    b.stat("Opérations en brouillon", Sql('''
-        SELECT count(*) FROM events.operations o JOIN events.events e ON e.id = o.event_id
-        WHERE o.publication_status = 'DRAFT' AND e.start_date_time > localtimestamp'''),
-        steps=[(None, GREEN), (1, ORANGE)], w=4, description="Opérations à venir pas encore publiées.")
+        WHERE $__timeFilter(e.start_date_time) AND e.start_date_time <= localtimestamp'''), decimals=1, w=5,
+        description="Moyenne des réponses « présent ». C'est une intention annoncée, pas une présence vérifiée.")
+    b.stat("Publiés sur Discord", Sql('''
+        SELECT round(count(*) FILTER (WHERE discord_message_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
+        FROM events.events WHERE $__timeFilter(start_date_time)'''), unit="percentunit",
+        steps=[(None, RED), (0.8, ORANGE), (0.95, GREEN)], w=4,
+        description="Événements de la période qui ont bien leur message sur Discord.")
     b.table("Prochains événements", Sql(f'''
         SELECT e.start_date_time AS "Début", e.title AS "Titre", {EVENT_TYPE} AS "Type",
                CASE WHEN o.event_id IS NULL THEN 'Événement'
                     WHEN o.publication_status = 'DRAFT' THEN 'Opération (brouillon)' ELSE 'Opération' END AS "Nature",
                count(p.id) FILTER (WHERE p.status = {PRESENT}) AS "Présents",
                count(p.id) FILTER (WHERE p.status = {MAYBE}) AS "Peut-être",
-               count(p.id) FILTER (WHERE p.status = {ABSENT}) AS "Absents",
-               (SELECT count(*) FROM events.operation_assignments a
-                 WHERE a.operation_event_id = e.id AND a.status = 'CONFIRMED') AS "Affectés"
+               count(p.id) FILTER (WHERE p.status = {ABSENT}) AS "Absents"
         FROM events.events e
         LEFT JOIN events.operations o ON o.event_id = e.id
         LEFT JOIN events.event_participation p ON p.event_id = e.id
         WHERE e.start_date_time > localtimestamp AND NOT e.finished
-        GROUP BY e.id, o.event_id, o.publication_status ORDER BY e.start_date_time LIMIT 20'''),
+        GROUP BY e.id, o.event_id, o.publication_status ORDER BY e.start_date_time LIMIT 30'''),
         columns={"Début": {"unit": "dateTimeAsLocal", "width": 170}, "Présents": {"width": 90},
-                 "Peut-être": {"width": 90}, "Absents": {"width": 90}, "Affectés": {"width": 90}},
-        description="Affectés : membres placés dans un groupe de l'opération (vide pour un événement simple).")
+                 "Peut-être": {"width": 90}, "Absents": {"width": 90}}, h=10)
     b.series("Événements par mois", [(ts(f'''
         SELECT date_trunc('month', e.start_date_time) AS time, {EVENT_TYPE} AS metric, count(*) AS value
         FROM events.events e WHERE $__timeFilter(e.start_date_time) GROUP BY 1, 2 ORDER BY 1'''), "")],
@@ -627,11 +838,43 @@ def events():
         SELECT u.username AS metric, count(*) AS value
         FROM events.event_participation p JOIN events.events e ON e.id = p.event_id JOIN core.users u ON u.id = p.user_id
         WHERE p.status = {PRESENT} AND $__timeFilter(e.start_date_time) AND e.start_date_time <= localtimestamp
-        GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10'''), "", h=10)
+        GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "", h=11, label="Membre", value="Présences annoncées")
     b.bars("Événements par type", Sql(f'''
         SELECT {EVENT_TYPE} AS metric, count(*) AS value FROM events.events e
-        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", h=10)
-    b.row("Opérations")
+        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", h=11, label="Type", value="Événements")
+    b.table("Événements Star Citizen", Sql(f'''
+        SELECT w.start_at AS "Début", w.title AS "Événement", w.type_name AS "Type",
+               count(p.id) FILTER (WHERE p.status = {PRESENT}) AS "Confirmés",
+               count(p.id) FILTER (WHERE p.status = {MAYBE}) AS "Peut-être",
+               coalesce(sum(p.total) FILTER (WHERE p.status = {PRESENT}), 0) AS "Points des confirmés"
+        FROM scworld.sc_world_event w LEFT JOIN scworld.sc_world_event_participation p ON p.scwe_id = w.id
+        WHERE $__timeFilter(w.start_at) GROUP BY w.id ORDER BY w.start_at DESC LIMIT 20'''),
+        columns={"Début": {"unit": "dateTimeAsLocal", "width": 170}}, h=8)
+    b.write()
+
+
+def operations():
+    b = Board("iceforge-operations", "Opérations et objectifs",
+              "Organisation des opérations (groupes, affectations, vaisseaux) et objectifs de l'organisation.",
+              time_from="now-6M", time_to="now+2M", refresh="5m", kind="metier")
+    b.stat("Opérations publiées", Sql('''
+        SELECT count(*) FROM events.operations o JOIN events.events e ON e.id = o.event_id
+        WHERE o.publication_status = 'PUBLISHED' AND $__timeFilter(e.start_date_time)'''), w=5)
+    b.stat("Brouillons à venir", Sql('''
+        SELECT count(*) FROM events.operations o JOIN events.events e ON e.id = o.event_id
+        WHERE o.publication_status = 'DRAFT' AND e.start_date_time > localtimestamp'''),
+        steps=[(None, GREEN), (1, ORANGE)], w=5, description="Opérations à venir pas encore publiées.")
+    b.stat("Demandes de place en attente", Sql('''
+        SELECT count(*) FROM events.operation_assignment_requests r JOIN events.events e ON e.id = r.operation_event_id
+        WHERE r.status = 'PENDING' AND e.start_date_time > localtimestamp'''), steps=[(None, GREEN), (1, ORANGE)], w=5,
+        description="Membres qui demandent une place dans un groupe à validation : un responsable doit répondre.")
+    b.stat("Vaisseaux proposés en attente", Sql('''
+        SELECT count(*) FROM events.operation_ship_proposals p JOIN events.events e ON e.id = p.operation_event_id
+        WHERE p.status = 'PROPOSED' AND e.start_date_time > localtimestamp'''), steps=[(None, GREEN), (1, ORANGE)], w=5)
+    b.stat("Modèles d'équipage utilisés", Sql('''
+        SELECT count(DISTINCT g.crew_preset_id) || ' / ' || (SELECT count(*) FROM events.operation_crew_presets WHERE NOT archived)
+        FROM events.operation_groups g WHERE g.crew_preset_id IS NOT NULL'''), w=4,
+        description="Modèles appliqués au moins une fois, sur le nombre de modèles non archivés.")
     b.table("Opérations de la période", Sql('''
         SELECT e.start_date_time AS "Début", e.title AS "Opération",
                CASE o.publication_status WHEN 'DRAFT' THEN 'Brouillon' ELSE 'Publiée' END AS "Statut",
@@ -648,34 +891,18 @@ def events():
                  WHERE sp.operation_event_id = e.id AND sp.status = 'ACCEPTED') AS "Vaisseaux acceptés"
         FROM events.operations o JOIN events.events e ON e.id = o.event_id
         WHERE $__timeFilter(e.start_date_time) ORDER BY e.start_date_time DESC LIMIT 30'''),
-        columns={"Début": {"unit": "dateTimeAsLocal", "width": 170}},
+        columns={"Début": {"unit": "dateTimeAsLocal", "width": 170}}, h=10,
         description="Places : somme des capacités des groupes, vide si un groupe n'a pas de capacité définie.")
-    b.stat("Demandes d'affectation en attente", Sql('''
-        SELECT count(*) FROM events.operation_assignment_requests r JOIN events.events e ON e.id = r.operation_event_id
-        WHERE r.status = 'PENDING' AND e.start_date_time > localtimestamp'''), steps=[(None, GREEN), (1, ORANGE)], w=6,
-        description="Membres qui demandent une place dans un groupe à validation : un responsable doit répondre.")
-    b.stat("Vaisseaux proposés en attente", Sql('''
-        SELECT count(*) FROM events.operation_ship_proposals p JOIN events.events e ON e.id = p.operation_event_id
-        WHERE p.status = 'PROPOSED' AND e.start_date_time > localtimestamp'''), steps=[(None, GREEN), (1, ORANGE)], w=6)
-    b.stat("Événements publiés sur Discord", Sql('''
-        SELECT round(count(*) FILTER (WHERE discord_message_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
-        FROM events.events WHERE $__timeFilter(start_date_time)'''), unit="percentunit",
-        steps=[(None, RED), (0.8, ORANGE), (0.95, GREEN)], w=6,
-        description="Part des événements de la période dont le message Discord existe. Un écart signale un message perdu par le bot.")
-    b.stat("Modèles d'équipage utilisés", Sql('''
-        SELECT count(DISTINCT g.crew_preset_id) || ' / ' || (SELECT count(*) FROM events.operation_crew_presets WHERE NOT archived)
-        FROM events.operation_groups g WHERE g.crew_preset_id IS NOT NULL'''), w=6,
-        description="Modèles d'équipage appliqués au moins une fois, sur les modèles non archivés.")
-    b.bars("Réponses aux demandes d'affectation", Sql('''
+    b.bars("Réponses aux demandes de place", Sql('''
         SELECT CASE r.status WHEN 'PENDING' THEN 'En attente' WHEN 'APPROVED' THEN 'Acceptée' WHEN 'REFUSED' THEN 'Refusée'
                              WHEN 'CANCELLED' THEN 'Annulée' ELSE r.status END AS metric, count(*) AS value
         FROM events.operation_assignment_requests r JOIN events.events e ON e.id = r.operation_event_id
-        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", w=12)
-    b.bars("Vaisseaux proposés aux opérations", Sql('''
+        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", w=12, h=7, label="Réponse", value="Demandes")
+    b.bars("Vaisseaux proposés", Sql('''
         SELECT CASE p.status WHEN 'PROPOSED' THEN 'Proposé' WHEN 'ACCEPTED' THEN 'Accepté' WHEN 'DECLINED' THEN 'Refusé'
                              WHEN 'UNAVAILABLE' THEN 'Indisponible' ELSE p.status END AS metric, count(*) AS value
         FROM events.operation_ship_proposals p JOIN events.events e ON e.id = p.operation_event_id
-        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", w=12)
+        WHERE $__timeFilter(e.start_date_time) GROUP BY 1 ORDER BY 2 DESC'''), "", w=12, h=7, label="État", value="Vaisseaux")
     b.row("Objectifs")
     b.table("Objectifs en cours", Sql('''
         SELECT g.name AS "Objectif", coalesce(u.username, 'Organisation') AS "Porteur",
@@ -683,34 +910,21 @@ def events():
                round(g.current::numeric / nullif(g.target, 0), 3) AS "Avancement",
                g.created_at AS "Créé le"
         FROM goals.goals g LEFT JOIN core.users u ON u.id = g.user_id
-        WHERE NOT g.completed ORDER BY g.pinned DESC, 5 DESC NULLS LAST LIMIT 20'''),
+        WHERE NOT g.completed ORDER BY g.pinned DESC, 5 DESC NULLS LAST LIMIT 30'''),
         columns={"Avancement": {"unit": "percentunit", "steps": [(None, ORANGE), (0.5, BLUE), (1, GREEN)], "width": 120},
-                 "Créé le": {"unit": "dateTimeAsLocal", "width": 170}}, w=14)
+                 "Créé le": {"unit": "dateTimeAsLocal", "width": 170}}, w=14, h=10)
     b.series("Contributions aux objectifs par semaine", [(ts('''
         SELECT date_trunc('week', created_at) AS time, count(*) AS "Contributions"
         FROM goals.goal_participations WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1'''), "")],
-        bars=True, w=10, h=9)
-    b.row("Événements Star Citizen")
-    b.table("Participation aux événements Star Citizen", Sql(f'''
-        SELECT w.start_at AS "Début", w.title AS "Événement", w.type_name AS "Type",
-               count(p.id) FILTER (WHERE p.status = {PRESENT}) AS "Confirmés",
-               count(p.id) FILTER (WHERE p.status = {MAYBE}) AS "Peut-être",
-               coalesce(sum(p.total) FILTER (WHERE p.status = {PRESENT}), 0) AS "Points des confirmés"
-        FROM scworld.sc_world_event w LEFT JOIN scworld.sc_world_event_participation p ON p.scwe_id = w.id
-        WHERE $__timeFilter(w.start_at) GROUP BY w.id ORDER BY w.start_at DESC LIMIT 20'''),
-        columns={"Début": {"unit": "dateTimeAsLocal", "width": 170}}, h=7)
+        bars=True, w=10, h=10)
     b.write()
-
-
-# Règlement en cours d'une fiche : le seul non annulé (index unique session_settlements_one_current).
-CURRENT_SETTLEMENT = "s.cancelled_at IS NULL"
 
 
 def mining():
     b = Board("iceforge-minage", "Minage",
-              "Fiches de minage : ventes, frais avancés, partage, virements entre participants et raffinage.",
+              "Fiches de minage : activité, ventes, frais et raffinage. Le partage et les virements sont dans « Minage : partage ».",
               time_from="now-6M", refresh="5m", kind="metier")
-    b.row("Période")
+    b.row("Sur la période")
     b.stat("Fiches", Sql("SELECT count(*) FROM session.sheets WHERE $__timeFilter(session_date)"), w=4)
     b.stat("Ventes", Sql('''
         SELECT sum(sa.amount) FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id
@@ -728,19 +942,16 @@ def mining():
     b.stat("Participations", Sql('''
         SELECT count(*) FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id
         WHERE $__timeFilter(sh.session_date)'''), w=5, description="Somme des participants de chaque fiche.")
-    b.row("À traiter")
-    b.stat("Fiches en cours", Sql("SELECT count(*) FROM session.sheets WHERE status = 'ACTIVE'"), w=4)
+    b.row("À traiter maintenant")
+    b.stat("Fiches en cours", Sql("SELECT count(*) FROM session.sheets WHERE status = 'ACTIVE'"), w=6)
     b.stat("Fiches en règlement", Sql("SELECT count(*) FROM session.sheets WHERE status = 'SETTLEMENT'"),
-           steps=[(None, GREEN), (1, ORANGE)], w=5, description="Comptes arrêtés, virements pas encore tous confirmés.")
-    b.stat("Virements en attente", Sql(f'''
-        SELECT count(*) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id
-        WHERE {CURRENT_SETTLEMENT} AND t.received_at IS NULL'''), steps=[(None, GREEN), (1, ORANGE)], w=5)
-    b.stat("Montant à verser", Sql(f'''
-        SELECT coalesce(sum(t.amount), 0) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id
-        WHERE {CURRENT_SETTLEMENT} AND t.received_at IS NULL'''), unit=AUEC, steps=[(None, GREEN), (1, ORANGE)], w=5)
+           steps=[(None, GREEN), (1, ORANGE)], w=6, description="Comptes arrêtés, virements pas encore tous confirmés.")
     b.stat("Raffinage prêt, non remis", Sql('''
         SELECT count(*) FROM mining.refinery_orders WHERE finishes_at <= localtimestamp AND handed_over_at IS NULL'''),
-        steps=[(None, GREEN), (1, ORANGE)], w=5, description="Ordres de raffinage terminés dont le minerai n'a pas été remis au destinataire.")
+        steps=[(None, GREEN), (1, ORANGE)], w=6, description="Ordres terminés dont le minerai n'a pas été remis au destinataire.")
+    b.stat("Virements en attente", Sql(f'''
+        SELECT count(*) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id
+        WHERE {CURRENT_SETTLEMENT} AND t.received_at IS NULL'''), steps=[(None, GREEN), (1, ORANGE)], w=6)
     b.table("Fiches de la période", Sql(f'''
         SELECT sh.session_date AS "Date", sh.name AS "Fiche", o.username AS "Organisateur",
                CASE sh.status WHEN 'ACTIVE' THEN 'En cours' WHEN 'SETTLEMENT' THEN 'En règlement' ELSE 'Clôturée' END AS "Statut",
@@ -757,26 +968,75 @@ def mining():
         columns={"Date": {"unit": "dateTimeAsLocalNoDateIfToday", "width": 110},
                  "Ventes": {"unit": AUEC, "decimals": 0}, "Frais avancés": {"unit": AUEC, "decimals": 0},
                  "Net": {"unit": AUEC, "decimals": 0, "steps": [(None, RED), (0, GREEN)]},
-                 "Virements reçus": {"width": 130}},
+                 "Virements reçus": {"width": 130}}, h=10,
         description="Ventes vides : aucune vente saisie. Virements reçus : confirmés sur le total du règlement en cours.")
-    b.row("Partage entre participants")
-    b.table("Frais avancés et remboursement", Sql(f'''
-        SELECT sh.session_date AS "Date", sh.name AS "Fiche", u.username AS "Participant",
-               ss.shares_centi / 100.0 AS "Parts", ss.share AS "Part du bénéfice", ss.advanced AS "Frais avancés",
-               ss.balance AS "Dû au participant", ss.cashed AS "Ventes encaissées",
-               ss.balance - ss.cashed AS "Reste à recevoir (+) ou à verser (−)"
-        FROM session.settlement_shares ss
-        JOIN session.settlements s ON s.id = ss.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id
-        JOIN core.users u ON u.id = ss.user_id
-        WHERE {CURRENT_SETTLEMENT} AND $__timeFilter(sh.session_date)
-        ORDER BY sh.session_date DESC, sh.name, ss.position LIMIT 200'''),
-        columns={"Date": {"width": 110}, "Parts": {"decimals": 2, "width": 70},
-                 "Part du bénéfice": {"unit": AUEC, "decimals": 0}, "Frais avancés": {"unit": AUEC, "decimals": 0},
-                 "Dû au participant": {"unit": AUEC, "decimals": 0}, "Ventes encaissées": {"unit": AUEC, "decimals": 0},
-                 "Reste à recevoir (+) ou à verser (−)": {"unit": AUEC, "decimals": 0,
-                                                         "steps": [(None, ORANGE), (0, GREEN)]}},
-        h=10, description="Photographie de l'arrêt des comptes. Dû au participant = part du bénéfice + remboursement de ses "
-                          "frais avancés. Il a déjà encaissé ses propres ventes : la différence est réglée par virements.")
+    b.row("Activité")
+    b.series("Ventes et frais par semaine", [
+        (ts('''SELECT date_trunc('week', sh.session_date) AS time, sum(sa.amount) AS "Ventes"
+               FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id
+               WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 1'''), ""),
+        (ts('''SELECT date_trunc('week', sh.session_date) AS time, sum(ex.amount) AS "Frais avancés"
+               FROM mining_fees ex JOIN session.sheets sh ON sh.id = ex.sheet_id
+               WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 1'''), ""),
+    ], unit=AUEC, bars=True)
+    b.bars("Mineurs les plus présents", Sql('''
+        SELECT u.username AS metric, count(*) AS value
+        FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id JOIN core.users u ON u.id = pa.user_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "", label="Membre", value="Fiches")
+    b.bars("Minerais vendus", Sql('''
+        SELECT sl.commodity_name AS metric, sum(sl.quantity_cscu) / 100.0 AS value
+        FROM mining.sale_lines sl JOIN session.sales sa ON sa.id = sl.sale_id JOIN session.sheets sh ON sh.id = sa.sheet_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20'''), "", unit=SCU, w=8, h=10,
+        label="Minerai", value="Vendu")
+    b.bars("Minerai raffiné", Sql('''
+        SELECT l.commodity_name AS metric, sum(l.quantity_cscu) / 100.0 AS value
+        FROM mining.refinery_order_lines l JOIN mining.refinery_orders ro ON ro.id = l.order_id
+        JOIN session.sheets sh ON sh.id = ro.sheet_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20'''), "", unit=SCU, w=8, h=10,
+        label="Minerai", value="Raffiné")
+    b.bars("Ventes par terminal", Sql('''
+        SELECT sa.terminal_label AS metric, sum(sa.amount) AS value
+        FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 20'''), "", unit=AUEC, w=8, h=10,
+        label="Terminal", value="Ventes")
+    b.bars("Frais par nature", Sql('''
+        SELECT CASE ex.kind WHEN 'FUEL' THEN 'Carburant' WHEN 'REPAIR' THEN 'Réparations'
+                            WHEN 'MATERIAL' THEN 'Matériel' WHEN 'REFINING' THEN 'Raffinage' ELSE 'Autre' END AS metric, sum(ex.amount) AS value
+        FROM mining_fees ex JOIN session.sheets sh ON sh.id = ex.sheet_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "", unit=AUEC, w=8, h=8,
+        label="Nature", value="Montant")
+    b.bars("Méthodes de raffinage", Sql('''
+        SELECT coalesce(ro.method_label, ro.method_code, 'Non précisée') AS metric, count(*) AS value
+        FROM mining.refinery_orders ro JOIN session.sheets sh ON sh.id = ro.sheet_id
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "", w=8, h=8, label="Méthode", value="Ordres")
+    b.stat("Durée moyenne de raffinage", Sql('''
+        SELECT avg(extract(epoch FROM ro.finishes_at - ro.created_at)) FROM mining.refinery_orders ro
+        JOIN session.sheets sh ON sh.id = ro.sheet_id WHERE $__timeFilter(sh.session_date)'''), unit="s", w=4, h=8)
+    b.stat("Fiches liées à une opération", Sql('''
+        SELECT round(count(*) FILTER (WHERE operation_event_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
+        FROM session.sheets WHERE $__timeFilter(session_date)'''), unit="percentunit", w=4, h=8)
+    b.write()
+
+
+def mining_settlement():
+    b = Board("iceforge-minage-partage", "Minage : partage et virements",
+              "Arrêtés de comptes, remboursement des frais avancés et virements entre participants.",
+              time_from="now-6M", refresh="5m", kind="metier")
+    b.stat("Virements en attente", Sql(f'''
+        SELECT count(*) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id
+        WHERE {CURRENT_SETTLEMENT} AND t.received_at IS NULL'''), steps=[(None, GREEN), (1, ORANGE)], w=6)
+    b.stat("Montant encore à verser", Sql(f'''
+        SELECT coalesce(sum(t.amount), 0) FROM session.settlement_transfers t JOIN session.settlements s ON s.id = t.settlement_id
+        WHERE {CURRENT_SETTLEMENT} AND t.received_at IS NULL'''), unit=AUEC, steps=[(None, GREEN), (1, ORANGE)], w=6)
+    b.stat("Délai moyen jusqu'à la clôture", Sql('''
+        SELECT avg(extract(epoch FROM h.at - sh.created_at)) FROM session.sheets sh
+        JOIN session.history h ON h.sheet_id = sh.id AND h.action IN ('CLOSED', 'FORCED_CLOSE')
+        WHERE $__timeFilter(sh.session_date)'''), unit="s", w=6,
+        description="De la création de la fiche à sa clôture : ventes, partage et confirmation de tous les virements.")
+    b.stat("Coût du raffinage", Sql('''
+        SELECT sum(ro.cost) FROM mining.refinery_orders ro JOIN session.sheets sh ON sh.id = ro.sheet_id
+        WHERE $__timeFilter(sh.session_date)'''), unit=AUEC, w=6,
+        description="Compris dans les frais avancés, remboursé au membre qui a lancé l'ordre.")
     b.table("Virements entre participants", Sql(f'''
         SELECT sh.session_date AS "Date", sh.name AS "Fiche", f.username AS "Verse", t2.username AS "Reçoit",
                t.amount AS "Montant",
@@ -792,119 +1052,97 @@ def mining():
                      "En attente": {"color": ORANGE}, "Reçu": {"color": GREEN}}}],
                           "steps": [(None, "text")]},
                  "Confirmé le": {"unit": "dateTimeAsLocal", "width": 170}}, h=10)
-    b.row("Activité")
-    b.series("Ventes et frais par semaine", [
-        (ts('''SELECT date_trunc('week', sh.session_date) AS time, sum(sa.amount) AS "Ventes"
-               FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id
-               WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 1'''), ""),
-        (ts('''SELECT date_trunc('week', sh.session_date) AS time, sum(ex.amount) AS "Frais avancés"
-               FROM mining_fees ex JOIN session.sheets sh ON sh.id = ex.sheet_id
-               WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 1'''), ""),
-    ], unit=AUEC, bars=True)
-    b.bars("Frais par nature", Sql('''
-        SELECT CASE ex.kind WHEN 'FUEL' THEN 'Carburant' WHEN 'REPAIR' THEN 'Réparations'
-                            WHEN 'MATERIAL' THEN 'Matériel' WHEN 'REFINING' THEN 'Raffinage' ELSE 'Autre' END AS metric, sum(ex.amount) AS value
-        FROM mining_fees ex JOIN session.sheets sh ON sh.id = ex.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "", unit=AUEC)
-    b.bars("Minerais vendus", Sql('''
-        SELECT sl.commodity_name AS metric, sum(sl.quantity_cscu) / 100.0 AS value
-        FROM mining.sale_lines sl JOIN session.sales sa ON sa.id = sl.sale_id JOIN session.sheets sh ON sh.id = sa.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12'''), "", unit=SCU, w=8, h=10)
-    b.bars("Ventes par terminal", Sql('''
-        SELECT sa.terminal_label AS metric, sum(sa.amount) AS value
-        FROM session.sales sa JOIN session.sheets sh ON sh.id = sa.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12'''), "", unit=AUEC, w=8, h=10)
-    b.bars("Méthodes de raffinage", Sql('''
-        SELECT coalesce(ro.method_label, ro.method_code, 'Non précisée') AS metric, count(*) AS value
-        FROM mining.refinery_orders ro JOIN session.sheets sh ON sh.id = ro.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "", w=8, h=10)
-    b.bars("Mineurs les plus présents", Sql('''
-        SELECT u.username AS metric, count(*) AS value
-        FROM session.participants pa JOIN session.sheets sh ON sh.id = pa.sheet_id JOIN core.users u ON u.id = pa.user_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10'''), "",
-        description="Nombre de fiches auxquelles chaque membre a participé.")
-    b.bars("Bénéfice reçu par membre", Sql(f'''
+    b.table("Frais avancés et remboursement", Sql(f'''
+        SELECT sh.session_date AS "Date", sh.name AS "Fiche", u.username AS "Participant",
+               ss.shares_centi / 100.0 AS "Parts", ss.share AS "Part du bénéfice", ss.advanced AS "Frais avancés",
+               ss.balance AS "Dû au participant", ss.cashed AS "Ventes encaissées",
+               ss.balance - ss.cashed AS "Reste à recevoir (+) ou à verser (−)"
+        FROM session.settlement_shares ss
+        JOIN session.settlements s ON s.id = ss.settlement_id JOIN session.sheets sh ON sh.id = s.sheet_id
+        JOIN core.users u ON u.id = ss.user_id
+        WHERE {CURRENT_SETTLEMENT} AND $__timeFilter(sh.session_date)
+        ORDER BY sh.session_date DESC, sh.name, ss.position LIMIT 200'''),
+        columns={"Date": {"width": 110}, "Parts": {"decimals": 2, "width": 70},
+                 "Part du bénéfice": {"unit": AUEC, "decimals": 0}, "Frais avancés": {"unit": AUEC, "decimals": 0},
+                 "Dû au participant": {"unit": AUEC, "decimals": 0}, "Ventes encaissées": {"unit": AUEC, "decimals": 0},
+                 "Reste à recevoir (+) ou à verser (−)": {"unit": AUEC, "decimals": 0,
+                                                         "steps": [(None, ORANGE), (0, GREEN)]}},
+        h=11, description="Photographie de l'arrêt des comptes. Dû au participant = part du bénéfice + remboursement de ses "
+                          "frais avancés. Il a déjà encaissé ses propres ventes : la différence est réglée par virements.")
+    b.bars("Part du bénéfice attribuée par membre", Sql(f'''
         SELECT u.username AS metric, sum(ss.share) AS value
         FROM session.settlement_shares ss JOIN session.settlements s ON s.id = ss.settlement_id
         JOIN session.sheets sh ON sh.id = s.sheet_id JOIN core.users u ON u.id = ss.user_id
-        WHERE {CURRENT_SETTLEMENT} AND $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10'''), "",
-        unit=AUEC, description="Part du bénéfice des règlements en cours, hors remboursement des frais avancés.")
-    b.row("Déroulement des fiches")
-    b.stat("Fiches liées à une opération", Sql('''
-        SELECT round(count(*) FILTER (WHERE operation_event_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
-        FROM session.sheets WHERE $__timeFilter(session_date)'''), unit="percentunit", w=6)
-    b.stat("Délai moyen jusqu'à la clôture", Sql('''
-        SELECT avg(extract(epoch FROM h.at - sh.created_at)) FROM session.sheets sh
-        JOIN session.history h ON h.sheet_id = sh.id AND h.action IN ('CLOSED', 'FORCED_CLOSE')
-        WHERE $__timeFilter(sh.session_date)'''), unit="s", w=6,
-        description="De la création de la fiche à sa clôture : ventes, partage et confirmation de tous les virements.")
-    b.stat("Durée moyenne de raffinage", Sql('''
-        SELECT avg(extract(epoch FROM ro.finishes_at - ro.created_at)) FROM mining.refinery_orders ro
-        JOIN session.sheets sh ON sh.id = ro.sheet_id WHERE $__timeFilter(sh.session_date)'''), unit="s", w=6)
-    b.stat("Coût du raffinage", Sql('''
-        SELECT sum(ro.cost) FROM mining.refinery_orders ro JOIN session.sheets sh ON sh.id = ro.sheet_id
-        WHERE $__timeFilter(sh.session_date)'''), unit=AUEC, w=6,
-        description="Coût des ordres de raffinage : compris dans les frais avancés, remboursé au membre qui a lancé l'ordre.")
+        WHERE {CURRENT_SETTLEMENT} AND $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30'''), "",
+        unit=AUEC, h=10, label="Membre", value="Part du bénéfice",
+        description="Règlements en cours : part attribuée, que ses virements soient reçus ou non. Hors remboursement des frais avancés.")
     b.bars("Étapes et corrections", Sql('''
         SELECT CASE h.action WHEN 'SETTLED' THEN 'Comptes arrêtés' WHEN 'CLOSED' THEN 'Clôtures'
                              WHEN 'FORCED_CLOSE' THEN 'Clôtures forcées' WHEN 'REOPENED_SETTLEMENT' THEN 'Réouvertures du règlement'
                              WHEN 'REOPENED_ACTIVE' THEN 'Retours en cours' WHEN 'RECEIPT_CONFIRMED' THEN 'Virements confirmés'
                              WHEN 'RECEIPT_WITHDRAWN' THEN 'Confirmations retirées' ELSE h.action END AS metric, count(*) AS value
         FROM session.history h JOIN session.sheets sh ON sh.id = h.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "",
+        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC'''), "", h=10, label="Étape", value="Nombre",
         description="Réouvertures et clôtures forcées signalent des comptes corrigés après coup ou des virements jamais confirmés.")
-    b.bars("Minerai raffiné", Sql('''
-        SELECT l.commodity_name AS metric, sum(l.quantity_cscu) / 100.0 AS value
-        FROM mining.refinery_order_lines l JOIN mining.refinery_orders ro ON ro.id = l.order_id
-        JOIN session.sheets sh ON sh.id = ro.sheet_id
-        WHERE $__timeFilter(sh.session_date) GROUP BY 1 ORDER BY 2 DESC LIMIT 12'''), "", unit=SCU)
     b.write()
 
 
-def content():
-    b = Board("iceforge-contenu", "Contenu et données",
-              "Actualités, veille CIG et synchronisation du catalogue Star Citizen.",
+def news():
+    b = Board("iceforge-actualites", "Actualités et veille", "Actualités publiées et veille des sources CIG.",
               time_from="now-30d", refresh="5m", kind="metier")
-    b.row("Actualités")
-    b.stat("Publiées sur la période", Sql("SELECT count(*) FROM news.news WHERE $__timeFilter(created_at)"), w=6)
-    b.stat("Guides publiés", Sql("SELECT count(*) FROM public.content_guides WHERE published"), w=6)
+    b.stat("Actualités publiées sur la période", Sql("SELECT count(*) FROM news.news WHERE $__timeFilter(created_at)"), w=4)
+    b.stat("Relayées sur Discord", Sql('''
+        SELECT round(count(*) FILTER (WHERE discord_message_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
+        FROM news.news WHERE $__timeFilter(created_at)'''), unit="percentunit", w=4)
+    b.stat("Guides publiés", Sql("SELECT count(*) FROM public.content_guides WHERE published"), w=4)
     b.stat("Dernière collecte CIG", Sql(
         "SELECT extract(epoch FROM now() - max(last_fetched_at)) FROM news.cig_watch_fetch_state"),
-        unit="s", steps=[(None, GREEN), (1800, ORANGE), (3 * 3600, RED)], w=6,
-        description="La veille interroge les sources toutes les 5 minutes.")
+        unit="s", steps=[(None, GREEN), (1800, ORANGE), (3 * 3600, RED)], w=4,
+        description="Il y a combien de temps. La veille interroge les sources toutes les 5 minutes.")
     b.stat("Erreurs de collecte (24 h)", Sql(
         "SELECT count(*) FROM news.cig_watch_fetch_errors WHERE fetched_at >= now() - interval '24 hours'"),
-        steps=[(None, GREEN), (1, ORANGE), (20, RED)], w=6)
-    b.stat("Traductions en attente", Sql(
-        "SELECT count(*) FROM news.cig_watch_entries WHERE translation_status <> 'TRANSLATED'"),
-        steps=[(None, GREEN), (1, ORANGE)], w=6)
+        steps=[(None, GREEN), (1, ORANGE), (20, RED)], w=4)
     b.stat("Envois Discord en échec", Sql(
         "SELECT count(*) FROM news.cig_watch_entries WHERE delivery_status = 'FAILED'"),
-        steps=[(None, GREEN), (1, RED)], w=6)
-    b.stat("Envois Discord en attente", Sql(
-        "SELECT count(*) FROM news.cig_watch_entries WHERE delivery_status = 'PENDING'"),
-        steps=[(None, GREEN), (1, ORANGE)], w=6)
-    b.stat("Entrées CIG collectées", Sql(
-        "SELECT count(*) FROM news.cig_watch_entries WHERE $__timeFilter(fetched_at)"), w=6)
-    b.series("Entrées CIG par jour et source", [(ts('''
-        SELECT date_trunc('day', fetched_at) AS time, source_label AS metric, count(*) AS value
-        FROM news.cig_watch_entries WHERE $__timeFilter(fetched_at) GROUP BY 1, 2 ORDER BY 1'''), "")],
-        bars=True, stack=True)
+        steps=[(None, GREEN), (1, RED)], w=4)
     b.series("Actualités publiées par semaine", [(ts('''
         SELECT date_trunc('week', n.created_at) AS time, coalesce(t.name, 'Sans type') AS metric, count(*) AS value
         FROM news.news n LEFT JOIN news.news_type t ON t.id = n.type_id
         WHERE $__timeFilter(n.created_at) GROUP BY 1, 2 ORDER BY 1'''), "")], bars=True, stack=True)
-    b.row("Catalogue Star Citizen")
+    b.series("Entrées CIG collectées par jour", [(ts('''
+        SELECT date_trunc('day', fetched_at) AS time, source_label AS metric, count(*) AS value
+        FROM news.cig_watch_entries WHERE $__timeFilter(fetched_at) GROUP BY 1, 2 ORDER BY 1'''), "")],
+        bars=True, stack=True)
+    b.stat("Traductions en attente", Sql(
+        "SELECT count(*) FROM news.cig_watch_entries WHERE translation_status <> 'TRANSLATED'"),
+        steps=[(None, GREEN), (1, ORANGE)], w=8)
+    b.stat("Envois Discord en attente", Sql(
+        "SELECT count(*) FROM news.cig_watch_entries WHERE delivery_status = 'PENDING'"),
+        steps=[(None, GREEN), (1, ORANGE)], w=8)
+    b.stat("Entrées CIG sur la période", Sql(
+        "SELECT count(*) FROM news.cig_watch_entries WHERE $__timeFilter(fetched_at)"), w=8)
+    b.write()
+
+
+def game_data():
+    b = Board("iceforge-donnees-jeu", "Catalogue et données de jeu",
+              "Synchronisation du catalogue Star Citizen et fraîcheur des données servies par les outils.",
+              time_from="now-30d", refresh="5m", kind="metier")
     b.stat("Dernière synchronisation réussie", Sql(
         "SELECT extract(epoch FROM now() - max(completed_at)) FROM catalog.sync_runs WHERE status = 'SUCCEEDED'"),
-        unit="s", steps=[(None, GREEN), (14 * 86400, ORANGE), (45 * 86400, RED)], w=6)
+        unit="s", steps=[(None, GREEN), (14 * 86400, ORANGE), (45 * 86400, RED)], w=4, description="Il y a combien de temps.")
     b.stat("Synchronisations en échec", Sql(
         "SELECT count(*) FROM catalog.sync_runs WHERE status = 'FAILED' AND $__timeFilter(created_at)"),
-        steps=[(None, GREEN), (1, RED)], w=6)
+        steps=[(None, GREEN), (1, RED)], w=4)
     b.stat("Conflits à arbitrer", Sql("SELECT count(*) FROM catalog.sync_conflicts WHERE status = 'PENDING'"),
-           steps=[(None, GREEN), (1, ORANGE)], w=6,
+           steps=[(None, GREEN), (1, ORANGE)], w=4,
            description="Plusieurs sources proposent des fiches différentes : un administrateur doit choisir.")
-    b.stat("Entrées actives", Sql("SELECT count(*) FROM catalog.entries WHERE active"), w=6)
+    b.stat("Entrées du catalogue", Sql("SELECT count(*) FROM catalog.entries WHERE active"), w=4)
+    b.stat("Offres de prix actives", Sql("SELECT count(*) FROM catalog.offers WHERE active"), w=4,
+           description="Prix d'achat, de vente et de location utilisés par les outils Ressources et Achat de vaisseaux.")
+    b.stat("Recettes Wikelo", Sql('''
+        SELECT (SELECT count(*) FROM utils.wikelo_ships) + (SELECT count(*) FROM catalog.wikelo_equipment_recipes WHERE active)'''),
+        w=4, description="Vaisseaux et équipements échangeables chez Wikelo.")
     b.table("Dernières synchronisations", Sql('''
         SELECT created_at AS "Lancée", operation AS "Opération", coalesce(scope, 'Tout') AS "Périmètre",
                CASE status WHEN 'SUCCEEDED' THEN 'Réussie' WHEN 'FAILED' THEN 'Échec' WHEN 'RUNNING' THEN 'En cours'
@@ -914,41 +1152,26 @@ def content():
         columns={"Lancée": {"unit": "dateTimeAsLocal", "width": 170}, "Durée": {"unit": "s", "width": 100},
                  "Statut": {"width": 120, "steps": [(None, "text")], "mappings": [{"type": "value", "options": {
                      "Réussie": {"color": GREEN}, "Échec": {"color": RED}, "À arbitrer": {"color": ORANGE},
-                     "En cours": {"color": BLUE}, "En file": {"color": BLUE}}}]}}, w=14, h=9)
-    b.bars("Entrées actives par famille", Sql('''
+                     "En cours": {"color": BLUE}, "En file": {"color": BLUE}}}]}}, w=14, h=10)
+    b.bars("Catalogue par famille", Sql('''
         SELECT coalesce(family, 'Sans famille') AS metric, count(*) AS value FROM catalog.entries
-        WHERE active GROUP BY 1 ORDER BY 2 DESC LIMIT 12'''), "", w=10, h=9)
-    b.row("Données de jeu des outils")
-    b.stat("Offres de prix actives", Sql("SELECT count(*) FROM catalog.offers WHERE active"), w=4,
-           description="Prix d'achat, de vente et de location utilisés par les outils Ressources et Achat de vaisseaux.")
-    b.stat("Emplacements de minerai", Sql("SELECT count(*) FROM public.ore_locations"), w=4)
-    b.stat("Scans de minerai cumulés", Sql("SELECT sum(scans_count) FROM public.ore_locations"), w=4,
-           description="Nombre de scans communautaires agrégés dans les données d'emplacement importées.")
-    b.stat("Recettes Wikelo", Sql('''
-        SELECT (SELECT count(*) FROM utils.wikelo_ships) + (SELECT count(*) FROM catalog.wikelo_equipment_recipes WHERE active)'''),
-        w=4, description="Vaisseaux et équipements échangeables chez Wikelo.")
-    b.stat("Planètes, lunes et stations", Sql('''
-        SELECT (SELECT count(*) FROM public.celestial_bodies) + (SELECT count(*) FROM public.orbital_stations)'''), w=4)
-    b.stat("Images hébergées", Sql("SELECT sum(size) FROM media.image_metadata"), unit="bytes", w=4,
-           description="Taille totale des images envoyées par les administrateurs.")
+        WHERE active GROUP BY 1 ORDER BY 2 DESC LIMIT 20'''), "", w=10, h=10, label="Famille", value="Entrées")
     b.table("Fraîcheur des données UEX", Sql('''
         SELECT dataset_key AS "Jeu de données", item_count AS "Éléments", game_version AS "Version du jeu",
                fetched_at AS "Récupéré le", extract(epoch FROM now() - fetched_at) AS "Âge"
         FROM utils.uex_dataset_cache ORDER BY fetched_at, dataset_key'''),
         columns={"Récupéré le": {"unit": "dateTimeAsLocal", "width": 170},
                  "Âge": {"unit": "s", "width": 110, "steps": [(None, GREEN), (7 * 86400, ORANGE), (30 * 86400, RED)]}},
-        w=14, h=10, description="Prix et terminaux servis par les outils publics. Un jeu ancien donne des prix périmés.")
+        w=14, h=11, description="Prix et terminaux servis par les outils publics. Un jeu ancien donne des prix périmés.")
     b.bars("Emplacements de minerai par version du jeu", Sql('''
         SELECT coalesce(game_version, 'Version inconnue') AS metric, count(*) AS value FROM public.ore_locations
-        GROUP BY 1 ORDER BY 1 DESC'''), "", w=10, h=10)
-    b.bars("Images par catégorie", Sql('''
-        SELECT coalesce(category, 'Sans catégorie') AS metric, count(*) AS value FROM media.image_metadata
-        GROUP BY 1 ORDER BY 2 DESC LIMIT 12'''), "", w=8)
-    b.stat("Actualités relayées sur Discord", Sql('''
-        SELECT round(count(*) FILTER (WHERE discord_message_id IS NOT NULL)::numeric / nullif(count(*), 0), 3)
-        FROM news.news WHERE $__timeFilter(created_at)'''), unit="percentunit", w=8, h=8,
-        description="Part des actualités de la période publiées sur le serveur Discord.")
-    b.stat("Blocs IceLink", Sql("SELECT count(*) FROM icelink.icelink_block"), w=8, h=8)
+        GROUP BY 1 ORDER BY 1 DESC'''), "", w=10, h=11, label="Version", value="Emplacements")
+    b.stat("Planètes, lunes et stations", Sql('''
+        SELECT (SELECT count(*) FROM public.celestial_bodies) + (SELECT count(*) FROM public.orbital_stations)'''), w=6)
+    b.stat("Scans de minerai cumulés", Sql("SELECT sum(scans_count) FROM public.ore_locations"), w=6,
+           description="Scans communautaires agrégés dans les données d'emplacement importées.")
+    b.stat("Images hébergées", Sql("SELECT sum(size) FROM media.image_metadata"), unit="bytes", w=6)
+    b.stat("Blocs IceLink", Sql("SELECT count(*) FROM icelink.icelink_block"), w=6)
     b.write()
 
 
@@ -1007,27 +1230,31 @@ def usage():
            description="Appels du bot : participation par bouton, liaison de compte, flotte déclarée sur Discord.")
     b.row("Outils publics")
     b.bars("Appels par outil public", [(_calls(uri), name) for name, uri in PUBLIC_FEATURES], "", h=10,
+           label="Outil", value="Appels",
            description="Nombre d'appels sur la période. Une visite de page déclenche en général plusieurs appels.")
     b.series("Outils publics dans le temps",
              [(f'sum(rate(http_server_requests_seconds_count{{job="backend", uri=~"{uri}"}}[$__rate_interval])) * 3600', name)
               for name, uri in PUBLIC_FEATURES], unit="short", h=10, description="Appels par heure.")
     b.row("Espace membre")
-    b.bars("Appels par fonctionnalité", [(_calls(uri), name) for name, uri in MEMBER_FEATURES], "", h=11)
+    b.bars("Appels par fonctionnalité", [(_calls(uri), name) for name, uri in MEMBER_FEATURES], "", h=11,
+           label="Fonctionnalité", value="Appels")
     b.bars("Modifications par fonctionnalité", [(_calls(uri, WRITE), name) for name, uri in MEMBER_FEATURES], "", h=11,
+           label="Fonctionnalité", value="Modifications",
            description="Créations, modifications et suppressions (POST, PUT, PATCH, DELETE) réussies ou non.")
     b.series("Espace membre dans le temps",
              [(f'sum(rate(http_server_requests_seconds_count{{job="backend", uri=~"{uri}"}}[$__rate_interval])) * 3600', name)
               for name, uri in MEMBER_FEATURES], unit="short", h=10, w=24, description="Appels par heure.")
     b.row("Détail")
     b.bars("Routes les plus appelées", f'topk(20, round(sum by (method, uri) (increase(http_server_requests_seconds_count{{{HTTP}}}[$__range]))))',
-           "{{method}} {{uri}}", h=14)
+           "{{method}} {{uri}}", h=14, label="Route", value="Appels")
     b.bars("Routes en erreur", f'topk(20, round(sum by (method, uri, status) (increase(http_server_requests_seconds_count{{{HTTP}, outcome=~"CLIENT_ERROR|SERVER_ERROR"}}[$__range]))) > 0)',
-           "{{status}} {{method}} {{uri}}", steps=[(None, ORANGE)], h=14,
+           "{{status}} {{method}} {{uri}}", steps=[(None, ORANGE)], h=14, label="Route", value="Erreurs",
            description="401 sur une route membre : visiteur non connecté ou session expirée.")
     b.write()
 
 
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
-    for build in (overview, backend, rabbitmq, host, usage, community, events, mining, content):
+    for build in (overview, backend, rabbitmq, host, usage, members, member_activity, recruitment, fleets, events,
+                  operations, mining, mining_settlement, news, game_data):
         build()
