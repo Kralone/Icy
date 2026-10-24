@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { NavigationEnd, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TutorialService } from './tutorial.service';
+import { AuthService } from '../../core/services/auth/auth.service';
 import { TUTORIALS } from './tutorial-definitions';
 
 const hangar = TUTORIALS.find(tutorial => tutorial.id === 'hangar')!;
@@ -13,6 +14,7 @@ describe('TutorialService', () => {
   let router: { url: string; events: Subject<unknown> };
   let http: HttpTestingController;
   let page: HTMLElement;
+  let userId: string;
 
   const setup = (url: string) => {
     router.url = url;
@@ -27,7 +29,8 @@ describe('TutorialService', () => {
     localStorage.clear();
     events = new Subject();
     router = { url: '/icy/dashboard', events };
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: router }] });
+    userId = 'u1';
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: router }, { provide: AuthService, useValue: { getUserIdFromToken: () => userId } }] });
     page = document.createElement('div');
     page.innerHTML = '<div data-tuto="hangar-filters"></div><button data-tuto="hangar-add"></button>';
     document.body.appendChild(page);
@@ -74,7 +77,7 @@ describe('TutorialService', () => {
     const save = http.expectOne('/api/users/me/tutorials/hangar');
     expect(save.request.method).toBe('PUT');
     expect(save.request.body).toEqual({ version: hangar.version, status: 'COMPLETED' });
-    expect(JSON.parse(localStorage.getItem('icy.tutorials')!)).toEqual({ hangar: hangar.version });
+    expect(JSON.parse(localStorage.getItem('icy.tutorials.u1')!)).toEqual({ hangar: hangar.version });
   });
 
   it('records a skipped tutorial as dismissed', () => {
@@ -98,11 +101,25 @@ describe('TutorialService', () => {
   });
 
   it('uses the browser record when the server cannot be read', () => {
-    localStorage.setItem('icy.tutorials', JSON.stringify({ hangar: hangar.version }));
+    localStorage.setItem('icy.tutorials.u1', JSON.stringify({ hangar: hangar.version }));
     const service = setup('/icy/hangar');
     http.expectOne('/api/users/me/tutorials').flush('erreur', { status: 500, statusText: 'Server Error' });
     vi.advanceTimersByTime(2000);
     expect(service.active()).toBeNull();
+  });
+
+  it('keeps each account apart when another player logs in on the same browser', () => {
+    const service = setup('/icy/hangar');
+    http.expectOne('/api/users/me/tutorials').flush({ data: [] });
+    vi.advanceTimersByTime(600);
+    service.skip();
+    http.expectOne('/api/users/me/tutorials/hangar').flush({ data: null });
+
+    userId = 'u2';
+    events.next(new NavigationEnd(2, '/icy/hangar', '/icy/hangar'));
+    http.expectOne('/api/users/me/tutorials').flush({ data: [] });
+    vi.advanceTimersByTime(600);
+    expect(service.active()?.tutorial.id).toBe('hangar');
   });
 
   it('offers no tutorial on other pages and closes the running one when leaving its page', () => {
