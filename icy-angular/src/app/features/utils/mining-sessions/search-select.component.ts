@@ -96,11 +96,13 @@ export class SearchSelectComponent<T> implements ControlValueAccessor {
     this.reposition();
   }
 
-  /** Sous le champ, ou au-dessus s'il reste trop peu de place en bas de l'écran. */
+  /** Sous le champ, ou au-dessus s'il reste trop peu de place en bas de l'écran ; fermée si le champ quitte l'écran. */
   reposition(): void {
     if (!this.open()) return;
     const field = this.host.nativeElement.querySelector('input')?.getBoundingClientRect();
     if (!field) return;
+    // Champ sorti de l'écran par le défilement : la liste ne reste pas affichée seule.
+    if (field.bottom <= 0 || field.top >= window.innerHeight) { this.close(); return; }
     const gap = 4, margin = 8, wanted = 240;
     const below = window.innerHeight - field.bottom - gap - margin;
     const above = field.top - gap - margin;
