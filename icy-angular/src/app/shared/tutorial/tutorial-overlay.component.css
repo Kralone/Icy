@@ -1,0 +1,64 @@
+:host { --tuto-veil: rgba(2, 8, 20, 0.74); --tuto-accent: #22d3ee; }
+
+.tuto { position: fixed; inset: 0; z-index: 1000; }
+.tuto__blocker { position: absolute; inset: 0; }
+.tuto__veil { position: absolute; inset: 0; background: var(--tuto-veil); }
+.tuto__spot {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 200vmax var(--tuto-veil), 0 0 0 2px var(--tuto-accent), 0 0 24px 4px rgba(34, 211, 238, 0.35);
+  pointer-events: none;
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+.tuto__bubble {
+  position: fixed;
+  width: min(360px, calc(100vw - 32px));
+  padding: 16px 18px 14px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 16px;
+  background: #0f1d30;
+  color: #e2e8f0;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  visibility: hidden;
+}
+.tuto__bubble--ready { visibility: visible; }
+
+.tuto__bubble[data-arrow]::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #0f1d30;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  transform: rotate(45deg);
+}
+.tuto__bubble[data-arrow='top']::before { top: -8px; left: calc(var(--arrow-offset, 24px) - 7px); border-right: 0; border-bottom: 0; }
+.tuto__bubble[data-arrow='bottom']::before { bottom: -8px; left: calc(var(--arrow-offset, 24px) - 7px); border-left: 0; border-top: 0; }
+.tuto__bubble[data-arrow='left']::before { left: -8px; top: calc(var(--arrow-offset, 24px) - 7px); border-right: 0; border-top: 0; }
+.tuto__bubble[data-arrow='right']::before { right: -8px; top: calc(var(--arrow-offset, 24px) - 7px); border-left: 0; border-bottom: 0; }
+
+.tuto__meta { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 6px; font-size: 0.75rem; color: #7dd3fc; text-transform: uppercase; letter-spacing: 0.06em; }
+.tuto__title { margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; color: #fff; }
+.tuto__text { margin: 0; font-size: 0.92rem; line-height: 1.5; color: #cbd5e1; }
+
+.tuto__actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.tuto__nav { display: flex; gap: 8px; margin-left: auto; }
+.tuto__actions button { min-height: 38px; padding: 0 14px; border-radius: 10px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.tuto__skip { padding: 0 4px !important; border: 0; background: none; color: #94a3b8; text-decoration: underline; text-underline-offset: 3px; }
+.tuto__skip:hover { color: #fff; }
+.tuto__prev { border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); color: #e2e8f0; }
+.tuto__prev:hover { background: rgba(255, 255, 255, 0.12); }
+.tuto__next { border: 0; background: var(--tuto-accent); color: #04121f; }
+.tuto__next:hover { background: #67e8f9; }
+.tuto__actions button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+@media (min-width: 1920px) {
+  .tuto__bubble { width: 420px; padding: 20px 22px 16px; }
+  .tuto__title { font-size: 1.2rem; }
+  .tuto__text { font-size: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuto__spot { transition: none; }
+}

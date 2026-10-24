@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -8,6 +8,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
 import { HotToastService } from '@ngxpert/hot-toast';
 import { UserService } from '../../core/services/user/user.service';
 import { RankOrbitComponent } from '../rank-orbit/rank-orbit.component';
+import { TutorialService } from '../tutorial/tutorial.service';
 import { Subscription } from 'rxjs';
 
 type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
@@ -22,6 +23,7 @@ type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 })
 export class TopbarComponent {
   @Output() sidebarToggle = new EventEmitter<void>();
+  readonly tutorials = inject(TutorialService);
 
   name = 'Cmdr Unknown';
   isHidden = false;
