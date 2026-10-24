@@ -63,6 +63,7 @@ public class OperationController {
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
     private final com.icy.icy_backend.service.operation.OperationCoordinationService coordinationService;
     private final com.icy.icy_backend.service.operation.OperationCrewService crewService;
+    private final com.icy.icy_backend.service.operation.OperationReplanService replanService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
@@ -77,6 +78,33 @@ public class OperationController {
         seed.setBriefing(request.getDescription());
         seed.setImageUrl(request.getImageUrl());
         seed.setAllowShipProposals(request.getAllowShipProposals());
+        return operationService.update(eventId, seed);
+    }
+
+    /**
+     * Nouveau brouillon aux dates données, à partir d'une opération existante : le cadre vient du formulaire,
+     * le reste du contenu et l'organisation sont repris de l'opération d'origine, sans ses inscrits ni ses vaisseaux proposés.
+     */
+    @PostMapping("/{id}/replan")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @Transactional
+    public ResponseEntity<MessageResponse<OperationResponseDTO>> replan(@PathVariable UUID id, @RequestBody CreateEventRequest request) {
+        eventRepository.findById(id).filter(event -> event.getActivityType() == ActivityType.OPERATION)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        Operation source = operationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        String type = eventService.requireExistingEventTypeName(request.getType());
+        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
+        UUID eventId = created.getBody().getData().getId();
+        operationService.convert(eventId);
+        replanService.copyOrganization(id, eventId);
+        OperationUpdateRequest seed = new OperationUpdateRequest();
+        seed.setBriefing(request.getDescription());
+        seed.setObjectives(source.getObjectives());
+        seed.setMeetingPoint(source.getMeetingPoint());
+        seed.setImageUrl(request.getImageUrl());
+        seed.setAllowShipProposals(request.getAllowShipProposals());
+        seed.setMiningSession(source.isMiningSession());
+        seed.setDefaultAssignmentMode(source.getDefaultAssignmentMode());
         return operationService.update(eventId, seed);
     }
 
