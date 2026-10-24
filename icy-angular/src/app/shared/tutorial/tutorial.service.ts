@@ -58,26 +58,35 @@ export class TutorialService {
   play(tutorial: TutorialDefinition): boolean {
     if (!this.isBrowser) return false;
     this.cancelReadyWait();
-    const steps = tutorial.steps.filter(step => !step.target || !!findVisibleTarget(step.target));
+    const steps = availableSteps(tutorial);
     if (!steps.length) return false;
     this.activeSignal.set({ tutorial, steps, index: 0 });
     return true;
   }
 
   next(): void {
-    const active = this.activeSignal();
-    if (!active) return;
-    if (active.index >= active.steps.length - 1) {
-      this.finish('COMPLETED');
-      return;
-    }
-    this.activeSignal.set({ ...active, index: active.index + 1 });
+    this.move(1);
   }
 
   previous(): void {
+    this.move(-1);
+  }
+
+  // Les étapes sont recalculées à chaque déplacement : une section chargée après le démarrage reste montrée.
+  private move(direction: 1 | -1): void {
     const active = this.activeSignal();
-    if (!active || active.index === 0) return;
-    this.activeSignal.set({ ...active, index: active.index - 1 });
+    if (!active) return;
+    const current = active.steps[active.index];
+    const order = active.tutorial.steps.indexOf(current);
+    const steps = availableSteps(active.tutorial, current);
+    const index = direction > 0
+      ? steps.findIndex(step => active.tutorial.steps.indexOf(step) > order)
+      : findLastIndex(steps, step => active.tutorial.steps.indexOf(step) < order);
+    if (index === -1) {
+      if (direction > 0) this.finish('COMPLETED');
+      return;
+    }
+    this.activeSignal.set({ ...active, steps, index });
   }
 
   skip(): void {
@@ -186,6 +195,15 @@ export class TutorialService {
       localStorage.setItem(this.localKey(), JSON.stringify(Object.fromEntries(this.seen)));
     } catch { /* stockage local indisponible */ }
   }
+}
+
+function availableSteps(tutorial: TutorialDefinition, keep?: TutorialStep): TutorialStep[] {
+  return tutorial.steps.filter(step => step === keep || !step.target || !!findVisibleTarget(step.target));
+}
+
+function findLastIndex<T>(items: T[], predicate: (item: T) => boolean): number {
+  for (let index = items.length - 1; index >= 0; index--) if (predicate(items[index])) return index;
+  return -1;
 }
 
 export function findVisibleTarget(selector: string): HTMLElement | null {

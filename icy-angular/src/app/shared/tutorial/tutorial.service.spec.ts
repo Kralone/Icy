@@ -80,6 +80,26 @@ describe('TutorialService', () => {
     expect(JSON.parse(localStorage.getItem('icy.tutorials.u1')!)).toEqual({ hangar: hangar.version });
   });
 
+  it('shows a step whose section appears after the tutorial has started', () => {
+    const service = setup('/icy/hangar');
+    http.expectOne('/api/users/me/tutorials').flush({ data: [] });
+    vi.advanceTimersByTime(600);
+    expect(service.active()?.steps.length).toBe(3);
+
+    const card = document.createElement('div');
+    card.setAttribute('data-tuto', 'hangar-ship');
+    page.appendChild(card);
+    service.next();
+    service.next();
+    service.next();
+
+    expect(service.step()?.title).toBe('Fiche du vaisseau');
+    expect(service.active()?.index).toBe(3);
+    expect(service.active()?.steps.length).toBe(4);
+    service.previous();
+    expect(service.step()?.title).toBe('Rechercher');
+  });
+
   it('records a skipped tutorial as dismissed', () => {
     const service = setup('/icy/hangar');
     http.expectOne('/api/users/me/tutorials').flush({ data: [] });
