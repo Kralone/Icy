@@ -5,6 +5,7 @@ public class UexVehiclePurchaseDTO {
     private String planetName;
     private String locationName;
     private String systemName;
+    private String moonName;
 
     public String getTerminalId() { return terminalId; }
     public void setTerminalId(String value) { terminalId = value; }
@@ -14,6 +15,8 @@ public class UexVehiclePurchaseDTO {
     public void setLocationName(String value) { locationName = value; }
     public String getSystemName() { return systemName; }
     public void setSystemName(String value) { systemName = value; }
+    public String getMoonName() { return moonName; }
+    public void setMoonName(String value) { moonName = value; }
     private String vehicleName;
     private String terminalName;
     private Integer buyPrice;

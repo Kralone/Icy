@@ -2,7 +2,7 @@ import {TestBed} from '@angular/core/testing';
 import {ActivatedRoute, convertToParamMap, provideRouter} from '@angular/router';
 import {BehaviorSubject, of} from 'rxjs';
 import {CatalogBrowserComponent} from './catalog-browser.component';
-import {CatalogEntry, CatalogService} from '../../../core/services/catalog/catalog.service';
+import {CatalogEntry, CatalogOffer, CatalogService} from '../../../core/services/catalog/catalog.service';
 
 describe('CatalogBrowserComponent scroll lock', () => {
   it('loads direct family and group links and responds to another shortcut', async () => {
@@ -44,5 +44,25 @@ describe('CatalogBrowserComponent scroll lock', () => {
     } finally {
       document.body.style.overflow = original;
     }
+  });
+});
+
+describe('CatalogBrowserComponent offer places', () => {
+  it('shows planet then place, and keeps unresolved terminals unlabelled', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CatalogBrowserComponent],
+      providers: [provideRouter([]), {provide: CatalogService, useValue: {}}]
+    }).compileComponents();
+    const component = TestBed.createComponent(CatalogBrowserComponent).componentInstance;
+    const offer = (place: Partial<CatalogOffer>) => ({location: 'Terminal', ...place} as CatalogOffer);
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Hurston', placeName: 'Lorville'}))).toBe('Hurston → Lorville');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: null, placeName: 'ARC-L1 Wide Forest Station'})))
+      .toBe('Stanton → ARC-L1 Wide Forest Station');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Crusader', moonName: 'Daymar', placeName: 'Shubin Mining SCD-1'})))
+      .toBe('Crusader → Daymar → Shubin Mining SCD-1');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Crusader', moonName: 'Daymar', placeName: 'Daymar'})))
+      .toBe('Crusader → Daymar');
+    expect(component.offerPlace(offer({systemName: 'Stanton', planetName: 'Hurston', placeName: null}))).toBeNull();
+    expect(component.offerPlace(offer({}))).toBeNull();
   });
 });

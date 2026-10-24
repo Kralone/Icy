@@ -2,7 +2,8 @@ import { Component, EventEmitter, Input, Output, OnChanges, DoCheck, ChangeDetec
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoalService } from '../../../core/services/goal/goal.service';
-import { Goal } from '../../../model/goal.model';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { Goal, GoalMember } from '../../../model/goal.model';
 import { GoalParticipation } from '../../../model/goal-participation.model';
 import { GoalParticipationSummary } from '../../../model/goal-participation-summary.model';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
@@ -44,10 +45,71 @@ export class GoalSubComponent implements OnChanges, DoCheck {
   showCombinedStack = false;
   combinedTotalDelta = 0;
   batchAmount = 1;
+  membershipLoading = false;
+  membershipError = '';
+  readonly currentUserId: string | null;
   private lastGoalId: number | null = null;
   private lastTotals: { current: number; target: number } | null = null;
 
-  constructor(private goalService: GoalService) {}
+  constructor(private goalService: GoalService, authService: AuthService) {
+    let userId: string | null = null;
+    try {
+      userId = authService.getUserIdFromToken();
+    } catch {
+      userId = null;
+    }
+    this.currentUserId = userId;
+  }
+
+  get members(): GoalMember[] {
+    return this.goal?.members ?? [];
+  }
+
+  /** Avatars affichés avant la bulle « … ». */
+  static readonly MAX_VISIBLE_MEMBERS = 5;
+
+  get visibleMembers(): GoalMember[] {
+    return this.members.slice(0, GoalSubComponent.MAX_VISIBLE_MEMBERS);
+  }
+
+  get hiddenMembersCount(): number {
+    return Math.max(0, this.members.length - GoalSubComponent.MAX_VISIBLE_MEMBERS);
+  }
+
+  get membersLabel(): string {
+    return 'Participants : ' + this.members.map(m => m.username || 'Inconnu').join(', ');
+  }
+
+  get isMember(): boolean {
+    return !!this.currentUserId && this.members.some(m => m.userId === this.currentUserId);
+  }
+
+  toggleMembership(): void {
+    if (!this.currentUserId || this.membershipLoading) return;
+    const leaving = this.isMember;
+    this.membershipError = '';
+    this.membershipLoading = true;
+    const request = leaving ? this.goalService.leaveGoal(this.goal.id) : this.goalService.joinGoal(this.goal.id);
+    request.subscribe({
+      next: () => {
+        this.membershipLoading = false;
+        this.goal.members = leaving
+          ? this.members.filter(m => m.userId !== this.currentUserId)
+          : [...this.members, this.buildCurrentMember()];
+      },
+      error: () => {
+        this.membershipLoading = false;
+        this.membershipError = leaving
+          ? 'Impossible de retirer votre participation.'
+          : 'Impossible d’enregistrer votre participation.';
+      },
+    });
+  }
+
+  /** Placeholder affiché jusqu’au rechargement par WebSocket, qui renvoie le nom et l’avatar réels. */
+  private buildCurrentMember(): GoalMember {
+    return { userId: this.currentUserId!, username: 'Vous', avatarUrl: null, joinedAt: new Date().toISOString() };
+  }
 
   ngOnChanges(): void {
     if (this.goal?.id !== this.lastGoalId) {
@@ -232,7 +294,7 @@ export class GoalSubComponent implements OnChanges, DoCheck {
         this.participationsLoading = false;
       },
       error: (err) => {
-        this.participationsError = 'Impossible de charger les participations.';
+        this.participationsError = 'Impossible de charger l’historique des contributions.';
         this.participationsLoading = false;
       },
     });

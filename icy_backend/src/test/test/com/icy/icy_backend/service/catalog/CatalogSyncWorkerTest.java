@@ -99,6 +99,40 @@ class CatalogSyncWorkerTest {
     }
 
     @Test
+    void locationsScopeRefreshesUexPlaceListsBeforeMapping() {
+        CatalogSyncRunRepository runs = mock(CatalogSyncRunRepository.class);
+        StarCitizenWikiScraper wiki = mock(StarCitizenWikiScraper.class);
+        CatalogMapper mapper = mock(CatalogMapper.class);
+        UexDatasetService uex = mock(UexDatasetService.class);
+        CatalogSyncProperties properties = new CatalogSyncProperties();
+        properties.setUexDelayMillis(0);
+        CatalogSyncRun run = new CatalogSyncRun(); run.setId(9L);
+        when(runs.findById(9L)).thenReturn(Optional.of(run));
+        when(wiki.scrape("locations", 9L)).thenReturn(30);
+        UexDatasetDetailDTO detail = new UexDatasetDetailDTO();
+        detail.setItemCount(3);
+        MessageResponse<UexDatasetDetailDTO> body = new MessageResponse<>(HttpStatus.OK, "OK", "OK", 2000, detail);
+        for (String dataset : CatalogMapper.UEX_PLACE_DATASETS) {
+            when(uex.refreshDataset(dataset)).thenReturn(ResponseEntity.ok(body));
+        }
+        when(mapper.mapWikiDataset("locations", 9L)).thenReturn(30);
+        CatalogSyncWorker worker = new CatalogSyncWorker(runs, wiki, mapper, mock(CatalogEconomyMapper.class),
+                mock(CatalogRawStore.class), uex, mock(WikeloService.class), mock(WikeloEquipmentRecipeStore.class),
+                properties, new ObjectMapper().findAndRegisterModules());
+
+        worker.run(9L, "SCRAPE", CatalogSyncScope.LOCATIONS);
+
+        InOrder order = inOrder(wiki, uex, mapper);
+        order.verify(wiki).scrape("locations", 9L);
+        order.verify(uex).refreshDataset("space_stations");
+        order.verify(uex).refreshDataset("cities");
+        order.verify(uex).refreshDataset("outposts");
+        order.verify(mapper).mapWikiDataset("locations", 9L);
+        assertThat(run.getStatus()).isEqualTo("SUCCEEDED");
+        assertThat(run.getCurrentStep()).isEqualTo(run.getTotalSteps());
+    }
+
+    @Test
     void wikeloScopeRefreshesVehiclesBeforePublishingOffers() {
         CatalogSyncRunRepository runs = mock(CatalogSyncRunRepository.class);
         StarCitizenWikiScraper wiki = mock(StarCitizenWikiScraper.class);
