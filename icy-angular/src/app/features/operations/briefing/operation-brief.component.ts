@@ -15,13 +15,14 @@ const briefingMarkdown = new Marked({
   gfm: true,
   async: false,
   renderer: {
-    link(href: string, title: string | null | undefined, text: string): string {
+    link({ href, title, tokens }): string {
+      const text = this.parser.parseInline(tokens);
       const target = (href ?? '').replace(/&amp;/g, '&').trim();
       if (!/^(https?:\/\/|mailto:)/i.test(target)) return text;
       const label = title ? ` title="${escapeAttribute(title)}"` : '';
       return `<a href="${escapeAttribute(target)}"${label} target="_blank" rel="noopener noreferrer nofollow">${text}</a>`;
     },
-    image(_href: string, _title: string | null, text: string): string { return text; }
+    image({ text }): string { return text; }
   }
 });
 
