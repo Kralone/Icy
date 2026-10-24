@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, catchError, filter, map, of, shareReplay } from 'rxjs';
 import { ApiResponse } from '../../model/api-response.model';
+import { AuthService } from '../../core/services/auth/auth.service';
 import { TUTORIALS, findTutorialForPath } from './tutorial-definitions';
 import { TutorialDefinition, TutorialProgress, TutorialStatus, TutorialStep } from './tutorial.model';
 
@@ -21,6 +22,7 @@ const READY_TIMEOUT_MS = 10000;
 export class TutorialService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly apiUrl = '/api/users/me/tutorials';
 
@@ -28,6 +30,7 @@ export class TutorialService {
   private readonly activeSignal = signal<ActiveTutorial | null>(null);
   private progress$: Observable<Map<string, number>> | null = null;
   private readonly seen = new Map<string, number>();
+  private userKey: string | null = null;
   private readyTimer: ReturnType<typeof setTimeout> | null = null;
   private started = false;
 
@@ -47,7 +50,6 @@ export class TutorialService {
   start(): void {
     if (this.started || !this.isBrowser) return;
     this.started = true;
-    this.readLocal();
     this.onPage(this.router.url);
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(event => this.onPage(event.urlAfterRedirects));
@@ -101,11 +103,25 @@ export class TutorialService {
     if (this.activeSignal() && this.activeSignal()!.tutorial !== tutorial) this.activeSignal.set(null);
     this.pageTutorialSignal.set(tutorial);
     if (!tutorial || this.activeSignal()) return;
+    this.syncUser();
     this.loadProgress().subscribe(seen => {
       if ((seen.get(tutorial.id) ?? 0) >= tutorial.version) return;
       if (this.pageTutorialSignal() !== tutorial) return;
       this.waitUntilReady(tutorial);
     });
+  }
+
+  // Le suivi est propre à chaque compte : un changement de compte dans le même navigateur repart de zéro.
+  private syncUser(): void {
+    let userKey = '';
+    try {
+      userKey = this.auth.getUserIdFromToken() ?? '';
+    } catch { /* pas de jeton lisible */ }
+    if (userKey === this.userKey) return;
+    this.userKey = userKey;
+    this.seen.clear();
+    this.progress$ = null;
+    this.readLocal();
   }
 
   private loadProgress(): Observable<Map<string, number>> {
@@ -153,7 +169,7 @@ export class TutorialService {
   // Le navigateur garde aussi la trace : le tutoriel ne revient pas en boucle si l’API est indisponible.
   private readLocal(): void {
     try {
-      const stored = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? '{}') as Record<string, unknown>;
+      const stored = JSON.parse(localStorage.getItem(this.localKey()) ?? '{}') as Record<string, unknown>;
       for (const tutorial of TUTORIALS) {
         const version = stored[tutorial.id];
         if (typeof version === 'number') this.seen.set(tutorial.id, version);
@@ -161,9 +177,13 @@ export class TutorialService {
     } catch { /* stockage local indisponible */ }
   }
 
+  private localKey(): string {
+    return `${LOCAL_KEY}.${this.userKey ?? ''}`;
+  }
+
   private writeLocal(): void {
     try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.fromEntries(this.seen)));
+      localStorage.setItem(this.localKey(), JSON.stringify(Object.fromEntries(this.seen)));
     } catch { /* stockage local indisponible */ }
   }
 }
