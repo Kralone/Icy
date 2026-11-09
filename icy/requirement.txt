@@ -3,7 +3,7 @@ asyncpg==0.32.0
 python-dotenv==1.2.4
 
 # Rabbit
-aio-pika==10.1.1
+aio-pika==10.2.2
 
 beautifulsoup4==4.15.0
 soupsieve==3.0.3
