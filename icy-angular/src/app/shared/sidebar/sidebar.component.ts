@@ -36,6 +36,7 @@ export class SidebarComponent implements OnInit {
     { icon: '🛸', label: 'La flotte', link: '/icy/fleet' },
     { icon: '📆', label: 'Events', link: '/icy/events' },
     { icon: '📈', label: 'Objectifs', link: '/icy/goals' },
+    { icon: '🏦', label: 'Banque', link: '/icy/banque' },
     { icon: '📚', label: 'Guides', link: '/icy/outils/guides' },
     { icon: '🛰️', label: 'Outils', link: '/icy/outils' },
   ];

@@ -22,6 +22,7 @@ import com.icy.icy_backend.db.repository.event.EventParticipationRepository;
 import com.icy.icy_backend.db.repository.user.UserShipRepository;
 import com.icy.icy_backend.db.repository.collection.UserCollectionRepository;
 import com.icy.icy_backend.db.repository.ship.ShipRepository;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.UserPublisher;
 import com.icy.icy_backend.service.notification.NotificationPushService;
@@ -33,7 +34,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -49,6 +52,9 @@ public class UserService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private static final String DEFAULT_ROLE_NAME = "JUNIOR";
+    /** Fonctions cumulables avec le grade : elles ne remplacent jamais le grade d'un membre. */
+    public static final String TREASURER_ROLE = "TRESORIER";
+    private static final Set<String> FUNCTION_ROLES = Set.of(TREASURER_ROLE);
     private static final Duration ACTIVITY_TOUCH_INTERVAL = Duration.ofSeconds(30);
     private static final Duration ABSENT_THRESHOLD = Duration.ofMinutes(10);
     private static final Duration OFFLINE_THRESHOLD = Duration.ofMinutes(60);
@@ -445,7 +451,19 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName) {
+        return updateUser(id, username, discordId, roleName, null);
+    }
+
+    /**
+     * Le grade remplace l'ancien grade ; les fonctions (trésorier) s'y ajoutent et sont gardées,
+     * sauf si treasurer les change explicitement.
+     */
+    @Transactional
+    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName, Boolean treasurer) {
         logger.info("Mise à jour de l'utilisateur {}", id);
+        if (roleName != null && FUNCTION_ROLES.contains(roleName.trim().toUpperCase())) {
+            throw new BadRequestException("Trésorier est une fonction, pas un grade : cochez la case Trésorier.");
+        }
 
         User user = findUserById(id);
         List<String> previousRoles = user.getRoles().stream()
@@ -455,25 +473,33 @@ public class UserService {
         user.setDiscordId(discordId);
 
         Role role = findRoleByName(roleName);
+        boolean keepTreasurer = treasurer != null ? treasurer : previousRoles.contains(TREASURER_ROLE);
 
-        user.getRoles().clear(); // supprime les anciens (orphanRemoval active ici)
-
-        UserRole userRole = new UserRole();
-        userRole.setUser(user);
-        userRole.setRole(role);
-
-        user.getRoles().add(userRole); // ajoute proprement
+        // Le grade et les fonctions sont reconstruits : orphanRemoval supprime les anciennes lignes.
+        user.getRoles().clear();
+        addRole(user, role);
+        if (keepTreasurer) {
+            addRole(user, findRoleByName(TREASURER_ROLE));
+        }
 
         User saved = userRepository.save(user);
-        if (!previousRoles.contains(roleName) || previousRoles.size() != 1) {
+        List<String> newRoles = saved.getRoles().stream().map(userRole -> userRole.getRole().getName()).toList();
+        if (!new HashSet<>(previousRoles).equals(new HashSet<>(newRoles))) {
             notifyAdmins(
                     "Admin : roles mis a jour",
-                    "Roles de " + saved.getUsername() + " : " + roleName,
+                    "Roles de " + saved.getUsername() + " : " + String.join(", ", newRoles),
                     "/icy/admin/members",
                     2
             );
         }
         return messageService.buildResponse("user.updated", saved);
+    }
+
+    private static void addRole(User user, Role role) {
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        user.getRoles().add(userRole);
     }
 
     public List<UUID> getAdminUserIds() {

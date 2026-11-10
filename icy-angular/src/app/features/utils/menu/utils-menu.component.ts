@@ -5,6 +5,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { RankOrbitComponent } from '../../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { memberRank } from '../../../core/services/user/member-rank';
 
 type UtilityScope = 'Interne' | 'Public';
 type UtilityMenuItem = {
@@ -54,7 +55,7 @@ export class UtilsMenuComponent {
 
     this.userService.profile$.subscribe((profile) => {
       const roles = profile?.roles ?? [];
-      this.activeRankKey = this.normalizeRank(roles[0]);
+      this.activeRankKey = this.normalizeRank(memberRank(roles));
     });
     this.userService.getMyProfile().subscribe({
       next: () => {

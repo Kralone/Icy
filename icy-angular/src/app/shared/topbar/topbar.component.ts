@@ -9,6 +9,7 @@ import { HotToastService } from '@ngxpert/hot-toast';
 import { UserService } from '../../core/services/user/user.service';
 import { RankOrbitComponent } from '../rank-orbit/rank-orbit.component';
 import { Subscription } from 'rxjs';
+import { memberRank } from '../../core/services/user/member-rank';
 
 type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 
@@ -89,7 +90,7 @@ export class TopbarComponent {
       }
       this.avatarUrl = profile?.avatarUrl ?? null;
       const roles = profile?.roles ?? [];
-      this.activeRankKey = this.normalizeRank(roles[0]);
+      this.activeRankKey = this.normalizeRank(memberRank(roles));
     });
     this.userService.getMyProfile().subscribe();
 
