@@ -204,7 +204,7 @@ public class BankService {
             List<BankEntry> of = byMonth.getOrDefault(month, List.of());
             balance += of.stream().mapToLong(BankEntry::signedAmount).sum();
             points.add(new BankDtos.MonthPoint(month.toString(), sum(of, BankEntry.Kind.DEPOSIT), sum(of, BankEntry.Kind.EXPENSE),
-                    sum(of, BankEntry.Kind.PAYOUT), sum(of, BankEntry.Kind.ADJUSTMENT), balance));
+                    sum(of, BankEntry.Kind.PAYOUT), adjustments(of, true), adjustments(of, false), balance));
         }
         return points;
     }
@@ -270,6 +270,12 @@ public class BankService {
                 entry.isCancelled(), entry.getCancelledAt(), entry.getCancelledBy() == null ? null : names.name(entry.getCancelledBy()), entry.getCancelReason());
     }
 
+    /** Ajustements d'un seul sens, en valeur positive : une hausse et une baisse le même mois ne s'annulent pas. */
+    static long adjustments(List<BankEntry> list, boolean increase) {
+        return list.stream().filter(entry -> entry.getKind() == BankEntry.Kind.ADJUSTMENT && !entry.isCancelled())
+                .mapToLong(BankEntry::getAmount).filter(amount -> increase ? amount > 0 : amount < 0).map(Math::abs).sum();
+    }
+
     static long sum(List<BankEntry> list, BankEntry.Kind kind) {
         return list.stream().filter(entry -> entry.getKind() == kind && !entry.isCancelled()).mapToLong(BankEntry::getAmount).sum();
     }
@@ -309,7 +315,7 @@ public class BankService {
 
     private static long amount(BankEntry.Kind kind, Long amount) {
         if (amount == null) throw new BadRequestException("Indiquez le montant.");
-        if (Math.abs(amount) > MAX_AMOUNT) throw new BadRequestException("Montant trop élevé.");
+        if (amount > MAX_AMOUNT || amount < -MAX_AMOUNT) throw new BadRequestException("Montant trop élevé.");
         if (kind == BankEntry.Kind.ADJUSTMENT) {
             if (amount == 0) throw new BadRequestException("Un ajustement ne peut pas être nul.");
         } else if (amount <= 0) {

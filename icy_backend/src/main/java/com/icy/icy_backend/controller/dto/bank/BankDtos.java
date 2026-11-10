@@ -32,8 +32,8 @@ public final class BankDtos {
     public record Totals(long balance, long deposits, long expenses, long payouts, long adjustments, int donors, int entries) {
     }
 
-    /** Un mois du graphique : entrées, sorties et solde en fin de mois. */
-    public record MonthPoint(String month, long deposits, long expenses, long payouts, long adjustments, long balance) {
+    /** Un mois du graphique : entrées, sorties, ajustements à la hausse et à la baisse (positifs), solde en fin de mois. */
+    public record MonthPoint(String month, long deposits, long expenses, long payouts, long adjustmentsIn, long adjustmentsOut, long balance) {
     }
 
     /** Solde après les mouvements d'un jour. */

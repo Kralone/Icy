@@ -7,7 +7,7 @@ export type BankProjectStatus = 'OPEN' | 'COMPLETED' | 'CANCELLED';
 
 export interface BankAccess { details: boolean; write: boolean; }
 export interface BankTotals { balance: number; deposits: number; expenses: number; payouts: number; adjustments: number; donors: number; entries: number; }
-export interface BankMonthPoint { month: string; deposits: number; expenses: number; payouts: number; adjustments: number; balance: number; }
+export interface BankMonthPoint { month: string; deposits: number; expenses: number; payouts: number; adjustmentsIn: number; adjustmentsOut: number; balance: number; }
 export interface BankBalancePoint { date: string; balance: number; }
 export interface BankProject {
   id: string; name: string; description: string | null; targetAmount: number | null; status: BankProjectStatus;

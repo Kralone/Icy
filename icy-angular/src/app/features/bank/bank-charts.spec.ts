@@ -59,10 +59,10 @@ describe('variation', () => {
 describe('monthBars', () => {
   it('puts inflows and outflows on the same scale', () => {
     const bars = monthBars([
-      { month: '2026-10', deposits: 400, expenses: 100, payouts: 100, adjustments: 0, balance: 200 },
-      { month: '2026-11', deposits: 0, expenses: 0, payouts: 0, adjustments: -50, balance: 150 }
+      { month: '2026-10', deposits: 400, expenses: 100, payouts: 100, adjustmentsIn: 0, adjustmentsOut: 0, balance: 200 },
+      { month: '2026-11', deposits: 0, expenses: 0, payouts: 0, adjustmentsIn: 20, adjustmentsOut: 70, balance: 150 }
     ]);
     expect(bars[0]).toMatchObject({ inflow: 400, outflow: 200, inHeight: 100, outHeight: 50, label: 'oct.' });
-    expect(bars[1]).toMatchObject({ inflow: 0, outflow: 50, inHeight: 0 });
+    expect(bars[1]).toMatchObject({ inflow: 20, outflow: 70 });
   });
 });

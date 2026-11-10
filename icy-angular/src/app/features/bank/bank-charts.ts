@@ -90,8 +90,8 @@ export interface MonthBar { month: string; label: string; inflow: number; outflo
 export function monthBars(months: BankMonthPoint[]): MonthBar[] {
   const flows = months.map(month => ({
     month,
-    inflow: month.deposits + Math.max(0, month.adjustments),
-    outflow: month.expenses + month.payouts + Math.max(0, -month.adjustments)
+    inflow: month.deposits + month.adjustmentsIn,
+    outflow: month.expenses + month.payouts + month.adjustmentsOut
   }));
   const peak = Math.max(1, ...flows.map(flow => Math.max(flow.inflow, flow.outflow)));
   return flows.map(({ month, inflow, outflow }) => ({

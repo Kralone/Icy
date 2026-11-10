@@ -229,6 +229,21 @@ class BankServiceTest {
     // ----- Saisie -----
 
     @Test
+    void opposedAdjustmentsInTheSameMonthAreBothCounted() {
+        service.record(new BankDtos.EntryRequest("ADJUSTMENT", 100_000L, null, null, "Oubli", null));
+        service.record(new BankDtos.EntryRequest("ADJUSTMENT", -100_000L, null, null, "Correction", null));
+
+        assertThat(service.overview().months().getLast())
+                .extracting(BankDtos.MonthPoint::adjustmentsIn, BankDtos.MonthPoint::adjustmentsOut).containsExactly(100_000L, 100_000L);
+    }
+
+    @Test
+    void amountOutsideTheLimitsIsRefusedEvenAtTheLongMinimum() {
+        assertThatThrownBy(() -> service.record(new BankDtos.EntryRequest("ADJUSTMENT", Long.MIN_VALUE, null, null, "x", null))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.record(new BankDtos.EntryRequest("ADJUSTMENT", BankService.MAX_AMOUNT + 1, null, null, "x", null))).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     void depositNeedsAPlayerAndAPositiveAmount() {
         assertThatThrownBy(() -> service.record(new BankDtos.EntryRequest("DEPOSIT", 10L, null, null, null, null))).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> service.record(new BankDtos.EntryRequest("DEPOSIT", -10L, VEXA, null, null, null))).isInstanceOf(BadRequestException.class);
