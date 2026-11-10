@@ -75,6 +75,19 @@ describe('TutorialOverlayComponent', () => {
     expect(fixture.nativeElement.querySelector('.tuto')).toBeNull();
   });
 
+  it('offers a replay button on pages that have a tutorial, hidden while it runs', () => {
+    expect(fixture.nativeElement.querySelector('.tuto-replay')).toBeNull();
+    (service as unknown as { pageTutorialSignal: { set(value: TutorialDefinition): void } }).pageTutorialSignal.set(demo);
+    fixture.detectChanges();
+    const replay = fixture.nativeElement.querySelector('.tuto-replay') as HTMLButtonElement;
+    expect(replay.getAttribute('aria-label')).toBe('Revoir le tutoriel : Démo');
+
+    replay.click();
+    fixture.detectChanges();
+    expect(service.active()?.tutorial).toBe(demo);
+    expect(fixture.nativeElement.querySelector('.tuto-replay')).toBeNull();
+  });
+
   it('closes with Escape and goes back with the left arrow', () => {
     service.play(demo);
     service.next();

@@ -1,3 +1,9 @@
+@if (!tutorials.active() && tutorials.pageTutorial(); as pageTutorial) {
+  <button type="button" class="tuto-replay" (click)="tutorials.play(pageTutorial)" [attr.aria-label]="'Revoir le tutoriel : ' + pageTutorial.title">
+    <span class="tuto-replay__icon" aria-hidden="true">?</span>
+    <span class="tuto-replay__label">Guide de la page</span>
+  </button>
+}
 @if (tutorials.active(); as active) {
   @let step = active.steps[active.index];
   @let current = frame();
