@@ -61,9 +61,10 @@
   z-index: 60;
   display: flex;
   align-items: center;
-  gap: 8px;
+  box-sizing: border-box;
+  min-width: 44px;
   height: 44px;
-  padding: 0 11px;
+  padding: 0 10px;
   border: 1px solid rgba(34, 211, 238, 0.45);
   border-radius: 999px;
   background: rgba(15, 29, 48, 0.92);
@@ -79,16 +80,17 @@
   place-items: center;
   width: 22px;
   height: 22px;
+  flex: none;
   border-radius: 50%;
   border: 1.5px solid currentColor;
   font-size: 0.8rem;
   font-weight: 700;
 }
-.tuto-replay__label { max-width: 0; overflow: hidden; white-space: nowrap; font-size: 0.85rem; font-weight: 600; transition: max-width 0.2s ease; }
-.tuto-replay:hover .tuto-replay__label, .tuto-replay:focus-visible .tuto-replay__label { max-width: 160px; }
+.tuto-replay__label { max-width: 0; overflow: hidden; white-space: nowrap; font-size: 0.85rem; font-weight: 600; transition: max-width 0.2s ease, margin-left 0.2s ease; }
+.tuto-replay:hover .tuto-replay__label, .tuto-replay:focus-visible .tuto-replay__label { max-width: 160px; margin-left: 8px; margin-right: 2px; }
 
 @media (max-width: 639px) {
-  .tuto-replay { right: 12px; bottom: 12px; height: 40px; padding: 0 9px; }
+  .tuto-replay { right: 12px; bottom: 12px; min-width: 40px; height: 40px; padding: 0 8px; }
 }
 
 @media (min-width: 1920px) {
