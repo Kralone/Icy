@@ -15,7 +15,7 @@
     >
     <!-- Header filtres + Ajouter -->
     <div class="flex flex-wrap justify-between items-center px-6 pt-6 pb-4 gap-3">
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3" data-tuto="hangar-filters">
         <input
           [(ngModel)]="shipFilter"
           (ngModelChange)="onFilterChange()"
@@ -56,6 +56,7 @@
           </div>
 
           <button
+            data-tuto="hangar-add"
             (click)="openModal()"
         class="px-4 py-2 text-sm rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold
                shadow-[0_0_12px_rgba(56,189,248,0.35)] hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] transform hover:scale-105 transition"
@@ -69,7 +70,7 @@
           @for (ship of filteredShips; track ship) {
             <div
               class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg overflow-hidden transition transform hover:scale-105 hover:border-cyan-400"
-              role="button" tabindex="0" (click)="openShipDetail(ship)" (keydown.enter)="openShipDetail(ship)"
+              data-tuto="hangar-ship" role="button" tabindex="0" (click)="openShipDetail(ship)" (keydown.enter)="openShipDetail(ship)"
               >
               <button
                 (click)="deleteShip(ship.shipId); $event.stopPropagation()"

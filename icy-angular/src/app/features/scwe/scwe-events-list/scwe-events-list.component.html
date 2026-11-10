@@ -54,7 +54,7 @@
               }
             </div>
             @if (getGlobalMax(it.event.scoreSchema); as globalMax) {
-              <div class="mt-4 md:mt-0 pt-4 md:pt-0 border-t border-white/5 md:border-none w-full">
+              <div class="mt-4 md:mt-0 pt-4 md:pt-0 border-t border-white/5 md:border-none w-full" [attr.data-tuto]="mode === 'active' ? 'scwe-progress-bar' : null">
                 <div class="flex justify-end mb-2 items-baseline gap-1.5">
                   <div class="text-base md:text-lg font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)] transition-all duration-300">
                     {{ it.participation?.total || 0 }}
@@ -153,6 +153,8 @@
           }
           <div class="pt-6 border-t border-white/10">
             <app-scwe-progress-editor
+              [attr.data-tuto]="mode === 'active' ? 'scwe-progress-editor' : null"
+              class="block"
               [event]="it.event"
               [participation]="it.participation"
               [readonly]="mode === 'history'"
