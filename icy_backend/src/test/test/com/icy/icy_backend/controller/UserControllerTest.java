@@ -80,7 +80,7 @@ class UserControllerTest {
         UUID staffId = UUID.randomUUID();
         when(userService.getUserByDiscordId(eq("123"))).thenReturn(okResponse(new User()));
         when(userService.createUser(eq("alice"), eq("123"), eq("USER"))).thenReturn(okResponse(new User()));
-        when(userService.updateUser(any(), any(), any(), any())).thenReturn(okResponse(new User()));
+        when(userService.updateUser(any(), any(), any(), any(), any())).thenReturn(okResponse(new User()));
         when(userService.resolveUser(any(UUID.class))).thenReturn(new User());
         when(userService.resolveUser(any(Long.class))).thenReturn(new User());
         when(userService.deactivateUser(any())).thenReturn(okResponse(null));

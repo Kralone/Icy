@@ -294,6 +294,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/goal/goal.component').then(m => m.GoalComponent)
       },
       {
+        path: 'banque',
+        loadComponent: () => import('./features/bank/guild-bank.component').then(m => m.GuildBankComponent)
+      },
+      {
         path: 'outils',
         loadComponent: () => import('./features/utils/member-tools-layout/member-tools-layout.component').then(m => m.MemberToolsLayoutComponent),
         loadChildren: () => import('./features/utils/member-tools.routes').then(m => m.memberToolsRoutes)

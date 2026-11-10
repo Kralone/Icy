@@ -77,7 +77,7 @@ public class UserController {
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<User>> updateUser(@RequestBody UpdateUserRequest request) {
         UserManagementPolicy.assertCanManage(userService.resolveUser(request.getId()), request.getRole());
-        return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole());
+        return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole(), request.getTreasurer());
     }
 
 

@@ -18,6 +18,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByIdIncludingInactive(@Param("id") UUID id);
     @Query(value = "SELECT * FROM core.users WHERE active = false ORDER BY lower(username)", nativeQuery = true)
     List<User> findAllInactive();
+    /** Noms des joueurs d'un registre : un membre parti reste nommé sur ses anciens mouvements. */
+    @Query(value = "SELECT * FROM core.users WHERE id IN (:ids)", nativeQuery = true)
+    List<User> findAllByIdIncludingInactive(@Param("ids") java.util.Collection<UUID> ids);
     Optional<User> findByUsername(String username);
     @Query("SELECT DISTINCT u FROM User u " +
             "JOIN u.roles ur " +

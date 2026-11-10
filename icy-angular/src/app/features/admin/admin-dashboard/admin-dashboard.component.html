@@ -222,6 +222,14 @@
                   }
                 </select>
               </div>
+              @if (isEditMode) {
+                <!-- Fonction de trésorier : elle s'ajoute au grade -->
+                <label class="flex items-start gap-3 rounded-xl border border-white/10 bg-[#0b1324] px-4 py-3 text-sm text-slate-300 cursor-pointer">
+                  <input type="checkbox" name="treasurer" [(ngModel)]="newUser.treasurer" class="mt-0.5 h-4 w-4 accent-cyan-400">
+                  <span><span class="font-semibold text-white">Trésorier</span><br>
+                  <span class="text-slate-400">Gère la banque de guilde : dépôts, dépenses, reversements. S'ajoute au grade.</span></span>
+                </label>
+              }
               <!-- Actions -->
               <div class="flex justify-end gap-4 pt-6">
                 <button

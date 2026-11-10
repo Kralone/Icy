@@ -1,0 +1,435 @@
+<main class="bank">
+  <header class="bank__head">
+    <div>
+      <h1>Banque de guilde</h1>
+      <p class="muted">Registre de l’argent que le trésorier garde en jeu pour la guilde.</p>
+    </div>
+    @if (access().write) {
+      <div class="bank__actions">
+        <button type="button" class="btn primary" (click)="openEntry('DEPOSIT')">+ Dépôt</button>
+        <button type="button" class="btn" (click)="openEntry('EXPENSE')">Dépense</button>
+        <button type="button" class="btn" (click)="openEntry('PAYOUT')">Reversement</button>
+        <button type="button" class="btn small" (click)="openEntry('ADJUSTMENT')">Ajustement</button>
+        <button type="button" class="btn gold" (click)="openProject()">+ Projet</button>
+      </div>
+    }
+  </header>
+
+  @if (state() === 'loading') {
+    <app-async-state kind="loading" title="Chargement de la banque…" />
+  } @else if (state() === 'error') {
+    <app-async-state kind="error" title="La banque n’a pas pu être chargée." actionLabel="Réessayer" (action)="load()" />
+  } @else if (totals(); as totals) {
+    <!-- Bandeau des chiffres -->
+    <section class="kpis" aria-label="Chiffres de la banque">
+      <article class="kpi kpi--balance">
+        <span class="kpi__label">Solde <span class="live" title="Mis à jour en direct"><i aria-hidden="true"></i>En direct</span></span>
+        @for (tick of [pulse()]; track tick) {
+          <strong class="kpi__value num flash" [class.neg]="totals.balance < 0">{{ formatAuec(totals.balance) }} <small>aUEC</small></strong>
+        }
+        <span class="kpi__trend" [class.up]="change30() > 0" [class.down]="change30() < 0">
+          @if (change30() > 0) { <b>▲ +{{ formatAuec(change30()) }}</b> } @else if (change30() < 0) { <b>▼ −{{ formatAuec(-change30()) }}</b> } @else { <b>= 0</b> }
+          <span class="muted">&nbsp;sur 30 jours</span>
+        </span>
+      </article>
+      <article class="kpi">
+        <span class="kpi__label">Dons reçus</span>
+        <strong class="kpi__value num pos">{{ compactAuec(totals.deposits) }}</strong>
+        <span class="muted">{{ totals.donors }} donateur{{ totals.donors > 1 ? 's' : '' }}</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi__label">Dépenses</span>
+        <strong class="kpi__value num neg">{{ compactAuec(totals.expenses) }}</strong>
+        <span class="muted">achats pour la guilde</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi__label">Reversements</span>
+        <strong class="kpi__value num" style="color: var(--s-share)">{{ compactAuec(totals.payouts) }}</strong>
+        <span class="muted">rendus aux joueurs</span>
+      </article>
+    </section>
+
+    <!-- Graphiques -->
+    <div class="charts">
+      <section class="panel" style="--section: var(--cyan)" aria-labelledby="bank-curve">
+        <header><h2 id="bank-curve"><app-operation-icon name="radar" /> Évolution du solde</h2>
+          @if (chart(); as chart) { <span>depuis le {{ dayLabel(chart.points[0].date) }}</span> }</header>
+        @if (chart(); as chart) {
+          <div class="curve" (pointerleave)="hover.set(null)">
+            <div class="curve__axis" aria-hidden="true">
+              @for (tick of chart.ticks; track tick.value) {
+                <span class="num" [style.top.%]="tick.y">{{ compactAuec(tick.value) }}</span>
+              }
+            </div>
+            <div class="curve__plot">
+              <svg #plot viewBox="0 0 1000 100" preserveAspectRatio="none" role="img"
+                [attr.aria-label]="'Solde actuel : ' + formatAuec(totals.balance) + ' aUEC'"
+                (pointermove)="onChartMove($event, plot)" (pointerdown)="onChartMove($event, plot)">
+                <defs>
+                  <linearGradient id="bank-area" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#67e8f9" stop-opacity=".38" />
+                    <stop offset="100%" stop-color="#67e8f9" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                @for (tick of chart.ticks; track tick.value) {
+                  <line class="grid" x1="0" x2="1000" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+                }
+                <line class="zero" x1="0" x2="1000" [attr.y1]="chart.zeroY" [attr.y2]="chart.zeroY" />
+                <path class="area" [attr.d]="chart.area" />
+                <path class="line" [attr.d]="chart.line" />
+                @if (hover(); as point) {
+                  <line class="cursor" [attr.x1]="point.x" [attr.x2]="point.x" y1="0" y2="100" />
+                }
+              </svg>
+              @if (hover(); as point) {
+                <span class="curve__dot" [style.left.%]="point.x / 10" [style.top.%]="point.y"></span>
+                <div class="curve__tip" [style.left.%]="point.x / 10" [class.curve__tip--left]="point.x > 700">
+                  <b class="num">{{ formatAuec(point.balance) }} aUEC</b>
+                  <span>{{ dayLabel(point.date) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="empty">Aucun mouvement pour l’instant. La courbe apparaîtra au premier dépôt.</p>
+        }
+      </section>
+
+      <section class="panel" style="--section: var(--s-sell)" aria-labelledby="bank-months">
+        <header><h2 id="bank-months"><app-operation-icon name="coins" /> Entrées et sorties</h2><span>12 derniers mois</span></header>
+        <div class="flows">
+          <span class="flows__legend"><i class="sw sw--in"></i>Entrées <b class="num pos">{{ compactAuec(monthsInflow()) }}</b></span>
+          <span class="flows__legend"><i class="sw sw--out"></i>Sorties <b class="num neg">{{ compactAuec(monthsOutflow()) }}</b></span>
+        </div>
+        <div class="bars" role="list">
+          @for (bar of bars(); track bar.month) {
+            <div class="bar" role="listitem" tabindex="0"
+              [attr.aria-label]="bar.label + ' : entrées ' + formatAuec(bar.inflow) + ', sorties ' + formatAuec(bar.outflow) + ' aUEC'">
+              <div class="bar__top"><span class="bar__in" [style.height.%]="bar.inHeight"></span></div>
+              <div class="bar__bottom"><span class="bar__out" [style.height.%]="bar.outHeight"></span></div>
+              <span class="bar__label">{{ bar.label }}</span>
+              <span class="bar__tip num">+{{ compactAuec(bar.inflow) }}<br>−{{ compactAuec(bar.outflow) }}<br><small>solde {{ compactAuec(bar.balance) }}</small></span>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- Projets -->
+    <section class="panel" style="--section: var(--gold)" aria-labelledby="bank-projects">
+      <header><h2 id="bank-projects"><app-operation-icon name="target" /> Projets</h2>
+        <span>{{ openProjects().length }} en cours</span></header>
+      @if (!openProjects().length && !closedProjects().length) {
+        <p class="empty">Aucun projet.@if (access().write) { Créez un projet pour rassembler l’argent d’un achat, par exemple un vaisseau. }</p>
+      } @else {
+        <ul class="projects">
+          @for (project of openProjects(); track project.id) {
+            <ng-container *ngTemplateOutlet="projectCard; context: { $implicit: project }" />
+          }
+        </ul>
+        @if (closedProjects().length) {
+          <details class="closed">
+            <summary>Projets terminés ou annulés ({{ closedProjects().length }})</summary>
+            <ul class="projects">
+              @for (project of closedProjects(); track project.id) {
+                <ng-container *ngTemplateOutlet="projectCard; context: { $implicit: project }" />
+              }
+            </ul>
+          </details>
+        }
+      }
+    </section>
+
+    <ng-template #projectCard let-project>
+      <li class="project" [attr.data-status]="project.status">
+        @if (project.shipImageUrl) {
+          <img class="project__img" [src]="project.shipImageUrl" [alt]="project.shipName" loading="lazy">
+        } @else {
+          <div class="project__img project__img--none" aria-hidden="true"><app-operation-icon name="coins" /></div>
+        }
+        <div class="project__body">
+          <div class="project__title">
+            <strong>{{ project.name }}</strong>
+            @if (project.status !== 'OPEN') { <span class="badge" [class.badge--given]="project.status === 'COMPLETED'" [class.badge--muted]="project.status === 'CANCELLED'">{{ statusLabel(project.status) }}</span> }
+          </div>
+          @if (project.shipName) { <span class="muted small">{{ project.shipName }}</span> }
+          @if (project.description) { <p class="project__desc">{{ project.description }}</p> }
+          @if (project.targetAmount) {
+            <div class="gauge" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progress(project)"
+              [attr.aria-label]="'Collecté ' + progress(project) + ' %'">
+              <span [style.width.%]="progress(project)"></span>
+            </div>
+            <div class="project__line"><span class="num"><b>{{ compactAuec(project.collected) }}</b> / {{ compactAuec(project.targetAmount) }}</span><span class="num gold-text">{{ progress(project) }} %</span></div>
+          } @else {
+            <div class="project__line"><span>Collecté</span><b class="num">{{ compactAuec(project.collected) }}</b></div>
+          }
+          <dl class="project__stats">
+            <div><dt>Dépensé</dt><dd class="num">{{ compactAuec(project.spent) }}</dd></div>
+            <div><dt>Disponible</dt><dd class="num" [class.neg]="project.available < 0">{{ compactAuec(project.available) }}</dd></div>
+            <div><dt>Contributeurs</dt><dd class="num">{{ project.contributors }}</dd></div>
+          </dl>
+          @if (access().write) {
+            <div class="project__actions">
+              @if (project.status === 'OPEN') {
+                <button type="button" class="btn small" (click)="openEntry('DEPOSIT', project.id)">+ Dépôt</button>
+                <button type="button" class="btn small" (click)="openEntry('EXPENSE', project.id)">Dépense</button>
+              }
+              <button type="button" class="btn small" (click)="openProject(project)">Modifier</button>
+            </div>
+          }
+        </div>
+      </li>
+    </ng-template>
+
+    <div class="duo">
+      <!-- Ce que le lecteur a donné -->
+      <section class="panel" style="--section: var(--green)" aria-labelledby="bank-mine">
+        <header><h2 id="bank-mine"><app-operation-icon name="assignment" /> Mes contributions</h2></header>
+        @if (overview()?.mine; as mine) {
+          <div class="mine">
+            <div><span class="muted">Donné</span><b class="num pos">{{ formatAuec(mine.given) }} aUEC</b></div>
+            <div><span class="muted">Reçu</span><b class="num">{{ formatAuec(mine.received) }} aUEC</b></div>
+          </div>
+          @if (mine.entries.length) {
+            <div class="rows">
+              @for (entry of mine.entries.slice(0, 6); track entry.id) {
+                <div class="row" [class.cancelled]="entry.cancelled">
+                  <span><span class="kind" [attr.data-kind]="entry.kind">{{ kindLabels[entry.kind] }}</span>
+                    @if (entry.projectName) { {{ entry.projectName }} } @else { <span class="muted">Banque</span> }</span>
+                  <span class="num">{{ formatAuec(entry.amount) }}</span>
+                  <span class="sub">{{ dayLabel(entry.occurredOn) }}@if (entry.cancelled) { · annulé : {{ entry.cancelReason }} }</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty">Vous n’avez encore rien donné. Pour participer, donnez vos aUEC au trésorier en jeu : il les enregistrera ici.</p>
+          }
+        }
+      </section>
+
+      <!-- Derniers mouvements, sans nom de joueur -->
+      <section class="panel" style="--section: var(--s-share)" aria-labelledby="bank-recent">
+        <header><h2 id="bank-recent"><app-operation-icon name="clock" /> Derniers mouvements</h2></header>
+        @if (overview()?.recent?.length) {
+          <div class="rows">
+            @for (entry of overview()!.recent; track entry.id) {
+              <div class="row">
+                <span><span class="kind" [attr.data-kind]="entry.kind">{{ kindLabels[entry.kind] }}</span>
+                  @if (entry.projectName) { {{ entry.projectName }} } @else { <span class="muted">Banque</span> }</span>
+                <span class="num" [class.pos]="entry.kind === 'DEPOSIT'" [class.neg]="entry.kind === 'EXPENSE' || entry.kind === 'PAYOUT'">
+                  {{ entry.kind === 'DEPOSIT' ? '+' : entry.kind === 'ADJUSTMENT' ? (entry.amount < 0 ? '' : '+') : '−' }}{{ formatAuec(entry.amount) }}</span>
+                <span class="sub">{{ dayLabel(entry.occurredOn) }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty">Aucun mouvement.</p>
+        }
+      </section>
+    </div>
+
+    <!-- Détail réservé : journal complet et joueurs -->
+    @if (access().details) {
+      <section class="panel" style="--section: var(--sky)" aria-labelledby="bank-details">
+        <header>
+          <h2 id="bank-details"><app-operation-icon name="briefing" /> Registre</h2>
+          <div class="tabs" role="tablist" aria-label="Registre">
+            <button type="button" role="tab" [attr.aria-selected]="tab() === 'journal'" (click)="tab.set('journal')">Journal</button>
+            <button type="button" role="tab" [attr.aria-selected]="tab() === 'players'" (click)="tab.set('players')">Par joueur</button>
+          </div>
+        </header>
+        @if (!details()) {
+          <app-async-state kind="loading" title="Chargement du registre…" />
+        } @else if (tab() === 'journal') {
+          <div class="filters">
+            <label class="field">Joueur
+              <app-search-select [ngModel]="filterPlayer()" (ngModelChange)="setFilter(() => filterPlayer.set($event))" [options]="playerFilterOptions()" placeholder="Tous" ariaLabel="Filtrer par joueur" />
+            </label>
+            <label class="field">Projet
+              <select [ngModel]="filterProject()" (ngModelChange)="setFilter(() => filterProject.set($event))">
+                <option value="">Tous</option>
+                <option value="none">Sans projet</option>
+                @for (project of overview()!.projects; track project.id) { <option [value]="project.id">{{ project.name }}</option> }
+              </select>
+            </label>
+            <label class="field">Type
+              <select [ngModel]="filterKind()" (ngModelChange)="setFilter(() => filterKind.set($event))">
+                <option value="">Tous</option>
+                @for (kind of kinds; track kind) { <option [value]="kind">{{ kindLabels[kind] }}</option> }
+              </select>
+            </label>
+            <label class="field">Période
+              <select [ngModel]="filterPeriod()" (ngModelChange)="setFilter(() => filterPeriod.set($event))">
+                <option value="all">Tout</option>
+                <option value="30">30 jours</option>
+                <option value="90">3 mois</option>
+                <option value="365">1 an</option>
+              </select>
+            </label>
+            <label class="check"><input type="checkbox" [ngModel]="showCancelled()" (ngModelChange)="setFilter(() => showCancelled.set($event))"> Lignes annulées</label>
+            <button type="button" class="btn small" (click)="resetFilters()">Effacer</button>
+          </div>
+          <p class="note">{{ filteredEntries().length }} mouvement{{ filteredEntries().length > 1 ? 's' : '' }} · effet sur le solde
+            <b class="num" [class.pos]="filteredSum() > 0" [class.neg]="filteredSum() < 0">{{ filteredSum() > 0 ? '+' : '' }}{{ formatAuec(filteredSum()) }} aUEC</b></p>
+          @if (!filteredEntries().length) {
+            <p class="empty">Aucun mouvement ne correspond.</p>
+          } @else {
+            <div class="journal" role="table" aria-label="Journal des mouvements">
+              <div class="journal__row journal__head" role="row">
+                <span role="columnheader">Date</span><span role="columnheader">Type</span><span role="columnheader">Joueur</span>
+                <span role="columnheader">Projet · note</span><span role="columnheader" class="right">Montant</span><span role="columnheader">Saisi par</span><span role="columnheader"></span>
+              </div>
+              @for (entry of journalVisible(); track entry.id) {
+                <div class="journal__row" role="row" [class.cancelled]="entry.cancelled">
+                  <span role="cell" class="num small">{{ dayLabel(entry.occurredOn) }}</span>
+                  <span role="cell"><span class="kind" [attr.data-kind]="entry.kind">{{ kindLabels[entry.kind] }}</span></span>
+                  <span role="cell" class="who">
+                    @if (entry.userId) {
+                      <button type="button" class="link" (click)="showPlayer(entry.userId)">
+                        @if (entry.userAvatarUrl) { <img [src]="entry.userAvatarUrl" alt="" class="avatar"> } @else { <span class="avatar avatar--none" aria-hidden="true">{{ entry.userName?.charAt(0) }}</span> }
+                        {{ entry.userName }}</button>
+                    } @else { <span class="muted">—</span> }
+                  </span>
+                  <span role="cell" class="what">@if (entry.projectName) { <b>{{ entry.projectName }}</b> }@if (entry.projectName && entry.note) { · }{{ entry.note }}
+                    @if (entry.cancelled) { <span class="cancel-note">Annulé par {{ entry.cancelledByName }} : {{ entry.cancelReason }}</span> }</span>
+                  <span role="cell" class="num right amount" [class.pos]="entry.signedAmount > 0" [class.neg]="entry.signedAmount < 0">{{ entry.signedAmount > 0 ? '+' : '−' }}{{ formatAuec(entry.signedAmount < 0 ? -entry.signedAmount : entry.signedAmount) }}</span>
+                  <span role="cell" class="muted small">{{ entry.recordedByName }}</span>
+                  <span role="cell" class="right">
+                    @if (access().write && !entry.cancelled) { <button type="button" class="btn small danger" (click)="askCancel(entry)" [attr.aria-label]="'Annuler le mouvement du ' + dayLabel(entry.occurredOn)">Annuler</button> }
+                  </span>
+                </div>
+              }
+            </div>
+            @if (journalPages() > 1) {
+              <div class="pager">
+                <button type="button" class="btn small" [disabled]="journalPage() === 0" (click)="journalPage.set(journalPage() - 1)">Précédent</button>
+                <span class="muted">Page {{ journalPage() + 1 }} / {{ journalPages() }}</span>
+                <button type="button" class="btn small" [disabled]="journalPage() + 1 >= journalPages()" (click)="journalPage.set(journalPage() + 1)">Suivant</button>
+              </div>
+            }
+          }
+        } @else {
+          @if (!details()!.players.length) {
+            <p class="empty">Aucun joueur n’a encore donné ou reçu d’argent.</p>
+          } @else {
+            <ol class="players">
+              @for (player of details()!.players; track player.userId; let i = $index) {
+                <li>
+                  <button type="button" class="player" (click)="showPlayer(player.userId)" [attr.aria-label]="'Voir les mouvements de ' + player.userName">
+                    <span class="player__rank num">{{ i + 1 }}</span>
+                    @if (player.userAvatarUrl) { <img [src]="player.userAvatarUrl" alt="" class="avatar"> } @else { <span class="avatar avatar--none" aria-hidden="true">{{ player.userName.charAt(0) }}</span> }
+                    <span class="player__name"><b>{{ player.userName }}</b>
+                      <small class="muted">{{ player.deposits }} dépôt{{ player.deposits > 1 ? 's' : '' }}@if (player.lastDeposit) { · dernier le {{ dayLabel(player.lastDeposit) }} }</small></span>
+                    <span class="player__bars">
+                      <span class="pbar pbar--in" [style.width.%]="playerWidth(player.given)"></span>
+                      <span class="pbar pbar--out" [style.width.%]="playerWidth(player.received)"></span>
+                    </span>
+                    <span class="player__nums num"><span class="pos">+{{ compactAuec(player.given) }}</span>@if (player.received) { <span class="neg">−{{ compactAuec(player.received) }}</span> }</span>
+                  </button>
+                </li>
+              }
+            </ol>
+          }
+        }
+      </section>
+    }
+  }
+
+  <!-- Saisie d'un mouvement -->
+  @if (entryDialog()) {
+    <div class="dialog-backdrop" (click)="closeDialogs()">
+      <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveEntry()" aria-labelledby="entry-title"
+        [style.--section]="entryForm.kind === 'DEPOSIT' ? 'var(--ok)' : entryForm.kind === 'EXPENSE' ? 'var(--rose)' : entryForm.kind === 'PAYOUT' ? 'var(--s-share)' : 'var(--gold)'">
+        <h2 id="entry-title">Nouveau mouvement</h2>
+        <div class="segmented" role="radiogroup" aria-label="Type de mouvement">
+          @for (kind of kinds; track kind) {
+            <button type="button" role="radio" [attr.aria-checked]="entryForm.kind === kind" [attr.data-kind]="kind" (click)="entryForm.kind = kind">{{ kindLabels[kind] }}</button>
+          }
+        </div>
+        <p class="note">
+          @switch (entryForm.kind) {
+            @case ('DEPOSIT') { Un joueur vous a donné des aUEC en jeu. }
+            @case ('EXPENSE') { Vous avez dépensé l’argent de la guilde : un achat, un projet. }
+            @case ('PAYOUT') { Vous avez rendu ou donné de l’argent de la guilde à un joueur. }
+            @case ('ADJUSTMENT') { Correction pour coller au solde réel en jeu : un montant négatif le diminue. }
+          }
+        </p>
+        <div class="fields">
+          <label class="field">Montant (aUEC)
+            <input name="amount" class="big" [(ngModel)]="entryForm.amount" inputmode="decimal" autocomplete="off" placeholder="250k, 1,5M ou 250000" required>
+            <small>{{ entryAmountPreview() }}</small>
+          </label>
+          <label class="field">Date en jeu<input name="occurredOn" type="date" [(ngModel)]="entryForm.occurredOn" [max]="today()"></label>
+        </div>
+        @if (entryForm.kind !== 'ADJUSTMENT') {
+          <label class="field">
+            {{ entryForm.kind === 'DEPOSIT' ? 'Joueur qui donne' : entryForm.kind === 'PAYOUT' ? 'Joueur qui reçoit' : 'Joueur concerné (facultatif)' }}
+            <app-search-select name="userId" [(ngModel)]="entryForm.userId" [options]="memberOptions()" placeholder="Rechercher un membre" ariaLabel="Joueur" />
+          </label>
+        }
+        <label class="field">Projet {{ entryForm.kind === 'EXPENSE' ? '' : '(facultatif)' }}
+          <select name="projectId" [(ngModel)]="entryForm.projectId">
+            <option [ngValue]="null">Aucun, la banque en général</option>
+            @for (project of openProjects(); track project.id) { <option [ngValue]="project.id">{{ project.name }}</option> }
+          </select>
+        </label>
+        <label class="field">Note {{ entryForm.kind === 'ADJUSTMENT' || (entryForm.kind === 'EXPENSE' && !entryForm.projectId) ? '' : '(facultative)' }}
+          <input name="note" [(ngModel)]="entryForm.note" maxlength="300" [placeholder]="entryForm.kind === 'EXPENSE' ? 'Ce qui a été acheté' : entryForm.kind === 'ADJUSTMENT' ? 'Pourquoi cette correction' : ''">
+        </label>
+        @if (formError()) { <p class="alert" role="alert">{{ formError() }}</p> }
+        <div class="dialog-actions">
+          <button type="button" class="btn" (click)="closeDialogs()">Fermer</button>
+          <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Projet -->
+  @if (projectDialog()) {
+    <div class="dialog-backdrop" (click)="closeDialogs()">
+      <form class="dialog" style="--section: var(--gold)" (click)="$event.stopPropagation()" (ngSubmit)="saveProject()" aria-labelledby="project-title">
+        <h2 id="project-title">{{ projectForm.id ? 'Modifier le projet' : 'Nouveau projet' }}</h2>
+        <label class="field">Nom<input name="name" [(ngModel)]="projectForm.name" maxlength="120" required placeholder="Achat d’une Carrack"></label>
+        <div class="fields">
+          <label class="field">Objectif (aUEC, facultatif)<input name="target" [(ngModel)]="projectForm.target" inputmode="decimal" placeholder="25M"></label>
+          <label class="field">Vaisseau (facultatif)
+            <app-search-select name="shipId" [(ngModel)]="projectForm.shipId" [options]="shipOptions()" placeholder="Rechercher dans le catalogue" ariaLabel="Vaisseau" />
+          </label>
+        </div>
+        <label class="field">Description (facultative)<textarea name="description" rows="3" [(ngModel)]="projectForm.description" maxlength="500"></textarea></label>
+        @if (projectForm.id) {
+          <label class="field">Statut
+            <select name="status" [(ngModel)]="projectForm.status">
+              <option value="OPEN">En cours</option>
+              <option value="COMPLETED">Terminé</option>
+              <option value="CANCELLED">Annulé</option>
+            </select>
+          </label>
+        }
+        @if (formError()) { <p class="alert" role="alert">{{ formError() }}</p> }
+        <div class="dialog-actions">
+          <button type="button" class="btn" (click)="closeDialogs()">Fermer</button>
+          <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Annulation -->
+  @if (cancelTarget(); as entry) {
+    <div class="dialog-backdrop" (click)="closeDialogs()">
+      <form class="dialog" style="--section: var(--rose)" (click)="$event.stopPropagation()" (ngSubmit)="confirmCancel()" aria-labelledby="cancel-title">
+        <h2 id="cancel-title">Annuler ce mouvement</h2>
+        <p class="note">{{ kindLabels[entry.kind] }} de <b class="num">{{ formatAuec(entry.amount) }} aUEC</b>@if (entry.userName) { · {{ entry.userName }} } · {{ dayLabel(entry.occurredOn) }}.
+          La ligne reste visible, barrée, et ne compte plus dans le solde.</p>
+        <label class="field">Motif<input name="reason" [(ngModel)]="cancelReason" maxlength="300" required placeholder="Saisi deux fois, mauvais montant…"></label>
+        @if (formError()) { <p class="alert" role="alert">{{ formError() }}</p> }
+        <div class="dialog-actions">
+          <button type="button" class="btn" (click)="closeDialogs()">Garder</button>
+          <button type="submit" class="btn danger" [disabled]="saving()">Annuler le mouvement</button>
+        </div>
+      </form>
+    </div>
+  }
+</main>

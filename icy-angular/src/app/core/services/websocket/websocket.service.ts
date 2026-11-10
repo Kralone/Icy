@@ -140,6 +140,11 @@ export class WebSocketService {
     return this.watchSignal(`/topic/sessions/${sheetId}`);
   }
 
+  /** Signal « la banque de guilde a changé » : la page se relit avec les droits de son lecteur. Fermé avec la page. */
+  watchGuildBank(): Observable<void> {
+    return this.watchSignal('/topic/bank');
+  }
+
   private watchSignal(topic: string): Observable<void> {
     let subject = this.signalSubjects.get(topic);
     if (!subject) { subject = new Subject<void>(); this.signalSubjects.set(topic, subject); }

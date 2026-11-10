@@ -8,6 +8,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
+import { TREASURER_ROLE, hasRole, memberRank } from '../../../core/services/user/member-rank';
 
 export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
 
@@ -59,10 +60,12 @@ export class AdminDashboardComponent implements OnInit {
     username: string;
     discordId: string;
     role: string;
+    treasurer: boolean;
   } = {
     username: '',
     discordId: '',
-    role: 'JUNIOR'
+    role: 'JUNIOR',
+    treasurer: false
   };
 
   availableRoles: string[] = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
@@ -76,7 +79,8 @@ export class AdminDashboardComponent implements OnInit {
     USER: 'Junior',
     MEMBRE: 'Junior',
     RECRUE: 'Junior',
-    BOT: 'Bot'
+    BOT: 'Bot',
+    TRESORIER: 'Trésorier'
   };
   roleAliases: Record<string, string> = {
     USER: 'JUNIOR',
@@ -234,7 +238,8 @@ export class AdminDashboardComponent implements OnInit {
     this.newUser = {
       username: '',
       discordId: '',
-      role: 'JUNIOR'
+      role: 'JUNIOR',
+      treasurer: false
     };
     this.isEditMode = false;
     this.editedUserId = null;
@@ -260,7 +265,8 @@ export class AdminDashboardComponent implements OnInit {
     this.newUser = {
       username: user.username,
       discordId: user.discordId,
-      role: this.normalizeRole(user.roles?.[0])
+      role: this.normalizeRole(memberRank(user.roles)),
+      treasurer: hasRole(user.roles, TREASURER_ROLE)
     };
 
     this.editedUserId = user.id;
@@ -275,7 +281,8 @@ export class AdminDashboardComponent implements OnInit {
       id: this.editedUserId,
       username: this.newUser.username,
       discordId: this.newUser.discordId,
-      role: this.newUser.role
+      role: this.newUser.role,
+      treasurer: this.newUser.treasurer
     };
 
     this.userService.updateUser(payload).subscribe({

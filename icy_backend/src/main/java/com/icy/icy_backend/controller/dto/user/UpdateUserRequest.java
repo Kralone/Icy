@@ -12,6 +12,8 @@ public class UpdateUserRequest {
     private String username;
     private String discordId;
     private String role;
+    /** Fonction de trésorier, qui s'ajoute au grade ; null la laisse telle quelle. */
+    private Boolean treasurer;
 
 }
 

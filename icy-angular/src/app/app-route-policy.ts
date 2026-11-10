@@ -32,6 +32,7 @@ const knownRoutes = new Set([
   '/icy/fleet',
   '/icy/events',
   '/icy/goals',
+  '/icy/banque',
   '/icy/collection',
   '/icy/outils',
   '/icy/outils/collection',

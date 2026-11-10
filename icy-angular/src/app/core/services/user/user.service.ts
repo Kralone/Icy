@@ -37,7 +37,7 @@ export class UserService {
     return this.http.delete<void>(`/api/users/by-id?id=${id}`);
   }
 
-  updateUser(user: { id: string, username: string, discordId: string, role: string }): Observable<any> {
+  updateUser(user: { id: string, username: string, discordId: string, role: string, treasurer?: boolean }): Observable<any> {
     return this.http.put('/api/users/update', user);
   }
 
