@@ -21,7 +21,7 @@ interface EntryForm { kind: BankEntryKind; amount: string; userId: string | null
 interface ProjectForm { id: string | null; name: string; description: string; target: string; shipId: number | null; status: BankProjectStatus; }
 
 /**
- * Banque de guilde : le registre de l'argent que le trésorier garde en jeu.
+ * Banque : le registre de l'argent que le trésorier garde en jeu.
  * Tout membre voit le solde, les graphiques et les projets ; le détail et la saisie dépendent des droits renvoyés par le serveur.
  * La page se relit à chaque signal « la banque a changé » ; l'abonnement se ferme quand on quitte la page.
  */
