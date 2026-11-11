@@ -13,14 +13,16 @@ let nextId = 0;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => SearchSelectComponent), multi: true }],
-  host: { '(document:click)': 'outside($event)', '(window:resize)': 'reposition()' },
+  host: { '(window:resize)': 'reposition()' },
+  // Ouverture à l'appui sur le champ (mousedown), au clavier (flèches) ou en tapant, mais ni au clic ni au focus :
+  // placé dans un <label>, le champ reçoit du label un clic et le focus après chaque choix dans la liste ou chaque clic
+  // sur le libellé, ce qui la rouvrirait aussitôt.
   template: `
     <input type="text" role="combobox" autocomplete="off" [id]="inputId()" [attr.aria-label]="ariaLabel()" [placeholder]="placeholder()" [value]="text()" [disabled]="disabled()"
       [attr.aria-expanded]="open()" [attr.aria-controls]="listId" [attr.aria-activedescendant]="open() && matches().length ? listId + '-' + active() : null"
-      (focus)="show()" (click)="show()" (input)="search($any($event.target).value)" (keydown)="key($event)" (blur)="touched()">
+      (mousedown)="show()" (input)="search($any($event.target).value)" (keydown)="key($event)" (blur)="touched()">
     @if (open()) {
-      <!-- Placée dans un <label>, la liste lui renverrait chaque clic, et le label recliquerait le champ, qui rouvrirait la liste. -->
-      <ul class="list" role="listbox" [id]="listId" (click)="$event.preventDefault()" [style.top.px]="place().top" [style.bottom.px]="place().bottom" [style.left.px]="place().left"
+      <ul class="list" role="listbox" [id]="listId" [style.top.px]="place().top" [style.bottom.px]="place().bottom" [style.left.px]="place().left"
         [style.width.px]="place().width" [style.max-height.px]="place().maxHeight">
         @for (option of matches(); track $index; let i = $index) {
           <li role="option" [id]="listId + '-' + i" [attr.aria-selected]="option.value === value()" [class.active]="i === active()"
@@ -77,8 +79,15 @@ export class SearchSelectComponent<T> implements ControlValueAccessor {
   constructor() {
     // Le défilement ne remonte pas jusqu'au document : on l'écoute en capture pour suivre le champ.
     const follow = () => this.reposition();
+    // En capture aussi pour un appui ailleurs : une fenêtre de dialogue qui arrête la propagation de ses clics
+    // ne doit pas empêcher la liste de se fermer.
+    const press = (event: Event) => this.outside(event);
     window.addEventListener('scroll', follow, true);
-    inject(DestroyRef).onDestroy(() => window.removeEventListener('scroll', follow, true));
+    document.addEventListener('pointerdown', press, true);
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('scroll', follow, true);
+      document.removeEventListener('pointerdown', press, true);
+    });
   }
 
   private onChange: (value: T | null) => void = () => {};

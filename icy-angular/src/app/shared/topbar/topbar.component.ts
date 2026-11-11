@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, NgZone, Output, Renderer2, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, EventEmitter, NgZone, Output, Renderer2, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -29,6 +29,8 @@ export class TopbarComponent {
   isDesktop = false; // ✅ détecte les écrans larges
   lastScrollY = 0;
   private scrollListener: (() => void) | null = null;
+  // En capture : un dialogue qui arrête la propagation de ses clics ne doit pas garder le panneau ouvert.
+  private readonly documentClick = (event: MouseEvent) => this.onDocumentClick(event);
   private notificationsSubscription?: Subscription;
   showNotifications = false;
   notifications: NotificationItem[] = [];
@@ -145,6 +147,7 @@ export class TopbarComponent {
   }
 
   ngAfterViewInit(): void {
+    document.addEventListener('click', this.documentClick, true);
     const scrollableElement = document.querySelector('.main-content');
     if (scrollableElement) {
       this.scrollListener = this.renderer.listen(scrollableElement, 'scroll', () => {
@@ -157,6 +160,7 @@ export class TopbarComponent {
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('click', this.documentClick, true);
     this.notificationsSubscription?.unsubscribe();
     this.websocketService.disconnectNotifications();
     if (this.scrollListener) {
@@ -283,7 +287,6 @@ export class TopbarComponent {
     return this.availableRanks.includes(mapped) ? mapped : 'JUNIOR';
   }
 
-  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.el.nativeElement.contains(event.target)) {
       if (this.showNotifications) {

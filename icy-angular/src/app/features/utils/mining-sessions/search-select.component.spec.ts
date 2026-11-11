@@ -1,46 +1,87 @@
 import { Component } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { SearchOption, SearchSelectComponent } from './search-select.component';
 
+/** Comme dans les fenêtres de la banque : le champ est dans un label, et la fenêtre arrête la propagation de ses clics. */
 @Component({
   standalone: true,
   imports: [FormsModule, SearchSelectComponent],
   template: `
-    <label>Joueur qui donne
-      <app-search-select [(ngModel)]="value" [options]="options" ariaLabel="Joueur" />
-    </label>
+    <form class="dialog" (click)="$event.stopPropagation()">
+      <h2>Saisir un dépôt</h2>
+      <label>Joueur qui donne
+        <app-search-select name="player" [(ngModel)]="value" [options]="options" ariaLabel="Joueur" />
+      </label>
+      <label>Montant <input class="amount"></label>
+    </form>
   `,
 })
-class InLabelHost {
+class DialogHost {
   value: string | null = null;
   readonly options: SearchOption<string>[] = [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Bravo' }];
 }
 
+/** Ce que fait le navigateur pour un clic de souris : appui, puis clic. */
+function press(element: Element): void {
+  element.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+  element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+  element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
 describe('SearchSelectComponent', () => {
-  it('closes after a pick even when it sits inside a label', async () => {
-    const fixture = TestBed.createComponent(InLabelHost);
-    document.body.appendChild(fixture.nativeElement);
+  let fixture: ComponentFixture<DialogHost>;
+  let root: HTMLElement;
+  let input: HTMLInputElement;
+
+  async function settle(): Promise<void> {
     fixture.detectChanges();
     await fixture.whenStable();
-    const root = fixture.nativeElement as HTMLElement;
-    const input = root.querySelector('input')!;
+  }
+  const list = () => root.querySelector('ul[role=listbox]');
+
+  beforeEach(async () => {
+    fixture = TestBed.createComponent(DialogHost);
+    document.body.appendChild(fixture.nativeElement);
+    await settle();
+    root = fixture.nativeElement as HTMLElement;
+    input = root.querySelector('app-search-select input')!;
     // jsdom ne fait pas de mise en page : le champ est placé en haut de l'écran.
     input.getBoundingClientRect = () => ({ top: 100, bottom: 130, left: 10, right: 210, width: 200, height: 30, x: 10, y: 100, toJSON: () => ({}) });
+  });
 
-    input.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    const option = root.querySelectorAll('li')[1] as HTMLElement;
-    expect(option).toBeTruthy();
+  afterEach(() => fixture.nativeElement.remove());
 
-    option.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+  it('opens when the field is pressed and closes after a pick, although the label clicks the field again', async () => {
+    press(input);
+    await settle();
+    expect(list()).not.toBeNull();
 
-    expect(root.querySelector('ul')).toBeNull();
+    press(root.querySelectorAll('li')[1]);
+    await settle();
+
+    expect(list()).toBeNull();
     expect(fixture.componentInstance.value).toBe('b');
     expect(input.value).toBe('Bravo');
-    fixture.nativeElement.remove();
+  });
+
+  it('closes on a press elsewhere, even inside a dialog that stops click propagation', async () => {
+    for (const elsewhere of [root.querySelector('h2')!, root.querySelector('.amount')!]) {
+      press(input);
+      await settle();
+      expect(list()).not.toBeNull();
+
+      press(elsewhere);
+      await settle();
+      expect(list()).toBeNull();
+    }
+  });
+
+  it('stays closed when the label text is pressed', async () => {
+    press(input);
+    await settle();
+    press(root.querySelector('label')!);
+    await settle();
+    expect(list()).toBeNull();
   });
 });
