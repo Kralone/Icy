@@ -19,7 +19,8 @@ let nextId = 0;
       [attr.aria-expanded]="open()" [attr.aria-controls]="listId" [attr.aria-activedescendant]="open() && matches().length ? listId + '-' + active() : null"
       (focus)="show()" (click)="show()" (input)="search($any($event.target).value)" (keydown)="key($event)" (blur)="touched()">
     @if (open()) {
-      <ul class="list" role="listbox" [id]="listId" [style.top.px]="place().top" [style.bottom.px]="place().bottom" [style.left.px]="place().left"
+      <!-- Placée dans un <label>, la liste lui renverrait chaque clic, et le label recliquerait le champ, qui rouvrirait la liste. -->
+      <ul class="list" role="listbox" [id]="listId" (click)="$event.preventDefault()" [style.top.px]="place().top" [style.bottom.px]="place().bottom" [style.left.px]="place().left"
         [style.width.px]="place().width" [style.max-height.px]="place().maxHeight">
         @for (option of matches(); track $index; let i = $index) {
           <li role="option" [id]="listId + '-' + i" [attr.aria-selected]="option.value === value()" [class.active]="i === active()"
