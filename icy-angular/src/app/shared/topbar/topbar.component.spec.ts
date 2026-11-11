@@ -34,4 +34,20 @@ describe('TopbarComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('closes the notifications on a click outside, even one that stops propagating', () => {
+    const outside = document.createElement('button');
+    outside.addEventListener('click', event => event.stopPropagation());
+    document.body.appendChild(outside);
+    const markAllRead = vi.spyOn(component, 'markAllRead').mockImplementation(() => undefined);
+    component.showNotifications = true;
+
+    (fixture.nativeElement as HTMLElement).click();
+    expect(component.showNotifications).toBe(true);
+
+    outside.click();
+    expect(component.showNotifications).toBe(false);
+    expect(markAllRead).toHaveBeenCalled();
+    outside.remove();
+  });
 });
