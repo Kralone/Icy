@@ -13,18 +13,19 @@ let nextId = 0;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => SearchSelectComponent), multi: true }],
-  host: { '(document:click)': 'outside($event)', '(window:resize)': 'reposition()' },
+  host: { '(window:resize)': 'reposition()' },
   template: `
     <input type="text" role="combobox" autocomplete="off" [id]="inputId()" [attr.aria-label]="ariaLabel()" [placeholder]="placeholder()" [value]="text()" [disabled]="disabled()"
       [attr.aria-expanded]="open()" [attr.aria-controls]="listId" [attr.aria-activedescendant]="open() && matches().length ? listId + '-' + active() : null"
       (focus)="show()" (click)="show()" (input)="search($any($event.target).value)" (keydown)="key($event)" (blur)="touched()">
     @if (open()) {
-      <!-- Placée dans un <label>, la liste lui renverrait chaque clic, et le label recliquerait le champ, qui rouvrirait la liste. -->
+      <!-- Placée dans un <label>, la liste lui renverrait chaque clic, et le label recliquerait le champ, qui rouvrirait la liste.
+           Annulé sur l'option elle-même : après le choix, la liste est retirée avant que le clic ne remonte jusqu'à elle. -->
       <ul class="list" role="listbox" [id]="listId" (click)="$event.preventDefault()" [style.top.px]="place().top" [style.bottom.px]="place().bottom" [style.left.px]="place().left"
         [style.width.px]="place().width" [style.max-height.px]="place().maxHeight">
         @for (option of matches(); track $index; let i = $index) {
           <li role="option" [id]="listId + '-' + i" [attr.aria-selected]="option.value === value()" [class.active]="i === active()"
-            (mousedown)="$event.preventDefault()" (click)="pick(option)" (mouseenter)="active.set(i)">
+            (mousedown)="$event.preventDefault()" (click)="$event.preventDefault(); pick(option)" (mouseenter)="active.set(i)">
             <span>{{ option.label }}</span>@if (option.detail) { <small [title]="option.detail">{{ option.detail }}</small> }
           </li>
         } @empty { <li class="none">Aucun résultat</li> }
@@ -78,7 +79,13 @@ export class SearchSelectComponent<T> implements ControlValueAccessor {
     // Le défilement ne remonte pas jusqu'au document : on l'écoute en capture pour suivre le champ.
     const follow = () => this.reposition();
     window.addEventListener('scroll', follow, true);
-    inject(DestroyRef).onDestroy(() => window.removeEventListener('scroll', follow, true));
+    // En capture aussi : un dialogue qui arrête la propagation de ses clics ne doit pas garder la liste ouverte.
+    const outside = (event: Event) => this.outside(event);
+    document.addEventListener('click', outside, true);
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('scroll', follow, true);
+      document.removeEventListener('click', outside, true);
+    });
   }
 
   private onChange: (value: T | null) => void = () => {};

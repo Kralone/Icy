@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Output, EventEmitter, HostListener } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, Output, EventEmitter, inject } from '@angular/core';
 
 @Directive({
   selector: '[appClickOutside]'
@@ -6,9 +6,13 @@ import { Directive, ElementRef, Output, EventEmitter, HostListener } from '@angu
 export class ClickOutsideDirective {
   @Output() appClickOutside  = new EventEmitter<void>();
 
-  constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
+  constructor(private readonly elementRef: ElementRef<HTMLElement>) {
+    // En capture : un élément qui arrête la propagation de ses clics ne doit pas empêcher la fermeture.
+    const listener = (event: Event) => this.onClick(event.target);
+    document.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', listener, true));
+  }
 
-  @HostListener('document:click', ['$event.target'])
   public onClick(targetElement: EventTarget | null): void {
     const clickedInside = targetElement instanceof Node
       && this.elementRef.nativeElement.contains(targetElement);
