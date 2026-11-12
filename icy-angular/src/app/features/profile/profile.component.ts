@@ -10,6 +10,7 @@ import { RankOrbitComponent } from '../../shared/rank-orbit/rank-orbit.component
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { Ship } from '../../model/ship.model';
 import { AcquisitionType } from '../../shared/ship-selector/ship-selector.component';
+import { AvailabilityEditorComponent } from '../../shared/availability/availability-editor.component';
 
 type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
 
@@ -22,7 +23,7 @@ interface RankOption {
   key: string;
   label: string;
 }
-type ProfileTabId = 'profile' | 'ranks' | 'settings';
+type ProfileTabId = 'profile' | 'ranks' | 'availability' | 'settings';
 
 interface ProfileTabOption {
   id: ProfileTabId;
@@ -43,7 +44,7 @@ interface RankGuideEntry {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent],
+  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent, AvailabilityEditorComponent],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.component.css'
@@ -51,6 +52,7 @@ interface RankGuideEntry {
 export class ProfileComponent implements OnInit {
   profileTabs: ProfileTabOption[] = [
     { id: 'profile', label: 'Profil', subtitle: 'Identite et stats' },
+    { id: 'availability', label: 'Disponibilités', subtitle: 'Mes créneaux habituels' },
     { id: 'settings', label: 'Parametres', subtitle: 'Notifications et options' }
   ];
   activeTab: ProfileTabId = 'profile';

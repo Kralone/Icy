@@ -1,0 +1,119 @@
+<section class="avail-card" aria-labelledby="availability-heatmap-title">
+  <header class="avail-head">
+    <div>
+      <h2 id="availability-heatmap-title" class="avail-title">Disponibilités</h2>
+      <p class="avail-sub">Créneaux habituels des membres, à l'heure de Paris. Survole ou touche une case pour voir qui est là.</p>
+    </div>
+    @if (!loading() && !loadError()) {
+      <span class="avail-count" [class.is-empty]="filled().length === 0">{{ filled().length }} / {{ members().length }} renseignés</span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="avail-state" role="status">Chargement…</div>
+  } @else if (loadError()) {
+    <div class="avail-state is-error" role="alert">
+      Disponibilités indisponibles.
+      <button type="button" class="avail-btn is-ghost" (click)="load()">Réessayer</button>
+    </div>
+  } @else if (filled().length === 0) {
+    <div class="avail-state">Aucun membre n'a encore renseigné ses disponibilités dans son profil.</div>
+  } @else {
+    <div class="heat-layout">
+      <div>
+        <div class="avail-grid" role="grid" aria-label="Membres disponibles par jour et par créneau" (mouseleave)="leave()">
+          <div class="avail-row is-header" role="row">
+            <span class="avail-corner" role="columnheader"></span>
+            @for (period of periods; track period.key) {
+              <div role="columnheader" class="avail-col-head is-static" [attr.data-period]="period.key">
+                <app-period-icon [period]="period.key" [size]="20" />
+                <span class="avail-col-label">{{ period.label }}</span>
+                <span class="avail-col-hours">{{ period.hours }}</span>
+              </div>
+            }
+          </div>
+          @for (day of days; track day.day) {
+            <div class="avail-row" role="row" [class.is-weekend]="day.day >= 6">
+              <span role="rowheader" class="avail-day is-static">
+                <span class="avail-day-long">{{ day.label }}</span><span class="avail-day-short">{{ day.short }}</span>
+              </span>
+              @for (period of periods; track period.key) {
+                <button type="button" role="gridcell" class="heat-cell" [attr.data-period]="period.key"
+                        [style.--level]="level(day.day, period.key)"
+                        [class.is-zero]="count(day.day, period.key) === 0"
+                        [class.is-strong]="level(day.day, period.key) > 0.6"
+                        [class.is-best]="isBest(day.day, period.key)"
+                        [class.is-active]="isActive(day.day, period.key)"
+                        [class.is-dimmed]="isDimmed(day.day, period.key)"
+                        [class.is-mine]="isMine(day.day, period.key)"
+                        [attr.aria-label]="cellLabel(day.day, period.key)"
+                        [attr.aria-pressed]="isActive(day.day, period.key)"
+                        (mouseenter)="hover(day.day, period.key)" (focus)="hover(day.day, period.key)"
+                        (click)="pin(day.day, period.key)">
+                  @if (count(day.day, period.key) > 0) {
+                    <span class="heat-count">{{ count(day.day, period.key) }}</span>
+                  } @else {
+                    <span aria-hidden="true">·</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+        <div class="avail-foot">
+          <div class="heat-legend"><span>Personne</span><span class="heat-scale" aria-hidden="true"></span><span>Le plus de monde</span></div>
+          <div class="heat-legend"><span class="heat-best-dot" aria-hidden="true">●</span><span>Meilleurs créneaux</span></div>
+        </div>
+      </div>
+
+      <aside class="heat-panel" aria-live="polite">
+        @if (active(); as cell) {
+          <p class="heat-panel-title">
+            <span class="heat-ink" [attr.data-period]="cell.period"><app-period-icon [period]="cell.period" [size]="18" /></span>
+            {{ label(cell.day, cell.period) }}
+          </p>
+          @if (activePeople().length) {
+            <p class="heat-panel-sub">{{ activePeople().length }} {{ activePeople().length > 1 ? 'membres disponibles' : 'membre disponible' }}</p>
+            <div class="heat-people">
+              @for (person of activePeople(); track person.userId) {
+                <span class="heat-person">
+                  @if (person.avatarUrl) { <img class="heat-avatar" [src]="person.avatarUrl" alt="" loading="lazy" /> }
+                  @else { <span class="heat-avatar" aria-hidden="true">{{ initial(person.username) }}</span> }
+                  {{ person.username }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="heat-panel-sub">Personne n'a coché ce créneau.</p>
+          }
+        } @else {
+          <p class="heat-panel-title">Meilleurs créneaux</p>
+          <ol class="heat-people is-list">
+            @for (slot of best(); track $index) {
+              <li class="heat-person" [attr.data-period]="slot.period">
+                <span class="heat-avatar heat-ink"><app-period-icon [period]="slot.period" [size]="14" /></span>
+                {{ label(slot.day, slot.period) }} · {{ slot.count }}
+              </li>
+            }
+          </ol>
+        }
+
+        <div class="heat-panel-foot">
+          <p class="heat-panel-sub">Voir les créneaux d'un membre</p>
+          <div class="heat-filter">
+            @for (member of members(); track member.userId) {
+              <button type="button" class="heat-chip" [class.is-active]="focusedMember() === member.userId"
+                      [class.is-missing]="member.slots.length === 0" [attr.aria-pressed]="focusedMember() === member.userId"
+                      [attr.title]="member.slots.length === 0 ? 'Rien renseigné' : null"
+                      (click)="toggleMember(member.userId)">
+                @if (member.avatarUrl) { <img class="heat-avatar" [src]="member.avatarUrl" alt="" loading="lazy" /> }
+                @else { <span class="heat-avatar" aria-hidden="true">{{ initial(member.username) }}</span> }
+                {{ member.username }}
+              </button>
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</section>

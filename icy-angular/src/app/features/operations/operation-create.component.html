@@ -40,6 +40,7 @@
         <label>
           <span class="field-label" id="operation-create-start">Début <span class="req" aria-hidden="true">*</span></span>
           <app-date-time-field [(ngModel)]="form.startDateTime" required label="Date et heure de début" />
+          <app-availability-hint [startDateTime]="form.startDateTime" />
         </label>
         <label>
           <span class="field-label" id="operation-create-end">Fin <span class="req" aria-hidden="true">*</span></span>

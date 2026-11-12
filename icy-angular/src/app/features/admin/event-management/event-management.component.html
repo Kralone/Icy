@@ -70,6 +70,7 @@
         <div>
           <label class="block text-sm mb-1 text-gray-300">Début</label>
           <app-date-time-field [(ngModel)]="newEvent.startDateTime" label="Début" />
+          <app-availability-hint [startDateTime]="newEvent.startDateTime" />
           </div>
           <div>
             <label class="block text-sm mb-1 text-gray-300">Fin</label>

@@ -1,0 +1,76 @@
+<section class="avail-card" aria-labelledby="availability-editor-title">
+  <header class="avail-head">
+    <div>
+      <h2 id="availability-editor-title" class="avail-title">Mes disponibilités</h2>
+      <p class="avail-sub">Les créneaux où tu es habituellement en jeu, à l'heure de Paris. Glisse pour cocher plusieurs cases.</p>
+    </div>
+    <span class="avail-count" [class.is-empty]="count() === 0">{{ count() }} / 28</span>
+  </header>
+
+  @if (loading()) {
+    <div class="avail-state" role="status">Chargement…</div>
+  } @else if (loadError()) {
+    <div class="avail-state is-error" role="alert">
+      Disponibilités indisponibles.
+      <button type="button" class="avail-btn is-ghost" (click)="load()">Réessayer</button>
+    </div>
+  } @else {
+    <div class="avail-grid is-editor" role="grid" aria-label="Disponibilités par jour et par créneau"
+         [class.is-busy]="saving()"
+         (pointermove)="onPointerMove($event)" (pointerup)="endPaint()" (pointercancel)="endPaint()" (pointerleave)="endPaint()">
+      <div class="avail-row is-header" role="row">
+        <span class="avail-corner" role="columnheader"></span>
+        @for (period of periods; track period.key) {
+          <button type="button" role="columnheader" class="avail-col-head" [attr.data-period]="period.key"
+                  [class.is-full]="columnFull(period.key)" [attr.aria-pressed]="columnFull(period.key)"
+                  [attr.title]="(columnFull(period.key) ? 'Décocher tous les ' : 'Cocher tous les ') + period.label.toLowerCase() + 's'"
+                  (click)="togglePeriod(period.key)">
+            <app-period-icon [period]="period.key" [size]="20" />
+            <span class="avail-col-label">{{ period.label }}</span>
+            <span class="avail-col-hours">{{ period.hours }}</span>
+          </button>
+        }
+      </div>
+      @for (day of days; track day.day) {
+        <div class="avail-row" role="row" [class.is-weekend]="day.day >= 6">
+          <button type="button" role="rowheader" class="avail-day" [class.is-full]="rowFull(day.day)"
+                  [attr.aria-pressed]="rowFull(day.day)"
+                  [attr.title]="(rowFull(day.day) ? 'Décocher tout le ' : 'Cocher tout le ') + day.label.toLowerCase()"
+                  (click)="toggleDay(day.day)">
+            <span class="avail-day-long">{{ day.label }}</span><span class="avail-day-short">{{ day.short }}</span>
+          </button>
+          @for (period of periods; track period.key) {
+            <button type="button" role="gridcell" class="avail-cell" [attr.data-period]="period.key"
+                    [attr.data-slot]="key(day.day, period.key)"
+                    [class.is-on]="isOn(day.day, period.key)" [attr.aria-pressed]="isOn(day.day, period.key)"
+                    [attr.aria-label]="cellLabel(day.day, period.key)"
+                    (pointerdown)="onPointerDown($event, day.day, period.key)"
+                    (click)="onKeyboardToggle($event, day.day, period.key)">
+              <span class="avail-cell-glow" aria-hidden="true"></span>
+              <span class="avail-cell-icon"><app-period-icon [period]="period.key" [size]="18" /></span>
+              <span class="avail-cell-check" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <footer class="avail-foot">
+      <p class="avail-note" [class.is-dirty]="dirty()" aria-live="polite">
+        {{ dirty() ? 'Modifications non enregistrées' : (count() === 0 ? 'Aucun créneau coché' : 'À jour') }}
+      </p>
+      <div class="avail-actions">
+        @if (dirty()) {
+          <button type="button" class="avail-btn is-ghost" (click)="reset()" [disabled]="saving()">Annuler</button>
+        } @else if (count() > 0) {
+          <button type="button" class="avail-btn is-ghost" (click)="clear()" [disabled]="saving()">Tout effacer</button>
+        }
+        <button type="button" class="avail-btn is-primary" (click)="save()" [disabled]="!dirty() || saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </footer>
+  }
+</section>
