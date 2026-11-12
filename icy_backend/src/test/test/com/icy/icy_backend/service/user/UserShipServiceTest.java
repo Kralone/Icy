@@ -11,7 +11,10 @@ import com.icy.icy_backend.service.common.MessageService;
 import com.icy.icy_backend.service.ship.ShipService;
 import com.icy.icy_backend.websocket.ShipFleetWebSocketService;
 import com.icy.icy_backend.websocket.UserWebSocketService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class UserShipServiceTest {
+
+    /** Ces tests supposent un appelant sans rôle : un contexte laissé par un autre test de la même JVM fausserait le refus des brouillons. */
+    @BeforeEach
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void getShipsByUserIdReturnsNotFoundWhenEmpty() {
