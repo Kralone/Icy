@@ -89,10 +89,11 @@ export function bestSlots(members: AvailabilityMember[], limit = 3): RankedSlot[
 export function slotOfDateTime(value: string | null | undefined): AvailabilitySlot | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value ?? '');
   if (!match) return null;
-  const [, year, month, date, hourText] = match;
-  const hour = Number(hourText);
-  const day = new Date(Date.UTC(Number(year), Number(month) - 1, Number(date)));
-  if (Number.isNaN(day.getTime()) || hour > 23) return null;
+  const [, year, month, date, hourText, minuteText] = match.map(Number);
+  const hour = hourText;
+  const day = new Date(Date.UTC(year, month - 1, date));
+  // Date.UTC normalise un 30 février en 2 mars : une date qui ne se relit pas à l'identique est rejetée.
+  if (day.getUTCFullYear() !== year || day.getUTCMonth() !== month - 1 || day.getUTCDate() !== date || hour > 23 || minuteText > 59) return null;
   if (hour < 6) day.setUTCDate(day.getUTCDate() - 1);
   const iso = day.getUTCDay() === 0 ? 7 : day.getUTCDay();
   const period: AvailabilityPeriod = hour < 6 || hour >= 23 ? 'NIGHT' : hour < 12 ? 'MORNING' : hour < 18 ? 'AFTERNOON' : 'EVENING';

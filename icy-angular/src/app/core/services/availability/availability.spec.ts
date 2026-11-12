@@ -20,6 +20,9 @@ describe('disponibilités', () => {
     expect(slotOfDateTime('')).toBeNull();
     expect(slotOfDateTime('2026-11-14')).toBeNull();
     expect(slotOfDateTime(null)).toBeNull();
+    expect(slotOfDateTime('2026-02-30T09:00')).toBeNull();
+    expect(slotOfDateTime('2026-11-14T09:99')).toBeNull();
+    expect(slotOfDateTime('2026-11-14T24:00')).toBeNull();
   });
 
   it('classe les créneaux par nombre de membres, puis dans l’ordre de la semaine', () => {
