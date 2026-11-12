@@ -40,7 +40,6 @@
         <label>
           <span class="field-label" id="operation-create-start">Début <span class="req" aria-hidden="true">*</span></span>
           <app-date-time-field [(ngModel)]="form.startDateTime" required label="Date et heure de début" />
-          <app-availability-hint [startDateTime]="form.startDateTime" />
         </label>
         <label>
           <span class="field-label" id="operation-create-end">Fin <span class="req" aria-hidden="true">*</span></span>
@@ -57,6 +56,7 @@
       @if (error) { <p class="error" role="alert">{{ error }}</p> }
       <button type="button" class="primary" [disabled]="invalid" [attr.aria-busy]="saving" (click)="create()">{{ saving ? 'Création…' : sourceId ? 'Replanifier et ouvrir l’éditeur' : 'Créer le brouillon et ouvrir l’éditeur' }}</button>
     </div>
+    <div class="preview-column">
     <aside class="mission-preview" aria-label="Aperçu de la mission">
       <div class="preview-hero">
         @if (previewType?.imageUrl) { <img [src]="previewType?.imageUrl" alt="" /> }
@@ -66,5 +66,7 @@
       </div>
       <div class="preview-body"><p [class.is-placeholder]="!form.description">{{ form.description || 'Le briefing apparaîtra ici.' }}</p><div class="preview-fact"><app-operation-icon name="calendar" /> {{ form.startDateTime ? (form.startDateTime | date:'EEEE d MMMM yyyy, HH\'h\'mm':'':'fr') : 'Date à définir' }}</div><div class="preview-fact"><app-operation-icon name="groups" /> Organisation à préparer dans l’éditeur</div></div>
     </aside>
+    <app-availability-hint [startDateTime]="form.startDateTime" />
+    </div>
   </section>
 </main>

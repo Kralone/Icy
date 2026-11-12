@@ -70,13 +70,13 @@
         <div>
           <label class="block text-sm mb-1 text-gray-300">Début</label>
           <app-date-time-field [(ngModel)]="newEvent.startDateTime" label="Début" />
-          <app-availability-hint [startDateTime]="newEvent.startDateTime" />
           </div>
           <div>
             <label class="block text-sm mb-1 text-gray-300">Fin</label>
             <app-date-time-field [(ngModel)]="newEvent.endDateTime" label="Fin" />
           </div>
         </div>
+        <div class="space-y-4">
         <aside class="rounded-2xl border border-cyan-300/20 bg-[#071525] overflow-hidden min-h-[260px]">
             <div class="relative h-28 p-5 flex items-end" [style.backgroundColor]="previewType?.backgroundColor || '#123047'">
               @if (previewType?.imageUrl) { <img [src]="previewType?.imageUrl" alt="" class="absolute inset-0 w-full h-full object-cover opacity-55" /> }
@@ -84,6 +84,8 @@
             </div>
             <div class="p-5 space-y-3"><div class="text-sm text-slate-300">{{ newEvent.description || 'La description apparaîtra ici.' }}</div><div class="text-sm text-cyan-200">{{ newEvent.startDateTime ? (newEvent.startDateTime | date:'EEEE d MMMM · HH:mm') : 'Date à définir' }}</div></div>
         </aside>
+        <app-availability-hint [startDateTime]="newEvent.startDateTime" />
+        </div>
 
           <div class="flex justify-end mt-6">
             <button
