@@ -46,10 +46,10 @@
                     [attr.aria-label]="cellLabel(day.day, period.key)"
                     (pointerdown)="onPointerDown($event, day.day, period.key)"
                     (click)="onKeyboardToggle($event, day.day, period.key)">
-              <span class="avail-cell-glow" aria-hidden="true"></span>
-              <span class="avail-cell-icon"><app-period-icon [period]="period.key" [size]="18" /></span>
+              <span class="avail-cell-icon" aria-hidden="true"><app-period-icon [period]="period.key" [size]="18" /></span>
+              <span class="avail-cell-label" aria-hidden="true">{{ period.label }}</span>
               <span class="avail-cell-check" aria-hidden="true">
-                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg viewBox="0 0 16 16" width="10" height="10"><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </button>
           }
