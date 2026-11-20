@@ -13,6 +13,8 @@ public class UserResponseDTO {
     private UUID id;
     private String username;
     private List<String> roles;
+    /** Pôle du membre quand son grade est Spécialiste ; null sinon. */
+    private String specialty;
     private String discordId;
     private Boolean active;
     private LocalDateTime createdAt;
@@ -25,6 +27,7 @@ public class UserResponseDTO {
         this.roles = user.getRoles().stream()
                 .map(userRole -> userRole.getRole().getName())
                 .toList();
+        this.specialty = user.getSpecialty() != null ? user.getSpecialty().name() : null;
         this.discordId = user.getDiscordId();
         this.active = user.getActive();
         this.createdAt = user.getCreatedAt();

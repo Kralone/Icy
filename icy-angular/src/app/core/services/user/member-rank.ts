@@ -4,6 +4,22 @@ export const MEMBER_RANKS = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'A
 /** Fonctions qui s'ajoutent au grade sans le remplacer. */
 export const TREASURER_ROLE = 'TRESORIER';
 
+/** Grade qui porte un sous-grade : le pôle dont le membre est le référent. */
+export const SPECIALIST_RANK = 'SPECIALISTE';
+
+/** Pôles d'un Spécialiste. Les clés sont celles du serveur. */
+export const SPECIALTIES = [
+  { key: 'LOGISTIQUE', label: 'Logistique', description: 'Transport, ravitaillement et préparation des opérations.' },
+  { key: 'MILITAIRE', label: 'Militaire', description: 'Combat, escorte et protection des joueurs.' },
+  { key: 'INDUSTRIE', label: 'Industrie', description: 'Minage, raffinage, récupération et production.' }
+] as const;
+
+/** Libellé d'un pôle ; null si le membre n'en a pas ou si la clé est inconnue. */
+export function specialtyLabel(specialty: string | null | undefined): string | null {
+  const key = (specialty ?? '').trim().toUpperCase();
+  return SPECIALTIES.find(entry => entry.key === key)?.label ?? null;
+}
+
 const RANK_ALIASES: Record<string, string> = { USER: 'JUNIOR', MEMBRE: 'JUNIOR', RECRUE: 'JUNIOR' };
 
 /**

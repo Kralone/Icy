@@ -83,6 +83,11 @@
                 @for (role of user.roles; track role) {
                   <span class="inline-block bg-cyan-500/15 border border-cyan-300/30 text-cyan-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ roleLabels[role] || role }}</span>
                 }
+                @if (specialtyLabel(user.specialty); as pole) {
+                  <span data-testid="member-specialty" class="inline-block bg-violet-500/15 border border-violet-300/40 text-violet-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ pole }}</span>
+                } @else if (needsSpecialty(user)) {
+                  <span data-testid="member-specialty-missing" class="inline-block bg-amber-500/15 border border-amber-300/40 text-amber-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">Pôle à choisir</span>
+                }
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-slate-300">
                 @if (user.createdAt) { <time [attr.datetime]="user.createdAt">{{ user.createdAt | date:'d MMM yyyy' }}</time> } @else { <span class="text-slate-500 italic">Non renseignée</span> }
@@ -226,6 +231,29 @@
                   }
                 </select>
               </div>
+              @if (newUser.role === specialistRank) {
+                <!-- Sous-grade : le pôle du Spécialiste, obligatoire -->
+                <fieldset data-testid="specialty-choice">
+                  <legend class="block mb-1 text-sm text-slate-300">Pôle du Spécialiste</legend>
+                  <div class="grid grid-cols-1 gap-2">
+                    @for (pole of specialties; track pole.key) {
+                      <label
+                        class="flex items-start gap-3 rounded-xl border px-4 py-2.5 text-sm cursor-pointer transition"
+                        [class.border-violet-300]="newUser.specialty === pole.key"
+                        [class.bg-violet-500/10]="newUser.specialty === pole.key"
+                        [class.border-white/10]="newUser.specialty !== pole.key"
+                        >
+                        <input type="radio" name="specialty" [value]="pole.key" [(ngModel)]="newUser.specialty" required class="mt-0.5 h-4 w-4 accent-violet-400">
+                        <span><span class="font-semibold text-white">{{ pole.label }}</span><br>
+                        <span class="text-slate-400">{{ pole.description }}</span></span>
+                      </label>
+                    }
+                  </div>
+                  @if (specialtyMissing) {
+                    <p class="mt-2 text-xs text-amber-200" role="status">Choisissez un pôle pour enregistrer ce Spécialiste.</p>
+                  }
+                </fieldset>
+              }
               @if (isEditMode) {
                 <!-- Fonction de trésorier : elle s'ajoute au grade -->
                 <label class="flex items-start gap-3 rounded-xl border border-white/10 bg-[#0b1324] px-4 py-3 text-sm text-slate-300 cursor-pointer">
@@ -245,9 +273,9 @@
                 </button>
                 <button
                   type="submit"
-                  [disabled]="addUserForm.invalid"
+                  [disabled]="addUserForm.invalid || specialtyMissing"
           class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition"
+                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                   {{ isEditMode ? 'Modifier' : 'Ajouter' }}
                 </button>

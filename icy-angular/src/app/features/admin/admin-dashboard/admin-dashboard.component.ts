@@ -9,7 +9,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
 import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
-import { TREASURER_ROLE, hasRole, memberRank } from '../../../core/services/user/member-rank';
+import { SPECIALIST_RANK, SPECIALTIES, TREASURER_ROLE, hasRole, memberRank, specialtyLabel } from '../../../core/services/user/member-rank';
 
 export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
 
@@ -63,12 +63,19 @@ export class AdminDashboardComponent implements OnInit {
     discordId: string;
     role: string;
     treasurer: boolean;
+    /** Pôle du Spécialiste ; vide tant qu'aucun n'est choisi. */
+    specialty: string;
   } = {
     username: '',
     discordId: '',
     role: 'JUNIOR',
-    treasurer: false
+    treasurer: false,
+    specialty: ''
   };
+
+  readonly specialistRank = SPECIALIST_RANK;
+  readonly specialties = SPECIALTIES;
+  readonly specialtyLabel = specialtyLabel;
 
   availableRoles: string[] = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
   roleLabels: Record<string, string> = {
@@ -241,7 +248,8 @@ export class AdminDashboardComponent implements OnInit {
       username: '',
       discordId: '',
       role: 'JUNIOR',
-      treasurer: false
+      treasurer: false,
+      specialty: ''
     };
     this.isEditMode = false;
     this.editedUserId = null;
@@ -249,9 +257,9 @@ export class AdminDashboardComponent implements OnInit {
 
   // ==== CRUD actions ====
   addUser(): void {
-    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role) return;
+    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role || this.specialtyMissing) return;
 
-    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role).subscribe({
+    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role, this.selectedSpecialty).subscribe({
       next: () => {
         this.closeModal();
         this.loadUsers();
@@ -268,7 +276,8 @@ export class AdminDashboardComponent implements OnInit {
       username: user.username,
       discordId: user.discordId,
       role: this.normalizeRole(memberRank(user.roles)),
-      treasurer: hasRole(user.roles, TREASURER_ROLE)
+      treasurer: hasRole(user.roles, TREASURER_ROLE),
+      specialty: specialtyLabel(user.specialty) ? (user.specialty ?? '').toUpperCase() : ''
     };
 
     this.editedUserId = user.id;
@@ -277,14 +286,15 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   updateUser(): void {
-    if (!this.editedUserId) return;
+    if (!this.editedUserId || this.specialtyMissing) return;
 
     const payload = {
       id: this.editedUserId,
       username: this.newUser.username,
       discordId: this.newUser.discordId,
       role: this.newUser.role,
-      treasurer: this.newUser.treasurer
+      treasurer: this.newUser.treasurer,
+      specialty: this.selectedSpecialty
     };
 
     this.userService.updateUser(payload).subscribe({
@@ -297,6 +307,20 @@ export class AdminDashboardComponent implements OnInit {
         alert('Échec de la mise à jour');
       }
     });
+  }
+
+  /** Le pôle n'est envoyé que pour un Spécialiste : il n'existe pas pour les autres grades. */
+  get selectedSpecialty(): string | null {
+    return this.newUser.role === SPECIALIST_RANK && this.newUser.specialty ? this.newUser.specialty : null;
+  }
+
+  get specialtyMissing(): boolean {
+    return this.newUser.role === SPECIALIST_RANK && !this.newUser.specialty;
+  }
+
+  /** Un Spécialiste nommé avant les pôles n'en a pas encore : la ligne le signale. */
+  needsSpecialty(user: User): boolean {
+    return memberRank(user.roles) === SPECIALIST_RANK && !specialtyLabel(user.specialty);
   }
 
   private normalizeRole(role?: string | null): string {

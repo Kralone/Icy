@@ -7,4 +7,6 @@ export interface User {
   lastSeenAt?: string | null;
   active: boolean;
   roles: string[];
+  /** Pôle du membre quand son grade est Spécialiste (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; null sinon. */
+  specialty?: string | null;
 }

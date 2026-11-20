@@ -6,6 +6,7 @@ import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { forkJoin } from 'rxjs';
 import { ShipSelectorComponent } from '../../shared/ship-selector/ship-selector.component';
+import { SPECIALIST_RANK, specialtyLabel } from '../../core/services/user/member-rank';
 import { RankOrbitComponent } from '../../shared/rank-orbit/rank-orbit.component';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { Ship } from '../../model/ship.model';
@@ -184,6 +185,7 @@ export class ProfileComponent implements OnInit {
     status: 'connecte' as StatusKey,
     discordId: '',
     roles: [] as string[],
+    specialty: null as string | null,
     favoriteShip: '',
     avatarUrl: '',
     notifications: {
@@ -239,6 +241,7 @@ export class ProfileComponent implements OnInit {
         this.profile.status = (data.status as StatusKey) ?? this.profile.status;
         this.profile.avatarUrl = data.avatarUrl ?? this.profile.avatarUrl;
         this.profile.roles = data.roles ?? this.profile.roles;
+        this.profile.specialty = data.specialty ?? null;
         this.pendingAvatarPreview = '';
         this.pendingAvatarFile = null;
         if (data.favoriteShip) {
@@ -316,7 +319,9 @@ export class ProfileComponent implements OnInit {
 
   get activeRankLabel(): string {
     const matched = this.rankOptions.find((rank) => rank.key === this.activeRankKey);
-    return matched?.label ?? 'Junior';
+    const label = matched?.label ?? 'Junior';
+    const pole = this.activeRankKey === SPECIALIST_RANK ? specialtyLabel(this.profile.specialty) : null;
+    return pole ? `${label} ${pole}` : label;
   }
 
   get activeGuideRank(): RankGuideEntry | null {

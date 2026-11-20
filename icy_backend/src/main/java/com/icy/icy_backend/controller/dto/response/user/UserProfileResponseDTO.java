@@ -19,6 +19,8 @@ public class UserProfileResponseDTO {
     private FavoriteShipDTO favoriteShip;
     private NotificationSettingsDTO notifications;
     private List<String> roles;
+    /** Pôle du membre quand son grade est Spécialiste ; null sinon. */
+    private String specialty;
 
     public UserProfileResponseDTO(User user, UserParam userParam) {
         this.id = user.getId();
@@ -31,6 +33,7 @@ public class UserProfileResponseDTO {
         this.roles = user.getRoles().stream()
                 .map(userRole -> userRole.getRole().getName())
                 .toList();
+        this.specialty = user.getSpecialty() != null ? user.getSpecialty().name() : null;
         if (userParam != null) {
             this.notifications = new NotificationSettingsDTO(
                     userParam.getNotifGlobal(),
