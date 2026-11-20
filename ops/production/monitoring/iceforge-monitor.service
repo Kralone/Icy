@@ -1,8 +1,10 @@
 [Unit]
-Description=Surveillance IceForge et alertes mail
+Description=Surveillance IceForge et alertes mail/Discord
 After=docker.service network-online.target
 Wants=network-online.target
-ConditionPathExists=/etc/iceforge-monitor/config.json
+# Au moins un canal d'alerte configuré (« | » : l'une ou l'autre condition suffit).
+ConditionPathExists=|/etc/iceforge-monitor/config.json
+ConditionPathExists=|/etc/iceforge-monitor/discord.json
 
 [Service]
 Type=oneshot
