@@ -397,18 +397,18 @@ def http_json(method, url, payload=None):
     return json.loads(body) if body else {}
 
 
-def update_status(config, state, payload):
+def update_status(config, state, payload, send=http_json):
     """Edit the live message; post a new one if it was deleted or never posted."""
     url = config.get('status_webhook_url') or config['webhook_url']
     message = state.get('status_message_id')
     if message and state.get('status_webhook') == webhook_id(url):
         try:
-            http_json('PATCH', f'{url}/messages/{message}', payload)
+            send('PATCH', f'{url}/messages/{message}', payload)
             return
         except urllib.error.HTTPError as error:
             if error.code != 404:
                 raise
-    posted = http_json('POST', url + '?wait=true', payload)
+    posted = send('POST', url + '?wait=true', payload)
     state['status_message_id'] = str(posted['id'])
     state['status_webhook'] = webhook_id(url)
 
@@ -428,28 +428,30 @@ def discord_check(config, state, observation, now, send=http_json):
         if unknown:
             found.setdefault(key, value['text'])
     updated, new, recovered = discord_transition(state, found, now)
+    delivered = True
     if recovered:
         try:
             send('POST', config['webhook_url'], recovery_payload(recovered, now))
         except (OSError, ValueError):
             # Not delivered: these incidents stay open and the recovery is retried next minute.
             updated['alerted'].update(recovered)
-            for key in new:
-                del updated['alerted'][key]
-            return updated, False
+            delivered = False
     if new:
         try:
+            if not delivered:
+                raise OSError('alert webhook unavailable')
             send('POST', config['webhook_url'], alert_payload(new, config.get('mention', 'here')))
         except (OSError, ValueError):
             # Only the failed alert is retried; a recovery already delivered is not sent again.
             for key in new:
                 del updated['alerted'][key]
-            return updated, False
+            delivered = False
+    # The live message is updated even when an alert failed: it may use another webhook.
     try:
-        update_status(config, updated, status_payload(observation, found, updated['alerted'], now))
+        update_status(config, updated, status_payload(observation, found, updated['alerted'], now), send)
     except (OSError, ValueError, KeyError):
-        return updated, False
-    return updated, True
+        delivered = False
+    return updated, delivered
 
 
 def validated_discord_config(raw):

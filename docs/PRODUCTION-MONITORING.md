@@ -283,11 +283,11 @@ Brevo distinct du login SMTP, le destinataire Gmail, le mail mensuel et sa repri
 après un échec d’envoi.
 Le mode local est testé sans identifiants, avec en-têtes Date/Message-ID, autorisation
 SPF exacte et refus d’envoyer ou de persister une configuration sans SPF.
-Quatorze tests Discord couvrent l’alerte après deux échecs sans répétition, l’incident
+Quinze tests Discord couvrent l’alerte après deux échecs sans répétition, l’incident
 bref non signalé, le rétablissement sans mention, Vault scellé avec la commande de
 déverrouillage, conteneur disparu, disque et certificat, la panne Docker qui ne
 simule pas de rétablissement, ni un certificat illisible, le message d’état publié puis modifié, sa republication
-après suppression, la reprise du seul envoi échoué, la mention limitée au rôle choisi,
+après suppression, la reprise du seul envoi échoué, l’état en direct actualisé malgré un webhook d’alerte en panne, la mention limitée au rôle choisi,
 le refus d’une URL qui n’est pas un webhook Discord et l’inventaire sans le staging.
 Aucun appel réseau n’est fait.
 

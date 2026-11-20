@@ -342,7 +342,7 @@ class DiscordTests(unittest.TestCase):
             return {'id': '222'}
         config = {'webhook_url': WEBHOOK, 'mention': 'here', 'containers': []}
         with patch.object(monitor, 'http_json', side_effect=send):
-            state, delivered = monitor.discord_check(config, state, extended(), NOW)
+            state, delivered = monitor.discord_check(config, state, extended(), NOW, send)
         self.assertTrue(delivered)
         self.assertEqual(calls, ['PATCH', 'POST'])
         self.assertEqual(state['status_message_id'], '222')
@@ -413,6 +413,22 @@ class DiscordTests(unittest.TestCase):
         contents = [p['content'] for p in self.posts(calls)]
         self.assertEqual(len(contents), 1)
         self.assertIn('Alerte', contents[0])
+
+    def test_status_is_still_updated_when_the_alert_webhook_fails(self):
+        status_url = 'https://discord.com/api/webhooks/223456789012345678/' + 'b' * 68
+        config = {'webhook_url': WEBHOOK, 'status_webhook_url': status_url, 'containers': []}
+        down = extended(containers={'iceforge_bot': DOWN})
+        state, _ = self.run_checks([down])
+        statuses = []
+        def alerts_down(method, url, payload):
+            if url.startswith(WEBHOOK):
+                raise OSError('synthetic')
+            statuses.append(payload['embeds'][0]['description'])
+            return {'id': '5'}
+        state, delivered = monitor.discord_check(config, state, down, NOW, alerts_down)
+        self.assertFalse(delivered)
+        self.assertEqual(state['alerted'], {})
+        self.assertIn('iceforge_bot', statuses[0])
 
 
 if __name__ == '__main__':
