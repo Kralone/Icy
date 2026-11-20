@@ -77,7 +77,7 @@
               <h2 class="pole-section-title">{{ group.label }}</h2>
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                 @for (tool of group.tools; track tool.route; let index = $index) {
-                  <a class="pole-tool pole-rise" [style.--rise]="index" [routerLink]="tool.route">
+                  <a class="pole-tool pole-rise" [style.--rise]="index" [routerLink]="tool.route" [queryParams]="tool.query ?? null">
                     <span class="pole-tool-image"><img [src]="tool.imageUrl" alt="" loading="lazy" (error)="useFallback($event, pole.imageUrl)" /></span>
                     <span class="pole-tool-body">
                       <span class="min-w-0 flex-1">

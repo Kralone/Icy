@@ -31,3 +31,9 @@ a:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
   .hero__content { width: min(2400px, calc(100% - 4rem)); }
   .hero__facts dd { font-size: 1.05rem; }
 }
+
+/* Pôle de rattachement, à la couleur du pôle. */
+.hero__pole { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .7rem; border: 1px solid rgb(var(--pole-tone) / .6); border-radius: 999px; color: rgb(var(--pole-tone)); background: rgb(var(--pole-tone) / .16); font-size: .8rem; font-weight: 600; }
+.hero__pole[data-pole=LOGISTIQUE] { --pole-tone: 251 146 60; }
+.hero__pole[data-pole=MILITAIRE] { --pole-tone: 248 113 113; }
+.hero__pole[data-pole=INDUSTRIE] { --pole-tone: 52 211 153; }

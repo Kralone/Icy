@@ -142,3 +142,16 @@ button:focus-visible, a:focus-visible { outline: 2px solid #aee8f2; outline-offs
 .agenda-content h2, .calendar-event-card strong { color: #f0f7fc; text-shadow: 0 1px 3px #0008; }
 .agenda-open { border-radius: .4rem; padding: .4rem .6rem; background: #0b1826b3; color: #edf8ff; }
 @media (max-width: 639px) { .event-type-image { width: 58%; opacity: .55; } .calendar-event-type { display: none; } }
+
+/* Pôles : filtre de la barre d'outils et pastille sur les cartes, à la couleur du pôle. */
+[data-pole=LOGISTIQUE] { --pole-tone: 251 146 60; }
+[data-pole=MILITAIRE] { --pole-tone: 248 113 113; }
+[data-pole=INDUSTRIE] { --pole-tone: 52 211 153; }
+.events-poles { display: inline-flex; flex-wrap: wrap; gap: .4rem; }
+.events-poles button { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border: 1px solid #294253; border-radius: 999px; background: #081421; color: #a9bdcf; font-size: .8rem; font-weight: 600; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+.events-poles button:hover { border-color: rgb(var(--pole-tone, 105 182 203) / .7); color: #e7f3fb; }
+.events-poles button[aria-pressed=true] { border-color: rgb(var(--pole-tone, 105 182 203)); background: rgb(var(--pole-tone, 105 182 203) / .16); color: rgb(var(--pole-tone, 216 248 255)); }
+.pole-badge { display: inline-flex; align-items: center; gap: .3rem; width: fit-content; margin-left: .4rem; padding: .16rem .55rem; border: 1px solid rgb(var(--pole-tone) / .55); border-radius: 999px; background: rgb(var(--pole-tone) / .14); color: rgb(var(--pole-tone)); font-size: .72rem; font-weight: 600; vertical-align: middle; }
+.pole-badge--small { margin: .15rem 0 0; padding: .04rem .4rem; font-size: .6rem; }
+@media (max-width: 639px) { .pole-badge--small { display: none; } }
+@media (prefers-reduced-motion: reduce) { .events-poles button { transition: none; } }

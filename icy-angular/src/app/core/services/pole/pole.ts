@@ -6,6 +6,8 @@ export interface PoleTool {
   label: string;
   description: string;
   route: string;
+  /** Paramètres d'adresse ajoutés au lien, par exemple le filtre de pôle du calendrier. */
+  query?: Record<string, string>;
   imageUrl: string;
 }
 
@@ -138,6 +140,7 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
           label: 'Événements et opérations',
           description: 'Le calendrier des sorties, avec les groupes et les postes des opérations.',
           route: '/icy/events',
+          query: { pole: 'militaire' },
           imageUrl: ACTIVITIES + 'space-combat.jpg'
         },
         {

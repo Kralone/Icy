@@ -140,6 +140,11 @@ export class EventService {
   }
 
   /** `expectedRevision` : le serveur refuse (409) si l'opération a changé depuis cette révision. */
+  /** Rattache l'opération à un pôle, ou la détache avec null. Renvoie le pôle enregistré. */
+  assignOperationPole(eventId: string, pole: string | null) {
+    return this.http.put<any>(`/api/operations/${eventId}/pole`, { pole }).pipe(map(res => (res.data ?? null) as string | null));
+  }
+
   updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; miningSession?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
     return this.http.put<any>(`/api/operations/${eventId}`, payload, options.keepalive ? { keepalive: true } : {}).pipe(map(res => res.data));
   }

@@ -16,6 +16,14 @@
       <button type="button" [attr.aria-pressed]="viewMode === 'upcoming'" (click)="setView('upcoming')">À venir</button>
       <button type="button" [attr.aria-pressed]="viewMode === 'calendar'" (click)="setView('calendar')">Calendrier</button>
     </div>
+    <div class="events-poles" role="group" aria-label="Filtrer par pôle" data-testid="events-pole-filter">
+      <button type="button" [attr.aria-pressed]="!poleFilter" (click)="setPoleFilter('')">Tous</button>
+      @for (pole of poles; track pole.key) {
+        <button type="button" [attr.data-pole]="pole.key" [attr.aria-pressed]="poleFilter === pole.key" (click)="setPoleFilter(pole.key)">
+          <app-pole-icon [key]="pole.key" size="h-4 w-4" /> {{ pole.label }}
+        </button>
+      }
+    </div>
   </div>
 
   @if (isLoading) {
@@ -37,6 +45,9 @@
           <div class="agenda-content">
             @if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }
             <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
+            @if (poleLabel(event.pole); as pole) {
+              <span class="pole-badge" [attr.data-pole]="event.pole"><app-pole-icon [key]="event.pole!" size="h-3.5 w-3.5" /> {{ pole }}</span>
+            }
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -68,7 +79,7 @@
           </div>
           <div>
 
-            <h2>Aucun événement à venir</h2>
+            <h2>{{ poleFilter ? 'Aucun événement à venir pour ce pôle' : 'Aucun événement à venir' }}</h2>
           </div>
           <button type="button" class="events-button" (click)="setView('calendar')">Explorer le calendrier <span aria-hidden="true">↗</span></button>
         </div>
@@ -103,6 +114,9 @@
           <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
           <strong>{{ arg.event.title }}</strong>
           <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>
+          @if (poleLabel(arg.event.extendedProps.pole); as pole) {
+            <span class="pole-badge pole-badge--small" [attr.data-pole]="arg.event.extendedProps.pole"><app-pole-icon [key]="arg.event.extendedProps.pole" size="h-3 w-3" /> {{ pole }}</span>
+          }
         </div>
       </ng-template>
     </full-calendar>

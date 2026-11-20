@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { eventColor, eventImage } from '../../events/event-appearance';
 import { OperationIconComponent } from './operation-icon.component';
 import { OperationSheet } from './operation-sheet.model';
+import { specialtyLabel } from '../../../core/services/user/member-rank';
+import { PoleIconComponent } from '../../../shared/pole-icon/pole-icon.component';
 
 type HeroStatus = 'draft' | 'upcoming' | 'running' | 'done';
 const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming: 'À venir', running: 'En cours', done: 'Terminée' };
@@ -12,7 +14,7 @@ const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming
 @Component({
   selector: 'app-operation-hero',
   standalone: true,
-  imports: [DatePipe, RouterLink, OperationIconComponent],
+  imports: [DatePipe, RouterLink, OperationIconComponent, PoleIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-hero.component.html',
   styleUrl: './operation-hero.component.css'
@@ -23,6 +25,8 @@ export class OperationHeroComponent {
   readonly presentCount = input<number | null>(null);
   /** Aperçu dans l'éditeur : pas de lien de navigation. */
   readonly preview = input(false);
+
+  readonly poleLabel = computed(() => specialtyLabel(this.operation().pole));
 
   /** Images qui n'ont pas pu être chargées : on passe à la suivante, puis à l'aplat de couleur. */
   private readonly failedImages = signal<ReadonlySet<string>>(new Set());

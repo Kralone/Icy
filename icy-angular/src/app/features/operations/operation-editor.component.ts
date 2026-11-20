@@ -25,6 +25,7 @@ import { OperationCrewPanelComponent } from './organization/operation-crew-panel
 import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
 import { eventColor, eventImage } from '../events/event-appearance';
+import { SPECIALTIES } from '../../core/services/user/member-rank';
 import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
@@ -229,6 +230,27 @@ export class OperationEditorComponent implements OnDestroy {
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!), this.shipsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
+  readonly poles = SPECIALTIES;
+  poleSaving = false;
+  poleError = '';
+
+  /** Le pôle s'enregistre à part du brouillon : il ne dépend ni de la révision ni de l'enregistrement automatique. */
+  assignPole(operation: { id: string; pole?: string | null }, pole: string): void {
+    const previous = operation.pole ?? null;
+    operation.pole = pole || null;
+    this.poleSaving = true;
+    this.poleError = '';
+    this.eventService.assignOperationPole(operation.id, pole || null).subscribe({
+      next: saved => { operation.pole = saved; this.poleSaving = false; this.changeDetector.markForCheck(); },
+      error: () => {
+        operation.pole = previous;
+        this.poleSaving = false;
+        this.poleError = 'Le pôle n’a pas pu être enregistré. Réessayez.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, miningSession: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
 
   // --- Organisation : structure lue sur le serveur, un seul groupe édité à la fois.

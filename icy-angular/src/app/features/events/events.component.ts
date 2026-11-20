@@ -17,6 +17,8 @@ import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
 import { AsyncStateComponent } from '../../shared/async-state/async-state.component';
 import { eventColor, eventImage } from './event-appearance';
+import { SPECIALTIES, specialtyLabel } from '../../core/services/user/member-rank';
+import { PoleIconComponent } from '../../shared/pole-icon/pole-icon.component';
 
 type FleetMiniShip = {
   name: string;
@@ -28,7 +30,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent],
+  imports: [FormsModule, DatePipe, RouterLink, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent, PoleIconComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
@@ -36,6 +38,10 @@ type FleetMiniShip = {
 export class EventsComponent implements AfterViewInit, OnDestroy {
   readonly eventColor = eventColor;
   readonly eventImage = eventImage;
+  readonly poles = SPECIALTIES;
+  readonly poleLabel = specialtyLabel;
+  /** Pôle dont on ne montre que les activités ; vide pour toutes. Repris de l'adresse : ?pole=militaire. */
+  poleFilter = '';
   @ViewChild(FullCalendarComponent) calendarComponent?: FullCalendarComponent;
 
   calendarEvents: any[] = [];
@@ -145,6 +151,12 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
     this.reloadEvents();
 
     this.routeSubscription = this.route.queryParamMap.subscribe(params => {
+      const pole = (params.get('pole') ?? '').trim().toUpperCase();
+      const known = SPECIALTIES.some(entry => entry.key === pole) ? pole : '';
+      if (known !== this.poleFilter) {
+        this.poleFilter = known;
+        this.showEvents();
+      }
       const eventId = params.get('eventId');
       if (eventId) {
         this.pendingEventId = eventId;
@@ -231,17 +243,29 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
 
   private applyEvents(events: EventDTO[]): void {
     this.eventSnapshot = events;
-    this.calendarEvents = events.map(event => ({
-      id: event.id, title: event.title, start: event.startDateTime, end: event.endDateTime,
-      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event), activityType: event.activityType }
-    }));
-    this.upcomingEvents = events.filter(event => !this.isEventFinished(event))
-      .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
-    this.calendarOptions = { ...this.calendarOptions, events: this.calendarEvents };
+    this.showEvents();
     this.isLoading = false;
     this.loadError = '';
     this.tryOpenEventFromQuery();
     if (this.viewMode === 'calendar') setTimeout(() => this.updateResponsiveCalendarLayout());
+  }
+
+  /** Garde ou retire le filtre de pôle, et le reporte dans l'adresse pour qu'un lien le conserve. */
+  setPoleFilter(pole: string): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: { pole: pole ? pole.toLowerCase() : null }, queryParamsHandling: 'merge' });
+  }
+
+  /** Affiche les activités chargées, limitées au pôle choisi s'il y en a un. */
+  private showEvents(): void {
+    const events = this.poleFilter ? this.eventSnapshot.filter(event => event.pole === this.poleFilter) : this.eventSnapshot;
+    this.calendarEvents = events.map(event => ({
+      id: event.id, title: event.title, start: event.startDateTime, end: event.endDateTime,
+      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event), activityType: event.activityType, pole: event.pole }
+    }));
+    this.upcomingEvents = events.filter(event => !this.isEventFinished(event))
+      .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+    this.calendarOptions = { ...this.calendarOptions, events: this.calendarEvents };
+    this.changeDetector.markForCheck();
   }
 
   private listenForUpdates() {

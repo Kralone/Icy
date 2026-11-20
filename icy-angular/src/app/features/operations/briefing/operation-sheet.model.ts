@@ -21,6 +21,8 @@ export interface OperationSheet {
   /** Mode des groupes qui n'en fixent pas un eux-mêmes. */
   defaultAssignmentMode?: string;
   /** Type d'événement choisi à la création : il donne son nom, ses couleurs et son image de repli. */
+  /** Pôle de rattachement (LOGISTIQUE, MILITAIRE, INDUSTRIE), s'il y en a un. */
+  pole?: string | null;
   typeName?: string | null;
   typeTextColor?: string | null;
   typeBackgroundColor?: string | null;

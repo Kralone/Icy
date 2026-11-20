@@ -368,6 +368,17 @@ public class OperationController {
         return operationService.update(id, request);
     }
 
+    /** Rattache l'opération à un pôle, ou la détache (pôle absent ou vide). Enregistré tout de suite, hors du brouillon. */
+    @PutMapping("/{id}/pole")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @Transactional
+    public ResponseEntity<MessageResponse<String>> assignPole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+        eventRepository.findById(id).filter(event -> event.getActivityType() == ActivityType.OPERATION)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        eventService.assignPole(id, body == null ? null : body.get("pole"));
+        return messageService.buildResponse("operation.updated", eventRepository.findById(id).map(Event::getPole).map(Enum::name).orElse(null));
+    }
+
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> publish(@PathVariable UUID id) {
