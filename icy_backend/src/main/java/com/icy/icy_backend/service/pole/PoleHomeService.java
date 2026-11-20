@@ -122,7 +122,7 @@ public class PoleHomeService {
                 new PoleDtos.Stat("MINING_SHEETS_30D", sheets.countByActivityAndSessionDateGreaterThanEqual(MINING, since)),
                 new PoleDtos.Stat("MINING_SHEETS_OPEN", sheets.countByActivityAndStatusNot(MINING, SessionSheet.Status.CLOSED)),
                 new PoleDtos.Stat("MINERS_30D", sheets.countParticipantsSince(MINING, since)),
-                new PoleDtos.Stat("MINING_SALES_30D", sheets.sumSalesSince(MINING, since)));
+                new PoleDtos.Stat("MINING_SALES_30D", sheets.sumSalesSince(MINING, since.atStartOfDay())));
     }
 
     private List<PoleDtos.Activity> industryActivity() {
