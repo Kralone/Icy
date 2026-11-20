@@ -100,6 +100,9 @@ par la configuration externe existante. Le workflow de sauvegarde ne change pas.
 
 ## Maintenance AlmaLinux 9
 
+SSH, fail2ban, pare-feu d'entrée et mises à jour automatiques : voir
+[`docs/PRODUCTION-HOST-HARDENING.md`](../../docs/PRODUCTION-HOST-HARDENING.md).
+
 `system/update-almalinux9.sh` contrôle ou applique les mises à jour du VPS. Le
 mode d'application refuse de démarrer sans sauvegarde chiffrée vérifiée. Il ne
 modifie ni la configuration/version de Vault ni SSH. La désactivation de

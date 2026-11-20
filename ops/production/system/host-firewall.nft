@@ -1,0 +1,37 @@
+#!/usr/sbin/nft -f
+# Pare-feu d'entrée de l'hôte IceForge.
+# Table dédiée : elle ne touche ni aux tables Docker (iptables-nft) ni à celle
+# de fail2ban. Seul le trafic à destination de l'hôte (hook input) est filtré ;
+# le trafic publié par Docker vers les conteneurs passe par forward et reste géré
+# par Docker.
+
+table inet iceforge_host
+delete table inet iceforge_host
+
+table inet iceforge_host {
+  chain input {
+    type filter hook input priority filter; policy drop;
+
+    iif lo accept
+    ct state established,related accept
+    ct state invalid drop
+
+    # Conteneurs vers l'hôte (réponses DNS, docker-proxy, supervision).
+    iifname { "docker0", "br-*" } accept
+
+    # ICMP indispensable (PMTU, voisinage IPv6), ping limité.
+    ip protocol icmp icmp type echo-request limit rate 10/second accept
+    ip protocol icmp icmp type { destination-unreachable, time-exceeded, parameter-problem } accept
+    ip6 nexthdr ipv6-icmp icmpv6 type echo-request limit rate 10/second accept
+    ip6 nexthdr ipv6-icmp icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept
+
+    # Clients DHCP éventuels de l'hébergeur.
+    udp sport 67 udp dport 68 accept
+    udp sport 547 udp dport 546 accept
+
+    # Services publics : SSH, HTTP, HTTPS.
+    tcp dport { 22, 80, 443 } accept
+
+    counter comment "entrees refusees"
+  }
+}
