@@ -420,20 +420,31 @@ def webhook_id(url):
 def discord_check(config, state, observation, now, send=http_json):
     """One check: alerts and recoveries first, then the live message. Returns the state to persist."""
     found = problems(observation)
-    if 'docker' in found:
-        # Unknown is not recovered: keep alerted containers until Docker answers again.
-        found.update({key: value['text'] for key, value in state.get('alerted', {}).items()
-                      if key.startswith('container:')})
+    # Unknown is not recovered: an open incident stays open until a valid measure clears it.
+    for key, value in state.get('alerted', {}).items():
+        unknown = ((key.startswith('container:') and 'docker' in found)
+                   or (key == 'certificate' and observation.get('certificate_days') is None)
+                   or (key == 'disk' and observation.get('disk_percent') is None))
+        if unknown:
+            found.setdefault(key, value['text'])
     updated, new, recovered = discord_transition(state, found, now)
-    try:
-        if recovered:
+    if recovered:
+        try:
             send('POST', config['webhook_url'], recovery_payload(recovered, now))
-        if new:
+        except (OSError, ValueError):
+            # Not delivered: these incidents stay open and the recovery is retried next minute.
+            updated['alerted'].update(recovered)
+            for key in new:
+                del updated['alerted'][key]
+            return updated, False
+    if new:
+        try:
             send('POST', config['webhook_url'], alert_payload(new, config.get('mention', 'here')))
-    except (OSError, ValueError):
-        # Not delivered: keep the previous alerted set so that the message is retried next minute.
-        updated['alerted'] = state.get('alerted', {})
-        return updated, False
+        except (OSError, ValueError):
+            # Only the failed alert is retried; a recovery already delivered is not sent again.
+            for key in new:
+                del updated['alerted'][key]
+            return updated, False
     try:
         update_status(config, updated, status_payload(observation, found, updated['alerted'], now))
     except (OSError, ValueError, KeyError):

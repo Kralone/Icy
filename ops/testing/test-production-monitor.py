@@ -384,6 +384,36 @@ class DiscordTests(unittest.TestCase):
         with patch('subprocess.run', side_effect=subprocess.TimeoutExpired(['docker'], 10)):
             self.assertIsNone(monitor.inspect_containers(['iceforge_backend']))
 
+    def test_unreadable_certificate_does_not_fake_a_recovery(self):
+        expiring = extended(certificate_days=3)
+        state, _ = self.run_checks([expiring, expiring])
+        self.assertIn('certificate', state['alerted'])
+        state, calls = self.run_checks([extended(certificate_days=None)], state)
+        self.assertEqual(self.posts(calls), [])
+        self.assertIn('certificate', state['alerted'])
+        state, calls = self.run_checks([extended(certificate_days=80)], state)
+        self.assertIn('rétabli', self.posts(calls)[0]['content'])
+
+    def test_delivered_recovery_is_not_resent_when_the_next_alert_fails(self):
+        # Same check: the bot recovers while the database reaches its second failure.
+        state = {'counts': {'container:iceforge_db': 1},
+                 'alerted': {'container:iceforge_bot': {'text': 'iceforge_bot : arrêté', 'since': NOW.isoformat()}}}
+        swapped = extended(containers={'iceforge_bot': {'status': 'running', 'health': 'healthy', 'restarts': 4}, 'iceforge_db': DOWN})
+        sent = []
+        def recovery_then_fail(method, url, payload):
+            if 'rétabli' in payload.get('content', '') or method == 'PATCH':
+                sent.append(payload.get('content'))
+                return {'id': '1'}
+            raise OSError('synthetic')
+        state, delivered = monitor.discord_check({'webhook_url': WEBHOOK}, state, swapped, NOW, recovery_then_fail)
+        self.assertFalse(delivered)
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(set(state['alerted']), set())
+        state, calls = self.run_checks([swapped], state)
+        contents = [p['content'] for p in self.posts(calls)]
+        self.assertEqual(len(contents), 1)
+        self.assertIn('Alerte', contents[0])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
