@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { coreTestProviders } from '@testing/test-providers';
 import { PoleHome } from '../../core/services/pole/pole';
 import { PolePageComponent } from './pole-page.component';
@@ -214,5 +214,26 @@ describe('PolePageComponent', () => {
     fixture.detectChanges();
     expect(navigate).toHaveBeenCalledWith(['/icy/poles'], { replaceUrl: true });
     TestBed.inject(HttpTestingController).expectNone(() => true);
+  });
+  it('reloads the page when the address moves to another pole', async () => {
+    const params = new BehaviorSubject(convertToParamMap({ pole: 'industrie' }));
+    await TestBed.configureTestingModule({
+      imports: [PolePageComponent],
+      providers: [...coreTestProviders, { provide: ActivatedRoute, useValue: { paramMap: params, snapshot: { paramMap: params.value } } }]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PolePageComponent);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http.expectOne('/api/poles/INDUSTRIE').flush(home('INDUSTRIE', { canManage: true, news: [news] }));
+    fixture.componentInstance.toggleManaging();
+
+    params.next(convertToParamMap({ pole: 'militaire' }));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.home()).toBeNull();
+    expect(fixture.componentInstance.managing()).toBe(false);
+    http.expectOne('/api/poles/MILITAIRE').flush(home('MILITAIRE'));
+    expect(fixture.componentInstance.home()!.key).toBe('MILITAIRE');
+    expect(fixture.componentInstance.home()!.news).toEqual([]);
   });
 });

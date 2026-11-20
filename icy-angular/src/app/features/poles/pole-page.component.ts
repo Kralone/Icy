@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,7 +23,7 @@ const DAY = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', ye
   templateUrl: './pole-page.component.html',
   styleUrl: './poles.css'
 })
-export class PolePageComponent implements OnInit {
+export class PolePageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly poleService = inject(PoleService);
@@ -62,23 +62,35 @@ export class PolePageComponent implements OnInit {
   /** Actualité dont la suppression attend une confirmation. */
   readonly deletingId = signal<number | null>(null);
   draft = { title: '', content: '' };
+  private paramsSub?: { unsubscribe(): void };
 
   ngOnInit(): void {
-    if (!this.pole()) {
-      // Adresse d'un pôle qui n'existe pas : retour au menu des pôles.
-      void this.router.navigate(['/icy/poles'], { replaceUrl: true });
-      return;
-    }
-    this.load();
+    // Angular réutilise la page d'un pôle à l'autre : chaque changement d'adresse recharge l'accueil du pôle affiché.
+    this.paramsSub = this.route.paramMap.subscribe(params => {
+      if (!poleBySlug(params.get('pole'))) {
+        // Adresse d'un pôle qui n'existe pas : retour au menu des pôles.
+        void this.router.navigate(['/icy/poles'], { replaceUrl: true });
+        return;
+      }
+      this.home.set(null);
+      this.managing.set(false);
+      this.saving.set(false);
+      this.resetDraft();
+      this.load(poleBySlug(params.get('pole')));
+    });
   }
 
-  load(): void {
-    const pole = this.pole();
+  ngOnDestroy(): void {
+    this.paramsSub?.unsubscribe();
+  }
+
+  load(pole = this.pole()): void {
     if (!pole) return;
     this.loadFailed.set(false);
     this.poleService.home(pole.key).subscribe({
-      next: home => this.home.set(home),
-      error: () => this.loadFailed.set(true)
+      // Une réponse arrivée après un changement de pôle est ignorée.
+      next: home => { if (this.pole()?.key === pole.key) this.home.set(home); },
+      error: () => { if (this.pole()?.key === pole.key) this.loadFailed.set(true); }
     });
   }
 
