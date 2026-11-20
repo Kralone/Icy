@@ -19,10 +19,6 @@ services:
   frontend:
     networks: !override [internal, external]
 
-  icy-images:
-    ports: !override []
-    networks: !override [internal]
-
   vault:
     ports: !override
       - "127.0.0.1:8200:8200"

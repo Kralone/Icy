@@ -30,7 +30,7 @@ flowchart LR
 | Frontend | [`icy-angular/`](../icy-angular/) | pages publiques, espace membre, administration, REST, WebSocket, SEO, PWA |
 | Backend | [`icy_backend/`](../icy_backend/) | authentification, utilisateurs, événements, objectifs, collections, catalogues, images, notifications, intégrations |
 | Bot | [`icy/`](../icy/) | messages Discord, boutons de participation, commandes, consommation/publication RabbitMQ |
-| Déploiement principal | [`docker-compose.yml`](../docker-compose.yml) | PostgreSQL, backend, frontend statique, bot, images et RabbitMQ |
+| Déploiement principal | [`docker-compose.yml`](../docker-compose.yml) | PostgreSQL, backend, frontend statique (qui sert aussi les images), bot et RabbitMQ |
 | Déploiement SSR | [`icy-angular/docker-compose.ssr.yml`](../icy-angular/docker-compose.ssr.yml) | serveur Node Angular SSR derrière Nginx |
 | Vault local | [`docker-compose.vault.yml`](../docker-compose.vault.yml) | Vault de développement |
 
@@ -114,7 +114,7 @@ flowchart TB
     Vault --> Bot
 ```
 
-La cible de production doit uniquement exposer 80/443. PostgreSQL 5432, backend 8080, bot 8090, serveur d'images 8081, AMQP 5672, management RabbitMQ 15672 et Vault 8200 doivent rester privés ou liés à `127.0.0.1` selon le besoin d'administration.
+La cible de production doit uniquement exposer 80/443. PostgreSQL 5432, backend 8080, bot 8090, AMQP 5672, management RabbitMQ 15672 et Vault 8200 doivent rester privés ou liés à `127.0.0.1` selon le besoin d'administration.
 
 ### Incohérence actuelle
 

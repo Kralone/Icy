@@ -16,8 +16,6 @@ services:
       internal:
         ipv4_address: ${ICEFORGE_LOCAL_FRONTEND_IP:-10.253.20.10}
       external: {}
-  icy-images:
-    ports: ["127.0.0.1:8081:80"]
 
 networks:
   internal:

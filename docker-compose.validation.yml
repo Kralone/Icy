@@ -25,9 +25,6 @@ services:
         ipv4_address: ${ICEFORGE_VALIDATION_FRONTEND_IP:-10.253.30.10}
       external: {}
 
-  icy-images:
-    ports: !reset []
-
   bot:
     # Avoid connecting a real Discord bot during infrastructure smoke tests.
     profiles: ["external"]
