@@ -53,7 +53,7 @@ export class GuidesComponent {
       summary: 'Réglages experts, gadgets, risques et pipeline de production.',
       category: 'Industrie',
       route: '/guides/minage/confirmed',
-      imageUrl: 'assets/images/home/activities/mining.jpg',
+      imageUrl: 'assets/images/home/activities/mining-advanced.jpg',
       type: 'live'
     }
   ];

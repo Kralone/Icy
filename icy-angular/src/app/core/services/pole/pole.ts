@@ -123,7 +123,7 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
       label: 'Guides',
       tools: [
         { label: 'Guide de minage', description: 'Les bases pour débuter et progresser.', route: '/icy/outils/guides/minage-star-citizen', imageUrl: ACTIVITIES + 'mining.jpg' },
-        { label: 'Minage avancé', description: 'Techniques et réglages pour les mineurs confirmés.', route: '/icy/outils/guides/minage-avance', imageUrl: ACTIVITIES + 'mining.jpg' },
+        { label: 'Minage avancé', description: 'Techniques et réglages pour les mineurs confirmés.', route: '/icy/outils/guides/minage-avance', imageUrl: ACTIVITIES + 'mining-advanced.jpg' },
         { label: 'Guide de salvage', description: 'Récupération de coques et de composants.', route: '/icy/outils/guides/salvage', imageUrl: ACTIVITIES + 'salvage.jpg' }
       ]
     }
