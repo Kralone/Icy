@@ -63,6 +63,8 @@ export class PolePageComponent implements OnInit, OnDestroy {
   readonly deletingId = signal<number | null>(null);
   draft = { title: '', content: '' };
   private paramsSub?: { unsubscribe(): void };
+  /** Numéro de la visite en cours : une réponse partie d'un autre pôle ne touche plus à la page. */
+  private visit = 0;
 
   ngOnInit(): void {
     // Angular réutilise la page d'un pôle à l'autre : chaque changement d'adresse recharge l'accueil du pôle affiché.
@@ -72,6 +74,7 @@ export class PolePageComponent implements OnInit, OnDestroy {
         void this.router.navigate(['/icy/poles'], { replaceUrl: true });
         return;
       }
+      this.visit++;
       this.home.set(null);
       this.managing.set(false);
       this.saving.set(false);
@@ -122,10 +125,12 @@ export class PolePageComponent implements OnInit, OnDestroy {
       return;
     }
     const id = this.editingId();
+    const visit = this.visit;
     this.saving.set(true);
     this.formError.set(null);
     (id === null ? this.poleService.publishNews(pole.key, news) : this.poleService.updateNews(pole.key, id, news)).subscribe({
       next: saved => {
+        if (visit !== this.visit) return;
         this.home.update(home => home && {
           ...home,
           news: id === null ? [saved, ...home.news] : home.news.map(entry => (entry.id === id ? saved : entry))
@@ -134,6 +139,7 @@ export class PolePageComponent implements OnInit, OnDestroy {
         this.resetDraft();
       },
       error: error => {
+        if (visit !== this.visit) return;
         this.saving.set(false);
         this.formError.set(error?.error?.message || "L'actualité n'a pas pu être enregistrée.");
       }
@@ -148,13 +154,16 @@ export class PolePageComponent implements OnInit, OnDestroy {
       this.deletingId.set(news.id);
       return;
     }
+    const visit = this.visit;
     this.poleService.deleteNews(pole.key, news.id).subscribe({
       next: () => {
+        if (visit !== this.visit) return;
         this.home.update(home => home && { ...home, news: home.news.filter(entry => entry.id !== news.id) });
         if (this.editingId() === news.id) this.resetDraft();
         this.deletingId.set(null);
       },
       error: () => {
+        if (visit !== this.visit) return;
         this.deletingId.set(null);
         this.formError.set("L'actualité n'a pas pu être supprimée.");
       }

@@ -236,4 +236,30 @@ describe('PolePageComponent', () => {
     expect(fixture.componentInstance.home()!.key).toBe('MILITAIRE');
     expect(fixture.componentInstance.home()!.news).toEqual([]);
   });
+
+  it('ignores a publication answered after the address moved to another pole', async () => {
+    const params = new BehaviorSubject(convertToParamMap({ pole: 'industrie' }));
+    await TestBed.configureTestingModule({
+      imports: [PolePageComponent],
+      providers: [...coreTestProviders, { provide: ActivatedRoute, useValue: { paramMap: params, snapshot: { paramMap: params.value } } }]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PolePageComponent);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http.expectOne('/api/poles/INDUSTRIE').flush(home('INDUSTRIE', { canManage: true }));
+    const page = fixture.componentInstance;
+    page.toggleManaging();
+    page.draft = { title: 'Sortie Quantanium', content: 'Samedi 21h.' };
+    page.save();
+    const publication = http.expectOne('/api/poles/INDUSTRIE/news');
+
+    params.next(convertToParamMap({ pole: 'militaire' }));
+    http.expectOne('/api/poles/MILITAIRE').flush(home('MILITAIRE', { canManage: true }));
+    page.draft = { title: 'Brouillon militaire', content: '' };
+    publication.flush(news);
+
+    expect(page.home()!.news).toEqual([]);
+    expect(page.draft.title).toBe('Brouillon militaire');
+    expect(page.saving()).toBe(false);
+  });
 });
