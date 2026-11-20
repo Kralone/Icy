@@ -9,6 +9,7 @@ import com.icy.icy_backend.controller.dto.user.UpdateUserProfileRequest;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.db.entity.user.UserParam;
 import com.icy.icy_backend.db.entity.user.Role;
+import com.icy.icy_backend.db.entity.user.Specialty;
 import com.icy.icy_backend.db.entity.user.UserRole;
 import com.icy.icy_backend.db.entity.user.UserStatus;
 import com.icy.icy_backend.db.entity.ship.Ship;
@@ -111,6 +112,14 @@ public class UserService {
      */
     @Transactional
     public ResponseEntity<MessageResponse<User>> createUser(String username, String discordId, String role) {
+        return createUser(username, discordId, role, null);
+    }
+
+    /** Un Spécialiste est créé avec son pôle ; specialty est ignoré pour les autres grades. */
+    @Transactional
+    public ResponseEntity<MessageResponse<User>> createUser(String username, String discordId, String role, String specialty) {
+        String roleName = (role == null || role.isBlank()) ? DEFAULT_ROLE_NAME : role;
+        Specialty pole = Specialty.forRank(roleName, specialty);
         logger.info("Création d'un nouvel utilisateur: {} avec Discord ID: {}", username, discordId);
 
         var existingUser = userRepository.findByDiscordIdIncludingInactive(discordId);
@@ -129,10 +138,10 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
 
-        String roleName = (role == null || role.isBlank()) ? DEFAULT_ROLE_NAME : role;
         Role defaultRole = findRoleByName(roleName);
         user.getRoles().clear();
         user.assignDefaultRole(defaultRole);
+        user.setSpecialty(pole);
 
         User savedUser = userRepository.saveAndFlush(user);
         userPublisher.sendTemporaryPassword(discordId, username, tempPassword);
@@ -451,15 +460,21 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName) {
-        return updateUser(id, username, discordId, roleName, null);
+        return updateUser(id, username, discordId, roleName, null, null);
+    }
+
+    @Transactional
+    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName, Boolean treasurer) {
+        return updateUser(id, username, discordId, roleName, treasurer, null);
     }
 
     /**
      * Le grade remplace l'ancien grade ; les fonctions (trésorier) s'y ajoutent et sont gardées,
-     * sauf si treasurer les change explicitement.
+     * sauf si treasurer les change explicitement. Le pôle (specialty) est obligatoire pour un Spécialiste ;
+     * s'il n'est pas transmis, celui déjà enregistré est gardé. Il est effacé dès que le grade change.
      */
     @Transactional
-    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName, Boolean treasurer) {
+    public ResponseEntity<MessageResponse<User>> updateUser(UUID id, String username, String discordId, String roleName, Boolean treasurer, String specialty) {
         logger.info("Mise à jour de l'utilisateur {}", id);
         if (roleName != null && FUNCTION_ROLES.contains(roleName.trim().toUpperCase())) {
             throw new BadRequestException("Trésorier est une fonction, pas un grade : cochez la case Trésorier.");
@@ -469,8 +484,13 @@ public class UserService {
         List<String> previousRoles = user.getRoles().stream()
                 .map(userRole -> userRole.getRole().getName())
                 .toList();
+        Specialty previousSpecialty = user.getSpecialty();
+        String requestedSpecialty = specialty != null && !specialty.isBlank() ? specialty
+                : previousSpecialty != null ? previousSpecialty.name() : null;
+        Specialty pole = Specialty.forRank(roleName, requestedSpecialty);
         user.setUsername(username);
         user.setDiscordId(discordId);
+        user.setSpecialty(pole);
 
         Role role = findRoleByName(roleName);
         boolean keepTreasurer = treasurer != null ? treasurer : previousRoles.contains(TREASURER_ROLE);
@@ -484,10 +504,11 @@ public class UserService {
 
         User saved = userRepository.save(user);
         List<String> newRoles = saved.getRoles().stream().map(userRole -> userRole.getRole().getName()).toList();
-        if (!new HashSet<>(previousRoles).equals(new HashSet<>(newRoles))) {
+        if (!new HashSet<>(previousRoles).equals(new HashSet<>(newRoles)) || previousSpecialty != pole) {
             notifyAdmins(
                     "Admin : roles mis a jour",
-                    "Roles de " + saved.getUsername() + " : " + String.join(", ", newRoles),
+                    "Roles de " + saved.getUsername() + " : " + String.join(", ", newRoles)
+                            + (pole != null ? " (" + pole.name() + ")" : ""),
                     "/icy/admin/members",
                     2
             );

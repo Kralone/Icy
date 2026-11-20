@@ -30,7 +30,7 @@ public class OperationCrewPresetController {
     private final MessageService messageService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.canCreate()")
     public ResponseEntity<MessageResponse<List<OperationCrewPresetDTO>>> list(@RequestParam(required = false) Long shipModelId,
                                                                                @RequestParam(defaultValue = "false") boolean includeArchived) {
         return messageService.buildResponse("operation.crew.presets", presetService.list(shipModelId, includeArchived));

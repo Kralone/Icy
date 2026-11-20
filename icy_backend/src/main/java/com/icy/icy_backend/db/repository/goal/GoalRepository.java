@@ -13,6 +13,9 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
 
     List<Goal> findByParent(Goal parent);
 
+    /** Objectifs principaux d'un pôle : ceux en cours d'abord, les plus récents en tête. */
+    List<Goal> findByPoleAndParentIsNullOrderByCompletedAscCreatedAtDesc(com.icy.icy_backend.db.entity.user.Specialty pole);
+
     Optional<Goal> findFirstByPinnedTrue();
 
     long countByUser_Id(UUID userId);

@@ -12,6 +12,9 @@
           <label>Description<textarea [disabled]="busy" name="description" [(ngModel)]="form.description" rows="3" placeholder="Précisions utiles (facultatif)"></textarea></label>
           <div class="form-pair"><label>Cible<input [disabled]="busy" name="target" type="number" [(ngModel)]="form.target" required min="1" max="2147483647" step="1" /></label>@if (editingGoal) { <label>Progression actuelle<input [disabled]="busy" name="current" type="number" [(ngModel)]="form.current" required min="0" max="2147483647" step="1" /></label> }</div>
           <label>Objectif parent<select [disabled]="busy" name="parent" [(ngModel)]="form.parentId"><option [ngValue]="null">Aucun — objectif principal</option>@for (node of parentOptions; track node.goal.id) { <option [ngValue]="node.goal.id">{{ '— '.repeat(node.depth) }}{{ node.goal.name }}</option> }</select></label>
+          @if (form.parentId === null) {
+            <label>Pôle<select [disabled]="busy" name="pole" [(ngModel)]="form.pole" data-testid="goal-pole"><option value="">Aucun pôle</option>@for (pole of poles; track pole.key) { <option [value]="pole.key">{{ pole.label }}</option> }</select></label>
+          }
           <label>Membre associé<select [disabled]="busy" name="user" [(ngModel)]="form.userId"><option [ngValue]="null">Aucun</option>@for (user of users; track user.id) { <option [ngValue]="user.id">{{ user.username }}</option> }</select></label>
           @if (editingGoal) { <label class="checkbox"><input [disabled]="busy" name="pinned" type="checkbox" [(ngModel)]="form.pinned" />Épingler sur le tableau de bord</label> }
           @if (!isGoalFormValid) { <p class="form-hint">Indiquez un nom et des quantités entières valides. La cible doit être supérieure à zéro.</p> }

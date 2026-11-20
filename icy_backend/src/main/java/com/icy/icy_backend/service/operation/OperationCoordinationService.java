@@ -45,7 +45,7 @@ public class OperationCoordinationService {
 
     @Transactional(readOnly = true)
     public OperationCoordinationDTO coordination(UUID operationId) {
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         // Pour un non-organisateur, un brouillon n'existe pas.
         Operation operation = operationRepository.findById(operationId)
                 .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)

@@ -75,14 +75,29 @@
             <tr class="hover:bg-cyan-400/[0.04] transition-colors">
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3 min-w-0">
-                  <span class="flex-none w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-700/40 border border-cyan-300/20 grid place-items-center text-xs font-bold text-cyan-100" aria-hidden="true">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
+                  <span class="member-avatar flex-none w-8 h-8 rounded-full grid place-items-center text-xs font-bold" [attr.data-rank]="rankKey(user)" aria-hidden="true">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
                   <span class="font-semibold text-white break-words">{{ user.username }}</span>
                 </div>
               </td>
               <td class="px-4 py-3">
-                @for (role of user.roles; track role) {
-                  <span class="inline-block bg-cyan-500/15 border border-cyan-300/30 text-cyan-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ roleLabels[role] || role }}</span>
-                }
+                <!-- Le grade est mis en avant, à sa couleur ; le pôle et la fonction le précisent en petit. -->
+                <div class="flex flex-col items-start gap-1.5">
+                  <span data-testid="member-rank" class="rank-pill" [attr.data-rank]="rankKey(user)">
+                    <span class="rank-dot" aria-hidden="true"></span>{{ rankLabel(user) }}
+                  </span>
+                  @if (rankDetails(user); as details) {
+                    @if (details.length) {
+                      <span class="flex flex-wrap items-center gap-x-3 gap-y-1 pl-1">
+                        @for (detail of details; track detail.key) {
+                          <span class="rank-detail" [attr.data-choice]="detail.key" [attr.data-testid]="detail.testId">
+                            <app-pole-icon [key]="detail.key" size="h-3.5 w-3.5" />
+                            {{ detail.label }}
+                          </span>
+                        }
+                      </span>
+                    }
+                  }
+                </div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-slate-300">
                 @if (user.createdAt) { <time [attr.datetime]="user.createdAt">{{ user.createdAt | date:'d MMM yyyy' }}</time> } @else { <span class="text-slate-500 italic">Non renseignée</span> }
@@ -226,12 +241,48 @@
                   }
                 </select>
               </div>
+              @if (newUser.role === specialistRank) {
+                <!-- Sous-grade : le pôle du Spécialiste, obligatoire -->
+                <fieldset data-testid="specialty-choice">
+                  <legend class="block mb-2 text-sm text-slate-300">Pôle du Spécialiste</legend>
+                  <div class="grid grid-cols-3 gap-2">
+                    @for (pole of specialties; track pole.key) {
+                      <label
+                        class="choice-tile relative flex flex-col items-center gap-2 rounded-2xl border px-2 py-4 text-center cursor-pointer transition"
+                        [attr.data-choice]="pole.key"
+                        [class.is-selected]="newUser.specialty === pole.key"
+                        >
+                        <input type="radio" name="specialty" [value]="pole.key" [(ngModel)]="newUser.specialty" required class="sr-only">
+                        <span class="choice-icon grid h-12 w-12 place-items-center rounded-xl" aria-hidden="true">
+                          <app-pole-icon [key]="pole.key" size="h-7 w-7" />
+                        </span>
+                        <span class="text-sm font-semibold text-white">{{ pole.label }}</span>
+                        <span class="choice-check absolute right-2 top-2 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold" aria-hidden="true">✓</span>
+                      </label>
+                    }
+                  </div>
+                  <p class="mt-2 text-xs text-slate-400" data-testid="specialty-description">
+                    {{ selectedSpecialtyDescription ?? 'Un Spécialiste a toujours un pôle : choisissez-le pour enregistrer.' }}
+                  </p>
+                </fieldset>
+              }
               @if (isEditMode) {
-                <!-- Fonction de trésorier : elle s'ajoute au grade -->
-                <label class="flex items-start gap-3 rounded-xl border border-white/10 bg-[#0b1324] px-4 py-3 text-sm text-slate-300 cursor-pointer">
-                  <input type="checkbox" name="treasurer" [(ngModel)]="newUser.treasurer" class="mt-0.5 h-4 w-4 accent-cyan-400">
-                  <span><span class="font-semibold text-white">Trésorier</span><br>
-                  <span class="text-slate-400">Gère la banque : dépôts, dépenses, reversements. S'ajoute au grade.</span></span>
+                <!-- Fonction de trésorier : elle s'ajoute au grade. Même tuile que les pôles. -->
+                <label
+                  class="choice-tile relative flex items-center gap-3 rounded-2xl border px-4 py-3 cursor-pointer transition"
+                  data-choice="TRESORIER"
+                  data-testid="treasurer-choice"
+                  [class.is-selected]="newUser.treasurer"
+                  >
+                  <input type="checkbox" name="treasurer" [(ngModel)]="newUser.treasurer" class="sr-only">
+                  <span class="choice-icon grid h-12 w-12 flex-none place-items-center rounded-xl" aria-hidden="true">
+                    <app-pole-icon [key]="'TRESORIER'" size="h-7 w-7" />
+                  </span>
+                  <span class="min-w-0 pr-5 text-sm">
+                    <span class="block font-semibold text-white">Trésorier</span>
+                    <span class="block text-xs text-slate-400">Gère la banque : dépôts, dépenses, reversements. S'ajoute au grade.</span>
+                  </span>
+                  <span class="choice-check absolute right-2 top-2 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold" aria-hidden="true">✓</span>
                 </label>
               }
               <!-- Actions -->
@@ -245,9 +296,9 @@
                 </button>
                 <button
                   type="submit"
-                  [disabled]="addUserForm.invalid"
+                  [disabled]="addUserForm.invalid || specialtyMissing"
           class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition"
+                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                   {{ isEditMode ? 'Modifier' : 'Ajouter' }}
                 </button>

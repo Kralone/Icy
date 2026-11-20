@@ -8,6 +8,8 @@ export interface UserProfile {
   status?: UserStatusKey | null;
   avatarUrl?: string | null;
   roles?: string[] | null;
+  /** Pôle du membre quand son grade est Spécialiste ; null sinon. */
+  specialty?: string | null;
   favoriteShip?: {
     id: number;
     name: string;

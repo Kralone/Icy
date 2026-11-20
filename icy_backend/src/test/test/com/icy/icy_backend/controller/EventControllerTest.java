@@ -59,11 +59,15 @@ class EventControllerTest {
     @MockitoBean
     private EventService eventService;
 
+    @MockitoBean
+    private com.icy.icy_backend.service.pole.PoleAccess poleAccess;
+
     @Test
     void eventEndpointsReturnOk() throws Exception {
-        when(eventService.createEvent(any(), any(), any(), any(), any()))
+        when(poleAccess.poleFor(any())).thenAnswer(call -> call.getArgument(0));
+        when(eventService.createEvent(any(), any(), any(), any(), any(), anyBoolean(), any()))
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
-        when(eventService.updateEvent(any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
+        when(eventService.updateEvent(any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
         when(eventService.deleteEvent(any())).thenReturn(okResponse(null));
         when(eventService.getAllEvents()).thenReturn(okResponse(List.of(new EventResponseDTO(new Event()))));

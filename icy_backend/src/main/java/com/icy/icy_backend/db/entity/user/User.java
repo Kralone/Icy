@@ -40,6 +40,11 @@ public class User {
     @Column(nullable = false)
     private UserStatus status = UserStatus.CONNECTE;
 
+    /** Pôle du membre quand son grade est Spécialiste ; null sinon. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private Specialty specialty;
+
     @Column(name = "avatar_url")
     private String avatarUrl;
 

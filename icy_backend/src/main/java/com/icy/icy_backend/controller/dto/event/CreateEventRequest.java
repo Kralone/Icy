@@ -13,6 +13,8 @@ public class CreateEventRequest {
     private LocalDateTime endDateTime;
     private String imageUrl;
     private Boolean allowShipProposals;
+    /** Pôle rattaché (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; absent ou vide : aucun. */
+    private String pole;
 }
 
 

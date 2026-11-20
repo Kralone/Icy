@@ -266,6 +266,46 @@ class EventServiceTest {
     }
 
     @Test
+    void theRealtimeMessageOfANewEventAlreadyCarriesItsPole() {
+        EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
+        UserService userService = Mockito.mock(UserService.class);
+        EventService service = new EventService(eventRepository, messageService, eventWebSocketService,
+                Mockito.mock(EventTypeRepository.class), Mockito.mock(EventParticipationRepository.class), userService,
+                Mockito.mock(AuthService.class), Mockito.mock(EventPublisher.class), Mockito.mock(NotificationPushService.class));
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(UUID.randomUUID());
+            service.createEvent("Type", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusHours(1), true,
+                    com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+        }
+
+        org.mockito.ArgumentCaptor<Event> sent = org.mockito.ArgumentCaptor.forClass(Event.class);
+        verify(eventWebSocketService).sendEventUpdate(sent.capture(), eq("ADD"));
+        assertThat(sent.getValue().getPole()).isEqualTo(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+    }
+
+    @Test
+    void movingAPublishedActivityToAnotherPoleRefreshesOpenCalendars() {
+        EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
+        EventService service = new EventService(eventRepository, Mockito.mock(MessageService.class), eventWebSocketService,
+                Mockito.mock(EventTypeRepository.class), Mockito.mock(EventParticipationRepository.class), Mockito.mock(UserService.class),
+                Mockito.mock(AuthService.class), Mockito.mock(EventPublisher.class), Mockito.mock(NotificationPushService.class));
+        Event event = new Event();
+        event.setId(UUID.randomUUID());
+        when(eventRepository.findById(event.getId())).thenReturn(java.util.Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.assignPole(event.getId(), "LOGISTIQUE");
+
+        assertThat(event.getPole()).isEqualTo(com.icy.icy_backend.db.entity.user.Specialty.LOGISTIQUE);
+        verify(eventWebSocketService).sendEventUpdate(event, "UPDATE");
+    }
+
+    @Test
     void markExpiredEventsAsFinishedHandlesAllExpiredEvents() {
         EventRepository eventRepository = Mockito.mock(EventRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);

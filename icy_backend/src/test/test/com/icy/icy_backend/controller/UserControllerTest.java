@@ -39,6 +39,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -79,8 +80,8 @@ class UserControllerTest {
     void userEndpointsReturnOk() throws Exception {
         UUID staffId = UUID.randomUUID();
         when(userService.getUserByDiscordId(eq("123"))).thenReturn(okResponse(new User()));
-        when(userService.createUser(eq("alice"), eq("123"), eq("USER"))).thenReturn(okResponse(new User()));
-        when(userService.updateUser(any(), any(), any(), any(), any())).thenReturn(okResponse(new User()));
+        when(userService.createUser(eq("alice"), eq("123"), eq("USER"), any())).thenReturn(okResponse(new User()));
+        when(userService.updateUser(any(), any(), any(), any(), any(), any())).thenReturn(okResponse(new User()));
         when(userService.resolveUser(any(UUID.class))).thenReturn(new User());
         when(userService.resolveUser(any(Long.class))).thenReturn(new User());
         when(userService.deactivateUser(any())).thenReturn(okResponse(null));
@@ -192,42 +193,40 @@ class UserControllerTest {
     }
 
     @Test
-    void discordBotCanCreateUserOnlyThroughDedicatedEndpoint() throws Exception {
-        UUID actorId = UUID.randomUUID();
-        when(userService.createUser(eq("alice"), eq("123456789"), eq("SPECIALISTE")))
-                .thenReturn(okResponse(new User()));
-
-        String payload = "{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"SPECIALISTE\"}";
-        mockMvc.perform(post("/api/users/bot/create")
-                        .with(TestAuth.user(actorId, "BOT"))
-                        .contentType("application/json")
-                        .content(payload))
-                .andExpect(status().isOk());
-
+    void botCannotCreateUsers() throws Exception {
+        String payload = "{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"JUNIOR\"}";
         mockMvc.perform(post("/api/users/create")
-                        .with(TestAuth.user(actorId, "BOT"))
+                        .with(TestAuth.user(UUID.randomUUID(), "BOT"))
                         .contentType("application/json")
                         .content(payload))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(post("/api/users/bot/create")
-                        .with(TestAuth.user(actorId, "ADMIN"))
-                        .contentType("application/json")
-                        .content(payload))
-                .andExpect(status().isForbidden());
+        verifyNoMoreInteractions(userService);
     }
 
     @Test
-    void discordBotCreateRejectsRoleOutsideCommandChoices() throws Exception {
+    void specialistPoleIsForwardedOnCreateAndUpdate() throws Exception {
         UUID actorId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+        when(userService.createUser(eq("alice"), eq("123456789"), eq("SPECIALISTE"), eq("INDUSTRIE")))
+                .thenReturn(okResponse(new User()));
+        when(userService.resolveUser(targetId)).thenReturn(new User());
+        when(userService.updateUser(eq(targetId), eq("alice"), eq("123456789"), eq("SPECIALISTE"), eq(null), eq("MILITAIRE")))
+                .thenReturn(okResponse(new User()));
 
-        mockMvc.perform(post("/api/users/bot/create")
-                        .with(TestAuth.user(actorId, "BOT"))
+        mockMvc.perform(post("/api/users/create")
+                        .with(TestAuth.user(actorId, "ADMIN"))
                         .contentType("application/json")
-                        .content("{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"BOT\"}"))
-                .andExpect(status().isBadRequest());
+                        .content("{\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"SPECIALISTE\",\"specialty\":\"INDUSTRIE\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/users/update")
+                        .with(TestAuth.user(actorId, "ADMIN"))
+                        .contentType("application/json")
+                        .content("{\"id\":\"" + targetId + "\",\"username\":\"alice\",\"discordId\":\"123456789\",\"role\":\"SPECIALISTE\",\"specialty\":\"MILITAIRE\"}"))
+                .andExpect(status().isOk());
 
-        verifyNoMoreInteractions(userService);
+        verify(userService).createUser("alice", "123456789", "SPECIALISTE", "INDUSTRIE");
+        verify(userService).updateUser(targetId, "alice", "123456789", "SPECIALISTE", null, "MILITAIRE");
     }
 
     @Test

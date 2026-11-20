@@ -58,6 +58,8 @@ public class OperationController {
     private final OperationGroupService groupService;
     private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
+    private final com.icy.icy_backend.service.pole.PoleAccess poleAccess;
+    private final com.icy.icy_backend.db.repository.user.UserRepository userRepository;
     private final com.icy.icy_backend.service.operation.OperationFleetService fleetService;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
@@ -66,7 +68,7 @@ public class OperationController {
     private final com.icy.icy_backend.service.operation.OperationReplanService replanService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.canCreate()")
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> create(@RequestBody CreateEventRequest request) {
         String type = eventService.requireExistingEventTypeName(request.getType());
@@ -74,6 +76,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
+        eventService.assignPole(eventId, poleAccess.poleFor(request.getPole()));
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());
         seed.setImageUrl(request.getImageUrl());
@@ -86,7 +89,7 @@ public class OperationController {
      * le reste du contenu et l'organisation sont repris de l'opération d'origine, sans ses inscrits ni ses vaisseaux proposés.
      */
     @PostMapping("/{id}/replan")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     @Transactional
     public ResponseEntity<MessageResponse<OperationResponseDTO>> replan(@PathVariable UUID id, @RequestBody CreateEventRequest request) {
         eventRepository.findById(id).filter(event -> event.getActivityType() == ActivityType.OPERATION)
@@ -96,6 +99,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
+        eventService.assignPole(eventId, poleAccess.poleFor(request.getPole()));
         replanService.copyOrganization(id, eventId);
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());
@@ -122,26 +126,26 @@ public class OperationController {
     }
 
     @PostMapping("/{id}/groups/{groupId}/positions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCrewDTO.Position>> addPosition(@PathVariable UUID id, @PathVariable Long groupId, @RequestBody com.icy.icy_backend.controller.dto.operation.OperationPositionRequest request) {
         return crewService.addPosition(id, groupId, request);
     }
 
     @PutMapping("/{id}/groups/{groupId}/positions/{positionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationCrewDTO.Position>> updatePosition(@PathVariable UUID id, @PathVariable Long groupId, @PathVariable Long positionId, @RequestBody com.icy.icy_backend.controller.dto.operation.OperationPositionRequest request) {
         return crewService.updatePosition(id, groupId, positionId, request);
     }
 
     /** L'équipage reprend les postes du preset et le suit ensuite. */
     @PutMapping("/{id}/groups/{groupId}/preset")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> followPreset(@PathVariable UUID id, @PathVariable Long groupId, @RequestParam UUID presetId) {
         return crewService.followPreset(id, groupId, presetId);
     }
 
     @DeleteMapping("/{id}/groups/{groupId}/positions/{positionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> deletePosition(@PathVariable UUID id, @PathVariable Long groupId, @PathVariable Long positionId) {
         return crewService.deletePosition(id, groupId, positionId);
     }
@@ -173,26 +177,26 @@ public class OperationController {
     }
 
     @PostMapping("/{id}/groups")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> createGroup(@PathVariable UUID id, @RequestBody OperationGroupRequest request) {
         return groupService.create(id, request);
     }
 
     @PutMapping("/{id}/groups/{groupId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationGroupResponseDTO>> updateGroup(@PathVariable UUID id, @PathVariable Long groupId, @RequestBody OperationGroupRequest request) {
         return groupService.update(id, groupId, request);
     }
 
     @DeleteMapping("/{id}/groups/{groupId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> deleteGroup(@PathVariable UUID id, @PathVariable Long groupId,
                                                              @RequestParam(name = "withLinkedShips", defaultValue = "false") boolean withLinkedShips) {
         return groupService.delete(id, groupId, withLinkedShips);
     }
 
     @PutMapping("/{id}/groups/reorder")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> reorderGroups(@PathVariable UUID id, @RequestBody List<Long> groupIds) {
         return groupService.reorder(id, groupIds);
     }
@@ -210,25 +214,25 @@ public class OperationController {
     }
 
     @PostMapping("/{id}/ships/proposals/{proposalId}/accept")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> acceptShipProposal(@PathVariable UUID id, @PathVariable UUID proposalId) {
         return shipService.accept(id, proposalId);
     }
 
     @PostMapping("/{id}/ships/proposals/{proposalId}/decline")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> declineShipProposal(@PathVariable UUID id, @PathVariable UUID proposalId) {
         return shipService.decline(id, proposalId);
     }
 
     @PostMapping("/{id}/ships/proposals/{proposalId}/unavailable")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> markShipUnavailable(@PathVariable UUID id, @PathVariable UUID proposalId) {
         return shipService.markUnavailable(id, proposalId);
     }
 
     @PutMapping("/{id}/ships/proposals/{proposalId}/pilot")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> setShipPilot(@PathVariable UUID id, @PathVariable UUID proposalId, @RequestParam(required = false) UUID pilotUserId) {
         return shipService.setPilot(id, proposalId, pilotUserId);
     }
@@ -240,19 +244,19 @@ public class OperationController {
     }
 
     @PostMapping("/{id}/ship-requirements")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> createShipRequirement(@PathVariable UUID id, @RequestBody OperationShipRequirementRequest request) {
         return shipRequirementService.create(id, request);
     }
 
     @PutMapping("/{id}/ship-requirements/{requirementId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationShipRequirementResponseDTO>> updateShipRequirement(@PathVariable UUID id, @PathVariable UUID requirementId, @RequestBody OperationShipRequirementRequest request) {
         return shipRequirementService.update(id, requirementId, request);
     }
 
     @DeleteMapping("/{id}/ship-requirements/{requirementId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<Void>> deleteShipRequirement(@PathVariable UUID id, @PathVariable UUID requirementId) {
         return shipRequirementService.delete(id, requirementId);
     }
@@ -333,13 +337,13 @@ public class OperationController {
     }
 
     @GetMapping("/{id}/organization")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<com.icy.icy_backend.controller.dto.response.event.OperationOrganizationDTO>> organization(@PathVariable UUID id) {
         return messageService.buildResponse("operation.groups.edit", organizationService.organization(id));
     }
 
     @GetMapping("/{id}/groups/edit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<List<OperationGroupResponseDTO>>> groupsForEdit(@PathVariable UUID id) {
         operationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         List<OperationGroupResponseDTO> groups = operationGroupRepository.findByOperationEventIdOrderBySortOrderAscIdAsc(id).stream().map(OperationGroupResponseDTO::new).toList();
@@ -347,7 +351,7 @@ public class OperationController {
     }
 
     @PostMapping("/{id}/convert")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> convert(@PathVariable UUID id) {
         // Convertir un événement classique déjà annoncé ou ayant des réponses le ferait disparaître des membres : refusé, rien n'est modifié.
         eventRepository.findById(id)
@@ -361,13 +365,24 @@ public class OperationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> update(@PathVariable UUID id, @RequestBody OperationUpdateRequest request) {
         return operationService.update(id, request);
     }
 
-    @PostMapping("/{id}/publish")
+    /** Rattache l'opération à un pôle, ou la détache (pôle absent ou vide). Enregistré tout de suite, hors du brouillon. */
+    @PutMapping("/{id}/pole")
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @Transactional
+    public ResponseEntity<MessageResponse<String>> assignPole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+        eventRepository.findById(id).filter(event -> event.getActivityType() == ActivityType.OPERATION)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        eventService.assignPole(id, body == null ? null : body.get("pole"));
+        return messageService.buildResponse("operation.updated", eventRepository.findById(id).map(Event::getPole).map(Enum::name).orElse(null));
+    }
+
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> publish(@PathVariable UUID id) {
         return operationService.publish(id);
     }
@@ -386,19 +401,34 @@ public class OperationController {
         return messageService.buildResponse("operation.get", new OperationResponseDTO(event, operation));
     }
 
+    /** Membres actifs, réduits à l'identifiant et au pseudo : de quoi désigner un responsable sans ouvrir la liste d'administration. */
+    @GetMapping("/members")
+    @PreAuthorize("@poleAccess.canCreate()")
+    @Transactional(readOnly = true)
+    public ResponseEntity<MessageResponse<List<java.util.Map<String, Object>>>> members() {
+        List<java.util.Map<String, Object>> members = userRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(user -> user.getUsername() == null ? "" : user.getUsername().toLowerCase()))
+                .map(user -> java.util.Map.<String, Object>of("id", user.getId(), "username", user.getUsername() == null ? "" : user.getUsername()))
+                .toList();
+        return messageService.buildResponse("user.list", members);
+    }
+
     @GetMapping("/drafts")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.canCreate()")
     @Transactional(readOnly = true)
     public ResponseEntity<MessageResponse<List<OperationDraftSummaryDTO>>> drafts() {
+        // Un référent ne voit que les brouillons de son pôle.
+        com.icy.icy_backend.db.entity.user.Specialty ownPole = com.icy.icy_backend.service.pole.PoleAccess.organizer() ? null : poleAccess.ownPole();
         List<OperationDraftSummaryDTO> drafts = operationRepository.findByPublicationStatusOrderByUpdatedAtDesc(Operation.PublicationStatus.DRAFT).stream()
                 .filter(operation -> operation.getEvent() != null)
+                .filter(operation -> ownPole == null || operation.getEvent().getPole() == ownPole)
                 .map(OperationDraftSummaryDTO::new)
                 .toList();
         return messageService.buildResponse("operation.drafts", drafts);
     }
 
     @GetMapping("/{id}/edit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> edit(@PathVariable UUID id) {
         Event event = eventRepository.findById(id)
                 .filter(value -> value.getActivityType() == ActivityType.OPERATION)

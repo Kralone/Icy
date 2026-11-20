@@ -81,7 +81,8 @@ class AccessDeniedOverHttpTest {
     @org.springframework.boot.SpringBootConfiguration
     @EnableAutoConfiguration
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class, BotApiKeyAuthenticationFilter.class, GlobalExceptionHandler.class,
-            MessageService.class, OperationController.class, OperationShipService.class, Probe.class})
+            MessageService.class, OperationController.class, OperationShipService.class, Probe.class,
+            com.icy.icy_backend.service.pole.PoleAccess.class})
     static class App {}
 
     @RestController
@@ -123,6 +124,7 @@ class AccessDeniedOverHttpTest {
     @MockitoBean private EventParticipationRepository participations;
     @MockitoBean private OperationShipRequirementRepository requirements;
     @MockitoBean private OperationLock operationLock;
+    @MockitoBean private com.icy.icy_backend.db.repository.user.UserRepository userRepository;
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final UUID operationId = UUID.randomUUID();
@@ -139,7 +141,7 @@ class AccessDeniedOverHttpTest {
         when(participations.existsByEvent_IdAndUser_IdAndStatus(operationId, pilotId, 1)).thenReturn(true);
     }
 
-    private void token(String token, String username, String role) {
+    private User token(String token, String username, String role) {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setUsername(username);
@@ -147,6 +149,7 @@ class AccessDeniedOverHttpTest {
         when(jwtUtil.getSubjectFromToken(token)).thenReturn(username);
         when(jwtUtil.extractRoles(token)).thenReturn(List.of(role));
         when(userService.getByUsername(username)).thenReturn(user);
+        return user;
     }
 
     private HttpResponse<String> call(String method, String path, String token) throws Exception {
@@ -296,6 +299,31 @@ class AccessDeniedOverHttpTest {
         assertThat(call("PUT", pilotPath(null), "jeton-officier").statusCode()).isEqualTo(200);
         assertThat(proposal.getPilotUserId()).isNull();
         verify(proposals, org.mockito.Mockito.times(3)).save(proposal);
+    }
+
+    @Test
+    void aPoleReferentOrganizesTheOperationsOfTheirPoleOnly() throws Exception {
+        User referent = token("jeton-referent", "referent", "SPECIALISTE");
+        referent.setSpecialty(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+        when(userRepository.findById(referent.getId())).thenReturn(Optional.of(referent));
+        com.icy.icy_backend.db.entity.event.Event operation = new com.icy.icy_backend.db.entity.event.Event();
+        operation.setId(operationId);
+        when(eventRepository.findById(operationId)).thenReturn(Optional.of(operation));
+
+        // Opération sans pôle, puis d'un autre pôle : le référent n'y touche pas.
+        assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(403);
+        operation.setPole(com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE);
+        assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(403);
+        assertThat(proposal.getPilotUserId()).isNull();
+
+        // Opération de son pôle : il l'organise.
+        operation.setPole(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+        assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(200);
+        assertThat(proposal.getPilotUserId()).isEqualTo(pilotId);
+
+        // Un Spécialiste sans pôle n'organise rien.
+        referent.setSpecialty(null);
+        assertThat(call("PUT", pilotPath(null), "jeton-referent").statusCode()).isEqualTo(403);
     }
 
     @Test

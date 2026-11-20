@@ -142,3 +142,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid #aee8f2; outline-offs
 .agenda-content h2, .calendar-event-card strong { color: #f0f7fc; text-shadow: 0 1px 3px #0008; }
 .agenda-open { border-radius: .4rem; padding: .4rem .6rem; background: #0b1826b3; color: #edf8ff; }
 @media (max-width: 639px) { .event-type-image { width: 58%; opacity: .55; } .calendar-event-type { display: none; } }
+
+/* Pastille de pôle sur les cartes. */
+.agenda-pole { margin-left: .4rem; }
+.calendar-pole { margin-top: .15rem; }
+@media (max-width: 639px) { .calendar-pole { display: none; } }

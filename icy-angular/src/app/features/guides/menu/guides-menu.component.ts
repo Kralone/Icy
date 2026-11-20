@@ -42,7 +42,7 @@ export class GuidesMenuComponent {
       label: 'Guide Minage avancé',
       summary: 'Réglages experts, gadgets, risques et pipeline de production.',
       route: 'minage/confirmed',
-      imageUrl: 'assets/images/home/activities/mining.jpg'
+      imageUrl: 'assets/images/home/activities/mining-advanced.jpg'
     }
   ];
 
@@ -52,7 +52,7 @@ export class GuidesMenuComponent {
         const images: Record<string, string> = {
           'minage-star-citizen': 'assets/images/home/activities/mining.jpg',
           salvage: 'assets/images/home/activities/salvage.jpg',
-          'minage-confirmed': 'assets/images/home/activities/mining.jpg',
+          'minage-confirmed': 'assets/images/home/activities/mining-advanced.jpg',
           hathor: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png'
         };
         const routes: Record<string, string> = { 'minage-confirmed': 'minage/confirmed' };

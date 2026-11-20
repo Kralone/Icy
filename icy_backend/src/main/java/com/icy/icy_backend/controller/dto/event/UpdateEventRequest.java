@@ -16,6 +16,8 @@ public class UpdateEventRequest {
     private boolean finished;
     /** Changement de date d'un événement classique : vrai pour garder les réponses déjà données. Absent : elles sont effacées, comme avant. */
     private Boolean keepParticipants;
+    /** Pôle rattaché (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; absent ou vide : aucun. */
+    private String pole;
 }
 
 

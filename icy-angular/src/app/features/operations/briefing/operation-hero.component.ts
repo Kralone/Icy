@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { eventColor, eventImage } from '../../events/event-appearance';
 import { OperationIconComponent } from './operation-icon.component';
 import { OperationSheet } from './operation-sheet.model';
+import { PoleBadgeComponent } from '../../../shared/pole-badge/pole-badge.component';
 
 type HeroStatus = 'draft' | 'upcoming' | 'running' | 'done';
 const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming: 'À venir', running: 'En cours', done: 'Terminée' };
@@ -12,7 +13,7 @@ const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming
 @Component({
   selector: 'app-operation-hero',
   standalone: true,
-  imports: [DatePipe, RouterLink, OperationIconComponent],
+  imports: [DatePipe, RouterLink, OperationIconComponent, PoleBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-hero.component.html',
   styleUrl: './operation-hero.component.css'

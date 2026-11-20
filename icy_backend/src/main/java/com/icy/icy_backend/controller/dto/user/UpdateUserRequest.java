@@ -14,6 +14,8 @@ public class UpdateUserRequest {
     private String role;
     /** Fonction de trésorier, qui s'ajoute au grade ; null la laisse telle quelle. */
     private Boolean treasurer;
+    /** Pôle du Spécialiste (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; obligatoire pour ce grade, ignoré pour les autres. */
+    private String specialty;
 
 }
 

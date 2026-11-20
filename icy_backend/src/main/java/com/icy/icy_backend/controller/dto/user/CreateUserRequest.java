@@ -10,6 +10,8 @@ public class CreateUserRequest {
         @JsonProperty("discordId")
         private String discordId;
         private String role;
+        /** Pôle du Spécialiste ; obligatoire pour ce grade, ignoré pour les autres. */
+        private String specialty;
 }
 
 

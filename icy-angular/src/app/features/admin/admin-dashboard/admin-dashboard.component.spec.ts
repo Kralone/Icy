@@ -98,4 +98,57 @@ describe('AdminDashboardComponent', () => {
     const charlie = Array.from(element.querySelectorAll('tbody tr')).find(row => row.textContent!.includes('Charlie'))!;
     expect(charlie.textContent).toContain('Non renseignée');
   });
+
+  it('requires a pole for a Specialist and sends it with the member', () => {
+    component.isAddUserModalOpen = true;
+    component.newUser = { username: 'Torin', discordId: '42', role: 'ASSOCIE', treasurer: false, specialty: '' };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="specialty-choice"]')).toBeNull();
+
+    component.newUser.role = 'SPECIALISTE';
+    fixture.detectChanges();
+    const choices: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="specialty-choice"] label'));
+    expect(choices.map(choice => choice.textContent?.replace('✓', '').trim())).toEqual(['Logistique', 'Militaire', 'Industrie']);
+    expect(choices.every(choice => choice.querySelector('input[type="radio"]'))).toBe(true);
+    expect(component.specialtyMissing).toBe(true);
+    component.addUser();
+    http.expectNone('/api/users/create');
+
+    component.newUser.specialty = 'INDUSTRIE';
+    component.addUser();
+    const created = http.expectOne('/api/users/create');
+    expect(created.request.body).toEqual({ username: 'Torin', discordId: '42', role: 'SPECIALISTE', specialty: 'INDUSTRIE' });
+    created.flush({});
+    http.expectOne('/api/users/all').flush({ data: [] });
+  });
+
+  it('drops the pole when the rank is no longer Specialist', () => {
+    component.editUser({ id: 'a', username: 'Torin', discordId: '42', active: true, createdAt: null, roles: ['SPECIALISTE'], specialty: 'MILITAIRE' });
+    expect(component.newUser.specialty).toBe('MILITAIRE');
+
+    component.newUser.role = 'OFFICIER';
+    component.updateUser();
+    const updated = http.expectOne('/api/users/update');
+    expect(updated.request.body.specialty).toBeNull();
+    updated.flush({});
+    http.expectOne('/api/users/all').flush({ data: [] });
+  });
+
+  it('shows the rank first, in its colour, with the pole and the treasurer function below', () => {
+    component.loadUsers();
+    http.expectOne('/api/users/all').flush({ data: [
+      { id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['SPECIALISTE'], specialty: 'LOGISTIQUE', createdAt: null },
+      { id: 'b', username: 'Bravo', discordId: '2', active: true, roles: ['OFFICIER'], specialty: null, createdAt: null },
+      { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['TRESORIER', 'ASSOCIE'], specialty: null, createdAt: null }
+    ] });
+    fixture.detectChanges();
+
+    const rows: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('tbody tr'));
+    const ranks = rows.map(row => row.querySelector('[data-testid="member-rank"]') as HTMLElement);
+    expect(ranks.map(rank => rank.textContent?.trim())).toEqual(['Spécialiste', 'Officier', 'Associé']);
+    expect(ranks.map(rank => rank.getAttribute('data-rank'))).toEqual(['SPECIALISTE', 'OFFICIER', 'ASSOCIE']);
+    expect(rows[0].querySelector('[data-testid="member-specialty"]')?.textContent).toContain('Logistique');
+    expect(rows[1].querySelector('[data-testid="member-specialty"], [data-testid="member-function"]')).toBeNull();
+    expect(rows[2].querySelector('[data-testid="member-function"]')?.textContent).toContain('Trésorier');
+  });
 });

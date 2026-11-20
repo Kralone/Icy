@@ -1,6 +1,6 @@
 <section class="management-page">
   <header class="page-heading">
-    <div><a routerLink="/icy/admin" class="back">← Administration</a><h1>Opérations</h1></div>
+    <div>@if (lockedPole()) { <a routerLink="/icy/poles" class="back">← Pôles</a> } @else { <a routerLink="/icy/admin" class="back">← Administration</a> }<h1>Opérations</h1></div>
     <div class="page-actions">
       <a routerLink="/icy/operations/new" class="primary">Nouvelle opération</a>
     </div>

@@ -11,14 +11,11 @@
     [softFade]="true"
   ></app-loading-overlay>
 
-  @if (isMemberPresentation) {
-    <div class="utils-rank-orbit" aria-hidden="true">
-      <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
-    </div>
-  }
-
   <div class="utils-rank-label">
-    {{ isMemberPresentation ? 'Opérations' : 'Utilitaires' }}
+    @if (isMemberPresentation) {
+      <app-rank-orbit class="corner-rank-emblem" [rank]="activeRankKey"></app-rank-orbit>
+    }
+    <span>{{ isMemberPresentation ? 'Opérations' : 'Utilitaires' }}</span>
   </div>
 
   <div class="utils-content max-w-7xl mx-auto space-y-8">

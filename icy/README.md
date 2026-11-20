@@ -22,13 +22,13 @@ disposait ni d'un contrat d'authentification backend compatible, ni d'un modèle
 de permissions Discord fiable. Les événements doivent être créés depuis
 l'interface web authentifiée jusqu'à la définition explicite d'un contrat bot.
 
-## Commande d'administration
+## Création des comptes
 
-La slash command `/ajouter_utilisateur` est réservée aux administrateurs du
-serveur Discord. Elle demande un membre, un grade IceForge et, facultativement,
-un pseudo différent de son handle Discord. Le compte est créé par la route bot
-authentifiée du backend, puis le membre reçoit en message privé son identifiant
-IceForge et son mot de passe temporaire.
+Les comptes se créent depuis la page Membres du site. La slash command
+`/ajouter_utilisateur` et la route bot `api/users/bot/create` ont été retirées :
+le bot ne crée plus de compte. Il continue d'envoyer en message privé
+l'identifiant IceForge et le mot de passe temporaire, à la création comme à la
+réinitialisation.
 
 L'ancien serveur HTTP `/notify-password` a été supprimé. La notification de
 réinitialisation transite uniquement par la file RabbitMQ interne.

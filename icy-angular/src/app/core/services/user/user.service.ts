@@ -29,15 +29,15 @@ export class UserService {
     return this.http.put<ApiResponse<void>>(`${this.apiUrl}/reactivate?id=${encodeURIComponent(id)}`, {});
   }
 
-  createUser(username: string, discordId: string, role: string): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/create`, { username, discordId, role });
+  createUser(username: string, discordId: string, role: string, specialty: string | null = null): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/create`, { username, discordId, role, specialty });
   }
 
   deleteUser(id: string): Observable<void> {
     return this.http.delete<void>(`/api/users/by-id?id=${id}`);
   }
 
-  updateUser(user: { id: string, username: string, discordId: string, role: string, treasurer?: boolean }): Observable<any> {
+  updateUser(user: { id: string, username: string, discordId: string, role: string, treasurer?: boolean, specialty?: string | null }): Observable<any> {
     return this.http.put('/api/users/update', user);
   }
 

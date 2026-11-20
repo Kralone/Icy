@@ -8,10 +8,11 @@ PREFLIGHT_ONLY=0
 FRESH_BACKUP=0
 # Une archive complète de moins de 7 jours est réutilisée : voir select-predeploy-backup.sh.
 MAX_BACKUP_AGE_DAYS=7
-# Flyway version this release must reach. Missing migrations (V39 to V49) are applied by the backend at startup.
+# Flyway version this release must reach. Missing migrations (V39 to V50) are applied by the backend at startup.
 # V45 is destructive (mining sheets V1 dropped); V46 adds goals.goal_members, V47 core.user_tutorials,
-# V48 the bank schema and the TRESORIER role, V49 core.user_availability. Any database below V49 triggers a fresh backup, see select-predeploy-backup.sh.
-TARGET_FLYWAY_VERSION=49
+# V48 the bank schema and the TRESORIER role, V49 core.user_availability,
+# V50 core.users.specialty. Any database below V50 triggers a fresh backup, see select-predeploy-backup.sh.
+TARGET_FLYWAY_VERSION=50
 
 usage() {
   echo "Usage: $0 --revision <git-sha> --age-recipient 'age1...'|\"ssh-ed25519 AAAA...\" [--fresh-backup] [--preflight]" >&2
@@ -68,6 +69,7 @@ required_files=(
   "$BACKEND_DIR/verify-flyway-v46.sql"
   "$BACKEND_DIR/verify-flyway-v48.sql"
   "$BACKEND_DIR/verify-flyway-v49.sql"
+  "$BACKEND_DIR/verify-flyway-v50.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -85,6 +87,7 @@ grep -Fq 'FLYWAY_V45_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v45.sql"   || { 
 grep -Fq 'FLYWAY_V46_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v46.sql"   || { echo 'verify-flyway-v46.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V48_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v48.sql"   || { echo 'verify-flyway-v48.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V49_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v49.sql"   || { echo 'verify-flyway-v49.sql invalide.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V50_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v50.sql"   || { echo 'verify-flyway-v50.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V38_CHECKSUMS_OK' "$BACKEND_DIR/verify-flyway-v38-checksums.sql"   || { echo 'verify-flyway-v38-checksums.sql invalide.' >&2; exit 1; }
 for image in "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE"; do
   docker image inspect "$image" >/dev/null || { echo "Image candidate absente: $image" >&2; exit 1; }
@@ -144,28 +147,32 @@ case "$current_version" in
     db_psql <"$BACKEND_DIR/verify-flyway-v38-checksums.sql" >/dev/null
     ;;
   43)
-    # V44 à V49 restent à appliquer : l'historique V1-V43 livré doit être intact.
+    # V44 à V50 restent à appliquer : l'historique V1-V43 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v43.sql" >/dev/null
     ;;
   44)
-    # V45 à V49 restent à appliquer : l'historique V1-V44 livré doit être intact.
+    # V45 à V50 restent à appliquer : l'historique V1-V44 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v44.sql" >/dev/null
     ;;
   45)
-    # V46 à V49 restent à appliquer : l'historique V1-V45 livré doit être intact.
+    # V46 à V50 restent à appliquer : l'historique V1-V45 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v45.sql" >/dev/null
     ;;
   46)
-    # V47 à V49 restent à appliquer : l'historique V1-V46 livré doit être intact.
+    # V47 à V50 restent à appliquer : l'historique V1-V46 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v46.sql" >/dev/null
     ;;
   48)
-    # V49 reste à appliquer : l'historique V1-V48 livré doit être intact.
+    # V49 et V50 restent à appliquer : l'historique V1-V48 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v48.sql" >/dev/null
     ;;
   49)
-    # Release already applied: the same command can be run again.
+    # V50 reste à appliquer : l'historique V1-V49 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v49.sql" >/dev/null
+    ;;
+  50)
+    # Release already applied: the same command can be run again.
+    db_psql <"$BACKEND_DIR/verify-flyway-v50.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac

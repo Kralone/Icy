@@ -21,6 +21,8 @@ public class EventResponseDTO {
     private ActivityType activityType;
     /** Renseigné dans la liste de gestion : opération pas encore publiée, invisible des membres. */
     private boolean draft;
+    /** Pôle rattaché, ou null. */
+    private String pole;
 
     public EventResponseDTO(Event event) {
         this.id = event.getId();
@@ -32,6 +34,7 @@ public class EventResponseDTO {
         this.createdAt = event.getCreatedAt();
         this.finished = event.isFinished();
         this.activityType = event.getActivityType();
+        this.pole = event.getPole() == null ? null : event.getPole().name();
     }
 }
 

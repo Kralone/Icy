@@ -2,6 +2,10 @@ import { inject } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { UserService } from '../../core/services/user/user.service';
+import { referentPole } from '../../core/services/user/member-rank';
+
+/** Rôle de route : le référent d'un pôle, c'est-à-dire un Spécialiste qui a un pôle. */
+export const REFERENT_ROLE = 'REFERENT';
 
 const resolveRequiredRoles = (route: { data?: Record<string, unknown>; parent?: any }): string[] => {
   const direct = route.data?.['roles'] as string[] | undefined;
@@ -22,7 +26,7 @@ export const roleGuard: CanActivateFn & CanActivateChildFn = (route, state) => {
       const roles = (response?.data?.roles ?? []).map((role) => (role ?? '').trim().toUpperCase());
       const allowed = requiredRoles
         .map((role) => role.trim().toUpperCase())
-        .some((role) => roles.includes(role));
+        .some((role) => role === REFERENT_ROLE ? !!referentPole(roles, response?.data?.specialty) : roles.includes(role));
       return allowed ? true : router.createUrlTree(['/icy']);
     }),
     catchError(() => of(router.createUrlTree(['/icy'])))

@@ -1,5 +1,7 @@
+import { UserService } from '../../../core/services/user/user.service';
 import { DateTimeFieldComponent } from '../../../shared/date-time-field/date-time-field.component';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { SPECIALTIES, isOrganizer, referentPole } from '../../../core/services/user/member-rank';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -22,7 +24,11 @@ export class EventManagementComponent implements OnInit {
     description: '',
     startDateTime: '',
     endDateTime: '',
+    pole: '',
   };
+
+  /** Pôles auxquels un événement peut être rattaché. */
+  readonly poles = SPECIALTIES;
 
   // === Liste des événements ===
   events: EventDTO[] = [];
@@ -69,9 +75,21 @@ export class EventManagementComponent implements OnInit {
   }
 
 
+  /** Pôle imposé à un référent : il ne crée et ne gère que les événements de son pôle. Vide pour un organisateur. */
+  lockedPole = '';
+  private readonly userService = inject(UserService);
+
   constructor(private eventService: EventService) {}
 
   ngOnInit() {
+    this.userService.getMyProfile().subscribe({
+      next: response => {
+        const roles = response?.data?.roles;
+        this.lockedPole = isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '';
+        if (this.lockedPole) this.newEvent.pole = this.lockedPole;
+      },
+      error: () => undefined
+    });
     this.loadTypes();
     this.loadAllEvents();
   }
@@ -162,7 +180,7 @@ export class EventManagementComponent implements OnInit {
     this.eventService.createEvent(this.newEvent).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
+        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', pole: this.lockedPole };
         this.loadAllEvents();
       },
       error: (err) => {
@@ -221,7 +239,8 @@ export class EventManagementComponent implements OnInit {
       endDateTime: this.editingEvent.endDateTime,
       finished: this.editingEvent.finished ?? false,
       type: this.editingEvent.type?.name || (this.editingEvent as any).type,
-      keepParticipants: this.keepParticipants
+      keepParticipants: this.keepParticipants,
+      pole: this.editingEvent.pole || null
     };
 
     this.eventService.updateEvent(payload).subscribe({
@@ -251,6 +270,7 @@ export class EventManagementComponent implements OnInit {
       description: this.editingEvent.description || '',
       startDateTime: '',
       endDateTime: '',
+      pole: this.editingEvent.pole || '',
     };
 
     this.cancelEditEvent();

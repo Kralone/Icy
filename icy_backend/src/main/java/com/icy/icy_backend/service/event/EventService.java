@@ -82,6 +82,18 @@ public class EventService {
      * Une opération non publiée n'existe pas pour les membres : ni listes, ni temps réel, ni Discord, ni notifications.
      * Les événements classiques ne sont jamais concernés.
      */
+    /** Rattache l'activité à un pôle, ou la détache (null ou vide). Seul le calendrier temps réel est prévenu : le pôle ne figure dans aucune annonce. */
+    @Transactional
+    public void assignPole(UUID eventId, String pole) {
+        com.icy.icy_backend.db.entity.user.Specialty wanted = com.icy.icy_backend.db.entity.user.Specialty.optional(pole);
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
+        if (event.getPole() == wanted) return;
+        event.setPole(wanted);
+        Event saved = eventRepository.save(event);
+        // Les calendriers ouverts filtrent sur le pôle : une activité publiée leur est renvoyée à jour.
+        if (!isUnpublishedOperation(saved)) eventWebSocketService.sendEventUpdate(saved, "UPDATE");
+    }
+
     public boolean isUnpublishedOperation(Event event) {
         if (event.getActivityType() != ActivityType.OPERATION) return false;
         return operationRepository == null || operationRepository.findById(event.getId())
@@ -105,7 +117,7 @@ public class EventService {
     /** Lecture ou réponse par identifiant : un brouillon est introuvable pour qui ne l'organise pas. */
     private Event findEventVisibleToCurrentUser(UUID eventId) {
         Event event = findEventById(eventId);
-        if (isUnpublishedOperation(event) && !currentUserIsOrganizer()) {
+        if (isUnpublishedOperation(event) && !com.icy.icy_backend.service.pole.PoleAccess.organizes(eventId)) {
             throw new ResourceNotFoundException("Event introuvable avec ID: " + eventId);
         }
         return event;
@@ -183,6 +195,20 @@ public class EventService {
             LocalDateTime end,
             boolean announce
     ) {
+        return createEvent(type, title, description, start, end, announce, null);
+    }
+
+    /** {@code pole} : pôle enregistré avec l'événement, avant toute diffusion. {@code null} : aucun pôle. */
+    @Transactional
+    public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
+            String type,
+            String title,
+            String description,
+            LocalDateTime start,
+            LocalDateTime end,
+            boolean announce,
+            com.icy.icy_backend.db.entity.user.Specialty pole
+    ) {
         validateEventDates(start, end);
         // 🔹 Récupération du créateur (user connecté)
         UUID userId = AuthUtils.getCurrentUserId();
@@ -202,6 +228,7 @@ public class EventService {
         event.setCreatedAt(LocalDateTime.now());
         event.setUpdatedAt(LocalDateTime.now());
         event.setCreator(creator); // ✅ Important
+        event.setPole(pole);
 
         // 🔹 Persistance
         Event saved = eventRepository.save(event);
@@ -253,6 +280,22 @@ public class EventService {
             boolean finished,
             boolean keepParticipants
     ) {
+        return updateEvent(id, type, title, description, start, end, finished, keepParticipants, null);
+    }
+
+    /** {@code pole} : s'il est fourni, le pôle est enregistré avec la modification, avant toute diffusion. {@code null} : pôle inchangé. */
+    @Transactional
+    public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(
+            UUID id,
+            String type,
+            String title,
+            String description,
+            LocalDateTime start,
+            LocalDateTime end,
+            boolean finished,
+            boolean keepParticipants,
+            java.util.Optional<com.icy.icy_backend.db.entity.user.Specialty> pole
+    ) {
         validateEventDates(start, end);
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
@@ -283,6 +326,7 @@ public class EventService {
         event.setEndDateTime(end);
         event.setFinished(finished);
         event.setUpdatedAt(LocalDateTime.now());
+        if (pole != null) event.setPole(pole.orElse(null));
 
         // --- Si date changée : on purge les participations d'un événement classique, sauf si l'organisateur choisit de les garder.
         // Une opération garde les siennes : ses affectations et ses vaisseaux en dépendent et ne sont pas réinitialisés.
@@ -388,13 +432,16 @@ public class EventService {
         return getAllEvents(false);
     }
 
-    /** `includeDrafts` n'est honoré que pour un organisateur : c'est la liste de gestion de l'administration. */
+    /** `includeDrafts` n'est honoré que pour un organisateur ou un référent de pôle : c'est la liste de gestion. */
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getAllEvents(boolean includeDrafts) {
         List<Event> all = (List<Event>) eventRepository.findAll();
         List<Event> published = withoutUnpublishedOperations(all);
-        if (!includeDrafts || !currentUserIsOrganizer()) {
+        com.icy.icy_backend.db.entity.user.Specialty ownPole = currentUserIsOrganizer() ? null : com.icy.icy_backend.service.pole.PoleAccess.currentPole();
+        if (!includeDrafts || (!currentUserIsOrganizer() && ownPole == null)) {
             return messageService.buildResponse("event.list", published.stream().map(EventResponseDTO::new).collect(Collectors.toList()));
         }
+        // Un référent ne gère que les activités de son pôle : sa liste de gestion s'y limite.
+        if (ownPole != null) all = all.stream().filter(event -> event.getPole() == ownPole).toList();
         Set<UUID> publishedIds = published.stream().map(Event::getId).collect(Collectors.toSet());
         List<EventResponseDTO> events = all.stream().map(event -> {
             EventResponseDTO dto = new EventResponseDTO(event);

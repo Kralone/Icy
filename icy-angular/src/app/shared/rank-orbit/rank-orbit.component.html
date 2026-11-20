@@ -1,157 +1,117 @@
-<svg
-  viewBox="0 0 200 200"
-  aria-hidden="true"
-  [ngClass]="{
-    'orbit-whole': animateWhole,
-    'orbit-glow': glow && !animateWhole,
-    'orbit-staged': deploy
-  }"
-  >
-  <ng-container>
-    @switch (normalizedRank) {
-      @case ('JUNIOR') {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
+<div class="orbit" aria-hidden="true">
+  <!-- Calque arrière : halo, anneaux et satellites, puis le cœur lumineux (mode emblème). -->
+  <svg class="orbit-layer" viewBox="-100 -100 200 200" focusable="false">
+    <defs>
+      @for (ring of rings(); track $index) {
+        <linearGradient
+          [attr.id]="uid + '-back-ring-' + $index"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          [attr.y1]="-ring.ry"
+          x2="0"
+          [attr.y2]="ring.ry"
+        >
+          <stop offset="0" class="tone-stop" [attr.stop-opacity]="ring.opacity * 0.3" />
+          <stop offset="0.5" class="tone-stop" [attr.stop-opacity]="ring.opacity * 0.62" />
+          <stop offset="1" class="tone-stop" [attr.stop-opacity]="ring.opacity" />
+        </linearGradient>
       }
-      @case ('ASSOCIE') {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(2)">
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
-            <circle cx="136" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="65" cy="80" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
-      }
-      @case ('INGENIEUR') {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(2)">
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
-            <circle cx="136" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="65" cy="80" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(3)">
-            <circle cx="100" cy="100" r="52" fill="none" stroke="currentColor" stroke-opacity="0.24" stroke-width="1" />
-            <circle cx="118" cy="149" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="49" cy="82" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="133" cy="60" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
-      }
-      @case ('SPECIALISTE') {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(2)">
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
-            <circle cx="136" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="65" cy="80" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(3)">
-            <circle cx="100" cy="100" r="52" fill="none" stroke="currentColor" stroke-opacity="0.24" stroke-width="1" />
-            <circle cx="118" cy="149" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="49" cy="82" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="133" cy="60" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(4)">
-            <circle cx="100" cy="100" r="64" fill="none" stroke="currentColor" stroke-opacity="0.26" stroke-width="1" />
-            <circle cx="162" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="68" cy="155" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="48" cy="63" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="132" cy="45" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
-      }
-      @case ('OFFICIER') {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(2)">
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
-            <circle cx="136" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="65" cy="80" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(3)">
-            <circle cx="100" cy="100" r="52" fill="none" stroke="currentColor" stroke-opacity="0.24" stroke-width="1" />
-            <circle cx="118" cy="149" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="49" cy="82" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="133" cy="60" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(4)">
-            <circle cx="100" cy="100" r="64" fill="none" stroke="currentColor" stroke-opacity="0.26" stroke-width="1" />
-            <circle cx="162" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="68" cy="155" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="48" cy="63" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="132" cy="45" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(5)">
-            <circle cx="100" cy="100" r="76" fill="none" stroke="currentColor" stroke-opacity="0.28" stroke-width="1" />
-            <circle cx="158" cy="149" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="68" cy="169" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="24" cy="93" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="74" cy="29" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="166" cy="62" r="2.8" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
-      }
-      @default {
-        <ng-container>
-          <g [ngClass]="orbitClass(1)">
-            <circle cx="100" cy="100" r="28" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" />
-            <circle cx="114" cy="76" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(2)">
-            <circle cx="100" cy="100" r="40" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
-            <circle cx="136" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="65" cy="80" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(3)">
-            <circle cx="100" cy="100" r="52" fill="none" stroke="currentColor" stroke-opacity="0.24" stroke-width="1" />
-            <circle cx="118" cy="149" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="49" cy="82" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="133" cy="60" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(4)">
-            <circle cx="100" cy="100" r="64" fill="none" stroke="currentColor" stroke-opacity="0.26" stroke-width="1" />
-            <circle cx="162" cy="117" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="68" cy="155" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="48" cy="63" r="3" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="132" cy="45" r="3" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(5)">
-            <circle cx="100" cy="100" r="76" fill="none" stroke="currentColor" stroke-opacity="0.28" stroke-width="1" />
-            <circle cx="158" cy="149" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="68" cy="169" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="24" cy="93" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="74" cy="29" r="2.8" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="166" cy="62" r="2.8" fill="currentColor" fill-opacity="0.45" />
-          </g>
-          <g [ngClass]="orbitClass(6)">
-            <circle cx="100" cy="100" r="88" fill="none" stroke="currentColor" stroke-opacity="0.3" stroke-width="1.1" />
-            <circle cx="187" cy="115" r="2.6" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="115" cy="187" r="2.6" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="24" cy="144" r="2.6" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="38" cy="38" r="2.6" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="123" cy="15" r="2.6" fill="currentColor" fill-opacity="0.45" />
-            <circle cx="183" cy="70" r="2.6" fill="currentColor" fill-opacity="0.45" />
-          </g>
-        </ng-container>
-      }
+      <radialGradient [attr.id]="uid + '-halo'" r="0.5">
+        <stop offset="0.4" class="tone-stop" stop-opacity="0.16" />
+        <stop offset="1" class="tone-stop" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient [attr.id]="uid + '-core'">
+        <stop offset="0" stop-color="#fff" />
+        <stop offset="0.3" stop-color="#fff" stop-opacity="0.95" />
+        <stop offset="0.55" class="tone-stop" stop-opacity="0.85" />
+        <stop offset="1" class="tone-stop" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <circle r="100" [attr.fill]="'url(#' + uid + '-halo)'" />
+      <g [attr.transform]="'rotate(' + tilt + ')'">
+        <g>
+          @for (ring of rings(); track $index) {
+            <ellipse
+              #outline
+              [attr.data-ring]="$index"
+              [attr.rx]="ring.rx"
+              [attr.ry]="ring.ry"
+              fill="none"
+              [attr.stroke]="'url(#' + uid + '-back-ring-' + $index + ')'"
+              stroke-width="2"
+            />
+          }
+          @for (ring of rings(); track $index) {
+            <g #satellite [attr.data-ring]="$index" [attr.transform]="'translate(' + ring.rx + ' 0) scale(3.7)'">
+              <circle r="2.4" class="tone-fill" fill-opacity="0.2" />
+              <circle r="1" class="tone-fill" />
+            </g>
+          }
+        </g>
+      </g>
+    @if (mode() === 'emblem') {
+      <g [attr.transform]="'rotate(' + tilt + ')'">
+        @for (wave of waves; track wave) {
+          <ellipse #wave rx="16" ry="6.72" fill="none" class="tone-stroke" stroke-width="2.6" stroke-opacity="0" />
+        }
+      </g>
+      <g #core>
+        <circle r="30" [attr.fill]="'url(#' + uid + '-core)'" />
+      </g>
     }
-  </ng-container>
-</svg>
+  </svg>
+
+  @if (mode() === 'avatar') {
+    <div class="orbit-center">
+      <ng-content />
+    </div>
+  }
+
+  <!-- Calque avant : visible seulement sur l'avatar ou le cœur, sur sa moitié basse, avec un fondu. -->
+  <svg class="orbit-layer" viewBox="-100 -100 200 200" focusable="false">
+    <defs>
+      @for (ring of rings(); track $index) {
+        <linearGradient
+          [attr.id]="uid + '-front-ring-' + $index"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          [attr.y1]="-ring.ry"
+          x2="0"
+          [attr.y2]="ring.ry"
+        >
+          <stop offset="0" class="tone-stop" [attr.stop-opacity]="ring.opacity * 0.3" />
+          <stop offset="0.5" class="tone-stop" [attr.stop-opacity]="ring.opacity * 0.62" />
+          <stop offset="1" class="tone-stop" [attr.stop-opacity]="ring.opacity" />
+        </linearGradient>
+      }
+      <linearGradient [attr.id]="uid + '-depth'" gradientUnits="userSpaceOnUse" x1="0" y1="-8" x2="0" y2="8">
+        <stop offset="0" stop-color="#000" />
+        <stop offset="1" stop-color="#fff" />
+      </linearGradient>
+      <mask [attr.id]="uid + '-mask'" maskUnits="userSpaceOnUse" x="-120" y="-120" width="240" height="240">
+        <circle [attr.r]="mode() === 'avatar' ? avatarRadius + 1.5 : coreRadius" [attr.fill]="'url(#' + uid + '-depth)'" />
+      </mask>
+    </defs>
+      <g [attr.transform]="'rotate(' + tilt + ')'">
+        <g [attr.mask]="'url(#' + uid + '-mask)'">
+          @for (ring of rings(); track $index) {
+            <ellipse
+              #outline
+              [attr.data-ring]="$index"
+              [attr.rx]="ring.rx"
+              [attr.ry]="ring.ry"
+              fill="none"
+              [attr.stroke]="'url(#' + uid + '-front-ring-' + $index + ')'"
+              stroke-width="2"
+            />
+          }
+          @for (ring of rings(); track $index) {
+            <g #satellite [attr.data-ring]="$index" [attr.transform]="'translate(' + ring.rx + ' 0) scale(3.7)'">
+              <circle r="2.4" class="tone-fill" fill-opacity="0.2" />
+              <circle r="1" class="tone-fill" />
+            </g>
+          }
+        </g>
+      </g>
+  </svg>
+</div>

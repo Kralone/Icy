@@ -3,17 +3,10 @@
   overflow: hidden;
 }
 
-.admin-rank-orbit {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 1500px;
-  height: 1500px;
-  opacity: 0.3;
-  transform: translate(50%, -50%);
-  pointer-events: none;
-  z-index: 5;
-  will-change: transform;
+/* Icône de grade animée, posée à côté du nom du grade, sans déborder sur la page. */
+.corner-rank-emblem {
+  width: 64px;
+  flex: none;
 }
 
 .admin-content {

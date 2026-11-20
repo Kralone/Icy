@@ -25,6 +25,7 @@ import { OperationCrewPanelComponent } from './organization/operation-crew-panel
 import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
 import { eventColor, eventImage } from '../events/event-appearance';
+import { SPECIALTIES, isOrganizer } from '../../core/services/user/member-rank';
 import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
@@ -149,7 +150,10 @@ export class OperationEditorComponent implements OnDestroy {
   readonly catalogError = signal('');
   catalogQuery = '';
   selectedRequirementModel = signal<CatalogEntry | null>(null);
-  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])), shareReplay({ bufferSize: 1, refCount: true }));
+  /** La liste d'administration est refusée à un référent : il reçoit la liste réduite (identifiant et pseudo) des organisateurs. */
+  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]),
+    catchError(() => this.eventService.getOperationMembers().pipe(map(members => members as User[]), catchError(() => of([] as User[])))),
+    shareReplay({ bufferSize: 1, refCount: true }));
 
   hasMember(members: User[], id: string | null): boolean {
     return !!id && members.some(member => member.id === id);
@@ -229,6 +233,33 @@ export class OperationEditorComponent implements OnDestroy {
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!), this.shipsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
+  readonly poles = SPECIALTIES;
+  poleSaving = false;
+  /** Seul un organisateur change le pôle : un référent perdrait la main sur l'opération en la déplaçant. */
+  canChoosePole = false;
+  private readonly poleRights = inject(UserService).getMyProfile().subscribe({
+    next: response => { this.canChoosePole = isOrganizer(response?.data?.roles); this.changeDetector.markForCheck(); },
+    error: () => undefined
+  });
+  poleError = '';
+
+  /** Le pôle s'enregistre à part du brouillon : il ne dépend ni de la révision ni de l'enregistrement automatique. */
+  assignPole(operation: { id: string; pole?: string | null }, pole: string): void {
+    const previous = operation.pole ?? null;
+    operation.pole = pole || null;
+    this.poleSaving = true;
+    this.poleError = '';
+    this.eventService.assignOperationPole(operation.id, pole || null).subscribe({
+      next: saved => { operation.pole = saved; this.poleSaving = false; this.changeDetector.markForCheck(); },
+      error: () => {
+        operation.pole = previous;
+        this.poleSaving = false;
+        this.poleError = 'Le pôle n’a pas pu être enregistré. Réessayez.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
   form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, miningSession: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
 
   // --- Organisation : structure lue sur le serveur, un seul groupe édité à la fois.

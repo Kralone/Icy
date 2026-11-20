@@ -8,8 +8,9 @@ import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
+import { PoleIconComponent } from '../../../shared/pole-icon/pole-icon.component';
 import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
-import { TREASURER_ROLE, hasRole, memberRank } from '../../../core/services/user/member-rank';
+import { SPECIALIST_RANK, SPECIALTIES, TREASURER_ROLE, hasRole, memberRank, specialtyLabel } from '../../../core/services/user/member-rank';
 
 export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
 
@@ -22,10 +23,12 @@ function toTime(value?: string | null): number | null {
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
+  styleUrl: './admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
     DatePipe,
+    PoleIconComponent,
     LoadingOverlayComponent,
     AvailabilityHeatmapComponent
 ]
@@ -63,20 +66,27 @@ export class AdminDashboardComponent implements OnInit {
     discordId: string;
     role: string;
     treasurer: boolean;
+    /** Pôle du Spécialiste ; vide tant qu'aucun n'est choisi. */
+    specialty: string;
   } = {
     username: '',
     discordId: '',
     role: 'JUNIOR',
-    treasurer: false
+    treasurer: false,
+    specialty: ''
   };
+
+  readonly specialistRank = SPECIALIST_RANK;
+  readonly specialties = SPECIALTIES;
+  readonly specialtyLabel = specialtyLabel;
 
   availableRoles: string[] = ['ADMIN', 'OFFICIER', 'SPECIALISTE', 'INGENIEUR', 'ASSOCIE', 'JUNIOR'];
   roleLabels: Record<string, string> = {
     ADMIN: 'Directeur',
     OFFICIER: 'Officier',
-    SPECIALISTE: 'Specialiste',
-    INGENIEUR: 'Ingenieur',
-    ASSOCIE: 'Associe',
+    SPECIALISTE: 'Spécialiste',
+    INGENIEUR: 'Ingénieur',
+    ASSOCIE: 'Associé',
     JUNIOR: 'Junior',
     USER: 'Junior',
     MEMBRE: 'Junior',
@@ -241,7 +251,8 @@ export class AdminDashboardComponent implements OnInit {
       username: '',
       discordId: '',
       role: 'JUNIOR',
-      treasurer: false
+      treasurer: false,
+      specialty: ''
     };
     this.isEditMode = false;
     this.editedUserId = null;
@@ -249,9 +260,9 @@ export class AdminDashboardComponent implements OnInit {
 
   // ==== CRUD actions ====
   addUser(): void {
-    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role) return;
+    if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role || this.specialtyMissing) return;
 
-    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role).subscribe({
+    this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role, this.selectedSpecialty).subscribe({
       next: () => {
         this.closeModal();
         this.loadUsers();
@@ -268,7 +279,8 @@ export class AdminDashboardComponent implements OnInit {
       username: user.username,
       discordId: user.discordId,
       role: this.normalizeRole(memberRank(user.roles)),
-      treasurer: hasRole(user.roles, TREASURER_ROLE)
+      treasurer: hasRole(user.roles, TREASURER_ROLE),
+      specialty: specialtyLabel(user.specialty) ? (user.specialty ?? '').toUpperCase() : ''
     };
 
     this.editedUserId = user.id;
@@ -277,14 +289,15 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   updateUser(): void {
-    if (!this.editedUserId) return;
+    if (!this.editedUserId || this.specialtyMissing) return;
 
     const payload = {
       id: this.editedUserId,
       username: this.newUser.username,
       discordId: this.newUser.discordId,
       role: this.newUser.role,
-      treasurer: this.newUser.treasurer
+      treasurer: this.newUser.treasurer,
+      specialty: this.selectedSpecialty
     };
 
     this.userService.updateUser(payload).subscribe({
@@ -297,6 +310,43 @@ export class AdminDashboardComponent implements OnInit {
         alert('Échec de la mise à jour');
       }
     });
+  }
+
+  /** Le pôle n'est envoyé que pour un Spécialiste : il n'existe pas pour les autres grades. */
+  get selectedSpecialty(): string | null {
+    return this.newUser.role === SPECIALIST_RANK && this.newUser.specialty ? this.newUser.specialty : null;
+  }
+
+  get selectedSpecialtyDescription(): string | null {
+    return SPECIALTIES.find(pole => pole.key === this.selectedSpecialty)?.description ?? null;
+  }
+
+  get specialtyMissing(): boolean {
+    return this.newUser.role === SPECIALIST_RANK && !this.newUser.specialty;
+  }
+
+  /** Grade du membre, celui qui est mis en avant dans la liste. */
+  rankLabel(user: User): string {
+    const rank = this.normalizeRole(memberRank(user.roles));
+    return this.roleLabels[rank] ?? rank;
+  }
+
+  /** Clé du grade, qui choisit sa couleur dans la liste. */
+  rankKey(user: User): string {
+    return this.normalizeRole(memberRank(user.roles));
+  }
+
+  /** Ce qui précise le grade, affiché en petit dessous : le pôle du Spécialiste, puis la fonction de trésorier. */
+  rankDetails(user: User): { key: string; label: string; testId: string }[] {
+    const details: { key: string; label: string; testId: string }[] = [];
+    const pole = specialtyLabel(user.specialty);
+    if (pole && memberRank(user.roles) === SPECIALIST_RANK) {
+      details.push({ key: (user.specialty ?? '').trim().toUpperCase(), label: pole, testId: 'member-specialty' });
+    }
+    if (hasRole(user.roles, TREASURER_ROLE)) {
+      details.push({ key: TREASURER_ROLE, label: this.roleLabels[TREASURER_ROLE], testId: 'member-function' });
+    }
+    return details;
   }
 
   private normalizeRole(role?: string | null): string {

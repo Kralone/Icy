@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.io.IOException;
 
@@ -30,9 +29,6 @@ import java.io.IOException;
 @RequestMapping("/api/users")
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-    private static final Set<String> DISCORD_ASSIGNABLE_ROLES = Set.of(
-            "JUNIOR", "ASSOCIE", "INGENIEUR", "SPECIALISTE", "OFFICIER", "ADMIN"
-    );
     private final UserService userService;
     private final MessageService messageService;
 
@@ -51,33 +47,14 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<User>>createUser(@RequestBody CreateUserRequest createUserRequest) {
         UserManagementPolicy.assertCanManage(null, createUserRequest.getRole());
-        return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
-    }
-
-    @PreAuthorize("hasRole('BOT')")
-    @PostMapping("/bot/create")
-    public ResponseEntity<MessageResponse<User>> createUserFromDiscord(@RequestBody CreateUserRequest createUserRequest) {
-        validateDiscordCreateRequest(createUserRequest);
-        return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole());
-    }
-
-    private static void validateDiscordCreateRequest(CreateUserRequest request) {
-        if (request.getUsername() == null || request.getUsername().isBlank() || request.getUsername().length() > 50) {
-            throw new IllegalArgumentException("Le pseudo doit contenir entre 1 et 50 caractères.");
-        }
-        if (request.getDiscordId() == null || !request.getDiscordId().matches("[1-9][0-9]{5,19}")) {
-            throw new IllegalArgumentException("L'identifiant Discord est invalide.");
-        }
-        if (!DISCORD_ASSIGNABLE_ROLES.contains(request.getRole())) {
-            throw new IllegalArgumentException("Le rôle IceForge demandé est invalide.");
-        }
+        return userService.createUser(createUserRequest.getUsername(), createUserRequest.getDiscordId(), createUserRequest.getRole(), createUserRequest.getSpecialty());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<User>> updateUser(@RequestBody UpdateUserRequest request) {
         UserManagementPolicy.assertCanManage(userService.resolveUser(request.getId()), request.getRole());
-        return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole(), request.getTreasurer());
+        return userService.updateUser(request.getId(), request.getUsername(), request.getDiscordId(), request.getRole(), request.getTreasurer(), request.getSpecialty());
     }
 
 

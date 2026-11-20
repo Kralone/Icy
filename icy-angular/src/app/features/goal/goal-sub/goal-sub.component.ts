@@ -1,3 +1,4 @@
+import { PoleBadgeComponent } from '../../../shared/pole-badge/pole-badge.component';
 import { Component, EventEmitter, Input, Output, OnChanges, DoCheck, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +12,7 @@ import { AsyncStateComponent } from '../../../shared/async-state/async-state.com
 @Component({
   selector: 'app-goal-sub',
   standalone: true,
-  imports: [CommonModule, FormsModule, AsyncStateComponent],
+  imports: [CommonModule, FormsModule, AsyncStateComponent, PoleBadgeComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './goal-sub.component.html',
   styleUrl: './goal-sub.component.css',

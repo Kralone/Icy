@@ -16,6 +16,7 @@
       <button type="button" [attr.aria-pressed]="viewMode === 'upcoming'" (click)="setView('upcoming')">À venir</button>
       <button type="button" [attr.aria-pressed]="viewMode === 'calendar'" (click)="setView('calendar')">Calendrier</button>
     </div>
+    <app-pole-filter [value]="poleFilter" (valueChange)="setPoleFilter($event)" data-testid="events-pole-filter" />
   </div>
 
   @if (isLoading) {
@@ -37,6 +38,7 @@
           <div class="agenda-content">
             @if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }
             <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
+            <app-pole-badge class="agenda-pole" [pole]="event.pole" />
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -68,7 +70,7 @@
           </div>
           <div>
 
-            <h2>Aucun événement à venir</h2>
+            <h2>{{ poleFilter ? 'Aucun événement à venir pour ce pôle' : 'Aucun événement à venir' }}</h2>
           </div>
           <button type="button" class="events-button" (click)="setView('calendar')">Explorer le calendrier <span aria-hidden="true">↗</span></button>
         </div>
@@ -103,6 +105,7 @@
           <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
           <strong>{{ arg.event.title }}</strong>
           <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>
+          <app-pole-badge class="calendar-pole" [pole]="arg.event.extendedProps.pole" [small]="true" />
         </div>
       </ng-template>
     </full-calendar>

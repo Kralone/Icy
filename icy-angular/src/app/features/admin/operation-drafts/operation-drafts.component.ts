@@ -1,3 +1,4 @@
+import { isOrganizer, referentPole } from '../../../core/services/user/member-rank';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { DatePipe, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -29,10 +30,13 @@ export class OperationDraftsComponent implements OnInit {
   readonly publishedLoading = signal(false);
   readonly publishedError = signal('');
   /** Les plus proches d'abord. */
-  readonly planned = computed(() => this.published().filter(operation => !this.finishedIds().has(operation.id))
+  /** Pôle d'un référent : il ne voit que les opérations publiées de son pôle, les seules qu'il peut modifier. Vide pour un organisateur. */
+  readonly lockedPole = signal('');
+  private readonly manageable = computed(() => this.published().filter(operation => !this.lockedPole() || operation.pole === this.lockedPole()));
+  readonly planned = computed(() => this.manageable().filter(operation => !this.finishedIds().has(operation.id))
     .sort((a, b) => a.startDateTime.localeCompare(b.startDateTime)));
   /** Les plus récentes d'abord. */
-  readonly past = computed(() => this.published().filter(operation => this.finishedIds().has(operation.id))
+  readonly past = computed(() => this.manageable().filter(operation => this.finishedIds().has(operation.id))
     .sort((a, b) => b.startDateTime.localeCompare(a.startDateTime)));
 
   ngOnInit(): void {
@@ -40,7 +44,11 @@ export class OperationDraftsComponent implements OnInit {
     this.load();
     this.loadPublished();
     this.userService.getMyProfile().subscribe({
-      next: response => this.isAdmin.set((response?.data?.roles ?? []).some(role => (role ?? '').trim().toUpperCase() === 'ADMIN')),
+      next: response => {
+        const roles = response?.data?.roles ?? [];
+        this.isAdmin.set(roles.some(role => (role ?? '').trim().toUpperCase() === 'ADMIN'));
+        this.lockedPole.set(isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '');
+      },
       error: () => this.isAdmin.set(false)
     });
   }
@@ -78,7 +86,7 @@ export class OperationDraftsComponent implements OnInit {
     return {
       id: event.id, title: event.title, type: event.type?.name, typeTextColor: event.type?.textColor,
       typeBackgroundColor: event.type?.backgroundColor, typeImageUrl: event.type?.imageUrl,
-      startDateTime: event.startDateTime, endDateTime: event.endDateTime
+      startDateTime: event.startDateTime, endDateTime: event.endDateTime, pole: event.pole
     };
   }
 }

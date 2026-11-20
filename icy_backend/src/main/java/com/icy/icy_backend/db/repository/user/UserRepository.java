@@ -33,6 +33,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "WHERE u.username = :username")
     Optional<User> findByUsernameWithRoles(@Param("username") String username);
 
+    /** Spécialistes actifs qui ont un pôle : les référents affichés sur les pages des pôles. */
+    @Query("SELECT DISTINCT u FROM User u " +
+            "JOIN u.roles ur " +
+            "JOIN ur.role r " +
+            "WHERE r.name = 'SPECIALISTE' AND u.specialty IS NOT NULL")
+    List<User> findSpecialistsWithPole();
+
     List<User> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since);
 
 
