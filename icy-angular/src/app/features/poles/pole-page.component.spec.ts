@@ -3,6 +3,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { coreTestProviders } from '@testing/test-providers';
+import { PoleHome } from '../../core/services/pole/pole';
 import { PolePageComponent } from './pole-page.component';
 
 describe('PolePageComponent', () => {
@@ -17,50 +18,146 @@ describe('PolePageComponent', () => {
     }).compileComponents();
     fixture = TestBed.createComponent(PolePageComponent);
     http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
   }
 
-  const request = () => http.expectOne(req => req.url.endsWith('/api/poles'));
-  const text = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`).textContent.replace(/\s+/g, ' ').trim();
+  const home = (key: string, changes: Partial<PoleHome> = {}): PoleHome => ({ key, specialists: [], canManage: false, stats: [], activity: [], news: [], ...changes });
+  const news = { id: 7, title: 'Sortie Quantanium', content: 'Samedi 21h.', authorName: 'Ada', createdAt: '2026-11-18T21:00:00' };
+  const find = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
+  const text = (testId: string) => find(testId)!.textContent!.replace(/\s+/g, ' ').trim();
+  const button = (label: string) =>
+    (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find(b => b.textContent!.trim() === label)!;
 
-  it('shows the Industrie pole with its referents and its tools', async () => {
-    await open('industrie');
+  async function load(slug: string, body: PoleHome): Promise<void> {
+    await open(slug);
+    http.expectOne(`/api/poles/${body.key}`).flush(body);
     fixture.detectChanges();
-    request().flush([{ key: 'INDUSTRIE', specialists: [{ id: '1', username: 'Ada' }] }, { key: 'MILITAIRE', specialists: [{ id: '2', username: 'Cy' }] }]);
-    fixture.detectChanges();
+  }
+
+  function type(selector: string, value: string): void {
+    const field = fixture.nativeElement.querySelector(selector) as HTMLInputElement;
+    field.value = value;
+    field.dispatchEvent(new Event('input'));
+  }
+
+  it('shows the Industrie pole: referent, stats, tools by group, news and recent activity', async () => {
+    await load('industrie', home('INDUSTRIE', {
+      specialists: [{ id: '1', username: 'Ada' }],
+      stats: [{ key: 'MINING_SHEETS_30D', value: 6 }, { key: 'MINING_SALES_30D', value: 1250000 }, { key: 'INCONNU', value: 3 }],
+      activity: [{ kind: 'MINING_SHEET', id: 'abc', name: 'Aaron Halo', date: '2026-11-19', status: 'ACTIVE' }],
+      news: [news]
+    }));
 
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Industrie');
-    expect(text('pole-referents')).toContain('Ada');
-    expect(text('pole-referents')).not.toContain('Cy');
+    expect(text('pole-referents')).toContain('RéférentAda');
+    expect(find('pole-manage')).toBeNull();
+    expect(text('pole-stats')).toMatch(/Fiches de minage\s*6\s*30 derniers jours/);
+    expect(text('pole-stats')).toMatch(/Ventes de minerai\s*1.250.000\s*aUEC/);
+    expect(find('pole-stats')!.querySelectorAll('.pole-stat').length).toBe(2);
+    const groups = Array.from(find('pole-tools')!.querySelectorAll('h3')).map(title => title.textContent);
+    expect(groups).toEqual(['Sur le terrain', 'Guides']);
     const tools = Array.from(fixture.nativeElement.querySelectorAll('a.pole-tool')) as HTMLAnchorElement[];
     expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-minage');
     expect(tools.length).toBe(5);
+    expect(text('pole-news')).toMatch(/Sortie Quantanium\s*18 novembre 2026 · Ada\s*Samedi 21h\./);
+    expect(find('pole-activity')!.querySelector('a')!.getAttribute('href')).toBe('/icy/outils/fiches-minage/abc');
+    expect(text('pole-activity')).toContain('En cours');
   });
 
-  it('says so when a pole has no referent and no tool yet', async () => {
-    await open('militaire');
-    fixture.detectChanges();
-    request().flush([]);
-    fixture.detectChanges();
-    expect(text('pole-referents')).toContain("Aucun Spécialiste n'est nommé");
+  it('says so when a pole has no referent, no tool and no news, and hides empty sections', async () => {
+    await load('militaire', home('MILITAIRE'));
+    expect(text('pole-referents')).toBe("Aucun référent pour l'instant");
     expect(text('pole-tools')).toContain("Ce pôle n'a pas encore d'outil dédié.");
+    expect(text('pole-news')).toContain('Aucune actualité publiée pour ce pôle.');
+    expect(find('pole-stats')).toBeNull();
+    expect(find('pole-activity')).toBeNull();
   });
 
-  it('offers to retry when the referents cannot be loaded', async () => {
+  it('lets a manager publish, edit and delete news', async () => {
+    await load('industrie', home('INDUSTRIE', { canManage: true }));
+    expect(find('pole-news-form')).toBeNull();
+    find('pole-manage')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    button('Publier').click();
+    fixture.detectChanges();
+    expect(text('pole-news-form')).toContain('Le titre et le texte sont obligatoires.');
+
+    type('input[name="title"]', ' Sortie Quantanium ');
+    type('textarea[name="content"]', 'Samedi 21h.');
+    button('Publier').click();
+    const post = http.expectOne({ method: 'POST', url: '/api/poles/INDUSTRIE/news' });
+    expect(post.request.body).toEqual({ title: 'Sortie Quantanium', content: 'Samedi 21h.' });
+    post.flush(news);
+    fixture.detectChanges();
+    expect(text('pole-news')).toContain('Sortie Quantanium');
+
+    button('Modifier').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    type('input[name="title"]', 'Sortie reportée');
+    button('Enregistrer').click();
+    const put = http.expectOne({ method: 'PUT', url: '/api/poles/INDUSTRIE/news/7' });
+    expect(put.request.body).toEqual({ title: 'Sortie reportée', content: 'Samedi 21h.' });
+    put.flush({ ...news, title: 'Sortie reportée', updatedAt: '2026-11-19T10:00:00' });
+    fixture.detectChanges();
+    expect(text('pole-news')).toContain('Sortie reportée');
+    expect(text('pole-news')).toContain('modifiée');
+
+    button('Supprimer').click();
+    fixture.detectChanges();
+    http.expectNone({ method: 'DELETE', url: '/api/poles/INDUSTRIE/news/7' });
+    button('Confirmer la suppression').click();
+    http.expectOne({ method: 'DELETE', url: '/api/poles/INDUSTRIE/news/7' }).flush(null);
+    fixture.detectChanges();
+    expect(text('pole-news')).toContain('Aucune actualité publiée pour ce pôle.');
+  });
+
+  it('shows the server message when publishing is refused', async () => {
+    await load('industrie', home('INDUSTRIE', { canManage: true }));
+    find('pole-manage')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    type('input[name="title"]', 'Titre');
+    type('textarea[name="content"]', 'Texte');
+    button('Publier').click();
+    http.expectOne({ method: 'POST', url: '/api/poles/INDUSTRIE/news' }).flush({ message: 'Refusé.' }, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+    expect(text('pole-news-form')).toContain('Refusé.');
+  });
+
+  it('offers to retry when the pole cannot be loaded, and keeps the tools', async () => {
     await open('industrie');
+    http.expectOne('/api/poles/INDUSTRIE').flush('x', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    request().flush('x', { status: 500, statusText: 'Server Error' });
+    expect(fixture.nativeElement.querySelectorAll('a.pole-tool').length).toBe(5);
+    find('pole-error')!.querySelector('button')!.click();
+    http.expectOne('/api/poles/INDUSTRIE').flush(home('INDUSTRIE', { specialists: [{ id: '1', username: 'Ada' }] }));
     fixture.detectChanges();
-    fixture.nativeElement.querySelector('[data-testid="pole-referents-error"] button').click();
-    request().flush([{ key: 'INDUSTRIE', specialists: [{ id: '1', username: 'Ada' }] }]);
-    fixture.detectChanges();
+    expect(find('pole-error')).toBeNull();
     expect(text('pole-referents')).toContain('Ada');
   });
 
+  it('falls back to the local image when the remote one fails', async () => {
+    await load('industrie', home('INDUSTRIE'));
+    const hero = fixture.nativeElement.querySelector('.pole-hero-image') as HTMLImageElement;
+    expect(hero.getAttribute('src')).toContain('media.starcitizen.tools');
+    hero.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(hero.getAttribute('src')).toBe('assets/images/home/activities/mining.jpg');
+  });
+
   it('sends an unknown pole back to the poles menu', async () => {
-    await open('inconnu');
+    const params = convertToParamMap({ pole: 'inconnu' });
+    await TestBed.configureTestingModule({
+      imports: [PolePageComponent],
+      providers: [...coreTestProviders, { provide: ActivatedRoute, useValue: { paramMap: of(params), snapshot: { paramMap: params } } }]
+    }).compileComponents();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture = TestBed.createComponent(PolePageComponent);
     fixture.detectChanges();
     expect(navigate).toHaveBeenCalledWith(['/icy/poles'], { replaceUrl: true });
-    http.expectNone(req => req.url.endsWith('/api/poles'));
+    TestBed.inject(HttpTestingController).expectNone(() => true);
   });
 });

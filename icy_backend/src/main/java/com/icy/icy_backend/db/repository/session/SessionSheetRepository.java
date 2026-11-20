@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,4 +24,20 @@ public interface SessionSheetRepository extends JpaRepository<SessionSheet, UUID
     Optional<SessionSheet> findByOperationEventId(UUID operationEventId);
 
     List<SessionSheet> findAllByOrderBySessionDateDescCreatedAtDesc();
+
+    List<SessionSheet> findTop4ByActivityOrderBySessionDateDescCreatedAtDesc(String activity);
+
+    long countByActivityAndSessionDateGreaterThanEqual(String activity, LocalDate since);
+
+    long countByActivityAndStatusNot(String activity, SessionSheet.Status status);
+
+    /** Membres distincts inscrits sur les fiches d'une activité depuis une date. */
+    @Query("select count(distinct p.userId) from SessionParticipant p where p.sheetId in "
+            + "(select s.id from SessionSheet s where s.activity = :activity and s.sessionDate >= :since)")
+    long countParticipantsSince(@Param("activity") String activity, @Param("since") LocalDate since);
+
+    /** Total des ventes (aUEC) des fiches d'une activité depuis une date. */
+    @Query("select coalesce(sum(x.amount), 0) from SessionSale x where x.sheetId in "
+            + "(select s.id from SessionSheet s where s.activity = :activity and s.sessionDate >= :since)")
+    long sumSalesSince(@Param("activity") String activity, @Param("since") LocalDate since);
 }

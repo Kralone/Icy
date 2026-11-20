@@ -21,6 +21,13 @@ export class PolesMenuComponent implements OnInit {
   readonly referents = signal<PoleReferents[] | null>(null);
   readonly loadFailed = signal(false);
 
+  /** Pôles dont l'image distante n'a pas répondu : ils affichent leur image locale. */
+  readonly failedImages = signal<ReadonlySet<string>>(new Set());
+
+  imageFailed(key: string): void {
+    this.failedImages.update(failed => new Set(failed).add(key));
+  }
+
   ngOnInit(): void {
     this.poleService.referents().subscribe({
       next: poles => this.referents.set(poles ?? []),

@@ -1,11 +1,44 @@
 @if (pole(); as pole) {
-  <div class="min-h-full w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-4 py-8 sm:px-8 sm:py-10" [attr.data-pole]="pole.key">
-    <div class="mx-auto max-w-[1600px] space-y-8">
-      <a routerLink="/icy/poles" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">← Pôles</a>
+  <div class="pole-page min-h-full w-full text-white px-4 py-6 sm:px-8 sm:py-8" [attr.data-pole]="pole.key">
+    <div class="mx-auto max-w-[1800px] space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <a routerLink="/icy/poles" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">← Pôles</a>
+
+        <div class="flex flex-wrap items-center justify-end gap-3" data-testid="pole-referents">
+          @if (home(); as home) {
+            @if (home.canManage) {
+              <button type="button" class="pole-manage" [class.pole-manage--on]="managing()" [attr.aria-pressed]="managing()"
+                      data-testid="pole-manage" (click)="toggleManaging()">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+                </svg>
+                {{ managing() ? 'Terminer' : 'Gérer le pôle' }}
+              </button>
+            }
+            @for (specialist of home.specialists; track specialist.id) {
+              <span class="pole-referent">
+                <span class="pole-referent-avatar h-9 w-9 text-sm" aria-hidden="true">
+                  @if (specialist.avatarUrl) {
+                    <img [src]="specialist.avatarUrl" alt="" class="h-full w-full object-cover" />
+                  } @else {
+                    {{ initial(specialist.username) }}
+                  }
+                </span>
+                <span class="min-w-0 leading-tight">
+                  <span class="block text-[0.65rem] uppercase tracking-[0.18em] text-slate-400">Référent</span>
+                  <span class="block truncate font-semibold text-white">{{ specialist.username }}</span>
+                </span>
+              </span>
+            } @empty {
+              <span class="pole-referent text-sm text-slate-400">Aucun référent pour l'instant</span>
+            }
+          }
+        </div>
+      </div>
 
       <header class="pole-hero">
-        <img [src]="pole.imageUrl" alt="" class="absolute inset-0 h-full w-full object-cover" />
-        <div class="relative z-10 flex items-center gap-5 px-6 py-10 sm:px-10 sm:py-14">
+        <img [src]="heroFailed() ? pole.fallbackImageUrl : pole.imageUrl" alt="" class="pole-hero-image" (error)="heroFailed.set(true)" />
+        <div class="relative z-10 flex items-center gap-5 px-6 py-12 sm:px-10 sm:py-16 2xl:py-24">
           <span class="pole-badge h-16 w-16 sm:h-20 sm:w-20"><app-pole-icon [key]="pole.key" size="h-9 w-9 sm:h-11 sm:w-11" /></span>
           <div class="min-w-0">
             <p class="text-xs uppercase tracking-[0.3em] text-slate-300">Pôle</p>
@@ -15,59 +48,124 @@
         </div>
       </header>
 
-      <div class="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <section class="space-y-4" aria-labelledby="pole-referents-title" data-testid="pole-referents">
-          <h2 id="pole-referents-title" class="pole-section-title">{{ (specialists()?.length ?? 0) > 1 ? 'Référents' : 'Référent' }}</h2>
-          @if (specialists(); as specialists) {
-            @if (specialists.length) {
-              <ul class="space-y-3">
-                @for (specialist of specialists; track specialist.id) {
-                  <li class="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                    <span class="pole-referent-avatar h-12 w-12 text-lg" aria-hidden="true">
-                      @if (specialist.avatarUrl) {
-                        <img [src]="specialist.avatarUrl" alt="" class="h-full w-full object-cover" />
-                      } @else {
-                        {{ initial(specialist.username) }}
-                      }
-                    </span>
-                    <span class="min-w-0">
-                      <span class="block truncate font-semibold text-white">{{ specialist.username }}</span>
-                      <span class="block text-sm text-slate-400">Spécialiste {{ pole.label }}</span>
-                    </span>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="rounded-2xl border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">Aucun Spécialiste n'est nommé pour ce pôle pour l'instant.</p>
-            }
-          } @else if (loadFailed()) {
-            <div class="rounded-2xl border border-red-300/30 px-4 py-5 text-sm text-red-200" data-testid="pole-referents-error">
-              <p>Impossible de charger les référents pour le moment.</p>
-              <button type="button" class="mt-3 rounded-full border border-red-300/40 px-4 py-1.5 hover:border-red-300 transition" (click)="load()">Réessayer</button>
-            </div>
-          } @else {
-            <p class="px-1 text-sm text-slate-500">Chargement…</p>
-          }
-        </section>
+      @if (loadFailed()) {
+        <div class="rounded-2xl border border-red-300/30 px-4 py-5 text-sm text-red-200" data-testid="pole-error">
+          <p>Impossible de charger les informations du pôle pour le moment.</p>
+          <button type="button" class="mt-3 rounded-full border border-red-300/40 px-4 py-1.5 hover:border-red-300 transition" (click)="load()">Réessayer</button>
+        </div>
+      }
 
-        <section class="space-y-4" aria-labelledby="pole-tools-title" data-testid="pole-tools">
-          <h2 id="pole-tools-title" class="pole-section-title">Outils</h2>
-          @if (pole.tools.length) {
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-              @for (tool of pole.tools; track tool.route) {
-                <a class="pole-tool" [routerLink]="tool.route">
-                  <span class="min-w-0 flex-1">
-                    <span class="block font-semibold text-white">{{ tool.label }}</span>
-                    <span class="block text-sm text-slate-400">{{ tool.description }}</span>
-                  </span>
-                  <span class="pole-tool-arrow text-xl" aria-hidden="true">→</span>
-                </a>
-              }
+      @if (stats().length) {
+        <dl class="grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="pole-stats">
+          @for (stat of stats(); track stat.key; let index = $index) {
+            <div class="pole-stat pole-rise" [style.--rise]="index">
+              <dt class="text-xs uppercase tracking-[0.14em] text-slate-400">{{ stat.label }}</dt>
+              <dd class="mt-1 flex flex-wrap items-baseline gap-x-2">
+                <span class="pole-stat-value">{{ stat.value }}</span>
+                @if (stat.unit) { <span class="text-sm text-slate-400">{{ stat.unit }}</span> }
+              </dd>
+              @if (stat.period) { <dd class="text-xs text-slate-500">{{ stat.period }}</dd> }
             </div>
-          } @else {
+          }
+        </dl>
+      }
+
+      <div class="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section class="space-y-6" aria-labelledby="pole-tools-title" data-testid="pole-tools">
+          <h2 id="pole-tools-title" class="pole-section-title">Outils</h2>
+          @for (group of pole.toolGroups; track group.label) {
+            <div class="space-y-3">
+              <h3 class="text-sm font-semibold text-slate-300">{{ group.label }}</h3>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+                @for (tool of group.tools; track tool.route; let index = $index) {
+                  <a class="pole-tool pole-rise" [style.--rise]="index" [routerLink]="tool.route">
+                    <span class="pole-tool-image"><img [src]="tool.imageUrl" alt="" loading="lazy" (error)="useFallback($event, pole.fallbackImageUrl)" /></span>
+                    <span class="pole-tool-body">
+                      <span class="min-w-0 flex-1">
+                        <span class="block font-semibold text-white">{{ tool.label }}</span>
+                        <span class="block text-sm text-slate-400">{{ tool.description }}</span>
+                      </span>
+                      <span class="pole-tool-arrow text-xl" aria-hidden="true">→</span>
+                    </span>
+                  </a>
+                }
+              </div>
+            </div>
+          } @empty {
             <p class="rounded-2xl border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">Ce pôle n'a pas encore d'outil dédié.</p>
           }
         </section>
+
+        <aside class="space-y-8">
+          <section class="space-y-4" aria-labelledby="pole-news-title" data-testid="pole-news">
+            <h2 id="pole-news-title" class="pole-section-title">Actualités du pôle</h2>
+
+            @if (managing()) {
+              <form class="pole-panel space-y-3" data-testid="pole-news-form" (ngSubmit)="save()">
+                <p class="text-sm font-semibold text-white">{{ editingId() === null ? 'Nouvelle actualité' : "Modifier l'actualité" }}</p>
+                <label class="block text-sm text-slate-300">Titre
+                  <input type="text" name="title" maxlength="120" class="pole-input" [(ngModel)]="draft.title" />
+                </label>
+                <label class="block text-sm text-slate-300">Texte
+                  <textarea name="content" rows="4" maxlength="4000" class="pole-input" [(ngModel)]="draft.content"></textarea>
+                </label>
+                @if (formError(); as message) { <p class="text-sm text-red-300" role="alert">{{ message }}</p> }
+                <div class="flex flex-wrap justify-end gap-2">
+                  @if (editingId() !== null) {
+                    <button type="button" class="pole-button" (click)="resetDraft()">Annuler</button>
+                  }
+                  <button type="submit" class="pole-button pole-button--main" [disabled]="saving()">
+                    {{ saving() ? 'Enregistrement…' : editingId() === null ? 'Publier' : 'Enregistrer' }}
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (home(); as home) {
+              @for (news of home.news; track news.id; let index = $index) {
+                <article class="pole-panel pole-news pole-rise" [style.--rise]="index">
+                  <h3 class="font-semibold text-white">{{ news.title }}</h3>
+                  <p class="text-xs text-slate-500">{{ day(news.createdAt) }} · {{ news.authorName }}{{ news.updatedAt ? ' · modifiée' : '' }}</p>
+                  <p class="mt-2 whitespace-pre-line break-words text-sm text-slate-300">{{ news.content }}</p>
+                  @if (managing()) {
+                    <div class="mt-3 flex flex-wrap justify-end gap-2">
+                      <button type="button" class="pole-button" (click)="edit(news)">Modifier</button>
+                      <button type="button" class="pole-button pole-button--danger" (click)="remove(news)">
+                        {{ deletingId() === news.id ? 'Confirmer la suppression' : 'Supprimer' }}
+                      </button>
+                    </div>
+                  }
+                </article>
+              } @empty {
+                <p class="rounded-2xl border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">
+                  Aucune actualité publiée pour ce pôle.
+                  @if (home.canManage && !managing()) { Le bouton « Gérer le pôle » permet d'en publier une. }
+                </p>
+              }
+            } @else if (!loadFailed()) {
+              <p class="px-1 text-sm text-slate-500">Chargement…</p>
+            }
+          </section>
+
+          @if (home()?.activity?.length) {
+            <section class="space-y-4" aria-labelledby="pole-activity-title" data-testid="pole-activity">
+              <h2 id="pole-activity-title" class="pole-section-title">Activité récente</h2>
+              <ul class="space-y-2">
+                @for (activity of home()!.activity; track activity.id) {
+                  <li>
+                    <a class="pole-activity" [routerLink]="activityLink(activity)">
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate font-medium text-white">{{ activity.name }}</span>
+                        <span class="block text-xs text-slate-500">Fiche de minage · {{ day(activity.date) }}</span>
+                      </span>
+                      <span class="pole-status" [attr.data-status]="activity.status">{{ activityStatus(activity) }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </aside>
       </div>
     </div>
   </div>

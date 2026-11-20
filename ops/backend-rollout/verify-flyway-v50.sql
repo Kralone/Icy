@@ -288,7 +288,7 @@ BEGIN
             ('47', 'V47__create_user_tutorials.sql', 2032996675),
             ('48', 'V48__create_guild_bank.sql', -948273531),
             ('49', 'V49__create_user_availability.sql', 1842482513),
-            ('50', 'V50__add_user_specialty.sql', 1257478111)
+            ('50', 'V50__add_user_specialty.sql', 540415462)
         ) expected(version, script, checksum)
         WHERE NOT EXISTS (SELECT 1 FROM public.flyway_schema_history actual
             WHERE actual.version = expected.version AND actual.script = expected.script
@@ -442,6 +442,15 @@ BEGIN
        OR EXISTS (SELECT 1 FROM core.users WHERE specialty IS NOT NULL
                   AND specialty NOT IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'))
     THEN RAISE EXCEPTION 'V50 user specialty structure is incomplete'; END IF;
+
+    -- V50 : actualités des pôles, limitées aux trois pôles ; l'auteur supprimé laisse l'actualité en place.
+    IF to_regclass('core.pole_news') IS NULL
+       OR NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'core.pole_news'::regclass
+                      AND conname = 'ck_pole_news_pole' AND contype = 'c' AND convalidated)
+       OR NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'core.pole_news'::regclass
+                      AND contype = 'f' AND confdeltype = 'n' AND confrelid = 'core.users'::regclass)
+       OR to_regclass('core.idx_pole_news_pole_created_at') IS NULL
+    THEN RAISE EXCEPTION 'V50 pole news structure is incomplete'; END IF;
 END
 $verify$;
 
