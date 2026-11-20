@@ -56,7 +56,7 @@
       }
 
       @if (stats().length) {
-        <dl class="grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="pole-stats">
+        <dl class="pole-stats" [class.pole-stats-three]="stats().length === 3" data-testid="pole-stats">
           @for (stat of stats(); track stat.key; let index = $index) {
             <div class="pole-stat pole-rise" [style.--rise]="index">
               <dt class="text-xs uppercase tracking-[0.14em] text-slate-400">{{ stat.label }}</dt>
@@ -177,12 +177,14 @@
               <ul class="space-y-2">
                 @for (activity of home()!.activity; track activity.id) {
                   <li>
-                    <a class="pole-activity" [routerLink]="activityLink(activity)">
+                    <a class="pole-activity" [routerLink]="activityLink(activity)" [queryParams]="activityQuery(activity)">
                       <span class="min-w-0 flex-1">
                         <span class="block truncate font-medium text-white">{{ activity.name }}</span>
-                        <span class="block text-xs text-slate-500">Fiche de minage · {{ day(activity.date) }}</span>
+                        <span class="block text-xs text-slate-500">{{ activityKind(activity) }} · {{ day(activity.date) }}</span>
                       </span>
-                      <span class="pole-status" [attr.data-status]="activity.status">{{ activityStatus(activity) }}</span>
+                      @if (activityStatus(activity); as status) {
+                        <span class="pole-status" [attr.data-status]="activity.status">{{ status }}</span>
+                      }
                     </a>
                   </li>
                 }

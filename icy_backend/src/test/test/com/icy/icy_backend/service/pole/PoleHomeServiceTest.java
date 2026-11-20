@@ -89,11 +89,27 @@ class PoleHomeServiceTest {
     }
 
     @Test
-    void polesWithoutDataHaveNoStatsAndNoActivity() {
+    void polesWithoutOwnToolsCountTheirEventsAndOperations() {
         signIn("JUNIOR", null);
+        LocalDateTime now = LocalDateTime.of(2026, 11, 20, 10, 0);
+        LocalDateTime since = now.minusDays(30);
+        when(events.countEndedOfPoleBetween(Specialty.MILITAIRE, since, now)).thenReturn(3L);
+        when(events.countParticipantsOfPoleBetween(Specialty.MILITAIRE, since, now)).thenReturn(11L);
+        when(events.countUpcomingOfPole(Specialty.MILITAIRE, now)).thenReturn(2L);
+        com.icy.icy_backend.db.entity.event.Event patrol = com.icy.icy_backend.db.entity.event.Event.builder()
+                .id(UUID.randomUUID()).title("Patrouille Pyro")
+                .activityType(com.icy.icy_backend.db.entity.event.ActivityType.OPERATION)
+                .startDateTime(LocalDateTime.of(2026, 11, 14, 21, 0)).endDateTime(LocalDateTime.of(2026, 11, 14, 23, 0)).build();
+        when(events.findPastOfPole(Mockito.eq(Specialty.MILITAIRE), Mockito.eq(now), any())).thenReturn(List.of(patrol));
+
         PoleDtos.Home home = service.home("MILITAIRE");
-        assertThat(home.stats()).isEmpty();
-        assertThat(home.activity()).isEmpty();
+
+        assertThat(home.stats()).containsExactly(
+                new PoleDtos.Stat("POLE_ACTIVITIES_30D", 3),
+                new PoleDtos.Stat("POLE_PARTICIPANTS_30D", 11),
+                new PoleDtos.Stat("POLE_UPCOMING", 2));
+        assertThat(home.activity()).containsExactly(
+                new PoleDtos.Activity("OPERATION", patrol.getId(), "Patrouille Pyro", LocalDate.of(2026, 11, 14), null));
         assertThat(home.news()).isEmpty();
         assertThat(home.agenda()).isEmpty();
     }

@@ -48,7 +48,8 @@ export interface PoleActivity {
   id: string;
   name: string;
   date: string;
-  status: string;
+  /** État d'une fiche ; absent pour un événement ou une opération. */
+  status?: string | null;
 }
 
 /** Événement ou opération à venir rattaché au pôle. */
@@ -87,7 +88,10 @@ export const POLE_STAT_LABELS: Record<string, { label: string; period?: string; 
   MINING_SHEETS_30D: { label: 'Fiches de minage', period: '30 derniers jours' },
   MINING_SHEETS_OPEN: { label: 'Fiches en cours' },
   MINERS_30D: { label: 'Mineurs actifs', period: '30 derniers jours' },
-  MINING_SALES_30D: { label: 'Ventes de minerai', period: '30 derniers jours', unit: 'aUEC' }
+  MINING_SALES_30D: { label: 'Ventes de minerai', period: '30 derniers jours', unit: 'aUEC' },
+  POLE_ACTIVITIES_30D: { label: 'Événements et opérations', period: '30 derniers jours' },
+  POLE_PARTICIPANTS_30D: { label: 'Participants', period: '30 derniers jours' },
+  POLE_UPCOMING: { label: 'À venir' }
 };
 
 const ACTIVITIES = 'assets/images/home/activities/';
@@ -98,9 +102,64 @@ const IMAGES: Record<PoleKey, string> = {
   INDUSTRIE: 'assets/images/poles/industrie.jpg'
 };
 
+const WIKI = 'https://media.starcitizen.tools/';
+
 const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
-  LOGISTIQUE: [],
-  MILITAIRE: [],
+  LOGISTIQUE: [
+    {
+      label: 'Outils',
+      tools: [
+        {
+          label: 'La flotte',
+          description: 'Les vaisseaux de l’organisation et leurs propriétaires.',
+          route: '/icy/fleet',
+          imageUrl: ACTIVITIES + 'cargo.jpg'
+        },
+        {
+          label: 'Achat de vaisseaux',
+          description: 'Où acheter ou louer chaque vaisseau, et à quel prix.',
+          route: '/icy/outils/achat-vaisseaux',
+          imageUrl: WIKI + 'thumb/f/f6/IAE2954-day5-polaris-tunnel-view.jpg/400px-IAE2954-day5-polaris-tunnel-view.jpg.webp'
+        },
+        {
+          label: 'Wikelo',
+          description: 'Les échanges proposés par Wikelo et ce qu’ils demandent.',
+          route: '/icy/outils/wikelo',
+          imageUrl: WIKI + 'thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp'
+        }
+      ]
+    }
+  ],
+  MILITAIRE: [
+    {
+      label: 'Outils',
+      tools: [
+        {
+          label: 'Événements et opérations',
+          description: 'Le calendrier des sorties, avec les groupes et les postes des opérations.',
+          route: '/icy/events',
+          imageUrl: ACTIVITIES + 'space-combat.jpg'
+        },
+        {
+          label: 'Hangars exécutifs',
+          description: 'Cycle d’ouverture des hangars exécutifs, cartes et suivi des joueurs.',
+          route: '/icy/outils/executive-hangar',
+          imageUrl: WIKI + 'b/b8/Cutter_Approaching_Checkmate_Station.png'
+        }
+      ]
+    },
+    {
+      label: 'Guides',
+      tools: [
+        {
+          label: 'Guide Hathor',
+          description: 'Préparation, trajet et exécution de l’opération Hathor.',
+          route: '/icy/outils/guides/hathor',
+          imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png'
+        }
+      ]
+    }
+  ],
   INDUSTRIE: [
     {
       label: 'Outils',

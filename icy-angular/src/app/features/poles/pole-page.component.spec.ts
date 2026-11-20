@@ -79,14 +79,34 @@ describe('PolePageComponent', () => {
     expect(links[1].querySelector('img')!.getAttribute('src')).toBe('assets/images/poles/industrie.jpg');
   });
 
-  it('says so when a pole has no referent, no tool and no news, and hides empty sections', async () => {
+  it('says so when a pole has no referent and no news, and hides empty sections', async () => {
     await load('militaire', home('MILITAIRE'));
     expect(text('pole-referents')).toBe("Aucun référent pour l'instant");
-    expect(text('pole-tools')).toContain("Ce pôle n'a pas encore d'outil dédié.");
+    expect(text('pole-tools')).toContain('Hangars exécutifs');
+    expect(text('pole-tools')).toContain('Guide Hathor');
     expect(text('pole-news')).toContain('Aucune actualité publiée pour ce pôle.');
     expect(find('pole-stats')).toBeNull();
     expect(find('pole-activity')).toBeNull();
     expect(find('pole-agenda')).toBeNull();
+  });
+
+  it('shows the event figures and the past activities of a pole without its own tools', async () => {
+    await load('logistique', {
+      ...home('LOGISTIQUE'),
+      stats: [{ key: 'POLE_ACTIVITIES_30D', value: 3 }, { key: 'POLE_PARTICIPANTS_30D', value: 11 }, { key: 'POLE_UPCOMING', value: 2 }],
+      activity: [
+        { kind: 'OPERATION', id: 'op-1', name: 'Convoi Pyro', date: '2026-11-14', status: null },
+        { kind: 'EVENT', id: 'ev-1', name: 'Soirée cargo', date: '2026-11-10', status: null }
+      ]
+    });
+    expect(text('pole-stats')).toMatch(/Événements et opérations\s*3/);
+    expect(text('pole-stats')).toMatch(/Participants\s*11/);
+    expect(text('pole-tools')).toContain('La flotte');
+    const links = Array.from(find('pole-activity')!.querySelectorAll('a')) as HTMLAnchorElement[];
+    expect(links[0].textContent).toMatch(/Convoi Pyro\s*Opération · 14 novembre 2026/);
+    expect(links[0].getAttribute('href')).toBe('/icy/operations/op-1');
+    expect(links[1].getAttribute('href')).toBe('/icy/events?eventId=ev-1');
+    expect(find('pole-activity')!.querySelector('.pole-status')).toBeNull();
   });
 
   it('lets a manager publish, edit and delete news', async () => {

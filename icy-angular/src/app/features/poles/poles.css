@@ -148,6 +148,31 @@
   to { opacity: 1; transform: none; }
 }
 
+/* Les chiffres remplissent toujours la ligne : quatre de front, ou trois quand le pôle en a trois. */
+.pole-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.pole-stats-three > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1280px) {
+  .pole-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .pole-stats-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pole-stats-three > :last-child {
+    grid-column: auto;
+  }
+}
+
 .pole-stat {
   position: relative;
   overflow: hidden;

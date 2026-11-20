@@ -9,6 +9,7 @@ import { eventImage } from '../events/event-appearance';
 import { PoleIconComponent } from '../../shared/pole-icon/pole-icon.component';
 
 const ACTIVITY_STATUS: Record<string, string> = { ACTIVE: 'En cours', SETTLEMENT: 'Comptes arrêtés', CLOSED: 'Clôturée' };
+const ACTIVITY_KIND: Record<string, string> = { MINING_SHEET: 'Fiche de minage', EVENT: 'Événement', OPERATION: 'Opération' };
 const NUMBER = new Intl.NumberFormat('fr-FR');
 const MOMENT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 const DAY = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -183,11 +184,21 @@ export class PolePageComponent implements OnInit {
     return entry.kind === 'OPERATION' ? null : { eventId: entry.id };
   }
 
-  activityStatus(activity: PoleActivity): string {
-    return ACTIVITY_STATUS[activity.status] ?? activity.status;
+  activityStatus(activity: PoleActivity): string | null {
+    return activity.status ? ACTIVITY_STATUS[activity.status] ?? activity.status : null;
+  }
+
+  activityKind(activity: PoleActivity): string {
+    return ACTIVITY_KIND[activity.kind] ?? 'Activité';
   }
 
   activityLink(activity: PoleActivity): string[] | null {
-    return activity.kind === 'MINING_SHEET' ? ['/icy/outils/fiches-minage', activity.id] : null;
+    if (activity.kind === 'MINING_SHEET') return ['/icy/outils/fiches-minage', activity.id];
+    if (activity.kind === 'OPERATION') return ['/icy/operations', activity.id];
+    return activity.kind === 'EVENT' ? ['/icy/events'] : null;
+  }
+
+  activityQuery(activity: PoleActivity): { eventId: string } | null {
+    return activity.kind === 'EVENT' ? { eventId: activity.id } : null;
   }
 }

@@ -41,6 +41,7 @@ public class PoleHomeService {
     static final int TITLE_MAX = 120;
     static final int CONTENT_MAX = 4000;
     static final int AGENDA_MAX = 6;
+    static final int ACTIVITY_MAX = 4;
     private static final String MINING = "MINING";
 
     private final PoleService poles;
@@ -64,8 +65,8 @@ public class PoleHomeService {
                 .toList();
         boolean industry = pole == Specialty.INDUSTRIE;
         return new PoleDtos.Home(pole.name(), specialists, canManage(pole),
-                industry ? industryStats() : List.of(),
-                industry ? industryActivity() : List.of(),
+                industry ? industryStats() : eventStats(pole),
+                industry ? industryActivity() : eventActivity(pole),
                 agenda(pole),
                 news.findTop10ByPoleOrderByCreatedAtDescIdDesc(pole).stream().map(PoleHomeService::view).toList());
     }
@@ -140,6 +141,24 @@ public class PoleHomeService {
     private List<PoleDtos.Activity> industryActivity() {
         return sheets.findTop4ByActivityOrderBySessionDateDescCreatedAtDesc(MINING).stream()
                 .map(sheet -> new PoleDtos.Activity("MINING_SHEET", sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name()))
+                .toList();
+    }
+
+    /** Chiffres d'un pôle sans outil propre : ses événements et opérations rattachés. */
+    private List<PoleDtos.Stat> eventStats(Specialty pole) {
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime since = now.minusDays(STATS_DAYS);
+        return List.of(
+                new PoleDtos.Stat("POLE_ACTIVITIES_30D", events.countEndedOfPoleBetween(pole, since, now)),
+                new PoleDtos.Stat("POLE_PARTICIPANTS_30D", events.countParticipantsOfPoleBetween(pole, since, now)),
+                new PoleDtos.Stat("POLE_UPCOMING", events.countUpcomingOfPole(pole, now)));
+    }
+
+    /** Dernières activités terminées du pôle. */
+    private List<PoleDtos.Activity> eventActivity(Specialty pole) {
+        return events.findPastOfPole(pole, LocalDateTime.now(clock), PageRequest.of(0, ACTIVITY_MAX)).stream()
+                .map(event -> new PoleDtos.Activity(event.getActivityType().name(), event.getId(), event.getTitle(),
+                        event.getStartDateTime().toLocalDate(), null))
                 .toList();
     }
 

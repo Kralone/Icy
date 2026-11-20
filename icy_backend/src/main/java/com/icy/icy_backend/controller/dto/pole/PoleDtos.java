@@ -18,7 +18,7 @@ public final class PoleDtos {
 
     /**
      * Accueil d'un pôle. canManage dit si le membre connecté gère ce pôle ;
-     * stats et activity sont vides pour un pôle qui n'a pas encore de données à montrer.
+     * activity est vide pour un pôle qui n'a pas encore d'activité à montrer.
      */
     public record Home(String key, List<Specialist> specialists, boolean canManage,
                        List<Stat> stats, List<Activity> activity, List<Agenda> agenda, List<News> news) {
@@ -33,7 +33,7 @@ public final class PoleDtos {
     public record Stat(String key, long value) {
     }
 
-    /** Une activité récente du pôle. kind donne sa nature (MINING_SHEET), id l'objet à ouvrir. */
+    /** Une activité récente du pôle. kind donne sa nature (MINING_SHEET, EVENT, OPERATION), id l'objet à ouvrir ; status ne vaut que pour une fiche. */
     public record Activity(String kind, UUID id, String name, LocalDate date, String status) {
     }
 
