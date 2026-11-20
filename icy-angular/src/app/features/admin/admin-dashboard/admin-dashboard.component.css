@@ -50,7 +50,7 @@
   color: rgb(203 213 225);
   white-space: nowrap;
 }
-.rank-detail svg { color: rgb(var(--tone)); }
+.rank-detail app-pole-icon { color: rgb(var(--tone)); }
 
 /* Formulaire : tuiles des pôles et de la fonction de trésorier, colorées quand elles sont choisies. */
 .choice-tile {

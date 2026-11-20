@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 
 import { User } from '../../../model/user.model';
@@ -8,6 +8,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
+import { PoleIconComponent } from '../../../shared/pole-icon/pole-icon.component';
 import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
 import { SPECIALIST_RANK, SPECIALTIES, TREASURER_ROLE, hasRole, memberRank, specialtyLabel } from '../../../core/services/user/member-rank';
 
@@ -27,7 +28,7 @@ function toTime(value?: string | null): number | null {
   imports: [
     FormsModule,
     DatePipe,
-    NgTemplateOutlet,
+    PoleIconComponent,
     LoadingOverlayComponent,
     AvailabilityHeatmapComponent
 ]

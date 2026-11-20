@@ -298,6 +298,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/bank/guild-bank.component').then(m => m.GuildBankComponent)
       },
       {
+        path: 'poles',
+        loadComponent: () => import('./features/poles/poles-menu.component').then(m => m.PolesMenuComponent)
+      },
+      {
+        path: 'poles/:pole',
+        loadComponent: () => import('./features/poles/pole-page.component').then(m => m.PolePageComponent)
+      },
+      {
         path: 'outils',
         loadComponent: () => import('./features/utils/member-tools-layout/member-tools-layout.component').then(m => m.MemberToolsLayoutComponent),
         loadChildren: () => import('./features/utils/member-tools.routes').then(m => m.memberToolsRoutes)

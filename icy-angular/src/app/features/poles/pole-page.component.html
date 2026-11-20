@@ -1,0 +1,74 @@
+@if (pole(); as pole) {
+  <div class="min-h-full w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-4 py-8 sm:px-8 sm:py-10" [attr.data-pole]="pole.key">
+    <div class="mx-auto max-w-[1600px] space-y-8">
+      <a routerLink="/icy/poles" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">← Pôles</a>
+
+      <header class="pole-hero">
+        <img [src]="pole.imageUrl" alt="" class="absolute inset-0 h-full w-full object-cover" />
+        <div class="relative z-10 flex items-center gap-5 px-6 py-10 sm:px-10 sm:py-14">
+          <span class="pole-badge h-16 w-16 sm:h-20 sm:w-20"><app-pole-icon [key]="pole.key" size="h-9 w-9 sm:h-11 sm:w-11" /></span>
+          <div class="min-w-0">
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-300">Pôle</p>
+            <h1 class="text-3xl sm:text-5xl font-bold text-white">{{ pole.label }}</h1>
+            <p class="mt-2 max-w-2xl text-sm sm:text-base text-slate-200">{{ pole.description }}</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <section class="space-y-4" aria-labelledby="pole-referents-title" data-testid="pole-referents">
+          <h2 id="pole-referents-title" class="pole-section-title">{{ (specialists()?.length ?? 0) > 1 ? 'Référents' : 'Référent' }}</h2>
+          @if (specialists(); as specialists) {
+            @if (specialists.length) {
+              <ul class="space-y-3">
+                @for (specialist of specialists; track specialist.id) {
+                  <li class="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                    <span class="pole-referent-avatar h-12 w-12 text-lg" aria-hidden="true">
+                      @if (specialist.avatarUrl) {
+                        <img [src]="specialist.avatarUrl" alt="" class="h-full w-full object-cover" />
+                      } @else {
+                        {{ initial(specialist.username) }}
+                      }
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block truncate font-semibold text-white">{{ specialist.username }}</span>
+                      <span class="block text-sm text-slate-400">Spécialiste {{ pole.label }}</span>
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="rounded-2xl border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">Aucun Spécialiste n'est nommé pour ce pôle pour l'instant.</p>
+            }
+          } @else if (loadFailed()) {
+            <div class="rounded-2xl border border-red-300/30 px-4 py-5 text-sm text-red-200" data-testid="pole-referents-error">
+              <p>Impossible de charger les référents pour le moment.</p>
+              <button type="button" class="mt-3 rounded-full border border-red-300/40 px-4 py-1.5 hover:border-red-300 transition" (click)="load()">Réessayer</button>
+            </div>
+          } @else {
+            <p class="px-1 text-sm text-slate-500">Chargement…</p>
+          }
+        </section>
+
+        <section class="space-y-4" aria-labelledby="pole-tools-title" data-testid="pole-tools">
+          <h2 id="pole-tools-title" class="pole-section-title">Outils</h2>
+          @if (pole.tools.length) {
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              @for (tool of pole.tools; track tool.route) {
+                <a class="pole-tool" [routerLink]="tool.route">
+                  <span class="min-w-0 flex-1">
+                    <span class="block font-semibold text-white">{{ tool.label }}</span>
+                    <span class="block text-sm text-slate-400">{{ tool.description }}</span>
+                  </span>
+                  <span class="pole-tool-arrow text-xl" aria-hidden="true">→</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="rounded-2xl border border-dashed border-white/15 px-4 py-5 text-sm text-slate-400">Ce pôle n'a pas encore d'outil dédié.</p>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+}

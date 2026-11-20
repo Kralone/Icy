@@ -1,0 +1,114 @@
+/* Couleur de chaque pôle, lue dans --tone (triplet RVB). Partagée par le menu des pôles et leurs pages. */
+[data-pole] { --tone: 148 163 184; }
+[data-pole='LOGISTIQUE'] { --tone: 251 146 60; }
+[data-pole='MILITAIRE'] { --tone: 248 113 113; }
+[data-pole='INDUSTRIE'] { --tone: 52 211 153; }
+
+.pole-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 0.9rem;
+  color: rgb(var(--tone));
+  background: rgb(11 19 36 / 0.82);
+  border: 1px solid rgb(var(--tone) / 0.45);
+  backdrop-filter: blur(6px);
+}
+
+/* Menu : une carte par pôle. */
+.pole-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.35);
+  transition: transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease;
+}
+.pole-card:hover,
+.pole-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgb(var(--tone) / 0.55);
+  box-shadow: 0 28px 60px rgb(var(--tone) / 0.16);
+  outline: none;
+}
+.pole-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: rgb(var(--tone));
+  opacity: 0.7;
+}
+.pole-card img { transition: opacity 500ms ease, transform 700ms ease; }
+.pole-card:hover img { opacity: 1; transform: scale(1.03); }
+
+/* Page d'un pôle. */
+.pole-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(var(--tone) / 0.3);
+}
+.pole-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(10 17 28 / 0.94) 0%, rgb(10 17 28 / 0.7) 45%, rgb(10 17 28 / 0.25) 100%),
+    linear-gradient(0deg, rgb(var(--tone) / 0.16), transparent 60%);
+}
+.pole-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(203 213 225);
+}
+.pole-section-title::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(var(--tone));
+}
+.pole-referent-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 9999px;
+  color: color-mix(in srgb, rgb(var(--tone)) 45%, rgb(241 245 249));
+  background: rgb(var(--tone) / 0.12);
+  border: 1px solid rgb(var(--tone) / 0.35);
+  font-weight: 700;
+}
+.pole-tool {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.04);
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+.pole-tool:hover,
+.pole-tool:focus-visible {
+  border-color: rgb(var(--tone) / 0.55);
+  background: rgb(var(--tone) / 0.07);
+  transform: translateY(-2px);
+  outline: none;
+}
+.pole-tool-arrow { color: rgb(var(--tone)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pole-card, .pole-card img, .pole-tool { transition: none; }
+  .pole-card:hover, .pole-tool:hover { transform: none; }
+  .pole-card:hover img { transform: none; }
+}
