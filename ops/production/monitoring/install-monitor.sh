@@ -10,9 +10,9 @@ install -o root -g root -m 0644 "$directory/iceforge-monitor.timer" /etc/systemd
 systemd-analyze verify /etc/systemd/system/iceforge-monitor.service /etc/systemd/system/iceforge-monitor.timer
 systemctl daemon-reload
 systemctl enable --now iceforge-monitor.timer
-if [[ -f /etc/iceforge-monitor/config.json ]]; then
+if [[ -f /etc/iceforge-monitor/config.json || -f /etc/iceforge-monitor/discord.json ]]; then
   systemctl start iceforge-monitor.service
-  echo 'ICEFORGE-MONITOR=INSTALLED configuration présente ; vérifier le mail de test et le timer.'
+  echo 'ICEFORGE-MONITOR=INSTALLED configuration présente ; vérifier le message de test et le timer.'
 else
-  echo 'ICEFORGE-MONITOR=WAITING_FOR_MAIL configuration requise ; aucun mail ne peut encore partir.'
+  echo 'ICEFORGE-MONITOR=WAITING_FOR_CHANNEL configurer le mail ou Discord ; aucune alerte ne peut encore partir.'
 fi

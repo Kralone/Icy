@@ -7,7 +7,7 @@ Une sonde Python indépendante du backend et de Vault est lancée par
 `https://iceforge.fr/api/front/members`, la santé du backend et du bot et l’état
 de scellement de Vault. Elle ne lit aucun secret applicatif dans Vault.
 
-Après deux contrôles consécutifs en échec, elle envoie un mail à l’adresse de
+Après deux contrôles consécutifs en échec, elle envoie un mail (et, si configurée, une alerte Discord : voir plus bas) à l’adresse de
 réception choisie à la configuration (paramètre `-Recipient`). Cette adresse n’est
 pas écrite dans le dépôt, qui est public. La cause détectée est précisée dans le sujet et le
 corps : Vault scellé, Vault indisponible, backend non sain, API publique indisponible
@@ -28,6 +28,91 @@ Cette sonde tourne sur le VPS : elle détecte les pannes applicatives et les
 redémarrages bloqués, mais ne peut envoyer de mail si le VPS lui-même est arrêté
 ou n’a plus de réseau. Une sonde HTTPS externe reste nécessaire pour couvrir ces
 deux cas. L’envoi Gmail doit être validé avant de considérer les notifications actives.
+
+## Alertes Discord et état en direct
+
+La même sonde publie aussi sur Discord, via un **webhook** de salon. Le webhook ne
+dépend ni du bot IceForge ni du backend : si le bot tombe, l’alerte part quand même.
+Le mail reste un canal indépendant ; les deux peuvent être actifs ensemble, ou un seul.
+
+### Ce qui est surveillé
+
+| Élément | Problème signalé |
+|---|---|
+| Site public `https://iceforge.fr/api/front/members` | réponse différente de HTTP 200, ou injoignable |
+| Vault | scellé, ou état illisible |
+| Chaque conteneur surveillé | arrêté, en redémarrage, `unhealthy`, encore en démarrage, ou disparu |
+| Docker | ne répond pas |
+| Disque `/` | 90 % ou plus |
+| Certificat HTTPS | expire dans moins de 14 jours |
+
+Un conteneur sans healthcheck est sain tant qu’il tourne. La liste des conteneurs
+n’est pas écrite dans le dépôt : à l’activation, la sonde relève les conteneurs en
+cours d’exécution, **sans ceux du staging** (nom ou projet Compose contenant
+`staging`, souvent volontairement en veille), et les affiche dans le message de test.
+Un conteneur de cette liste qui disparaît est signalé.
+
+### Messages publiés
+
+- **État en direct** : un seul message, modifié après chaque contrôle (chaque minute) :
+  une ligne verte ou rouge par élément et l’heure du dernier contrôle. Il est vert
+  quand tout va bien, orange pendant la vérification d’une anomalie, rouge pendant
+  un incident. S’il est supprimé, la sonde en publie un nouveau.
+- **Alerte** : après **deux contrôles consécutifs** en échec d’un même élément, avec
+  une mention (`@here` par défaut). Un incident en cours n’est pas répété ; un nouvel
+  élément en panne déclenche une nouvelle alerte. Pour Vault scellé, l’alerte donne
+  la commande de déverrouillage.
+- **Rétablissement** : un message sans mention par élément revenu à la normale,
+  avec la durée de l’incident.
+
+Une panne Docker n’est pas prise pour un rétablissement des conteneurs : leurs
+alertes restent ouvertes jusqu’à ce que Docker réponde de nouveau. Un envoi Discord
+échoué est retenté au contrôle suivant.
+
+Les alertes et l’état en direct peuvent partager un salon, ou utiliser deux salons
+(par exemple `#alertes` avec notifications, `#etat-serveur` en lecture seule).
+
+### Activation
+
+1. Dans Discord : paramètres du salon › **Intégrations** › **Webhooks** ›
+   **Nouveau webhook**, nommer « IceForge alertes », puis **Copier l’URL du webhook**.
+   Cette URL permet à quiconque d’écrire dans le salon : ne pas la coller dans un chat.
+   Pour un second salon d’état en direct, créer un second webhook.
+2. Installer les fichiers mis à jour de `ops/production/monitoring/` sur le VPS puis
+   relancer `install-monitor.sh` (voir « Installation serveur »).
+3. Depuis le dépôt Windows :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\production\monitoring\configure-discord-from-windows.ps1
+```
+
+Coller l’URL dans la saisie masquée. Options : `-SeparateStatusChannel` pour un
+second salon, `-Mention none|everyone|<identifiant de rôle>` au lieu de `@here`.
+L’URL passe par stdin SSH. Seules les adresses de webhook `discord.com` sont acceptées.
+Le script envoie un message de test qui liste les conteneurs surveillés, puis
+enregistre `/etc/iceforge-monitor/discord.json` (root, 0600, hors Vault et hors dépôt)
+et lance un premier contrôle : le message d’état en direct apparaît.
+
+Après l’ajout ou le retrait d’un service, mettre la liste à jour :
+
+```bash
+sudo python3 /root/iceforge/ops/production/monitoring/production-monitor.py refresh-containers
+sudo python3 /root/iceforge/ops/production/monitoring/production-monitor.py test-discord
+```
+
+`refresh-containers` relève à nouveau les conteneurs en cours d’exécution et affiche
+ceux ajoutés et retirés. Le lancer quand toute la production tourne, sinon un
+conteneur arrêté à ce moment sortirait de la surveillance.
+
+### Limite assumée
+
+La sonde tourne sur le VPS. Si le VPS est entièrement arrêté ou n’a plus de réseau,
+**aucune alerte ne part** et le message d’état en direct cesse simplement d’être
+mis à jour : son heure de dernier contrôle vieillit. Une sonde externe a été
+écartée pour l’instant (décision du 20 novembre 2026).
+
+Le pare-feu d’entrée (22, 80 et 443) ne gêne pas les webhooks, qui sont des
+connexions sortantes HTTPS.
 
 ## SMTP local du VPS
 
@@ -160,16 +245,16 @@ configuration ; ne pas désactiver les vérifications TLS.
 
 ## Installation serveur
 
-Installer les quatre fichiers de `ops/production/monitoring/` dans
+Installer les fichiers de `ops/production/monitoring/` dans
 `/root/iceforge/ops/production/monitoring/`, appartenant à root, puis :
 
 ```bash
 sudo bash /root/iceforge/ops/production/monitoring/install-monitor.sh
 ```
 
-Sans configuration mail, le timer est installé mais la sonde est ignorée par
-`ConditionPathExists`. Le message `WAITING_FOR_MAIL` signifie qu’aucun mail ne
-peut encore être envoyé. Le script Windows démarre un contrôle après configuration.
+Sans configuration mail ni Discord, le timer est installé mais la sonde est ignorée par
+`ConditionPathExists`. Le message `WAITING_FOR_CHANNEL` signifie qu’aucune alerte ne
+peut encore être envoyée. Le script Windows démarre un contrôle après configuration.
 
 Les fichiers d’état et de verrouillage résident dans `/var/lib/iceforge-monitor/`,
 répertoire root 0700 ; l’état est remplacé atomiquement en 0600. Le verrou évite
@@ -198,6 +283,13 @@ Brevo distinct du login SMTP, le destinataire Gmail, le mail mensuel et sa repri
 après un échec d’envoi.
 Le mode local est testé sans identifiants, avec en-têtes Date/Message-ID, autorisation
 SPF exacte et refus d’envoyer ou de persister une configuration sans SPF.
+Douze tests Discord couvrent l’alerte après deux échecs sans répétition, l’incident
+bref non signalé, le rétablissement sans mention, Vault scellé avec la commande de
+déverrouillage, conteneur disparu, disque et certificat, la panne Docker qui ne
+simule pas de rétablissement, le message d’état publié puis modifié, sa republication
+après suppression, la reprise d’un envoi échoué, la mention limitée au rôle choisi,
+le refus d’une URL qui n’est pas un webhook Discord et l’inventaire sans le staging.
+Aucun appel réseau n’est fait.
 
 Installation du 17 octobre 2026 : timer installé, activé au démarrage et actif,
 unités validées par `systemd-analyze verify`. La sonde exécutée sur le VPS a constaté

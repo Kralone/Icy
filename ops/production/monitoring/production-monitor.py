@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Host-level monitoring independent of the application and Vault secrets."""
+"""Host-level monitoring independent of the application and Vault secrets.
+
+Alerts go by mail (config.json) and/or to a Discord webhook (discord.json). The
+webhook does not depend on the IceForge bot, so it still alerts if the bot is down.
+"""
 import argparse
 from datetime import datetime, timezone
 from email.message import EmailMessage
@@ -9,12 +13,15 @@ import json
 import os
 import re
 from pathlib import Path
+import shutil
 import smtplib
+import socket
 import ssl
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 
@@ -82,15 +89,18 @@ def inspect_services():
     return {'backend': summarize(result), 'bot': summarize(bot)}
 
 
-def probe():
+def probe(containers=None):
+    """Mail diagnosis; with a container list, also the extended Discord checks."""
     data = inspect_services()
     vault = command(['docker', 'exec', 'iceforge_vault', 'wget', '-qO-', '-T', '5',
                      'http://127.0.0.1:8200/v1/sys/seal-status'])
     data['vault_sealed'] = vault.get('sealed') if isinstance(vault, dict) else None
     try:
         request = urllib.request.Request(URL, headers={'User-Agent': 'IceForge-Production-Monitor/1.0'})
+        started = time.monotonic()
         with urllib.request.urlopen(request, timeout=8) as response:
             data['http'] = response.status
+        data['latency_ms'] = int((time.monotonic() - started) * 1000)
     except urllib.error.HTTPError as error:
         data['http'] = error.code
     except (OSError, urllib.error.URLError):
@@ -107,6 +117,10 @@ def probe():
         data['cause'] = 'BOT_DOWN'
     else:
         data['cause'] = 'OK'
+    if containers is not None:
+        data['containers'] = inspect_containers(containers)
+        data['disk_percent'] = disk_percent()
+        data['certificate_days'] = certificate_days()
     return data
 
 
@@ -182,11 +196,297 @@ def transition(state, observation, notify, threshold=2, heartbeat_days=0, now=No
     return state
 
 
+# --- Discord and extended checks ---------------------------------------------
+
+DISCORD_CONFIG = Path('/etc/iceforge-monitor/discord.json')
+DISCORD_STATE = Path('/var/lib/iceforge-monitor/discord-state.json')
+# Only Discord webhooks: the secret URL never leaves for an arbitrary host.
+WEBHOOK = re.compile(r'https://(?:(?:canary|ptb)\.)?discord(?:app)?\.com/api/webhooks/\d{15,22}/[A-Za-z0-9_-]{20,120}')
+MENTION = re.compile(r'here|everyone|none|\d{15,22}')
+CONTAINER_NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}')
+USER_AGENT = 'DiscordBot (https://iceforge.fr, 2.0) IceForge-Production-Monitor'
+DISK_THRESHOLD = 90
+CERTIFICATE_THRESHOLD_DAYS = 14
+GREEN, ORANGE, RED = 0x2ECC71, 0xE67E22, 0xE74C3C
+UNSEAL_HINT = ('Déverrouiller depuis PowerShell, dans le dépôt IceForge :\n'
+               '`powershell -NoProfile -ExecutionPolicy Bypass -File .\\ops\\production\\vault\\unseal-from-windows.ps1`')
+
+
+def inspect_containers(names):
+    """State of each watched container; never reads its environment."""
+    template = ('{{.Name}}\t{{.State.Status}}\t'
+                '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}\t{{.RestartCount}}')
+    try:
+        # Exit code is non-zero when one container is missing: the others are still printed.
+        result = subprocess.run(['docker', 'inspect', '--type', 'container', '--format', template, *names],
+                                capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode and not result.stdout.strip() and 'No such' not in result.stderr:
+        return None
+    found = {}
+    for line in result.stdout.splitlines():
+        parts = line.split('\t')
+        if len(parts) == 4:
+            found[parts[0].lstrip('/')] = {'status': parts[1], 'health': parts[2],
+                                           'restarts': int(parts[3]) if parts[3].isdigit() else 0}
+    return {name: found.get(name, {'status': 'missing', 'health': 'unknown', 'restarts': 0}) for name in names}
+
+
+def running_containers(exclude):
+    """Containers to watch: those running now, minus the ones matching `exclude` (staging)."""
+    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}\t{{.Label "com.docker.compose.project"}}'],
+                            capture_output=True, text=True, timeout=10, check=True)
+    pattern = re.compile(exclude, re.IGNORECASE) if exclude else None
+    names = []
+    for line in result.stdout.splitlines():
+        name, _, project = line.partition('\t')
+        if CONTAINER_NAME.fullmatch(name) and not (pattern and (pattern.search(name) or pattern.search(project))):
+            names.append(name)
+    return sorted(names)
+
+
+def disk_percent(path='/'):
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return None
+    return round(usage.used * 100 / usage.total)
+
+
+def certificate_days(host='iceforge.fr'):
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((host, 443), timeout=8) as raw:
+            with context.wrap_socket(raw, server_hostname=host) as connection:
+                not_after = connection.getpeercert()['notAfter']
+        return int((ssl.cert_time_to_seconds(not_after) - time.time()) // 86400)
+    except (OSError, ssl.SSLError, KeyError, ValueError):
+        return None  # An invalid certificate already makes the public API check fail.
+
+
+def container_ok(state):
+    return state['status'] == 'running' and state['health'] in ('healthy', 'none')
+
+
+def container_text(name, state):
+    if state['status'] == 'missing':
+        return f'{name} : conteneur introuvable'
+    if state['status'] != 'running':
+        detail = state['status'] + (f", {state['restarts']} redémarrages" if state['restarts'] else '')
+        return f'{name} : {detail}'
+    return f"{name} : {'démarrage en cours' if state['health'] == 'starting' else 'non sain'}"
+
+
+def problems(observation):
+    """Every failing component, keyed so that each one is alerted and recovered on its own."""
+    found = {}
+    if observation['http'] != 200:
+        found['api'] = ('Site public injoignable' if observation['http'] == 0
+                        else f"Site public : HTTP {observation['http']}")
+    if observation['vault_sealed'] is True:
+        found['vault'] = 'Vault scellé : le backend et le bot ne pourront pas redémarrer'
+    elif observation['vault_sealed'] is not False:
+        found['vault'] = 'Vault : état illisible'
+    containers = observation.get('containers')
+    if containers is None:
+        found['docker'] = 'Docker ne répond pas'
+    else:
+        for name, state in containers.items():
+            if not container_ok(state):
+                found['container:' + name] = container_text(name, state)
+    if observation.get('disk_percent') is not None and observation['disk_percent'] >= DISK_THRESHOLD:
+        found['disk'] = f"Disque presque plein : {observation['disk_percent']} %"
+    days = observation.get('certificate_days')
+    if days is not None and days < CERTIFICATE_THRESHOLD_DAYS:
+        found['certificate'] = f'Certificat HTTPS : expire dans {days} jours'
+    return found
+
+
+def discord_transition(state, found, now, threshold=2):
+    """Returns (state, new alerts, recoveries). A problem is alerted after `threshold` failed checks."""
+    previous = state.get('counts', {})
+    counts = {key: previous.get(key, 0) + 1 for key in found}
+    alerted = {key: dict(value) for key, value in state.get('alerted', {}).items()}
+    recovered = {key: alerted.pop(key) for key in list(alerted) if key not in found}
+    new = {}
+    for key, text in found.items():
+        if key in alerted:
+            alerted[key]['text'] = text
+        elif counts[key] >= threshold:
+            new[key] = alerted[key] = {'text': text, 'since': now.isoformat()}
+    updated = dict(state)
+    updated.update(counts=counts, alerted=alerted)
+    return updated, new, recovered
+
+
+def duration(since, now):
+    minutes = max(1, round((now - datetime.fromisoformat(since)).total_seconds() / 60))
+    return f'{minutes} min' if minutes < 120 else f'{minutes // 60} h {minutes % 60:02d}'
+
+
+def allowed_mentions(mention):
+    if mention in ('here', 'everyone'):
+        return '@' + mention, {'parse': ['everyone']}
+    if mention and mention.isdigit():
+        return f'<@&{mention}>', {'roles': [mention]}
+    return '', {'parse': []}
+
+
+def alert_payload(new, mention):
+    prefix, allowed = allowed_mentions(mention)
+    lines = [f"🔴 {value['text']}" for value in new.values()]
+    if 'vault' in new:
+        lines += ['', UNSEAL_HINT, 'Ne pas réinitialiser Vault.']
+    return {'content': (prefix + ' ' if prefix else '') + '**Alerte IceForge**', 'allowed_mentions': allowed,
+            'embeds': [{'title': 'Incident détecté', 'description': '\n'.join(lines), 'color': RED}]}
+
+
+def recovery_payload(recovered, now):
+    lines = [f"🟢 {value['text']} (durée : {duration(value['since'], now)})" for value in recovered.values()]
+    return {'content': '**IceForge : rétabli**', 'allowed_mentions': {'parse': []},
+            'embeds': [{'title': 'Service rétabli', 'description': '\n'.join(lines), 'color': GREEN}]}
+
+
+def status_payload(observation, found, alerted, now):
+    """The live message, edited after every check."""
+    def mark(ok):
+        return '🟢' if ok else '🔴'
+    http = observation['http']
+    latency = f", {observation['latency_ms']} ms" if http == 200 and 'latency_ms' in observation else ''
+    sealed = observation['vault_sealed']
+    lines = [f"{mark(http == 200)} **Site public** : {'HTTP ' + str(http) if http else 'injoignable'}{latency}",
+             f"{mark(sealed is False)} **Vault** : "
+             + {True: 'scellé', False: 'déverrouillé'}.get(sealed, 'état illisible')]
+    containers = observation.get('containers')
+    if containers is None:
+        lines.append('🔴 **Conteneurs** : Docker ne répond pas')
+    else:
+        healthy = sum(container_ok(state) for state in containers.values())
+        lines.append(f'{mark(healthy == len(containers))} **Conteneurs** : {healthy}/{len(containers)} sains')
+        for name, state in containers.items():
+            detail = state['health'] if state['health'] != 'none' else state['status']
+            if not container_ok(state):
+                detail = container_text(name, state).split(' : ', 1)[1]
+            lines.append(f'{mark(container_ok(state))} `{name}` {detail}')
+    disk = observation.get('disk_percent')
+    if disk is not None:
+        lines.append(f'{mark(disk < DISK_THRESHOLD)} **Disque** : {disk} % utilisé')
+    days = observation.get('certificate_days')
+    if days is not None:
+        lines.append(f'{mark(days >= CERTIFICATE_THRESHOLD_DAYS)} **Certificat HTTPS** : expire dans {days} jours')
+    lines += ['', f'Dernier contrôle : <t:{int(now.timestamp())}:R>']
+    if alerted:
+        colour, title = RED, f'IceForge : {len(alerted)} incident(s) en cours'
+    elif found:
+        colour, title = ORANGE, 'IceForge : anomalie en vérification'
+    else:
+        colour, title = GREEN, 'IceForge : tout fonctionne'
+    return {'content': '', 'allowed_mentions': {'parse': []},
+            'embeds': [{'title': title, 'description': '\n'.join(lines), 'color': colour,
+                        'footer': {'text': 'Mis à jour chaque minute par la sonde du VPS'}}]}
+
+
+def http_json(method, url, payload=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    request = urllib.request.Request(url, data=data, method=method,
+                                     headers={'Content-Type': 'application/json', 'User-Agent': USER_AGENT})
+    with urllib.request.urlopen(request, timeout=10) as response:
+        body = response.read()
+    return json.loads(body) if body else {}
+
+
+def update_status(config, state, payload):
+    """Edit the live message; post a new one if it was deleted or never posted."""
+    url = config.get('status_webhook_url') or config['webhook_url']
+    message = state.get('status_message_id')
+    if message and state.get('status_webhook') == webhook_id(url):
+        try:
+            http_json('PATCH', f'{url}/messages/{message}', payload)
+            return
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+    posted = http_json('POST', url + '?wait=true', payload)
+    state['status_message_id'] = str(posted['id'])
+    state['status_webhook'] = webhook_id(url)
+
+
+def webhook_id(url):
+    return url.split('/api/webhooks/', 1)[1].split('/', 1)[0]
+
+
+def discord_check(config, state, observation, now, send=http_json):
+    """One check: alerts and recoveries first, then the live message. Returns the state to persist."""
+    found = problems(observation)
+    if 'docker' in found:
+        # Unknown is not recovered: keep alerted containers until Docker answers again.
+        found.update({key: value['text'] for key, value in state.get('alerted', {}).items()
+                      if key.startswith('container:')})
+    updated, new, recovered = discord_transition(state, found, now)
+    try:
+        if recovered:
+            send('POST', config['webhook_url'], recovery_payload(recovered, now))
+        if new:
+            send('POST', config['webhook_url'], alert_payload(new, config.get('mention', 'here')))
+    except (OSError, ValueError):
+        # Not delivered: keep the previous alerted set so that the message is retried next minute.
+        updated['alerted'] = state.get('alerted', {})
+        return updated, False
+    try:
+        update_status(config, updated, status_payload(observation, found, updated['alerted'], now))
+    except (OSError, ValueError, KeyError):
+        return updated, False
+    return updated, True
+
+
+def validated_discord_config(raw):
+    config = {'webhook_url': raw.get('webhook_url'), 'mention': raw.get('mention') or 'here'}
+    if raw.get('status_webhook_url'):
+        config['status_webhook_url'] = raw['status_webhook_url']
+    if (not isinstance(config['webhook_url'], str) or not WEBHOOK.fullmatch(config['webhook_url'])
+            or ('status_webhook_url' in config and not (isinstance(config['status_webhook_url'], str)
+                                                         and WEBHOOK.fullmatch(config['status_webhook_url'])))
+            or not isinstance(config['mention'], str) or not MENTION.fullmatch(config['mention'])):
+        raise RuntimeError('Invalid Discord configuration')
+    return config
+
+
+def configure_discord(exclude):
+    config = validated_discord_config(json.loads(sys.stdin.readline()))
+    config['containers'] = running_containers(exclude)
+    if not config['containers']:
+        raise RuntimeError('No running container to watch')
+    listing = '\n'.join(f'• `{name}`' for name in config['containers'])
+    test = {'content': '**IceForge : alertes Discord activées**', 'allowed_mentions': {'parse': []},
+            'embeds': [{'title': f"{len(config['containers'])} conteneurs surveillés", 'color': GREEN,
+                        'description': listing + '\n\nUne alerte arrive ici quand un service tombe, '
+                                                 'puis un message quand il est rétabli.'}]}
+    http_json('POST', config['webhook_url'], test)
+    write_protected(DISCORD_CONFIG, config)
+    print('DISCORD-CONFIG=OK containers=' + ','.join(config['containers']))
+
+
+def refresh_containers(exclude):
+    config = read_protected(DISCORD_CONFIG)
+    before = set(config.get('containers', []))
+    config['containers'] = running_containers(exclude)
+    if not config['containers']:
+        raise RuntimeError('No running container to watch')
+    write_protected(DISCORD_CONFIG, config)
+    after = set(config['containers'])
+    print('DISCORD-CONTAINERS=OK added=' + ','.join(sorted(after - before))
+          + ' removed=' + ','.join(sorted(before - after)) + f' total={len(after)}')
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=('configure', 'configure-local', 'check', 'test-email'))
+    parser.add_argument('action', choices=('configure', 'configure-local', 'check', 'test-email',
+                                           'configure-discord', 'refresh-containers', 'test-discord'))
     # Adresse de réception : paramètre de déploiement, jamais écrite dans le dépôt.
     parser.add_argument('--recipient')
+    # Conteneurs ignorés lors de l'inventaire : le staging est souvent volontairement en veille.
+    parser.add_argument('--exclude', default='staging')
     args = parser.parse_args()
     if os.geteuid() != 0:
         raise RuntimeError('Root required')
@@ -233,33 +533,61 @@ def main():
         write_protected(CONFIG, config)
         print('MONITOR-MAIL-CONFIG=OK test envoyé')
         return
-    config = read_protected(CONFIG)
+    if args.action == 'configure-discord':
+        configure_discord(args.exclude)
+        return
+    if args.action == 'refresh-containers':
+        refresh_containers(args.exclude)
+        return
+    if args.action == 'test-discord':
+        config = read_protected(DISCORD_CONFIG)
+        http_json('POST', config['webhook_url'], {'content': '**IceForge : test des alertes Discord**',
+                                                  'allowed_mentions': {'parse': []}})
+        print('DISCORD-TEST=OK')
+        return
     if args.action == 'test-email':
-        send_email(config, '[IceForge] Test des alertes de production', 'Envoi des alertes opérationnel.')
+        send_email(read_protected(CONFIG), '[IceForge] Test des alertes de production', 'Envoi des alertes opérationnel.')
         print('MONITOR-MAIL-TEST=OK')
         return
+    mail = read_protected(CONFIG) if CONFIG.exists() else None
+    discord = read_protected(DISCORD_CONFIG) if DISCORD_CONFIG.exists() else None
+    if mail is None and discord is None:
+        raise RuntimeError('No alert channel configured')
     STATE.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     with open(STATE.parent / '.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        state = read_protected(STATE) if STATE.exists() else {'failures': 0}
-        observation = probe()
-        try:
-            updated = transition(state, observation, lambda subject, body: send_email(config, subject, body),
-                                 heartbeat_days=config.get('heartbeat_days', 0))
-        except (OSError, smtplib.SMTPException):
-            # Keep the prior notified state; failed alert/recovery mail will be retried next minute.
-            updated = dict(state)
-            if observation['cause'] != 'OK':
-                updated['failures'] = updated.get('failures', 0) + 1
+        observation = probe(discord['containers'] if discord else None)
+        failed = []
+        if discord:
+            state = read_protected(DISCORD_STATE) if DISCORD_STATE.exists() else {}
+            updated, delivered = discord_check(discord, state, observation, datetime.now(timezone.utc))
+            write_protected(DISCORD_STATE, updated)
+            if not delivered:
+                failed.append('discord')
+        if mail:
+            state = read_protected(STATE) if STATE.exists() else {'failures': 0}
+            try:
+                updated = transition(state, observation, lambda subject, body: send_email(mail, subject, body),
+                                     heartbeat_days=mail.get('heartbeat_days', 0))
+            except (OSError, smtplib.SMTPException):
+                # Keep the prior notified state; failed alert/recovery mail will be retried next minute.
+                updated = dict(state)
+                if observation['cause'] != 'OK':
+                    updated['failures'] = updated.get('failures', 0) + 1
+                failed.append('mail')
             write_protected(STATE, updated)
-            raise RuntimeError('Mail delivery failed') from None
-        write_protected(STATE, updated)
-        print('ICEFORGE-MONITOR cause=' + observation['cause'] + ' http=' + str(observation['http']))
-
+        print('ICEFORGE-MONITOR cause=' + observation['cause'] + ' http=' + str(observation['http'])
+              + (f' problems={len(problems(observation))}' if discord else ''))
+        if failed:
+            raise RuntimeError('Delivery failed: ' + ','.join(failed))
 
 if __name__ == '__main__':
     try:
         main()
-    except (OSError, ValueError, RuntimeError, smtplib.SMTPException, subprocess.TimeoutExpired):
-        print('ICEFORGE-MONITOR=ERROR vérifier configuration mail, réseau et journal du service ; aucun secret affiché.', file=sys.stderr)
+    except RuntimeError as error:
+        # Only messages written by this script: they never contain a secret.
+        print(f'ICEFORGE-MONITOR=ERROR {error} ; aucun secret affiché.', file=sys.stderr)
+        sys.exit(1)
+    except (OSError, ValueError, smtplib.SMTPException, subprocess.TimeoutExpired):
+        print('ICEFORGE-MONITOR=ERROR vérifier configuration mail/Discord, réseau et journal du service ; aucun secret affiché.', file=sys.stderr)
         sys.exit(1)
