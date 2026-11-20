@@ -288,7 +288,7 @@ BEGIN
             ('47', 'V47__create_user_tutorials.sql', 2032996675),
             ('48', 'V48__create_guild_bank.sql', -948273531),
             ('49', 'V49__create_user_availability.sql', 1842482513),
-            ('50', 'V50__add_user_specialty.sql', -2112471753)
+            ('50', 'V50__add_user_specialty.sql', -1310181089)
         ) expected(version, script, checksum)
         WHERE NOT EXISTS (SELECT 1 FROM public.flyway_schema_history actual
             WHERE actual.version = expected.version AND actual.script = expected.script
@@ -442,6 +442,13 @@ BEGIN
        OR EXISTS (SELECT 1 FROM core.users WHERE specialty IS NOT NULL
                   AND specialty NOT IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'))
     THEN RAISE EXCEPTION 'V50 user specialty structure is incomplete'; END IF;
+
+    -- V50 : aucun Spécialiste sans pôle ; ceux nommés avant cette version sont repassés Ingénieur.
+    IF EXISTS (SELECT 1 FROM core.user_roles ur
+               JOIN core.roles r ON r.id = ur.role_id AND r.name = 'SPECIALISTE'
+               JOIN core.users u ON u.id = ur.user_id
+               WHERE u.specialty IS NULL)
+    THEN RAISE EXCEPTION 'V50 left a Specialist without a pole'; END IF;
 
     -- V50 : actualités des pôles, limitées aux trois pôles ; l'auteur supprimé laisse l'actualité en place.
     IF to_regclass('core.pole_news') IS NULL

@@ -1,9 +1,20 @@
 -- Sous-grade des Spécialistes : le pôle dont le membre est le référent.
--- Renseigné uniquement pour le grade SPECIALISTE (règle appliquée par le backend) ; NULL pour les autres grades
--- et pour les Spécialistes nommés avant cette version, à compléter depuis la page Membres.
+-- Renseigné uniquement pour le grade SPECIALISTE (règle appliquée par le backend) ; NULL pour les autres grades.
 ALTER TABLE core.users
     ADD COLUMN specialty VARCHAR(16),
     ADD CONSTRAINT ck_users_specialty CHECK (specialty IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'));
+
+-- Un Spécialiste nommé avant cette version n'a pas de pôle : il repasse au grade précédent, Ingénieur.
+-- Il retrouvera le grade Spécialiste quand un pôle lui sera attribué depuis la page Membres.
+UPDATE core.user_roles ur
+SET role_id = (SELECT id FROM core.roles WHERE name = 'INGENIEUR')
+WHERE ur.role_id = (SELECT id FROM core.roles WHERE name = 'SPECIALISTE')
+  AND NOT EXISTS (SELECT 1 FROM core.user_roles other
+                  WHERE other.user_id = ur.user_id
+                    AND other.role_id = (SELECT id FROM core.roles WHERE name = 'INGENIEUR'));
+
+DELETE FROM core.user_roles
+WHERE role_id = (SELECT id FROM core.roles WHERE name = 'SPECIALISTE');
 
 -- Actualités d'un pôle, publiées par ses référents, les Officiers ou les Administrateurs.
 -- L'auteur reste affiché par son pseudo même si son compte est supprimé.
