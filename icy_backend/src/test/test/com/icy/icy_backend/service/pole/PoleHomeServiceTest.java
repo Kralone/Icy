@@ -43,7 +43,9 @@ class PoleHomeServiceTest {
     private final PoleNewsRepository news = Mockito.mock(PoleNewsRepository.class);
     private final SessionSheetRepository sheets = Mockito.mock(SessionSheetRepository.class);
     private final UserRepository users = Mockito.mock(UserRepository.class);
-    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users);
+    private final com.icy.icy_backend.db.repository.event.EventRepository events = Mockito.mock(com.icy.icy_backend.db.repository.event.EventRepository.class);
+    private final com.icy.icy_backend.db.repository.event.OperationRepository operations = Mockito.mock(com.icy.icy_backend.db.repository.event.OperationRepository.class);
+    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users, events, operations);
 
     @BeforeEach
     void setUp() {
@@ -93,6 +95,34 @@ class PoleHomeServiceTest {
         assertThat(home.stats()).isEmpty();
         assertThat(home.activity()).isEmpty();
         assertThat(home.news()).isEmpty();
+        assertThat(home.agenda()).isEmpty();
+    }
+
+    @Test
+    void agendaListsUpcomingActivitiesOfThePoleWithTheirImage() {
+        signIn("JUNIOR", null);
+        com.icy.icy_backend.db.entity.event.EventType type = new com.icy.icy_backend.db.entity.event.EventType();
+        type.setName("Minage");
+        type.setImageUrl("/images/minage.webp");
+        com.icy.icy_backend.db.entity.event.Event outing = com.icy.icy_backend.db.entity.event.Event.builder()
+                .id(UUID.randomUUID()).title("Sortie Quantanium").type(type)
+                .startDateTime(LocalDateTime.of(2026, 11, 21, 21, 0)).endDateTime(LocalDateTime.of(2026, 11, 21, 23, 0)).build();
+        com.icy.icy_backend.db.entity.event.Event operation = com.icy.icy_backend.db.entity.event.Event.builder()
+                .id(UUID.randomUUID()).title("Opération Halo").type(type)
+                .activityType(com.icy.icy_backend.db.entity.event.ActivityType.OPERATION)
+                .startDateTime(LocalDateTime.of(2026, 11, 28, 21, 0)).endDateTime(LocalDateTime.of(2026, 11, 28, 23, 0)).build();
+        com.icy.icy_backend.db.entity.event.Operation details = new com.icy.icy_backend.db.entity.event.Operation();
+        details.setEventId(operation.getId());
+        details.setImageUrl("https://exemple.test/halo.jpg");
+        when(events.findUpcomingOfPole(Mockito.eq(Specialty.INDUSTRIE), Mockito.eq(LocalDateTime.of(2026, 11, 20, 10, 0)), any()))
+                .thenReturn(List.of(outing, operation));
+        when(operations.findAllById(List.of(outing.getId(), operation.getId()))).thenReturn(List.of(details));
+
+        List<PoleDtos.Agenda> agenda = service.home("INDUSTRIE").agenda();
+
+        assertThat(agenda).containsExactly(
+                new PoleDtos.Agenda(outing.getId(), "EVENT", "Sortie Quantanium", "Minage", "/images/minage.webp", outing.getStartDateTime(), outing.getEndDateTime()),
+                new PoleDtos.Agenda(operation.getId(), "OPERATION", "Opération Halo", "Minage", "https://exemple.test/halo.jpg", operation.getStartDateTime(), operation.getEndDateTime()));
     }
 
     @Test

@@ -51,6 +51,17 @@ export interface PoleActivity {
   status: string;
 }
 
+/** Événement ou opération à venir rattaché au pôle. */
+export interface PoleAgendaEntry {
+  id: string;
+  kind: 'EVENT' | 'OPERATION' | string;
+  title: string;
+  type?: string | null;
+  imageUrl?: string | null;
+  startDateTime: string;
+  endDateTime: string;
+}
+
 export interface PoleNews {
   id: number;
   title: string;
@@ -67,6 +78,7 @@ export interface PoleHome {
   canManage: boolean;
   stats: PoleStat[];
   activity: PoleActivity[];
+  agenda: PoleAgendaEntry[];
   news: PoleNews[];
 }
 

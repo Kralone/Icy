@@ -254,6 +254,22 @@
 .pole-button--danger { color: rgb(252 165 165); border-color: rgb(248 113 113 / 0.4); }
 .pole-button--danger:hover { border-color: rgb(248 113 113); }
 
+.pole-agenda {
+  display: flex;
+  align-items: stretch;
+  gap: 0.9rem;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(11 19 36 / 0.8);
+  transition: border-color 200ms ease, transform 250ms ease;
+}
+.pole-agenda-image { flex: none; width: 6.5rem; min-height: 4.75rem; overflow: hidden; background: rgb(var(--tone) / 0.08); }
+.pole-agenda-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 700ms ease; }
+.pole-agenda-kind { color: color-mix(in srgb, rgb(var(--tone)) 55%, rgb(226 232 240)); }
+.pole-agenda:hover, .pole-agenda:focus-visible { border-color: rgb(var(--tone) / 0.55); transform: translateY(-2px); outline: none; }
+.pole-agenda:hover img { transform: scale(1.06); }
+
 .pole-activity {
   display: flex;
   align-items: center;
@@ -277,7 +293,8 @@
 .pole-status[data-status='ACTIVE'] { color: rgb(110 231 183); border-color: rgb(52 211 153 / 0.45); }
 
 @media (prefers-reduced-motion: reduce) {
-  .pole-card, .pole-card img, .pole-tool, .pole-tool img, .pole-tool-arrow { transition: none; }
+  .pole-card, .pole-card img, .pole-tool, .pole-tool img, .pole-tool-arrow, .pole-agenda, .pole-agenda img { transition: none; }
+  .pole-agenda:hover, .pole-agenda:hover img { transform: none; }
   .pole-card:hover, .pole-tool:hover { transform: none; }
   .pole-card:hover img, .pole-tool:hover img { transform: none; }
   .pole-hero-image, .pole-rise { animation: none; }

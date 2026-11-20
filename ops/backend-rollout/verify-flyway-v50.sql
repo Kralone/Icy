@@ -288,7 +288,7 @@ BEGIN
             ('47', 'V47__create_user_tutorials.sql', 2032996675),
             ('48', 'V48__create_guild_bank.sql', -948273531),
             ('49', 'V49__create_user_availability.sql', 1842482513),
-            ('50', 'V50__add_user_specialty.sql', 540415462)
+            ('50', 'V50__add_user_specialty.sql', -2112471753)
         ) expected(version, script, checksum)
         WHERE NOT EXISTS (SELECT 1 FROM public.flyway_schema_history actual
             WHERE actual.version = expected.version AND actual.script = expected.script
@@ -451,6 +451,15 @@ BEGIN
                       AND contype = 'f' AND confdeltype = 'n' AND confrelid = 'core.users'::regclass)
        OR to_regclass('core.idx_pole_news_pole_created_at') IS NULL
     THEN RAISE EXCEPTION 'V50 pole news structure is incomplete'; END IF;
+
+    -- V50 : pôle facultatif d'un événement ou d'une opération, limité aux trois pôles.
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'events' AND table_name = 'events'
+                   AND column_name = 'pole' AND data_type = 'character varying'
+                   AND character_maximum_length = 16 AND is_nullable = 'YES')
+       OR NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'events.events'::regclass
+                      AND conname = 'ck_events_pole' AND contype = 'c' AND convalidated)
+       OR to_regclass('events.idx_events_pole_end') IS NULL
+    THEN RAISE EXCEPTION 'V50 event pole structure is incomplete'; END IF;
 END
 $verify$;
 

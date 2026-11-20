@@ -99,6 +99,28 @@
         </div>
 
         <aside class="space-y-8">
+          @if (home()?.agenda?.length) {
+            <section class="space-y-4" aria-labelledby="pole-agenda-title" data-testid="pole-agenda">
+              <h2 id="pole-agenda-title" class="pole-section-title">À venir</h2>
+              <ul class="space-y-3">
+                @for (entry of home()!.agenda; track entry.id; let index = $index) {
+                  <li>
+                    <a class="pole-agenda pole-rise" [style.--rise]="index" [routerLink]="agendaLink(entry)" [queryParams]="agendaQuery(entry)">
+                      <span class="pole-agenda-image">
+                        <img [src]="agendaImage(entry, pole.imageUrl)" alt="" loading="lazy" (error)="useFallback($event, pole.imageUrl)" />
+                      </span>
+                      <span class="min-w-0 flex-1 py-2.5 pr-3">
+                        <span class="block text-[0.65rem] font-semibold uppercase tracking-[0.16em] pole-agenda-kind">{{ agendaKind(entry) }}@if (entry.type) { · {{ entry.type }} }</span>
+                        <span class="block truncate font-semibold text-white">{{ entry.title }}</span>
+                        <span class="block text-xs text-slate-400 first-letter:uppercase">{{ moment(entry.startDateTime) }}</span>
+                      </span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
           <section class="space-y-4" aria-labelledby="pole-news-title" data-testid="pole-news">
             <h2 id="pole-news-title" class="pole-section-title">Actualités du pôle</h2>
 

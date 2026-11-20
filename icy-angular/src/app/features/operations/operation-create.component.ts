@@ -1,4 +1,5 @@
 import { DateTimeFieldComponent } from '../../shared/date-time-field/date-time-field.component';
+import { SPECIALTIES } from '../../core/services/user/member-rank';
 import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +29,9 @@ export class OperationCreateComponent implements OnInit {
   typesError = '';
   saving = false;
   error = '';
-  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false };
+  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false, pole: '' };
+  /** Pôles auxquels l'opération peut être rattachée. */
+  readonly poles = SPECIALTIES;
   /** Replanification : opération dont le nouveau brouillon reprend le cadre et l'organisation, avec de nouvelles dates. */
   sourceId: string | null = null;
   sourceTitle = '';
@@ -59,7 +62,8 @@ export class OperationCreateComponent implements OnInit {
           startDateTime: '',
           endDateTime: '',
           imageUrl: operation?.imageUrl ?? '',
-          allowShipProposals: !!operation?.allowShipProposals
+          allowShipProposals: !!operation?.allowShipProposals,
+          pole: operation?.pole ?? ''
         };
         this.changeDetector.markForCheck();
       },
@@ -116,7 +120,7 @@ export class OperationCreateComponent implements OnInit {
     if (this.invalid) return;
     this.saving = true;
     this.error = '';
-    const payload = { ...this.form, title: this.form.title.trim() };
+    const payload = { ...this.form, title: this.form.title.trim(), pole: this.form.pole || null };
     const request = this.sourceId ? this.eventService.replanOperation(this.sourceId, payload) : this.eventService.createOperation(payload);
     request.subscribe({
       next: operation => {

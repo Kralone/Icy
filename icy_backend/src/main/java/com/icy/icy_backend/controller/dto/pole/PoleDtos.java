@@ -21,7 +21,12 @@ public final class PoleDtos {
      * stats et activity sont vides pour un pôle qui n'a pas encore de données à montrer.
      */
     public record Home(String key, List<Specialist> specialists, boolean canManage,
-                       List<Stat> stats, List<Activity> activity, List<News> news) {
+                       List<Stat> stats, List<Activity> activity, List<Agenda> agenda, List<News> news) {
+    }
+
+    /** Événement ou opération à venir rattaché au pôle. kind vaut EVENT ou OPERATION ; imageUrl peut manquer. */
+    public record Agenda(UUID id, String kind, String title, String type, String imageUrl,
+                         LocalDateTime startDateTime, LocalDateTime endDateTime) {
     }
 
     /** Un chiffre du pôle ; le libellé est porté par l'interface, à partir de key. */

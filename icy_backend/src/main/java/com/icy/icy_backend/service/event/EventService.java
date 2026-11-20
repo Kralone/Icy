@@ -82,6 +82,16 @@ public class EventService {
      * Une opération non publiée n'existe pas pour les membres : ni listes, ni temps réel, ni Discord, ni notifications.
      * Les événements classiques ne sont jamais concernés.
      */
+    /** Rattache l'activité à un pôle, ou la détache (null ou vide). Rien n'est annoncé : le pôle ne figure dans aucun message. */
+    @Transactional
+    public void assignPole(UUID eventId, String pole) {
+        com.icy.icy_backend.db.entity.user.Specialty wanted = com.icy.icy_backend.db.entity.user.Specialty.optional(pole);
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
+        if (event.getPole() == wanted) return;
+        event.setPole(wanted);
+        eventRepository.save(event);
+    }
+
     public boolean isUnpublishedOperation(Event event) {
         if (event.getActivityType() != ActivityType.OPERATION) return false;
         return operationRepository == null || operationRepository.findById(event.getId())

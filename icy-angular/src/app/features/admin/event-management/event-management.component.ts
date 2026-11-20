@@ -1,4 +1,5 @@
 import { DateTimeFieldComponent } from '../../../shared/date-time-field/date-time-field.component';
+import { SPECIALTIES } from '../../../core/services/user/member-rank';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +23,11 @@ export class EventManagementComponent implements OnInit {
     description: '',
     startDateTime: '',
     endDateTime: '',
+    pole: '',
   };
+
+  /** Pôles auxquels un événement peut être rattaché. */
+  readonly poles = SPECIALTIES;
 
   // === Liste des événements ===
   events: EventDTO[] = [];
@@ -162,7 +167,7 @@ export class EventManagementComponent implements OnInit {
     this.eventService.createEvent(this.newEvent).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '' };
+        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', pole: '' };
         this.loadAllEvents();
       },
       error: (err) => {
@@ -221,7 +226,8 @@ export class EventManagementComponent implements OnInit {
       endDateTime: this.editingEvent.endDateTime,
       finished: this.editingEvent.finished ?? false,
       type: this.editingEvent.type?.name || (this.editingEvent as any).type,
-      keepParticipants: this.keepParticipants
+      keepParticipants: this.keepParticipants,
+      pole: this.editingEvent.pole || null
     };
 
     this.eventService.updateEvent(payload).subscribe({
@@ -251,6 +257,7 @@ export class EventManagementComponent implements OnInit {
       description: this.editingEvent.description || '',
       startDateTime: '',
       endDateTime: '',
+      pole: this.editingEvent.pole || '',
     };
 
     this.cancelEditEvent();

@@ -21,7 +21,7 @@ describe('PolePageComponent', () => {
     fixture.detectChanges();
   }
 
-  const home = (key: string, changes: Partial<PoleHome> = {}): PoleHome => ({ key, specialists: [], canManage: false, stats: [], activity: [], news: [], ...changes });
+  const home = (key: string, changes: Partial<PoleHome> = {}): PoleHome => ({ key, specialists: [], canManage: false, stats: [], activity: [], agenda: [], news: [], ...changes });
   const news = { id: 7, title: 'Sortie Quantanium', content: 'Samedi 21h.', authorName: 'Ada', createdAt: '2026-11-18T21:00:00' };
   const find = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null;
   const text = (testId: string) => find(testId)!.textContent!.replace(/\s+/g, ' ').trim();
@@ -64,6 +64,21 @@ describe('PolePageComponent', () => {
     expect(text('pole-activity')).toContain('En cours');
   });
 
+  it('lists the upcoming events and operations of the pole, each opening its own page', async () => {
+    await load('industrie', home('INDUSTRIE', {
+      agenda: [
+        { id: 'e1', kind: 'EVENT', title: 'Sortie Quantanium', type: 'Minage', imageUrl: '/images/minage.webp', startDateTime: '2026-11-21T21:00:00', endDateTime: '2026-11-21T23:00:00' },
+        { id: 'o1', kind: 'OPERATION', title: 'Opération Halo', type: null, imageUrl: null, startDateTime: '2026-11-28T21:00:00', endDateTime: '2026-11-28T23:00:00' }
+      ]
+    }));
+    const links = Array.from(find('pole-agenda')!.querySelectorAll('a')) as HTMLAnchorElement[];
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['/icy/events?eventId=e1', '/icy/operations/o1']);
+    expect(links[0].textContent!.replace(/\s+/g, ' ')).toMatch(/Événement · Minage\s*Sortie Quantanium\s*samedi 21 novembre à 21:00/);
+    expect(links[0].querySelector('img')!.getAttribute('src')).toBe('https://iceforge.fr/images/minage.webp');
+    expect(links[1].textContent).toContain('Opération');
+    expect(links[1].querySelector('img')!.getAttribute('src')).toBe('assets/images/poles/industrie.jpg');
+  });
+
   it('says so when a pole has no referent, no tool and no news, and hides empty sections', async () => {
     await load('militaire', home('MILITAIRE'));
     expect(text('pole-referents')).toBe("Aucun référent pour l'instant");
@@ -71,6 +86,7 @@ describe('PolePageComponent', () => {
     expect(text('pole-news')).toContain('Aucune actualité publiée pour ce pôle.');
     expect(find('pole-stats')).toBeNull();
     expect(find('pole-activity')).toBeNull();
+    expect(find('pole-agenda')).toBeNull();
   });
 
   it('lets a manager publish, edit and delete news', async () => {

@@ -74,6 +74,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
+        eventService.assignPole(eventId, request.getPole());
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());
         seed.setImageUrl(request.getImageUrl());
@@ -96,6 +97,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
+        eventService.assignPole(eventId, request.getPole());
         replanService.copyOrganization(id, eventId);
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());

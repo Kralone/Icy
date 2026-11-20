@@ -15,6 +15,8 @@ export interface EventCreateRequest {
   endDateTime: string;
   imageUrl?: string;
   allowShipProposals?: boolean;
+  /** Pôle rattaché (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; vide ou absent : aucun. */
+  pole?: string | null;
 }
 
 export interface EventDTO {
@@ -29,6 +31,8 @@ export interface EventDTO {
   activityType?: 'EVENT' | 'OPERATION';
   /** Liste de gestion uniquement : opération pas encore publiée, invisible des membres. */
   draft?: boolean;
+  /** Pôle rattaché, ou null. */
+  pole?: string | null;
 }
 
 export interface OperationDraftSummary {

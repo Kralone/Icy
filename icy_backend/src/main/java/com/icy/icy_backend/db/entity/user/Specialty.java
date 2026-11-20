@@ -13,6 +13,16 @@ public enum Specialty {
     /**
      * Sous-grade à enregistrer pour un grade donné : obligatoire pour un Spécialiste, effacé pour tout autre grade.
      */
+    /** Pôle facultatif d'une activité : null si rien n'est choisi, refus d'un pôle inconnu. */
+    public static Specialty optional(String requested) {
+        if (requested == null || requested.isBlank()) return null;
+        try {
+            return valueOf(requested.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException unknown) {
+            throw new BadRequestException("Pôle inconnu : " + requested);
+        }
+    }
+
     public static Specialty forRank(String rank, String requested) {
         if (rank == null || !RANK.equals(rank.trim().toUpperCase())) {
             return null;

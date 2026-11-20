@@ -3,12 +3,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { POLE_STAT_LABELS, PoleActivity, PoleHome, PoleNews, poleBySlug } from '../../core/services/pole/pole';
+import { POLE_STAT_LABELS, PoleActivity, PoleAgendaEntry, PoleHome, PoleNews, poleBySlug } from '../../core/services/pole/pole';
 import { PoleService } from '../../core/services/pole/pole.service';
+import { eventImage } from '../events/event-appearance';
 import { PoleIconComponent } from '../../shared/pole-icon/pole-icon.component';
 
 const ACTIVITY_STATUS: Record<string, string> = { ACTIVE: 'En cours', SETTLEMENT: 'Comptes arrêtés', CLOSED: 'Clôturée' };
 const NUMBER = new Intl.NumberFormat('fr-FR');
+const MOMENT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 const DAY = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /** Accueil d'un pôle : référents, chiffres, actualités, activité récente et outils. */
@@ -155,6 +157,30 @@ export class PolePageComponent implements OnInit {
     const civil = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
     const date = civil ? new Date(+civil[1], +civil[2] - 1, +civil[3]) : new Date(value);
     return Number.isNaN(date.getTime()) ? '' : DAY.format(date);
+  }
+
+  /** Jour et heure de début, par exemple « samedi 21 novembre à 21:00 ». */
+  moment(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : MOMENT.format(date);
+  }
+
+  agendaKind(entry: PoleAgendaEntry): string {
+    return entry.kind === 'OPERATION' ? 'Opération' : 'Événement';
+  }
+
+  /** Image de l'activité si elle en a une valable, sinon celle du pôle. */
+  agendaImage(entry: PoleAgendaEntry, fallback: string): string {
+    return eventImage(entry.imageUrl) ?? fallback;
+  }
+
+  /** Une opération ouvre sa page ; un événement ouvre sa fiche dans le calendrier. */
+  agendaLink(entry: PoleAgendaEntry): string[] {
+    return entry.kind === 'OPERATION' ? ['/icy/operations', entry.id] : ['/icy/events'];
+  }
+
+  agendaQuery(entry: PoleAgendaEntry): { eventId: string } | null {
+    return entry.kind === 'OPERATION' ? null : { eventId: entry.id };
   }
 
   activityStatus(activity: PoleActivity): string {

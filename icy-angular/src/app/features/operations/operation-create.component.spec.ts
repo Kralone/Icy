@@ -153,7 +153,7 @@ describe('OperationCreateComponent, replanification', () => {
     expect(fixture.nativeElement.querySelector('h1').textContent).toContain('Replanifier une opération');
     expect(component.form).toEqual({
       title: 'Escorte du convoi', type: 'Combat', description: 'Briefing repris', startDateTime: '', endDateTime: '',
-      imageUrl: 'https://example.org/convoi.png', allowShipProposals: true
+      imageUrl: 'https://example.org/convoi.png', allowShipProposals: true, pole: ''
     });
     expect(component.invalid).toBe(true);
   });
@@ -165,8 +165,19 @@ describe('OperationCreateComponent, replanification', () => {
     component.create();
 
     expect(createOperation).not.toHaveBeenCalled();
-    expect(replanOperation).toHaveBeenCalledWith('op-0', expect.objectContaining({ title: 'Escorte du convoi', startDateTime: '2026-11-05T20:00' }));
+    expect(replanOperation).toHaveBeenCalledWith('op-0', expect.objectContaining({ title: 'Escorte du convoi', startDateTime: '2026-11-05T20:00', pole: null }));
     expect(toast.success).toHaveBeenCalledWith('Opération replanifiée : nouveau brouillon créé.');
     expect(navigate).toHaveBeenCalledWith(['/icy/operations', 'op-2', 'edit']);
+  });
+
+  it('sends the chosen pole with the new draft', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const options = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="operation-create-pole"] option')) as HTMLOptionElement[];
+    expect(options.map(option => option.textContent!.trim())).toEqual(['Aucun pôle', 'Logistique', 'Militaire', 'Industrie']);
+    component.form = { ...component.form, startDateTime: '2026-11-05T20:00', endDateTime: '2026-11-05T23:00', pole: 'INDUSTRIE' };
+
+    component.create();
+
+    expect(replanOperation).toHaveBeenCalledWith('op-0', expect.objectContaining({ pole: 'INDUSTRIE' }));
   });
 });

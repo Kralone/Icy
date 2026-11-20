@@ -32,6 +32,14 @@
             <small id="operation-type-help" class="field-help">Types définis dans la gestion des événements.</small>
           }
         </label>
+        <label>
+          <span class="field-label" id="operation-create-pole">Pôle</span>
+          <select [(ngModel)]="form.pole" aria-labelledby="operation-create-pole" aria-describedby="operation-pole-help" data-testid="operation-create-pole">
+            <option value="">Aucun pôle</option>
+            @for (pole of poles; track pole.key) { <option [value]="pole.key">{{ pole.label }}</option> }
+          </select>
+          <small id="operation-pole-help" class="field-help">L'opération apparaîtra sur la page de ce pôle une fois publiée.</small>
+        </label>
         <label class="wide">
           <span class="field-label" id="operation-create-briefing">Briefing</span>
           <textarea class="briefing-field" [(ngModel)]="form.description" rows="12" maxlength="50000" aria-labelledby="operation-create-briefing" aria-describedby="operation-create-briefing-count" placeholder="Ex. : contexte, intention et consignes de préparation"></textarea>

@@ -47,6 +47,11 @@ public class Event {
     @Builder.Default
     private ActivityType activityType = ActivityType.EVENT;
 
+    /** Pôle auquel l'activité est rattachée ; null si elle ne concerne aucun pôle en particulier. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private com.icy.icy_backend.db.entity.user.Specialty pole;
+
     // 🔗 Synchronisation Discord
     @Column(name = "discord_channel_id", length = 50)
     private String discordChannelId;

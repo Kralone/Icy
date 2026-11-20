@@ -5,6 +5,10 @@ import com.icy.icy_backend.db.entity.pole.PoleNews;
 import com.icy.icy_backend.db.entity.session.SessionSheet;
 import com.icy.icy_backend.db.entity.user.Specialty;
 import com.icy.icy_backend.db.entity.user.User;
+import com.icy.icy_backend.db.entity.event.Event;
+import com.icy.icy_backend.db.entity.event.Operation;
+import com.icy.icy_backend.db.repository.event.EventRepository;
+import com.icy.icy_backend.db.repository.event.OperationRepository;
 import com.icy.icy_backend.db.repository.pole.PoleNewsRepository;
 import com.icy.icy_backend.db.repository.session.SessionSheetRepository;
 import com.icy.icy_backend.db.repository.user.UserRepository;
@@ -13,13 +17,16 @@ import com.icy.icy_backend.exception.definition.ForbiddenException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.security.AuthUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -33,12 +40,15 @@ public class PoleHomeService {
     static final int STATS_DAYS = 30;
     static final int TITLE_MAX = 120;
     static final int CONTENT_MAX = 4000;
+    static final int AGENDA_MAX = 6;
     private static final String MINING = "MINING";
 
     private final PoleService poles;
     private final PoleNewsRepository news;
     private final SessionSheetRepository sheets;
     private final UserRepository users;
+    private final EventRepository events;
+    private final OperationRepository operations;
     private Clock clock = Clock.systemDefaultZone();
 
     void setClock(Clock clock) {
@@ -56,6 +66,7 @@ public class PoleHomeService {
         return new PoleDtos.Home(pole.name(), specialists, canManage(pole),
                 industry ? industryStats() : List.of(),
                 industry ? industryActivity() : List.of(),
+                agenda(pole),
                 news.findTop10ByPoleOrderByCreatedAtDescIdDesc(pole).stream().map(PoleHomeService::view).toList());
     }
 
@@ -130,6 +141,21 @@ public class PoleHomeService {
         return sheets.findTop4ByActivityOrderBySessionDateDescCreatedAtDesc(MINING).stream()
                 .map(sheet -> new PoleDtos.Activity("MINING_SHEET", sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name()))
                 .toList();
+    }
+
+    /** Prochains événements et opérations du pôle ; une opération montre son image, sinon celle de son type. */
+    private List<PoleDtos.Agenda> agenda(Specialty pole) {
+        List<Event> upcoming = events.findUpcomingOfPole(pole, LocalDateTime.now(clock), PageRequest.of(0, AGENDA_MAX));
+        Map<UUID, String> operationImages = new HashMap<>();
+        operations.findAllById(upcoming.stream().map(Event::getId).toList())
+                .forEach(operation -> operationImages.put(operation.getEventId(), operation.getImageUrl()));
+        return upcoming.stream().map(event -> {
+            String image = operationImages.get(event.getId());
+            if ((image == null || image.isBlank()) && event.getType() != null) image = event.getType().getImageUrl();
+            return new PoleDtos.Agenda(event.getId(), event.getActivityType().name(), event.getTitle(),
+                    event.getType() == null ? null : event.getType().getName(),
+                    image == null || image.isBlank() ? null : image, event.getStartDateTime(), event.getEndDateTime());
+        }).toList();
     }
 
     private static Specialty pole(String key) {

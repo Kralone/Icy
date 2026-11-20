@@ -13,6 +13,8 @@ import java.util.UUID;
 public class OperationResponseDTO {
     private UUID id;
     private String title;
+    /** Pôle rattaché, ou null. */
+    private String pole;
     private String description;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
@@ -40,6 +42,7 @@ public class OperationResponseDTO {
     public OperationResponseDTO(Event event, Operation operation) {
         this.id = event.getId();
         this.title = event.getTitle();
+        this.pole = event.getPole() == null ? null : event.getPole().name();
         this.description = event.getDescription();
         this.startDateTime = event.getStartDateTime();
         this.endDateTime = event.getEndDateTime();

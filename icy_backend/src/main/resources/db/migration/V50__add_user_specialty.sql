@@ -20,3 +20,10 @@ CREATE TABLE core.pole_news (
 );
 
 CREATE INDEX idx_pole_news_pole_created_at ON core.pole_news (pole, created_at DESC);
+
+-- Pôle auquel un événement ou une opération est rattaché, pour l'afficher sur la page du pôle. Facultatif.
+ALTER TABLE events.events
+    ADD COLUMN pole VARCHAR(16),
+    ADD CONSTRAINT ck_events_pole CHECK (pole IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'));
+
+CREATE INDEX idx_events_pole_end ON events.events (pole, end_date_time) WHERE pole IS NOT NULL;
