@@ -15,7 +15,7 @@ services:
     networks: [backup_test]
 
   rabbitmq:
-    image: "${BACKUP_TEST_RABBITMQ_IMAGE:-rabbitmq:4.3.7-management@sha256:6e51f8f18e055d6dc3d94316db0073da64d811c2e19744661fae06b03c1d6fa8}"
+    image: "${BACKUP_TEST_RABBITMQ_IMAGE:-rabbitmq:4.3.7-management@sha256:8e913a7748f808be4ce117c3df11817935775bcd83934d4de92441a7e93e9899}"
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: iceforge_test

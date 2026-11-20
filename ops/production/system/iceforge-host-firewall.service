@@ -1,0 +1,14 @@
+[Unit]
+Description=Pare-feu d'entrée de l'hôte IceForge (table nft inet iceforge_host)
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/iceforge/host-firewall.nft
+ExecReload=/usr/sbin/nft -f /etc/iceforge/host-firewall.nft
+ExecStop=/usr/sbin/nft delete table inet iceforge_host
+
+[Install]
+WantedBy=multi-user.target
