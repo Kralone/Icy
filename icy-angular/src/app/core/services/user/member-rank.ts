@@ -31,6 +31,27 @@ export function memberRank(roles: readonly (string | null | undefined)[] | null 
   return MEMBER_RANKS.find(rank => normalized.includes(rank)) ?? 'JUNIOR';
 }
 
+/** Administrateur ou Officier : organise tous les événements et opérations. */
+export function isOrganizer(roles: readonly (string | null | undefined)[] | null | undefined): boolean {
+  return hasRole(roles, 'ADMIN') || hasRole(roles, 'OFFICIER');
+}
+
+/** Pôle dont le membre est référent : celui d'un Spécialiste, sinon null. */
+export function referentPole(roles: readonly (string | null | undefined)[] | null | undefined, specialty: string | null | undefined): string | null {
+  const key = (specialty ?? '').trim().toUpperCase();
+  return hasRole(roles, SPECIALIST_RANK) && SPECIALTIES.some(entry => entry.key === key) ? key : null;
+}
+
+/**
+ * Le membre organise-t-il les activités de ce pôle ? Un organisateur les organise toutes, un référent celles de son pôle.
+ * Sans pôle précisé : peut-il organiser au moins une activité.
+ */
+export function organizes(roles: readonly (string | null | undefined)[] | null | undefined, specialty: string | null | undefined, pole?: string | null): boolean {
+  if (isOrganizer(roles)) return true;
+  const own = referentPole(roles, specialty);
+  return !!own && (pole === undefined || pole === own);
+}
+
 export function hasRole(roles: readonly (string | null | undefined)[] | null | undefined, role: string): boolean {
   return (roles ?? []).some(candidate => (candidate ?? '').trim().toUpperCase() === role);
 }

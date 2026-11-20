@@ -274,7 +274,7 @@ export const routes: Routes = [
       {
         path: 'operations/new',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN', 'OFFICIER'] },
+        data: { roles: ['ADMIN', 'OFFICIER', 'REFERENT'] },
         loadComponent: () => import('./features/operations/operation-create.component').then(m => m.OperationCreateComponent)
       },
       {
@@ -284,7 +284,7 @@ export const routes: Routes = [
       {
         path: 'operations/:id/edit',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN', 'OFFICIER'] },
+        data: { roles: ['ADMIN', 'OFFICIER', 'REFERENT'] },
         // Demande confirmation si des saisies ne peuvent pas être enregistrées en quittant l'éditeur.
         canDeactivate: [(component: { canLeave?: () => boolean }) => component.canLeave?.() ?? true],
         loadComponent: () => import('./features/operations/operation-editor.component').then(m => m.OperationEditorComponent)
@@ -331,10 +331,13 @@ export const routes: Routes = [
           },
           {
             path: 'events',
+            // Un référent de pôle gère aussi les événements de son pôle ; le serveur limite sa liste à ce pôle.
+            data: { roles: ['ADMIN', 'OFFICIER', 'REFERENT'] },
             loadComponent: () => import('./features/admin/event-management/event-management.component').then(m => m.EventManagementComponent)
           },
           {
             path: 'operations',
+            data: { roles: ['ADMIN', 'OFFICIER', 'REFERENT'] },
             loadComponent: () => import('./features/admin/operation-drafts/operation-drafts.component').then(m => m.OperationDraftsComponent)
           },
           { path: 'operation-drafts', redirectTo: 'operations', pathMatch: 'full' },

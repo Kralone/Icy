@@ -34,11 +34,11 @@
         </label>
         <label class="wide">
           <span class="field-label" id="operation-create-pole">Pôle</span>
-          <select [(ngModel)]="form.pole" aria-labelledby="operation-create-pole" aria-describedby="operation-pole-help" data-testid="operation-create-pole">
+          <select [(ngModel)]="form.pole" [disabled]="!!lockedPole" aria-labelledby="operation-create-pole" aria-describedby="operation-pole-help" data-testid="operation-create-pole">
             <option value="">Aucun pôle</option>
             @for (pole of poles; track pole.key) { <option [value]="pole.key">{{ pole.label }}</option> }
           </select>
-          <small id="operation-pole-help" class="field-help">L'opération apparaîtra sur la page de ce pôle une fois publiée.</small>
+          <small id="operation-pole-help" class="field-help">{{ lockedPole ? 'En tant que référent, vous créez les opérations de votre pôle.' : 'L\'opération apparaîtra sur la page de ce pôle une fois publiée.' }}</small>
         </label>
         <label class="wide">
           <span class="field-label" id="operation-create-briefing">Briefing</span>

@@ -55,7 +55,7 @@ describe('EventsComponent', () => {
       {id: 'free', title: 'Soirée libre', type: {name: 'Social'}, pole: null, startDateTime: '2099-06-03T20:00:00', finished: false}
     ]});
     fixture.detectChanges();
-    const badges = () => Array.from(fixture.nativeElement.querySelectorAll('.events-agenda .pole-badge')).map((badge: any) => badge.textContent.trim());
+    const badges = () => Array.from(fixture.nativeElement.querySelectorAll('.events-agenda app-pole-badge:not([hidden])')).map((badge: any) => badge.textContent.trim());
     expect(badges()).toEqual(['Militaire', 'Industrie']);
 
     component.setPoleFilter('MILITAIRE');

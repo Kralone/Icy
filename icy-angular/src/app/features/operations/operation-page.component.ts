@@ -10,6 +10,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { isOrganizer, organizes } from '../../core/services/user/member-rank';
 import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { OperationConfirmService } from './operation-confirm.service';
@@ -58,7 +59,7 @@ export class OperationPageComponent {
     switchMap(() => this.route.paramMap),
     // L'échec reste dans la lecture en cours : la suivante (autre fiche, nouvel essai) reste possible.
     switchMap(params => this.http.get<{ data: OperationSheet }>(`/api/operations/${params.get('id')}`).pipe(
-      map(response => { this.currentOperation = response.data; return { status: 'READY', data: response.data } as OperationViewState; }),
+      map(response => { this.currentOperation = response.data; this.refreshCanManage(); return { status: 'READY', data: response.data } as OperationViewState; }),
       catchError(error => of({ status: 'ERROR', failure: operationLoadFailure(error) } as OperationViewState)),
       startWith({ status: 'LOADING' } as OperationViewState))),
     shareReplay({ bufferSize: 1, refCount: true })
@@ -153,10 +154,9 @@ export class OperationPageComponent {
     });
     this.userService.getMyProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
-        const roles = (response?.data?.roles ?? []).map(role => (role ?? '').trim().toUpperCase());
-        this.canManage = roles.includes('ADMIN') || roles.includes('OFFICIER');
-        // Un organisateur coordonne toute l'opération, sans être responsable d'un groupe.
-        if (this.canManage && this.shownOperationId) this.loadCoordination(this.shownOperationId);
+        this.profileRoles = response?.data?.roles ?? [];
+        this.profileSpecialty = response?.data?.specialty ?? null;
+        this.refreshCanManage();
         this.changeDetector.markForCheck();
       },
       error: () => { this.canManage = false; }
@@ -216,6 +216,18 @@ export class OperationPageComponent {
 
   /** Administrateur ou officier : accès à l'éditeur et au tableau de coordination complet. */
   canManage = false;
+  private profileRoles: readonly (string | null | undefined)[] = [];
+  private profileSpecialty: string | null = null;
+
+  /** Administrateur ou Officier, ou référent du pôle de cette opération. Un organisateur coordonne toute l'opération, sans être responsable d'un groupe. */
+  private refreshCanManage(): void {
+    // Pour un référent, le droit dépend du pôle de l'opération : il n'est connu qu'une fois la fiche chargée.
+    const allowed = isOrganizer(this.profileRoles)
+      || (!!this.currentOperation && organizes(this.profileRoles, this.profileSpecialty, this.currentOperation.pole ?? null));
+    const gained = allowed && !this.canManage;
+    this.canManage = allowed;
+    if (gained && this.shownOperationId) this.loadCoordination(this.shownOperationId);
+  }
 
   /** `quiet` : relecture de fond, la liste affichée reste en place et un échec ne la remplace pas par une erreur. */
   loadParticipations(operationId: string, quiet = false): void {

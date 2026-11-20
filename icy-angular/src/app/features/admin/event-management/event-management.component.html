@@ -60,6 +60,7 @@
           <select
             id="new-event-pole"
             [(ngModel)]="newEvent.pole"
+            [disabled]="!!lockedPole"
             data-testid="new-event-pole"
           class="w-full px-4 py-2 rounded-xl
                  bg-[#0b1324]
@@ -280,7 +281,8 @@
         </section>
 
         <!-- === SECTION 3 : Types d'événements === -->
-        <section class="space-y-8">
+        <!-- Réservée aux organisateurs : un référent de pôle utilise les types existants. -->
+        <section class="space-y-8" [hidden]="!!lockedPole" data-testid="event-types-section">
           <div class="space-y-1">
             <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Configuration</p>
             <h2 class="text-xl font-semibold text-cyan-200">Types d'evenements</h2>
@@ -479,7 +481,7 @@
                                   <select
                                     [ngModel]="editingEvent.pole || ''"
                                     (ngModelChange)="editingEvent.pole = $event || null"
-                                    [disabled]="isViewMode"
+                                    [disabled]="isViewMode || !!lockedPole"
                                     aria-label="Pôle"
                                     data-testid="edit-event-pole"
           class="w-full px-4 py-2 rounded-xl

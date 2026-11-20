@@ -99,6 +99,16 @@
         </div>
 
         <aside class="space-y-8">
+          @if (managing()) {
+            <section class="space-y-4" aria-labelledby="pole-organize-title" data-testid="pole-organize">
+              <h2 id="pole-organize-title" class="pole-section-title">Organiser</h2>
+              <div class="pole-panel flex flex-wrap gap-2">
+                <a class="pole-button pole-button--main" routerLink="/icy/operations/new" [queryParams]="{ pole: pole.slug }">Nouvelle opération</a>
+                <a class="pole-button" routerLink="/icy/admin/events">Événements du pôle</a>
+                <a class="pole-button" routerLink="/icy/admin/operations">Opérations du pôle</a>
+              </div>
+            </section>
+          }
           @if (home()?.agenda?.length) {
             <section class="space-y-4" aria-labelledby="pole-agenda-title" data-testid="pole-agenda">
               <h2 id="pole-agenda-title" class="pole-section-title">À venir</h2>

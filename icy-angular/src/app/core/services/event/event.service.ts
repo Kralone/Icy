@@ -44,6 +44,8 @@ export interface OperationDraftSummary {
   typeImageUrl?: string | null;
   startDateTime: string;
   endDateTime: string;
+  /** Pôle de rattachement, s'il y en a un. */
+  pole?: string | null;
   updatedAt?: string | null;
 }
 

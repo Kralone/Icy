@@ -17,8 +17,9 @@ import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
 import { AsyncStateComponent } from '../../shared/async-state/async-state.component';
 import { eventColor, eventImage } from './event-appearance';
-import { SPECIALTIES, specialtyLabel } from '../../core/services/user/member-rank';
-import { PoleIconComponent } from '../../shared/pole-icon/pole-icon.component';
+import { SPECIALTIES, organizes } from '../../core/services/user/member-rank';
+import { PoleFilterComponent } from '../../shared/pole-filter/pole-filter.component';
+import { PoleBadgeComponent } from '../../shared/pole-badge/pole-badge.component';
 
 type FleetMiniShip = {
   name: string;
@@ -30,7 +31,7 @@ type FleetMiniShip = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent, PoleIconComponent],
+  imports: [FormsModule, DatePipe, RouterLink, FullCalendarModule, EventDetailsModalComponent, AsyncStateComponent, PoleBadgeComponent, PoleFilterComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
@@ -38,8 +39,6 @@ type FleetMiniShip = {
 export class EventsComponent implements AfterViewInit, OnDestroy {
   readonly eventColor = eventColor;
   readonly eventImage = eventImage;
-  readonly poles = SPECIALTIES;
-  readonly poleLabel = specialtyLabel;
   /** Pôle dont on ne montre que les activités ; vide pour toutes. Repris de l'adresse : ?pole=militaire. */
   poleFilter = '';
   @ViewChild(FullCalendarComponent) calendarComponent?: FullCalendarComponent;
@@ -49,7 +48,7 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   selectedEvent: any = null;
   showDetailsModal = false;
   isLoading = true;
-  /** Administrateur ou officier : accès à la gestion des événements et des opérations. */
+  /** Administrateur, Officier ou référent de pôle : accès à la gestion des événements et des opérations. */
   canManage = false;
   private readonly userService = inject(UserService);
   viewMode: 'upcoming' | 'calendar' = 'upcoming';
@@ -139,8 +138,7 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.userService.getMyProfile().subscribe({
       next: response => {
-        const roles = (response?.data?.roles ?? []).map(role => (role ?? '').trim().toUpperCase());
-        this.canManage = roles.includes('ADMIN') || roles.includes('OFFICIER');
+        this.canManage = organizes(response?.data?.roles, response?.data?.specialty);
         this.changeDetector.markForCheck();
       },
       error: () => { this.canManage = false; }

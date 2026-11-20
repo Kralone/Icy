@@ -25,7 +25,7 @@ import { OperationCrewPanelComponent } from './organization/operation-crew-panel
 import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
 import { eventColor, eventImage } from '../events/event-appearance';
-import { SPECIALTIES } from '../../core/services/user/member-rank';
+import { SPECIALTIES, isOrganizer } from '../../core/services/user/member-rank';
 import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
@@ -232,6 +232,12 @@ export class OperationEditorComponent implements OnDestroy {
   editingRequirementId: string | null = null;
   readonly poles = SPECIALTIES;
   poleSaving = false;
+  /** Seul un organisateur change le pôle : un référent perdrait la main sur l'opération en la déplaçant. */
+  canChoosePole = false;
+  private readonly poleRights = inject(UserService).getMyProfile().subscribe({
+    next: response => { this.canChoosePole = isOrganizer(response?.data?.roles); this.changeDetector.markForCheck(); },
+    error: () => undefined
+  });
   poleError = '';
 
   /** Le pôle s'enregistre à part du brouillon : il ne dépend ni de la révision ni de l'enregistrement automatique. */

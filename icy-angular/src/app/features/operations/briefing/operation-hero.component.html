@@ -6,9 +6,7 @@
     <p class="hero__tags">
       <span class="hero__type">Opération@if (operation().typeName) { · {{ operation().typeName }} }</span>
       <span class="hero__status" [attr.data-status]="status()">{{ statusLabel() }}</span>
-      @if (poleLabel(); as pole) {
-        <span class="hero__pole" [attr.data-pole]="operation().pole" data-testid="operation-pole"><app-pole-icon [key]="operation().pole!" size="h-3.5 w-3.5" /> {{ pole }}</span>
-      }
+      <app-pole-badge class="hero__pole" [pole]="operation().pole" data-testid="operation-pole" />
     </p>
     @if (preview()) { <p class="hero__title" role="heading" aria-level="3">{{ operation().title }}</p> } @else { <h1 class="hero__title">{{ operation().title }}</h1> }
     <dl class="hero__facts">

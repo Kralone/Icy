@@ -1,5 +1,6 @@
 import { DateTimeFieldComponent } from '../../shared/date-time-field/date-time-field.component';
-import { SPECIALTIES } from '../../core/services/user/member-rank';
+import { SPECIALTIES, isOrganizer, referentPole } from '../../core/services/user/member-rank';
+import { UserService } from '../../core/services/user/user.service';
 import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +25,9 @@ export class OperationCreateComponent implements OnInit {
   private readonly toast = inject(HotToastService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly userService = inject(UserService);
+  /** Pôle imposé à un référent : il ne crée que des opérations de son pôle. Vide pour un organisateur. */
+  lockedPole = '';
   types: EventType[] = [];
   typesLoading = false;
   typesError = '';
@@ -40,6 +44,18 @@ export class OperationCreateComponent implements OnInit {
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
+    // Lien depuis la page d'un pôle : le pôle est déjà choisi.
+    const asked = (this.route.snapshot.queryParamMap.get('pole') ?? '').trim().toUpperCase();
+    if (SPECIALTIES.some(entry => entry.key === asked)) this.form.pole = asked;
+    this.userService.getMyProfile().subscribe({
+      next: response => {
+        const roles = response?.data?.roles;
+        this.lockedPole = isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '';
+        if (this.lockedPole) this.form.pole = this.lockedPole;
+        this.changeDetector.markForCheck();
+      },
+      error: () => undefined
+    });
     this.sourceId = this.route.snapshot.queryParamMap.get('from');
     if (this.sourceId) this.loadSource(this.sourceId);
     this.loadTypes();
@@ -63,7 +79,7 @@ export class OperationCreateComponent implements OnInit {
           endDateTime: '',
           imageUrl: operation?.imageUrl ?? '',
           allowShipProposals: !!operation?.allowShipProposals,
-          pole: operation?.pole ?? ''
+          pole: this.lockedPole || (operation?.pole ?? '')
         };
         this.changeDetector.markForCheck();
       },
@@ -120,7 +136,7 @@ export class OperationCreateComponent implements OnInit {
     if (this.invalid) return;
     this.saving = true;
     this.error = '';
-    const payload = { ...this.form, title: this.form.title.trim(), pole: this.form.pole || null };
+    const payload = { ...this.form, title: this.form.title.trim(), pole: this.lockedPole || this.form.pole || null };
     const request = this.sourceId ? this.eventService.replanOperation(this.sourceId, payload) : this.eventService.createOperation(payload);
     request.subscribe({
       next: operation => {
