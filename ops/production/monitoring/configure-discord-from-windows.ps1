@@ -27,7 +27,7 @@ try {
     $result = $payload | & ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -i $IdentityFile `
         "$SshUser@$Server" 'sudo -n python3 /root/iceforge/ops/production/monitoring/production-monitor.py configure-discord'
     $result | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Configuration refusée : vérifiez l'URL du webhook Discord copiée.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Configuration refusée : vérifiez l''URL du webhook Discord copiée.' }
     & ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes -i $IdentityFile "$SshUser@$Server" `
         'sudo -n systemctl start iceforge-monitor.service && sudo -n systemctl is-active iceforge-monitor.timer'
     if ($LASTEXITCODE -ne 0) { throw 'Configuration Discord enregistrée ; vérifier le service de surveillance.' }
