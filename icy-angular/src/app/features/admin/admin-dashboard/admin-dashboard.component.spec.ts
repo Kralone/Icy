@@ -108,7 +108,7 @@ describe('AdminDashboardComponent', () => {
     component.newUser.role = 'SPECIALISTE';
     fixture.detectChanges();
     const choices: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="specialty-choice"] label'));
-    expect(choices.map(choice => choice.querySelector('.font-semibold')?.textContent)).toEqual(['Logistique', 'Militaire', 'Industrie']);
+    expect(choices.map(choice => choice.textContent?.replace('✓', '').trim())).toEqual(['Logistique', 'Militaire', 'Industrie']);
     expect(choices.every(choice => choice.querySelector('input[type="radio"]'))).toBe(true);
     expect(component.specialtyMissing).toBe(true);
     component.addUser();
@@ -139,7 +139,7 @@ describe('AdminDashboardComponent', () => {
     http.expectOne('/api/users/all').flush({ data: [
       { id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['SPECIALISTE'], specialty: 'LOGISTIQUE', createdAt: null },
       { id: 'b', username: 'Bravo', discordId: '2', active: true, roles: ['SPECIALISTE'], specialty: null, createdAt: null },
-      { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['ASSOCIE'], specialty: null, createdAt: null }
+      { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['TRESORIER', 'ASSOCIE'], specialty: null, createdAt: null }
     ] });
     fixture.detectChanges();
 
@@ -147,5 +147,8 @@ describe('AdminDashboardComponent', () => {
     expect(rows[0].querySelector('[data-testid="member-specialty"]')?.textContent).toContain('Logistique');
     expect(rows[1].querySelector('[data-testid="member-specialty-missing"]')?.textContent).toContain('Pôle à choisir');
     expect(rows[2].querySelector('[data-testid^="member-specialty"]')).toBeNull();
+    // Le grade est la seule pastille ; pôle et fonction le précisent en dessous.
+    expect(rows.map(row => row.querySelector('[data-testid="member-rank"]')?.textContent?.trim())).toEqual(['Spécialiste', 'Spécialiste', 'Associé']);
+    expect(rows[2].querySelector('[data-testid="member-function"]')?.textContent).toContain('Trésorier');
   });
 });

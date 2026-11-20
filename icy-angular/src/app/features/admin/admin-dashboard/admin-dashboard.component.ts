@@ -22,6 +22,7 @@ function toTime(value?: string | null): number | null {
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
+  styleUrl: './admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
@@ -81,9 +82,9 @@ export class AdminDashboardComponent implements OnInit {
   roleLabels: Record<string, string> = {
     ADMIN: 'Directeur',
     OFFICIER: 'Officier',
-    SPECIALISTE: 'Specialiste',
-    INGENIEUR: 'Ingenieur',
-    ASSOCIE: 'Associe',
+    SPECIALISTE: 'Spécialiste',
+    INGENIEUR: 'Ingénieur',
+    ASSOCIE: 'Associé',
     JUNIOR: 'Junior',
     USER: 'Junior',
     MEMBRE: 'Junior',
@@ -314,6 +315,10 @@ export class AdminDashboardComponent implements OnInit {
     return this.newUser.role === SPECIALIST_RANK && this.newUser.specialty ? this.newUser.specialty : null;
   }
 
+  get selectedSpecialtyDescription(): string | null {
+    return SPECIALTIES.find(pole => pole.key === this.selectedSpecialty)?.description ?? null;
+  }
+
   get specialtyMissing(): boolean {
     return this.newUser.role === SPECIALIST_RANK && !this.newUser.specialty;
   }
@@ -321,6 +326,27 @@ export class AdminDashboardComponent implements OnInit {
   /** Un Spécialiste nommé avant les pôles n'en a pas encore : la ligne le signale. */
   needsSpecialty(user: User): boolean {
     return memberRank(user.roles) === SPECIALIST_RANK && !specialtyLabel(user.specialty);
+  }
+
+  /** Grade du membre, celui qui est mis en avant dans la liste. */
+  rankLabel(user: User): string {
+    const rank = this.normalizeRole(memberRank(user.roles));
+    return this.roleLabels[rank] ?? rank;
+  }
+
+  /** Ce qui précise le grade, affiché en petit dessous : le pôle du Spécialiste, puis la fonction de trésorier. */
+  rankDetails(user: User): { label: string; testId: string; missing?: boolean }[] {
+    const details: { label: string; testId: string; missing?: boolean }[] = [];
+    const pole = specialtyLabel(user.specialty);
+    if (pole) {
+      details.push({ label: pole, testId: 'member-specialty' });
+    } else if (this.needsSpecialty(user)) {
+      details.push({ label: 'Pôle à choisir', testId: 'member-specialty-missing', missing: true });
+    }
+    if (hasRole(user.roles, TREASURER_ROLE)) {
+      details.push({ label: this.roleLabels[TREASURER_ROLE], testId: 'member-function' });
+    }
+    return details;
   }
 
   private normalizeRole(role?: string | null): string {

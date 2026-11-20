@@ -1,0 +1,29 @@
+/* Choix du pôle d'un Spécialiste : une tuile par pôle, colorée quand elle est choisie. */
+.pole-tile {
+  --pole: 148 163 184;
+  border-color: rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.03);
+}
+.pole-tile[data-pole='LOGISTIQUE'] { --pole: 251 191 36; }
+.pole-tile[data-pole='MILITAIRE'] { --pole: 248 113 113; }
+.pole-tile[data-pole='INDUSTRIE'] { --pole: 52 211 153; }
+
+.pole-icon {
+  color: rgb(var(--pole));
+  background: rgb(var(--pole) / 0.12);
+  border: 1px solid rgb(var(--pole) / 0.3);
+}
+.pole-check {
+  opacity: 0;
+  color: #0b1324;
+  background: rgb(var(--pole));
+}
+
+.pole-tile:hover { border-color: rgb(var(--pole) / 0.5); }
+.pole-tile:focus-within { outline: 2px solid rgb(var(--pole)); outline-offset: 2px; }
+.pole-tile.is-selected {
+  border-color: rgb(var(--pole));
+  background: linear-gradient(180deg, rgb(var(--pole) / 0.18), rgb(var(--pole) / 0.04));
+  box-shadow: 0 10px 30px rgb(var(--pole) / 0.18);
+}
+.pole-tile.is-selected .pole-check { opacity: 1; }

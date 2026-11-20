@@ -80,14 +80,20 @@
                 </div>
               </td>
               <td class="px-4 py-3">
-                @for (role of user.roles; track role) {
-                  <span class="inline-block bg-cyan-500/15 border border-cyan-300/30 text-cyan-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ roleLabels[role] || role }}</span>
-                }
-                @if (specialtyLabel(user.specialty); as pole) {
-                  <span data-testid="member-specialty" class="inline-block bg-violet-500/15 border border-violet-300/40 text-violet-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">{{ pole }}</span>
-                } @else if (needsSpecialty(user)) {
-                  <span data-testid="member-specialty-missing" class="inline-block bg-amber-500/15 border border-amber-300/40 text-amber-100 text-xs px-2.5 py-0.5 rounded-full mr-1 whitespace-nowrap">Pôle à choisir</span>
-                }
+                <!-- Le grade est mis en avant ; le pôle et les fonctions le précisent en petit. -->
+                <div class="flex flex-col items-start gap-1">
+                  <span data-testid="member-rank" class="inline-block bg-cyan-400/20 border border-cyan-300/50 text-cyan-50 text-sm font-semibold px-3 py-0.5 rounded-full whitespace-nowrap">{{ rankLabel(user) }}</span>
+                  @if (rankDetails(user); as details) {
+                    @if (details.length) {
+                      <span class="pl-1 text-xs text-slate-400 whitespace-nowrap">
+                        @for (detail of details; track detail.label; let first = $first) {
+                          @if (!first) { <span aria-hidden="true" class="text-slate-600"> · </span> }
+                          <span [attr.data-testid]="detail.testId" [class.text-amber-200]="detail.missing">{{ detail.label }}</span>
+                        }
+                      </span>
+                    }
+                  }
+                </div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap text-slate-300">
                 @if (user.createdAt) { <time [attr.datetime]="user.createdAt">{{ user.createdAt | date:'d MMM yyyy' }}</time> } @else { <span class="text-slate-500 italic">Non renseignée</span> }
@@ -234,22 +240,38 @@
               @if (newUser.role === specialistRank) {
                 <!-- Sous-grade : le pôle du Spécialiste, obligatoire -->
                 <fieldset data-testid="specialty-choice">
-                  <legend class="block mb-1 text-sm text-slate-300">Pôle du Spécialiste</legend>
-                  <div class="grid grid-cols-1 gap-2">
+                  <legend class="block mb-2 text-sm text-slate-300">Pôle du Spécialiste</legend>
+                  <div class="grid grid-cols-3 gap-2">
                     @for (pole of specialties; track pole.key) {
                       <label
-                        class="flex items-start gap-3 rounded-xl border px-4 py-2.5 text-sm cursor-pointer transition"
-                        [class.border-violet-300]="newUser.specialty === pole.key"
-                        [class.bg-violet-500/10]="newUser.specialty === pole.key"
-                        [class.border-white/10]="newUser.specialty !== pole.key"
+                        class="pole-tile relative flex flex-col items-center gap-2 rounded-2xl border px-2 py-4 text-center cursor-pointer transition"
+                        [attr.data-pole]="pole.key"
+                        [class.is-selected]="newUser.specialty === pole.key"
                         >
-                        <input type="radio" name="specialty" [value]="pole.key" [(ngModel)]="newUser.specialty" required class="mt-0.5 h-4 w-4 accent-violet-400">
-                        <span><span class="font-semibold text-white">{{ pole.label }}</span><br>
-                        <span class="text-slate-400">{{ pole.description }}</span></span>
+                        <input type="radio" name="specialty" [value]="pole.key" [(ngModel)]="newUser.specialty" required class="sr-only">
+                        <span class="pole-icon grid h-11 w-11 place-items-center rounded-xl" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            @switch (pole.key) {
+                              @case ('LOGISTIQUE') {
+                                <path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3Z" /><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9M7.7 5.3l8.6 4.5" />
+                              }
+                              @case ('MILITAIRE') {
+                                <path d="M12 3 5 5.8v5.6c0 4.4 2.9 7.6 7 9.6 4.1-2 7-5.2 7-9.6V5.8L12 3Z" /><path d="m12 8.2 1.1 2.3 2.5.3-1.8 1.8.4 2.5-2.2-1.2-2.2 1.2.4-2.5-1.8-1.8 2.5-.3L12 8.2Z" />
+                              }
+                              @default {
+                                <path d="m14.5 4.5 5 5M4 20l9.2-9.2M12 3.5c2.6-.6 5.3 0 7.3 2s2.6 4.7 2 7.3" /><path d="m9 6 3 3" />
+                              }
+                            }
+                          </svg>
+                        </span>
+                        <span class="text-sm font-semibold text-white">{{ pole.label }}</span>
+                        <span class="pole-check absolute right-2 top-2 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold" aria-hidden="true">✓</span>
                       </label>
                     }
                   </div>
-                  @if (specialtyMissing) {
+                  @if (selectedSpecialtyDescription; as description) {
+                    <p class="mt-2 text-xs text-slate-400" data-testid="specialty-description">{{ description }}</p>
+                  } @else {
                     <p class="mt-2 text-xs text-amber-200" role="status">Choisissez un pôle pour enregistrer ce Spécialiste.</p>
                   }
                 </fieldset>
