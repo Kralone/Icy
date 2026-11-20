@@ -9,14 +9,12 @@
     [fadeOutMs]="500"
     [softFade]="true"
   ></app-loading-overlay>
-  <div class="admin-rank-orbit" aria-hidden="true">
-    <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true"></app-rank-orbit>
-  </div>
   <div class="admin-rank-label">
     {{ activeRankLabel }}
   </div>
   <div class="admin-content space-y-8">
-    <div class="flex flex-col gap-2 text-center">
+    <div class="flex items-center justify-center gap-3 text-center">
+      <app-rank-orbit class="corner-rank-emblem" [rank]="activeRankKey" [label]="activeRankLabel"></app-rank-orbit>
       <h1 class="text-3xl sm:text-4xl font-semibold tracking-[0.2em] uppercase text-cyan-200">Administration</h1>
     </div>
 
