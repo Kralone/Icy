@@ -54,8 +54,8 @@ describe('PolePageComponent', () => {
     expect(text('pole-stats')).toMatch(/Fiches de minage\s*6\s*30 derniers jours/);
     expect(text('pole-stats')).toMatch(/Ventes de minerai\s*1.250.000\s*aUEC/);
     expect(find('pole-stats')!.querySelectorAll('.pole-stat').length).toBe(2);
-    const groups = Array.from(find('pole-tools')!.querySelectorAll('h3')).map(title => title.textContent);
-    expect(groups).toEqual(['Sur le terrain', 'Guides']);
+    const groups = Array.from(find('pole-tools')!.querySelectorAll('h2')).map(title => title.textContent);
+    expect(groups).toEqual(['Outils', 'Guides']);
     const tools = Array.from(fixture.nativeElement.querySelectorAll('a.pole-tool')) as HTMLAnchorElement[];
     expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-minage');
     expect(tools.length).toBe(5);
@@ -139,13 +139,14 @@ describe('PolePageComponent', () => {
     expect(text('pole-referents')).toContain('Ada');
   });
 
-  it('falls back to the local image when the remote one fails', async () => {
+  it('replaces a tool image that does not load with the pole image, once', async () => {
     await load('industrie', home('INDUSTRIE'));
-    const hero = fixture.nativeElement.querySelector('.pole-hero-image') as HTMLImageElement;
-    expect(hero.getAttribute('src')).toContain('media.starcitizen.tools');
-    hero.dispatchEvent(new Event('error'));
-    fixture.detectChanges();
-    expect(hero.getAttribute('src')).toBe('assets/images/home/activities/mining.jpg');
+    const image = fixture.nativeElement.querySelector('a.pole-tool img') as HTMLImageElement;
+    image.dispatchEvent(new Event('error'));
+    expect(image.getAttribute('src')).toBe('assets/images/poles/industrie.jpg');
+    image.setAttribute('src', 'autre.jpg');
+    image.dispatchEvent(new Event('error'));
+    expect(image.getAttribute('src')).toBe('autre.jpg');
   });
 
   it('sends an unknown pole back to the poles menu', async () => {

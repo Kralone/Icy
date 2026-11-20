@@ -33,7 +33,6 @@ export class PolePageComponent implements OnInit {
   /** null tant que l'accueil du pôle n'est pas chargé. */
   readonly home = signal<PoleHome | null>(null);
   readonly loadFailed = signal(false);
-  readonly heroFailed = signal(false);
 
   /** Chiffres que l'interface sait nommer, dans l'ordre du serveur. */
   readonly stats = computed(() =>
@@ -138,7 +137,7 @@ export class PolePageComponent implements OnInit {
     });
   }
 
-  /** Image d'outil distante qui ne répond pas : l'image locale du pôle la remplace, une seule fois. */
+  /** Image d'outil hébergée ailleurs qui ne répond pas : l'image du pôle la remplace, une seule fois. */
   useFallback(event: Event, fallback: string): void {
     const image = event.target as HTMLImageElement;
     if (!image.dataset['fallback']) {

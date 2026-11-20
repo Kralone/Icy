@@ -6,7 +6,7 @@
       @for (pole of poles; track pole.key) {
         <a class="pole-card" [attr.data-pole]="pole.key" [attr.data-testid]="'pole-card-' + pole.slug" [routerLink]="['/icy/poles', pole.slug]">
           <div class="relative h-48 2xl:h-64 w-full overflow-hidden">
-            <img [src]="failedImages().has(pole.key) ? pole.fallbackImageUrl : pole.imageUrl" alt="" loading="lazy" class="h-full w-full object-cover opacity-80" (error)="imageFailed(pole.key)" />
+            <img [src]="pole.imageUrl" alt="" loading="lazy" class="h-full w-full object-cover opacity-80" />
             <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
             <span class="pole-badge absolute left-4 bottom-4 h-12 w-12"><app-pole-icon [key]="pole.key" size="h-7 w-7" /></span>
           </div>

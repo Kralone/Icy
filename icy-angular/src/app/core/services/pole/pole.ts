@@ -9,7 +9,7 @@ export interface PoleTool {
   imageUrl: string;
 }
 
-/** Outils d'un pôle rangés par usage : sur le terrain, guides… */
+/** Outils d'un pôle rangés par usage : outils, guides… */
 export interface PoleToolGroup {
   label: string;
   tools: PoleTool[];
@@ -22,8 +22,6 @@ export interface PoleDefinition {
   label: string;
   description: string;
   imageUrl: string;
-  /** Image locale affichée si imageUrl, hébergée ailleurs, ne répond pas. */
-  fallbackImageUrl: string;
   /** Outils du site rattachés au pôle. Vide tant que le pôle n'en a pas. */
   toolGroups: PoleToolGroup[];
 }
@@ -82,16 +80,10 @@ export const POLE_STAT_LABELS: Record<string, { label: string; period?: string; 
 
 const ACTIVITIES = 'assets/images/home/activities/';
 
-const IMAGES: Record<PoleKey, { imageUrl: string; fallbackImageUrl: string }> = {
-  LOGISTIQUE: { imageUrl: 'https://jolstatic.fr/www/captures/1895/8/168378.jpg', fallbackImageUrl: ACTIVITIES + 'cargo.jpg' },
-  MILITAIRE: {
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabh5fyox7sTu-KA8cOXF30-hVM0bz4Q68ExQXEiG5TC3sTJG1-OWbff6H&s=10',
-    fallbackImageUrl: ACTIVITIES + 'space-combat.jpg'
-  },
-  INDUSTRIE: {
-    imageUrl: 'https://media.starcitizen.tools/f/f9/Levski_-_Low_view_with_murial_in_the_distance.jpg?ngiuz',
-    fallbackImageUrl: ACTIVITIES + 'mining.jpg'
-  }
+const IMAGES: Record<PoleKey, string> = {
+  LOGISTIQUE: 'assets/images/poles/logistique.jpg',
+  MILITAIRE: 'assets/images/poles/militaire.jpg',
+  INDUSTRIE: 'assets/images/poles/industrie.jpg'
 };
 
 const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
@@ -99,7 +91,7 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
   MILITAIRE: [],
   INDUSTRIE: [
     {
-      label: 'Sur le terrain',
+      label: 'Outils',
       tools: [
         {
           label: 'Fiches de minage',
@@ -132,7 +124,7 @@ export const POLES: readonly PoleDefinition[] = SPECIALTIES.map(pole => ({
   slug: pole.key.toLowerCase(),
   label: pole.label,
   description: pole.description,
-  ...IMAGES[pole.key],
+  imageUrl: IMAGES[pole.key],
   toolGroups: TOOLS[pole.key]
 }));
 
