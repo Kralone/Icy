@@ -32,7 +32,7 @@
       </div>
     </header>
     <section class="mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
         @for (tab of profileTabs; track tab) {
           <button
             type="button"
@@ -50,6 +50,9 @@
         }
       </div>
     </section>
+    @if (activeTab === 'availability') {
+      <app-availability-editor />
+    }
     @if (activeTab === 'profile') {
       <section class="grid grid-cols-1 gap-6">
         <div class="space-y-6">

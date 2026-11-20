@@ -22,6 +22,8 @@ describe('AdminDashboardComponent', () => {
     fixture.detectChanges();
     http.expectOne('/api/users/all').flush({ data: [] });
     fixture.detectChanges();
+    http.expectOne('/api/availability/members').flush([]);
+    fixture.detectChanges();
   });
 
   afterEach(() => http.verify());

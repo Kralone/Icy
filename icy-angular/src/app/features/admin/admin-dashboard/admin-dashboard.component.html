@@ -162,6 +162,10 @@
         </button>
       </div>
     </div>
+
+    @if (!showInactive) {
+      <app-availability-heatmap />
+    }
   </div>
 
   <!-- ================== MODAL ================== -->

@@ -8,10 +8,11 @@ import { EventService } from '../../core/services/event/event.service';
 import { EventType } from '../../model/event-type.model';
 import { eventColor } from '../events/event-appearance';
 import { OperationIconComponent } from './briefing/operation-icon.component';
+import { AvailabilityHintComponent } from '../../shared/availability/availability-hint.component';
 
 @Component({
   standalone: true,
-  imports: [DateTimeFieldComponent, FormsModule, RouterLink, DatePipe, OperationIconComponent],
+  imports: [DateTimeFieldComponent, FormsModule, RouterLink, DatePipe, OperationIconComponent, AvailabilityHintComponent],
   templateUrl: './operation-create.component.html',
   styleUrl: './operation-create.component.css'
 })

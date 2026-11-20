@@ -6,10 +6,11 @@ import { RouterModule } from '@angular/router';
 import { EventService, EventDTO } from '../../../core/services/event/event.service';
 import { EventType } from '../../../model/event-type.model';
 
+import { AvailabilityHintComponent } from '../../../shared/availability/availability-hint.component';
 @Component({
   selector: 'app-event-management',
   standalone: true,
-  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule],
+  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule, AvailabilityHintComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-management.component.html',
 })

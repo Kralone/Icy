@@ -8,6 +8,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
+import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
 import { TREASURER_ROLE, hasRole, memberRank } from '../../../core/services/user/member-rank';
 
 export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
@@ -25,7 +26,8 @@ function toTime(value?: string | null): number | null {
   imports: [
     FormsModule,
     DatePipe,
-    LoadingOverlayComponent
+    LoadingOverlayComponent,
+    AvailabilityHeatmapComponent
 ]
 })
 export class AdminDashboardComponent implements OnInit {
