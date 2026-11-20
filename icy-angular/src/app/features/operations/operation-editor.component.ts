@@ -150,7 +150,10 @@ export class OperationEditorComponent implements OnDestroy {
   readonly catalogError = signal('');
   catalogQuery = '';
   selectedRequirementModel = signal<CatalogEntry | null>(null);
-  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]), catchError(() => of([] as User[])), shareReplay({ bufferSize: 1, refCount: true }));
+  /** La liste d'administration est refusée à un référent : il reçoit la liste réduite (identifiant et pseudo) des organisateurs. */
+  readonly members$ = this.userService.getAllUsers().pipe(map(response => response.data as User[]),
+    catchError(() => this.eventService.getOperationMembers().pipe(map(members => members as User[]), catchError(() => of([] as User[])))),
+    shareReplay({ bufferSize: 1, refCount: true }));
 
   hasMember(members: User[], id: string | null): boolean {
     return !!id && members.some(member => member.id === id);

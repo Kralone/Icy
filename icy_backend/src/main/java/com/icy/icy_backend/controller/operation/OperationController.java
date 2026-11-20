@@ -59,6 +59,7 @@ public class OperationController {
     private final OperationAssignmentRequestRepository requestRepository;
     private final EventService eventService;
     private final com.icy.icy_backend.service.pole.PoleAccess poleAccess;
+    private final com.icy.icy_backend.db.repository.user.UserRepository userRepository;
     private final com.icy.icy_backend.service.operation.OperationFleetService fleetService;
     private final com.icy.icy_backend.service.operation.OperationShipRequirementService shipRequirementService;
     private final com.icy.icy_backend.service.operation.OperationOrganizationService organizationService;
@@ -398,6 +399,18 @@ public class OperationController {
                 .filter(value -> value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
         return messageService.buildResponse("operation.get", new OperationResponseDTO(event, operation));
+    }
+
+    /** Membres actifs, réduits à l'identifiant et au pseudo : de quoi désigner un responsable sans ouvrir la liste d'administration. */
+    @GetMapping("/members")
+    @PreAuthorize("@poleAccess.canCreate()")
+    @Transactional(readOnly = true)
+    public ResponseEntity<MessageResponse<List<java.util.Map<String, Object>>>> members() {
+        List<java.util.Map<String, Object>> members = userRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(user -> user.getUsername() == null ? "" : user.getUsername().toLowerCase()))
+                .map(user -> java.util.Map.<String, Object>of("id", user.getId(), "username", user.getUsername() == null ? "" : user.getUsername()))
+                .toList();
+        return messageService.buildResponse("user.list", members);
     }
 
     @GetMapping("/drafts")

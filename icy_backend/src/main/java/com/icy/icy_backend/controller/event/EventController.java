@@ -31,26 +31,16 @@ public class EventController {
     public ResponseEntity<MessageResponse<EventResponseDTO>> create(@RequestBody CreateEventRequest req) {
         // Le pôle est contrôlé avant la création : un pôle inconnu ne laisse pas d'événement derrière lui.
         com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
-        ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime());
-        return withPole(created, pole);
+        // Le pôle est enregistré avec l'événement : la diffusion temps réel le porte déjà.
+        return eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), true, pole);
     }
 
     @PreAuthorize("@poleAccess.manages(#req.id)")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<EventResponseDTO>> update(@RequestBody UpdateEventRequest req) {
         com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
-        ResponseEntity<MessageResponse<EventResponseDTO>> updated = eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished(),
-                Boolean.TRUE.equals(req.getKeepParticipants()));
-        return withPole(updated, pole);
-    }
-
-    /** Enregistre le pôle choisi dans le formulaire et le reporte dans la réponse. */
-    private ResponseEntity<MessageResponse<EventResponseDTO>> withPole(ResponseEntity<MessageResponse<EventResponseDTO>> response, com.icy.icy_backend.db.entity.user.Specialty pole) {
-        EventResponseDTO event = response == null || response.getBody() == null ? null : response.getBody().getData();
-        if (event == null || event.getId() == null) return response;
-        eventService.assignPole(event.getId(), pole == null ? null : pole.name());
-        event.setPole(pole == null ? null : pole.name());
-        return response;
+        return eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished(),
+                Boolean.TRUE.equals(req.getKeepParticipants()), java.util.Optional.ofNullable(pole));
     }
 
     @PreAuthorize("@poleAccess.manages(#id)")

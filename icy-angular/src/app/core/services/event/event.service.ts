@@ -151,6 +151,11 @@ export class EventService {
     return this.http.put<any>(`/api/operations/${eventId}`, payload, options.keepalive ? { keepalive: true } : {}).pipe(map(res => res.data));
   }
 
+  /** Membres actifs réduits à l'identifiant et au pseudo, ouverts à ceux qui organisent une opération. */
+  getOperationMembers() {
+    return this.http.get<{ data: Array<{ id: string; username: string }> }>('/api/operations/members').pipe(map(res => res.data ?? []));
+  }
+
   getOperationDrafts() {
     return this.http.get<{ data: OperationDraftSummary[] }>('/api/operations/drafts').pipe(map(res => res.data));
   }
