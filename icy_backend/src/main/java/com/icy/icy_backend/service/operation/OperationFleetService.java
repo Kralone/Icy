@@ -41,7 +41,7 @@ public class OperationFleetService {
     @Transactional(readOnly = true)
     public List<OperationShipProposalResponseDTO> proposals(UUID operationId) {
         Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         if (operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED && !organizer) throw new ResourceNotFoundException("Opération introuvable");
 
         List<OperationShipProposal> proposals = proposalRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId);

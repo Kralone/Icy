@@ -118,7 +118,7 @@ public class PoleHomeService {
     }
 
     boolean canManage(Specialty pole) {
-        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER")) return true;
+        if (PoleAccess.organizer()) return true;
         if (!AuthUtils.hasRole("SPECIALISTE")) return false;
         UUID userId = AuthUtils.getCurrentUserId();
         return userId != null && users.findById(userId).map(user -> user.getSpecialty() == pole).orElse(false);

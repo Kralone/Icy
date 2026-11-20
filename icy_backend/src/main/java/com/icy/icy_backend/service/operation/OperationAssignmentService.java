@@ -57,7 +57,7 @@ public class OperationAssignmentService {
         requireActiveAccount(operationId, user);
         if (assignmentRepository.findByOperationEventIdAndUserId(operationId, user).map(current -> groupId.equals(current.getGroupId())).orElse(false)) throw new IllegalStateException("Vous êtes déjà dans ce groupe");
         // Celui qui accepterait la demande n'a pas à valider la sienne : il prend la place directement.
-        if (AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER") || hasResponsibleScope(user, group)) {
+        if (com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId) || hasResponsibleScope(user, group)) {
             ensureCapacity(operationId, groupId, user);
             OperationAssignment assignment = assignmentRepository.findByOperationEventIdAndUserId(operationId, user).orElseGet(OperationAssignment::new);
             assignment.setOperationEventId(operationId); assignment.moveTo(groupId); assignment.setUserId(user); assignment.setStatus(OperationAssignment.Status.CONFIRMED);
@@ -78,7 +78,7 @@ public class OperationAssignmentService {
         if (request.getStatus() != OperationAssignmentRequest.Status.PENDING) throw new IllegalStateException("Demande déjà traitée");
         OperationGroup group = groupRepository.findById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Groupe introuvable"));
         UUID currentUser = AuthUtils.getCurrentUserId();
-        if (!AuthUtils.isAdmin() && !AuthUtils.hasRole("OFFICIER") && !hasResponsibleScope(currentUser, group)) {
+        if (!com.icy.icy_backend.service.pole.PoleAccess.organizes(request.getOperationEventId()) && !hasResponsibleScope(currentUser, group)) {
             throw new org.springframework.security.access.AccessDeniedException("Responsable non autorisé pour ce groupe");
         }
         // Après la fin, une demande restée en attente n'est plus ni acceptée ni refusée : elle reste telle quelle.
@@ -96,7 +96,7 @@ public class OperationAssignmentService {
     /** Organisateur : place ou déplace un membre présent. Responsable : uniquement entre des groupes de sa délégation. */
     @Transactional
     public ResponseEntity<MessageResponse<Void>> assignMember(UUID operationId, UUID userId, Long groupId) {
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         operationRepository.findById(operationId)
                 .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -131,7 +131,7 @@ public class OperationAssignmentService {
     /** Retire un membre de son groupe : il reste inscrit Présent et redevient « sans affectation ». */
     @Transactional
     public ResponseEntity<MessageResponse<Void>> removeMember(UUID operationId, UUID userId) {
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         operationRepository.findById(operationId)
                 .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -198,7 +198,7 @@ public class OperationAssignmentService {
     @Transactional(readOnly = true)
     public List<OperationAssignmentRequest> visibleRequests(UUID operationId) {
         Operation operation = operationRepository.findById(operationId).orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         if (!organizer && operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) throw new ResourceNotFoundException("Opération introuvable");
         List<OperationAssignmentRequest> requests = requestRepository.findByOperationEventIdOrderByCreatedAtAsc(operationId);
         if (organizer) return requests;

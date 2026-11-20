@@ -417,7 +417,7 @@ class OperationCrewServiceTest {
 
     @Test void onlyOrganizersApplyAPresetToACrew() throws Exception {
         var method = com.icy.icy_backend.controller.operation.OperationController.class.getDeclaredMethod("followPreset", UUID.class, Long.class, UUID.class);
-        assertThat(method.getAnnotation(PreAuthorize.class).value()).isEqualTo("hasAnyRole('ADMIN', 'OFFICIER')");
+        assertThat(method.getAnnotation(PreAuthorize.class).value()).isEqualTo("@poleAccess.manages(#id)");
     }
 
     @Test void theCrewReadShowsPositionsTakenSeatsAndMembersWithoutPosition() {
@@ -463,6 +463,6 @@ class OperationCrewServiceTest {
             assertThat(method.getAnnotation(PreAuthorize.class).value()).isEqualTo("hasRole('ADMIN')");
         }
         var list = Arrays.stream(OperationCrewPresetController.class.getDeclaredMethods()).filter(candidate -> candidate.getName().equals("list")).findFirst().orElseThrow();
-        assertThat(list.getAnnotation(PreAuthorize.class).value()).isEqualTo("hasAnyRole('ADMIN', 'OFFICIER')");
+        assertThat(list.getAnnotation(PreAuthorize.class).value()).isEqualTo("@poleAccess.canCreate()");
     }
 }

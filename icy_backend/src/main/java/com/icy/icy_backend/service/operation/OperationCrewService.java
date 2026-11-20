@@ -65,13 +65,13 @@ public class OperationCrewService {
     private final MessageService messageService;
     private final CrewPresetApplier presetApplier;
 
-    private static boolean organizer() {
-        return AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+    private static boolean organizer(UUID operationId) {
+        return com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
     }
 
     /** Pour un non-organisateur, un brouillon n'existe pas. */
     private Operation visibleOperation(UUID operationId) {
-        boolean organizer = organizer();
+        boolean organizer = organizer(operationId);
         return operationRepository.findById(operationId)
                 .filter(value -> organizer || value.getPublicationStatus() == Operation.PublicationStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
@@ -100,7 +100,7 @@ public class OperationCrewService {
                 .stream().collect(Collectors.toMap(Ship::getId, Function.identity()));
         Map<UUID, String> presetNames = presetRepository.findAllById(crews.stream().map(OperationGroup::getCrewPresetId).filter(Objects::nonNull).collect(Collectors.toSet()))
                 .stream().collect(Collectors.toMap(OperationCrewPreset::getId, OperationCrewPreset::getName));
-        boolean organizer = organizer();
+        boolean organizer = organizer(operationId);
         UUID currentUser = AuthUtils.getCurrentUserId();
 
         return crews.stream().map(group -> {
@@ -286,7 +286,7 @@ public class OperationCrewService {
         OperationAssignment assignment = confirmedAssignment(operationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ce membre n’est affecté à aucun équipage"));
         OperationGroup group = crewGroup(operationId, assignment.getGroupId());
-        if (!organizer() && !assignmentService.hasResponsibleScope(AuthUtils.getCurrentUserId(), group)) {
+        if (!organizer(operationId) && !assignmentService.hasResponsibleScope(AuthUtils.getCurrentUserId(), group)) {
             throw new AccessDeniedException("Équipage hors de votre délégation");
         }
         operationLock.requireOpen(operationId);

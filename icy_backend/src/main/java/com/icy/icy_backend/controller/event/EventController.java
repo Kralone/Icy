@@ -19,24 +19,26 @@ import java.util.UUID;
 @RequestMapping("/api/events")
 public class EventController {
     private final EventService eventService;
+    private final com.icy.icy_backend.service.pole.PoleAccess poleAccess;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, com.icy.icy_backend.service.pole.PoleAccess poleAccess) {
         this.eventService = eventService;
+        this.poleAccess = poleAccess;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.canCreate()")
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<EventResponseDTO>> create(@RequestBody CreateEventRequest req) {
         // Le pôle est contrôlé avant la création : un pôle inconnu ne laisse pas d'événement derrière lui.
-        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(req.getPole());
+        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime());
         return withPole(created, pole);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#req.id)")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<EventResponseDTO>> update(@RequestBody UpdateEventRequest req) {
-        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(req.getPole());
+        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
         ResponseEntity<MessageResponse<EventResponseDTO>> updated = eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished(),
                 Boolean.TRUE.equals(req.getKeepParticipants()));
         return withPole(updated, pole);
@@ -51,7 +53,7 @@ public class EventController {
         return response;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PreAuthorize("@poleAccess.manages(#id)")
     @DeleteMapping
     public ResponseEntity<MessageResponse<Void>> delete(@RequestParam UUID id) {
         return eventService.deleteEvent(id);

@@ -115,7 +115,7 @@ public class EventService {
     /** Lecture ou réponse par identifiant : un brouillon est introuvable pour qui ne l'organise pas. */
     private Event findEventVisibleToCurrentUser(UUID eventId) {
         Event event = findEventById(eventId);
-        if (isUnpublishedOperation(event) && !currentUserIsOrganizer()) {
+        if (isUnpublishedOperation(event) && !com.icy.icy_backend.service.pole.PoleAccess.organizes(eventId)) {
             throw new ResourceNotFoundException("Event introuvable avec ID: " + eventId);
         }
         return event;
@@ -398,13 +398,16 @@ public class EventService {
         return getAllEvents(false);
     }
 
-    /** `includeDrafts` n'est honoré que pour un organisateur : c'est la liste de gestion de l'administration. */
+    /** `includeDrafts` n'est honoré que pour un organisateur ou un référent de pôle : c'est la liste de gestion. */
     public ResponseEntity<MessageResponse<List<EventResponseDTO>>> getAllEvents(boolean includeDrafts) {
         List<Event> all = (List<Event>) eventRepository.findAll();
         List<Event> published = withoutUnpublishedOperations(all);
-        if (!includeDrafts || !currentUserIsOrganizer()) {
+        com.icy.icy_backend.db.entity.user.Specialty ownPole = currentUserIsOrganizer() ? null : com.icy.icy_backend.service.pole.PoleAccess.currentPole();
+        if (!includeDrafts || (!currentUserIsOrganizer() && ownPole == null)) {
             return messageService.buildResponse("event.list", published.stream().map(EventResponseDTO::new).collect(Collectors.toList()));
         }
+        // Un référent ne gère que les activités de son pôle : sa liste de gestion s'y limite.
+        if (ownPole != null) all = all.stream().filter(event -> event.getPole() == ownPole).toList();
         Set<UUID> publishedIds = published.stream().map(Event::getId).collect(Collectors.toSet());
         List<EventResponseDTO> events = all.stream().map(event -> {
             EventResponseDTO dto = new EventResponseDTO(event);

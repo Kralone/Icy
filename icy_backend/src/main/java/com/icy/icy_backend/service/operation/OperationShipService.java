@@ -127,7 +127,7 @@ public class OperationShipService {
     public ResponseEntity<MessageResponse<Void>> withdraw(UUID operationId, UUID proposalId) {
         OperationShipProposal proposal = find(operationId, proposalId);
         UUID owner = AuthUtils.getCurrentUserId();
-        boolean organizer = AuthUtils.isAdmin() || AuthUtils.hasRole("OFFICIER");
+        boolean organizer = com.icy.icy_backend.service.pole.PoleAccess.organizes(operationId);
         if (!organizer && !owner.equals(proposal.getOwnerUserId())) {
             throw new org.springframework.security.access.AccessDeniedException("Seul le propriétaire peut retirer cette proposition");
         }
