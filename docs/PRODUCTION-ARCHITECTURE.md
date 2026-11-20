@@ -9,6 +9,11 @@ Vault ne sont plus joignables depuis Internet. Seuls 22, 80 et 443 répondent lo
 du contrôle externe final. Les images et volumes ont été conservés ; les sept
 conteneurs sont stables avec un compteur de redémarrage à zéro.
 
+Mise à jour du **20 novembre 2026** : aucun conteneur `icy-images` ne tourne en
+production. Le frontend sert `/images/` lui-même depuis le volume `icy_images_data`,
+monté en lecture seule. Le service `icy-images` a donc été retiré des fichiers Compose.
+Les mentions du serveur d'images ci-dessous décrivent l'état observé en août.
+
 Méthode : inventaire SSH et tests HTTP/TCP externes, strictement en lecture
 seule. Aucun conteneur, fichier, règle réseau, secret ou volume n'a été modifié.
 L'adresse de l'hôte, les identifiants, les chemins de secrets et les identifiants

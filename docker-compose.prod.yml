@@ -76,16 +76,6 @@ services:
         ipv4_address: ${ICEFORGE_PROD_FRONTEND_IP:-10.253.40.10}
       external: {}
 
-  icy-images:
-    read_only: true
-    tmpfs:
-      - /var/cache/nginx:size=16m
-      - /var/run:size=1m
-    security_opt: ["no-new-privileges:true"]
-    cpus: "0.25"
-    mem_limit: 128m
-    pids_limit: 100
-
 networks:
   internal:
     ipam:

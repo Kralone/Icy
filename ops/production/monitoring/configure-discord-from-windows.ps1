@@ -3,8 +3,8 @@ param(
     [ValidatePattern('^[A-Za-z0-9.-]+$')][string]$Server = '82.29.170.11',
     [ValidatePattern('^[a-z_][a-z0-9_-]*$')][string]$SshUser = 'iceforge-ops',
     [string]$IdentityFile = "$env:USERPROFILE\.ssh\iceforge_ops_ed25519",
-    # Qui est notifié sur une alerte : here, everyone, none ou l'identifiant numérique d'un rôle.
-    [ValidatePattern('^(here|everyone|none|\d{15,22})$')][string]$Mention = 'here',
+    # Qui est notifié sur une alerte : here, everyone, none, user:<id> (un membre) ou role:<id>.
+    [ValidatePattern('^(here|everyone|none|(user:|role:)?\d{15,22})$')][string]$Mention = 'here',
     # Un second salon pour le message « état en direct » (sinon le même salon que les alertes).
     [switch]$SeparateStatusChannel
 )
@@ -27,7 +27,7 @@ try {
     $result = $payload | & ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -i $IdentityFile `
         "$SshUser@$Server" 'sudo -n python3 /root/iceforge/ops/production/monitoring/production-monitor.py configure-discord'
     $result | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Configuration refusée : vérifiez l'URL du webhook Discord copiée.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Configuration refusée : vérifiez l''URL du webhook Discord copiée.' }
     & ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes -i $IdentityFile "$SshUser@$Server" `
         'sudo -n systemctl start iceforge-monitor.service && sudo -n systemctl is-active iceforge-monitor.timer'
     if ($LASTEXITCODE -ne 0) { throw 'Configuration Discord enregistrée ; vérifier le service de surveillance.' }

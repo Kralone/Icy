@@ -55,19 +55,17 @@ printf '%s' "$resolved" | jq -e '
     ((ports($service)[0].protocol // "tcp") == "tcp");
 
   .services as $services |
-  (["backend", "bot", "db", "frontend", "icy-images", "rabbitmq", "vault"] - ($services | keys)) == [] and
+  (["backend", "bot", "db", "frontend", "rabbitmq", "vault"] - ($services | keys)) == [] and
   (.networks.internal.internal == true) and
   network_names($services.frontend) == ["external", "internal"] and
   network_names($services.backend) == ["external", "internal"] and
   network_names($services.bot) == ["external", "internal"] and
   network_names($services.db) == ["internal"] and
-  network_names($services["icy-images"]) == ["internal"] and
   network_names($services.rabbitmq) == ["internal"] and
   network_names($services.vault) == ["internal"] and
   (ports($services.backend) | length) == 0 and
   (ports($services.bot) | length) == 0 and
   (ports($services.db) | length) == 0 and
-  (ports($services["icy-images"]) | length) == 0 and
   localhost_port($services.rabbitmq; 15672; 15672) and
   localhost_port($services.vault; 8200; 8200) and
   ((ports($services.frontend) | map(.published) | sort) == ["443", "80"]) and

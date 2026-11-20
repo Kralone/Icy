@@ -33,7 +33,7 @@ public class UserAvatarService {
     private final ImageService imageService;
 
     public UserAvatarService(@Value("${icy.image.path:images}") String imagePath,
-                             @Value("${icy.image.base-url:http://localhost:8081/images/}") String imageBaseUrl,
+                             @Value("${icy.image.base-url:http://localhost:8088/images/}") String imageBaseUrl,
                              ImageService imageService) throws IOException {
         this.avatarRoot = Paths.get(imagePath, "avatars").toAbsolutePath().normalize();
         this.baseUrl = ensureTrailingSlash(imageBaseUrl) + "avatars/";
