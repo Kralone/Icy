@@ -202,7 +202,8 @@ DISCORD_CONFIG = Path('/etc/iceforge-monitor/discord.json')
 DISCORD_STATE = Path('/var/lib/iceforge-monitor/discord-state.json')
 # Only Discord webhooks: the secret URL never leaves for an arbitrary host.
 WEBHOOK = re.compile(r'https://(?:(?:canary|ptb)\.)?discord(?:app)?\.com/api/webhooks/\d{15,22}/[A-Za-z0-9_-]{20,120}')
-MENTION = re.compile(r'here|everyone|none|\d{15,22}')
+# here, everyone, none, user:<id> (one member) or role:<id>; a bare id is a role (earlier format).
+MENTION = re.compile(r'here|everyone|none|(?:user:|role:)?\d{15,22}')
 CONTAINER_NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}')
 USER_AGENT = 'DiscordBot (https://iceforge.fr, 2.0) IceForge-Production-Monitor'
 DISK_THRESHOLD = 90
@@ -329,8 +330,12 @@ def duration(since, now):
 def allowed_mentions(mention):
     if mention in ('here', 'everyone'):
         return '@' + mention, {'parse': ['everyone']}
-    if mention and mention.isdigit():
-        return f'<@&{mention}>', {'roles': [mention]}
+    if mention and mention.startswith('user:'):
+        member = mention[len('user:'):]
+        return f'<@{member}>', {'users': [member]}
+    role = mention[len('role:'):] if mention and mention.startswith('role:') else mention
+    if role and role.isdigit():
+        return f'<@&{role}>', {'roles': [role]}
     return '', {'parse': []}
 
 
@@ -496,11 +501,14 @@ def refresh_containers(exclude):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('configure', 'configure-local', 'check', 'test-email',
-                                           'configure-discord', 'refresh-containers', 'test-discord'))
+                                           'configure-discord', 'refresh-containers', 'test-discord',
+                                           'set-mention'))
     # Adresse de réception : paramètre de déploiement, jamais écrite dans le dépôt.
     parser.add_argument('--recipient')
     # Conteneurs ignorés lors de l'inventaire : le staging est souvent volontairement en veille.
     parser.add_argument('--exclude', default='staging')
+    # Qui est notifié sur une alerte : here, everyone, none, user:<id> ou role:<id>.
+    parser.add_argument('--mention')
     args = parser.parse_args()
     if os.geteuid() != 0:
         raise RuntimeError('Root required')
@@ -552,6 +560,18 @@ def main():
         return
     if args.action == 'refresh-containers':
         refresh_containers(args.exclude)
+        return
+    if args.action == 'set-mention':
+        config = read_protected(DISCORD_CONFIG)
+        if not isinstance(args.mention, str) or not MENTION.fullmatch(args.mention):
+            raise RuntimeError('Invalid mention: here, everyone, none, user:<id> or role:<id>')
+        config['mention'] = args.mention
+        prefix, allowed = allowed_mentions(args.mention)
+        http_json('POST', config['webhook_url'], {
+            'content': (prefix + ' ' if prefix else '') + '**IceForge : test de la mention des alertes**',
+            'allowed_mentions': allowed})
+        write_protected(DISCORD_CONFIG, config)
+        print('DISCORD-MENTION=OK ' + args.mention)
         return
     if args.action == 'test-discord':
         config = read_protected(DISCORD_CONFIG)

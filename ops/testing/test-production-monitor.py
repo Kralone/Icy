@@ -363,6 +363,14 @@ class DiscordTests(unittest.TestCase):
         self.assertEqual(prefix, '<@&123456789012345678>')
         self.assertEqual(allowed, {'roles': ['123456789012345678']})
         self.assertEqual(monitor.allowed_mentions('none'), ('', {'parse': []}))
+        self.assertEqual(monitor.allowed_mentions('user:190174996235026433'),
+                         ('<@190174996235026433>', {'users': ['190174996235026433']}))
+        self.assertEqual(monitor.allowed_mentions('role:123456789012345678'),
+                         ('<@&123456789012345678>', {'roles': ['123456789012345678']}))
+        for valid in ('user:190174996235026433', 'role:123456789012345678', 'here'):
+            self.assertEqual(monitor.validated_discord_config({'webhook_url': WEBHOOK, 'mention': valid})['mention'], valid)
+        with self.assertRaises(RuntimeError):
+            monitor.validated_discord_config({'webhook_url': WEBHOOK, 'mention': 'user:abc'})
 
     def test_only_discord_webhooks_are_accepted(self):
         self.assertEqual(monitor.validated_discord_config({'webhook_url': WEBHOOK})['mention'], 'here')

@@ -3,8 +3,8 @@ param(
     [ValidatePattern('^[A-Za-z0-9.-]+$')][string]$Server = '82.29.170.11',
     [ValidatePattern('^[a-z_][a-z0-9_-]*$')][string]$SshUser = 'iceforge-ops',
     [string]$IdentityFile = "$env:USERPROFILE\.ssh\iceforge_ops_ed25519",
-    # Qui est notifié sur une alerte : here, everyone, none ou l'identifiant numérique d'un rôle.
-    [ValidatePattern('^(here|everyone|none|\d{15,22})$')][string]$Mention = 'here',
+    # Qui est notifié sur une alerte : here, everyone, none, user:<id> (un membre) ou role:<id>.
+    [ValidatePattern('^(here|everyone|none|(user:|role:)?\d{15,22})$')][string]$Mention = 'here',
     # Un second salon pour le message « état en direct » (sinon le même salon que les alertes).
     [switch]$SeparateStatusChannel
 )
