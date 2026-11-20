@@ -24,7 +24,7 @@
           <button type="button" role="columnheader" class="avail-col-head" [attr.data-period]="period.key"
                   [class.is-full]="columnFull(period.key)" [attr.aria-pressed]="columnFull(period.key)"
                   [attr.title]="(columnFull(period.key) ? 'Décocher tous les ' : 'Cocher tous les ') + period.label.toLowerCase() + 's'"
-                  (click)="togglePeriod(period.key)">
+                  [disabled]="saving()" (click)="togglePeriod(period.key)">
             <app-period-icon [period]="period.key" [size]="20" />
             <span class="avail-col-label">{{ period.label }}</span>
             <span class="avail-col-hours">{{ period.hours }}</span>
@@ -36,7 +36,7 @@
           <button type="button" role="rowheader" class="avail-day" [class.is-full]="rowFull(day.day)"
                   [attr.aria-pressed]="rowFull(day.day)"
                   [attr.title]="(rowFull(day.day) ? 'Décocher tout le ' : 'Cocher tout le ') + day.label.toLowerCase()"
-                  (click)="toggleDay(day.day)">
+                  [disabled]="saving()" (click)="toggleDay(day.day)">
             <span class="avail-day-long">{{ day.label }}</span><span class="avail-day-short">{{ day.short }}</span>
           </button>
           @for (period of periods; track period.key) {

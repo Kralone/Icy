@@ -58,4 +58,21 @@ describe('AvailabilityEditorComponent', () => {
     fixture.detectChanges();
     expect(cell('3-MORNING').getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('bloque les en-têtes de jour et de créneau pendant l’enregistrement', () => {
+    component.toggleDay(2);
+    component.save();
+    fixture.detectChanges();
+    const dayHead: HTMLButtonElement = fixture.nativeElement.querySelector('.avail-day');
+    const columnHead: HTMLButtonElement = fixture.nativeElement.querySelector('.avail-col-head');
+    expect(dayHead.disabled).toBe(true);
+    expect(columnHead.disabled).toBe(true);
+    component.toggleDay(4);
+    component.togglePeriod('MORNING');
+    expect(component.count()).toBe(5);
+    const request = http.expectOne('/api/availability/me');
+    request.flush({ slots: request.request.body.slots });
+    fixture.detectChanges();
+    expect(dayHead.disabled).toBe(false);
+  });
 });

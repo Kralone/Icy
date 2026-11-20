@@ -111,10 +111,12 @@ export class AvailabilityEditorComponent implements OnInit {
   }
 
   toggleDay(day: number): void {
+    if (this.saving()) return;
     this.set(this.periods.map(period => slotKey(day, period.key)), !this.rowFull(day));
   }
 
   togglePeriod(period: AvailabilityPeriod): void {
+    if (this.saving()) return;
     this.set(this.days.map(day => slotKey(day.day, period)), !this.columnFull(period));
   }
 
