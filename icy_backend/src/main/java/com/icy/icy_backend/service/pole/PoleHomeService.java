@@ -52,6 +52,7 @@ public class PoleHomeService {
     private final EventRepository events;
     private final OperationRepository operations;
     private final com.icy.icy_backend.db.repository.goal.GoalRepository goals;
+    private final com.icy.icy_backend.service.notification.NotificationPushService notifications;
     private Clock clock = Clock.systemDefaultZone();
 
     void setClock(Clock clock) {
@@ -86,7 +87,11 @@ public class PoleHomeService {
         entry.setAuthorUserId(author.getId());
         entry.setAuthorName(author.getUsername());
         entry.setCreatedAt(LocalDateTime.now(clock));
-        return view(news.save(entry));
+        PoleNews saved = news.save(entry);
+        // Une nouvelle actualité est annoncée à tous les membres ; une modification ou une suppression ne l'est pas.
+        String label = pole.name().charAt(0) + pole.name().substring(1).toLowerCase(Locale.ROOT);
+        notifications.sendBroadcast("Pôle " + label + " : actualité", saved.getTitle(), "/icy/poles/" + pole.name().toLowerCase(Locale.ROOT), 1);
+        return view(saved);
     }
 
     @Transactional

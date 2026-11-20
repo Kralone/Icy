@@ -45,8 +45,9 @@ class PoleHomeServiceTest {
     private final UserRepository users = Mockito.mock(UserRepository.class);
     private final com.icy.icy_backend.db.repository.event.EventRepository events = Mockito.mock(com.icy.icy_backend.db.repository.event.EventRepository.class);
     private final com.icy.icy_backend.db.repository.event.OperationRepository operations = Mockito.mock(com.icy.icy_backend.db.repository.event.OperationRepository.class);
+    private final com.icy.icy_backend.service.notification.NotificationPushService notifications = Mockito.mock(com.icy.icy_backend.service.notification.NotificationPushService.class);
     private final com.icy.icy_backend.db.repository.goal.GoalRepository goals = Mockito.mock(com.icy.icy_backend.db.repository.goal.GoalRepository.class);
-    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users, events, operations, goals);
+    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users, events, operations, goals, notifications);
 
     @BeforeEach
     void setUp() {
@@ -185,8 +186,10 @@ class PoleHomeServiceTest {
         assertThat(published.content()).isEqualTo("Samedi 21h.");
         assertThat(published.authorName()).isEqualTo(author.getUsername());
         assertThat(published.createdAt()).isEqualTo(LocalDateTime.of(2026, 11, 20, 10, 0));
+        verify(notifications).sendBroadcast("Pôle Industrie : actualité", "Sortie Quantanium", "/icy/poles/industrie", 1);
         assertThatThrownBy(() -> service.publish("MILITAIRE", new PoleDtos.NewsRequest("Titre", "Texte")))
                 .isInstanceOf(ForbiddenException.class);
+        Mockito.verifyNoMoreInteractions(notifications);
     }
 
     @Test
@@ -233,6 +236,8 @@ class PoleHomeServiceTest {
         assertThat(updated.updatedAt()).isEqualTo(LocalDateTime.of(2026, 11, 20, 10, 0));
         service.delete("INDUSTRIE", 4L);
         verify(news).delete(existing);
+        // Ni la modification ni la suppression ne sont annoncées.
+        Mockito.verifyNoInteractions(notifications);
     }
 
     private User signIn(String role, Specialty specialty) {
