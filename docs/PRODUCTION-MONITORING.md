@@ -87,7 +87,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\production\monitoring\
 ```
 
 Coller l’URL dans la saisie masquée. Options : `-SeparateStatusChannel` pour un
-second salon, `-Mention none|everyone|<identifiant de rôle>` au lieu de `@here`.
+second salon, `-Mention none|everyone|user:<id>|role:<id>` au lieu de `@here`
+(`user:<id>` notifie un membre précis, même hors ligne ; l’identifiant se copie avec le
+mode développeur de Discord).
 L’URL passe par stdin SSH. Seules les adresses de webhook `discord.com` sont acceptées.
 Le script envoie un message de test qui liste les conteneurs surveillés, puis
 enregistre `/etc/iceforge-monitor/discord.json` (root, 0600, hors Vault et hors dépôt)
@@ -98,6 +100,13 @@ Après l’ajout ou le retrait d’un service, mettre la liste à jour :
 ```bash
 sudo python3 /root/iceforge/ops/production/monitoring/production-monitor.py refresh-containers
 sudo python3 /root/iceforge/ops/production/monitoring/production-monitor.py test-discord
+```
+
+Pour changer la mention sans recoller l’URL du webhook (un message de test part avec
+la nouvelle mention) :
+
+```bash
+sudo python3 /root/iceforge/ops/production/monitoring/production-monitor.py set-mention --mention user:<id>
 ```
 
 `refresh-containers` relève à nouveau les conteneurs en cours d’exécution et affiche
