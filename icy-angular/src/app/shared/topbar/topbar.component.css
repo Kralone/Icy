@@ -173,11 +173,14 @@
   overflow: hidden;
 }
 
-.profile-orbit {
-  position: absolute;
-  inset: -24px;
-  transform-origin: center;
-  pointer-events: none;
-  opacity: 0.85;
-  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.35));
+/* Icône de grade autour de l'avatar : 68 px de large, l'avatar garde ses 32 px.
+   Les anneaux sont inclinés et peu hauts, la marge négative garde la barre à sa hauteur. */
+.topbar-rank-orbit {
+  width: 68px;
+  margin-block: -14px;
+  margin-inline: -10px;
+}
+
+.topbar-rank-orbit a {
+  border-color: rgb(var(--tone) / 0.55);
 }

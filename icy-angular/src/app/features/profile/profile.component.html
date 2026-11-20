@@ -5,13 +5,8 @@
   <div class="pointer-events-none absolute inset-0 overflow-hidden">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_60%)]"></div>
     @if (profileLoaded) {
-      <div class="rank-orbit is-ready">
-        <app-rank-orbit [rank]="activeRankKey" [animateWhole]="true" [deploy]="profileLoaded"></app-rank-orbit>
-      </div>
-    }
-    @if (profileLoaded) {
       <div
-        class="rank-label absolute right-4 top-8 text-[28px] sm:text-[38px] font-black tracking-[0.24em] text-white/10 uppercase"
+        class="rank-label hidden sm:block absolute right-4 top-8 text-[28px] sm:text-[38px] font-black tracking-[0.24em] text-white/10 uppercase"
         >
         {{ activeRankLabel }}
       </div>
@@ -26,9 +21,12 @@
   ></app-loading-overlay>
   <div class="relative z-10">
     <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-cyan-200/60">Profil</p>
-        <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300">CMDR {{ profile.username }}</h1>
+      <div class="flex items-center gap-3 sm:gap-4">
+        <app-rank-orbit class="profile-rank-emblem" [rank]="activeRankKey" [label]="activeRankLabel"></app-rank-orbit>
+        <div>
+          <p class="text-sm uppercase tracking-[0.3em] text-cyan-200/60">Profil</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-cyan-300">CMDR {{ profile.username }}</h1>
+        </div>
       </div>
     </header>
     <section class="mb-6">

@@ -10,17 +10,10 @@
   min-height: calc(100dvh - 60px);
 }
 
-.utils-rank-orbit {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 1500px;
-  height: 1500px;
-  opacity: 0.3;
-  transform: translate(50%, -50%);
-  pointer-events: none;
-  z-index: 5;
-  will-change: transform;
+/* Icône de grade animée, posée à côté du titre, sans déborder sur la page. */
+.corner-rank-emblem {
+  width: 64px;
+  flex: none;
 }
 
 .utils-content {
@@ -67,6 +60,9 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   font-size: 28px;
   font-weight: 900;
   letter-spacing: 0.24em;
