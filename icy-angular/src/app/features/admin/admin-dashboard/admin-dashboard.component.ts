@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 
 import { User } from '../../../model/user.model';
@@ -27,6 +27,7 @@ function toTime(value?: string | null): number | null {
   imports: [
     FormsModule,
     DatePipe,
+    NgTemplateOutlet,
     LoadingOverlayComponent,
     AvailabilityHeatmapComponent
 ]
@@ -323,28 +324,26 @@ export class AdminDashboardComponent implements OnInit {
     return this.newUser.role === SPECIALIST_RANK && !this.newUser.specialty;
   }
 
-  /** Un Spécialiste nommé avant les pôles n'en a pas encore : la ligne le signale. */
-  needsSpecialty(user: User): boolean {
-    return memberRank(user.roles) === SPECIALIST_RANK && !specialtyLabel(user.specialty);
-  }
-
   /** Grade du membre, celui qui est mis en avant dans la liste. */
   rankLabel(user: User): string {
     const rank = this.normalizeRole(memberRank(user.roles));
     return this.roleLabels[rank] ?? rank;
   }
 
+  /** Clé du grade, qui choisit sa couleur dans la liste. */
+  rankKey(user: User): string {
+    return this.normalizeRole(memberRank(user.roles));
+  }
+
   /** Ce qui précise le grade, affiché en petit dessous : le pôle du Spécialiste, puis la fonction de trésorier. */
-  rankDetails(user: User): { label: string; testId: string; missing?: boolean }[] {
-    const details: { label: string; testId: string; missing?: boolean }[] = [];
+  rankDetails(user: User): { key: string; label: string; testId: string }[] {
+    const details: { key: string; label: string; testId: string }[] = [];
     const pole = specialtyLabel(user.specialty);
-    if (pole) {
-      details.push({ label: pole, testId: 'member-specialty' });
-    } else if (this.needsSpecialty(user)) {
-      details.push({ label: 'Pôle à choisir', testId: 'member-specialty-missing', missing: true });
+    if (pole && memberRank(user.roles) === SPECIALIST_RANK) {
+      details.push({ key: (user.specialty ?? '').trim().toUpperCase(), label: pole, testId: 'member-specialty' });
     }
     if (hasRole(user.roles, TREASURER_ROLE)) {
-      details.push({ label: this.roleLabels[TREASURER_ROLE], testId: 'member-function' });
+      details.push({ key: TREASURER_ROLE, label: this.roleLabels[TREASURER_ROLE], testId: 'member-function' });
     }
     return details;
   }

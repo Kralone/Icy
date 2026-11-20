@@ -1,29 +1,79 @@
-/* Choix du pôle d'un Spécialiste : une tuile par pôle, colorée quand elle est choisie. */
-.pole-tile {
-  --pole: 148 163 184;
+/*
+ * Couleurs des grades, des pôles de Spécialiste et de la fonction de trésorier.
+ * Chaque élément lit sa couleur dans --tone (triplet RVB).
+ */
+[data-rank] { --tone: 148 163 184; }
+[data-rank='ADMIN'] { --tone: 251 191 36; }
+[data-rank='OFFICIER'] { --tone: 232 121 249; }
+[data-rank='SPECIALISTE'] { --tone: 34 211 238; }
+[data-rank='INGENIEUR'] { --tone: 129 140 248; }
+[data-rank='ASSOCIE'] { --tone: 125 211 252; }
+[data-rank='JUNIOR'] { --tone: 148 163 184; }
+
+[data-choice] { --tone: 148 163 184; }
+[data-choice='LOGISTIQUE'] { --tone: 251 146 60; }
+[data-choice='MILITAIRE'] { --tone: 248 113 113; }
+[data-choice='INDUSTRIE'] { --tone: 52 211 153; }
+[data-choice='TRESORIER'] { --tone: 250 204 21; }
+
+/* Liste : pastille du grade, initiale du membre et précisions sous le grade. */
+.rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.8rem 0.2rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--tone) / 0.55);
+  background: linear-gradient(90deg, rgb(var(--tone) / 0.26), rgb(var(--tone) / 0.08));
+  color: rgb(var(--tone));
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 0 18px rgb(var(--tone) / 0.12);
+}
+.rank-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: rgb(var(--tone));
+  box-shadow: 0 0 8px rgb(var(--tone) / 0.9);
+}
+.member-avatar {
+  color: rgb(var(--tone));
+  background: rgb(var(--tone) / 0.14);
+  border: 1px solid rgb(var(--tone) / 0.45);
+}
+.rank-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: rgb(203 213 225);
+  white-space: nowrap;
+}
+.rank-detail svg { color: rgb(var(--tone)); }
+
+/* Formulaire : tuiles des pôles et de la fonction de trésorier, colorées quand elles sont choisies. */
+.choice-tile {
   border-color: rgb(255 255 255 / 0.1);
   background: rgb(255 255 255 / 0.03);
 }
-.pole-tile[data-pole='LOGISTIQUE'] { --pole: 251 191 36; }
-.pole-tile[data-pole='MILITAIRE'] { --pole: 248 113 113; }
-.pole-tile[data-pole='INDUSTRIE'] { --pole: 52 211 153; }
-
-.pole-icon {
-  color: rgb(var(--pole));
-  background: rgb(var(--pole) / 0.12);
-  border: 1px solid rgb(var(--pole) / 0.3);
+.choice-icon {
+  color: rgb(var(--tone));
+  background: rgb(var(--tone) / 0.12);
+  border: 1px solid rgb(var(--tone) / 0.3);
 }
-.pole-check {
+.choice-check {
   opacity: 0;
   color: #0b1324;
-  background: rgb(var(--pole));
+  background: rgb(var(--tone));
 }
-
-.pole-tile:hover { border-color: rgb(var(--pole) / 0.5); }
-.pole-tile:focus-within { outline: 2px solid rgb(var(--pole)); outline-offset: 2px; }
-.pole-tile.is-selected {
-  border-color: rgb(var(--pole));
-  background: linear-gradient(180deg, rgb(var(--pole) / 0.18), rgb(var(--pole) / 0.04));
-  box-shadow: 0 10px 30px rgb(var(--pole) / 0.18);
+.choice-tile:hover { border-color: rgb(var(--tone) / 0.5); }
+.choice-tile:has(input:focus-visible) { outline: 2px solid rgb(var(--tone)); outline-offset: 2px; }
+.choice-tile.is-selected {
+  border-color: rgb(var(--tone));
+  background: linear-gradient(180deg, rgb(var(--tone) / 0.18), rgb(var(--tone) / 0.04));
+  box-shadow: 0 10px 30px rgb(var(--tone) / 0.18);
 }
-.pole-tile.is-selected .pole-check { opacity: 1; }
+.choice-tile.is-selected .choice-check { opacity: 1; }

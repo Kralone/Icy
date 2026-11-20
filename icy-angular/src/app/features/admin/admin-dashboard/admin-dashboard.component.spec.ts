@@ -134,21 +134,21 @@ describe('AdminDashboardComponent', () => {
     http.expectOne('/api/users/all').flush({ data: [] });
   });
 
-  it('shows the pole next to the rank, and flags a Specialist without one', () => {
+  it('shows the rank first, in its colour, with the pole and the treasurer function below', () => {
     component.loadUsers();
     http.expectOne('/api/users/all').flush({ data: [
       { id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['SPECIALISTE'], specialty: 'LOGISTIQUE', createdAt: null },
-      { id: 'b', username: 'Bravo', discordId: '2', active: true, roles: ['SPECIALISTE'], specialty: null, createdAt: null },
+      { id: 'b', username: 'Bravo', discordId: '2', active: true, roles: ['OFFICIER'], specialty: null, createdAt: null },
       { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['TRESORIER', 'ASSOCIE'], specialty: null, createdAt: null }
     ] });
     fixture.detectChanges();
 
     const rows: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('tbody tr'));
+    const ranks = rows.map(row => row.querySelector('[data-testid="member-rank"]') as HTMLElement);
+    expect(ranks.map(rank => rank.textContent?.trim())).toEqual(['Spécialiste', 'Officier', 'Associé']);
+    expect(ranks.map(rank => rank.getAttribute('data-rank'))).toEqual(['SPECIALISTE', 'OFFICIER', 'ASSOCIE']);
     expect(rows[0].querySelector('[data-testid="member-specialty"]')?.textContent).toContain('Logistique');
-    expect(rows[1].querySelector('[data-testid="member-specialty-missing"]')?.textContent).toContain('Pôle à choisir');
-    expect(rows[2].querySelector('[data-testid^="member-specialty"]')).toBeNull();
-    // Le grade est la seule pastille ; pôle et fonction le précisent en dessous.
-    expect(rows.map(row => row.querySelector('[data-testid="member-rank"]')?.textContent?.trim())).toEqual(['Spécialiste', 'Spécialiste', 'Associé']);
+    expect(rows[1].querySelector('[data-testid="member-specialty"], [data-testid="member-function"]')).toBeNull();
     expect(rows[2].querySelector('[data-testid="member-function"]')?.textContent).toContain('Trésorier');
   });
 });
