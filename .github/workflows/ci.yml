@@ -135,7 +135,7 @@ jobs:
           -f docker-compose.yml
           -f docker-compose.validation.yml
           up -d --build --wait --wait-timeout 300
-          db rabbitmq backend frontend icy-images
+          db rabbitmq backend frontend
       - name: Verify API through Nginx
         run: >-
           docker compose -p iceforge-ci

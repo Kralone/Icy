@@ -17,7 +17,8 @@ afin qu'un redéploiement ou un rollback reconstruise le même environnement.
 | `icy-angular/docker-compose.ssr.yml` | Variante frontend SSR, à activer séparément |
 
 Le socle contient PostgreSQL, RabbitMQ, le backend Spring Boot, le bot Discord,
-le frontend Nginx et le service d'images. PostgreSQL et RabbitMQ ne publient
+et le frontend Nginx, qui sert aussi les images
+(volume `icy_images_data` monté en lecture seule sur `/images/`). PostgreSQL et RabbitMQ ne publient
 aucun port en production. Seul le frontend publie `80` et `443`.
 
 PostgreSQL 18 utilise `PGDATA=/var/lib/postgresql/18/docker`. Son volume
@@ -36,7 +37,7 @@ docker compose down
 ```
 
 Les ports de développement sont liés à l'interface locale : PostgreSQL `5432`,
-RabbitMQ `5672` et `15672`, backend `8080`, frontend `8088`, images `8081`.
+RabbitMQ `5672` et `15672`, backend `8080`, frontend `8088` (images comprises, sous `/images/`).
 Les valeurs par défaut du socle sont réservées au poste de développement.
 
 ## Production

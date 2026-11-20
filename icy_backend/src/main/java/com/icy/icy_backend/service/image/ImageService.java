@@ -49,7 +49,7 @@ public class ImageService {
     private final ImageCategoryRepository categoryRepo;
     private final ImageSubcategoryRepository subcategoryRepo;
 
-    @Value("${icy.image.base-url:http://localhost:8081/images/}")
+    @Value("${icy.image.base-url:http://localhost:8088/images/}")
     private String imageBaseUrl;
 
     public ImageService(ImageMetadataRepository repo,
