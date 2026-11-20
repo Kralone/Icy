@@ -151,7 +151,9 @@ export class PolePageComponent implements OnInit {
   }
 
   day(value: string): string {
-    const date = new Date(value);
+    // Une date civile (AAAA-MM-JJ) reste ce jour-là quel que soit le fuseau du navigateur.
+    const civil = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
+    const date = civil ? new Date(+civil[1], +civil[2] - 1, +civil[3]) : new Date(value);
     return Number.isNaN(date.getTime()) ? '' : DAY.format(date);
   }
 
