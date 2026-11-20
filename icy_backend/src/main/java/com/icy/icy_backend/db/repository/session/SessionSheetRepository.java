@@ -28,14 +28,15 @@ public interface SessionSheetRepository extends JpaRepository<SessionSheet, UUID
 
     List<SessionSheet> findTop4ByActivityOrderBySessionDateDescCreatedAtDesc(String activity);
 
-    long countByActivityAndSessionDateGreaterThanEqual(String activity, LocalDate since);
+    /** Fiches d'une activité dont la date tombe entre deux jours inclus : les fiches prévues plus tard n'y entrent pas. */
+    long countByActivityAndSessionDateBetween(String activity, LocalDate since, LocalDate until);
 
     long countByActivityAndStatusNot(String activity, SessionSheet.Status status);
 
-    /** Membres distincts inscrits sur les fiches d'une activité depuis une date. */
+    /** Membres distincts inscrits sur les fiches d'une activité datées entre deux jours inclus. */
     @Query("select count(distinct p.userId) from SessionParticipant p where p.sheetId in "
-            + "(select s.id from SessionSheet s where s.activity = :activity and s.sessionDate >= :since)")
-    long countParticipantsSince(@Param("activity") String activity, @Param("since") LocalDate since);
+            + "(select s.id from SessionSheet s where s.activity = :activity and s.sessionDate between :since and :until)")
+    long countParticipantsBetween(@Param("activity") String activity, @Param("since") LocalDate since, @Param("until") LocalDate until);
 
     /** Total des ventes (aUEC) réalisées depuis un instant sur les fiches d'une activité, quelle que soit la date de la fiche. */
     @Query("select coalesce(sum(x.amount), 0) from SessionSale x where x.soldAt >= :since and x.sheetId in "

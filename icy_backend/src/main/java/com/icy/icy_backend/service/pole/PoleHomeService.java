@@ -117,11 +117,12 @@ public class PoleHomeService {
     }
 
     private List<PoleDtos.Stat> industryStats() {
-        LocalDate since = LocalDate.now(clock).minusDays(STATS_DAYS);
+        LocalDate today = LocalDate.now(clock);
+        LocalDate since = today.minusDays(STATS_DAYS);
         return List.of(
-                new PoleDtos.Stat("MINING_SHEETS_30D", sheets.countByActivityAndSessionDateGreaterThanEqual(MINING, since)),
+                new PoleDtos.Stat("MINING_SHEETS_30D", sheets.countByActivityAndSessionDateBetween(MINING, since, today)),
                 new PoleDtos.Stat("MINING_SHEETS_OPEN", sheets.countByActivityAndStatusNot(MINING, SessionSheet.Status.CLOSED)),
-                new PoleDtos.Stat("MINERS_30D", sheets.countParticipantsSince(MINING, since)),
+                new PoleDtos.Stat("MINERS_30D", sheets.countParticipantsBetween(MINING, since, today)),
                 new PoleDtos.Stat("MINING_SALES_30D", sheets.sumSalesSince(MINING, since.atStartOfDay())));
     }
 

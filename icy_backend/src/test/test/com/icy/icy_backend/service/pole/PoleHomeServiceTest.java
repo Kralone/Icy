@@ -64,9 +64,9 @@ class PoleHomeServiceTest {
     void industryHomeShowsReferentsStatsRecentSheetsAndNews() {
         signIn("JUNIOR", null);
         LocalDate since = TODAY.minusDays(30);
-        when(sheets.countByActivityAndSessionDateGreaterThanEqual("MINING", since)).thenReturn(6L);
+        when(sheets.countByActivityAndSessionDateBetween("MINING", since, TODAY)).thenReturn(6L);
         when(sheets.countByActivityAndStatusNot("MINING", SessionSheet.Status.CLOSED)).thenReturn(2L);
-        when(sheets.countParticipantsSince("MINING", since)).thenReturn(9L);
+        when(sheets.countParticipantsBetween("MINING", since, TODAY)).thenReturn(9L);
         when(sheets.sumSalesSince("MINING", since.atStartOfDay())).thenReturn(1_250_000L);
         SessionSheet sheet = SessionSheet.builder().id(UUID.randomUUID()).name("Quantanium Aaron Halo")
                 .sessionDate(TODAY).status(SessionSheet.Status.ACTIVE).build();
