@@ -38,3 +38,10 @@ ALTER TABLE events.events
     ADD CONSTRAINT ck_events_pole CHECK (pole IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'));
 
 CREATE INDEX idx_events_pole_end ON events.events (pole, end_date_time) WHERE pole IS NOT NULL;
+
+-- Pôle auquel un objectif principal est rattaché, pour l'afficher sur la page du pôle. Facultatif ; ses étapes le suivent.
+ALTER TABLE goals.goals
+    ADD COLUMN pole VARCHAR(16),
+    ADD CONSTRAINT ck_goals_pole CHECK (pole IN ('LOGISTIQUE', 'MILITAIRE', 'INDUSTRIE'));
+
+CREATE INDEX idx_goals_pole ON goals.goals (pole) WHERE pole IS NOT NULL;

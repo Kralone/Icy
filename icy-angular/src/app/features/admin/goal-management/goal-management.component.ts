@@ -1,3 +1,4 @@
+import { SPECIALTIES } from '../../../core/services/user/member-rank';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -75,7 +76,10 @@ export class GoalManagementComponent implements OnInit {
     parentId: null as number | null,
     pinned: false,
     userId: null as string | null,
+    /** Pôle d'un objectif principal ; vide sans pôle. */
+    pole: '',
   };
+  readonly poles = SPECIALTIES;
   formUserInput = '';
 
   templateDraftRoot: TemplateDraftNode = this.createDraftRoot();
@@ -275,6 +279,8 @@ export class GoalManagementComponent implements OnInit {
       ...(this.editingGoal ? {current: Number(this.form.current), pinned: !!this.form.pinned} : {}),
       parentId: this.form.parentId,
       userId: this.form.userId,
+      // Seul un objectif principal porte un pôle ; vide, il est détaché.
+      pole: this.form.parentId === null ? this.form.pole : '',
     };
 
     const req = this.editingGoal
@@ -311,6 +317,7 @@ export class GoalManagementComponent implements OnInit {
       parentId: goal.parentId ?? null,
       pinned: !!(goal as any).pinned,
       userId: (goal as any).userId ?? null,
+      pole: goal.pole ?? '',
     };
     this.formUserInput = (goal as any).username ?? '';
 
@@ -419,6 +426,7 @@ export class GoalManagementComponent implements OnInit {
       parentId: null,
       pinned: false,
       userId: null,
+      pole: '',
     };
   }
 

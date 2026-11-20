@@ -288,7 +288,7 @@ BEGIN
             ('47', 'V47__create_user_tutorials.sql', 2032996675),
             ('48', 'V48__create_guild_bank.sql', -948273531),
             ('49', 'V49__create_user_availability.sql', 1842482513),
-            ('50', 'V50__add_user_specialty.sql', -1310181089)
+            ('50', 'V50__add_user_specialty.sql', -1665097397)
         ) expected(version, script, checksum)
         WHERE NOT EXISTS (SELECT 1 FROM public.flyway_schema_history actual
             WHERE actual.version = expected.version AND actual.script = expected.script
@@ -467,6 +467,15 @@ BEGIN
                       AND conname = 'ck_events_pole' AND contype = 'c' AND convalidated)
        OR to_regclass('events.idx_events_pole_end') IS NULL
     THEN RAISE EXCEPTION 'V50 event pole structure is incomplete'; END IF;
+
+    -- V50 : pôle facultatif d'un objectif principal, limité aux trois pôles ; une étape n'en porte pas.
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'goals' AND table_name = 'goals'
+                   AND column_name = 'pole' AND data_type = 'character varying'
+                   AND character_maximum_length = 16 AND is_nullable = 'YES')
+       OR NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'goals.goals'::regclass
+                      AND conname = 'ck_goals_pole' AND contype = 'c' AND convalidated)
+       OR to_regclass('goals.idx_goals_pole') IS NULL
+    THEN RAISE EXCEPTION 'V50 goal pole structure is incomplete'; END IF;
 END
 $verify$;
 

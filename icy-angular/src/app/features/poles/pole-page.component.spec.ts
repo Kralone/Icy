@@ -87,7 +87,25 @@ describe('PolePageComponent', () => {
     expect(text('pole-news')).toContain('Aucune actualité publiée pour ce pôle.');
     expect(find('pole-stats')).toBeNull();
     expect(find('pole-activity')).toBeNull();
+    expect(find('pole-goals')).toBeNull();
     expect(find('pole-agenda')).toBeNull();
+  });
+
+  it('shows the goals of the pole with their progress', async () => {
+    await load('logistique', {
+      ...home('LOGISTIQUE'),
+      goals: [
+        { id: 1, name: 'Stock de Quantanium', current: 40, target: 100, completed: false },
+        { id: 2, name: 'Base avancée', current: 70, target: 70, completed: true }
+      ]
+    });
+    const cards = Array.from(find('pole-goals')!.querySelectorAll('a')) as HTMLAnchorElement[];
+    expect(cards[0].textContent).toMatch(/Stock de Quantanium\s*40 %/);
+    expect(cards[0].textContent).toMatch(/40 \/ 100/);
+    expect(cards[0].querySelector('[role=progressbar]')!.getAttribute('aria-valuenow')).toBe('40');
+    expect(cards[1].textContent).toContain('Atteint');
+    expect(cards[1].getAttribute('href')).toBe('/icy/goals');
+
   });
 
   it('shows the event figures and the past activities of a pole without its own tools', async () => {

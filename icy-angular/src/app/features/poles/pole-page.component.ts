@@ -38,6 +38,15 @@ export class PolePageComponent implements OnInit {
   readonly loadFailed = signal(false);
 
   /** Chiffres que l'interface sait nommer, dans l'ordre du serveur. */
+  /** Objectifs du pôle avec leur avancement en pourcentage, borné entre 0 et 100. */
+  readonly goals = computed(() =>
+    (this.home()?.goals ?? []).map(goal => ({
+      ...goal,
+      percent: goal.completed ? 100 : goal.target > 0 ? Math.max(0, Math.min(100, Math.round((goal.current / goal.target) * 100))) : 0,
+      currentLabel: NUMBER.format(goal.current),
+      targetLabel: NUMBER.format(goal.target)
+    })));
+
   readonly stats = computed(() =>
     (this.home()?.stats ?? [])
       .filter(stat => POLE_STAT_LABELS[stat.key])

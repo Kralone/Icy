@@ -80,6 +80,8 @@ public class GoalService {
                     .orElseThrow(() -> new ResourceNotFoundException("Objectif parent introuvable"));
             goal.setParent(parent);
         }
+        // Seul un objectif principal porte un pôle : ses étapes le suivent.
+        goal.setPole(goal.getParent() == null ? com.icy.icy_backend.db.entity.user.Specialty.optional(dto.getPole()) : null);
 
         goalRepository.save(goal);
         syncAncestorsCompletion(goal.getParent());
@@ -147,6 +149,13 @@ public class GoalService {
             }
 
             goal.setParent(parent);
+        }
+
+        // ----- pôle : porté par l'objectif principal seulement ; absent, inchangé -----
+        if (goal.getParent() != null) {
+            goal.setPole(null);
+        } else if (dto.getPole() != null) {
+            goal.setPole(com.icy.icy_backend.db.entity.user.Specialty.optional(dto.getPole()));
         }
 
         // ----- pinned (admin) -----
@@ -267,6 +276,7 @@ public class GoalService {
                 .completed(goal.isCompleted())
                 .createdAt(goal.getCreatedAt())
                 .parentId(goal.getParent() != null ? goal.getParent().getId() : null)
+                .pole(goal.getPole() == null ? null : goal.getPole().name())
                 .userId(goal.getUser() != null ? goal.getUser().getId() : null)
                 .username(goal.getUser() != null ? goal.getUser().getUsername() : null)
                 .avatarUrl(goal.getUser() != null ? goal.getUser().getAvatarUrl() : null)

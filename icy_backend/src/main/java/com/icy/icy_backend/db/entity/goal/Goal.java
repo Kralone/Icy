@@ -35,6 +35,11 @@ public class Goal {
 
     private LocalDateTime createdAt;
 
+    /** Pôle de rattachement d'un objectif principal ; null sans pôle, et toujours null pour une étape. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private com.icy.icy_backend.db.entity.user.Specialty pole;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

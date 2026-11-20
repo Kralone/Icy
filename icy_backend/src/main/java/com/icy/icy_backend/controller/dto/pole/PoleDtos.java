@@ -21,7 +21,11 @@ public final class PoleDtos {
      * activity est vide pour un pôle qui n'a pas encore d'activité à montrer.
      */
     public record Home(String key, List<Specialist> specialists, boolean canManage,
-                       List<Stat> stats, List<Activity> activity, List<Agenda> agenda, List<News> news) {
+                       List<Stat> stats, List<Activity> activity, List<Agenda> agenda, List<Goal> goals, List<News> news) {
+    }
+
+    /** Objectif principal rattaché au pôle. current et target cumulent ses étapes quand il en a. */
+    public record Goal(Long id, String name, long current, long target, boolean completed) {
     }
 
     /** Événement ou opération à venir rattaché au pôle. kind vaut EVENT ou OPERATION ; imageUrl peut manquer. */

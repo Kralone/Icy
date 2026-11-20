@@ -45,7 +45,8 @@ class PoleHomeServiceTest {
     private final UserRepository users = Mockito.mock(UserRepository.class);
     private final com.icy.icy_backend.db.repository.event.EventRepository events = Mockito.mock(com.icy.icy_backend.db.repository.event.EventRepository.class);
     private final com.icy.icy_backend.db.repository.event.OperationRepository operations = Mockito.mock(com.icy.icy_backend.db.repository.event.OperationRepository.class);
-    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users, events, operations);
+    private final com.icy.icy_backend.db.repository.goal.GoalRepository goals = Mockito.mock(com.icy.icy_backend.db.repository.goal.GoalRepository.class);
+    private final PoleHomeService service = new PoleHomeService(poles, news, sheets, users, events, operations, goals);
 
     @BeforeEach
     void setUp() {
@@ -139,6 +140,22 @@ class PoleHomeServiceTest {
         assertThat(agenda).containsExactly(
                 new PoleDtos.Agenda(outing.getId(), "EVENT", "Sortie Quantanium", "Minage", "/images/minage.webp", outing.getStartDateTime(), outing.getEndDateTime()),
                 new PoleDtos.Agenda(operation.getId(), "OPERATION", "Opération Halo", "Minage", "https://exemple.test/halo.jpg", operation.getStartDateTime(), operation.getEndDateTime()));
+    }
+
+    @Test
+    void goalsOfThePoleShowTheProgressOfTheirSteps() {
+        signIn("JUNIOR", null);
+        com.icy.icy_backend.db.entity.goal.Goal simple = com.icy.icy_backend.db.entity.goal.Goal.builder().id(1L).name("Stock de Quantanium").current(40).target(100).build();
+        com.icy.icy_backend.db.entity.goal.Goal staged = com.icy.icy_backend.db.entity.goal.Goal.builder().id(2L).name("Base avancée").current(0).target(1).completed(true)
+                .subGoals(List.of(
+                        com.icy.icy_backend.db.entity.goal.Goal.builder().id(3L).name("Acier").current(30).target(50).build(),
+                        com.icy.icy_backend.db.entity.goal.Goal.builder().id(4L).name("Cuivre").current(20).target(20).build()))
+                .build();
+        when(goals.findByPoleAndParentIsNullOrderByCompletedAscCreatedAtDesc(Specialty.LOGISTIQUE)).thenReturn(List.of(simple, staged));
+
+        assertThat(service.home("LOGISTIQUE").goals()).containsExactly(
+                new PoleDtos.Goal(1L, "Stock de Quantanium", 40, 100, false),
+                new PoleDtos.Goal(2L, "Base avancée", 50, 70, true));
     }
 
     @Test

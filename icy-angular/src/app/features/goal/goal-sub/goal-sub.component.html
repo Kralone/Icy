@@ -2,7 +2,7 @@
   <header class="card-heading">
     <div class="heading-copy">
       <div class="badges"><span class="status">{{ isDone(goal) ? 'Terminé' : 'En cours' }}</span>@if (goal.pinned) { <span class="pin-badge">Épinglé</span> }</div>
-      <h3>{{ goal.name }}</h3>
+      <h3>{{ goal.name }} <app-pole-badge [pole]="goal.pole" /></h3>
       @if (goal.description) { <p class="description">{{ goal.description }}</p> }
     </div>
     @if (goal.username && depth === 0) {

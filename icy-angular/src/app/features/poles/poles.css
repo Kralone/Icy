@@ -245,6 +245,44 @@
 .pole-tool:hover img, .pole-tool:focus-visible img { transform: scale(1.06); opacity: 1; }
 .pole-tool:hover .pole-tool-arrow, .pole-tool:focus-visible .pole-tool-arrow { transform: translateX(4px); }
 
+/* Objectifs du pôle : les cartes se partagent toujours toute la ligne. */
+.pole-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0.75rem;
+}
+.pole-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.04);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+.pole-goal:hover,
+.pole-goal:focus-visible {
+  border-color: rgb(var(--tone) / 0.7);
+  transform: translateY(-2px);
+  outline: none;
+}
+.pole-goal-track {
+  display: block;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+.pole-goal-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgb(var(--tone) / 0.6), rgb(var(--tone)));
+  transition: width 600ms ease;
+}
+.pole-goal--done .pole-goal-fill { background: rgb(var(--tone)); }
+
 .pole-panel {
   padding: 1rem 1.1rem;
   border-radius: 1rem;
@@ -323,4 +361,6 @@
   .pole-card:hover, .pole-tool:hover { transform: none; }
   .pole-card:hover img, .pole-tool:hover img { transform: none; }
   .pole-hero-image, .pole-rise { animation: none; }
+  .pole-goal, .pole-goal-fill { transition: none; }
+  .pole-goal:hover { transform: none; }
 }

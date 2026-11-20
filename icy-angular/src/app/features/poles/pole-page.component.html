@@ -70,6 +70,27 @@
         </dl>
       }
 
+      @if (goals().length) {
+        <section class="space-y-4" aria-labelledby="pole-goals-title" data-testid="pole-goals">
+          <h2 id="pole-goals-title" class="pole-section-title">Objectifs du pôle</h2>
+          <div class="pole-goals">
+            @for (goal of goals(); track goal.id; let index = $index) {
+              <a class="pole-goal pole-rise" [class.pole-goal--done]="goal.completed" [style.--rise]="index" routerLink="/icy/goals">
+                <span class="flex items-baseline justify-between gap-3">
+                  <span class="min-w-0 truncate font-semibold text-white">{{ goal.name }}</span>
+                  <span class="shrink-0 text-sm text-slate-400">{{ goal.completed ? 'Atteint' : goal.percent + ' %' }}</span>
+                </span>
+                <span class="pole-goal-track" role="progressbar" [attr.aria-label]="'Progression de ' + goal.name"
+                      [attr.aria-valuenow]="goal.percent" aria-valuemin="0" aria-valuemax="100">
+                  <span class="pole-goal-fill" [style.width.%]="goal.percent"></span>
+                </span>
+                <span class="text-xs text-slate-500">{{ goal.currentLabel }} / {{ goal.targetLabel }}</span>
+              </a>
+            }
+          </div>
+        </section>
+      }
+
       <div class="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div class="space-y-8" data-testid="pole-tools">
           @for (group of pole.toolGroups; track group.label) {

@@ -23,6 +23,8 @@ public class GoalDTO {
     private boolean completed;
     private LocalDateTime createdAt;
     private Long parentId;
+    /** Pôle de rattachement d'un objectif principal, s'il y en a un. */
+    private String pole;
     private UUID userId;
     private String username;
     private String avatarUrl;

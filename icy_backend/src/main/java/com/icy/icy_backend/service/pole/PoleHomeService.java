@@ -42,6 +42,7 @@ public class PoleHomeService {
     static final int CONTENT_MAX = 4000;
     static final int AGENDA_MAX = 6;
     static final int ACTIVITY_MAX = 4;
+    static final int GOALS_MAX = 4;
     private static final String MINING = "MINING";
 
     private final PoleService poles;
@@ -50,6 +51,7 @@ public class PoleHomeService {
     private final UserRepository users;
     private final EventRepository events;
     private final OperationRepository operations;
+    private final com.icy.icy_backend.db.repository.goal.GoalRepository goals;
     private Clock clock = Clock.systemDefaultZone();
 
     void setClock(Clock clock) {
@@ -68,6 +70,7 @@ public class PoleHomeService {
                 industry ? industryStats() : eventStats(pole),
                 industry ? industryActivity() : eventActivity(pole),
                 agenda(pole),
+                goals(pole),
                 news.findTop10ByPoleOrderByCreatedAtDescIdDesc(pole).stream().map(PoleHomeService::view).toList());
     }
 
@@ -160,6 +163,29 @@ public class PoleHomeService {
                 .map(event -> new PoleDtos.Activity(event.getActivityType().name(), event.getId(), event.getTitle(),
                         event.getStartDateTime().toLocalDate(), null))
                 .toList();
+    }
+
+    /** Objectifs principaux du pôle, ceux en cours d'abord. L'avancement cumule les étapes, comme sur la page Objectifs. */
+    private List<PoleDtos.Goal> goals(Specialty pole) {
+        return goals.findByPoleAndParentIsNullOrderByCompletedAscCreatedAtDesc(pole).stream().limit(GOALS_MAX)
+                .map(goal -> {
+                    long[] totals = totals(goal);
+                    return new PoleDtos.Goal(goal.getId(), goal.getName(), totals[0], totals[1], goal.isCompleted());
+                })
+                .toList();
+    }
+
+    /** Avancement et cible : ceux de l'objectif s'il n'a pas d'étape, sinon la somme de ses étapes. */
+    private static long[] totals(com.icy.icy_backend.db.entity.goal.Goal goal) {
+        List<com.icy.icy_backend.db.entity.goal.Goal> steps = goal.getSubGoals();
+        if (steps == null || steps.isEmpty()) return new long[]{goal.getCurrent(), goal.getTarget()};
+        long[] sum = new long[2];
+        for (com.icy.icy_backend.db.entity.goal.Goal step : steps) {
+            long[] part = totals(step);
+            sum[0] += part[0];
+            sum[1] += part[1];
+        }
+        return sum;
     }
 
     /** Prochains événements et opérations du pôle ; une opération montre son image, sinon celle de son type. */

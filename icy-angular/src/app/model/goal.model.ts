@@ -15,6 +15,8 @@ export interface Goal {
   completed: boolean;
   createdAt: string;
   parentId: number | null;
+  /** Pôle de rattachement d'un objectif principal (LOGISTIQUE, MILITAIRE, INDUSTRIE), s'il y en a un. */
+  pole?: string | null;
   userId?: string | null;
   username?: string | null;
   avatarUrl?: string | null;

@@ -54,6 +54,15 @@ export interface PoleActivity {
   status?: string | null;
 }
 
+/** Objectif principal rattaché au pôle ; current et target cumulent ses étapes. */
+export interface PoleGoal {
+  id: number;
+  name: string;
+  current: number;
+  target: number;
+  completed: boolean;
+}
+
 /** Événement ou opération à venir rattaché au pôle. */
 export interface PoleAgendaEntry {
   id: string;
@@ -82,6 +91,7 @@ export interface PoleHome {
   stats: PoleStat[];
   activity: PoleActivity[];
   agenda: PoleAgendaEntry[];
+  goals?: PoleGoal[];
   news: PoleNews[];
 }
 

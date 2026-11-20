@@ -22,6 +22,9 @@ public class CreateGoalDTO {
 
     /** Optionnel */
     private UUID userId;
+
+    /** Pôle d'un objectif principal. En modification : absent, inchangé ; vide, détaché. Ignoré pour une étape. */
+    private String pole;
 }
 
 
