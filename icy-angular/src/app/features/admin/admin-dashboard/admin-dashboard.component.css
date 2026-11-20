@@ -4,10 +4,10 @@
  */
 [data-rank] { --tone: 148 163 184; }
 [data-rank='ADMIN'] { --tone: 251 191 36; }
-[data-rank='OFFICIER'] { --tone: 232 121 249; }
-[data-rank='SPECIALISTE'] { --tone: 34 211 238; }
-[data-rank='INGENIEUR'] { --tone: 129 140 248; }
-[data-rank='ASSOCIE'] { --tone: 125 211 252; }
+[data-rank='OFFICIER'] { --tone: 251 146 60; }
+[data-rank='SPECIALISTE'] { --tone: 45 212 191; }
+[data-rank='INGENIEUR'] { --tone: 34 211 238; }
+[data-rank='ASSOCIE'] { --tone: 186 230 253; }
 [data-rank='JUNIOR'] { --tone: 148 163 184; }
 
 [data-choice] { --tone: 148 163 184; }
