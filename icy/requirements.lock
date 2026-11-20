@@ -16,6 +16,6 @@ multidict==6.7.1
 pamqp==4.0.1
 propcache==0.5.2
 python-dotenv==1.2.4
-soupsieve==3.0.3
+soupsieve==4.1.2
 typing_extensions==4.16.0
 yarl==1.25.1
