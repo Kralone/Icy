@@ -1,4 +1,4 @@
-/* Couleurs de grade, mêmes valeurs que les pastilles de grade de la page Membres. */
+/* Couleurs de grade « de la glace à la forge » : froid pour les premiers grades, chaud pour les plus hauts. */
 :host {
   --tone: 148 163 184;
   display: block;
@@ -7,12 +7,12 @@
   color: rgb(var(--tone));
 }
 
-:host([data-rank='ADMIN']) { --tone: 251 191 36; }
-:host([data-rank='OFFICIER']) { --tone: 232 121 249; }
-:host([data-rank='SPECIALISTE']) { --tone: 34 211 238; }
-:host([data-rank='INGENIEUR']) { --tone: 129 140 248; }
-:host([data-rank='ASSOCIE']) { --tone: 125 211 252; }
 :host([data-rank='JUNIOR']) { --tone: 148 163 184; }
+:host([data-rank='ASSOCIE']) { --tone: 186 230 253; }
+:host([data-rank='INGENIEUR']) { --tone: 34 211 238; }
+:host([data-rank='SPECIALISTE']) { --tone: 45 212 191; }
+:host([data-rank='OFFICIER']) { --tone: 251 146 60; }
+:host([data-rank='ADMIN']) { --tone: 251 191 36; }
 
 .orbit {
   position: absolute;
