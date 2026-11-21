@@ -1,0 +1,32 @@
+/* Filet vertical à la couleur du type d'événement. */
+.dashboard-event::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  z-index: 2;
+  background: var(--event-color);
+}
+.dashboard-event { --tone: 34 211 238; }
+
+/* Intitulé de rôle de la flotte : pastille et texte dans la couleur du rôle. */
+.dashboard-fleet-role {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--tone));
+}
+.dashboard-fleet-role::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(var(--tone) / 0.45), transparent);
+}
+
+@media (min-width: 2400px) {
+  .dashboard-page { font-size: 1.1rem; }
+}

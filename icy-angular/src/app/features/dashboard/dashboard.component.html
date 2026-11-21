@@ -1,15 +1,12 @@
 <main
-  class="flex flex-col xl:flex-row flex-1 min-h-screen p-4 sm:p-6
-         bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77]
-         text-white overflow-y-auto overflow-x-hidden"
+  class="glace-page dashboard-page flex flex-col xl:flex-row flex-1 min-h-screen p-4 sm:p-6 lg:p-10
+         overflow-y-auto overflow-x-hidden"
   >
   <!-- Contenu principal -->
   <div class="flex-1 xl:mr-6 mb-6 xl:mb-0">
     <!-- Header avec bouton -->
     <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
-      <h1
-        class="text-2xl sm:text-3xl font-bold text-cyan-300 drop-shadow-md text-center xl:text-left flex-1"
-        >
+      <h1 class="glace-title text-2xl sm:text-3xl text-center xl:text-left flex-1">
         Tableau de bord
       </h1>
     </div>
@@ -26,8 +23,8 @@
 
     <!-- Événements -->
     <div
-      class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg overflow-hidden"
-      [ngClass]="hasUpcomingEvents ? 'hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01]' : ''"
+      class="glace-panel dashboard-widget flex-1 p-5 overflow-hidden"
+      style="--tone: 34 211 238"
       [attr.data-loading]="isEventsLoading"
       >
       <app-loading-overlay
@@ -36,16 +33,8 @@
         [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
-      @if (hasUpcomingEvents) {
-        <div class="absolute -top-24 -left-24 h-60 w-60 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
-      }
-      @if (hasUpcomingEvents) {
-        <div class="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
-      }
 
-      <h2 class="relative text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
-        📅 Événements
-      </h2>
+      <h2 class="glace-panel-title relative mb-4">Événements</h2>
 
       <div class="relative overflow-y-auto scrollbar-custom pr-1 max-h-[30vh]">
         @if (events && events.length > 0) {
@@ -54,9 +43,8 @@
               <button
                 type="button"
                 (click)="openEvent(event)"
-              class="group relative w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0 text-left
-                     hover:border-cyan-400/40 hover:shadow-[0_0_18px_rgba(34,211,238,0.2)] transition
-                     cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+              class="glace-item dashboard-event group w-full p-0 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/50"
+                [style.--event-color]="event.typeTextColor || 'rgb(125 211 252)'"
                 >
                 @if (event.typeImageUrl) {
                   <div
@@ -64,21 +52,21 @@
                     [style.backgroundImage]="'url(' + event.typeImageUrl + ')'"
                   ></div>
                 }
-                <div class="absolute inset-0 bg-gradient-to-br from-[#0b1423]/90 via-[#0f1d33]/70 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-[#0b1324]/95 via-[#0b1324]/75 to-transparent"></div>
                 <div class="relative p-3 space-y-2">
                   <div class="flex items-center justify-between gap-2">
                     <span
                       class="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-white/20 bg-white/10"
                       [style.background]="event.typeBackgroundColor || 'rgba(15,23,42,0.6)'"
                       [style.borderColor]="event.typeBackgroundColor || 'rgba(255,255,255,0.2)'"
-                      [style.color]="event.typeTextColor || '#67e8f9'"
+                      [style.color]="event.typeTextColor || '#bae6fd'"
                       >
                       {{ event.type }}
                     </span>
                     @if (event.isOperation) {
                       <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-300 text-amber-950">Opération</span>
                     }
-                    <span class="text-[10px] text-cyan-200/70 inline-flex items-center gap-1">
+                    <span class="text-[10px] text-slate-400 inline-flex items-center gap-1">
                       Ouvrir
                       <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
@@ -96,13 +84,13 @@
                       }
                       @if (!event.typeImageUrl) {
                         <div
-                          class="h-full w-full flex items-center justify-center text-cyan-200 text-lg">
+                          class="h-full w-full flex items-center justify-center text-sky-200 text-lg">
                           ✦
                         </div>
                       }
                     </div>
                     <div class="flex-1">
-                      <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
+                      <p class="text-sm font-semibold group-hover:brightness-125 transition"
                         [style.color]="event.typeTextColor || '#ffffff'">
                         {{ event.name }}
                       </p>
@@ -110,7 +98,7 @@
                         {{ capitalizeFirst(event.date | date:"EEEE d MMMM y 'à' HH'h'mm":undefined:'fr-FR') }}
                       </p>
                     </div>
-                    <div class="self-center text-cyan-200/70 group-hover:text-cyan-100 transition">
+                    <div class="self-center text-slate-500 group-hover:text-sky-200 transition">
                       <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                       </svg>
@@ -129,35 +117,33 @@
 
     <!-- Membres en ligne -->
     <div
-      class="relative dashboard-widget p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
-             hover:shadow-cyan-500/20 transition"
+      class="glace-panel dashboard-widget p-5"
+      style="--tone: 52 211 153"
 
       >
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-cyan-300 drop-shadow-md">
-          🟢 En ligne
-        </h2>
-        <span class="text-xs text-cyan-100/60">
+        <h2 class="glace-panel-title">En ligne</h2>
+        <span class="text-xs text-slate-400">
           {{ onlineUsers.length }} actifs
         </span>
       </div>
 
       <div class="space-y-3">
         @if (onlineUsers.length === 0) {
-          <div class="text-xs text-cyan-100/60 text-center py-4">
+          <div class="text-xs text-slate-400 text-center py-4">
             Aucun membre en ligne.
           </div>
         }
         @for (member of paginatedOnlineUsers; track member.id) {
           <div
-            class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+            class="glace-item flex items-center gap-3 px-3 py-2"
             >
             <div class="h-9 w-9 rounded-full overflow-hidden border border-white/10 bg-white/10 flex items-center justify-center">
               @if (member.avatarUrl) {
                 <img [src]="member.avatarUrl" [alt]="member.username" class="h-full w-full object-cover" />
               }
               @if (!member.avatarUrl) {
-                <span class="text-sm font-bold text-cyan-200">
+                <span class="text-sm font-bold text-sky-200">
                   {{ member.username.charAt(0) }}
                 </span>
               }
@@ -173,12 +159,12 @@
       </div>
 
       @if (totalPages > 1) {
-        <div class="mt-4 flex items-center justify-between text-xs text-cyan-100/70">
+        <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
           <button
             type="button"
             (click)="changePage(-1)"
             [disabled]="currentPage === 1"
-          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-sky-300/50 transition
                  disabled:opacity-40 disabled:cursor-not-allowed"
             >
             Prec
@@ -188,7 +174,7 @@
             type="button"
             (click)="changePage(1)"
             [disabled]="currentPage === totalPages"
-          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-cyan-400/40 transition
+          class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:border-sky-300/50 transition
                  disabled:opacity-40 disabled:cursor-not-allowed"
             >
             Suiv
@@ -199,8 +185,8 @@
 
     <!-- Résumé de la flotte -->
     <div
-      class="relative dashboard-widget flex-[3] p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
-             hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+      class="glace-panel dashboard-widget flex-[3] p-5 overflow-hidden"
+      style="--tone: 186 230 253"
       [attr.data-loading]="isLoading"
       >
       <app-loading-overlay
@@ -209,16 +195,16 @@
         [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
-      <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
-        🛸 Résumé de la flotte
-      </h2>
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h2 class="glace-panel-title">Flotte</h2>
+        <a routerLink="/icy/fleet" class="glace-link">Voir la flotte ›</a>
+      </div>
 
       @if (hasFleetSummary) {
         <div class="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
           <select
             [(ngModel)]="fleetCategoryFilter"
-          class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
-                 focus:outline-none focus:border-cyan-400"
+          class="w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-300/60"
             >
             <option value="">Toutes catégories</option>
             @for (category of fleetCategories; track category) {
@@ -229,8 +215,7 @@
           </select>
           <select
             [(ngModel)]="fleetBrandFilter"
-          class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
-                 focus:outline-none focus:border-cyan-400"
+          class="w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-300/60"
             >
             <option value="">Toutes marques</option>
             @for (brand of fleetBrands; track brand) {
@@ -243,8 +228,7 @@
             [(ngModel)]="fleetSearchFilter"
             type="text"
             placeholder="Rechercher un vaisseau..."
-          class="w-full rounded-lg border border-white/20 bg-[#0d1b2a]/70 px-3 py-2 text-xs text-cyan-100
-                 placeholder:text-cyan-100/40 focus:outline-none focus:border-cyan-400"
+          class="w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-sky-300/60"
             />
           </div>
         }
@@ -254,7 +238,7 @@
             <button
               type="button"
               (click)="resetFleetFilters()"
-              class="text-[11px] px-2 py-1 rounded-lg border border-white/20 bg-white/5 text-cyan-100/80 hover:border-cyan-400/50 hover:text-cyan-100 transition"
+              class="text-[11px] px-2 py-1 rounded-lg border border-white/12 bg-white/[0.04] text-slate-300 hover:border-sky-300/50 hover:text-white transition"
               >
               Réinitialiser filtres
             </button>
@@ -266,22 +250,23 @@
             @if (objectKeys(filteredFleetSummary).length > 0) {
               @for (focus of objectKeys(filteredFleetSummary); track focus) {
                 <div class="mb-4">
-                  <h3 class="text-sm font-bold text-cyan-200 uppercase tracking-wide mb-1">
+                  <h3 class="dashboard-fleet-role mb-1.5" [style.--tone]="roleTone(focus)">
                     {{ focus }}
                   </h3>
                   <ul class="list-none pl-0 text-gray-200 text-sm space-y-1 overflow-hidden">
                     @for (ship of filteredFleetSummary[focus]; track ship) {
                       <li
-                        class="relative flex items-center justify-between h-10 overflow-hidden rounded-lg bg-white/5 hover:bg-white/10 transition"
+                        class="glace-item relative flex items-center justify-between h-10"
+                        [style.--tone]="roleTone(focus)"
                         >
                         @if (ship.imageUrl) {
                           <div class="absolute inset-0">
                             <img [src]="ship.imageUrl" alt="{{ ship.name }}" class="w-full h-full object-cover opacity-70" />
-                            <div class="absolute inset-0 bg-gradient-to-r from-[#0d1b2a]/80 to-transparent"></div>
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#0b1324] via-[#0b1324]/80 to-transparent"></div>
                           </div>
                         }
                         <span class="relative z-10 pl-2 truncate">{{ ship.displayName }}</span>
-                <span class="relative z-10 mr-2 shrink-0 text-[10px] uppercase tracking-wide text-cyan-100/80
+                <span class="relative z-10 mr-2 shrink-0 text-[10px] uppercase tracking-wide text-slate-300
                              px-1.5 py-0.5 rounded border border-white/20 bg-slate-900/40">
                           {{ ship.brandName }}
                         </span>

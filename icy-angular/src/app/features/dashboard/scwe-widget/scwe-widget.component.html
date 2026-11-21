@@ -1,7 +1,7 @@
 @if (event) {
 <div
-  class="relative dashboard-widget flex-1 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg
-         hover:shadow-cyan-500/20 transition-transform transform hover:scale-[1.01] overflow-hidden"
+  class="glace-panel dashboard-widget flex-1 p-5 overflow-hidden"
+  style="--tone: 251 191 36"
   [attr.data-loading]="loadingEvent"
   >
   <app-loading-overlay
@@ -10,11 +10,7 @@
     [fadeOutMs]="500"
     [softFade]="true"
   ></app-loading-overlay>
-  <div class="absolute -top-28 -left-28 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl animate-pulse"></div>
-  <div class="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl animate-pulse delay-1000"></div>
-  <h2 class="text-lg font-semibold text-cyan-300 mb-3 drop-shadow-md text-center xl:text-left">
-    🌍 SC World Event
-  </h2>
+  <h2 class="glace-panel-title mb-4">SC World Event</h2>
 
   @if (!loadingEvent && error) {
     <div class="text-red-300 text-sm text-center">
@@ -32,8 +28,7 @@
       <div class="space-y-3">
         <button
           type="button"
-        class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-0 text-left w-full
-               hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition"
+        class="glace-item group p-0 text-left w-full"
           (click)="openInCalendar()"
           >
           @if (event.bannerImageUrl || event.typeImageUrl) {
@@ -46,7 +41,7 @@
           <div class="relative p-4 space-y-2">
             <div class="flex items-center justify-between gap-2">
               <span
-                class="text-[10px] uppercase tracking-[0.3em] text-cyan-200/80"
+                class="text-[10px] uppercase tracking-[0.3em] text-sky-200/80"
                 >
                 Event en cours
               </span>
@@ -68,13 +63,13 @@
                 }
                 @if (!(event.bannerImageUrl || event.typeImageUrl)) {
                   <div
-                    class="h-full w-full flex items-center justify-center text-cyan-200 text-xl">
+                    class="h-full w-full flex items-center justify-center text-sky-200 text-xl">
                     ✦
                   </div>
                 }
               </div>
               <div class="flex-1">
-                <p class="text-sm font-semibold group-hover:text-cyan-100 transition"
+                <p class="text-sm font-semibold group-hover:brightness-125 transition"
                   [style.color]="event.typeTextColor || '#ffffff'">
                   {{ event.title }}
                 </p>
@@ -89,7 +84,7 @@
                 </p>
               </div>
             </div>
-            <div class="text-[11px] text-cyan-200/80">
+            <div class="text-[11px] text-sky-200/80">
               Ouvrir dans le calendrier →
             </div>
           </div>
@@ -104,7 +99,7 @@
             [fadeOutMs]="500"
             [softFade]="true"
           ></app-loading-overlay>
-          <p class="text-xs uppercase text-cyan-300/80 mb-2">Top 3 joueurs</p>
+          <p class="text-xs uppercase text-sky-200/80 mb-2">Top 3 joueurs</p>
           @if (!loadingLeaderboard && topPlayers.length === 0) {
             <div class="text-gray-400 text-sm text-center">
               Aucun classement pour le moment.
@@ -119,7 +114,7 @@
                   <span class="text-white font-semibold">
                     {{ player.username || 'Anonyme' }}
                   </span>
-                  <span class="text-cyan-300">{{ player.total || 0 }}</span>
+                  <span class="text-sky-200">{{ player.total || 0 }}</span>
                 </li>
               }
             </ul>
