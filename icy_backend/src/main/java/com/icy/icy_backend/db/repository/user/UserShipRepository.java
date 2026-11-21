@@ -17,7 +17,15 @@ public interface UserShipRepository extends JpaRepository<UserShip, UserShipId> 
     List<UserShip> findByUserId(UUID userId);
     List<UserShip> findByUserDiscordId(String discordId);
 
-    @Query("SELECT us FROM UserShip us JOIN FETCH us.ship s JOIN FETCH s.brand")
+    // Les vaisseaux d'un membre désactivé restent en base, mais User porte @SQLRestriction("active = true") :
+    // charger leur propriétaire en différé lève EntityNotFoundException et faisait échouer tout le résumé de flotte.
+    @Query("""
+    SELECT us FROM UserShip us
+    JOIN FETCH us.ship s
+    JOIN FETCH s.brand
+    JOIN FETCH us.user u
+    WHERE u.active = true
+""")
     List<UserShip> findAllWithShips();
 
 
