@@ -39,7 +39,7 @@ export class AvailabilityHeatmapComponent implements OnInit {
   readonly bySlot = computed(() => membersBySlot(this.members()));
   readonly filled = computed(() => this.members().filter(member => member.slots.length > 0));
   readonly max = computed(() => Math.max(1, ...[...this.bySlot().values()].map(list => list.length)));
-  readonly best = computed(() => bestSlots(this.members(), 3));
+  readonly best = computed(() => bestSlots(this.members(), 3, true));
   readonly bestKeys = computed(() => new Set(this.best().map(slot => slotKey(slot.day, slot.period))));
   readonly focusedSlots = computed(() => {
     const id = this.focusedMember();
