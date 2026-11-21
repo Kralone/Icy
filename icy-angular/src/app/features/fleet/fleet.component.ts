@@ -5,6 +5,7 @@ import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
 import {ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
+import {nameInitials, shipRoleTone} from '../../shared/ship-role/ship-role-tone';
 
 interface FleetShipGroup {
   name: string;
@@ -32,6 +33,17 @@ export class FleetComponent implements OnInit, OnDestroy {
 
   objectKeys = Object.keys;
   selectedShip: FleetShipGroup | null = null;
+  /** Pastilles de propriétaires affichées avant le « +n ». */
+  readonly maxAvatars = 5;
+  readonly roleTone = shipRoleTone;
+  readonly initials = nameInitials;
+
+  /** Teinte stable d'un propriétaire, pour reconnaître ses pastilles d'une carte à l'autre. */
+  ownerHue(owner: string): number {
+    let hash = 0;
+    for (const char of owner) hash = (hash * 31 + char.charCodeAt(0)) % 360;
+    return hash;
+  }
   openShip(ship: FleetShipGroup){ this.selectedShip = ship; }
   closeShip(){ this.selectedShip = null; }
 

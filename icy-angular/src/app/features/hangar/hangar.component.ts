@@ -14,6 +14,15 @@ import {ShipSelectorComponent} from '../../shared/ship-selector/ship-selector.co
 import {AcquisitionType} from '../../shared/ship-selector/ship-selector.component';
 import { Subscription } from 'rxjs';
 import { ShipDetailModalComponent, ShipDetail } from '../../shared/ship-detail-modal/ship-detail-modal.component';
+import { shipRoleTone } from '../../shared/ship-role/ship-role-tone';
+
+type AcquisitionKey = 'rsi' | 'ingame' | 'reward_ingame' | 'loaner';
+const ACQUISITION_LABELS: Record<AcquisitionKey, string> = {
+  rsi: 'RSI',
+  ingame: 'Achat en jeu',
+  reward_ingame: 'Récompense en jeu',
+  loaner: 'Loaner'
+};
 
 @Component({
   selector: 'app-hangar',
@@ -52,6 +61,21 @@ export class HangarComponent implements OnDestroy {
   selectedShipDetail: ShipDetail | null = null;
   editingShip: ShipListDTO | null = null;
   editAcquisitionType: AcquisitionType = 'rsi';
+
+  readonly roleTone = shipRoleTone;
+
+  /** Type de possession d'un vaisseau : il décide de son groupe. */
+  acquisition(ship: ShipListDTO): { key: AcquisitionKey; label: string } {
+    const key: AcquisitionKey = ship.loaner ? 'loaner' : ship.rewardInGame ? 'reward_ingame' : ship.inGamePurchase ? 'ingame' : 'rsi';
+    return { key, label: ACQUISITION_LABELS[key] };
+  }
+
+  /** Vaisseaux filtrés, rangés par type de possession dans l'ordre RSI, achat, récompense, loaner ; un groupe vide n'apparaît pas. */
+  acquisitionGroups(): { key: AcquisitionKey; label: string; ships: ShipListDTO[] }[] {
+    return (Object.keys(ACQUISITION_LABELS) as AcquisitionKey[])
+      .map((key) => ({ key, label: ACQUISITION_LABELS[key], ships: this.filteredShips.filter((ship) => this.acquisition(ship).key === key) }))
+      .filter((group) => group.ships.length > 0);
+  }
 
   constructor(private shipService: ShipService, private wsService: WebSocketService,
               private eRef: ElementRef, private toast: HotToastService, private authService: AuthService) {}

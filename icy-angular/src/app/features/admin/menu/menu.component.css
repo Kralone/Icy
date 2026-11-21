@@ -1,124 +1,222 @@
-.admin-menu {
-  position: relative;
-  overflow: hidden;
-}
+/* Menu d'administration, style glace-forge : bleu nuit, argent et liseré glacé.
+   --rank-tone suit le grade du membre ; --tone est la teinte de glace de chaque groupe. */
+:host { display: block; }
 
-/* Icône de grade animée, posée à côté du nom du grade, sans déborder sur la page. */
-.corner-rank-emblem {
-  width: 64px;
-  flex: none;
+.admin-menu {
+  --rank-tone: 148 163 184;
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+  color: rgb(226 232 240);
+  padding: 3rem clamp(1rem, 3vw, 3rem);
+  background:
+    radial-gradient(60rem 26rem at 88% -8rem, rgb(var(--rank-tone) / 0.08), transparent 70%),
+    linear-gradient(180deg, #0a111c, #0f172a 45%, #111827);
 }
+.admin-menu[data-rank='JUNIOR'] { --rank-tone: 148 163 184; }
+.admin-menu[data-rank='ASSOCIE'] { --rank-tone: 186 230 253; }
+.admin-menu[data-rank='INGENIEUR'] { --rank-tone: 34 211 238; }
+.admin-menu[data-rank='SPECIALISTE'] { --rank-tone: 45 212 191; }
+.admin-menu[data-rank='OFFICIER'] { --rank-tone: 251 146 60; }
+.admin-menu[data-rank='ADMIN'] { --rank-tone: 251 191 36; }
 
 .admin-content {
   position: relative;
-  z-index: 20;
+  z-index: 1;
+  max-width: 1800px;
+  margin: 0 auto;
 }
 
-.admin-rank-label {
-  position: absolute;
-  top: 2rem;
-  right: 1rem;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 0.24em;
+/* En-tête : icône de grade, titre argenté, pastille du grade. */
+.admin-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 2.25rem;
+}
+.admin-head-emblem { width: 72px; flex: none; }
+.admin-title {
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.18);
-  pointer-events: none;
-  z-index: 10;
+  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.admin-rank {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--rank-tone) / 0.45);
+  background: rgb(var(--rank-tone) / 0.08);
+  color: color-mix(in srgb, rgb(var(--rank-tone)) 60%, rgb(248 250 252));
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.admin-rank-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(var(--rank-tone));
+  box-shadow: 0 0 8px rgb(var(--rank-tone));
 }
 
-.admin-rank-label::after {
+/* Groupes. */
+.admin-group + .admin-group { margin-top: 2rem; }
+.admin-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(203 213 225);
+}
+.admin-group-title::before {
   content: '';
-  position: absolute;
-  inset: -80px -120px -80px -120px;
-  background: radial-gradient(
-    circle at top right,
-    rgba(34, 211, 238, 0.5) 0%,
-    rgba(34, 211, 238, 0.22) 35%,
-    rgba(34, 211, 238, 0.08) 60%,
-    rgba(34, 211, 238, 0.0) 78%
-  );
-  opacity: 0.65;
-  filter: blur(24px);
-  animation: adminRankGlow 6s ease-in-out infinite;
-  z-index: -1;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(var(--tone));
+  box-shadow: 0 0 8px rgb(var(--tone) / 0.8);
+}
+.admin-group-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(var(--tone) / 0.35), transparent);
 }
 
-.admin-menu-card {
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr));
+  gap: 1.25rem;
+}
+
+/* Carte illustrée, dans l'esprit du menu Pôles : image, pastille d'icône, liseré glacé et filet de couleur en bas. */
+.admin-card {
   position: relative;
-  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: #0b1324;
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.12), 0 20px 50px rgb(0 0 0 / 0.35);
   opacity: 0;
-  transform: translateY(18px) scale(0.985);
-  filter: blur(6px);
+  transform: translateY(14px);
   transition:
     opacity 420ms ease,
-    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 420ms ease;
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 250ms ease,
+    box-shadow 250ms ease;
   transition-delay: var(--card-delay, 0ms);
 }
-
-.admin-menu-card-wrap {
-  position: relative;
-}
-
-.admin-menu-card-wrap--submenu {
-  padding-right: 24px;
-  padding-bottom: 24px;
-}
-
-.admin-submenu-sheet {
+.admin-card::after {
+  content: '';
   position: absolute;
-  inset: 0 24px 24px 0;
-  border-radius: 1rem;
-  border: 1px solid rgba(56, 189, 248, 0.42);
-  background: linear-gradient(160deg, rgba(22, 35, 56, 0.96), rgba(16, 30, 50, 0.94));
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
-  pointer-events: none;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: rgb(var(--tone));
+  opacity: 0.75;
+}
+.admin-card--visible { opacity: 1; transform: none; }
+.admin-card:hover,
+.admin-card:focus-visible {
+  transform: translateY(-4px);
+  transition-delay: 0ms;
+  border-color: rgb(var(--tone) / 0.55);
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.2), 0 28px 60px rgb(var(--tone) / 0.16);
+  outline: none;
+}
+.admin-card:focus-visible { box-shadow: 0 0 0 2px rgb(var(--tone) / 0.7), 0 28px 60px rgb(var(--tone) / 0.16); }
+
+/* Image : si elle manque, il reste un fond bleu nuit éclairé de la teinte du groupe. */
+.admin-card-media {
+  position: relative;
+  display: block;
+  height: 8.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 72% 22%, rgb(var(--tone) / 0.22), transparent 62%),
+    linear-gradient(160deg, #16233a, #0b1324);
+}
+.admin-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  transition: opacity 500ms ease, transform 700ms ease;
+}
+.admin-card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #0b1324 0%, rgb(11 19 36 / 0.25) 55%, transparent 100%);
+}
+.admin-card:hover .admin-card-media img { opacity: 1; transform: scale(1.04); }
+
+.admin-card-icon {
+  position: absolute;
   z-index: 1;
+  left: 1rem;
+  top: calc(8.5rem - 1.5rem);
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.9rem;
+  color: rgb(var(--tone));
+  background: rgb(11 19 36 / 0.88);
+  border: 1px solid rgb(var(--tone) / 0.45);
+  box-shadow: 0 0 18px rgb(var(--tone) / 0.18);
+  backdrop-filter: blur(6px);
+}
+.admin-card-icon svg { width: 1.4rem; height: 1.4rem; }
+.admin-card-text { display: flex; flex-direction: column; gap: 0.25rem; padding: 2rem 1.15rem 1.25rem; }
+.admin-card-label { font-size: 1.1rem; font-weight: 600; color: rgb(248 250 252); }
+.admin-card-description { font-size: 0.85rem; line-height: 1.4; color: rgb(148 163 184); }
+
+/* Écrans 4K : cartes un peu plus grandes. */
+@media (min-width: 2400px) {
+  .admin-menu { padding-top: 4.5rem; }
+  .admin-content { max-width: 2800px; }
+  .admin-head { margin-bottom: 3rem; }
+  .admin-head-emblem { width: 104px; }
+  .admin-title { font-size: 2.9rem; }
+  .admin-rank { font-size: 1rem; padding: 0.55rem 1.2rem; }
+  .admin-group + .admin-group { margin-top: 2.75rem; }
+  .admin-group-title { font-size: 0.95rem; margin-bottom: 1.2rem; }
+  .admin-grid { grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.6rem; }
+  .admin-card-media { height: 12rem; }
+  .admin-card-icon { top: calc(12rem - 2rem); width: 4rem; height: 4rem; border-radius: 1.1rem; }
+  .admin-card-icon svg { width: 1.9rem; height: 1.9rem; }
+  .admin-card-text { padding: 2.6rem 1.5rem 1.6rem; }
+  .admin-card-label { font-size: 1.45rem; }
+  .admin-card-description { font-size: 1.05rem; }
 }
 
-.admin-submenu-sheet--1 {
-  transform: translate(11px, 11px);
-  opacity: 0.82;
-}
-
-.admin-submenu-sheet--2 {
-  transform: translate(20px, 20px);
-  opacity: 0.68;
-}
-
-.admin-menu-card--visible {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-
-@keyframes adminRankGlow {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: translate(6px, -6px) scale(0.95);
-  }
-  50% {
-    opacity: 0.85;
-    transform: translate(0, 0) scale(1.08);
-  }
+@media (max-width: 639px) {
+  .admin-menu { padding-top: 2rem; }
+  .admin-head-emblem { width: 56px; }
+  .admin-rank { margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-menu-card,
-  .admin-menu-card--visible {
+  .admin-card,
+  .admin-card--visible {
     opacity: 1;
     transform: none;
-    filter: none;
     transition: none;
-  }
-}
-
-@media (min-width: 640px) {
-  .admin-rank-label {
-    top: 2rem;
-    right: 1rem;
-    font-size: 38px;
   }
 }

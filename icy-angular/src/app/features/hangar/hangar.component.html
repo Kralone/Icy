@@ -1,5 +1,5 @@
-<!-- ================== PAGE VAISSEAUX (STYLE ICY corrigé) ================== -->
-<div class="relative min-h-[calc(100vh-64px)] bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
+<!-- Mon hangar, style glace-forge : rôle à la couleur du pôle, possession dans une pastille de couleur. -->
+<div class="hangar-page">
   <app-loading-overlay
     [isLoading]="isLoading"
     [minDurationMs]="0"
@@ -10,116 +10,105 @@
   <div
     [class.blur-sm]="isLoading"
     [class.pointer-events-none]="isLoading"
-    class="loading-reveal transition duration-300"
+    class="hangar-content loading-reveal transition duration-300"
     [attr.data-loading]="isLoading"
-    >
-    <!-- Header filtres + Ajouter -->
-    <div class="flex flex-wrap justify-between items-center px-6 pt-6 pb-4 gap-3">
-      <div class="flex flex-wrap items-center gap-3" data-tuto="hangar-filters">
-        <input
-          [(ngModel)]="shipFilter"
-          (ngModelChange)="onFilterChange()"
-          type="text"
-          placeholder="Rechercher un vaisseau…"
-          class="w-64 px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 backdrop-blur-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
-          />
-
-          <div class="relative" appClickOutside (appClickOutside)="showBrandDropdown = false">
-            <button
-              type="button"
-              (click)="showBrandDropdown = !showBrandDropdown"
-              class="px-4 py-2 text-sm rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 transition backdrop-blur-lg"
-              >
-              Marques
-            </button>
-
-            @if (showBrandDropdown) {
-              <div
-                class="absolute left-0 mt-2 w-56 bg-[#0d1b2a]/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg z-20 p-3 max-h-64 overflow-y-auto"
-                >
-                @for (brand of brands; track brand) {
-                  <label
-                    class="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white/20 cursor-pointer"
-                    >
-                    <input
-                      type="checkbox"
-                      [checked]="selectedBrands.includes(brand.name)"
-                      (change)="toggleBrand(brand.name)"
-                      class="text-cyan-400 accent-cyan-400"
-                      />
-                      {{ brand.name }}
-                    </label>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <button
-            data-tuto="hangar-add"
-            (click)="openModal()"
-        class="px-4 py-2 text-sm rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold
-               shadow-[0_0_12px_rgba(56,189,248,0.35)] hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] transform hover:scale-105 transition"
-            >
-            + Ajouter
-          </button>
+  >
+    <header class="hangar-head">
+      <h1 class="hangar-title">Mon hangar</h1>
+      @if (ships.length) {
+        <div class="hangar-stats" aria-label="Résumé du hangar">
+          <span class="hangar-stat"><strong>{{ ships.length }}</strong> {{ ships.length === 1 ? 'vaisseau' : 'vaisseaux' }}</span>
         </div>
+      }
+    </header>
 
-        <!-- Grille -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
-          @for (ship of filteredShips; track ship) {
-            <div
-              class="group relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg overflow-hidden transition transform hover:scale-105 hover:border-cyan-400"
-              data-tuto="hangar-ship" role="button" tabindex="0" (click)="openShipDetail(ship)" (keydown.enter)="openShipDetail(ship)"
-              >
-              <button
-                (click)="deleteShip(ship.shipId); $event.stopPropagation()"
-                class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
-                title="Supprimer"
-                >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7V4h6v3m-9 0 1 13h8l1-13" />
-                </svg>
-              </button>
-              <button type="button" (click)="openEdit(ship, $event)" class="absolute top-3 left-14 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 hover:bg-cyan-600 text-white rounded-full p-2 shadow-lg" title="Modifier l’acquisition" aria-label="Modifier l’acquisition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 3.487 3.651 3.651M4 20l4.2-.8L19.7 7.7a2.6 2.6 0 0 0-3.7-3.7L4.5 15.5 4 20Z" /></svg>
-              </button>
-              @if (getBrandLogo(ship.brand)) {
-                <app-manufacturer-badge class="absolute top-3 right-3" [imageUrl]="getBrandLogo(ship.brand)" [brand]="ship.brand" />
+    <div class="hangar-toolbar">
+      <div class="hangar-filters" data-tuto="hangar-filters">
+        <label class="hangar-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+          <input [(ngModel)]="shipFilter" (ngModelChange)="onFilterChange()" type="text" placeholder="Rechercher un vaisseau" aria-label="Rechercher un vaisseau" />
+        </label>
+
+        <div class="relative" appClickOutside (appClickOutside)="showBrandDropdown = false">
+          <button type="button" class="hangar-pill" [class.hangar-pill--on]="selectedBrands.length > 0" (click)="showBrandDropdown = !showBrandDropdown" [attr.aria-expanded]="showBrandDropdown">
+            Marques{{ selectedBrands.length ? ' · ' + selectedBrands.length : '' }}
+            <span aria-hidden="true">▾</span>
+          </button>
+          @if (showBrandDropdown) {
+            <div class="hangar-dropdown">
+              @for (brand of brands; track brand) {
+                <label class="hangar-dropdown-row">
+                  <input type="checkbox" [checked]="selectedBrands.includes(brand.name)" (change)="toggleBrand(brand.name)" />
+                  {{ brand.name }}
+                </label>
               }
-              <img [src]="ship.imageUrl" alt="{{ship.name}}" class="w-full h-40 object-cover" />
-              <div class="p-4 space-y-1">
-                <h2 class="text-lg font-semibold text-white">{{ ship.name }}</h2>
-                <p class="text-sm text-gray-300">Rôle : {{ ship.focus || 'Non classé' }}</p>
-                <p class="text-sm text-gray-300">Équipage : {{ ship.crew }}</p>
-              </div>
-              <div
-                class="absolute bottom-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border bg-white/10 border-white/20 backdrop-blur-md shadow-sm"
-          [ngClass]="{
-            'text-blue-400 border-blue-400': !ship.inGamePurchase && !ship.rewardInGame && !ship.loaner,
-            'text-green-400 border-green-400': ship.inGamePurchase,
-            'text-purple-300 border-purple-300': ship.rewardInGame,
-            'text-yellow-400 border-yellow-400': ship.loaner
-          }"
-                >
-                {{ ship.loaner ? 'Loaner' : ship.rewardInGame ? 'Récompense In Game' : ship.inGamePurchase ? 'Achat In Game' : 'RSI' }}
-              </div>
             </div>
           }
         </div>
-
-        <!-- Aucun vaisseau -->
-        @if (!isLoading && ships.length === 0) {
-          <div class="flex flex-col items-center justify-center h-96 text-gray-300">
-            <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20 21V7a2 2 0 0 0-2-2h-4.586a1 1 0 0 1-.707-.293l-1.414-1.414a1 1 0 0 0-.707-.293H6a2 2 0 0 0-2 2v16" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6m-6-4h6m-6-4h6" />
-            </svg>
-            Aucun vaisseau enregistré pour le moment.
-          </div>
-        }
       </div>
+
+      <button type="button" class="hangar-add" data-tuto="hangar-add" (click)="openModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        Ajouter un vaisseau
+      </button>
     </div>
+
+    @for (group of acquisitionGroups(); track group.key) {
+      <section class="hangar-group" [attr.data-acquisition]="group.key">
+        <h2 class="hangar-group-title">{{ group.label }} <span class="hangar-group-count">{{ group.ships.length }}</span></h2>
+        <div class="hangar-grid">
+      @for (ship of group.ships; track ship.shipId) {
+        <div
+          class="hangar-card"
+          [style.--tone]="roleTone(ship.focus)"
+          [attr.data-acquisition]="acquisition(ship).key"
+          data-tuto="hangar-ship" role="button" tabindex="0" (click)="openShipDetail(ship)" (keydown.enter)="openShipDetail(ship)"
+        >
+          <div class="hangar-card-media">
+            @if (ship.imageUrl) {
+              <img [src]="ship.imageUrl" [alt]="ship.name" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+            }
+            <div class="hangar-card-actions">
+              <button type="button" (click)="openEdit(ship, $event)" title="Modifier l’acquisition" aria-label="Modifier l’acquisition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.9 3.5 3.6 3.6M4 20l4.2-.8L19.7 7.7a2.6 2.6 0 0 0-3.7-3.7L4.5 15.5z" /></svg>
+              </button>
+              <button type="button" class="hangar-card-delete" (click)="deleteShip(ship.shipId); $event.stopPropagation()" title="Supprimer" aria-label="Supprimer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
+              </button>
+            </div>
+            @if (getBrandLogo(ship.brand)) {
+              <app-manufacturer-badge class="hangar-brand" [imageUrl]="getBrandLogo(ship.brand)" [brand]="ship.brand" />
+            }
+          </div>
+          <div class="hangar-card-copy">
+            <h3 class="hangar-card-name">{{ ship.name }}</h3>
+            <div class="hangar-chips">
+              <span class="hangar-chip hangar-chip--role">{{ ship.focus || 'Non classé' }}</span>
+              <span class="hangar-chip" title="Équipage">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="7" r="4" /><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /></svg>
+                {{ ship.crew }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+        </div>
+      </section>
+    }
+
+    @if (!isLoading && ships.length === 0) {
+      <div class="hangar-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+          <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+        </svg>
+        <p>Aucun vaisseau enregistré pour le moment.</p>
+      </div>
+    } @else if (!isLoading && filteredShips.length === 0) {
+      <div class="hangar-empty"><p>Aucun vaisseau ne correspond à la recherche.</p></div>
+    }
+  </div>
+</div>
 
     <app-ship-selector
       [isOpen]="isModalOpen"
@@ -134,11 +123,11 @@
 
     @if (editingShip) {
       <div class="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4" (click)="closeEdit()">
-        <section class="w-full max-w-md rounded-2xl border border-cyan-300/40 bg-slate-900 p-6 shadow-2xl" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <section class="w-full max-w-md rounded-2xl border border-sky-200/25 bg-[#0b1324] p-6 shadow-2xl" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between"><h2 class="text-lg font-semibold text-cyan-100">Modifier l’acquisition</h2><button type="button" class="text-slate-400 hover:text-white" (click)="closeEdit()" aria-label="Fermer">×</button></div>
           <p class="mt-2 text-sm text-slate-300">{{ editingShip.name }}</p>
-          <label class="mt-5 block text-sm text-slate-300">Type de possession<select [(ngModel)]="editAcquisitionType" class="mt-2 w-full rounded-lg border border-white/20 bg-slate-800 px-3 py-2 text-white"><option value="rsi">RSI</option><option value="ingame">Achat In Game</option><option value="reward_ingame">Récompense In Game</option><option value="loaner">Loaner</option></select></label>
-          <div class="mt-6 flex justify-end gap-2"><button type="button" class="rounded-lg border border-white/20 px-4 py-2 text-sm" (click)="closeEdit()">Annuler</button><button type="button" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950" (click)="saveEdit()">Enregistrer</button></div>
+          <label class="mt-5 block text-sm text-slate-300">Type de possession<select [(ngModel)]="editAcquisitionType" class="mt-2 w-full rounded-lg border border-white/20 bg-slate-800 px-3 py-2 text-white"><option value="rsi">RSI</option><option value="ingame">Achat en jeu</option><option value="reward_ingame">Récompense en jeu</option><option value="loaner">Loaner</option></select></label>
+          <div class="mt-6 flex justify-end gap-2"><button type="button" class="rounded-lg border border-white/20 px-4 py-2 text-sm" (click)="closeEdit()">Annuler</button><button type="button" class="rounded-full bg-gradient-to-b from-sky-100 to-sky-300 px-5 py-2 text-sm font-semibold text-slate-950" (click)="saveEdit()">Enregistrer</button></div>
         </section>
       </div>
     }

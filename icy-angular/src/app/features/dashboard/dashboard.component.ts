@@ -7,7 +7,8 @@ import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-ov
 import {EventService} from '../../core/services/event/event.service';
 import {GoalComponent} from './goal/goal.component';
 import {NewsComponent} from './news/news.component';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { shipRoleTone } from '../../shared/ship-role/ship-role-tone';
 import { ScweWidgetComponent } from './scwe-widget/scwe-widget.component';
 import { UserService } from '../../core/services/user/user.service';
 import { UserOnline } from '../../model/user-online.model';
@@ -59,13 +60,15 @@ interface StatusStyle {
     GoalComponent,
     NewsComponent,
     ScweWidgetComponent,
-    LoadingOverlayComponent
+    LoadingOverlayComponent,
+    RouterLink
   ],
   templateUrl: './dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {
+  readonly roleTone = shipRoleTone;
   isLoading = true;
   isEventsLoading = true;
   isOnlineLoading = true;
