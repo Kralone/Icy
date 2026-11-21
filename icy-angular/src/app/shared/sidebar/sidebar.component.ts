@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { PoleIconComponent } from '../pole-icon/pole-icon.component';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { ScwePlayerService } from '../../core/services/scworldevent/scwe-player.service';
 import { UserService } from '../../core/services/user/user.service';
@@ -10,12 +11,14 @@ type SidebarItem = {
   label: string;
   link: string;
   kind?: 'scwe';
+  /** Icône dessinée à la place de l'emoji (clé de app-pole-icon). */
+  poleIcon?: string;
 };
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, PoleIconComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sidebar.component.html',
 })
@@ -37,7 +40,7 @@ export class SidebarComponent implements OnInit {
     { icon: '📆', label: 'Events', link: '/icy/events' },
     { icon: '📈', label: 'Objectifs', link: '/icy/goals' },
     { icon: '🎖️', label: 'Pôles', link: '/icy/poles' },
-    { icon: '🏦', label: 'Banque', link: '/icy/banque' },
+    { icon: '', label: 'Banque', link: '/icy/banque', poleIcon: 'TRESORIER' },
     { icon: '📚', label: 'Guides', link: '/icy/outils/guides' },
     { icon: '🛰️', label: 'Outils', link: '/icy/outils' },
   ];
