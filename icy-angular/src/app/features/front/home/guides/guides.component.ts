@@ -35,7 +35,7 @@ export class GuidesComponent {
       summary: 'Préparation, trajet OLP, extraction de Carinite et sécurisation PvP.',
       category: 'Exploration',
       route: '/guides/hathor',
-      imageUrl: 'assets/images/home/carousel/img4.jpg',
+      imageUrl: 'https://files.mmopixel.com/tinymce/7f1f5f89-781f-45dc-b81c-40ef7eb1d067.png',
       type: 'live'
     },
     {

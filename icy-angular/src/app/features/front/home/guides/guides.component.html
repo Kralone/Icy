@@ -5,9 +5,9 @@
 
   <div class="guides-grid">
     @for (card of cards; track card.id) {
-        <a class="guide-card guide-card--live guide-card--clickable" [routerLink]="card.route" [attr.data-category]="card.category">
+        <a class="guide-card guide-card--live guide-card--clickable" [routerLink]="card.route">
           <div class="guide-card__media guide-card__media--live" aria-hidden="true">
-            <img class="guide-card__image" [src]="card.imageUrl" [alt]="card.title" loading="lazy" decoding="async" (error)="$any($event.target).style.display = 'none'" />
+            <img class="guide-card__image" [src]="card.imageUrl" [alt]="card.title" loading="lazy" decoding="async" />
             <div class="guide-card__hover-glow"></div>
             <span class="guide-card__status">{{ card.type === 'écriture' ? 'Ecriture' : 'Disponible' }}</span>
           </div>
