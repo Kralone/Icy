@@ -11,9 +11,10 @@
         <a
           [routerLink]="[item.route]"
           class="front-utils__card"
+          [style.--tone]="item.tone"
           >
           <div class="front-utils__media">
-            <img [src]="item.imageUrl" [alt]="item.label" loading="lazy" decoding="async" />
+            <img [src]="item.imageUrl" [alt]="item.label" loading="lazy" decoding="async" (error)="$any($event.target).style.display = 'none'" />
           </div>
           <div class="front-utils__content">
             <h3>{{ item.label }}</h3>

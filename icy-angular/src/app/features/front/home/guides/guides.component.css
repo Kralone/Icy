@@ -12,7 +12,13 @@
 
 .guides-header h2 {
   margin: 0;
-  color: #e7f8ff;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   font-size: clamp(1.35rem, 2.6vw, 2rem);
 }
 
@@ -145,9 +151,20 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.72rem;
-  color: #9bd4ec;
+  color: rgb(var(--tone));
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.guide-card__meta span::before {
+  content: '';
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.4rem;
+  border-radius: 9999px;
+  background: rgb(var(--tone));
+  vertical-align: middle;
 }
 
 .guide-card--coming {
@@ -264,3 +281,19 @@
     font-size: 0.8rem;
   }
 }
+
+/* Couleur de la catégorie, reprise des pôles : Industrie en vert, Exploration en cyan. */
+.guide-card { --tone: 125 211 252; }
+.guide-card[data-category='Industrie'] { --tone: 52 211 153; }
+.guide-card[data-category='Exploration'] { --tone: 34 211 238; }
+.guide-card[data-category='Logistique'] { --tone: 251 146 60; }
+.guide-card[data-category='Militaire'] { --tone: 248 113 113; }
+.guide-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: rgb(var(--tone));
+  opacity: 0.75;
+}
+.guide-card:hover { border-color: rgb(var(--tone) / 0.55); }

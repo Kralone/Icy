@@ -171,7 +171,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #e2f5ff;
+  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .front-hero-logo__subtitle {
@@ -197,12 +200,12 @@
   justify-content: center;
   padding: 0.9rem 2.2rem;
   border-radius: 999px;
-  background: linear-gradient(120deg, #67e8f9, #22d3ee);
+  background: linear-gradient(180deg, #e0f2fe, #7dd3fc);
   color: #0b1220;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  box-shadow: 0 16px 30px rgba(14, 116, 144, 0.4);
+  box-shadow: 0 0 24px rgba(125, 211, 252, 0.4);
 }
 
 .front-hero-logo__cta--alt {
