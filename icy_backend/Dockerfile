@@ -9,7 +9,7 @@ RUN mvn-resilient -B -ntp dependency:go-offline
 COPY src ./src
 RUN mvn-resilient -B -ntp verify
 
-FROM eclipse-temurin:25.0.4_7-jre-alpine-3.24@sha256:2ca9adf44f5c29d28ecd26cf92d75cc0c66b7f32bfd839a4439e363a8b428af8
+FROM eclipse-temurin:25-jre-alpine-3.24@sha256:e1898fd6a11fc965a994d8ace186fd3585aeb636cf8f05f47a723fcfee0b0918
 # Les paquets système de l'image de base sont mis à niveau : son empreinte est fixée, pas leurs correctifs de sécurité.
 RUN apk upgrade --no-cache
 WORKDIR /app
