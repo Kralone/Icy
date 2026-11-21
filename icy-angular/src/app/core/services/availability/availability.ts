@@ -69,8 +69,12 @@ export function membersBySlot(members: AvailabilityMember[]): Map<string, Availa
 
 export interface RankedSlot { day: number; period: AvailabilityPeriod; count: number; }
 
-/** Cases les plus fréquentées, de la meilleure à la moins bonne ; à égalité, l'ordre de la semaine. */
-export function bestSlots(members: AvailabilityMember[], limit = 3): RankedSlot[] {
+/**
+ * Cases les plus fréquentées, de la meilleure à la moins bonne ; à égalité, l'ordre de la semaine.
+ * Avec `keepTies`, les cases à égalité avec la dernière retenue sont gardées aussi,
+ * pour ne pas en écarter une arbitrairement.
+ */
+export function bestSlots(members: AvailabilityMember[], limit = 3, keepTies = false): RankedSlot[] {
   const counts = membersBySlot(members);
   const ranked: RankedSlot[] = [];
   for (const day of AVAILABILITY_DAYS) {
@@ -79,7 +83,10 @@ export function bestSlots(members: AvailabilityMember[], limit = 3): RankedSlot[
       if (count > 0) ranked.push({ day: day.day, period: period.key, count });
     }
   }
-  return ranked.sort((a, b) => b.count - a.count).slice(0, limit);
+  ranked.sort((a, b) => b.count - a.count);
+  if (!keepTies || ranked.length <= limit || limit <= 0) return ranked.slice(0, limit);
+  const threshold = ranked[limit - 1].count;
+  return ranked.filter(slot => slot.count >= threshold);
 }
 
 /**

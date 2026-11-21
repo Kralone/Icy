@@ -38,4 +38,14 @@ describe('disponibilités', () => {
     expect(membersBySlot(members).get('2-NIGHT')?.map(m => m.username)).toEqual(['b']);
     expect(slotLabel(6, 'EVENING')).toBe('Samedi soir');
   });
+
+  it('garde toutes les cases à égalité quand on le demande', () => {
+    const weekdays = [1, 2, 3, 4, 5];
+    const members = ['a', 'b', 'c', 'd'].map(name =>
+      member(name, weekdays.map(day => ({ day, period: 'EVENING' as const }))));
+    members.push(member('e', [{ day: 6, period: 'EVENING' }]));
+    expect(bestSlots(members, 3).length).toBe(3);
+    expect(bestSlots(members, 3, true).map(s => s.day)).toEqual(weekdays);
+    expect(bestSlots(members, 3, true).every(s => s.count === 4)).toBe(true);
+  });
 });
