@@ -1,58 +1,77 @@
-<!-- ================== MENU - STYLE ICY ================== -->
-<div
-  class="admin-menu loading-reveal min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white px-6 py-12"
-  [attr.data-loading]="isLoading"
-  >
+<div class="admin-menu loading-reveal" [attr.data-loading]="isLoading" [attr.data-rank]="activeRankKey">
   <app-loading-overlay
     [isLoading]="isLoading"
     [minDurationMs]="0"
     [fadeOutMs]="500"
     [softFade]="true"
   ></app-loading-overlay>
-  <div class="admin-rank-label">
-    {{ activeRankLabel }}
-  </div>
-  <div class="admin-content space-y-8">
-    <div class="flex items-center justify-center gap-3 text-center">
-      <app-rank-orbit class="corner-rank-emblem" [rank]="activeRankKey" [label]="activeRankLabel"></app-rank-orbit>
-      <h1 class="text-3xl sm:text-4xl font-semibold tracking-[0.2em] uppercase text-cyan-200">Administration</h1>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      @for (item of visibleMenuItems; track item; let i = $index) {
-        <div
-          class="admin-menu-card-wrap"
-          [class.admin-menu-card-wrap--submenu]="item.route === '/icy/admin/data'"
-          >
-          @if (item.route === '/icy/admin/data') {
-            <div class="admin-submenu-sheet admin-submenu-sheet--2" aria-hidden="true"></div>
-          }
-          @if (item.route === '/icy/admin/data') {
-            <div class="admin-submenu-sheet admin-submenu-sheet--1" aria-hidden="true"></div>
-          }
-          <a
-            [routerLink]="[item.route]"
-          class="admin-menu-card group relative flex flex-col rounded-2xl border border-white/10 bg-white/5
-                 shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition duration-300
-                 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_28px_60px_rgba(0,255,255,0.18)]
-                 cursor-pointer overflow-hidden"
-            [class.admin-menu-card--visible]="cardsVisible"
-            [style.--card-delay.ms]="i * 45"
+  <div class="admin-content">
+    <header class="admin-head">
+      <app-rank-orbit class="admin-head-emblem" [rank]="activeRankKey" [label]="activeRankLabel"></app-rank-orbit>
+      <h1 class="admin-title">Administration</h1>
+      <span class="admin-rank" data-testid="admin-rank"><span class="admin-rank-dot" aria-hidden="true"></span>{{ activeRankLabel }}</span>
+    </header>
+
+    @for (group of visibleGroups; track group.label; let g = $index) {
+      <section class="admin-group" [style.--tone]="group.tone" [attr.aria-labelledby]="'admin-group-' + g">
+        <h2 class="admin-group-title" [id]="'admin-group-' + g">{{ group.label }}</h2>
+        <div class="admin-grid">
+          @for (item of group.items; track item.route; let i = $index) {
+            <a
+              class="admin-card"
+              [class.admin-card--visible]="cardsVisible"
+              [style.--card-delay.ms]="(g * 3 + i) * 40"
+              [routerLink]="[item.route]"
+              [attr.data-testid]="'admin-card-' + item.route"
             >
-            <div class="relative h-48 w-full overflow-hidden">
-              <img
-                [src]="item.imageUrl"
-                alt="{{ item.label }}"
-                class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-500"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-[#0b1324] via-transparent to-transparent"></div>
-              </div>
-              <div class="flex items-center justify-between px-5 py-4 bg-[#0b1324]/80 border-t border-white/10">
-                <span class="text-lg font-semibold text-white">{{ item.label }}</span>
-              </div>
+              <span class="admin-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  @switch (item.icon) {
+                    @case ('users') {
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                    }
+                    @case ('user-plus') {
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" />
+                    }
+                    @case ('rocket') {
+                      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+                      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+                      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+                    }
+                    @case ('calendar') {
+                      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                    }
+                    @case ('flag') {
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><path d="M4 22v-7" />
+                    }
+                    @case ('globe') {
+                      <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    }
+                    @case ('news') {
+                      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z" />
+                    }
+                    @case ('book') {
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                    }
+                    @case ('link') {
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    }
+                    @case ('database') {
+                      <ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5v14a9 3 0 0 0 18 0V5" /><path d="M3 12a9 3 0 0 0 18 0" />
+                    }
+                  }
+                </svg>
+              </span>
+              <span class="admin-card-text">
+                <span class="admin-card-label">{{ item.label }}</span>
+                <span class="admin-card-description">{{ item.description }}</span>
+              </span>
+              <span class="admin-card-arrow" aria-hidden="true">›</span>
             </a>
-          </div>
-        }
-      </div>
-    </div>
+          }
+        </div>
+      </section>
+    }
   </div>
+</div>
