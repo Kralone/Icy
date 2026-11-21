@@ -39,7 +39,11 @@
                 ></span>
               }
               <span class="text-xl relative">
-                {{ item.icon }}
+                @if (item.poleIcon) {
+                  <app-pole-icon [key]="item.poleIcon" size="h-6 w-6" class="text-yellow-400 align-middle" />
+                } @else {
+                  {{ item.icon }}
+                }
               </span>
               <span class="text-sm uppercase tracking-wide relative">
                 {{ item.label }}

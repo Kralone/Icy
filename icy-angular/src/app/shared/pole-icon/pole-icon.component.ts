@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/** Icône d'un pôle (caisse de fret, viseur, usine) ou de la fonction de trésorier (banque). Prend la couleur du texte. */
+/** Icône d'un pôle (caisse de fret, viseur, usine) ou de la fonction de trésorier (pièce frappée d'un cristal). Prend la couleur du texte. */
 @Component({
   selector: 'app-pole-icon',
   standalone: true,
@@ -23,8 +23,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           <path d="M7 18h1M12 18h1M17 18h1" />
         }
         @case ('TRESORIER') {
-          <path d="M11.12 2.2a2 2 0 0 1 1.76 0l7.87 3.85c.47.23.3.95-.22.95H3.47c-.53 0-.7-.72-.22-.95z" />
-          <path d="M6 18v-7M10 18v-7M14 18v-7M18 18v-7M3 22h18" />
+          <circle cx="12" cy="12" r="10" />
+          <path d="M6.6 10 9.2 6.8h5.6l2.6 3.2L12 17.2Z" stroke-width="1.5" />
+          <path d="M6.6 10h10.8M10.4 10 12 17.2l1.6-7.2" stroke-width="1.2" />
         }
       }
     </svg>
