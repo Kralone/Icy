@@ -84,8 +84,8 @@ export class AdminMenuComponent {
       label: 'Communauté',
       tone: '186 230 253',
       items: [
-        { label: 'Membres', description: 'Grades, pôles et fonctions', icon: 'users', imageUrl: 'assets/images/home/carousel/img3.jpg', route: '/icy/admin/members' },
-        { label: 'Recrutement', description: 'Candidatures ouvertes et traitées', icon: 'user-plus', imageUrl: 'assets/images/home/carousel/img1.jpg', route: '/icy/admin/recrutement' }
+        { label: 'Membres', description: 'Grades, pôles et fonctions', icon: 'users', imageUrl: 'https://swissstarships.org/forums/uploads/monthly_2025_05/dr-fischer-invictus-idris-crew.webp.536e4b2ee37db43cd793445d1b79e763.webp', route: '/icy/admin/members' },
+        { label: 'Recrutement', description: 'Candidatures ouvertes et traitées', icon: 'user-plus', imageUrl: 'https://static1.dualshockersimages.com/wordpress/wp-content/uploads/2022/07/Star-Citizen-3172-1-scaled.jpg', route: '/icy/admin/recrutement' }
       ]
     },
     {
@@ -93,25 +93,25 @@ export class AdminMenuComponent {
       tone: '34 211 238',
       items: [
         { label: 'Opérations', description: 'Brouillons et opérations publiées', icon: 'rocket', imageUrl: 'assets/images/home/activities/space-combat.jpg', route: '/icy/admin/operations' },
-        { label: 'Événements', description: 'Calendrier et types d’événements', icon: 'calendar', imageUrl: 'assets/images/home/carousel/img7.jpg', route: '/icy/admin/events' },
-        { label: 'Objectifs', description: 'Objectifs et modèles', icon: 'flag', imageUrl: 'assets/images/home/activities/mining-advanced.jpg', route: '/icy/admin/goals' },
-        { label: 'SC World Event', description: 'Événements du jeu en cours', icon: 'globe', imageUrl: 'assets/images/home/carousel/img6.jpg', route: '/icy/admin/sc-world-events' }
+        { label: 'Événements', description: 'Calendrier et types d’événements', icon: 'calendar', imageUrl: 'https://robertsspaceindustries.com/i/08fe2244a8775fd0035d274b01dab7d7902a28d4/ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjResf17hC1c31dKDgMVCohp9HDpEHngVixnEz/3-16_patchbanner_crop.webp', route: '/icy/admin/events' },
+        { label: 'Objectifs', description: 'Objectifs et modèles', icon: 'flag', imageUrl: 'https://images.cybersport.ru/images/material-card/plain/6d/6de6fece-dd72-48f6-89d0-d1117b131f86.jpg@jpg', route: '/icy/admin/goals' },
+        { label: 'SC World Event', description: 'Événements du jeu en cours', icon: 'globe', imageUrl: 'https://robertsspaceindustries.com/i/20a2ccbe7f81fbe1a5512b046067441eaf57c220/resize(3000,1686,cover,crop(3050,1714,0,0,ADdPNihJzmPbNuTnFsH1DqUeqBRpXdSXVVtgJTyDDgscGKrzJuoFjReseXgqDduTjtPe7KFzRJ9FYxqKAAfoNREtv))/85/starcitizen-43-patch-thumbnail0101.webp', route: '/icy/admin/sc-world-events' }
       ]
     },
     {
       label: 'Contenu',
       tone: '45 212 191',
       items: [
-        { label: 'Actualités', description: 'Articles et types d’actualités', icon: 'news', imageUrl: 'assets/images/home/carousel/img8.jpg', route: '/icy/admin/news' },
+        { label: 'Actualités', description: 'Articles et types d’actualités', icon: 'news', imageUrl: 'https://media.starcitizen.tools/9/91/Careers_Overview_Concept.png', route: '/icy/admin/news' },
         { label: 'Guides', description: 'Rédaction et publication', icon: 'book', imageUrl: 'assets/images/home/activities/mining.jpg', route: '/icy/admin/guides' },
-        { label: 'IceLink Builder', description: 'Blocs de la page IceLink', icon: 'link', imageUrl: 'assets/images/home/carousel/img2.jpg', route: '/icy/admin/icelinkBuilder' }
+        { label: 'IceLink Builder', description: 'Blocs de la page IceLink', icon: 'link', imageUrl: 'https://media.starcitizen.tools/9/9c/Microtech-new-babbage-cityscape-01.jpg', route: '/icy/admin/icelinkBuilder' }
       ]
     },
     {
       label: 'Données',
       tone: '203 213 225',
       items: [
-        { label: 'Catalogue', description: 'Vaisseaux, équipement, lieux et images', icon: 'database', imageUrl: 'assets/images/home/activities/cargo.jpg', route: '/icy/admin/data' }
+        { label: 'Catalogue', description: 'Vaisseaux, équipement, lieux et images', icon: 'database', imageUrl: 'https://haus-enten.de/wordpress/wp-content/uploads/2019/08/news-header-crimestat-console.jpg', route: '/icy/admin/data' }
       ]
     }
   ];

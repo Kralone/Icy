@@ -44,7 +44,7 @@ describe('AdminMenuComponent', () => {
     for (const link of links) {
       expect(link.querySelector('.admin-card-icon svg')).toBeTruthy();
       expect(link.querySelector('.admin-card-description')?.textContent?.trim()).toBeTruthy();
-      expect(link.querySelector('img')?.getAttribute('src')).toMatch(/^assets\/images\//);
+      expect(link.querySelector('img')?.getAttribute('src')).toMatch(/^(https:\/\/|assets\/images\/)/);
     }
   });
 });
