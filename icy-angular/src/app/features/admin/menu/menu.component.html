@@ -25,6 +25,9 @@
               [routerLink]="[item.route]"
               [attr.data-testid]="'admin-card-' + item.route"
             >
+              <span class="admin-card-media">
+                <img [src]="item.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+              </span>
               <span class="admin-card-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   @switch (item.icon) {
@@ -67,7 +70,6 @@
                 <span class="admin-card-label">{{ item.label }}</span>
                 <span class="admin-card-description">{{ item.description }}</span>
               </span>
-              <span class="admin-card-arrow" aria-hidden="true">›</span>
             </a>
           }
         </div>

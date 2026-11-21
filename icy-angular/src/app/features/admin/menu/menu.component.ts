@@ -12,6 +12,8 @@ interface AdminMenuItem {
   label: string;
   description: string;
   icon: AdminIcon;
+  /** Image locale du site : les images externes ne s'affichent pas toujours. */
+  imageUrl: string;
   route: string;
   requiredRoles?: string[];
 }
@@ -82,34 +84,34 @@ export class AdminMenuComponent {
       label: 'Communauté',
       tone: '186 230 253',
       items: [
-        { label: 'Membres', description: 'Grades, pôles et fonctions', icon: 'users', route: '/icy/admin/members' },
-        { label: 'Recrutement', description: 'Candidatures ouvertes et traitées', icon: 'user-plus', route: '/icy/admin/recrutement' }
+        { label: 'Membres', description: 'Grades, pôles et fonctions', icon: 'users', imageUrl: 'assets/images/home/carousel/img3.jpg', route: '/icy/admin/members' },
+        { label: 'Recrutement', description: 'Candidatures ouvertes et traitées', icon: 'user-plus', imageUrl: 'assets/images/home/carousel/img1.jpg', route: '/icy/admin/recrutement' }
       ]
     },
     {
       label: 'Activités',
       tone: '34 211 238',
       items: [
-        { label: 'Opérations', description: 'Brouillons et opérations publiées', icon: 'rocket', route: '/icy/admin/operations' },
-        { label: 'Événements', description: 'Calendrier et types d’événements', icon: 'calendar', route: '/icy/admin/events' },
-        { label: 'Objectifs', description: 'Objectifs et modèles', icon: 'flag', route: '/icy/admin/goals' },
-        { label: 'SC World Event', description: 'Événements du jeu en cours', icon: 'globe', route: '/icy/admin/sc-world-events' }
+        { label: 'Opérations', description: 'Brouillons et opérations publiées', icon: 'rocket', imageUrl: 'assets/images/home/activities/space-combat.jpg', route: '/icy/admin/operations' },
+        { label: 'Événements', description: 'Calendrier et types d’événements', icon: 'calendar', imageUrl: 'assets/images/home/carousel/img7.jpg', route: '/icy/admin/events' },
+        { label: 'Objectifs', description: 'Objectifs et modèles', icon: 'flag', imageUrl: 'assets/images/home/activities/mining-advanced.jpg', route: '/icy/admin/goals' },
+        { label: 'SC World Event', description: 'Événements du jeu en cours', icon: 'globe', imageUrl: 'assets/images/home/carousel/img6.jpg', route: '/icy/admin/sc-world-events' }
       ]
     },
     {
       label: 'Contenu',
       tone: '45 212 191',
       items: [
-        { label: 'Actualités', description: 'Articles et types d’actualités', icon: 'news', route: '/icy/admin/news' },
-        { label: 'Guides', description: 'Rédaction et publication', icon: 'book', route: '/icy/admin/guides' },
-        { label: 'IceLink Builder', description: 'Blocs de la page IceLink', icon: 'link', route: '/icy/admin/icelinkBuilder' }
+        { label: 'Actualités', description: 'Articles et types d’actualités', icon: 'news', imageUrl: 'assets/images/home/carousel/img8.jpg', route: '/icy/admin/news' },
+        { label: 'Guides', description: 'Rédaction et publication', icon: 'book', imageUrl: 'assets/images/home/activities/mining.jpg', route: '/icy/admin/guides' },
+        { label: 'IceLink Builder', description: 'Blocs de la page IceLink', icon: 'link', imageUrl: 'assets/images/home/carousel/img2.jpg', route: '/icy/admin/icelinkBuilder' }
       ]
     },
     {
       label: 'Données',
       tone: '203 213 225',
       items: [
-        { label: 'Catalogue', description: 'Vaisseaux, équipement, lieux et images', icon: 'database', route: '/icy/admin/data' }
+        { label: 'Catalogue', description: 'Vaisseaux, équipement, lieux et images', icon: 'database', imageUrl: 'assets/images/home/activities/cargo.jpg', route: '/icy/admin/data' }
       ]
     }
   ];

@@ -99,23 +99,20 @@
 
 .admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr));
+  gap: 1.25rem;
 }
 
-/* Carte : liseré glacé en haut, filet de couleur du groupe à gauche. */
+/* Carte illustrée, dans l'esprit du menu Pôles : image, pastille d'icône, liseré glacé et filet de couleur en bas. */
 .admin-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 5.75rem;
-  padding: 1.1rem 1.25rem;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.09);
-  background: linear-gradient(160deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02));
-  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.12), 0 18px 40px rgb(0 0 0 / 0.3);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: #0b1324;
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.12), 0 20px 50px rgb(0 0 0 / 0.35);
   opacity: 0;
   transform: translateY(14px);
   transition:
@@ -125,50 +122,70 @@
     box-shadow 250ms ease;
   transition-delay: var(--card-delay, 0ms);
 }
-.admin-card::before {
+.admin-card::after {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0.9rem;
-  bottom: 0.9rem;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
+  inset: auto 0 0 0;
+  height: 3px;
   background: rgb(var(--tone));
+  opacity: 0.75;
 }
 .admin-card--visible { opacity: 1; transform: none; }
 .admin-card:hover,
 .admin-card:focus-visible {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   transition-delay: 0ms;
   border-color: rgb(var(--tone) / 0.55);
-  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.2), 0 24px 50px rgb(var(--tone) / 0.14);
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.2), 0 28px 60px rgb(var(--tone) / 0.16);
   outline: none;
 }
-.admin-card:focus-visible { box-shadow: 0 0 0 2px rgb(var(--tone) / 0.7), 0 24px 50px rgb(var(--tone) / 0.14); }
+.admin-card:focus-visible { box-shadow: 0 0 0 2px rgb(var(--tone) / 0.7), 0 28px 60px rgb(var(--tone) / 0.16); }
+
+/* Image : si elle manque, il reste un fond bleu nuit éclairé de la teinte du groupe. */
+.admin-card-media {
+  position: relative;
+  display: block;
+  height: 8.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 72% 22%, rgb(var(--tone) / 0.22), transparent 62%),
+    linear-gradient(160deg, #16233a, #0b1324);
+}
+.admin-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  transition: opacity 500ms ease, transform 700ms ease;
+}
+.admin-card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #0b1324 0%, rgb(11 19 36 / 0.25) 55%, transparent 100%);
+}
+.admin-card:hover .admin-card-media img { opacity: 1; transform: scale(1.04); }
 
 .admin-card-icon {
+  position: absolute;
+  z-index: 1;
+  left: 1rem;
+  top: calc(8.5rem - 1.5rem);
   display: grid;
   place-items: center;
-  flex: none;
   width: 3rem;
   height: 3rem;
   border-radius: 0.9rem;
   color: rgb(var(--tone));
-  background: rgb(var(--tone) / 0.1);
-  border: 1px solid rgb(var(--tone) / 0.35);
+  background: rgb(11 19 36 / 0.88);
+  border: 1px solid rgb(var(--tone) / 0.45);
+  box-shadow: 0 0 18px rgb(var(--tone) / 0.18);
+  backdrop-filter: blur(6px);
 }
 .admin-card-icon svg { width: 1.4rem; height: 1.4rem; }
-.admin-card-text { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.admin-card-label { font-size: 1.05rem; font-weight: 600; color: rgb(248 250 252); }
-.admin-card-description { font-size: 0.82rem; line-height: 1.35; color: rgb(148 163 184); }
-.admin-card-arrow {
-  margin-left: auto;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: rgb(var(--tone) / 0.6);
-  transition: transform 250ms ease, color 250ms ease;
-}
-.admin-card:hover .admin-card-arrow { transform: translateX(3px); color: rgb(var(--tone)); }
+.admin-card-text { display: flex; flex-direction: column; gap: 0.25rem; padding: 2rem 1.15rem 1.25rem; }
+.admin-card-label { font-size: 1.1rem; font-weight: 600; color: rgb(248 250 252); }
+.admin-card-description { font-size: 0.85rem; line-height: 1.4; color: rgb(148 163 184); }
 
 /* Écrans 4K : cartes un peu plus grandes. */
 @media (min-width: 2400px) {
@@ -180,10 +197,11 @@
   .admin-rank { font-size: 1rem; padding: 0.55rem 1.2rem; }
   .admin-group + .admin-group { margin-top: 2.75rem; }
   .admin-group-title { font-size: 0.95rem; margin-bottom: 1.2rem; }
-  .admin-grid { grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.5rem; }
-  .admin-card { min-height: 8rem; padding: 1.6rem 1.9rem; gap: 1.4rem; }
-  .admin-card-icon { width: 4rem; height: 4rem; border-radius: 1.1rem; }
+  .admin-grid { grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.6rem; }
+  .admin-card-media { height: 12rem; }
+  .admin-card-icon { top: calc(12rem - 2rem); width: 4rem; height: 4rem; border-radius: 1.1rem; }
   .admin-card-icon svg { width: 1.9rem; height: 1.9rem; }
+  .admin-card-text { padding: 2.6rem 1.5rem 1.6rem; }
   .admin-card-label { font-size: 1.45rem; }
   .admin-card-description { font-size: 1.05rem; }
 }

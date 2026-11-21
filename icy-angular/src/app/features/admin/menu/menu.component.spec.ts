@@ -23,7 +23,7 @@ describe('AdminMenuComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('range les pages d’administration en quatre groupes avec une icône et une description', () => {
+  it('range les pages d’administration en quatre groupes avec une image du site, une icône et une description', () => {
     const element: HTMLElement = fixture.nativeElement;
     const titles = Array.from(element.querySelectorAll('.admin-group-title')).map((title) => title.textContent?.trim());
     expect(titles).toEqual(['Communauté', 'Activités', 'Contenu', 'Données']);
@@ -44,7 +44,7 @@ describe('AdminMenuComponent', () => {
     for (const link of links) {
       expect(link.querySelector('.admin-card-icon svg')).toBeTruthy();
       expect(link.querySelector('.admin-card-description')?.textContent?.trim()).toBeTruthy();
-      expect(link.querySelector('img')).toBeNull();
+      expect(link.querySelector('img')?.getAttribute('src')).toMatch(/^assets\/images\//);
     }
   });
 });
