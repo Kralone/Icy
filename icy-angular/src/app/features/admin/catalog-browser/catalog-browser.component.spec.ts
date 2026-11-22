@@ -77,6 +77,9 @@ describe('CatalogBrowserComponent family column', () => {
     component.result = {groupFamilyCounts: {STANDARD: {SHIP: 4, FPS_WEAPON: 2, CITY: 1}}} as any;
     const labels = () => component.familyGroups.map(group => `${group.label}:${group.families.map(f => f.value).join(',')}`);
     expect(labels()).toEqual(['Vaisseaux et véhicules:', 'Armement:FPS_WEAPON', 'Lieux:CITY']);
+    component.result = {groupFamilyCounts: {STANDARD: {FPS_WEAPON: 2}}} as any;
+    expect(labels()).toEqual(['Armement:FPS_WEAPON']);
+    component.result = {groupFamilyCounts: {STANDARD: {SHIP: 4, FPS_WEAPON: 2, CITY: 1}}} as any;
     component.family = 'MOON';
     component.catalogGroup = 'STANDARD';
     expect(labels()).toContain('Lieux:MOON,CITY');

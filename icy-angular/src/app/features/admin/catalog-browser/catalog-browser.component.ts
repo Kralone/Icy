@@ -233,7 +233,7 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
       .map((group) => ({
         label: group.label,
         tone: group.tone,
-        ships: group.families.includes('SHIP'),
+        ships: group.families.includes('SHIP') && (this.nonWikeloShipCount > 0 || (this.family === 'SHIP' && this.catalogGroup !== 'WIKELO')),
         families: this.standardFamilies.filter((option) => group.families.includes(option.value)
           && (this.groupFamilyCount('STANDARD', option.value) > 0 || this.isStandardFamily(option.value)))
       }))
