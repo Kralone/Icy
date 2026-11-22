@@ -27,6 +27,18 @@ import {
 
 type FamilyOption = { value: string; label: string; shortLabel: string };
 
+const VIEW_MODE_KEY = 'icy.catalog.viewMode';
+export const DEFAULT_FAMILY_TONE = '203 213 225';
+export const WIKELO_TONE = '196 181 253';
+/** Grands groupes de familles et leur couleur, dans l'ordre d'affichage. */
+export const FAMILY_GROUPS: { label: string; tone: string; families: string[] }[] = [
+  { label: 'Vaisseaux et véhicules', tone: '34 211 238', families: ['SHIP', 'GROUND_VEHICLE', 'POWER_SUIT'] },
+  { label: 'Armement', tone: '248 113 113', families: ['FPS_WEAPON', 'SHIP_WEAPON', 'ARMOR'] },
+  { label: 'Équipement', tone: '251 146 60', families: ['SHIP_COMPONENT', 'MODULE', 'TOOL', 'ITEM'] },
+  { label: 'Lieux', tone: '52 211 153', families: ['SYSTEM', 'PLANET', 'MOON', 'CITY', 'STATION', 'JUMP_POINT', 'OUTPOST', 'LOCATION'] },
+  { label: 'Ressources', tone: '251 191 36', families: ['COMMODITY'] }
+];
+
 @Component({
   selector: 'app-catalog-browser',
   standalone: true,
@@ -63,9 +75,13 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     'SHIP', 'GROUND_VEHICLE', 'POWER_SUIT', 'FPS_WEAPON', 'SHIP_WEAPON',
     'ARMOR', 'SHIP_COMPONENT', 'MODULE', 'TOOL', 'ITEM'
   ].includes(family.value));
+  readonly wikeloTone = WIKELO_TONE;
   readonly standardFamilies = this.families.filter((family) => family.value !== 'SHIP');
 
   canCorrect = false;
+  /** Colonne des familles dépliée (sur mobile, elle est repliée en menu). */
+  familiesOpen = false;
+  viewMode: 'grid' | 'list' = 'grid';
   correctionsOpen = false;
   imageCorrectionOpen = false;
 
@@ -93,6 +109,7 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   private readonly currencyFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
   ngOnInit(): void {
+    try { if (localStorage.getItem(VIEW_MODE_KEY) === 'list') this.viewMode = 'list'; } catch { /* stockage indisponible */ }
     this.catalogService.canCorrect().subscribe(allowed => this.canCorrect = allowed);
     this.routeSubscription = this.route.queryParamMap.subscribe(params => {
       const family = params.get('family') || '';
@@ -205,11 +222,40 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     return 'Tout le catalogue';
   }
 
+  /** Couleur (triplet RVB) du grand groupe d'une famille, pour les pastilles, les cartes et le détail. */
   familyTone(value: string): string {
-    if (['SHIP', 'GROUND_VEHICLE', 'POWER_SUIT'].includes(value)) return 'cyan';
-    if (['FPS_WEAPON', 'SHIP_WEAPON', 'ARMOR'].includes(value)) return 'rose';
-    if (['SHIP_COMPONENT', 'MODULE', 'TOOL', 'ITEM'].includes(value)) return 'amber';
-    return 'violet';
+    return FAMILY_GROUPS.find((group) => group.families.includes(value))?.tone ?? DEFAULT_FAMILY_TONE;
+  }
+
+  /** Familles rangées par grand groupe ; une famille vide n'apparaît que si elle est sélectionnée. */
+  get familyGroups(): { label: string; tone: string; ships: boolean; families: FamilyOption[] }[] {
+    return FAMILY_GROUPS
+      .map((group) => ({
+        label: group.label,
+        tone: group.tone,
+        ships: group.families.includes('SHIP') && (this.nonWikeloShipCount > 0 || (this.family === 'SHIP' && this.catalogGroup !== 'WIKELO')),
+        families: this.standardFamilies.filter((option) => group.families.includes(option.value)
+          && (this.groupFamilyCount('STANDARD', option.value) > 0 || this.isStandardFamily(option.value)))
+      }))
+      .filter((group) => group.ships || group.families.length > 0);
+  }
+
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+    try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* stockage indisponible : le choix vaut pour la visite */ }
+  }
+
+  /** Les lieux ont des visuels de paysage : on les recadre au lieu de les inscrire en entier. */
+  isPlace(family: string): boolean {
+    return FAMILY_GROUPS[3].families.includes(family);
+  }
+
+  entryTone(entry: CatalogEntry): string {
+    return entry.catalogGroup === 'WIKELO' ? WIKELO_TONE : this.familyTone(entry.family);
+  }
+
+  isStandardFamily(value: string): boolean {
+    return this.family === value && this.catalogGroup === 'STANDARD';
   }
 
   cheapestOffer(entry: CatalogEntry): CatalogOffer | null {

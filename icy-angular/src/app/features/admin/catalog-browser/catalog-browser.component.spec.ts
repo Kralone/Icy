@@ -66,3 +66,24 @@ describe('CatalogBrowserComponent offer places', () => {
     expect(component.offerPlace(offer({}))).toBeNull();
   });
 });
+
+describe('CatalogBrowserComponent family column', () => {
+  it('groups families by colour and hides empty ones unless selected', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CatalogBrowserComponent],
+      providers: [provideRouter([]), {provide: CatalogService, useValue: {}}]
+    }).compileComponents();
+    const component = TestBed.createComponent(CatalogBrowserComponent).componentInstance;
+    component.result = {groupFamilyCounts: {STANDARD: {SHIP: 4, FPS_WEAPON: 2, CITY: 1}}} as any;
+    const labels = () => component.familyGroups.map(group => `${group.label}:${group.families.map(f => f.value).join(',')}`);
+    expect(labels()).toEqual(['Vaisseaux et véhicules:', 'Armement:FPS_WEAPON', 'Lieux:CITY']);
+    component.result = {groupFamilyCounts: {STANDARD: {FPS_WEAPON: 2}}} as any;
+    expect(labels()).toEqual(['Armement:FPS_WEAPON']);
+    component.result = {groupFamilyCounts: {STANDARD: {SHIP: 4, FPS_WEAPON: 2, CITY: 1}}} as any;
+    component.family = 'MOON';
+    component.catalogGroup = 'STANDARD';
+    expect(labels()).toContain('Lieux:MOON,CITY');
+    expect(component.familyTone('SHIP_WEAPON')).toBe('248 113 113');
+    expect(component.entryTone({family: 'SHIP', catalogGroup: 'WIKELO'} as CatalogEntry)).toBe('196 181 253');
+  });
+});
