@@ -57,7 +57,7 @@ class UserShipServiceTest {
         User user = new User();
         user.setId(UUID.randomUUID());
         when(userService.resolveUser(user.getId())).thenReturn(user);
-        when(userShipRepository.findByUserId(user.getId())).thenReturn(List.of());
+        when(userShipRepository.findByUserIdWithShipAndBrand(user.getId())).thenReturn(List.of());
 
         ResponseEntity<MessageResponse<List<UserShip>>> response = okResponse(List.of());
         Mockito.doReturn(response).when(messageService).buildResponse(eq("user.notfound"), eq(List.of()), any());
@@ -194,7 +194,7 @@ class UserShipServiceTest {
 
         assertThatThrownBy(() -> service.getConfirmedParticipantShips(eventId, userId))
                 .isInstanceOf(ForbiddenException.class);
-        verify(userShipRepository, never()).findByUserId(any());
+        verify(userShipRepository, never()).findByUserIdWithShipAndBrand(any());
     }
 
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {

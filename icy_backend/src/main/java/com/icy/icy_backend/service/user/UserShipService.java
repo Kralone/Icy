@@ -52,7 +52,10 @@ public class UserShipService {
         UUID userId = user.getId();
 
         logger.info("Récupération des vaisseaux pour l'utilisateur ID: {}", userId);
-        List<UserShip> userShips = userShipRepository.findByUserId(userId);
+        // Ship pointe sur la vue catalog.ship_compat, qui ne garde que les fiches actives du catalogue.
+        // Un vaisseau retiré du catalogue reste dans le hangar : le charger en différé échouait à la sérialisation
+        // et toute la liste renvoyait une erreur. La jointure ne garde que les vaisseaux encore au catalogue.
+        List<UserShip> userShips = userShipRepository.findByUserIdWithShipAndBrand(userId);
 
         if (userShips.isEmpty()) {
             logger.warn("Aucun vaisseau trouvé pour l'utilisateur ID: {}", userId);
