@@ -752,3 +752,37 @@ input[type="date"], input[type="time"], input[type="datetime-local"] { color-sch
 @media (min-width: 2400px) {
   .glace-panel-title { font-size: 0.95rem; }
 }
+
+/* Panneau de détail du catalogue admin : sorti du composant pour tenir dans son budget de styles. */
+app-catalog-browser .detail-backdrop { position: fixed; z-index: 90; inset: 0; background: rgba(1, 5, 10, 0.76); }
+app-catalog-browser .detail-panel { position: fixed; z-index: 91; top: 0; right: 0; width: min(94vw, 580px); height: 100dvh; overflow-y: auto; border-left: 1px solid rgb(var(--tone) / 0.35); color: #e2e8f0; background: linear-gradient(180deg, #0b1324, #0a111c); box-shadow: -35px 0 90px rgba(0, 0, 0, 0.48); }
+app-catalog-browser .detail-close { position: fixed; z-index: 2; top: 1rem; right: 1rem; display: grid; width: 2.55rem; height: 2.55rem; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; color: white; background: rgba(3, 10, 17, 0.64); font-size: 1.35rem; }
+app-catalog-browser .detail-visual { position: relative; aspect-ratio: 16 / 10; background: radial-gradient(circle at 50% 40%, rgb(var(--tone) / 0.16), transparent 70%), #08111b; }
+app-catalog-browser .detail-visual img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 24px; }
+app-catalog-browser .detail-visual > div { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, #0b1324 0%, transparent 18%); }
+app-catalog-browser .detail-content { padding: clamp(1.5rem, 5vw, 3rem); }
+app-catalog-browser .detail-content h2 { margin: 8px 0 16px; font-size: clamp(26px, 3vw, 36px); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+app-catalog-browser .detail-description { color: #93a8b8; font-size: 0.88rem; line-height: 1.8; white-space: pre-line; }
+app-catalog-browser .detail-metadata { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-block: 2rem; border-block: 1px solid var(--line); }
+app-catalog-browser .detail-metadata div { min-width: 0; padding: 1rem 0.7rem; border-bottom: 1px solid rgba(147, 210, 232, 0.08); }
+app-catalog-browser .detail-metadata dt { font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; color: #a8b8c9; font-size: 12px; }
+app-catalog-browser .detail-metadata dd { margin-top: 0.35rem; overflow: hidden; color: #c4d9e3; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+app-catalog-browser .offers-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+app-catalog-browser .offers-heading h3 { font-size: 0.95rem; font-weight: 600; }
+app-catalog-browser .offers-heading span { display: grid; width: 1.6rem; height: 1.6rem; place-items: center; border-radius: 50%; color: rgb(var(--tone)); background: rgb(var(--tone) / 0.12); font-size: 0.65rem; }
+app-catalog-browser .offer-list { display: grid; gap: 0.5rem; }
+app-catalog-browser .offer-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.8rem; padding: 0.85rem; border: 1px solid rgba(147, 210, 232, 0.1); border-radius: 0.75rem; background: rgba(255,255,255,.018); }
+app-catalog-browser .offer-type { padding: 0.3rem 0.5rem; border-radius: 999px; color: rgb(var(--tone)); background: rgb(var(--tone) / 0.12); font-size: 0.53rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+app-catalog-browser .offer-row div { min-width: 0; }
+app-catalog-browser .offer-row strong { display: block; overflow: hidden; color: #d1e5ec; font-weight: 550; text-overflow: ellipsis; white-space: normal; overflow-wrap: anywhere; font-size: 13px; }
+app-catalog-browser .offer-row small { display: block; margin-top: 0.18rem; color: #a8b8c9; font-size: 12px; }
+app-catalog-browser .offer-row b { font-size: 0.8rem; white-space: nowrap; color: rgb(var(--tone)); }
+app-catalog-browser .offers-empty { padding: 1.1rem; border: 1px dashed rgba(147, 210, 232, 0.13); border-radius: 0.7rem; color: #6f8799; font-size: 0.76rem; line-height: 1.6; }
+app-catalog-browser .source-button { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1.8rem; padding: 0.9rem 1rem; border: 1px solid rgb(var(--tone) / 0.35); border-radius: 999px; color: #f1f5f9; background: rgb(var(--tone) / 0.08); font-size: 0.75rem; }
+app-catalog-browser .offers-section { margin-top: 1.5rem; }
+@media (max-width: 560px) {
+  app-catalog-browser .detail-metadata { grid-template-columns: 1fr; }
+  app-catalog-browser .detail-panel { width: 100%; }
+  app-catalog-browser .offer-row { grid-template-columns: auto minmax(0, 1fr); }
+  app-catalog-browser .offer-row b { grid-column: 2; }
+}
