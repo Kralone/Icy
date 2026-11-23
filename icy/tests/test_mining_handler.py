@@ -41,6 +41,13 @@ class MiningMessageTest(unittest.TestCase):
 
         self.assertIsNone(content)
 
+    def test_footer_names_the_kind_of_sheet(self):
+        _, mining = build_message("mining.order_ready", ready_payload())
+        _, salvage = build_message("mining.order_ready", ready_payload(footer="Fiche de salvage"))
+
+        self.assertEqual(mining.footer.text, "Fiche de minage • IceForge")
+        self.assertEqual(salvage.footer.text, "Fiche de salvage • IceForge")
+
     def test_long_text_is_truncated_not_refused(self):
         _, embed = build_message("mining.all_ready", ready_payload(title="x" * 400, description="y" * 5000))
 

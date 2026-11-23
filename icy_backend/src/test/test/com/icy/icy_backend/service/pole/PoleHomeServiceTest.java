@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PoleHomeServiceTest {
+    private static final List<String> INDUSTRY = List.of(SessionSheet.MINING, SessionSheet.SALVAGE);
     private static final LocalDate TODAY = LocalDate.of(2026, 11, 20);
 
     private final PoleService poles = Mockito.mock(PoleService.class);
@@ -68,13 +69,15 @@ class PoleHomeServiceTest {
     void industryHomeShowsReferentsStatsRecentSheetsAndNews() {
         signIn("JUNIOR", null);
         LocalDate since = TODAY.minusDays(30);
-        when(sheets.countByActivityAndSessionDateBetween("MINING", since, TODAY)).thenReturn(6L);
-        when(sheets.countByActivityAndStatusNot("MINING", SessionSheet.Status.CLOSED)).thenReturn(2L);
-        when(sheets.countParticipantsBetween("MINING", since, TODAY)).thenReturn(9L);
-        when(sheets.sumSalesSince("MINING", since.atStartOfDay())).thenReturn(1_250_000L);
+        when(sheets.countByActivityInAndSessionDateBetween(INDUSTRY, since, TODAY)).thenReturn(6L);
+        when(sheets.countByActivityInAndStatusNot(INDUSTRY, SessionSheet.Status.CLOSED)).thenReturn(2L);
+        when(sheets.countParticipantsBetween(INDUSTRY, since, TODAY)).thenReturn(9L);
+        when(sheets.sumSalesSince(INDUSTRY, since.atStartOfDay())).thenReturn(1_250_000L);
         SessionSheet sheet = SessionSheet.builder().id(UUID.randomUUID()).name("Quantanium Aaron Halo")
                 .sessionDate(TODAY).status(SessionSheet.Status.ACTIVE).build();
-        when(sheets.findTop4ByActivityOrderBySessionDateDescCreatedAtDesc("MINING")).thenReturn(List.of(sheet));
+        SessionSheet salvage = SessionSheet.builder().id(UUID.randomUUID()).name("Épaves de Pyro").activity(SessionSheet.SALVAGE)
+                .sessionDate(TODAY).status(SessionSheet.Status.ACTIVE).build();
+        when(sheets.findTop4ByActivityInOrderBySessionDateDescCreatedAtDesc(INDUSTRY)).thenReturn(List.of(sheet, salvage));
         when(news.findTop10ByPoleOrderByCreatedAtDescIdDesc(Specialty.INDUSTRIE)).thenReturn(List.of(entry(7L, Specialty.INDUSTRIE)));
 
         PoleDtos.Home home = service.home("industrie");
@@ -86,7 +89,8 @@ class PoleHomeServiceTest {
                 new PoleDtos.Stat("MINING_SHEETS_30D", 6), new PoleDtos.Stat("MINING_SHEETS_OPEN", 2),
                 new PoleDtos.Stat("MINERS_30D", 9), new PoleDtos.Stat("MINING_SALES_30D", 1_250_000));
         assertThat(home.activity()).containsExactly(
-                new PoleDtos.Activity("MINING_SHEET", sheet.getId(), "Quantanium Aaron Halo", TODAY, "ACTIVE"));
+                new PoleDtos.Activity("MINING_SHEET", sheet.getId(), "Quantanium Aaron Halo", TODAY, "ACTIVE"),
+                new PoleDtos.Activity("SALVAGE_SHEET", salvage.getId(), "Épaves de Pyro", TODAY, "ACTIVE"));
         assertThat(home.news()).extracting(PoleDtos.News::id).containsExactly(7L);
     }
 

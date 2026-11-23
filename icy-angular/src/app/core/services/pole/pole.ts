@@ -97,10 +97,10 @@ export interface PoleHome {
 
 /** Libellé de chaque chiffre renvoyé par le serveur ; un chiffre inconnu n'est pas affiché. */
 export const POLE_STAT_LABELS: Record<string, { label: string; period?: string; unit?: string }> = {
-  MINING_SHEETS_30D: { label: 'Fiches de minage', period: '30 derniers jours' },
+  MINING_SHEETS_30D: { label: 'Fiches minage et salvage', period: '30 derniers jours' },
   MINING_SHEETS_OPEN: { label: 'Fiches en cours' },
-  MINERS_30D: { label: 'Mineurs actifs', period: '30 derniers jours' },
-  MINING_SALES_30D: { label: 'Ventes de minerai', period: '30 derniers jours', unit: 'aUEC' },
+  MINERS_30D: { label: 'Membres actifs', period: '30 derniers jours' },
+  MINING_SALES_30D: { label: 'Ventes minage et salvage', period: '30 derniers jours', unit: 'aUEC' },
   POLE_ACTIVITIES_30D: { label: 'Événements et opérations', period: '30 derniers jours' },
   POLE_PARTICIPANTS_30D: { label: 'Participants', period: '30 derniers jours' },
   POLE_UPCOMING: { label: 'À venir' }
@@ -187,7 +187,7 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
           label: 'Fiches de salvage',
           description: 'Sessions de salvage : cargaisons récupérées, raffinage du CMAT, ventes, frais et partage des gains.',
           route: '/icy/outils/fiches-salvage',
-          imageUrl: 'assets/images/home/activities/salvage.jpg'
+          imageUrl: 'assets/images/tools/salvage-sheet.jpg'
         },
         {
           label: 'Ressources de minage',

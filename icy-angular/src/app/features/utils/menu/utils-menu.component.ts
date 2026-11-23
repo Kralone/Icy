@@ -84,7 +84,7 @@ export class UtilsMenuComponent {
     },
     {
       label: 'Fiches salvage',
-      imageUrl: 'assets/images/home/activities/salvage.jpg',
+      imageUrl: 'assets/images/tools/salvage-sheet.jpg',
       path: 'fiches-salvage',
       scope: 'Interne' as UtilityScope,
     },

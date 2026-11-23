@@ -26,7 +26,7 @@ def _truncate(text: str, limit: int) -> str:
 
 
 def build_message(routing_key: str, payload: dict):
-    """Contenu (mentions) et embed d'une notification de fiche de minage. Le texte est rédigé par le serveur."""
+    """Contenu (mentions) et embed d'une notification de fiche de minage ou de salvage. Le texte est rédigé par le serveur."""
     mentions = [f"<@{value}>" for value in payload.get("mentionDiscordIds") or [] if DISCORD_ID.match(str(value))]
     lines = [str(line) for line in payload.get("lines") or []]
     description = payload.get("description") or ""
@@ -34,13 +34,14 @@ def build_message(routing_key: str, payload: dict):
         description = description + "\n\n" + "\n".join(f"• {line}" for line in lines)
     path = str(payload.get("path") or "")
     url = public_base_url() + path if path.startswith("/") else None
+    kind = _truncate(str(payload.get("footer") or "Fiche de minage"), 60)
     embed = discord.Embed(
-        title=_truncate(payload.get("title") or "Fiche de minage", TITLE_LIMIT),
+        title=_truncate(payload.get("title") or kind, TITLE_LIMIT),
         description=_truncate(description, DESCRIPTION_LIMIT),
         color=COLORS.get(routing_key, discord.Color.blurple()),
         url=url,
     )
-    embed.set_footer(text="Fiche de minage • IceForge")
+    embed.set_footer(text=f"{kind} • IceForge")
     return " ".join(mentions) or None, embed
 
 

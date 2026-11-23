@@ -85,6 +85,7 @@ public class MiningNotifications {
         payload.put("sheetId", sheet.getId());
         payload.put("sheetName", sheet.getName());
         payload.put("path", path(sheet));
+        payload.put("footer", sheet.isSalvage() ? "Fiche de salvage" : "Fiche de minage");
         payload.put("title", title);
         payload.put("description", description);
         payload.put("lines", lines);

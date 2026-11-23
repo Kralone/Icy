@@ -51,8 +51,8 @@ describe('PolePageComponent', () => {
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Industrie');
     expect(text('pole-referents')).toContain('RéférentAda');
     expect(find('pole-manage')).toBeNull();
-    expect(text('pole-stats')).toMatch(/Fiches de minage\s*6\s*30 derniers jours/);
-    expect(text('pole-stats')).toMatch(/Ventes de minerai\s*1.250.000\s*aUEC/);
+    expect(text('pole-stats')).toMatch(/Fiches minage et salvage\s*6\s*30 derniers jours/);
+    expect(text('pole-stats')).toMatch(/Ventes minage et salvage\s*1.250.000\s*aUEC/);
     expect(find('pole-stats')!.querySelectorAll('.pole-stat').length).toBe(2);
     const groups = Array.from(find('pole-tools')!.querySelectorAll('h2')).map(title => title.textContent);
     expect(groups).toEqual(['Outils', 'Guides']);

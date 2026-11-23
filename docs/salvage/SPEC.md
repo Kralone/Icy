@@ -53,6 +53,7 @@ Une opération peut créer sa fiche liée avec l'option « Session de salvage »
 - Pages : `/icy/outils/fiches-salvage` et `/utilitaires/fiches-salvage`, carte dans le menu Outils et le pôle Industrie.
 - Discord : mêmes messages et clés de routage `mining.*` ; seul le lien pointe vers la fiche de salvage. Le bot ne
   change pas.
-- **À la mise en production** : les scripts de vérification Flyway et de déploiement (`ops/backend-rollout`) visent
-  encore la dernière migration livrée ; ils devront être portés à V53. Ils n'ont pas été modifiés ici, un déploiement
-  étant en cours par ailleurs.
+- Pôle Industrie : ses chiffres et ses dernières fiches couvrent le minage et le salvage.
+- Discord : le pied du message dit « Fiche de salvage » ou « Fiche de minage » (champ `footer`, facultatif pour le bot).
+- Livraison : `verify-flyway-v53.sql` (historique V1-V53, checksum V53 909741628, structures V53), le déploiement de
+  production vise V53. Une base en V52 passe en V53 avec une sauvegarde fraîche, comme toute migration.

@@ -43,7 +43,8 @@ public class PoleHomeService {
     static final int AGENDA_MAX = 6;
     static final int ACTIVITY_MAX = 4;
     static final int GOALS_MAX = 4;
-    private static final String MINING = "MINING";
+    /** Pôle Industrie : fiches de minage et de salvage. */
+    private static final List<String> INDUSTRY = List.of(SessionSheet.MINING, SessionSheet.SALVAGE);
 
     private final PoleService poles;
     private final PoleNewsRepository news;
@@ -140,15 +141,15 @@ public class PoleHomeService {
         LocalDate today = LocalDate.now(clock);
         LocalDate since = today.minusDays(STATS_DAYS);
         return List.of(
-                new PoleDtos.Stat("MINING_SHEETS_30D", sheets.countByActivityAndSessionDateBetween(MINING, since, today)),
-                new PoleDtos.Stat("MINING_SHEETS_OPEN", sheets.countByActivityAndStatusNot(MINING, SessionSheet.Status.CLOSED)),
-                new PoleDtos.Stat("MINERS_30D", sheets.countParticipantsBetween(MINING, since, today)),
-                new PoleDtos.Stat("MINING_SALES_30D", sheets.sumSalesSince(MINING, since.atStartOfDay())));
+                new PoleDtos.Stat("MINING_SHEETS_30D", sheets.countByActivityInAndSessionDateBetween(INDUSTRY, since, today)),
+                new PoleDtos.Stat("MINING_SHEETS_OPEN", sheets.countByActivityInAndStatusNot(INDUSTRY, SessionSheet.Status.CLOSED)),
+                new PoleDtos.Stat("MINERS_30D", sheets.countParticipantsBetween(INDUSTRY, since, today)),
+                new PoleDtos.Stat("MINING_SALES_30D", sheets.sumSalesSince(INDUSTRY, since.atStartOfDay())));
     }
 
     private List<PoleDtos.Activity> industryActivity() {
-        return sheets.findTop4ByActivityOrderBySessionDateDescCreatedAtDesc(MINING).stream()
-                .map(sheet -> new PoleDtos.Activity("MINING_SHEET", sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name()))
+        return sheets.findTop4ByActivityInOrderBySessionDateDescCreatedAtDesc(INDUSTRY).stream()
+                .map(sheet -> new PoleDtos.Activity(sheet.isSalvage() ? "SALVAGE_SHEET" : "MINING_SHEET", sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name()))
                 .toList();
     }
 

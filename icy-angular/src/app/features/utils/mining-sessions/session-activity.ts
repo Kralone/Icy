@@ -44,7 +44,7 @@ export const ACTIVITY_TEXTS: Record<SessionActivity, ActivityText> = {
     listIntro: 'Cargaisons récupérées, raffinage du matériau de construction, ventes et partage d’une session de salvage.',
     sessionLabel: 'Session de salvage',
     newSheet: 'Nouvelle fiche de salvage',
-    heroImage: '/assets/images/home/activities/salvage.jpg',
+    heroImage: '/assets/images/tools/salvage-sheet.jpg',
     goods: 'matériau',
     goodsPlural: 'matériaux',
     theGoods: 'le matériau',
