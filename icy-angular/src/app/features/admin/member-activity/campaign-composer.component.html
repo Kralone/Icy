@@ -1,0 +1,60 @@
+<div class="overlay" (click)="closed.emit()"></div>
+<section class="side-panel composer" role="dialog" aria-modal="true" aria-labelledby="composer-title">
+  <button type="button" class="side-panel__close" (click)="closed.emit()" aria-label="Fermer">✕</button>
+  <form class="composer__body" (ngSubmit)="submit()">
+    <header>
+      <p class="eyebrow">Nouvelle campagne</p>
+      <h2 id="composer-title">Rappel à {{ members().length }} membre{{ members().length > 1 ? 's' : '' }}</h2>
+      <ul class="recipients" aria-label="Destinataires">
+        @for (member of members(); track member.userId) {
+          <li [attr.data-state]="member.state"><span aria-hidden="true"></span>{{ member.username }} <small>{{ member.daysInactive }} j</small></li>
+        }
+      </ul>
+    </header>
+
+    <label class="field">
+      <span>Titre de la campagne</span>
+      <input class="input" name="title" [(ngModel)]="title" maxlength="120" required>
+    </label>
+
+    <fieldset class="modes">
+      <legend>Envoi</legend>
+      @for (option of modes; track option.key) {
+        <label class="mode" [class.mode--active]="mode === option.key">
+          <input type="radio" name="mode" [value]="option.key" [(ngModel)]="mode" class="sr-only">
+          <span class="mode__radio" aria-hidden="true"></span>
+          <span>{{ option.label }}</span>
+        </label>
+      }
+      <p class="muted modes__help">{{ modeHelp }}</p>
+      @if (mode === 'BOT_LATER') {
+        <app-date-time-field name="scheduledAt" [(ngModel)]="scheduledAt" label="Envoi programmé" [hours]="[12, 18, 19, 20]" />
+      }
+    </fieldset>
+
+    <label class="field">
+      <span>Message <small class="muted">{{ '{' }}pseudo{{ '}' }} est remplacé par le pseudo de chacun</small></span>
+      <textarea class="input" name="body" [(ngModel)]="body" required></textarea>
+      <small class="counter" [class.counter--over]="tooLong">{{ body.length }} / 1900</small>
+    </label>
+
+    <app-media-picker [(file)]="mediaFile" />
+
+    <div class="preview">
+      <div class="preview__head">
+        <span class="eyebrow">Aperçu pour {{ previewMember?.username }}</span>
+        @if (members().length > 1) { <button type="button" class="link-button" (click)="nextPreview()">Membre suivant</button> }
+      </div>
+      <div class="discord-preview" [innerHTML]="previewHtml"></div>
+    </div>
+
+    @if (error) { <p class="form-error" role="alert">{{ error }}</p> }
+
+    <footer class="composer__actions">
+      <button type="button" class="btn" (click)="closed.emit()">Annuler</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving || !body.trim() || tooLong || !title.trim()" data-testid="composer-submit">
+        {{ saving ? 'Création…' : submitLabel }}
+      </button>
+    </footer>
+  </form>
+</section>

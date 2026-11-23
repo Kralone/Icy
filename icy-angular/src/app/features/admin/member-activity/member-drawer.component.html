@@ -1,0 +1,106 @@
+<div class="overlay" (click)="closed.emit()"></div>
+<aside class="side-panel drawer" role="dialog" aria-modal="true" [attr.aria-label]="'Fiche de ' + member().username" data-testid="member-drawer">
+  <button type="button" class="side-panel__close" (click)="closed.emit()" aria-label="Fermer">✕</button>
+  <div class="drawer__body">
+    <header class="drawer__head" [attr.data-state]="member().state">
+      <span class="avatar avatar--large" [attr.data-rank]="rank" aria-hidden="true">
+        @if (member().avatarUrl) { <img [src]="member().avatarUrl" alt=""> } @else { {{ member().username.charAt(0).toUpperCase() }} }
+      </span>
+      <div class="min-w-0">
+        <h2>{{ member().username }}</h2>
+        <p class="muted">{{ rankLabel }} · membre depuis {{ member().createdAt | date:'MMMM yyyy' }}</p>
+        <span class="state-badge" [attr.data-state]="member().state">{{ stateLabels[member().state] }}</span>
+      </div>
+    </header>
+
+    <dl class="facts">
+      <div><dt>Sans activité</dt><dd>{{ member().daysInactive }} j</dd></div>
+      <div><dt>Dernière visite du site</dt><dd>{{ member().lastSeenAt ? (member().lastSeenAt | date:"d MMM yyyy, HH'h'mm") : 'Jamais' }}</dd></div>
+      <div><dt>Dernière opération confirmée</dt><dd>{{ member().lastOperationAt ? (member().lastOperationAt | date:'d MMM yyyy') : 'Aucune' }}</dd></div>
+      <div><dt>État calculé</dt><dd>{{ stateLabels[member().computedState] }}</dd></div>
+    </dl>
+    <p class="muted rule">Calcul : {{ settings().watchDays }} jours sans visite du site ni opération confirmée → à surveiller, {{ settings().inactiveDays }} jours → inactif.</p>
+
+    <section class="block">
+      <h3 class="glace-panel-title">Corriger l’état</h3>
+      <p class="muted">Quand le calcul se trompe : un membre actif sur Discord mais pas sur le site, une absence prévenue.</p>
+      <div class="segmented" role="radiogroup" aria-label="État noté à la main">
+        <label [class.on]="manualState === ''"><input type="radio" name="manual" value="" [(ngModel)]="manualState" class="sr-only">Calcul automatique</label>
+        <label [class.on]="manualState === 'ACTIF'" data-state="ACTIF"><input type="radio" name="manual" value="ACTIF" [(ngModel)]="manualState" class="sr-only">Actif</label>
+        <label [class.on]="manualState === 'EN_PAUSE'" data-state="EN_PAUSE"><input type="radio" name="manual" value="EN_PAUSE" [(ngModel)]="manualState" class="sr-only">En pause</label>
+      </div>
+      @if (manualState) {
+        <label class="field inline">
+          <span>Jusqu’au <small class="muted">(vide : sans limite)</small></span>
+          <input type="date" class="input input--date" [min]="today" [(ngModel)]="manualUntil">
+        </label>
+      }
+      <label class="field">
+        <span>Note</span>
+        <input class="input" maxlength="500" [(ngModel)]="manualNote" placeholder="Ex. : en déplacement jusqu’à janvier">
+      </label>
+      <div class="row">
+        <button type="button" class="btn btn--small" (click)="saveManual()" [disabled]="savingManual">Enregistrer</button>
+        @if (manualMessage) { <small class="muted" role="status">{{ manualMessage }}</small> }
+        @if (member().manual?.updatedBy) { <small class="muted">Dernière correction : {{ member().manual?.updatedBy }}, {{ member().manual?.updatedAt | date:'d MMM' }}</small> }
+      </div>
+    </section>
+
+    <section class="block">
+      <h3 class="glace-panel-title">Annoncer une promotion</h3>
+      <p class="muted">Le bot envoie le message et le GIF du modèle en privé. Les textes se modifient dans l’onglet « Messages du bot ».</p>
+      <select class="input" [(ngModel)]="announceCode" aria-label="Annonce à envoyer">
+        @for (template of promotionTemplates; track template.code) { <option [value]="template.code">{{ template.label }}</option> }
+      </select>
+      @if (announcePreview) {
+        <div class="discord-preview"><div [innerHTML]="announceHtml"></div>@if (announceMedia) {<img [src]="announceMedia" alt="">}</div>
+      }
+      <div class="row">
+        <button type="button" class="btn btn--primary btn--small" (click)="announce()" [disabled]="announcing || !announceCode">{{ announcing ? 'Envoi…' : 'Envoyer par le bot' }}</button>
+        @if (announceMessage) { <small class="muted" role="status">{{ announceMessage }}</small> }
+        @if (announceError) { <small class="form-error" role="alert">{{ announceError }}</small> }
+      </div>
+    </section>
+
+    <section class="block">
+      <h3 class="glace-panel-title">Rappels</h3>
+      <ul class="timeline">
+        @for (reminder of history?.reminders ?? []; track reminder.id) {
+          <li>
+            <button type="button" class="timeline__item" (click)="openCampaign.emit(reminder.campaignId)" [attr.data-decision]="reminder.decision ?? (reminder.contactedAt ? 'WAITING' : 'TODO')">
+              <span class="timeline__dot" aria-hidden="true"></span>
+              <span class="min-w-0">
+                <strong>{{ reminder.campaignTitle }}</strong>
+                <small class="muted">
+                  {{ reminder.contactedAt ? 'Rappelé le ' + (reminder.contactedAt | date:'d MMM yyyy') : (reminder.deliveryStatus === 'FAILED' ? reasonLabel(reminder.deliveryReason) : 'Pas encore prévenu') }}
+                  · {{ reminder.decision ? decisionLabel(reminder.decision) : (reminder.answeredAt ? 'a répondu' : 'pas de réponse') }}
+                  @if (reminder.pauseUntil) { jusqu’au {{ reminder.pauseUntil | date:'d MMM yyyy' }} }
+                </small>
+                @if (reminder.note) { <small class="note">« {{ reminder.note }} »</small> }
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="muted">Jamais rappelé.</li>
+        }
+      </ul>
+    </section>
+
+    <section class="block">
+      <h3 class="glace-panel-title">Messages du bot</h3>
+      <ul class="messages">
+        @for (message of history?.messages ?? []; track message.id) {
+          <li>
+            <span class="msg-status" [attr.data-status]="message.status">{{ statusLabel(message.status) }}</span>
+            <span class="min-w-0">
+              <strong>{{ message.label }}</strong>
+              <small class="muted">{{ message.requestedAt | date:"d MMM yyyy, HH'h'mm" }}@if (message.requestedBy) { · par {{ message.requestedBy }} }@if (message.reason) { · {{ reasonLabel(message.reason) }} }</small>
+            </span>
+          </li>
+        } @empty {
+          <li class="muted">Aucun message envoyé par le bot.</li>
+        }
+      </ul>
+    </section>
+  </div>
+</aside>

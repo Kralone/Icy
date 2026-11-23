@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import unittest
@@ -63,6 +64,23 @@ class DirectMessageHandlerTest(unittest.IsolatedAsyncioTestCase):
 
         self.user.send.assert_awaited_once()
         self.assertEqual(2, self.rabbit.publish.await_count)
+        self.assertEqual("SENT", self.reported()["status"])
+
+    async def test_two_simultaneous_deliveries_send_only_once(self):
+        release = asyncio.Event()
+
+        async def slow_send(**kwargs):
+            await release.wait()
+
+        self.user.send.side_effect = slow_send
+        first = asyncio.create_task(self.handler.handle("dm.send", payload()))
+        await asyncio.sleep(0)
+        await self.handler.handle("dm.send", payload())
+        release.set()
+        await first
+
+        self.user.send.assert_awaited_once()
+        self.rabbit.publish.assert_awaited_once()
         self.assertEqual("SENT", self.reported()["status"])
 
     async def test_closed_private_messages_are_reported_as_such(self):

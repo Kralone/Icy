@@ -1,0 +1,128 @@
+<section class="detail" data-testid="campaign-detail">
+  <button type="button" class="back" (click)="back.emit()"><span aria-hidden="true">←</span> Toutes les campagnes</button>
+
+  @if (loading && !campaign) {
+    <div class="glace-panel placeholder" aria-busy="true">Chargement…</div>
+  } @else if (error) {
+    <div class="glace-panel placeholder" role="alert">{{ error }}</div>
+  } @else if (campaign) {
+    <header class="glace-panel detail__header">
+      <div class="detail__title">
+        <p class="eyebrow">{{ isBot ? 'Envoi par le bot' : 'Envoi à la main' }}</p>
+        <h2>{{ campaign.title }}</h2>
+        <p class="muted">
+          @if (campaign.status === 'PROGRAMMEE' && campaign.scheduledAt) { Envoi prévu le {{ campaign.scheduledAt | date:"EEEE d MMMM 'à' HH'h'mm" }}. }
+          @else if (campaign.status === 'ANNULEE') { Campagne annulée. }
+          @else if (campaign.status === 'BROUILLON') { Pas encore envoyée. }
+          @else if (campaign.sentAt) { Envoyée le {{ campaign.sentAt | date:"d MMMM 'à' HH'h'mm" }}. }
+          Créée par {{ campaign.createdBy }}.
+        </p>
+      </div>
+      <dl class="stats">
+        <div><dt>Rappelés</dt><dd>{{ campaign.counts.contacted }}<small>/{{ campaign.counts.members }}</small></dd></div>
+        <div><dt>Réponses</dt><dd>{{ campaign.counts.answered }}<small>/{{ campaign.counts.members }}</small></dd></div>
+        @if (campaign.counts.contacted) {
+          <div data-decision="REVIENT" title="Passés sur le site ou en opération après avoir été rappelés"><dt>Revenus depuis</dt><dd>{{ campaign.counts.cameBack ?? 0 }}<small>/{{ campaign.counts.contacted }}</small></dd></div>
+        }
+        @for (decision of decisions; track decision.key) {
+          <div [attr.data-decision]="decision.key"><dt>{{ decision.label }}</dt><dd>{{ campaign.counts.decisions[decision.key] ?? 0 }}</dd></div>
+        }
+      </dl>
+      <div class="detail__actions">
+        <button type="button" class="btn btn--small" (click)="messageOpen = !messageOpen" [attr.aria-expanded]="messageOpen">{{ messageOpen ? 'Masquer le message' : 'Voir le message' }}</button>
+        @if (isBot && notSentYet) {
+          <button type="button" class="btn btn--primary btn--small" (click)="sendNow()">Envoyer maintenant</button>
+          <button type="button" class="btn btn--danger btn--small" (click)="cancel()">Annuler l’envoi</button>
+        }
+        @if (deletable) { <button type="button" class="btn btn--danger btn--small" (click)="remove()">Supprimer</button> }
+      </div>
+      @if (messageOpen) {
+        <div class="discord-preview detail__message"><div [innerHTML]="bodyHtml"></div>@if (campaign.mediaUrl) {<img [src]="campaign.mediaUrl" [alt]="campaign.mediaFile">}</div>
+      }
+    </header>
+
+    @if (actionError) { <p class="form-error action-error" role="alert">{{ actionError }}</p> }
+
+    <div class="fiche-filters" role="radiogroup" aria-label="Filtrer les fiches">
+      @for (option of [{ key: 'TOUTES', label: 'Toutes' }, { key: 'A_PREVENIR', label: 'À prévenir' }, { key: 'EN_ATTENTE', label: 'En attente de réponse' }, { key: 'DECIDEES', label: 'Décidées' }]; track option.key) {
+        <button type="button" role="radio" class="filter" [class.filter--active]="filter === option.key" [attr.aria-checked]="filter === option.key" (click)="filter = $any(option.key)">
+          {{ option.label }} <span>{{ count($any(option.key)) }}</span>
+        </button>
+      }
+    </div>
+
+    <ul class="fiches">
+      @for (fiche of fiches; track fiche.id) {
+        <li class="fiche glace-item" [attr.data-decision]="fiche.decision ?? (fiche.contactedAt ? 'WAITING' : 'TODO')" [class.fiche--busy]="busyId === fiche.id">
+          <div class="fiche__who">
+            <span class="avatar" data-rank="JUNIOR" aria-hidden="true">
+              @if (fiche.avatarUrl) { <img [src]="fiche.avatarUrl" alt=""> } @else { {{ fiche.username.charAt(0).toUpperCase() }} }
+            </span>
+            <div class="min-w-0">
+              <strong>{{ fiche.username }}</strong>
+              <small class="muted">{{ fiche.daysInactive ?? '?' }} j sans activité à la création</small>
+              @if (fiche.today; as today) {
+                <small class="today" data-testid="fiche-today">
+                  <span class="state-badge" [attr.data-state]="today.state">{{ todayLabels[today.state] }}</span>
+                  @if (today.cameBack) { <span class="came-back">revenu le {{ today.lastActivityAt | date:'d MMM' }}</span> }
+                  @else if (today.cameBack === false) { <span class="muted">pas revenu depuis</span> }
+                </small>
+              }
+            </div>
+          </div>
+
+          <div class="fiche__contact">
+            @if (contactState(fiche); as state) {
+              <span class="contact" [attr.data-contact]="state.tone">{{ state.label }}@if (fiche.contactedAt) { <small>le {{ fiche.contactedAt | date:"d MMM, HH'h'mm" }}</small> }</span>
+            }
+            <div class="fiche__tools">
+              @if (!isBot) {
+                <button type="button" class="btn btn--small" (click)="copy(fiche)" [disabled]="!fiche.message">{{ copiedId === fiche.id ? 'Copié ✓' : 'Copier le message' }}</button>
+                @if (discordUrl(fiche); as url) { <a class="btn btn--small" [href]="url" target="_blank" rel="noopener">Profil Discord ↗</a> }
+                <label class="toggle">
+                  <input type="checkbox" [checked]="!!fiche.contactedAt" (change)="update(fiche, { contacted: $any($event.target).checked })">
+                  <span>Rappelé</span>
+                </label>
+              } @else if (fiche.deliveryStatus === 'FAILED' && !fiche.contactedAt) {
+                <button type="button" class="btn btn--small" (click)="resend(fiche)">Renvoyer</button>
+                <button type="button" class="btn btn--small" (click)="copy(fiche)" [disabled]="!fiche.message">{{ copiedId === fiche.id ? 'Copié ✓' : 'Copier pour l’envoyer moi-même' }}</button>
+                <label class="toggle">
+                  <input type="checkbox" [checked]="!!fiche.contactedAt" (change)="update(fiche, { contacted: $any($event.target).checked })">
+                  <span>Rappelé à la main</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="fiche__answer">
+            <label class="toggle">
+              <input type="checkbox" [checked]="!!fiche.answeredAt" (change)="update(fiche, { answered: $any($event.target).checked })">
+              <span>A répondu @if (fiche.answeredAt) { <small class="muted">le {{ fiche.answeredAt | date:'d MMM' }}</small> }</span>
+            </label>
+            <div class="decisions" role="group" [attr.aria-label]="'Décision de ' + fiche.username">
+              @for (decision of decisions; track decision.key) {
+                <button type="button" class="decision" [attr.data-decision]="decision.key" [class.decision--active]="fiche.decision === decision.key"
+                  [attr.aria-pressed]="fiche.decision === decision.key" (click)="setDecision(fiche, decision.key)">{{ decision.label }}</button>
+              }
+            </div>
+            @if (fiche.decision === 'PAUSE') {
+              <label class="inline-field">Jusqu’au
+                <input type="date" class="input input--date" [min]="minPauseDate" [(ngModel)]="pauseDates[fiche.id]" (change)="savePause(fiche)">
+              </label>
+            }
+            @if (fiche.decision === 'REVIENT') { <small class="muted">Noté actif pendant le délai « à surveiller » : il ne sera pas relancé tout de suite.</small> }
+            @if (fiche.decision === 'QUITTE') {
+              <small class="quit">Il quitte la corpo. <button type="button" class="link-button" (click)="deactivate(fiche)">Désactiver son compte</button></small>
+            }
+          </div>
+
+          <input class="input fiche__note" placeholder="Note (ce qu’il a répondu, rôle Discord à retirer…)" maxlength="500"
+            [(ngModel)]="notes[fiche.id]" (blur)="saveNote(fiche)" (keydown.enter)="saveNote(fiche)" [attr.aria-label]="'Note pour ' + fiche.username">
+          @if (fiche.updatedBy) { <small class="muted fiche__meta">Modifié par {{ fiche.updatedBy }} le {{ fiche.updatedAt | date:"d MMM, HH'h'mm" }}</small> }
+        </li>
+      } @empty {
+        <li class="glace-panel placeholder">Aucune fiche ici.</li>
+      }
+    </ul>
+  }
+</section>

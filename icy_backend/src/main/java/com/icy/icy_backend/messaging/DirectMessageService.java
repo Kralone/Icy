@@ -1,5 +1,6 @@
 package com.icy.icy_backend.messaging;
 
+import com.icy.icy_backend.service.operation.OperationLock;
 import com.icy.icy_backend.config.RabbitConfig;
 import com.icy.icy_backend.db.entity.member.DirectMessage;
 import com.icy.icy_backend.db.entity.user.User;
@@ -33,7 +34,8 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class DirectMessageService {
     /** Limites Discord : 2000 caractères pour un message, 4096 pour la description d'une carte. */
-    static final int CONTENT_LIMIT = 2000;
+    public static final int CONTENT_LIMIT = 2000;
+    static final String NO_ANSWER = "no_answer";
     static final int DESCRIPTION_LIMIT = 4096;
     /** Sans réponse du bot après ce délai (bot arrêté, message en file morte), l'envoi est noté en échec. */
     static final Duration ANSWER_TIMEOUT = Duration.ofMinutes(30);
@@ -67,7 +69,7 @@ public class DirectMessageService {
                 .embedTitle(request.embed() == null ? null : request.embed().title())
                 .mediaFile(blankToNull(request.mediaFile()))
                 .requestedBy(request.requestedBy())
-                .requestedAt(LocalDateTime.now())
+                .requestedAt(LocalDateTime.now(OperationLock.ZONE))
                 .status(DirectMessage.Status.PENDING)
                 .build());
 
@@ -90,14 +92,19 @@ public class DirectMessageService {
         return message;
     }
 
-    /** Réponse du bot. Un envoi inconnu (supprimé avec son membre) ou déjà conclu est ignoré. */
+    /**
+     * Réponse du bot. Un envoi inconnu (supprimé avec son membre) ou déjà conclu est ignoré, sauf une confirmation
+     * tardive d'un envoi que le délai avait noté en échec : Discord l'a bien remis.
+     */
     @Transactional
     public void recordResult(UUID deliveryId, DirectMessage.Status status, String reason) {
         if (deliveryId == null || status == null || status == DirectMessage.Status.PENDING) {
             throw new IllegalArgumentException("Résultat de message privé invalide");
         }
         messages.findById(deliveryId).ifPresentOrElse(message -> {
-            if (message.getStatus() != DirectMessage.Status.PENDING && message.getStatus() == status) return;
+            boolean lateConfirmation = message.getStatus() == DirectMessage.Status.FAILED && NO_ANSWER.equals(message.getReason())
+                    && status == DirectMessage.Status.SENT;
+            if (message.getStatus() != DirectMessage.Status.PENDING && !lateConfirmation) return;
             complete(message, status, reason);
         }, () -> log.warn("Résultat d'un message privé inconnu ignoré ({})", deliveryId));
     }
@@ -106,15 +113,15 @@ public class DirectMessageService {
     @Scheduled(fixedDelayString = "${iceforge.direct-messages.sweep-ms:600000}", initialDelayString = "${iceforge.direct-messages.sweep-ms:600000}")
     @Transactional
     public void expireUnanswered() {
-        for (DirectMessage message : messages.findByStatusAndRequestedAtBefore(DirectMessage.Status.PENDING, LocalDateTime.now().minus(ANSWER_TIMEOUT))) {
-            complete(message, DirectMessage.Status.FAILED, "no_answer");
+        for (DirectMessage message : messages.findByStatusAndRequestedAtBefore(DirectMessage.Status.PENDING, LocalDateTime.now(OperationLock.ZONE).minus(ANSWER_TIMEOUT))) {
+            complete(message, DirectMessage.Status.FAILED, NO_ANSWER);
         }
     }
 
     private void complete(DirectMessage message, DirectMessage.Status status, String reason) {
         message.setStatus(status);
         message.setReason(reason == null ? null : reason.substring(0, Math.min(40, reason.length())));
-        message.setCompletedAt(LocalDateTime.now());
+        message.setCompletedAt(LocalDateTime.now(OperationLock.ZONE));
         messages.save(message);
         events.publishEvent(new DirectMessageResultEvent(message.getId(), message.getUserId(), message.getOrigin(),
                 message.getReference(), status, message.getReason()));

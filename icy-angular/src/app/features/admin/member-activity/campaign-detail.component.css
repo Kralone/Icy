@@ -1,0 +1,51 @@
+.detail { display: grid; gap: 1rem; }
+.back { justify-self: start; display: inline-flex; gap: 0.45rem; padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgb(255 255 255 / 0.14); font-size: 0.85rem; }
+.back:hover { border-color: rgb(125 211 252 / 0.6); }
+.placeholder { padding: 2rem; text-align: center; color: rgb(148 163 184); }
+.eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #67e8f9; }
+.detail__header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem 2rem; padding: clamp(1rem, 2.5vw, 1.75rem); }
+.detail__title h2 { margin: 0.25rem 0 0.4rem; font-size: clamp(1.35rem, 2.6vw, 1.9rem); font-weight: 600; color: white; }
+.stats { display: grid; grid-template-columns: repeat(6, auto); gap: 0.25rem 1.5rem; align-self: center; }
+.stats div { display: grid; gap: 0.15rem; }
+.stats dt { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(148 163 184); white-space: nowrap; }
+.stats dd { font-size: 1.5rem; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+.stats div[data-decision] dd { color: color-mix(in srgb, rgb(var(--tone)) 55%, white); }
+.stats small { font-size: 0.85rem; color: rgb(100 116 139); }
+.detail__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.detail__message { grid-column: 1 / -1; }
+.action-error { padding: 0.6rem 1rem; border-radius: 0.75rem; background: rgb(248 113 113 / 0.1); border: 1px solid rgb(248 113 113 / 0.3); }
+.fiche-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.filter { display: inline-flex; gap: 0.45rem; padding: 0.4rem 0.85rem; border-radius: 9999px; border: 1px solid rgb(255 255 255 / 0.1); font-size: 0.82rem; color: rgb(203 213 225); }
+.filter span { color: rgb(148 163 184); font-size: 0.72rem; }
+.filter--active { border-color: #67e8f9; background: rgb(103 232 249 / 0.1); color: white; }
+.fiches { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr)); gap: 0.85rem; }
+.fiche { display: grid; gap: 0.9rem; padding: 1.1rem 1.2rem; border-left: 3px solid rgb(var(--tone) / 0.8); }
+.fiche--busy { opacity: 0.6; pointer-events: none; }
+.fiche__who { display: flex; align-items: center; gap: 0.75rem; }
+.fiche__who strong { display: block; color: white; font-weight: 600; }
+.fiche__contact { display: grid; gap: 0.6rem; }
+.contact { --tone: 125 211 252; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; justify-self: start; padding: 0.25rem 0.7rem; border-radius: 9999px; background: rgb(var(--tone) / 0.12); color: color-mix(in srgb, rgb(var(--tone)) 55%, white); font-size: 0.78rem; font-weight: 600; }
+.contact small { font-weight: 400; color: rgb(148 163 184); }
+.contact[data-contact='SENT'] { --tone: 52 211 153; }
+.contact[data-contact='PENDING'] { --tone: 251 191 36; }
+.contact[data-contact='FAILED'] { --tone: 251 113 133; }
+.fiche__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.toggle { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; }
+.toggle input { width: 1.05rem; height: 1.05rem; accent-color: #34d399; }
+.fiche__answer { display: grid; gap: 0.6rem; padding-top: 0.85rem; border-top: 1px solid rgb(255 255 255 / 0.06); }
+.decisions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.decision { padding: 0.35rem 0.8rem; border-radius: 9999px; border: 1px solid rgb(var(--tone) / 0.3); font-size: 0.8rem; color: rgb(203 213 225); transition: background 160ms ease, border-color 160ms ease; }
+.decision:hover { border-color: rgb(var(--tone) / 0.7); }
+.decision--active { border-color: rgb(var(--tone)); background: rgb(var(--tone) / 0.18); color: white; font-weight: 600; }
+.inline-field { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.84rem; }
+.input--date { width: auto; padding: 0.35rem 0.6rem; }
+.quit { color: rgb(254 202 202); font-size: 0.8rem; }
+.fiche__note { font-size: 0.84rem; }
+.fiche__meta { font-size: 0.72rem; }
+@media (max-width: 1100px) {
+  .detail__header { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.today { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.35rem; font-size: 0.74rem; }
+.today .state-badge { font-size: 0.7rem; padding-block: 0.1rem; }
+.came-back { color: rgb(110 231 183); }

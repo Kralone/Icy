@@ -22,6 +22,8 @@ ATTACHMENT_LIMIT = 10 * 1024 * 1024
 MEDIA_NAME = re.compile(r"^[A-Za-z0-9._-]{1,200}$")
 # Code d'erreur Discord quand le membre n'accepte pas les messages privés du serveur.
 CANNOT_SEND_TO_USER = 50007
+# Envoi réservé par un traitement en cours, pas encore conclu.
+SENDING = "SENDING"
 
 
 def _truncate(text, limit):
@@ -52,6 +54,24 @@ class DmDeliveryLedger:
                 "SELECT status, reason FROM dm_deliveries WHERE delivery_id = ?", (str(delivery_id),)
             ).fetchone()
         return (row[0], row[1]) if row else None
+
+    def reserve(self, delivery_id):
+        """Réserve l'envoi. False si un autre traitement l'a déjà réservé ou conclu : il ne faut pas renvoyer."""
+        with closing(sqlite3.connect(self.path, timeout=5)) as connection:
+            with connection:
+                cursor = connection.execute(
+                    "INSERT OR IGNORE INTO dm_deliveries (delivery_id, status) VALUES (?, ?)",
+                    (str(delivery_id), SENDING),
+                )
+                return cursor.rowcount == 1
+
+    def release(self, delivery_id):
+        """Libère une réservation après une erreur passagère, pour que le nouvel essai puisse envoyer."""
+        with closing(sqlite3.connect(self.path, timeout=5)) as connection:
+            with connection:
+                connection.execute(
+                    "DELETE FROM dm_deliveries WHERE delivery_id = ? AND status = ?", (str(delivery_id), SENDING)
+                )
 
     def save(self, delivery_id, status, reason):
         with closing(sqlite3.connect(self.path, timeout=5)) as connection:
@@ -115,13 +135,19 @@ class DirectMessageHandler:
         if not delivery_id:
             raise ValueError("deliveryId manquant")
 
-        already = self.ledger.get(delivery_id)
-        if already:
-            # Nouvel essai d'un message déjà traité : on redonne seulement le résultat au serveur.
-            await self._report(payload, *already)
+        if not self.ledger.reserve(delivery_id):
+            already = self.ledger.get(delivery_id)
+            if already and already[0] != SENDING:
+                # Nouvel essai d'un message déjà traité : on redonne seulement le résultat au serveur.
+                await self._report(payload, *already)
+            # Sinon un autre traitement l'envoie en ce moment et rendra lui-même le résultat.
             return
 
-        status, reason = await self._deliver(payload)
+        try:
+            status, reason = await self._deliver(payload)
+        except BaseException:
+            self.ledger.release(delivery_id)
+            raise
         self.ledger.save(delivery_id, status, reason)
         await self._report(payload, status, reason)
 
