@@ -175,6 +175,8 @@ public class MemberWarningService {
     @Transactional
     public ModerationDtos.Record decide(UUID userId, ModerationDtos.DecisionRequest request) {
         requireDirector();
+        // Deux Directeurs qui décident en même temps : le second attend, puis ne voit plus de décision en attente.
+        if (userId != null) warnings.lockMember(userId);
         User target = activeUser(userId);
         if (target.getId().equals(AuthUtils.getCurrentUserId())) throw new ForbiddenException("Tu ne peux pas décider de ta propre exclusion.");
         SanctionDecision decision = decision(request == null ? null : request.decision());

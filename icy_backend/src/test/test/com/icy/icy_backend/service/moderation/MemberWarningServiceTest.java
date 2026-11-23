@@ -223,6 +223,7 @@ class MemberWarningServiceTest {
 
         assertThat(member.getActive()).isFalse();
         verify(users).save(member);
+        verify(warnings, Mockito.times(4)).lockMember(member.getId());
         assertThat(record.active()).isFalse();
         assertThat(record.pendingDecision()).isFalse();
         assertThat(record.sanctions()).singleElement().satisfies(s -> {
