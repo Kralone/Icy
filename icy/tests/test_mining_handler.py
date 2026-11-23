@@ -14,7 +14,7 @@ def ready_payload(**overrides):
         "sheetName": "Quanta du jeudi",
         "path": "/icy/outils/fiches-minage/11111111-1111-1111-1111-111111111111",
         "title": "Raffinage prêt · Quanta du jeudi",
-        "description": "Ton raffinage à CRU-L1 est prêt : 14,8 SCU de Laranite. À remettre à Vexa.",
+        "description": "Votre raffinage à CRU-L1 est prêt : 14,8 SCU de Laranite. À remettre à Vexa.",
         "lines": [],
         "mentionDiscordIds": ["190174996235026433"],
     }

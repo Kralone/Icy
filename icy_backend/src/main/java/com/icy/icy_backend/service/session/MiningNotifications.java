@@ -39,8 +39,8 @@ public class MiningNotifications {
     public void orderReady(SessionSheet sheet, MiningRefineryOrder order) {
         Map<UUID, User> people = people(List.of(order.getLauncherUserId(), order.getRecipientUserId()));
         boolean own = order.getLauncherUserId().equals(order.getRecipientUserId());
-        String description = "Ton raffinage à " + order.getTerminalLabel() + " est prêt : " + ores(order) + ".";
-        String next = own ? "Récupère-le, puis marque-le récupéré sur la fiche avant de le vendre."
+        String description = "Votre raffinage à " + order.getTerminalLabel() + " est prêt : " + ores(order) + ".";
+        String next = own ? "Récupérez-le, puis marquez-le comme récupéré sur la fiche avant de le vendre."
                 : "À remettre à " + name(people, order.getRecipientUserId()) + ".";
         send(ORDER_READY, sheet, "Raffinage prêt · " + sheet.getName(), description + " " + next, List.of(),
                 mentions(people, List.of(order.getLauncherUserId())));

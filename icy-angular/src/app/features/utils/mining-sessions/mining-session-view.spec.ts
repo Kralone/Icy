@@ -180,7 +180,7 @@ describe('Fiche de salvage', () => {
 
   it('demande d’apporter une cargaison au vendeur, sans compte à rebours', () => {
     const result = progress(sheet({ activity: 'SALVAGE', phase: 'HANDOVER', orders: [haul(torin, vexa)] }), NOW);
-    expect(result.headline).toBe('Tout le cargo est prêt. 1 remise de cargo reste à faire.');
+    expect(result.headline).toBe('Toutes les cargaisons sont prêtes. 1 remise de cargo reste à faire.');
     expect(result.tasks[0].text).toBe('Torin : apporter la cargaison (Vulture) à Vexa');
   });
 

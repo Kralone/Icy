@@ -38,14 +38,14 @@ interface LineForm { commodityId: number | null; scu: string; destination: OreDe
               </div>
             }
           </div>
-          <label class="field"><span>Où est le cargo<app-hint label="Où est le cargo" text="Le vaisseau qui le transporte, ou la station où il est déposé. C’est là que le vendeur viendra le chercher." /></span>
+          <label class="field"><span>Emplacement de la cargaison<app-hint label="Emplacement de la cargaison" text="Vaisseau qui la transporte ou station où elle est déposée : le vendeur la récupère à cet endroit." /></span>
             <input name="location" [(ngModel)]="form.location" maxlength="200" placeholder="Vulture de Torin, Port Tressler" required>
           </label>
         </div>
 
         <label class="field">Vendu par
-          <select name="recipient" [(ngModel)]="form.recipient">@for (p of sheet().participants; track p.user.id) { <option [ngValue]="p.user.id">{{ p.user.username }}{{ p.user.id === form.holder ? ' (le garde et le vend)' : '' }}</option> }</select>
-          <small>{{ form.recipient === form.holder ? 'Déjà dans son stock : il peut le vendre tout de suite.' : 'À remettre à ce vendeur ; il confirme la remise sur la fiche.' }}</small>
+          <select name="recipient" [(ngModel)]="form.recipient">@for (p of sheet().participants; track p.user.id) { <option [ngValue]="p.user.id">{{ p.user.username }}{{ p.user.id === form.holder ? ' (détenteur, la vend lui-même)' : '' }}</option> }</select>
+          <small>{{ form.recipient === form.holder ? 'Déjà dans le stock du détenteur : la vente est possible immédiatement.' : 'À remettre à ce vendeur, qui confirme la remise sur la fiche.' }}</small>
         </label>
 
         <section class="block">

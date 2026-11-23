@@ -106,7 +106,7 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
       const pending = sheet.orders.filter(order => !order.handedOverAt);
       pending.forEach(order => tasks.push(handoverTask(order, false)));
       sellerTasks(sheet).forEach(task => tasks.push({ ...task, later: true }));
-      return { headline: `${sheet.activity === 'SALVAGE' ? 'Tout le cargo est prêt.' : 'Tous les ordres sont prêts.'} ${pending.length} remise${pending.length > 1 ? 's' : ''} de cargo ${pending.length > 1 ? 'restent' : 'reste'} à faire.`, tasks };
+      return { headline: `${sheet.activity === 'SALVAGE' ? 'Toutes les cargaisons sont prêtes.' : 'Tous les ordres sont prêts.'} ${pending.length} remise${pending.length > 1 ? 's' : ''} de cargo ${pending.length > 1 ? 'restent' : 'reste'} à faire.`, tasks };
     }
     case 'SELLING': {
       const left = sheet.remaining.reduce((sum, item) => sum + item.remainingCscu, 0);
