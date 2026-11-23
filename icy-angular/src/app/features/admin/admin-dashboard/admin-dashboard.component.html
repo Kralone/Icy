@@ -56,7 +56,7 @@
         @for (task of discipline?.discordBansToDo ?? []; track task.sanctionId) {
           <button type="button" class="discipline-alert" data-kind="ban" (click)="openDiscipline(task.userId)">
             <span class="discipline-alert-dot" aria-hidden="true"></span>
-            <span class="min-w-0"><strong>{{ task.username }}</strong> · exclu, ban Discord à faire</span>
+            <span class="min-w-0"><strong>{{ task.username }}</strong> · exclu, bannissement Discord à effectuer</span>
             <span class="discipline-alert-go" aria-hidden="true">Ouvrir →</span>
           </button>
         }

@@ -168,13 +168,13 @@ export class MemberDisciplineDrawerComponent {
       this.confirmingExclusion.set(false);
       this.decisionNote = '';
       this.notice.set(decision === 'EXCLUDE'
-        ? `${record.username} est exclu : son compte du site est désactivé. Reste à le bannir sur Discord.`
+        ? `${record.username} est exclu : son compte du site est désactivé. Le bannissement Discord reste à effectuer manuellement.`
         : `Dernière chance accordée à ${record.username}.`);
     });
   }
 
   confirmDiscordBan(sanction: MemberSanction): void {
-    this.run(this.discipline.confirmDiscordBan(sanction.id), () => this.notice.set('Ban Discord noté comme fait.'));
+    this.run(this.discipline.confirmDiscordBan(sanction.id), () => this.notice.set('Bannissement Discord confirmé.'));
   }
 
   copyDiscordId(): void {
@@ -187,7 +187,7 @@ export class MemberDisciplineDrawerComponent {
   }
 
   statusLine(record: DisciplineRecord): string {
-    if (!record.active) return this.banToDo() ? 'Exclu · ban Discord à faire' : 'Exclu';
+    if (!record.active) return this.banToDo() ? 'Exclu · bannissement Discord à effectuer' : 'Exclu';
     if (record.pendingDecision) return 'Exclusion à décider';
     if (record.activeWarnings === 0) return 'Aucun avertissement en cours';
     return `${record.activeWarnings} avertissement${record.activeWarnings > 1 ? 's' : ''} en cours sur ${record.threshold}`;
@@ -210,7 +210,7 @@ export class MemberDisciplineDrawerComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.busy.set(false);
-        this.actionError.set(typeof error.error?.message === 'string' ? error.error.message : "L'action n'a pas abouti. Réessaie dans un instant.");
+        this.actionError.set(typeof error.error?.message === 'string' ? error.error.message : "L'action n'a pas abouti. Veuillez réessayer dans un instant.");
       }
     });
   }

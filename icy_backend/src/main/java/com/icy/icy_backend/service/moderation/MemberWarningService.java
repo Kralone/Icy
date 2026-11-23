@@ -181,7 +181,7 @@ public class MemberWarningService {
         // Deux Directeurs qui décident en même temps : le second attend, puis ne voit plus de décision en attente.
         if (userId != null) warnings.lockMember(userId);
         User target = activeUser(userId);
-        if (target.getId().equals(AuthUtils.getCurrentUserId())) throw new ForbiddenException("Tu ne peux pas décider de ta propre exclusion.");
+        if (target.getId().equals(AuthUtils.getCurrentUserId())) throw new ForbiddenException("Impossible de décider de sa propre exclusion.");
         SanctionDecision decision = decision(request == null ? null : request.decision());
         long active = warnings.countByUserIdAndRevokedAtIsNull(target.getId());
         if (!pendingDecision(target.getId(), active)) {
@@ -300,7 +300,7 @@ public class MemberWarningService {
     }
 
     private void requireCanWarn(User target) {
-        if (target.getId().equals(AuthUtils.getCurrentUserId())) throw new ForbiddenException("Tu ne peux pas t'avertir toi-même.");
+        if (target.getId().equals(AuthUtils.getCurrentUserId())) throw new ForbiddenException("Impossible de s'avertir soi-même.");
         if (!canWarn(target)) throw new ForbiddenException("Un Officier ne peut pas avertir un Officier ou un Directeur.");
     }
 
@@ -332,7 +332,7 @@ public class MemberWarningService {
     }
 
     private static WarningCategory category(String value) {
-        if (value == null || value.isBlank()) throw new BadRequestException("Choisis la nature de l'avertissement.");
+        if (value == null || value.isBlank()) throw new BadRequestException("La nature de l'avertissement est obligatoire.");
         try {
             return WarningCategory.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
@@ -341,7 +341,7 @@ public class MemberWarningService {
     }
 
     private static SanctionDecision decision(String value) {
-        if (value == null || value.isBlank()) throw new BadRequestException("Choisis une décision.");
+        if (value == null || value.isBlank()) throw new BadRequestException("La décision est obligatoire.");
         try {
             return SanctionDecision.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {

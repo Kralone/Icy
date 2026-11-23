@@ -41,7 +41,7 @@
         <section class="dz-card dz-decision" data-testid="discipline-decision">
           <h3 class="dz-card-title">Exclusion à décider</h3>
           <p class="dz-text">{{ rec.username }} a {{ rec.activeWarnings }} avertissements en cours.
-            @if (rec.canDecide) { Exclure désactive son compte du site ; le ban Discord se fait ensuite à la main. } @else { Un Directeur doit choisir entre l'exclusion et une dernière chance. }
+            @if (rec.canDecide) { Exclure désactive son compte du site ; le bannissement Discord est ensuite effectué manuellement. } @else { Un Directeur doit choisir entre l'exclusion et une dernière chance. }
           </p>
           @if (rec.canDecide) {
             <label class="dz-label" for="dz-note">Message au membre <span class="dz-muted">(facultatif)</span></label>
@@ -66,15 +66,15 @@
       <!-- Exclusion décidée : le ban Discord reste à faire à la main. -->
       @if (banToDo(); as ban) {
         <section class="dz-card dz-ban" data-testid="discipline-ban-todo">
-          <h3 class="dz-card-title">Ban Discord à faire</h3>
-          <p class="dz-text">Le bot ne bannit pas. Bannis {{ rec.username }} sur le serveur Discord, puis note-le ici.</p>
+          <h3 class="dz-card-title">Bannissement Discord à effectuer</h3>
+          <p class="dz-text">Le bannissement Discord n'est pas fait par le bot : il doit être effectué manuellement sur le serveur, puis confirmé ici.</p>
           <div class="dz-id-row">
             <code class="dz-id">{{ rec.discordId }}</code>
             <button type="button" class="dz-btn is-small" (click)="copyDiscordId()">Copier l'ID</button>
           </div>
           @if (rec.canDecide) {
             <div class="dz-actions">
-              <button type="button" class="dz-btn is-primary" data-testid="confirm-ban" (click)="confirmDiscordBan(ban)" [disabled]="busy()">Ban fait sur Discord</button>
+              <button type="button" class="dz-btn is-primary" data-testid="confirm-ban" (click)="confirmDiscordBan(ban)" [disabled]="busy()">Confirmer le bannissement</button>
             </div>
           }
         </section>
@@ -196,7 +196,7 @@
                     }
                   </p>
                   @if (s.discordBanDoneAt) {
-                    <p class="dz-entry-meta">Ban Discord fait, noté le {{ s.discordBanDoneAt | date:'d MMM yyyy' }} par {{ s.discordBanDoneBy }}</p>
+                    <p class="dz-entry-meta">Bannissement Discord confirmé le {{ s.discordBanDoneAt | date:'d MMM yyyy' }} par {{ s.discordBanDoneBy }}</p>
                   }
                 </div>
               </li>

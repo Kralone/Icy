@@ -127,7 +127,7 @@ describe('MemberDisciplineDrawerComponent', () => {
     }));
     fixture.detectChanges();
 
-    expect(text('[data-testid="discipline-state"]')).toBe('Exclu · ban Discord à faire');
+    expect(text('[data-testid="discipline-state"]')).toBe('Exclu · bannissement Discord à effectuer');
     expect(text('[data-testid="discipline-ban-todo"]')).toContain('42');
     element.querySelector<HTMLButtonElement>('[data-testid="confirm-ban"]')!.click();
     http.expectOne('/api/admin/discipline/sanctions/7/discord-ban').flush(record({ active: false, canWarn: false, canDecide: true }));

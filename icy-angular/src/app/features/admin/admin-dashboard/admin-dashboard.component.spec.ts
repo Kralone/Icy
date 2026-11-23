@@ -178,7 +178,7 @@ describe('AdminDashboardComponent', () => {
 
     const alerts = element.querySelector('[data-testid="discipline-alerts"]')!.textContent!.replace(/\s+/g, ' ');
     expect(alerts).toContain('Charlie · exclusion à décider');
-    expect(alerts).toContain('Zulu · exclu, ban Discord à faire');
+    expect(alerts).toContain('Zulu · exclu, bannissement Discord à effectuer');
 
     cells[1].click();
     expect(component.disciplineUserId).toBe('b');
