@@ -117,7 +117,10 @@ public class MemberWarningService {
         warning.setCategory(category);
         warning.setReason(reason);
         warnings.lockMember(target.getId());
-        warning.setRank((int) warnings.countByUserIdAndRevokedAtIsNull(target.getId()) + 1);
+        long activeBefore = warnings.countByUserIdAndRevokedAtIsNull(target.getId());
+        // Une décision déjà attendue a été annoncée aux Directeurs : un avertissement de plus ne la réannonce pas.
+        boolean alreadyPending = pendingDecision(target.getId(), activeBefore);
+        warning.setRank((int) activeBefore + 1);
         warning.setIssuedByUserId(author.getId());
         warning.setIssuedByName(author.getUsername());
         warning.setCreatedAt(LocalDateTime.now(clock));
@@ -126,7 +129,7 @@ public class MemberWarningService {
         warning = warnings.save(warning);
         log.info("Avertissement n°{} donné à {} par {}", warning.getRank(), target.getId(), author.getId());
 
-        if (warning.getRank() >= threshold()) {
+        if (warning.getRank() >= threshold() && !alreadyPending) {
             notifyDirectors(target, warning.getRank());
         }
         return record(target);

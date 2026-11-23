@@ -144,9 +144,12 @@ class MemberWarningServiceTest {
         assertThat(record.canDecide()).isFalse();
         verify(notifications).sendToUsers(eq(List.of(director.getId())), eq("Exclusion à décider"),
                 eq("Torin a reçu son 3e avertissement."), eq("/icy/admin/members?discipline=" + member.getId()), eq(3));
+        // Un 4e avertissement avant la décision ne renvoie pas d'alerte.
+        service.warn(member.getId(), new ModerationDtos.WarningRequest("AUTRE", "Encore"));
+        verify(notifications, Mockito.times(1)).sendToUsers(anyList(), anyString(), anyString(), anyString(), anyInt());
         assertThat(service.summary().members()).singleElement()
                 .satisfies(standing -> {
-                    assertThat(standing.activeWarnings()).isEqualTo(3);
+                    assertThat(standing.activeWarnings()).isEqualTo(4);
                     assertThat(standing.pendingDecision()).isTrue();
                 });
     }
