@@ -3,7 +3,8 @@ from messaging.news_handler import NewsHandler
 from messaging.event_handler import EventHandler  # à venir
 from messaging.scwe_handler import ScweHandler
 from messaging.mining_handler import MiningHandler
-from messaging.user_handler import UserHandler  # 👈 nouveau import
+from messaging.user_handler import UserHandler
+from messaging.dm_handler import DirectMessageHandler
 
 logger = logging.getLogger("icy.handler")
 
@@ -21,6 +22,7 @@ class MessageHandler:
         self.user_handler = UserHandler(bot)  # 👈 ajouté
         self.scwe_handler = ScweHandler(bot, rabbit)
         self.mining_handler = MiningHandler(bot, rabbit)
+        self.dm_handler = DirectMessageHandler(bot, rabbit)
 
     async def handle_message(self, routing_key: str, payload: dict):
 
@@ -52,6 +54,10 @@ class MessageHandler:
         # --- FICHES DE MINAGE ---
         elif routing_key.startswith("mining."):
             await self.mining_handler.handle(routing_key, payload)
+
+        # --- MESSAGES PRIVÉS (rappels, promotions, avertissements) ---
+        elif routing_key.startswith("dm."):
+            await self.dm_handler.handle(routing_key, payload)
 
         # --- AUCUN MATCH ---
         else:

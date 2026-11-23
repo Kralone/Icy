@@ -142,6 +142,8 @@ services:
         condition: service_healthy
     volumes:
       - bot_config:/app/config
+      # GIF des messages privés (rappels, promotions) : lus dans la bibliothèque d'images, sans passer par le réseau.
+      - icy_images_data:/app/media:ro
     networks: [internal]
 
   frontend:

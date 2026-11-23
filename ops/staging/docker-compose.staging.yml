@@ -185,6 +185,7 @@ services:
       rabbitmq: {condition: service_healthy}
     volumes:
       - bot_config:/app/config
+      - images_data:/app/media:ro
     read_only: true
     tmpfs: ["/tmp:size=64m,mode=1777"]
     cap_drop: ["ALL"]
