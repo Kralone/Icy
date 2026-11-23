@@ -203,6 +203,7 @@ public class ReminderCampaignService {
             throw new BadRequestException("Cette campagne n'est pas encore partie : envoyez-la d'abord.");
         }
         User user = users.findById(fiche.getUserId()).orElseThrow(() -> new BadRequestException("Ce membre a été désactivé."));
+        if (MemberActivityService.isDirector(user)) throw new BadRequestException("Les directeurs ne reçoivent pas de rappel d'inactivité.");
         if (fiche.getDeliveryId() != null) {
             DirectMessage previous = directMessages.findById(fiche.getDeliveryId()).orElse(null);
             if (previous != null && previous.getStatus() != DirectMessage.Status.FAILED) {
@@ -294,6 +295,10 @@ public class ReminderCampaignService {
                 continue;
             }
             if (fiche.getDeliveryId() != null || fiche.getContactedAt() != null) continue;
+            if (MemberActivityService.isDirector(user)) {
+                skipped.add(user.getUsername() + " (directeur)");
+                continue;
+            }
             if (user.getDiscordId() == null || !user.getDiscordId().matches("\\d{5,25}")) {
                 skipped.add(user.getUsername() + " (identifiant Discord invalide)");
                 continue;
