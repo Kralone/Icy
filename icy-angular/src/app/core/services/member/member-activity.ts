@@ -81,6 +81,18 @@ export interface MemberReminder {
   message: string | null;
   updatedAt: string | null;
   updatedBy: string | null;
+  /** Où en est le membre aujourd'hui. */
+  today: ReminderToday | null;
+}
+
+/** PARTI : compte désactivé. */
+export type TodayState = ActivityState | 'PARTI';
+
+export interface ReminderToday {
+  state: TodayState;
+  lastActivityAt: string | null;
+  /** Revenu sur le site ou en opération après le rappel ; null s'il n'a pas encore été rappelé. */
+  cameBack: boolean | null;
 }
 
 export interface CampaignCounts {
@@ -90,6 +102,10 @@ export interface CampaignCounts {
   failed: number;
   answered: number;
   decisions: Partial<Record<ReminderDecision, number>>;
+  /** Rappelés revenus depuis. */
+  cameBack: number;
+  /** État actuel des membres de la campagne. */
+  states: Partial<Record<TodayState, number>>;
 }
 
 export interface ReminderCampaign {
@@ -148,6 +164,9 @@ export const STATE_LABELS: Record<ActivityState, string> = {
   INACTIF: 'Inactif',
   EN_PAUSE: 'En pause'
 };
+
+/** État du jour d'un membre rappelé, compte désactivé compris. */
+export const TODAY_LABELS: Record<TodayState, string> = { ...STATE_LABELS, PARTI: 'Parti' };
 
 export const DECISIONS: ReadonlyArray<{ key: ReminderDecision; label: string }> = [
   { key: 'REVIENT', label: 'Revient' },

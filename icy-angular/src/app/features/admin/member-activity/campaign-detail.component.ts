@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MemberActivityService } from '../../../core/services/member/member-activity.service';
 import { UserService } from '../../../core/services/user/user.service';
 import {
-  DECISIONS, MemberReminder, ReminderCampaign, ReminderDecision, ReminderUpdate, decisionLabel, deliveryReasonLabel, discordPreviewHtml
+  DECISIONS, MemberReminder, TODAY_LABELS, ReminderCampaign, ReminderDecision, ReminderUpdate, decisionLabel, deliveryReasonLabel, discordPreviewHtml
 } from '../../../core/services/member/member-activity';
 
 export type FicheFilter = 'TOUTES' | 'A_PREVENIR' | 'EN_ATTENTE' | 'DECIDEES';
@@ -42,6 +42,7 @@ export class CampaignDetailComponent implements OnChanges {
 
   readonly decisions = DECISIONS;
   readonly decisionLabel = decisionLabel;
+  readonly todayLabels = TODAY_LABELS;
   readonly reasonLabel = deliveryReasonLabel;
   readonly minPauseDate = new Date().toISOString().slice(0, 10);
 

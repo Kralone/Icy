@@ -93,6 +93,40 @@ public class MemberActivityService {
         return result;
     }
 
+    /** Dernière activité et état du jour des membres, comptes désactivés compris (état PARTI). */
+    @Transactional(readOnly = true)
+    public Map<UUID, Pulse> pulse(Collection<UUID> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        LocalDateTime now = LocalDateTime.now(OperationLock.ZONE);
+        MemberActivitySettings settings = settings();
+        Map<UUID, LocalDateTime> lastOperations = followUps.findLastConfirmedParticipations(now).stream()
+                .filter(row -> row.getUserId() != null && row.getLastAt() != null)
+                .collect(Collectors.toMap(MemberFollowUpRepository.LastParticipation::getUserId,
+                        MemberFollowUpRepository.LastParticipation::getLastAt, (left, right) -> left.isAfter(right) ? left : right));
+        Map<UUID, MemberFollowUp> manual = followUps.findAllById(userIds).stream().collect(Collectors.toMap(MemberFollowUp::getUserId, Function.identity()));
+        Map<UUID, Pulse> result = new HashMap<>();
+        for (User user : users.findAllByIdIncludingInactive(userIds)) {
+            LocalDateTime last = lastActivity(user, lastOperations.get(user.getId()));
+            String state;
+            if (Boolean.FALSE.equals(user.getActive())) {
+                state = "PARTI";
+            } else {
+                State current = computedState(days(last, user, now), settings);
+                MemberFollowUp followUp = manual.get(user.getId());
+                if (followUp != null && followUp.appliesOn(now.toLocalDate())) {
+                    current = followUp.getManualState() == MemberFollowUp.ManualState.EN_PAUSE ? State.EN_PAUSE : State.ACTIF;
+                }
+                state = current.name();
+            }
+            result.put(user.getId(), new Pulse(last, state));
+        }
+        return result;
+    }
+
+    /** Activité d'un membre à l'instant : sa dernière visite ou opération et son état. */
+    public record Pulse(LocalDateTime lastActivity, String state) {
+    }
+
     @Transactional
     public MemberActivityDtos.Manual updateFollowUp(UUID userId, MemberActivityDtos.FollowUpRequest request, String author) {
         users.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Membre introuvable."));
@@ -130,9 +164,10 @@ public class MemberActivityService {
         Map<Long, ReminderCampaign> campaignById = campaigns.findAllById(userReminders.stream().map(MemberReminder::getCampaignId).collect(Collectors.toSet()))
                 .stream().collect(Collectors.toMap(ReminderCampaign::getId, Function.identity()));
         Map<UUID, DirectMessage> deliveries = deliveries(userReminders);
+        Pulse pulse = pulse(List.of(userId)).get(userId);
         List<MemberActivityDtos.Reminder> reminderDtos = userReminders.stream()
                 .filter(reminder -> campaignById.containsKey(reminder.getCampaignId()))
-                .map(reminder -> ReminderCampaignService.toReminder(reminder, campaignById.get(reminder.getCampaignId()), user, reminder.getDeliveryId() == null ? null : deliveries.get(reminder.getDeliveryId()), null))
+                .map(reminder -> ReminderCampaignService.toReminder(reminder, campaignById.get(reminder.getCampaignId()), user, reminder.getDeliveryId() == null ? null : deliveries.get(reminder.getDeliveryId()), null, pulse))
                 .toList();
 
         List<DirectMessage> sent = directMessages.findTop20ByUserIdOrderByRequestedAtDesc(userId);

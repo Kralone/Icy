@@ -220,4 +220,23 @@ class ReminderCampaignServiceTest {
 
         assertThatThrownBy(() -> service.update(campaign.id(), change)).isInstanceOf(BadRequestException.class);
     }
+
+    @Test
+    void theCampaignShowsWhoCameBackAfterTheReminder() {
+        MemberActivityDtos.Campaign campaign = service.create(create("MANUEL", null, null), UUID.randomUUID(), "Kralone");
+        for (MemberReminder fiche : reminderStore.values()) {
+            service.updateReminder(fiche.getId(), new MemberActivityDtos.ReminderUpdate(true, null, null, null, null), "Kralone");
+        }
+        LocalDateTime later = LocalDateTime.now(java.time.ZoneId.of("Europe/Paris")).plusHours(2);
+        LocalDateTime before = LocalDateTime.now(java.time.ZoneId.of("Europe/Paris")).minusDays(40);
+        when(activity.pulse(any())).thenReturn(Map.of(
+                vexa.getId(), new MemberActivityService.Pulse(later, "ACTIF"),
+                torin.getId(), new MemberActivityService.Pulse(before, "PARTI")));
+
+        MemberActivityDtos.Campaign result = service.get(campaign.id());
+
+        assertThat(result.counts().cameBack()).isEqualTo(1);
+        assertThat(result.counts().states()).containsEntry("ACTIF", 1).containsEntry("PARTI", 1);
+        assertThat(result.reminders()).extracting(reminder -> reminder.today().cameBack()).containsExactlyInAnyOrder(true, false);
+    }
 }

@@ -21,6 +21,9 @@
       <dl class="stats">
         <div><dt>Rappelés</dt><dd>{{ campaign.counts.contacted }}<small>/{{ campaign.counts.members }}</small></dd></div>
         <div><dt>Réponses</dt><dd>{{ campaign.counts.answered }}<small>/{{ campaign.counts.members }}</small></dd></div>
+        @if (campaign.counts.contacted) {
+          <div data-decision="REVIENT" title="Passés sur le site ou en opération après avoir été rappelés"><dt>Revenus depuis</dt><dd>{{ campaign.counts.cameBack ?? 0 }}<small>/{{ campaign.counts.contacted }}</small></dd></div>
+        }
         @for (decision of decisions; track decision.key) {
           <div [attr.data-decision]="decision.key"><dt>{{ decision.label }}</dt><dd>{{ campaign.counts.decisions[decision.key] ?? 0 }}</dd></div>
         }
@@ -58,6 +61,13 @@
             <div class="min-w-0">
               <strong>{{ fiche.username }}</strong>
               <small class="muted">{{ fiche.daysInactive ?? '?' }} j sans activité à la création</small>
+              @if (fiche.today; as today) {
+                <small class="today" data-testid="fiche-today">
+                  <span class="state-badge" [attr.data-state]="today.state">{{ todayLabels[today.state] }}</span>
+                  @if (today.cameBack) { <span class="came-back">revenu le {{ today.lastActivityAt | date:'d MMM' }}</span> }
+                  @else if (today.cameBack === false) { <span class="muted">pas revenu depuis</span> }
+                </small>
+              }
             </div>
           </div>
 

@@ -1,0 +1,129 @@
+@if (sent.length) {
+  <section class="glace-panel review" aria-labelledby="review-title" data-testid="campaign-review">
+    <header class="review__head">
+      <div>
+        <h2 id="review-title">Bilan des rappels</h2>
+        <p class="muted">Chaque campagne partie, de la plus récente à la plus ancienne. « Revenus » : passés sur le site ou en opération après avoir été rappelés.</p>
+      </div>
+      <dl class="totals">
+        <div><dt>Campagnes</dt><dd>{{ totals.campaigns }}</dd></div>
+        <div><dt>Rappels envoyés</dt><dd>{{ totals.contacted }}</dd></div>
+        <div><dt>Ont répondu</dt><dd>{{ percent(totals.answered, totals.contacted) }}<small>%</small></dd></div>
+        <div data-state="ACTIF"><dt>Revenus</dt><dd>{{ percent(totals.cameBack, totals.contacted) }}<small>%</small></dd></div>
+        <div data-decision="QUITTE"><dt>Ont quitté</dt><dd>{{ totals.left }}</dd></div>
+      </dl>
+    </header>
+
+    <div class="review__table" role="table" aria-label="Bilan par campagne">
+      <div class="review__row review__row--head" role="row">
+        <span role="columnheader">Campagne</span>
+        <span role="columnheader">Réponses</span>
+        <span role="columnheader">Revenus</span>
+        <span role="columnheader">Décisions</span>
+        <span role="columnheader">Aujourd’hui</span>
+      </div>
+      @for (campaign of sent; track campaign.id) {
+        <button type="button" class="review__row" role="row" (click)="open.emit(campaign.id)">
+          <span class="review__name" role="cell">
+            <strong>{{ campaign.title }}</strong>
+            <small class="muted">{{ dateOf(campaign) | date:'d MMM yyyy' }} · {{ campaign.counts.contacted }} rappelé{{ campaign.counts.contacted > 1 ? 's' : '' }} · {{ campaign.delivery === 'BOT' ? 'bot' : 'à la main' }}</small>
+          </span>
+          <span class="review__rate" role="cell">
+            <small class="stack-label">Réponses</small>
+            <b>{{ percent(campaign.counts.answered, campaign.counts.contacted) }} %</b>
+            <small class="muted">{{ campaign.counts.answered }}/{{ campaign.counts.contacted }}</small>
+          </span>
+          <span class="review__rate" role="cell" data-state="ACTIF">
+            <small class="stack-label">Revenus</small>
+            <b>{{ percent(campaign.counts.cameBack ?? 0, campaign.counts.contacted) }} %</b>
+            <small class="muted">{{ campaign.counts.cameBack ?? 0 }}/{{ campaign.counts.contacted }}</small>
+          </span>
+          <span class="review__stack" role="cell">
+            <small class="stack-label">Décisions</small>
+            <span class="stack" [title]="segmentTitle(decisionSegments(campaign))">
+              @for (segment of decisionSegments(campaign); track segment.key) {
+                <span [attr.data-decision]="segment.key" [style.flex-grow]="segment.count"></span>
+              }
+            </span>
+            <small class="legend">
+              @for (segment of decisionSegments(campaign); track segment.key) {
+                <span [attr.data-decision]="segment.key">{{ segment.label }} {{ segment.count }}</span>
+              }
+            </small>
+          </span>
+          <span class="review__stack" role="cell">
+            <small class="stack-label">Aujourd’hui</small>
+            <span class="stack" [title]="segmentTitle(todaySegments(campaign))">
+              @for (segment of todaySegments(campaign); track segment.key) {
+                <span [attr.data-state]="segment.key" [style.flex-grow]="segment.count"></span>
+              }
+            </span>
+            <small class="legend">
+              @for (segment of todaySegments(campaign); track segment.key) {
+                <span [attr.data-state]="segment.key">{{ segment.label }} {{ segment.count }}</span>
+              }
+            </small>
+          </span>
+        </button>
+      }
+    </div>
+  </section>
+}
+
+@if (current.length) {
+  <h2 class="group-title">En cours</h2>
+  <div class="campaign-grid">
+    @for (campaign of current; track campaign.id) {
+      <ng-container *ngTemplateOutlet="card; context: { $implicit: campaign }" />
+    }
+  </div>
+}
+
+@if (archived.length) {
+  <h2 class="group-title">Anciennes campagnes</h2>
+  <div class="campaign-grid">
+    @for (campaign of archived; track campaign.id) {
+      <ng-container *ngTemplateOutlet="card; context: { $implicit: campaign }" />
+    }
+  </div>
+}
+
+@if (!campaigns().length) {
+  <div class="glace-panel empty-campaigns">
+    <p>Aucune campagne pour l’instant.</p>
+    <p class="muted">Cochez des membres dans l’onglet Membres, puis « Préparer le rappel ».</p>
+    <button type="button" class="btn btn--primary" (click)="showInactive.emit()">Voir les inactifs</button>
+  </div>
+}
+
+<ng-template #card let-campaign>
+  <button type="button" class="glace-panel campaign-card" [attr.data-status]="done(campaign) ? 'TERMINEE' : campaign.status" (click)="open.emit(campaign.id)">
+    <span class="campaign-card__top">
+      <span class="status-badge" [attr.data-status]="done(campaign) ? 'TERMINEE' : campaign.status">{{ statusLabel(campaign) }}</span>
+      <span class="muted">{{ campaign.delivery === 'BOT' ? 'Par le bot' : 'Envoyé à la main' }}</span>
+    </span>
+    <strong class="campaign-card__title">{{ campaign.title }}</strong>
+    <small class="muted">
+      @if (campaign.status === 'PROGRAMMEE' && campaign.scheduledAt) { Envoi prévu le {{ campaign.scheduledAt | date:"EEEE d MMMM 'à' HH'h'mm" }} }
+      @else if (campaign.sentAt) { Envoyée le {{ campaign.sentAt | date:'d MMMM yyyy' }} par {{ campaign.createdBy }} }
+      @else { Créée le {{ campaign.createdAt | date:'d MMMM yyyy' }} par {{ campaign.createdBy }} }
+    </small>
+    <span class="progress">
+      <span class="progress__row"><span>Rappelés</span><b>{{ campaign.counts.contacted }} / {{ campaign.counts.members }}</b></span>
+      <span class="bar"><span [style.width.%]="percent(campaign.counts.contacted, campaign.counts.members)"></span></span>
+      <span class="progress__row"><span>Réponses</span><b>{{ campaign.counts.answered }} / {{ campaign.counts.members }}</b></span>
+      <span class="bar bar--answers"><span [style.width.%]="percent(campaign.counts.answered, campaign.counts.members)"></span></span>
+      @if (campaign.counts.contacted) {
+        <span class="progress__row"><span>Revenus depuis</span><b>{{ campaign.counts.cameBack ?? 0 }} / {{ campaign.counts.contacted }}</b></span>
+      }
+    </span>
+    @if (decisionEntries(campaign).length || campaign.counts.failed) {
+      <span class="decision-chips">
+        @for (entry of decisionEntries(campaign); track entry.key) {
+          <span class="decision-chip" [attr.data-decision]="entry.key">{{ entry.label }} · {{ entry.count }}</span>
+        }
+        @if (campaign.counts.failed) { <span class="decision-chip" data-decision="FAILED">Échecs · {{ campaign.counts.failed }}</span> }
+      </span>
+    }
+  </button>
+</ng-template>

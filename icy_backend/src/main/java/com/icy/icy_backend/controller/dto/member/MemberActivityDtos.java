@@ -59,7 +59,14 @@ public final class MemberActivityDtos {
     public record Reminder(Long id, Long campaignId, String campaignTitle, String delivery, UUID userId, String username, String avatarUrl,
                            String discordId, Integer daysInactive, LocalDateTime contactedAt, LocalDateTime answeredAt, String decision,
                            LocalDate pauseUntil, String note, String deliveryStatus, String deliveryReason, String message,
-                           LocalDateTime updatedAt, String updatedBy) {
+                           LocalDateTime updatedAt, String updatedBy, Today today) {
+    }
+
+    /**
+     * Où en est le membre aujourd'hui, pour juger l'effet d'un rappel. state : ACTIF, A_SURVEILLER, INACTIF, EN_PAUSE,
+     * ou PARTI si son compte a été désactivé. cameBack : passé sur le site ou en opération après avoir été rappelé.
+     */
+    public record Today(String state, LocalDateTime lastActivityAt, Boolean cameBack) {
     }
 
     /**
@@ -69,8 +76,12 @@ public final class MemberActivityDtos {
     public record ReminderUpdate(Boolean contacted, Boolean answered, String decision, LocalDate pauseUntil, String note) {
     }
 
-    /** Compteurs d'une campagne, pour la liste. decisions : nombre de fiches par décision. */
-    public record CampaignCounts(int members, int contacted, int pending, int failed, int answered, Map<String, Integer> decisions) {
+    /**
+     * Compteurs d'une campagne, pour la liste. decisions : nombre de fiches par décision. cameBack : membres rappelés revenus
+     * depuis. states : état actuel des membres de la campagne.
+     */
+    public record CampaignCounts(int members, int contacted, int pending, int failed, int answered, Map<String, Integer> decisions,
+                                 int cameBack, Map<String, Integer> states) {
     }
 
     public record Campaign(Long id, String title, String body, String mediaFile, String mediaUrl, String delivery, String status,

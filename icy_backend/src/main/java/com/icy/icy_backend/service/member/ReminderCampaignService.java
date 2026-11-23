@@ -56,7 +56,9 @@ public class ReminderCampaignService {
         Map<Long, List<MemberReminder>> byCampaign = all.isEmpty() ? Map.of() : reminders.findByCampaignIdIn(all.stream().map(ReminderCampaign::getId).toList())
                 .stream().collect(Collectors.groupingBy(MemberReminder::getCampaignId));
         Map<UUID, DirectMessage> deliveries = deliveries(byCampaign.values().stream().flatMap(List::stream).toList());
-        return all.stream().map(campaign -> toCampaign(campaign, byCampaign.getOrDefault(campaign.getId(), List.of()), deliveries, null)).toList();
+        Map<UUID, MemberActivityService.Pulse> pulses = activity.pulse(byCampaign.values().stream().flatMap(List::stream)
+                .map(MemberReminder::getUserId).collect(Collectors.toSet()));
+        return all.stream().map(campaign -> toCampaign(campaign, byCampaign.getOrDefault(campaign.getId(), List.of()), deliveries, null, pulses)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +66,7 @@ public class ReminderCampaignService {
         ReminderCampaign campaign = find(id);
         List<MemberReminder> fiches = reminders.findByCampaignIdOrderByIdAsc(id);
         Map<UUID, User> members = users.findAllByIdIncludingInactive(ids(fiches)).stream().collect(Collectors.toMap(User::getId, Function.identity()));
-        return toCampaign(campaign, fiches, deliveries(fiches), members);
+        return toCampaign(campaign, fiches, deliveries(fiches), members, activity.pulse(ids(fiches)));
     }
 
     @Transactional
@@ -304,20 +306,30 @@ public class ReminderCampaignService {
     private MemberActivityDtos.Reminder reminderDto(MemberReminder fiche, ReminderCampaign campaign) {
         User user = users.findByIdIncludingInactive(fiche.getUserId()).orElse(null);
         DirectMessage delivery = fiche.getDeliveryId() == null ? null : directMessages.findById(fiche.getDeliveryId()).orElse(null);
-        return toReminder(fiche, campaign, user, delivery, campaign.getBody());
+        return toReminder(fiche, campaign, user, delivery, campaign.getBody(), activity.pulse(List.of(fiche.getUserId())).get(fiche.getUserId()));
     }
 
-    static MemberActivityDtos.Reminder toReminder(MemberReminder fiche, ReminderCampaign campaign, User user, DirectMessage delivery, String body) {
+    /** Revenu depuis le rappel : une visite du site ou une opération après la date où il a été prévenu. */
+    static Boolean cameBack(MemberReminder fiche, MemberActivityService.Pulse pulse) {
+        if (fiche.getContactedAt() == null || pulse == null) return null;
+        return pulse.lastActivity() != null && pulse.lastActivity().isAfter(fiche.getContactedAt());
+    }
+
+    static MemberActivityDtos.Reminder toReminder(MemberReminder fiche, ReminderCampaign campaign, User user, DirectMessage delivery, String body,
+                                                  MemberActivityService.Pulse pulse) {
         return new MemberActivityDtos.Reminder(fiche.getId(), campaign.getId(), campaign.getTitle(), campaign.getDelivery().name(), fiche.getUserId(),
                 user == null ? "Membre supprimé" : user.getUsername(), user == null ? null : user.getAvatarUrl(), user == null ? null : user.getDiscordId(),
                 fiche.getDaysInactive(), fiche.getContactedAt(), fiche.getAnsweredAt(), fiche.getDecision() == null ? null : fiche.getDecision().name(),
                 fiche.getPauseUntil(), fiche.getNote(), delivery == null ? null : delivery.getStatus().name(), delivery == null ? null : delivery.getReason(),
-                body == null || user == null ? null : MessageTemplateService.render(body, user, null), fiche.getUpdatedAt(), fiche.getUpdatedBy());
+                body == null || user == null ? null : MessageTemplateService.render(body, user, null), fiche.getUpdatedAt(), fiche.getUpdatedBy(),
+                pulse == null ? null : new MemberActivityDtos.Today(pulse.state(), pulse.lastActivity(), cameBack(fiche, pulse)));
     }
 
-    private MemberActivityDtos.Campaign toCampaign(ReminderCampaign campaign, List<MemberReminder> fiches, Map<UUID, DirectMessage> deliveries, Map<UUID, User> members) {
-        int contacted = 0, pending = 0, failed = 0, answered = 0;
+    private MemberActivityDtos.Campaign toCampaign(ReminderCampaign campaign, List<MemberReminder> fiches, Map<UUID, DirectMessage> deliveries,
+                                                   Map<UUID, User> members, Map<UUID, MemberActivityService.Pulse> pulses) {
+        int contacted = 0, pending = 0, failed = 0, answered = 0, cameBack = 0;
         Map<String, Integer> decisions = new LinkedHashMap<>();
+        Map<String, Integer> states = new LinkedHashMap<>();
         for (MemberReminder fiche : fiches) {
             DirectMessage delivery = fiche.getDeliveryId() == null ? null : deliveries.get(fiche.getDeliveryId());
             if (fiche.getContactedAt() != null) contacted++;
@@ -325,14 +337,17 @@ public class ReminderCampaignService {
             if (delivery != null && delivery.getStatus() == DirectMessage.Status.FAILED && fiche.getContactedAt() == null) failed++;
             if (fiche.getAnsweredAt() != null) answered++;
             if (fiche.getDecision() != null) decisions.merge(fiche.getDecision().name(), 1, Integer::sum);
+            MemberActivityService.Pulse pulse = pulses.get(fiche.getUserId());
+            if (Boolean.TRUE.equals(cameBack(fiche, pulse))) cameBack++;
+            if (pulse != null) states.merge(pulse.state(), 1, Integer::sum);
         }
         List<MemberActivityDtos.Reminder> reminderDtos = members == null ? null : fiches.stream()
-                .map(fiche -> toReminder(fiche, campaign, members.get(fiche.getUserId()), fiche.getDeliveryId() == null ? null : deliveries.get(fiche.getDeliveryId()), campaign.getBody()))
+                .map(fiche -> toReminder(fiche, campaign, members.get(fiche.getUserId()), fiche.getDeliveryId() == null ? null : deliveries.get(fiche.getDeliveryId()), campaign.getBody(), pulses.get(fiche.getUserId())))
                 .toList();
         return new MemberActivityDtos.Campaign(campaign.getId(), campaign.getTitle(), campaign.getBody(), campaign.getMediaFile(),
                 templates.mediaUrl(campaign.getMediaFile()), campaign.getDelivery().name(), campaign.getStatus().name(), campaign.getScheduledAt(),
                 campaign.getSentAt(), campaign.getCreatedByName(), campaign.getCreatedAt(),
-                new MemberActivityDtos.CampaignCounts(fiches.size(), contacted, pending, failed, answered, decisions), reminderDtos);
+                new MemberActivityDtos.CampaignCounts(fiches.size(), contacted, pending, failed, answered, decisions, cameBack, states), reminderDtos);
     }
 
     private Map<UUID, DirectMessage> deliveries(Collection<MemberReminder> fiches) {

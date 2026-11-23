@@ -12,6 +12,7 @@ import { memberRank, specialtyLabel } from '../../../core/services/user/member-r
 import { UserService } from '../../../core/services/user/user.service';
 import { CampaignComposerComponent } from './campaign-composer.component';
 import { CampaignDetailComponent } from './campaign-detail.component';
+import { CampaignHistoryComponent } from './campaign-history.component';
 import { MemberDrawerComponent } from './member-drawer.component';
 import { MessageTemplatesComponent } from './message-templates.component';
 
@@ -31,7 +32,7 @@ const RANK_LABELS: Record<string, string> = {
   templateUrl: './member-activity.component.html',
   styleUrl: './member-activity.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [DatePipe, FormsModule, RouterLink, CampaignComposerComponent, CampaignDetailComponent, MemberDrawerComponent, MessageTemplatesComponent]
+  imports: [DatePipe, FormsModule, RouterLink, CampaignComposerComponent, CampaignDetailComponent, CampaignHistoryComponent, MemberDrawerComponent, MessageTemplatesComponent]
 })
 export class MemberActivityComponent implements OnInit {
   private readonly api = inject(MemberActivityService);
@@ -215,31 +216,6 @@ export class MemberActivityComponent implements OnInit {
   openCampaign(id: number): void {
     this.tab = 'campagnes';
     this.openCampaignId = id;
-  }
-
-  campaignStatusLabel(campaign: ReminderCampaign): string {
-    switch (campaign.status) {
-      case 'BROUILLON': return 'Brouillon';
-      case 'PROGRAMMEE': return 'Programmée';
-      case 'ANNULEE': return 'Annulée';
-      default: return this.campaignDone(campaign) ? 'Terminée' : 'En cours';
-    }
-  }
-
-  /** Toutes les fiches ont une décision. */
-  campaignDone(campaign: ReminderCampaign): boolean {
-    const decided = Object.values(campaign.counts.decisions ?? {}).reduce((sum, value) => sum + (value ?? 0), 0);
-    return campaign.status === 'EN_COURS' && campaign.counts.members > 0 && decided >= campaign.counts.members;
-  }
-
-  decisionEntries(campaign: ReminderCampaign): { key: string; label: string; count: number }[] {
-    return Object.entries(campaign.counts.decisions ?? {})
-      .filter(([, count]) => (count ?? 0) > 0)
-      .map(([key, count]) => ({ key, label: decisionLabel(key as never), count: count ?? 0 }));
-  }
-
-  percent(part: number, total: number): number {
-    return total ? Math.round((part / total) * 100) : 0;
   }
 
   // ==== Seuils ====

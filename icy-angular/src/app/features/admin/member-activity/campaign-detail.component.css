@@ -46,3 +46,6 @@
   .detail__header { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+.today { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.35rem; font-size: 0.74rem; }
+.today .state-badge { font-size: 0.7rem; padding-block: 0.1rem; }
+.came-back { color: rgb(110 231 183); }

@@ -151,42 +151,7 @@
     @if (openCampaignId !== null) {
       <app-campaign-detail [campaignId]="openCampaignId" (back)="openCampaignId = null; loadCampaigns()" (changed)="reload()" />
     } @else {
-      <section class="campaign-grid" aria-label="Campagnes de rappel">
-        @for (campaign of campaigns; track campaign.id) {
-          <button type="button" class="glace-panel campaign-card" [attr.data-status]="campaignDone(campaign) ? 'TERMINEE' : campaign.status" (click)="openCampaign(campaign.id)">
-            <span class="campaign-card__top">
-              <span class="status-badge" [attr.data-status]="campaignDone(campaign) ? 'TERMINEE' : campaign.status">{{ campaignStatusLabel(campaign) }}</span>
-              <span class="muted">{{ campaign.delivery === 'BOT' ? 'Par le bot' : 'Envoyé à la main' }}</span>
-            </span>
-            <strong class="campaign-card__title">{{ campaign.title }}</strong>
-            <small class="muted">
-              @if (campaign.status === 'PROGRAMMEE' && campaign.scheduledAt) { Envoi prévu le {{ campaign.scheduledAt | date:"EEEE d MMMM 'à' HH'h'mm" }} }
-              @else if (campaign.sentAt) { Envoyée le {{ campaign.sentAt | date:'d MMMM yyyy' }} par {{ campaign.createdBy }} }
-              @else { Créée le {{ campaign.createdAt | date:'d MMMM yyyy' }} par {{ campaign.createdBy }} }
-            </small>
-            <span class="progress">
-              <span class="progress__row"><span>Rappelés</span><b>{{ campaign.counts.contacted }} / {{ campaign.counts.members }}</b></span>
-              <span class="bar"><span [style.width.%]="percent(campaign.counts.contacted, campaign.counts.members)"></span></span>
-              <span class="progress__row"><span>Réponses</span><b>{{ campaign.counts.answered }} / {{ campaign.counts.members }}</b></span>
-              <span class="bar bar--answers"><span [style.width.%]="percent(campaign.counts.answered, campaign.counts.members)"></span></span>
-            </span>
-            @if (decisionEntries(campaign).length || campaign.counts.failed) {
-              <span class="decision-chips">
-                @for (entry of decisionEntries(campaign); track entry.key) {
-                  <span class="decision-chip" [attr.data-decision]="entry.key">{{ entry.label }} · {{ entry.count }}</span>
-                }
-                @if (campaign.counts.failed) { <span class="decision-chip" data-decision="FAILED">Échecs · {{ campaign.counts.failed }}</span> }
-              </span>
-            }
-          </button>
-        } @empty {
-          <div class="glace-panel empty-campaigns">
-            <p>Aucune campagne pour l’instant.</p>
-            <p class="muted">Cochez des membres dans l’onglet Membres, puis « Préparer le rappel ».</p>
-            <button type="button" class="btn btn--primary" (click)="setTab('membres'); selectInactiveNotReminded()">Voir les inactifs</button>
-          </div>
-        }
-      </section>
+      <app-campaign-history [campaigns]="campaigns" (open)="openCampaign($event)" (showInactive)="setTab('membres'); selectInactiveNotReminded()" />
     }
   }
 

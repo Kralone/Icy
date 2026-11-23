@@ -67,27 +67,6 @@
 
 .selection-bar { position: fixed; z-index: 40; left: 50%; bottom: 1.25rem; transform: translateX(-50%); display: flex; align-items: center; gap: 1rem; width: max-content; max-width: calc(100vw - 2rem); padding: 0.65rem 0.75rem 0.65rem 1.25rem; border-radius: 9999px; border: 1px solid rgb(103 232 249 / 0.4); background: rgb(11 19 36 / 0.94); backdrop-filter: blur(8px); box-shadow: 0 20px 50px rgb(0 0 0 / 0.55); font-size: 0.88rem; }
 
-.campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
-.campaign-card { display: grid; gap: 0.75rem; padding: 1.25rem; text-align: left; transition: border-color 160ms ease, transform 160ms ease; }
-.campaign-card:hover { border-color: rgb(125 211 252 / 0.45); transform: translateY(-2px); }
-.campaign-card[data-status='ANNULEE'] { opacity: 0.6; }
-.campaign-card__top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.campaign-card__title { font-size: 1.1rem; font-weight: 600; color: white; }
-.status-badge { --tone: 125 211 252; padding: 0.2rem 0.65rem; border-radius: 9999px; background: rgb(var(--tone) / 0.14); color: color-mix(in srgb, rgb(var(--tone)) 55%, white); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-.status-badge[data-status='BROUILLON'] { --tone: 148 163 184; }
-.status-badge[data-status='PROGRAMMEE'] { --tone: 196 181 253; }
-.status-badge[data-status='TERMINEE'] { --tone: 52 211 153; }
-.status-badge[data-status='ANNULEE'] { --tone: 248 113 113; }
-.progress { display: grid; gap: 0.35rem; }
-.progress__row { display: flex; justify-content: space-between; font-size: 0.78rem; color: rgb(148 163 184); }
-.progress__row b { color: rgb(226 232 240); font-variant-numeric: tabular-nums; }
-.bar { display: block; height: 5px; margin-bottom: 0.35rem; border-radius: 5px; background: rgb(255 255 255 / 0.07); overflow: hidden; }
-.bar span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #22d3ee, #67e8f9); }
-.bar--answers span { background: linear-gradient(90deg, #34d399, #6ee7b7); }
-.decision-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.decision-chip { padding: 0.2rem 0.6rem; border-radius: 9999px; border: 1px solid rgb(var(--tone) / 0.35); color: color-mix(in srgb, rgb(var(--tone)) 55%, white); font-size: 0.72rem; }
-.empty-campaigns { display: grid; justify-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; grid-column: 1 / -1; }
-
 @media (max-width: 1280px) {
   .member-row { grid-template-columns: auto minmax(0, 1.4fr) minmax(7rem, 1fr) minmax(5rem, 0.7fr) minmax(11rem, 1.2fr); }
   .member-row__dates { display: none; }
