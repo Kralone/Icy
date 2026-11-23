@@ -1,0 +1,209 @@
+<div class="dz-backdrop" (click)="close()" aria-hidden="true"></div>
+<aside class="dz-panel" role="dialog" aria-modal="true" aria-labelledby="dz-title" data-testid="discipline-drawer">
+  <button #closeButton type="button" class="dz-close" (click)="close()" aria-label="Fermer le dossier">✕</button>
+
+  @if (loading() && !record()) {
+    <div class="dz-body"><p class="dz-muted">Chargement du dossier…</p></div>
+  } @else if (loadError()) {
+    <div class="dz-body">
+      <p class="dz-error" role="alert">{{ loadError() }}</p>
+      <button type="button" class="dz-btn" (click)="load(userId())">Réessayer</button>
+    </div>
+  } @else if (record(); as rec) {
+    <!-- En-tête : membre, jauge d'avertissements et état. -->
+    <header class="dz-head" [attr.data-state]="!rec.active ? 'excluded' : rec.pendingDecision ? 'pending' : rec.activeWarnings ? 'warned' : 'clear'">
+      <p class="dz-kicker">Discipline</p>
+      <div class="dz-identity">
+        <span class="dz-avatar" [attr.data-rank]="rank()" aria-hidden="true">{{ (rec.username || '?').charAt(0).toUpperCase() }}</span>
+        <div class="min-w-0">
+          <h2 id="dz-title" class="dz-name">{{ rec.username }}</h2>
+          <p class="dz-state" data-testid="discipline-state">{{ statusLine(rec) }}</p>
+        </div>
+      </div>
+      <div class="dz-meter" role="img" [attr.aria-label]="rec.activeWarnings + ' avertissement(s) en cours sur ' + rec.threshold">
+        @for (pip of pips(); track $index) {
+          <span class="dz-pip" [attr.data-tone]="pip.tone" [class.is-on]="pip.filled"></span>
+        }
+        <span class="dz-meter-label">{{ rec.activeWarnings }} / {{ rec.threshold }}</span>
+      </div>
+    </header>
+
+    <div class="dz-body">
+      @if (notice()) {
+        <p class="dz-notice" role="status">{{ notice() }}</p>
+      }
+      @if (actionError()) {
+        <p class="dz-error" role="alert">{{ actionError() }}</p>
+      }
+
+      <!-- Seuil atteint : un Directeur tranche. -->
+      @if (rec.pendingDecision) {
+        <section class="dz-card dz-decision" data-testid="discipline-decision">
+          <h3 class="dz-card-title">Exclusion à décider</h3>
+          <p class="dz-text">{{ rec.username }} a {{ rec.activeWarnings }} avertissements en cours.
+            @if (rec.canDecide) { Exclure désactive son compte du site ; le ban Discord se fait ensuite à la main. } @else { Un Directeur doit choisir entre l'exclusion et une dernière chance. }
+          </p>
+          @if (rec.canDecide) {
+            <label class="dz-label" for="dz-note">Message au membre <span class="dz-muted">(facultatif)</span></label>
+            <textarea id="dz-note" class="dz-input" rows="2" maxlength="1000" [(ngModel)]="decisionNote" placeholder="Ajouté au message du bot"></textarea>
+            <label class="dz-check"><input type="checkbox" [(ngModel)]="decisionNotify"> Prévenir {{ rec.username }} par message privé</label>
+            @if (confirmingExclusion()) {
+              <p class="dz-confirm" role="alert">Confirmer l'exclusion de {{ rec.username }} ? Son compte du site sera désactivé.</p>
+              <div class="dz-actions">
+                <button type="button" class="dz-btn" (click)="confirmingExclusion.set(false)" [disabled]="busy()">Annuler</button>
+                <button type="button" class="dz-btn is-danger" data-testid="confirm-exclusion" (click)="decide('EXCLUDE')" [disabled]="busy()">Confirmer l'exclusion</button>
+              </div>
+            } @else {
+              <div class="dz-actions">
+                <button type="button" class="dz-btn" data-testid="keep-member" (click)="decide('KEEP')" [disabled]="busy()">Dernière chance</button>
+                <button type="button" class="dz-btn is-danger" data-testid="exclude-member" (click)="decide('EXCLUDE')" [disabled]="busy()">Exclure {{ rec.username }}</button>
+              </div>
+            }
+          }
+        </section>
+      }
+
+      <!-- Exclusion décidée : le ban Discord reste à faire à la main. -->
+      @if (banToDo(); as ban) {
+        <section class="dz-card dz-ban" data-testid="discipline-ban-todo">
+          <h3 class="dz-card-title">Ban Discord à faire</h3>
+          <p class="dz-text">Le bot ne bannit pas. Bannis {{ rec.username }} sur le serveur Discord, puis note-le ici.</p>
+          <div class="dz-id-row">
+            <code class="dz-id">{{ rec.discordId }}</code>
+            <button type="button" class="dz-btn is-small" (click)="copyDiscordId()">Copier l'ID</button>
+          </div>
+          @if (rec.canDecide) {
+            <div class="dz-actions">
+              <button type="button" class="dz-btn is-primary" data-testid="confirm-ban" (click)="confirmDiscordBan(ban)" [disabled]="busy()">Ban fait sur Discord</button>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Nouvel avertissement, avec l'aperçu du message du bot. -->
+      @if (rec.canWarn) {
+        <section class="dz-section" data-testid="discipline-form">
+          <h3 class="dz-section-title">{{ ordinal(nextRank()).charAt(0).toUpperCase() + ordinal(nextRank()).slice(1) }} avertissement</h3>
+          <fieldset>
+            <legend class="dz-label">Nature</legend>
+            <div class="dz-categories">
+              @for (item of categories; track item.key) {
+                <label class="dz-category" [class.is-selected]="category() === item.key">
+                  <input type="radio" name="dz-category" class="sr-only" [value]="item.key" [checked]="category() === item.key" (change)="category.set(item.key)">
+                  <span class="dz-category-label">{{ item.label }}</span>
+                  <span class="dz-category-hint">{{ item.hint }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
+          <label class="dz-label" for="dz-reason">Motif envoyé à {{ rec.username }}</label>
+          <textarea id="dz-reason" class="dz-input" rows="3" [maxlength]="reasonMax" [ngModel]="reason()" (ngModelChange)="reason.set($event)"
+                    placeholder="Ce qui s'est passé, quand, et ce qui est attendu"></textarea>
+          <p class="dz-counter" [class.is-over]="reason().length > reasonMax">{{ reason().length }} / {{ reasonMax }}</p>
+
+          <!-- Aperçu fidèle au message privé : même texte que celui du serveur. -->
+          <div class="dz-preview" [attr.data-tone]="preview().tone" aria-label="Aperçu du message privé">
+            <p class="dz-preview-from"><span class="dz-bot">BOT</span> Icy · message privé</p>
+            <div class="dz-embed">
+              <p class="dz-embed-title">{{ preview().title }}</p>
+              <p class="dz-embed-text">La direction d'IceForge t'adresse un avertissement.</p>
+              <p class="dz-embed-text"><strong>Motif : {{ preview().category }}</strong></p>
+              <blockquote class="dz-embed-quote" [class.is-empty]="!preview().reason">{{ preview().reason || 'Le motif apparaîtra ici.' }}</blockquote>
+              <p class="dz-embed-text">{{ preview().consequence }}</p>
+              <p class="dz-embed-text">Si tu veux en parler, contacte un officier ou la direction sur Discord.</p>
+              <p class="dz-embed-footer">IceForge Industries · Direction · {{ today | date:'d MMMM yyyy' }}</p>
+            </div>
+          </div>
+
+          <div class="dz-actions">
+            <button type="button" class="dz-btn is-warn" data-testid="submit-warning" [disabled]="!canSubmit()" (click)="warn()">
+              Avertir et envoyer le message
+            </button>
+          </div>
+        </section>
+      } @else if (rec.active) {
+        <p class="dz-muted dz-section">Un Officier ne peut pas avertir un Officier ou un Directeur.</p>
+      }
+
+      <!-- Historique : avertissements et décisions. -->
+      <section class="dz-section">
+        <h3 class="dz-section-title">Historique</h3>
+        @if (history().length === 0) {
+          <p class="dz-muted">Aucun avertissement pour {{ rec.username }}.</p>
+        }
+        <ol class="dz-history">
+          @for (entry of history(); track entry.kind + entry.at) {
+            @if (entry.kind === 'warning') {
+              @let w = entry.warning;
+              <li class="dz-entry" [class.is-revoked]="!w.active" [attr.data-tone]="tone(w.rank)" data-testid="warning-entry">
+                <span class="dz-rank" aria-hidden="true">{{ ordinal(w.rank) }}</span>
+                <div class="dz-entry-body">
+                  <p class="dz-entry-head">
+                    <strong>{{ categoryLabel(w.category) }}</strong>
+                    <time [attr.datetime]="w.createdAt">{{ w.createdAt | date:"d MMM yyyy, HH'h'mm" }}</time>
+                  </p>
+                  <p class="dz-entry-text">{{ w.reason }}</p>
+                  <p class="dz-entry-meta">
+                    Par {{ w.issuedByName }}
+                    @switch (w.dmStatus) {
+                      @case ('SENT') { <span class="dz-dm is-sent">Message reçu</span> }
+                      @case ('PENDING') { <span class="dz-dm">Message en cours</span> }
+                      @case ('FAILED') { <span class="dz-dm is-failed" data-testid="dm-failed">Message non reçu : {{ failureLabel(w.dmFailure) }}</span> }
+                    }
+                  </p>
+                  @if (!w.active) {
+                    <p class="dz-entry-meta">Levé le {{ w.revokedAt | date:'d MMM yyyy' }} par {{ w.revokedByName }}@if (w.revokeReason) { · {{ w.revokeReason }} }</p>
+                  }
+                  @if (w.active && rec.canWarn) {
+                    @if (revokingId() === w.id) {
+                      <div class="dz-revoke">
+                        <label class="dz-label" [for]="'dz-revoke-' + w.id">Raison <span class="dz-muted">(facultatif)</span></label>
+                        <input [id]="'dz-revoke-' + w.id" class="dz-input" maxlength="500" [(ngModel)]="revokeReason" placeholder="Erreur, contestation acceptée…">
+                        <label class="dz-check"><input type="checkbox" [(ngModel)]="revokeNotify"> Prévenir {{ rec.username }}</label>
+                        <div class="dz-actions">
+                          <button type="button" class="dz-btn is-small" (click)="revokingId.set(null)">Annuler</button>
+                          <button type="button" class="dz-btn is-small is-primary" data-testid="confirm-revoke" (click)="revoke(w)" [disabled]="busy()">Lever l'avertissement</button>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="dz-entry-actions">
+                        @if (w.dmStatus === 'FAILED') {
+                          <button type="button" class="dz-link" (click)="resend(w)" [disabled]="busy()">Renvoyer le message</button>
+                        }
+                        <button type="button" class="dz-link" data-testid="revoke-warning" (click)="startRevoke(w)">Lever</button>
+                      </div>
+                    }
+                  }
+                </div>
+              </li>
+            } @else {
+              @let s = entry.sanction;
+              <li class="dz-entry is-sanction" [attr.data-decision]="s.decision">
+                <span class="dz-rank" aria-hidden="true">{{ s.decision === 'EXCLUDE' ? '⛔' : '↺' }}</span>
+                <div class="dz-entry-body">
+                  <p class="dz-entry-head">
+                    <strong>{{ s.decision === 'EXCLUDE' ? 'Exclusion' : 'Dernière chance' }}</strong>
+                    <time [attr.datetime]="s.createdAt">{{ s.createdAt | date:"d MMM yyyy, HH'h'mm" }}</time>
+                  </p>
+                  @if (s.note) { <p class="dz-entry-text">{{ s.note }}</p> }
+                  <p class="dz-entry-meta">
+                    Décidée par {{ s.decidedByName }}
+                    @switch (s.dmStatus) {
+                      @case ('SENT') { <span class="dz-dm is-sent">Message reçu</span> }
+                      @case ('PENDING') { <span class="dz-dm">Message en cours</span> }
+                      @case ('FAILED') { <span class="dz-dm is-failed">Message non reçu : {{ failureLabel(s.dmFailure) }}</span> }
+                      @default { <span class="dz-dm">Non prévenu</span> }
+                    }
+                  </p>
+                  @if (s.discordBanDoneAt) {
+                    <p class="dz-entry-meta">Ban Discord fait, noté le {{ s.discordBanDoneAt | date:'d MMM yyyy' }} par {{ s.discordBanDoneBy }}</p>
+                  }
+                </div>
+              </li>
+            }
+          }
+        </ol>
+      </section>
+    </div>
+  }
+</aside>

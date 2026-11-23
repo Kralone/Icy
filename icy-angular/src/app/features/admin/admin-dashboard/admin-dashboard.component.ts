@@ -11,6 +11,11 @@ import { finalize } from 'rxjs';
 import { PoleIconComponent } from '../../../shared/pole-icon/pole-icon.component';
 import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
 import { SPECIALIST_RANK, SPECIALTIES, TREASURER_ROLE, hasRole, memberRank, specialtyLabel } from '../../../core/services/user/member-rank';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DisciplineService } from '../../../core/services/moderation/discipline.service';
+import { DisciplineRecord, DisciplineStanding, DisciplineSummary } from '../../../model/discipline.model';
+import { MemberDisciplineDrawerComponent } from '../member-discipline/member-discipline-drawer.component';
+import { warningTone } from '../member-discipline/discipline-messages';
 
 export type MemberSortColumn = 'username' | 'role' | 'createdAt' | 'lastSeenAt';
 
@@ -30,7 +35,8 @@ function toTime(value?: string | null): number | null {
     DatePipe,
     PoleIconComponent,
     LoadingOverlayComponent,
-    AvailabilityHeatmapComponent
+    AvailabilityHeatmapComponent,
+    MemberDisciplineDrawerComponent
 ]
 })
 export class AdminDashboardComponent implements OnInit {
@@ -100,10 +106,84 @@ export class AdminDashboardComponent implements OnInit {
     RECRUE: 'JUNIOR'
   };
 
-  constructor(private userService: UserService, private authService: AuthService) {}
+  /** Avertissements en cours par membre, décisions et bans Discord à faire. */
+  discipline: DisciplineSummary | null = null;
+  private standings = new Map<string, DisciplineStanding>();
+  /** Membre dont le dossier disciplinaire est ouvert. */
+  disciplineUserId: string | null = null;
+
+  constructor(
+    private userService: UserService,
+    private authService: AuthService,
+    private disciplineService: DisciplineService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadDiscipline();
+    // Lien d'une notification « Exclusion à décider » : ouvre directement le dossier.
+    const requested = this.route.snapshot.queryParamMap.get('discipline');
+    if (requested) this.disciplineUserId = requested;
+  }
+
+  // ==== Discipline ====
+  loadDiscipline(): void {
+    this.disciplineService.summary().subscribe({
+      next: summary => {
+        this.discipline = summary;
+        this.standings = new Map(summary.members.map(standing => [standing.userId, standing]));
+      },
+      // La liste reste utilisable sans les avertissements ; la colonne affiche alors un tiret.
+      error: () => {
+        this.discipline = null;
+        this.standings = new Map();
+      }
+    });
+  }
+
+  standing(user: User): DisciplineStanding | null {
+    return this.standings.get(user.id) ?? null;
+  }
+
+  /** Jauge de la colonne Discipline : une case par avertissement jusqu'au seuil. */
+  disciplinePips(user: User): { filled: boolean; tone: string }[] {
+    const threshold = this.discipline?.threshold ?? 3;
+    const count = this.standing(user)?.activeWarnings ?? 0;
+    return Array.from({ length: Math.max(threshold, count) }, (_, index) => ({
+      filled: index < count,
+      tone: warningTone(index + 1, threshold)
+    }));
+  }
+
+  get pendingDecisions(): User[] {
+    if (!this.discipline) return [];
+    return this.users.filter(user => this.standing(user)?.pendingDecision);
+  }
+
+  openDiscipline(userId: string): void {
+    this.disciplineUserId = userId;
+  }
+
+  closeDiscipline(): void {
+    this.disciplineUserId = null;
+    if (this.route.snapshot.queryParamMap.has('discipline')) {
+      this.router.navigate([], { relativeTo: this.route, queryParams: { discipline: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
+  }
+
+  disciplineRank(userId: string): string {
+    const user = this.users.find(candidate => candidate.id === userId);
+    return user ? this.rankKey(user) : 'JUNIOR';
+  }
+
+  onDisciplineChanged(record: DisciplineRecord): void {
+    this.loadDiscipline();
+    // Une exclusion désactive le compte : il quitte la liste des membres actifs.
+    if (!record.active && !this.showInactive && this.users.some(user => user.id === record.userId)) {
+      this.loadUsers();
+    }
   }
 
   loadUsers(): void {
