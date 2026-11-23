@@ -47,8 +47,9 @@ public class MessageTemplateService {
 
     @Transactional
     public MemberActivityDtos.Template update(String code, MemberActivityDtos.TemplateUpdate request, String author) {
+        if (request == null) throw new BadRequestException("Modification vide.");
         MessageTemplate template = get(code);
-        template.setBody(validBody(request == null ? null : request.body()));
+        template.setBody(validBody(request.body()));
         template.setMediaFile(validMedia(request.mediaFile()));
         template.setUpdatedAt(LocalDateTime.now(OperationLock.ZONE));
         template.setUpdatedBy(author);

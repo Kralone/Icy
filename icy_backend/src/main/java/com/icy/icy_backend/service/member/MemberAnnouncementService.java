@@ -31,8 +31,13 @@ public class MemberAnnouncementService {
         if (template.getCategory() != MessageTemplate.Category.PROMOTION) {
             throw new BadRequestException("Ce modèle n'est pas une annonce de promotion.");
         }
+        String content = MessageTemplateService.render(template.getBody(), user, template.getCode());
+        if (content.length() > DirectMessageService.CONTENT_LIMIT) {
+            throw new BadRequestException("Une fois personnalisé pour " + user.getUsername() + ", le message « " + template.getLabel()
+                    + " » dépasse " + DirectMessageService.CONTENT_LIMIT + " caractères : raccourcissez le modèle.");
+        }
         DirectMessage message = directMessages.send(new DirectMessageService.Request(user, ORIGIN, template.getCode(),
-                MessageTemplateService.render(template.getBody(), user, template.getCode()), null, template.getMediaFile(), requestedBy));
+                content, null, template.getMediaFile(), requestedBy));
         return new MemberActivityDtos.DirectMessage(message.getId(), ORIGIN, template.getCode(), template.getLabel(), message.getStatus().name(),
                 null, message.getRequestedAt(), null, requestedByName);
     }
