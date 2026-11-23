@@ -387,6 +387,22 @@ public class OperationController {
         return operationService.publish(id);
     }
 
+    /**
+     * Supprime un brouillon d'opération avec son organisation. Un brouillon n'a été annoncé nulle part :
+     * la suppression ne prévient personne. Une opération publiée est refusée ici, même si elle l'a été entre-temps.
+     */
+    @DeleteMapping("/{id}/draft")
+    @PreAuthorize("@poleAccess.manages(#id)")
+    @Transactional
+    public ResponseEntity<MessageResponse<Void>> deleteDraft(@PathVariable UUID id) {
+        Event event = eventRepository.findById(id).filter(found -> found.getActivityType() == ActivityType.OPERATION)
+                .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
+        if (!eventService.isUnpublishedOperation(event)) {
+            throw new com.icy.icy_backend.exception.definition.OperationClosedException("Cette opération a été publiée : elle n’est plus un brouillon et ne peut pas être supprimée d’ici.");
+        }
+        return eventService.deleteEvent(id);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse<OperationResponseDTO>> get(@PathVariable UUID id) {

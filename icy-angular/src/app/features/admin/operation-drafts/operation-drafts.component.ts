@@ -4,6 +4,8 @@ import { DatePipe, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EventDTO, EventService, OperationDraftSummary } from '../../../core/services/event/event.service';
 import { UserService } from '../../../core/services/user/user.service';
+import { HotToastService } from '@ngxpert/hot-toast';
+import { OperationConfirmService } from '../../operations/operation-confirm.service';
 
 /** Page « Opérations » de l'administration : opérations prévues, brouillons, historique et, pour un administrateur, les presets d'équipage. */
 @Component({
@@ -21,6 +23,10 @@ export class OperationDraftsComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal('');
   private readonly userService = inject(UserService);
+  private readonly confirmService = inject(OperationConfirmService);
+  private readonly toast = inject(HotToastService);
+  /** Brouillon en cours de suppression : son bouton est désactivé pendant l'appel. */
+  readonly deletingId = signal<string | null>(null);
   /** Seul un administrateur voit l'accès aux presets ; la route et le serveur appliquent la même règle. */
   readonly isAdmin = signal(false);
 
@@ -61,6 +67,33 @@ export class OperationDraftsComponent implements OnInit {
       error: error => {
         this.loading.set(false);
         this.error.set(error?.status === 403 ? 'Vous n’avez pas les droits pour consulter les brouillons.' : 'Impossible de charger les brouillons.');
+      }
+    });
+  }
+
+  /** Supprime un brouillon après confirmation. Il n'a jamais été annoncé : personne n'est prévenu. */
+  async deleteDraft(draft: OperationDraftSummary): Promise<void> {
+    if (this.deletingId()) return;
+    const confirmed = await this.confirmService.ask({
+      title: `Supprimer le brouillon « ${draft.title} » ?`,
+      message: 'Le briefing, les objectifs, les groupes et les besoins en vaisseaux de ce brouillon sont supprimés définitivement. Il n’a jamais été publié : aucun membre n’est prévenu.',
+      confirmLabel: 'Supprimer le brouillon',
+      cancelLabel: 'Conserver',
+      danger: true
+    });
+    if (!confirmed) return;
+    this.deletingId.set(draft.id);
+    this.eventService.deleteOperationDraft(draft.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.drafts.update(drafts => drafts.filter(item => item.id !== draft.id));
+        this.toast.success('Brouillon supprimé.');
+      },
+      error: error => {
+        this.deletingId.set(null);
+        this.toast.error((typeof error?.error?.message === 'string' && error.error.message) || 'Suppression du brouillon impossible.');
+        // Un brouillon publié entre-temps quitte cette liste pour celle des opérations prévues.
+        if (error?.status === 409) { this.load(); this.loadPublished(); }
       }
     });
   }

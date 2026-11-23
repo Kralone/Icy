@@ -4,12 +4,17 @@ import { of, throwError } from 'rxjs';
 import { OperationDraftsComponent } from './operation-drafts.component';
 import { EventService } from '../../../core/services/event/event.service';
 import { UserService } from '../../../core/services/user/user.service';
+import { HotToastService } from '@ngxpert/hot-toast';
+import { OperationConfirmService } from '../../operations/operation-confirm.service';
 
 describe('OperationDraftsComponent', () => {
   let fixture: ComponentFixture<OperationDraftsComponent>;
   let getOperationDrafts: ReturnType<typeof vi.fn>;
   let getAll: ReturnType<typeof vi.fn>;
   let roles: string[];
+  let deleteOperationDraft: ReturnType<typeof vi.fn>;
+  let ask: ReturnType<typeof vi.fn>;
+  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   const type = { name: 'Combat', textColor: '#ffffff', backgroundColor: '#123456', imageUrl: '' };
   const event = (id: string, title: string, start: string, finished: boolean, activityType = 'OPERATION') =>
     ({ id, title, type, description: '', startDateTime: start, endDateTime: start, createdAt: start, finished, activityType });
@@ -17,7 +22,7 @@ describe('OperationDraftsComponent', () => {
   async function render(): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [OperationDraftsComponent],
-      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts, getAll } }, { provide: UserService, useValue: { getMyProfile: () => of({ data: { roles } }) } }]
+      providers: [provideRouter([]), { provide: EventService, useValue: { getOperationDrafts, getAll, deleteOperationDraft } }, { provide: OperationConfirmService, useValue: { ask } }, { provide: HotToastService, useValue: toast }, { provide: UserService, useValue: { getMyProfile: () => of({ data: { roles } }) } }]
     }).compileComponents();
     fixture = TestBed.createComponent(OperationDraftsComponent);
     fixture.detectChanges();
@@ -30,6 +35,9 @@ describe('OperationDraftsComponent', () => {
     getOperationDrafts = vi.fn(() => of([]));
     getAll = vi.fn(() => of([]));
     roles = ['OFFICIER'];
+    deleteOperationDraft = vi.fn(() => of(undefined));
+    ask = vi.fn(() => Promise.resolve(true));
+    toast = { success: vi.fn(), error: vi.fn() };
   });
 
   it('shows the crew presets entry below the history, to administrators only', async () => {
@@ -111,5 +119,49 @@ describe('OperationDraftsComponent', () => {
 
     expect(getAll).toHaveBeenCalledTimes(2);
     expect(section('planned').querySelector('.empty')).not.toBeNull();
+  });
+
+  const draft = (id: string, title: string) => ({ id, title, startDateTime: '2026-12-01T20:00:00', updatedAt: '2026-11-20T10:00:00' });
+  const deleteButton = (): HTMLButtonElement => section('drafts').querySelector('.delete-draft') as HTMLButtonElement;
+
+  it('deletes a draft after confirmation and removes its card', async () => {
+    getOperationDrafts = vi.fn(() => of([draft('d1', 'Raid Pyro'), draft('d2', 'Convoi')]));
+    await render();
+
+    expect(section('planned').querySelector('.delete-draft')).toBeNull();
+    deleteButton().click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(ask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Supprimer le brouillon « Raid Pyro » ?', danger: true }));
+    expect(deleteOperationDraft).toHaveBeenCalledWith('d1');
+    expect(titles('drafts')).toEqual(['Convoi']);
+    expect(toast.success).toHaveBeenCalledWith('Brouillon supprimé.');
+  });
+
+  it('keeps the draft when the deletion is not confirmed', async () => {
+    getOperationDrafts = vi.fn(() => of([draft('d1', 'Raid Pyro')]));
+    ask = vi.fn(() => Promise.resolve(false));
+    await render();
+
+    deleteButton().click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(deleteOperationDraft).not.toHaveBeenCalled();
+    expect(titles('drafts')).toEqual(['Raid Pyro']);
+  });
+
+  it('reloads both lists when the draft was published in the meantime', async () => {
+    getOperationDrafts = vi.fn(() => of([draft('d1', 'Raid Pyro')]));
+    deleteOperationDraft = vi.fn(() => throwError(() => ({ status: 409, error: { message: 'Cette opération a été publiée.' } })));
+    await render();
+
+    deleteButton().click();
+    await fixture.whenStable();
+
+    expect(toast.error).toHaveBeenCalledWith('Cette opération a été publiée.');
+    expect(getOperationDrafts).toHaveBeenCalledTimes(2);
+    expect(getAll).toHaveBeenCalledTimes(2);
   });
 });

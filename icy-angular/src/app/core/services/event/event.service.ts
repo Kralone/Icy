@@ -164,6 +164,11 @@ export class EventService {
     return this.http.post<any>(`/api/operations/${eventId}/publish`, {}).pipe(map(res => res.data));
   }
 
+  /** Supprime un brouillon jamais publié ; le serveur refuse une opération publiée. */
+  deleteOperationDraft(eventId: string): Observable<void> {
+    return this.http.delete<void>(`/api/operations/${eventId}/draft`);
+  }
+
   assignOperationGroup(operationId: string, groupId: number) {
     return this.http.post(`/api/operations/${operationId}/assignments/me/${groupId}`, {});
   }

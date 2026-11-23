@@ -69,6 +69,7 @@
         <a [routerLink]="['/icy/operations', operation.id, 'edit']" class="primary resume">{{ kind === 'draft' ? 'Reprendre l’édition' : 'Modifier' }}</a>
         @if (kind !== 'draft') { <a [routerLink]="['/icy/operations', operation.id]" class="secondary">Voir la fiche</a> }
         @if (kind !== 'draft') { <a routerLink="/icy/operations/new" [queryParams]="{ from: operation.id }" class="secondary replan">Replanifier</a> }
+        @if (kind === 'draft') { <button type="button" class="danger delete-draft" [disabled]="deletingId() === operation.id" [attr.aria-busy]="deletingId() === operation.id" [attr.aria-label]="'Supprimer le brouillon ' + operation.title" (click)="deleteDraft(operation)">{{ deletingId() === operation.id ? 'Suppression…' : 'Supprimer' }}</button> }
       </div>
     </div>
   </li>

@@ -12,7 +12,10 @@
       <div class="editor-banner__veil"></div>
       <div class="editor-topline">
         <a routerLink="/icy/events" class="editor-banner__chip">← Calendrier</a>
-        @if (saving) { <span class="save-activity" aria-hidden="true"></span> }
+        <span class="editor-topline__end">
+          @if (saving) { <span class="save-activity" aria-hidden="true"></span> }
+          @if (operation.publicationStatus !== 'PUBLISHED') { <button type="button" class="editor-banner__chip editor-banner__delete" aria-label="Supprimer le brouillon" [disabled]="deletingDraft" [attr.aria-busy]="deletingDraft" (click)="deleteDraft(operation)"><app-operation-icon name="trash" /> @if (deletingDraft) { Suppression… } @else { Supprimer<span class="editor-banner__delete-more">&nbsp;le brouillon</span> }</button> }
+        </span>
       </div>
       <p class="editor-banner__tags"><span class="eyebrow">Éditeur d’opération</span>@if (operation.typeName) { <span class="editor-banner__type">{{ operation.typeName }}</span> }<span class="status-pill" [class.status-pill--published]="operation.publicationStatus === 'PUBLISHED'">{{ publicationLabel(operation.publicationStatus) }}</span></p>
       <h1>{{ operation.title }}</h1>
