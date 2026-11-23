@@ -43,6 +43,8 @@ export function deliveryFailureLabel(failure: string | null | undefined): string
   switch (failure) {
     case 'dm_closed': return 'messages privés fermés';
     case 'user_not_found': return 'compte Discord introuvable';
+    case 'invalid_discord_id': return 'Discord ID invalide';
+    case 'no_answer': return 'le bot n\'a pas répondu';
     default: return 'refusé par Discord';
   }
 }

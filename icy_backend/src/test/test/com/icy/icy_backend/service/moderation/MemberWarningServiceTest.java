@@ -73,7 +73,7 @@ class MemberWarningServiceTest {
             when(users.findByIdIncludingInactive(user.getId())).thenReturn(Optional.of(user));
         }
         when(users.findAllByRoleName("ADMIN")).thenReturn(List.of(director));
-        when(messenger.send(anyString(), any())).thenAnswer(call -> UUID.randomUUID());
+        when(messenger.send(any(User.class), any())).thenAnswer(call -> UUID.randomUUID());
         when(warnings.save(any())).thenAnswer(call -> {
             MemberWarning warning = call.getArgument(0);
             if (warning.getId() == null) {
@@ -125,7 +125,7 @@ class MemberWarningServiceTest {
         assertThat(record.pendingDecision()).isFalse();
 
         ArgumentCaptor<ModerationMessage> message = ArgumentCaptor.forClass(ModerationMessage.class);
-        verify(messenger, Mockito.times(2)).send(eq(member.getDiscordId()), message.capture());
+        verify(messenger, Mockito.times(2)).send(eq(member), message.capture());
         ModerationMessage second = message.getAllValues().get(1);
         assertThat(second.title()).isEqualTo("⚠️ 2e avertissement");
         assertThat(second.description()).contains("**Motif : Absence sans prévenir**", "> Absent à l'opération",
@@ -185,7 +185,7 @@ class MemberWarningServiceTest {
         assertThat(record.warnings().get(1).active()).isFalse();
         assertThat(record.warnings().get(1).revokedByName()).isEqualTo("Vexa");
         ArgumentCaptor<ModerationMessage> message = ArgumentCaptor.forClass(ModerationMessage.class);
-        verify(messenger, Mockito.times(3)).send(eq(member.getDiscordId()), message.capture());
+        verify(messenger, Mockito.times(3)).send(eq(member), message.capture());
         assertThat(message.getValue().title()).isEqualTo("✅ Avertissement levé");
         assertThat(message.getValue().description()).contains("> Erreur de personne", "Il te reste 1 avertissement en cours.");
 
@@ -200,7 +200,7 @@ class MemberWarningServiceTest {
     void revokeWithoutNoticeSendsNothing() {
         warnTimes(1);
         service.revoke(stored.get(0).getId(), new ModerationDtos.RevokeRequest(null, false));
-        verify(messenger, Mockito.times(1)).send(anyString(), any());
+        verify(messenger, Mockito.times(1)).send(any(User.class), any());
     }
 
     @Test
@@ -231,7 +231,7 @@ class MemberWarningServiceTest {
             assertThat(s.discordBanDoneAt()).isNull();
         });
         ArgumentCaptor<ModerationMessage> message = ArgumentCaptor.forClass(ModerationMessage.class);
-        verify(messenger, Mockito.times(4)).send(eq(member.getDiscordId()), message.capture());
+        verify(messenger, Mockito.times(4)).send(eq(member), message.capture());
         assertThat(message.getValue().description()).contains("Après 3 avertissements", "> Récidive");
 
         assertThat(service.summary().discordBansToDo()).singleElement()
@@ -250,7 +250,7 @@ class MemberWarningServiceTest {
 
         assertThat(member.getActive()).isTrue();
         assertThat(service.record(member.getId()).pendingDecision()).isFalse();
-        verify(messenger, Mockito.times(3)).send(anyString(), any());
+        verify(messenger, Mockito.times(3)).send(any(User.class), any());
 
         signIn(officer);
         // L'horloge avance : le 4e avertissement est postérieur à la décision.
@@ -317,5 +317,21 @@ class MemberWarningServiceTest {
         UserAuthDetails details = new UserAuthDetails(user.getId(), user.getUsername(), "password", List.of());
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(details, "",
                 List.of(new SimpleGrantedAuthority("ROLE_" + role))));
+    }
+
+    @Test
+    void theBotResultReachesTheWarningOnlyForDisciplineMessages() {
+        warnTimes(1);
+        MemberWarning warning = stored.get(0);
+        ModerationDeliveryListener listener = new ModerationDeliveryListener(service);
+
+        listener.onResult(new com.icy.icy_backend.messaging.DirectMessageResultEvent(warning.getDmDeliveryId(), member.getId(), "REMINDER", null,
+                com.icy.icy_backend.db.entity.member.DirectMessage.Status.FAILED, "dm_closed"));
+        assertThat(warning.getDmStatus()).isEqualTo(DeliveryStatus.PENDING);
+
+        listener.onResult(new com.icy.icy_backend.messaging.DirectMessageResultEvent(warning.getDmDeliveryId(), member.getId(), "WARNING", null,
+                com.icy.icy_backend.db.entity.member.DirectMessage.Status.FAILED, "dm_closed"));
+        assertThat(warning.getDmStatus()).isEqualTo(DeliveryStatus.FAILED);
+        assertThat(warning.getDmFailure()).isEqualTo("dm_closed");
     }
 }

@@ -121,7 +121,7 @@ public class MemberWarningService {
         warning.setIssuedByName(author.getUsername());
         warning.setCreatedAt(LocalDateTime.now(clock));
         warning.setDmStatus(DeliveryStatus.PENDING);
-        warning.setDmDeliveryId(messenger.send(target.getDiscordId(), WarningMessages.warning(warning, threshold())));
+        warning.setDmDeliveryId(messenger.send(target, WarningMessages.warning(warning, threshold())));
         warning = warnings.save(warning);
         log.info("Avertissement n°{} donné à {} par {}", warning.getRank(), target.getId(), author.getId());
 
@@ -148,7 +148,7 @@ public class MemberWarningService {
         boolean notify = request == null || request.notifyMember() == null || request.notifyMember();
         if (notify && Boolean.TRUE.equals(target.getActive())) {
             long remaining = warnings.countByUserIdAndRevokedAtIsNull(target.getId());
-            messenger.send(target.getDiscordId(), WarningMessages.revoked(warning, reason, remaining));
+            messenger.send(target, WarningMessages.revoked(warning, reason, remaining));
         }
         return record(target);
     }
@@ -164,7 +164,7 @@ public class MemberWarningService {
         if (warning.getDmStatus() != DeliveryStatus.FAILED) throw new BadRequestException("Le message n'a pas échoué : il n'y a rien à renvoyer.");
         warning.setDmStatus(DeliveryStatus.PENDING);
         warning.setDmFailure(null);
-        warning.setDmDeliveryId(messenger.send(target.getDiscordId(), WarningMessages.warning(warning, threshold())));
+        warning.setDmDeliveryId(messenger.send(target, WarningMessages.warning(warning, threshold())));
         warnings.save(warning);
         return record(target);
     }
@@ -196,7 +196,7 @@ public class MemberWarningService {
             ModerationMessage message = decision == SanctionDecision.EXCLUDE
                     ? WarningMessages.excluded(active, note) : WarningMessages.kept(active, note);
             sanction.setDmStatus(DeliveryStatus.PENDING);
-            sanction.setDmDeliveryId(messenger.send(target.getDiscordId(), message));
+            sanction.setDmDeliveryId(messenger.send(target, message));
         }
         sanctions.save(sanction);
 

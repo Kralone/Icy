@@ -1,5 +1,7 @@
 package com.icy.icy_backend.service.moderation;
 
+import com.icy.icy_backend.db.entity.user.User;
+
 import java.util.UUID;
 
 /**
@@ -7,5 +9,5 @@ import java.util.UUID;
  * l'identifiant renvoyé permet de rattacher le résultat (reçu ou refusé) à l'avertissement ou à la décision.
  */
 public interface ModerationMessenger {
-    UUID send(String discordId, ModerationMessage message);
+    UUID send(User recipient, ModerationMessage message);
 }
