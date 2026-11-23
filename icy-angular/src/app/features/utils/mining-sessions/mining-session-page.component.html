@@ -142,16 +142,16 @@
           }
         } @else {
           @if (salvage()) {
-            <p class="empty">Aucune cargaison pour l’instant. Déclarez ce que chacun ramène (RMC, matériau de construction) et qui le vendra. Pour raffiner le matériau de construction en CMAT, créez un ordre de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+            <p class="empty">Aucune cargaison enregistrée. Les cargaisons récupérées (RMC, matériau de construction) sont déclarées ici avec leur vendeur. Le raffinage du matériau de construction en CMAT fait l’objet d’un ordre de raffinage, dont l’heure de fin est suivie ; le lanceur est averti sur Discord.</p>
           } @else {
-            <p class="empty">Aucun ordre pour l’instant. Créez-en un à chaque lancement de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+            <p class="empty">Aucun ordre de raffinage enregistré. Chaque lancement en raffinerie fait l’objet d’un ordre, dont l’heure de fin est suivie ; le lanceur est averti sur Discord.</p>
           }
         }
       </section>
 
       <!-- Frais -->
       <section class="panel p-costs" id="frais" style="--section: var(--s-costs)" aria-labelledby="costs-h">
-        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés<app-hint label="Frais avancés" [text]="salvage() ? 'Payés par un participant pour le groupe : claim, location de vaisseau, carburant, réparations, raffinage. Chacun récupère ce qu’il a avancé avant le partage du bénéfice.' : 'Payés par un participant pour le groupe, raffinage compris. Chacun récupère ce qu’il a avancé avant le partage du bénéfice.'" /></h2></header>
+        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés<app-hint label="Frais avancés" [text]="salvage() ? 'Payés par un participant pour le groupe : claim, location de vaisseau, carburant, réparations, raffinage. Ils sont remboursés à leur auteur avant le partage du bénéfice.' : 'Payés par un participant pour le groupe, raffinage compris. Ils sont remboursés à leur auteur avant le partage du bénéfice.'" /></h2></header>
         @if (costs().length) {
           <div class="rows">
             @for (cost of costs(); track $index) {
@@ -166,7 +166,7 @@
           </div>
           <div class="total-line"><span>Total</span><span class="num">{{ auec(s.share.totalExpenses) }} aUEC</span></div>
         } @else {
-          <p class="empty">Aucun frais déclaré. {{ salvage() ? 'Claim, location, carburant, réparations' : 'Carburant, réparations, matériel' }} : chacun ajoute ce qu’il paie.</p>
+          <p class="empty">Aucun frais déclaré. Les frais avancés par les participants ({{ salvage() ? 'claim, location, carburant, réparations' : 'carburant, réparations, matériel' }}) sont enregistrés ici.</p>
         }
       </section>
 
@@ -251,7 +251,7 @@
           <h2 id="share-h"><app-operation-icon name="coins" /> Partage</h2>
           @switch (s.share.source) {
             @case ('NONE') { <span>après la première vente</span> }
-            @case ('PREVIEW') { <span class="tag tag--prov">Provisoire<app-hint label="Provisoire" text="Les montants bougent à chaque frais ou vente saisi, jusqu’à ce que l’organisateur arrête les comptes." /></span> }
+            @case ('PREVIEW') { <span class="tag tag--prov">Provisoire<app-hint label="Provisoire" text="Les montants évoluent à chaque frais ou vente enregistré, jusqu’à l’arrêt des comptes par l’organisateur." /></span> }
             @default { <span>{{ s.status === 'CLOSED' ? 'Bilan final' : 'Comptes arrêtés' }}</span> }
           }
         </header>

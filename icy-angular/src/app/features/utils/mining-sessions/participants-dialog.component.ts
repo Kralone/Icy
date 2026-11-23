@@ -19,7 +19,7 @@ interface MemberForm { userId: string; username: string; parts: string; }
     <div class="dialog-backdrop" (click)="closed.emit()">
       <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="save()" aria-labelledby="participants-title">
         <h2 id="participants-title">Participants et parts</h2>
-        <p class="note">Chacun a 1 part. Une demi-part vaut 0,5 ; 0 exclut du partage tout en remboursant les frais avancés.</p>
+        <p class="note">Une part par participant par défaut. Une demi-part vaut 0,5 ; 0 exclut du partage tout en remboursant les frais avancés.</p>
         <div class="rows">
           @for (member of members; track member.userId; let i = $index) {
             <div class="row member">

@@ -17,7 +17,7 @@
     <section class="panel" style="--section: var(--s-progress)" aria-labelledby="sessions-active">
       <header><h2 id="sessions-active"><app-operation-icon name="target" /> En cours</h2><span>{{ active().length }} fiche{{ active().length > 1 ? 's' : '' }}</span></header>
       @if (!active().length) {
-        <p class="empty">Aucune session en cours.@if (canCreate()) { Créez une fiche, ou cochez « {{ text.operationOption }} » sur une opération. }</p>
+        <p class="empty">Aucune session en cours.@if (canCreate()) { Une fiche se crée ici, ou depuis une opération avec l’option « {{ text.operationOption }} ». }</p>
       } @else {
         <ul class="cards">
           @for (sheet of active(); track sheet.id) {
@@ -67,7 +67,7 @@
           <label class="field">Date de la session<input name="date" type="date" [(ngModel)]="form.date" required></label>
         </div>
         <div class="field">
-          <span>Participants ({{ form.participantIds.length }})<app-hint label="Participants" text="Chacun compte pour une part. Depuis la fiche, l’organisateur peut donner une demi-part ou exclure quelqu’un du partage." /></span>
+          <span>Participants ({{ form.participantIds.length }})<app-hint label="Participants" text="Une part par participant par défaut. Depuis la fiche, l’organisateur peut attribuer une demi-part ou exclure un participant du partage." /></span>
           @if (chosenMembers().length) {
             <ul class="chips" aria-label="Participants choisis">
               @for (member of chosenMembers(); track member.id) {
