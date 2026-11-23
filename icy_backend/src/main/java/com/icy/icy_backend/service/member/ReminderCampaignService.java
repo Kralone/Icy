@@ -191,6 +191,12 @@ public class ReminderCampaignService {
         MemberReminder fiche = findReminder(reminderId);
         ReminderCampaign campaign = find(fiche.getCampaignId());
         if (campaign.getStatus() == ReminderCampaign.Status.ANNULEE) throw new BadRequestException("Cette campagne a été annulée.");
+        if (campaign.getDelivery() != ReminderCampaign.Delivery.BOT) {
+            throw new BadRequestException("Cette campagne s'envoie à la main : le bot ne l'envoie pas.");
+        }
+        if (campaign.getStatus() != ReminderCampaign.Status.EN_COURS) {
+            throw new BadRequestException("Cette campagne n'est pas encore partie : envoyez-la d'abord.");
+        }
         User user = users.findById(fiche.getUserId()).orElseThrow(() -> new BadRequestException("Ce membre a été désactivé."));
         if (fiche.getDeliveryId() != null) {
             DirectMessage previous = directMessages.findById(fiche.getDeliveryId()).orElse(null);

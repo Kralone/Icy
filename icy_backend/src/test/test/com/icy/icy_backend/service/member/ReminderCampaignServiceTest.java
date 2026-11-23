@@ -239,4 +239,17 @@ class ReminderCampaignServiceTest {
         assertThat(result.counts().states()).containsEntry("ACTIF", 1).containsEntry("PARTI", 1);
         assertThat(result.reminders()).extracting(reminder -> reminder.today().cameBack()).containsExactlyInAnyOrder(true, false);
     }
+
+    @Test
+    void theBotNeverSendsAManualOrUnsentCampaign() {
+        service.create(create("MANUEL", null, null), UUID.randomUUID(), "Kralone");
+        MemberReminder manual = reminderStore.values().iterator().next();
+        assertThatThrownBy(() -> service.resend(manual.getId(), UUID.randomUUID(), "Kralone")).isInstanceOf(BadRequestException.class);
+
+        reminderStore.clear();
+        service.create(create("BOT", null, null), UUID.randomUUID(), "Kralone");
+        MemberReminder draft = reminderStore.values().iterator().next();
+        assertThatThrownBy(() -> service.resend(draft.getId(), UUID.randomUUID(), "Kralone")).isInstanceOf(BadRequestException.class);
+        verifyNoInteractions(directMessageService);
+    }
 }
