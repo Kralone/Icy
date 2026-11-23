@@ -109,6 +109,17 @@ class SalvageSessionTest {
     }
 
     @Test
+    void refiningOrderOnlyAcceptsTheRefinedMaterial() {
+        assertThatThrownBy(() -> fixture.as(TORIN).sheetService.addOrder(fixture.sheet.getId(), new SessionRequests.RefineryOrder(null, null, REFINERY, null, null, 0L, 45, TORIN,
+                List.of(new SessionRequests.OrderLine(RMC, 1_000, null, "SELL")))))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("CMAT");
+        assertThat(fixture.orders).isEmpty();
+        assertThat(MiningMarketService.isRefinedSalvage("Construction Materials")).isTrue();
+        assertThat(MiningMarketService.isRefinedSalvage("Construction Rubble")).isFalse();
+        assertThat(MiningMarketService.isRefinedSalvage("Recycled Material Composite")).isFalse();
+    }
+
+    @Test
     void onlyHandedOverCargoCanBeSold() {
         fixture.as(TORIN).sheetService.addOrder(fixture.sheet.getId(),
                 haul("Reclaimer", VEXA, new SessionRequests.OrderLine(RMC, 10_000, null, "SELL"), new SessionRequests.OrderLine(CMAT, 500, null, "KEEP")));

@@ -1,6 +1,7 @@
 import { SessionSheet, UserRef } from '../../../core/services/mining/mining-session.service';
 import { SALVAGE_STEPS, countdownLabel, mySituation, progress, stepState, stepsFor } from './mining-session-view';
 import { clampQuality, groupDigits, parseAmount, parseScu, stepDuration, typedDuration } from './session-input';
+import { isRefinedSalvage } from './session-activity';
 
 const kralone: UserRef = { id: 'k', username: 'Kralone', avatarUrl: null };
 const vexa: UserRef = { id: 'v', username: 'Vexa', avatarUrl: null };
@@ -158,6 +159,12 @@ describe('Avancement en direct', () => {
 });
 
 describe('Fiche de salvage', () => {
+  it('ne propose au raffinage que le matériau raffiné (CMAT)', () => {
+    expect(isRefinedSalvage('Construction Materials')).toBe(true);
+    expect(isRefinedSalvage('Recycled Material Composite')).toBe(false);
+    expect(isRefinedSalvage('Construction Rubble')).toBe(false);
+  });
+
   const haul = (launcher: UserRef, recipient: UserRef, handedOverAt: string | null = null) => ({
     id: launcher.id, kind: 'HAUL' as const, launcher, terminalId: null, terminalLabel: 'Vulture', methodCode: null, methodLabel: null, cost: 0,
     finishesAt: '2026-10-22T21:00:00', ready: true, recipient, handedOverAt, lines: [], editable: false, canHandOver: true

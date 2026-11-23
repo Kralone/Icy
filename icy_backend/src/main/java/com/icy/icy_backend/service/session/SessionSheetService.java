@@ -395,6 +395,8 @@ public class SessionSheetService {
             if (line == null || line.commodityId() == null) throw new BadRequestException("Choisissez le " + word + " de chaque ligne.");
             MiningMarketService.Commodity commodity = commodities.get(line.commodityId());
             if (commodity == null) throw new BadRequestException(salvage ? "Matériau de salvage inconnu dans les données UEX." : "Minerai raffiné inconnu dans les données UEX.");
+            if (salvage && !order.isHaul() && !MiningMarketService.isRefinedSalvage(commodity.name()))
+                throw new BadRequestException("Un ordre de raffinage ne contient que le matériau raffiné (CMAT). Le RMC et le matériau brut se déclarent en cargaison.");
             int quantity = quantity(line.quantityCscu());
             Integer quality = null;
             if (!salvage) {

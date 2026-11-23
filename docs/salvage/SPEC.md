@@ -27,8 +27,9 @@ Une fiche porte une activité, `MINING` ou `SALVAGE` (`session.sheets.activity`,
 
 Un lot de cargo (`mining.refinery_orders`) a un type :
 
-- `REFINERY` : un ordre de raffinage, comme au minage. Sur une fiche de salvage, il raffine le matériau de
-  construction brut en CMAT, sans qualité.
+- `REFINERY` : un ordre de raffinage, comme au minage. Ses lignes disent ce qui sort de la raffinerie : sur une
+  fiche de salvage, uniquement du CMAT (Construction Materials), sans qualité. Le RMC et le matériau brut sont refusés
+  (écran et serveur) : ils se déclarent en cargaison.
 - `HAUL` : une **cargaison**. C'est ce qui a été récupéré à bord, avec un lieu libre (le vaisseau ou la station),
   sans terminal, sans méthode, sans durée. Elle est prête dès sa saisie, n'est jamais annoncée sur Discord comme un
   raffinage terminé et, gardée par son détenteur pour qu'il la vende lui-même, elle est remise d'office.

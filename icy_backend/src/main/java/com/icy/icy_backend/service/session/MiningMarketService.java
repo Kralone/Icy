@@ -99,6 +99,14 @@ public class MiningMarketService {
         return SALVAGE_NAME_PATTERNS.stream().anyMatch(lower::contains);
     }
 
+    /**
+     * Seul le matériau de construction raffiné (Construction Materials, CMAT) sort d'une raffinerie au salvage :
+     * le RMC se vend tel quel et le matériau brut (Rubble, Pieces, Salvage) entre en raffinerie, il n'en sort pas.
+     */
+    static boolean isRefinedSalvage(String name) {
+        return name != null && name.toLowerCase(java.util.Locale.ROOT).contains("construction material");
+    }
+
     public Map<Integer, Terminal> terminals() {
         Map<Integer, Terminal> result = new LinkedHashMap<>();
         for (JsonNode row : rows("terminals")) {

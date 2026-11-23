@@ -67,3 +67,11 @@ export const PHASE_LABELS: Record<SessionPhase, string> = {
   PAYMENTS: 'Versements',
   DONE: 'Terminée'
 };
+
+/**
+ * Seul le matériau de construction raffiné (Construction Materials, CMAT) sort d'une raffinerie au salvage
+ * (même règle que le serveur, MiningMarketService.isRefinedSalvage).
+ */
+export function isRefinedSalvage(name: string): boolean {
+  return name.toLowerCase().includes('construction material');
+}

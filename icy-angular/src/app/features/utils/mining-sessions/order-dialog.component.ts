@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MarketReference, MiningSessionService, OreDestination, RefineryOrder, SessionSheet, serverMessage } from '../../../core/services/mining/mining-session.service';
 import { HintComponent } from './hint.component';
 import { hourLabel } from './mining-session-view';
+import { isRefinedSalvage } from './session-activity';
 import { SearchOption, SearchSelectComponent } from './search-select.component';
 import { Duration, clampQuality, groupDigits, parseAmountOrZero, parseScu, scuInput, stepDuration, toDuration, typedDuration } from './session-input';
 
@@ -85,13 +86,13 @@ interface LineForm { commodityId: number | null; scu: string; quality: string; d
         <section class="block">
           <div class="block__head">
             @if (salvage()) {
-              <h3>Matériau raffiné<app-hint label="Matériau raffiné" text="Ce que la raffinerie rendra, en SCU (souvent des Construction Materials). Un matériau conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
+              <h3>Matériau raffiné<app-hint label="Matériau raffiné" text="Ce que la raffinerie rendra, en SCU (Construction Materials, le CMAT). Le RMC et le matériau brut ne se raffinent pas ici : déclarez-les en cargaison. Un matériau conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
             } @else {
               <h3>Minerais raffinés<app-hint label="Minerais raffinés" text="Quantités en SCU, qualité de 0 à 1000. Un minerai conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
             }
           </div>
           @if (salvage() && !commodityOptions().length) {
-            <p class="alert" role="alert">Aucun matériau de salvage dans les données UEX : un administrateur doit rafraîchir le cache UEX.</p>
+            <p class="alert" role="alert">Aucun matériau raffiné (Construction Materials) dans les données UEX : un administrateur doit rafraîchir le cache UEX.</p>
           }
           @for (line of form.lines; track $index; let i = $index) {
             <div class="line-row" [class.line-row--salvage]="salvage()">
@@ -180,9 +181,13 @@ export class OrderDialogComponent implements OnInit {
   readonly clamp = clampQuality;
   readonly refineryOptions = computed<SearchOption<number>[]>(() => this.reference().refineries.map(t => ({ value: t.id, label: t.name, detail: t.location })));
   readonly salvage = computed(() => this.sheet().activity === 'SALVAGE');
-  /** Minage : minerais raffinés. Salvage : matériaux de salvage (le matériau de construction raffiné en CMAT). */
-  readonly commodityOptions = computed<SearchOption<number>[]>(() =>
-    (this.salvage() ? this.reference().salvageCommodities ?? [] : this.reference().commodities).map(c => ({ value: c.id, label: c.name })));
+  /**
+   * Ce qui sort de la raffinerie. Minage : minerais raffinés. Salvage : le seul matériau raffiné, le CMAT
+   * (Construction Materials) ; le RMC et le matériau brut se déclarent en cargaison.
+   */
+  readonly commodityOptions = computed<SearchOption<number>[]>(() => this.salvage()
+    ? (this.reference().salvageCommodities ?? []).filter(c => isRefinedSalvage(c.name)).map(c => ({ value: c.id, label: `${c.name} (CMAT)` }))
+    : this.reference().commodities.map(c => ({ value: c.id, label: c.name })));
 
   nameOf(userId: string): string {
     return this.sheet().participants.find(p => p.user.id === userId)?.user.username ?? 'Vous';
