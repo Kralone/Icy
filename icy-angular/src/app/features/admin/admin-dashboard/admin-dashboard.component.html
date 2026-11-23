@@ -47,6 +47,26 @@
       </button>
     </div>
 
+    <!-- Discipline : décisions d'exclusion en attente et bans Discord à faire à la main. -->
+    @if (pendingDecisions.length || discipline?.discordBansToDo?.length) {
+      <section class="discipline-alerts" data-testid="discipline-alerts" aria-label="Discipline à traiter">
+        @for (user of pendingDecisions; track user.id) {
+          <button type="button" class="discipline-alert" data-kind="decision" (click)="openDiscipline(user.id)">
+            <span class="discipline-alert-dot" aria-hidden="true"></span>
+            <span class="min-w-0"><strong>{{ user.username }}</strong> · exclusion à décider</span>
+            <span class="discipline-alert-go" aria-hidden="true">Ouvrir →</span>
+          </button>
+        }
+        @for (task of discipline?.discordBansToDo ?? []; track task.sanctionId) {
+          <button type="button" class="discipline-alert" data-kind="ban" (click)="openDiscipline(task.userId)">
+            <span class="discipline-alert-dot" aria-hidden="true"></span>
+            <span class="min-w-0"><strong>{{ task.username }}</strong> · exclu, bannissement Discord à effectuer</span>
+            <span class="discipline-alert-go" aria-hidden="true">Ouvrir →</span>
+          </button>
+        }
+      </section>
+    }
+
     <!-- Tableau responsive -->
     <div
       class="relative loading-reveal overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.35)]"
@@ -58,7 +78,7 @@
         [fadeOutMs]="500"
         [softFade]="true"
       ></app-loading-overlay>
-      <table class="min-w-[860px] w-full text-sm text-slate-200">
+      <table class="min-w-[920px] w-full text-sm text-slate-200">
         <thead class="bg-[#0b1324]/90 text-xs text-cyan-200/90 uppercase tracking-[0.14em] border-b border-white/10">
           <tr>
             @for (column of sortableColumns; track column.key) {
@@ -69,7 +89,7 @@
                 </button>
               </th>
             }
-            <th scope="col" class="px-4 py-3 text-left font-semibold">Discord ID</th>
+            <th scope="col" class="px-4 py-3 text-left font-semibold">Discipline</th>
             <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
           </tr>
         </thead>
@@ -80,7 +100,10 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3 min-w-0">
                   <span class="member-avatar flex-none w-8 h-8 rounded-full grid place-items-center text-xs font-bold" [attr.data-rank]="rankKey(user)" aria-hidden="true">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
-                  <span class="font-semibold text-white break-words">{{ user.username }}</span>
+                  <span class="min-w-0">
+                    <span class="block font-semibold text-white break-words">{{ user.username }}</span>
+                    <span class="block font-mono text-[11px] text-slate-500" title="Discord ID">{{ user.discordId }}</span>
+                  </span>
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -109,7 +132,28 @@
               <td class="px-4 py-3 whitespace-nowrap text-slate-300">
                 @if (user.lastSeenAt) { <time [attr.datetime]="user.lastSeenAt" [attr.title]="user.lastSeenAt | date:'EEEE d MMMM yyyy, HH:mm'">{{ user.lastSeenAt | date:"d MMM yyyy, HH'h'mm" }}</time> } @else { <span class="text-slate-500 italic">Jamais</span> }
               </td>
-              <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-xs">{{ user.discordId }}</td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <!-- Avertissements en cours : une case par avertissement jusqu'au seuil. Ouvre le dossier. -->
+                <button type="button" class="discipline-cell" data-testid="discipline-cell" (click)="openDiscipline(user.id)"
+                        [attr.aria-label]="'Discipline de ' + user.username + ' : ' + (standing(user)?.activeWarnings ?? 0) + ' avertissement(s) en cours'">
+                  @if (discipline) {
+                    <span class="discipline-pips" aria-hidden="true">
+                      @for (pip of disciplinePips(user); track $index) {
+                        <span class="discipline-pip" [attr.data-tone]="pip.tone" [class.is-on]="pip.filled"></span>
+                      }
+                    </span>
+                    @if (standing(user)?.pendingDecision) {
+                      <span class="discipline-flag">À décider</span>
+                    } @else if (standing(user)) {
+                      <span class="discipline-count">{{ standing(user)?.activeWarnings }} / {{ discipline.threshold }}</span>
+                    } @else {
+                      <span class="discipline-none">Avertir</span>
+                    }
+                  } @else {
+                    <span class="discipline-none">—</span>
+                  }
+                </button>
+              </td>
               <td class="px-4 py-3">
                 <div class="flex flex-nowrap justify-end gap-2 whitespace-nowrap">
                   @if (showInactive) {
@@ -325,3 +369,11 @@
           </div>
         </div>
       }
+
+  @if (disciplineUserId) {
+    <app-member-discipline-drawer
+      [userId]="disciplineUserId"
+      [rank]="disciplineRank(disciplineUserId)"
+      (closed)="closeDiscipline()"
+      (changed)="onDisciplineChanged($event)" />
+  }

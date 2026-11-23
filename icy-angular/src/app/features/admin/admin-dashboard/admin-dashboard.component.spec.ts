@@ -21,6 +21,7 @@ describe('AdminDashboardComponent', () => {
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     http.expectOne('/api/users/all').flush({ data: [] });
+    http.expectOne('/api/admin/discipline').flush({ threshold: 3, members: [], discordBansToDo: [] });
     fixture.detectChanges();
     http.expectOne('/api/availability/members').flush([]);
     fixture.detectChanges();
@@ -164,5 +165,52 @@ describe('AdminDashboardComponent', () => {
     expect(rows[0].querySelector('[data-testid="member-specialty"]')?.textContent).toContain('Logistique');
     expect(rows[1].querySelector('[data-testid="member-specialty"], [data-testid="member-function"]')).toBeNull();
     expect(rows[2].querySelector('[data-testid="member-function"]')?.textContent).toContain('Trésorier');
+  });
+
+  it('shows active warnings per member, flags a pending decision and opens the record', () => {
+    component.loadUsers();
+    http.expectOne('/api/users/all').flush({ data: [
+      { id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['JUNIOR'], createdAt: null },
+      { id: 'b', username: 'Bravo', discordId: '2', active: true, roles: ['ASSOCIE'], createdAt: null },
+      { id: 'c', username: 'Charlie', discordId: '3', active: true, roles: ['JUNIOR'], createdAt: null }
+    ] });
+    component.loadDiscipline();
+    http.expectOne('/api/admin/discipline').flush({
+      threshold: 3,
+      members: [
+        { userId: 'b', activeWarnings: 1, lastWarningAt: '2026-11-20T10:00:00', pendingDecision: false },
+        { userId: 'c', activeWarnings: 3, lastWarningAt: '2026-11-22T10:00:00', pendingDecision: true }
+      ],
+      discordBansToDo: [{ sanctionId: 9, userId: 'z', username: 'Zulu', discordId: '99', decidedByName: 'Kralone', decidedAt: '2026-11-21T10:00:00' }]
+    });
+    fixture.detectChanges();
+
+    const element: HTMLElement = fixture.nativeElement;
+    const cells = Array.from(element.querySelectorAll<HTMLButtonElement>('[data-testid="discipline-cell"]'));
+    expect(cells.map(cell => cell.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['Avertir', '1 / 3', 'À décider']);
+    expect(cells[2].querySelectorAll('.discipline-pip.is-on').length).toBe(3);
+
+    const alerts = element.querySelector('[data-testid="discipline-alerts"]')!.textContent!.replace(/\s+/g, ' ');
+    expect(alerts).toContain('Charlie · exclusion à décider');
+    expect(alerts).toContain('Zulu · exclu, bannissement Discord à effectuer');
+
+    cells[1].click();
+    expect(component.disciplineUserId).toBe('b');
+    fixture.detectChanges();
+    http.expectOne('/api/admin/discipline/members/b').flush({
+      userId: 'b', username: 'Bravo', discordId: '2', active: true, threshold: 3, activeWarnings: 1, pendingDecision: false,
+      canWarn: true, canDecide: false, warnings: [], sanctions: []
+    });
+    fixture.detectChanges();
+    expect(element.querySelector('[data-testid="discipline-drawer"]')?.textContent).toContain('Bravo');
+  });
+
+  it('keeps the members list usable when warnings cannot be loaded', () => {
+    component.loadUsers();
+    http.expectOne('/api/users/all').flush({ data: [{ id: 'a', username: 'Alpha', discordId: '1', active: true, roles: ['JUNIOR'], createdAt: null }] });
+    component.loadDiscipline();
+    http.expectOne('/api/admin/discipline').flush({}, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="discipline-cell"]')?.textContent?.trim()).toBe('—');
   });
 });

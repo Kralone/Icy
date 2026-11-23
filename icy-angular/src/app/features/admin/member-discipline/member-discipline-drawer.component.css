@@ -1,0 +1,160 @@
+/* Dossier disciplinaire, style glace-forge. --tone : couleur d'un avertissement (ambre, orange, rouge). */
+:host { --amber: 251 191 36; --orange: 251 146 60; --red: 248 113 113; --green: 52 211 153; --ice: 125 211 252; }
+
+.dz-backdrop { position: fixed; z-index: 90; inset: 0; background: rgb(1 5 10 / 0.72); backdrop-filter: blur(2px); }
+.dz-panel {
+  position: fixed; z-index: 91; top: 0; right: 0;
+  width: min(100vw, 600px); height: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+  color: rgb(226 232 240);
+  border-left: 1px solid rgb(var(--ice) / 0.25);
+  background: linear-gradient(180deg, #0b1324, #0a111c);
+  box-shadow: -35px 0 90px rgb(0 0 0 / 0.5);
+}
+@media (min-width: 2400px) { .dz-panel { width: 600px; zoom: 1.4; } }
+.dz-close {
+  position: absolute; z-index: 2; top: 1rem; right: 1rem; display: grid; width: 2.5rem; height: 2.5rem; place-items: center;
+  border: 1px solid rgb(255 255 255 / 0.2); border-radius: 50%; color: white; background: rgb(3 10 17 / 0.6);
+}
+.dz-close:hover, .dz-close:focus-visible { border-color: rgb(var(--ice) / 0.7); outline: none; }
+
+/* En-tête : la teinte suit l'état du dossier. */
+.dz-head {
+  --state: var(--ice);
+  padding: 2rem clamp(1.25rem, 4vw, 2.25rem) 1.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  background: radial-gradient(36rem 12rem at 0% 0%, rgb(var(--state) / 0.14), transparent 70%);
+}
+.dz-head[data-state='warned'] { --state: var(--amber); }
+.dz-head[data-state='pending'], .dz-head[data-state='excluded'] { --state: var(--red); }
+.dz-kicker { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(var(--state)); }
+.dz-identity { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.75rem; padding-right: 2.5rem; }
+.dz-avatar {
+  --tone: 148 163 184; flex: none; display: grid; width: 3rem; height: 3rem; place-items: center; border-radius: 9999px;
+  font-weight: 700; font-size: 1.15rem;
+  color: color-mix(in srgb, rgb(var(--tone)) 45%, rgb(241 245 249));
+  background: rgb(var(--tone) / 0.1); border: 1px solid rgb(var(--tone) / 0.3);
+}
+.dz-avatar[data-rank='ADMIN'] { --tone: 251 191 36; }
+.dz-avatar[data-rank='OFFICIER'] { --tone: 251 146 60; }
+.dz-avatar[data-rank='SPECIALISTE'] { --tone: 45 212 191; }
+.dz-avatar[data-rank='INGENIEUR'] { --tone: 34 211 238; }
+.dz-avatar[data-rank='ASSOCIE'] { --tone: 186 230 253; }
+.dz-name {
+  font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere;
+  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.dz-state { margin-top: 0.15rem; font-size: 0.85rem; color: color-mix(in srgb, rgb(var(--state)) 55%, rgb(226 232 240)); }
+
+.dz-meter { display: flex; align-items: center; gap: 0.4rem; margin-top: 1.25rem; }
+.dz-pip {
+  flex: 1; max-width: 5rem; height: 0.45rem; border-radius: 9999px;
+  background: rgb(255 255 255 / 0.07); border: 1px solid rgb(var(--tone) / 0.3);
+}
+.dz-pip.is-on { background: rgb(var(--tone)); box-shadow: 0 0 10px rgb(var(--tone) / 0.6); }
+.dz-meter-label { margin-left: 0.5rem; font-size: 0.8rem; font-variant-numeric: tabular-nums; color: rgb(148 163 184); }
+
+.dz-body { padding: 1.5rem clamp(1.25rem, 4vw, 2.25rem) 3rem; display: grid; gap: 1.5rem; }
+.dz-muted { color: rgb(148 163 184); font-size: 0.85rem; }
+.dz-error, .dz-notice, .dz-confirm { padding: 0.7rem 0.9rem; border-radius: 0.75rem; font-size: 0.85rem; }
+.dz-error { color: rgb(254 202 202); background: rgb(var(--red) / 0.1); border: 1px solid rgb(var(--red) / 0.35); }
+.dz-notice { color: rgb(167 243 208); background: rgb(var(--green) / 0.08); border: 1px solid rgb(var(--green) / 0.3); }
+.dz-confirm { margin-top: 0.9rem; color: rgb(254 202 202); background: rgb(var(--red) / 0.08); border: 1px dashed rgb(var(--red) / 0.5); }
+
+/* Cartes d'action : décision au seuil, ban à faire. */
+.dz-card { --tone: var(--red); padding: 1.1rem 1.2rem; border-radius: 1rem; border: 1px solid rgb(var(--tone) / 0.4); background: linear-gradient(160deg, rgb(var(--tone) / 0.1), rgb(var(--tone) / 0.02)); }
+.dz-ban { --tone: var(--orange); }
+.dz-card-title, .dz-section-title {
+  display: flex; align-items: center; gap: 0.6rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(203 213 225);
+}
+.dz-card-title::before, .dz-section-title::before {
+  content: ''; width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: rgb(var(--tone, var(--ice))); box-shadow: 0 0 8px rgb(var(--tone, var(--ice)) / 0.8);
+}
+.dz-text { margin-top: 0.6rem; font-size: 0.875rem; line-height: 1.6; color: rgb(203 213 225); }
+.dz-id-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.8rem; }
+.dz-id { padding: 0.35rem 0.7rem; border-radius: 0.5rem; background: #08111b; border: 1px solid rgb(255 255 255 / 0.08); font-size: 0.85rem; color: rgb(226 232 240); }
+
+/* Formulaire */
+.dz-section { display: grid; gap: 0.6rem; }
+.dz-section-title { margin-bottom: 0.3rem; }
+.dz-label { display: block; margin-top: 0.5rem; margin-bottom: 0.35rem; font-size: 0.8rem; color: rgb(203 213 225); }
+.dz-input {
+  width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.75rem; resize: vertical;
+  color: white; background: #08111b; border: 1px solid rgb(255 255 255 / 0.1); font-size: 0.9rem;
+}
+.dz-input::placeholder { color: rgb(100 116 139); }
+.dz-input:focus { outline: none; border-color: rgb(var(--ice) / 0.6); box-shadow: 0 0 0 3px rgb(var(--ice) / 0.15); }
+.dz-counter { justify-self: end; font-size: 0.72rem; color: rgb(100 116 139); font-variant-numeric: tabular-nums; }
+.dz-counter.is-over { color: rgb(var(--red)); }
+.dz-check { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.85rem; color: rgb(203 213 225); cursor: pointer; }
+.dz-check input { accent-color: rgb(var(--ice)); width: 1rem; height: 1rem; }
+
+.dz-categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.5rem; }
+.dz-category {
+  display: grid; gap: 0.15rem; padding: 0.65rem 0.8rem; border-radius: 0.75rem; cursor: pointer;
+  border: 1px solid rgb(255 255 255 / 0.08); background: rgb(255 255 255 / 0.025); transition: border-color 150ms, background 150ms;
+}
+.dz-category:hover { border-color: rgb(var(--amber) / 0.45); }
+.dz-category:has(input:focus-visible) { outline: 2px solid rgb(var(--amber)); outline-offset: 2px; }
+.dz-category.is-selected { border-color: rgb(var(--amber)); background: rgb(var(--amber) / 0.1); }
+.dz-category-label { font-size: 0.85rem; font-weight: 600; color: white; }
+.dz-category-hint { font-size: 0.72rem; color: rgb(148 163 184); }
+
+/* Aperçu du message privé, à la manière de Discord. */
+.dz-preview { margin-top: 0.4rem; padding: 0.9rem; border-radius: 0.75rem; background: #1e1f22; border: 1px solid rgb(255 255 255 / 0.05); }
+.dz-preview-from { display: flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; font-weight: 600; color: rgb(219 222 225); }
+.dz-bot { padding: 0 0.3rem; border-radius: 0.25rem; background: #5865f2; color: white; font-size: 0.6rem; line-height: 1.1rem; }
+.dz-embed { margin-top: 0.55rem; padding: 0.75rem 0.9rem; border-radius: 0.3rem; border-left: 4px solid rgb(var(--tone)); background: #2b2d31; display: grid; gap: 0.45rem; }
+.dz-embed-title { font-weight: 700; color: white; font-size: 0.92rem; }
+.dz-embed-text { font-size: 0.82rem; line-height: 1.45; color: rgb(219 222 225); }
+.dz-embed-quote { padding-left: 0.6rem; border-left: 3px solid #4e5058; font-size: 0.82rem; line-height: 1.45; color: rgb(219 222 225); white-space: pre-line; overflow-wrap: anywhere; }
+.dz-embed-quote.is-empty { color: #80848e; font-style: italic; }
+.dz-embed-footer { font-size: 0.7rem; color: #949ba4; }
+
+/* Boutons */
+.dz-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; margin-top: 0.9rem; }
+.dz-btn {
+  padding: 0.55rem 1.1rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600;
+  color: rgb(226 232 240); border: 1px solid rgb(255 255 255 / 0.15); background: rgb(255 255 255 / 0.03); transition: border-color 150ms, background 150ms;
+}
+.dz-btn:hover:not(:disabled) { border-color: rgb(var(--ice) / 0.6); }
+.dz-btn:focus-visible { outline: 2px solid rgb(var(--ice)); outline-offset: 2px; }
+.dz-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.dz-btn.is-small { padding: 0.35rem 0.85rem; font-size: 0.78rem; }
+.dz-btn.is-primary { color: #04121d; border-color: transparent; background: linear-gradient(90deg, rgb(34 211 238), rgb(14 165 233)); }
+.dz-btn.is-warn { color: #1c1003; border-color: transparent; background: linear-gradient(90deg, rgb(var(--amber)), rgb(var(--orange))); box-shadow: 0 12px 30px rgb(var(--orange) / 0.2); }
+.dz-btn.is-danger { color: white; border-color: rgb(var(--red) / 0.7); background: rgb(220 38 38 / 0.75); }
+.dz-btn.is-danger:hover:not(:disabled) { border-color: rgb(var(--red)); background: rgb(220 38 38 / 0.95); }
+.dz-link { font-size: 0.8rem; color: rgb(var(--ice)); text-decoration: underline; text-underline-offset: 3px; }
+.dz-link:hover { color: white; }
+
+/* Historique */
+.dz-history { display: grid; gap: 0.6rem; }
+.dz-entry { --tone: var(--amber); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.85rem; padding: 0.9rem; border-radius: 0.85rem; border: 1px solid rgb(255 255 255 / 0.07); background: #0b1324; }
+.dz-entry.is-revoked { opacity: 0.55; }
+.dz-entry.is-revoked .dz-entry-text { text-decoration: line-through; text-decoration-color: rgb(148 163 184 / 0.6); }
+.dz-entry.is-sanction { --tone: var(--orange); }
+.dz-entry[data-decision='EXCLUDE'] { --tone: var(--red); }
+.dz-rank {
+  display: grid; width: 2.4rem; height: 2.4rem; place-items: center; border-radius: 0.7rem; font-size: 0.78rem; font-weight: 700;
+  color: rgb(var(--tone)); background: rgb(var(--tone) / 0.12); border: 1px solid rgb(var(--tone) / 0.4);
+}
+.dz-entry-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 0.75rem; font-size: 0.88rem; color: white; }
+.dz-entry-head time { font-size: 0.75rem; color: rgb(148 163 184); }
+.dz-entry-text { margin-top: 0.3rem; font-size: 0.85rem; line-height: 1.55; color: rgb(203 213 225); white-space: pre-line; overflow-wrap: anywhere; }
+.dz-entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; margin-top: 0.45rem; font-size: 0.75rem; color: rgb(148 163 184); }
+.dz-dm { padding: 0.1rem 0.55rem; border-radius: 9999px; border: 1px solid rgb(255 255 255 / 0.12); color: rgb(203 213 225); }
+.dz-dm.is-sent { color: rgb(167 243 208); border-color: rgb(var(--green) / 0.35); background: rgb(var(--green) / 0.08); }
+.dz-dm.is-failed { color: rgb(254 202 202); border-color: rgb(var(--red) / 0.45); background: rgb(var(--red) / 0.1); }
+.dz-entry-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.55rem; }
+.dz-revoke { margin-top: 0.6rem; padding-top: 0.4rem; border-top: 1px dashed rgb(255 255 255 / 0.1); }
+
+/* Teinte d'un avertissement : déclarée en dernier pour l'emporter sur la teinte par défaut d'une ligne. */
+.dz-entry[data-tone='amber'], [data-tone='amber'] { --tone: var(--amber); }
+.dz-entry[data-tone='orange'], [data-tone='orange'] { --tone: var(--orange); }
+.dz-entry[data-tone='red'], [data-tone='red'] { --tone: var(--red); }
+
+@media (max-width: 560px) {
+  .dz-categories { grid-template-columns: 1fr 1fr; }
+  .dz-actions { justify-content: stretch; }
+  .dz-actions .dz-btn { flex: 1; }
+}
