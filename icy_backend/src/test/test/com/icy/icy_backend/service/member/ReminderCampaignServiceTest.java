@@ -208,4 +208,16 @@ class ReminderCampaignServiceTest {
 
         assertThat(fiche.getDeliveryId()).isNotEqualTo(first);
     }
+
+    @Test
+    void aManualCampaignKeepsItsMessageOnceSomeoneWasReminded() {
+        MemberActivityDtos.Campaign campaign = service.create(create("MANUEL", null, null), UUID.randomUUID(), "Kralone");
+        MemberActivityDtos.CampaignUpdate change = new MemberActivityDtos.CampaignUpdate("Rappel", "Salut {pseudo}", null, null);
+        service.update(campaign.id(), change);
+
+        MemberReminder fiche = reminderStore.values().iterator().next();
+        service.updateReminder(fiche.getId(), new MemberActivityDtos.ReminderUpdate(true, null, null, null, null), "Kralone");
+
+        assertThatThrownBy(() -> service.update(campaign.id(), change)).isInstanceOf(BadRequestException.class);
+    }
 }

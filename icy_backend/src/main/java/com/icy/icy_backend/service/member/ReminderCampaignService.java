@@ -113,6 +113,14 @@ public class ReminderCampaignService {
                 && campaign.getDelivery() == ReminderCampaign.Delivery.BOT) {
             throw new BadRequestException("Cette campagne est déjà partie : son message ne peut plus changer.");
         }
+        if (campaign.getStatus() == ReminderCampaign.Status.ANNULEE) {
+            throw new BadRequestException("Cette campagne est annulée.");
+        }
+        // Envoi à la main : dès qu'un membre est rappelé, le message des fiches doit rester celui qu'il a reçu.
+        if (campaign.getDelivery() == ReminderCampaign.Delivery.MANUEL
+                && reminders.findByCampaignIdOrderByIdAsc(id).stream().anyMatch(fiche -> fiche.getContactedAt() != null)) {
+            throw new BadRequestException("Des membres ont déjà reçu ce rappel : son message ne peut plus changer.");
+        }
         if (request == null) throw new BadRequestException("Modification vide.");
         campaign.setTitle(validTitle(request.title()));
         campaign.setBody(MessageTemplateService.validBody(request.body()));
