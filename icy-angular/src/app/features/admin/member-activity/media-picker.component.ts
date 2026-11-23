@@ -3,10 +3,12 @@ import { ImageLibraryService } from '../../../core/services/image/image-library.
 import { ImageMetadata } from '../../../model/image-metadata.model';
 
 const MEDIA = /\.(gif|webp|png|jpe?g|avif)$/i;
+/** Catégorie de la bibliothèque d'images réservée aux GIF des messages du bot. */
+export const MEDIA_CATEGORY = 'Messages du bot';
 
 /**
- * GIF joint à un message privé : choisi dans la bibliothèque d'images. Le bot le lit dans le même dossier
- * et le joint au message ; un fichier introuvable n'empêche pas l'envoi du texte.
+ * GIF joint à un message privé : choisi parmi les images de la catégorie « Messages du bot » de la bibliothèque.
+ * Le bot le lit dans le même dossier et le joint au message ; un fichier introuvable n'empêche pas l'envoi du texte.
  */
 @Component({
   selector: 'app-media-picker',
@@ -23,13 +25,13 @@ const MEDIA = /\.(gif|webp|png|jpe?g|avif)$/i;
         <div class="media__choice">
           <select class="input" (change)="pick($any($event.target).value)" aria-label="GIF joint au message">
             <option value="" [selected]="!file()">Aucun GIF</option>
-            @if (file() && !current()) { <option [value]="file()" selected>{{ file() }} (pas dans la bibliothèque)</option> }
+            @if (file() && !inCategory()) { <option [value]="file()" selected>{{ file() }} ({{ current() ? 'hors catégorie ' + category : 'pas dans la bibliothèque' }})</option> }
             @for (image of images(); track image.name) { <option [value]="image.name" [selected]="image.name === file()">{{ image.name }}</option> }
           </select>
           @if (file() && !current() && loaded()) {
             <small class="media__warning">« {{ file() }} » n’est pas dans la bibliothèque d’images : importez-le sous ce nom (Admin › Images) ou choisissez-en un autre. Sans lui, le texte part seul.</small>
           } @else {
-            <small class="muted">Les fichiers viennent de la bibliothèque d’images (Admin › Images).</small>
+            <small class="muted">Les GIF proposés sont ceux de la catégorie « {{ category }} » de la bibliothèque d’images (Admin › Images).</small>
           }
         </div>
       </div>
@@ -46,14 +48,18 @@ const MEDIA = /\.(gif|webp|png|jpe?g|avif)$/i;
 export class MediaPickerComponent implements OnInit {
   private readonly library = inject(ImageLibraryService);
   readonly file = model<string | null>(null);
-  readonly images = signal<ImageMetadata[]>([]);
+  readonly category = MEDIA_CATEGORY;
+  /** Toute la bibliothèque, pour reconnaître un fichier déjà choisi hors de la catégorie. */
+  private readonly allImages = signal<ImageMetadata[]>([]);
+  readonly images = computed(() => this.allImages().filter(image => sameCategory(image.category)));
   readonly loaded = signal(false);
-  readonly current = computed(() => this.images().find(image => image.name === this.file()) ?? null);
+  readonly current = computed(() => this.allImages().find(image => image.name === this.file()) ?? null);
+  readonly inCategory = computed(() => this.images().some(image => image.name === this.file()));
 
   ngOnInit(): void {
     this.library.getAll().subscribe({
       next: images => {
-        this.images.set((images ?? []).filter(image => MEDIA.test(image.name)).sort((a, b) => a.name.localeCompare(b.name)));
+        this.allImages.set((images ?? []).filter(image => MEDIA.test(image.name)).sort((a, b) => a.name.localeCompare(b.name)));
         this.loaded.set(true);
       },
       error: () => this.loaded.set(true)
@@ -63,4 +69,8 @@ export class MediaPickerComponent implements OnInit {
   pick(name: string): void {
     this.file.set(name || null);
   }
+}
+
+function sameCategory(category: string | undefined): boolean {
+  return (category ?? '').trim().localeCompare(MEDIA_CATEGORY, 'fr', { sensitivity: 'base' }) === 0;
 }
