@@ -35,6 +35,14 @@ public class RabbitConfig {
 
     public static final String USERS_QUEUE = "users.queue";
 
+    // === MESSAGES PRIVÉS ENVOYÉS PAR LE BOT ===
+    /** File du bot : « dm.* ». */
+    public static final String DIRECT_MESSAGE_QUEUE = "dm.queue";
+    public static final String DIRECT_MESSAGE_SEND_KEY = "dm.send";
+    /** Retour du bot. Il ne commence pas par « dm. » pour ne pas retomber dans la file du bot. */
+    public static final String DIRECT_MESSAGE_RESULT_QUEUE = "directmessage.result.queue";
+    public static final String DIRECT_MESSAGE_RESULT_KEY = "directmessage.result";
+
     // === NOUVEL ESSAI ET FILE MORTE (messages reçus du bot que le serveur n'a pas pu traiter) ===
     /** Un message y attend {@link #BACKEND_RETRY_DELAY_MS} ms, puis revient dans l'échange principal avec sa clé d'origine. */
     public static final String BACKEND_RETRY_EXCHANGE = "icy.exchange.backend.retry";
@@ -124,6 +132,27 @@ public class RabbitConfig {
         return BindingBuilder.bind(usersQueue)
                 .to(icyExchange)
                 .with(USERS_ROUTING_KEY);
+    }
+
+    // === MESSAGES PRIVÉS ===
+    @Bean
+    public Queue directMessageQueue() {
+        return new Queue(DIRECT_MESSAGE_QUEUE, true);
+    }
+
+    @Bean
+    public Binding directMessageBinding(Queue directMessageQueue, TopicExchange icyExchange) {
+        return BindingBuilder.bind(directMessageQueue).to(icyExchange).with("dm.*");
+    }
+
+    @Bean
+    public Queue directMessageResultQueue() {
+        return new Queue(DIRECT_MESSAGE_RESULT_QUEUE, true);
+    }
+
+    @Bean
+    public Binding directMessageResultBinding(Queue directMessageResultQueue, TopicExchange icyExchange) {
+        return BindingBuilder.bind(directMessageResultQueue).to(icyExchange).with(DIRECT_MESSAGE_RESULT_KEY);
     }
 
     // === NOUVEL ESSAI ET FILE MORTE ===

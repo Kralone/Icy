@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 
 import { User } from '../../../model/user.model';
@@ -8,6 +9,7 @@ import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { LoadingOverlayComponent } from '../../../shared/loading-overlay/loading-overlay.component';
 import { finalize } from 'rxjs';
+import { MemberActivityService } from '../../../core/services/member/member-activity.service';
 import { PoleIconComponent } from '../../../shared/pole-icon/pole-icon.component';
 import { AvailabilityHeatmapComponent } from '../../../shared/availability/availability-heatmap.component';
 import { SPECIALIST_RANK, SPECIALTIES, TREASURER_ROLE, hasRole, memberRank, specialtyLabel } from '../../../core/services/user/member-rank';
@@ -28,6 +30,7 @@ function toTime(value?: string | null): number | null {
   imports: [
     FormsModule,
     DatePipe,
+    RouterLink,
     PoleIconComponent,
     LoadingOverlayComponent,
     AvailabilityHeatmapComponent
@@ -100,7 +103,75 @@ export class AdminDashboardComponent implements OnInit {
     RECRUE: 'JUNIOR'
   };
 
-  constructor(private userService: UserService, private authService: AuthService) {}
+  /** Grade et fonction avant modification : une montée de grade propose l'annonce en message privé. */
+  private originalRank: string | null = null;
+  private originalTreasurer = false;
+  /** Annoncer la promotion, la nomination ou la bienvenue en message privé par le bot. */
+  announce = true;
+  announceNotice: string | null = null;
+
+  private readonly promotionLabels: Record<string, string> = {
+    BIENVENUE_JUNIOR: 'Bienvenue',
+    PROMOTION_ASSOCIE: 'Promotion Associé',
+    PROMOTION_INGENIEUR: 'Promotion Ingénieur',
+    PROMOTION_SPECIALISTE_INDUSTRIE: 'Nomination Spécialiste Industrie',
+    PROMOTION_SPECIALISTE_LOGISTIQUE: 'Nomination Spécialiste Logistique',
+    PROMOTION_SPECIALISTE_MILITAIRE: 'Nomination Spécialiste Militaire',
+    PROMOTION_OFFICIER: 'Nomination Officier',
+    NOMINATION_TRESORIER: 'Nomination Trésorier'
+  };
+
+  constructor(private userService: UserService, private authService: AuthService, private memberActivity: MemberActivityService) {}
+
+  /**
+   * Messages à annoncer pour la saisie en cours : la bienvenue d'un nouveau Junior, une montée de grade
+   * (pas une rétrogradation), une nouvelle fonction de trésorier. Directeur n'a pas d'annonce.
+   */
+  get announcementCodes(): string[] {
+    const codes: string[] = [];
+    const rank = this.newUser.role;
+    const code = (target: string): string | null => {
+      if (target === SPECIALIST_RANK) return this.newUser.specialty ? `PROMOTION_SPECIALISTE_${this.newUser.specialty}` : null;
+      return this.promotionLabels[`PROMOTION_${target}`] ? `PROMOTION_${target}` : null;
+    };
+    if (!this.isEditMode) {
+      if (rank === 'JUNIOR') codes.push('BIENVENUE_JUNIOR');
+      else { const promotion = code(rank); if (promotion) codes.push(promotion); }
+      return codes;
+    }
+    const before = this.availableRoles.indexOf(this.originalRank ?? 'JUNIOR');
+    const after = this.availableRoles.indexOf(rank);
+    if (after >= 0 && before >= 0 && after < before) {
+      const promotion = code(rank);
+      if (promotion) codes.push(promotion);
+    }
+    if (this.newUser.treasurer && !this.originalTreasurer) codes.push('NOMINATION_TRESORIER');
+    return codes;
+  }
+
+  get announcementLabel(): string {
+    return this.announcementCodes.map(code => this.promotionLabels[code] ?? code).join(' et ');
+  }
+
+  /** Envoie les annonces après l'enregistrement ; un échec n'annule pas la modification du membre. */
+  private sendAnnouncements(userId: string | null | undefined, codes: string[]): void {
+    if (!userId || !codes.length) return;
+    let pending = codes.length;
+    let failed = 0;
+    for (const code of codes) {
+      this.memberActivity.announce(userId, code).subscribe({
+        next: () => { if (--pending === 0) this.finishAnnouncements(failed, codes.length); },
+        error: () => { failed++; if (--pending === 0) this.finishAnnouncements(failed, codes.length); }
+      });
+    }
+  }
+
+  private finishAnnouncements(failed: number, total: number): void {
+    this.announceNotice = failed
+      ? `Membre enregistré, mais ${failed} annonce${failed > 1 ? 's' : ''} sur ${total} n’a pas pu partir. Renvoyez-la depuis Activité et rappels.`
+      : `Annonce confiée au bot. Suivi dans Activité et rappels.`;
+    setTimeout(() => (this.announceNotice = null), 6000);
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -256,14 +327,20 @@ export class AdminDashboardComponent implements OnInit {
     };
     this.isEditMode = false;
     this.editedUserId = null;
+    this.originalRank = null;
+    this.originalTreasurer = false;
+    this.announce = true;
   }
 
   // ==== CRUD actions ====
   addUser(): void {
     if (!this.newUser.username || !this.newUser.discordId || !this.newUser.role || this.specialtyMissing) return;
 
+    const codes = this.announce ? this.announcementCodes : [];
     this.userService.createUser(this.newUser.username, this.newUser.discordId, this.newUser.role, this.selectedSpecialty).subscribe({
-      next: () => {
+      next: (created) => {
+        const response = created as unknown as { id?: string; data?: { id?: string } };
+        this.sendAnnouncements(response?.data?.id ?? response?.id, codes);
         this.closeModal();
         this.loadUsers();
       },
@@ -284,6 +361,9 @@ export class AdminDashboardComponent implements OnInit {
     };
 
     this.editedUserId = user.id;
+    this.originalRank = this.newUser.role;
+    this.originalTreasurer = this.newUser.treasurer;
+    this.announce = true;
     this.isEditMode = true;
     this.isAddUserModalOpen = true;
   }
@@ -300,8 +380,11 @@ export class AdminDashboardComponent implements OnInit {
       specialty: this.selectedSpecialty
     };
 
+    const codes = this.announce ? this.announcementCodes : [];
+    const userId = this.editedUserId;
     this.userService.updateUser(payload).subscribe({
       next: () => {
+        this.sendAnnouncements(userId, codes);
         this.closeModal();
         this.loadUsers();
       },

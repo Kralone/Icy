@@ -1,0 +1,171 @@
+<main class="glace-page activity-page activity-ui">
+  <header class="activity-header">
+    <div class="activity-header__top">
+      <h1 class="glace-title">Activité et rappels</h1>
+      <nav class="header-links" aria-label="Pages des membres">
+        <a routerLink="/icy/admin/members" class="pill-link"><span aria-hidden="true">←</span> Liste des membres</a>
+        <button type="button" class="pill-link" (click)="openSettings()" [attr.aria-expanded]="settingsOpen">
+          Seuils : {{ settings.watchDays }} j / {{ settings.inactiveDays }} j
+        </button>
+      </nav>
+    </div>
+
+    @if (settingsOpen) {
+      <form class="settings glace-panel" (ngSubmit)="saveSettings()" data-testid="activity-settings">
+        <p class="settings__help">Jours sans visite du site ni opération confirmée avant qu’un membre passe « à surveiller », puis « inactif ».</p>
+        <label>À surveiller dès
+          <input type="number" min="1" max="364" name="watchDays" [(ngModel)]="settingsDraft.watchDays" [disabled]="!isDirector"> jours
+        </label>
+        <label>Inactif dès
+          <input type="number" min="2" max="365" name="inactiveDays" [(ngModel)]="settingsDraft.inactiveDays" [disabled]="!isDirector"> jours
+        </label>
+        @if (isDirector) {
+          <button type="submit" class="btn btn--primary">Enregistrer</button>
+        } @else {
+          <span class="settings__help">Seule la Direction change les seuils.</span>
+        }
+        @if (settingsError) { <p class="form-error" role="alert">{{ settingsError }}</p> }
+      </form>
+    }
+
+    <div class="vitals" aria-label="Répartition des membres">
+      @for (state of filters.slice(0, 4); track state.key) {
+        <button type="button" class="vital" [attr.data-state]="state.key" [class.vital--active]="tab === 'membres' && filter === state.key"
+          (click)="setTab('membres'); filter = state.key">
+          <span class="vital__value">{{ loading ? '—' : count(state.key) }}</span>
+          <span class="vital__label">{{ state.label }}</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab === 'membres'" [attr.aria-selected]="tab === 'membres'" (click)="setTab('membres')">Membres</button>
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab === 'campagnes'" [attr.aria-selected]="tab === 'campagnes'" (click)="setTab('campagnes')">
+      Campagnes de rappel @if (activeCampaigns) { <span class="tab__badge">{{ activeCampaigns }}</span> }
+    </button>
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab === 'messages'" [attr.aria-selected]="tab === 'messages'" (click)="setTab('messages')">Messages du bot</button>
+  </div>
+
+  @if (error) {
+    <div class="glace-panel load-error" role="alert">
+      <p>{{ error }}</p>
+      <button type="button" class="btn" (click)="reload()">Réessayer</button>
+    </div>
+  }
+
+  <!-- ================= MEMBRES ================= -->
+  @if (tab === 'membres') {
+    <section class="glace-panel list-panel" aria-label="Activité des membres">
+      <div class="toolbar">
+        <div class="chips" role="radiogroup" aria-label="Filtrer par état">
+          @for (option of filters; track option.key) {
+            <button type="button" role="radio" class="chip" [attr.data-state]="option.key" [class.chip--active]="filter === option.key"
+              [attr.aria-checked]="filter === option.key" (click)="filter = option.key">
+              {{ option.label }} <span>{{ count(option.key) }}</span>
+            </button>
+          }
+        </div>
+        <input type="search" class="search" placeholder="Rechercher un membre" [(ngModel)]="search" aria-label="Rechercher un membre">
+      </div>
+
+      <div class="list-head">
+        <label class="check">
+          <input type="checkbox" [checked]="allVisibleSelected" (change)="toggleAllVisible()" [disabled]="!visibleMembers.length">
+          <span>Tout cocher</span>
+        </label>
+        <button type="button" class="link-button" (click)="selectInactiveNotReminded()">Cocher les inactifs pas encore prévenus</button>
+      </div>
+
+      <ul class="member-list" data-testid="activity-members">
+        @for (member of visibleMembers; track member.userId) {
+          <li class="member-row" [attr.data-state]="member.state" [class.member-row--selected]="selected.has(member.userId)">
+            <label class="check member-row__check">
+              <input type="checkbox" [checked]="selected.has(member.userId)" (change)="toggle(member)" [attr.aria-label]="'Sélectionner ' + member.username">
+            </label>
+
+            <button type="button" class="member-row__identity" (click)="drawerMember = member">
+              <span class="avatar" [attr.data-rank]="rankKey(member)" aria-hidden="true">
+                @if (member.avatarUrl) { <img [src]="member.avatarUrl" alt=""> } @else { {{ member.username.charAt(0).toUpperCase() }} }
+              </span>
+              <span class="min-w-0">
+                <strong>{{ member.username }}</strong>
+                <small>{{ rankLabel(member) }}</small>
+              </span>
+            </button>
+
+            <div class="member-row__state">
+              <span class="state-badge" [attr.data-state]="member.state">{{ stateLabels[member.state] }}</span>
+              @if (member.manual?.state && member.state !== member.computedState) {
+                <small class="muted" [title]="'Calcul : ' + stateLabels[member.computedState]">noté à la main{{ member.manual?.until ? ' jusqu’au ' + (member.manual?.until | date:'d MMM') : '' }}</small>
+              }
+            </div>
+
+            <div class="member-row__days">
+              <span class="days">{{ daysText(member.daysInactive) }}</span>
+              <span class="gauge" aria-hidden="true"><span [style.width.%]="gauge(member) * 100"></span></span>
+            </div>
+
+            <dl class="member-row__dates">
+              <div><dt>Site</dt><dd>{{ member.lastSeenAt ? (member.lastSeenAt | date:'d MMM yyyy') : 'Jamais' }}</dd></div>
+              <div><dt>Opération</dt><dd>{{ member.lastOperationAt ? (member.lastOperationAt | date:'d MMM yyyy') : 'Aucune' }}</dd></div>
+            </dl>
+
+            <div class="member-row__reminder">
+              @if (member.reminder; as reminder) {
+                <button type="button" class="reminder-tag" [attr.data-tone]="reminderTone(member)" (click)="openCampaign(reminder.campaignId)"
+                  [title]="reminder.campaignTitle ?? ''">
+                  <span class="dot" aria-hidden="true"></span>
+                  <span>{{ reminderText(member) }}</span>
+                  @if (reminder.contactedAt) { <small>rappelé le {{ reminder.contactedAt | date:'d MMM' }}</small> }
+                </button>
+              } @else {
+                <span class="muted">Jamais rappelé</span>
+              }
+            </div>
+          </li>
+        } @empty {
+          @if (!loading) {
+            <li class="empty">
+              {{ filter === 'INACTIF' ? 'Aucun membre inactif. Tout le monde est passé récemment.' : 'Aucun membre dans cette catégorie.' }}
+            </li>
+          }
+        }
+        @if (loading) {
+          @for (placeholder of [1, 2, 3, 4]; track placeholder) { <li class="member-row member-row--skeleton" aria-hidden="true"></li> }
+        }
+      </ul>
+    </section>
+
+    @if (selected.size) {
+      <div class="selection-bar" role="region" aria-label="Sélection">
+        <span><strong>{{ selected.size }}</strong> membre{{ selected.size > 1 ? 's' : '' }} sélectionné{{ selected.size > 1 ? 's' : '' }}</span>
+        <button type="button" class="link-button" (click)="clearSelection()">Vider</button>
+        <button type="button" class="btn btn--primary" (click)="composerOpen = true" data-testid="prepare-reminder">Préparer le rappel</button>
+      </div>
+    }
+  }
+
+  <!-- ================= CAMPAGNES ================= -->
+  @if (tab === 'campagnes') {
+    @if (openCampaignId !== null) {
+      <app-campaign-detail [campaignId]="openCampaignId" (back)="openCampaignId = null; loadCampaigns()" (changed)="reload()" />
+    } @else {
+      <app-campaign-history [campaigns]="campaigns" (open)="openCampaign($event)" (showInactive)="setTab('membres'); selectInactiveNotReminded()" />
+    }
+  }
+
+  <!-- ================= MESSAGES ================= -->
+  @if (tab === 'messages') {
+    <app-message-templates [templates]="templates" (saved)="reload()" />
+  }
+
+  @if (composerOpen) {
+    <app-campaign-composer [members]="selectedMembers" [templates]="templates" (closed)="composerOpen = false" (created)="campaignCreated($event)" />
+  }
+
+  @if (drawerMember) {
+    <app-member-drawer [member]="drawerMember" [settings]="settings" [templates]="templates"
+      (closed)="drawerMember = null" (changed)="reload()" (openCampaign)="drawerMember = null; openCampaign($event)" />
+  }
+</main>

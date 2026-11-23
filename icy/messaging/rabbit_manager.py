@@ -78,7 +78,8 @@ class RabbitManager:
             "events": "events.queue",
             "users": "users.queue",
             "scwe": "scwe.queue",
-            "mining": "mining.queue"
+            "mining": "mining.queue",
+            "dm": "dm.queue",
         }
 
     @staticmethod
