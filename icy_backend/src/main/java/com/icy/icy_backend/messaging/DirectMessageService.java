@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class DirectMessageService {
     /** Limites Discord : 2000 caractères pour un message, 4096 pour la description d'une carte. */
-    static final int CONTENT_LIMIT = 2000;
+    public static final int CONTENT_LIMIT = 2000;
     static final int DESCRIPTION_LIMIT = 4096;
     /** Sans réponse du bot après ce délai (bot arrêté, message en file morte), l'envoi est noté en échec. */
     static final Duration ANSWER_TIMEOUT = Duration.ofMinutes(30);

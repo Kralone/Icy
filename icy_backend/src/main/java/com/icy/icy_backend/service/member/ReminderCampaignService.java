@@ -79,6 +79,7 @@ public class ReminderCampaignService {
         List<User> members = users.findAllById(userIds);
         if (members.size() != userIds.size()) throw new BadRequestException("Un des membres choisis n'existe plus ou a été désactivé.");
 
+        checkRenderedLength(MessageTemplateService.validBody(request.body()), members);
         boolean sendNow = Boolean.TRUE.equals(request.sendNow());
         LocalDateTime scheduledAt = delivery == ReminderCampaign.Delivery.BOT && !sendNow ? request.scheduledAt() : null;
         if (scheduledAt != null && scheduledAt.isBefore(LocalDateTime.now(OperationLock.ZONE).minusMinutes(1))) {
@@ -125,7 +126,9 @@ public class ReminderCampaignService {
         }
         if (request == null) throw new BadRequestException("Modification vide.");
         campaign.setTitle(validTitle(request.title()));
-        campaign.setBody(MessageTemplateService.validBody(request.body()));
+        String body = MessageTemplateService.validBody(request.body());
+        checkRenderedLength(body, users.findAllByIdIncludingInactive(ids(reminders.findByCampaignIdOrderByIdAsc(id))));
+        campaign.setBody(body);
         campaign.setMediaFile(MessageTemplateService.validMedia(request.mediaFile()));
         if (campaign.getDelivery() == ReminderCampaign.Delivery.BOT) {
             if (request.scheduledAt() != null && request.scheduledAt().isBefore(LocalDateTime.now(OperationLock.ZONE).minusMinutes(1))) {
@@ -371,6 +374,16 @@ public class ReminderCampaignService {
 
     private MemberReminder findReminder(Long id) {
         return reminders.findById(id).orElseThrow(() -> new ResourceNotFoundException("Fiche de rappel introuvable."));
+    }
+
+    /** Le texte personnalisé doit tenir dans un message Discord pour chaque membre, pseudo et grade remplacés. */
+    private static void checkRenderedLength(String body, Collection<User> members) {
+        for (User member : members) {
+            if (MessageTemplateService.render(body, member, null).length() > DirectMessageService.CONTENT_LIMIT) {
+                throw new BadRequestException("Une fois personnalisé pour " + member.getUsername() + ", le message dépasse "
+                        + DirectMessageService.CONTENT_LIMIT + " caractères : raccourcissez-le.");
+            }
+        }
     }
 
     private static String validTitle(String title) {

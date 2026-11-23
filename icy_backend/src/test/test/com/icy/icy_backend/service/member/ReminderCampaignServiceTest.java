@@ -252,4 +252,16 @@ class ReminderCampaignServiceTest {
         assertThatThrownBy(() -> service.resend(draft.getId(), UUID.randomUUID(), "Kralone")).isInstanceOf(BadRequestException.class);
         verifyNoInteractions(directMessageService);
     }
+
+    @Test
+    void aMessageTooLongOnceThePseudoIsInIsRefused() {
+        torin.setUsername("Torin_le_tres_long_pseudo");
+        String body = "{pseudo} ".repeat(200) + "x".repeat(1900 - 9 * 200);
+        assertThat(body.length()).isLessThanOrEqualTo(1900);
+        MemberActivityDtos.CampaignCreate request = new MemberActivityDtos.CampaignCreate("Rappel", body, null, "MANUEL",
+                List.of(vexa.getId(), torin.getId()), null, null);
+
+        assertThatThrownBy(() -> service.create(request, UUID.randomUUID(), "Kralone")).isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("2000");
+    }
 }
