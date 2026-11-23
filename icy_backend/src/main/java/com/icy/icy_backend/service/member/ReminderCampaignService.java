@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service.member;
 
+import com.icy.icy_backend.service.operation.OperationLock;
 import com.icy.icy_backend.controller.dto.member.MemberActivityDtos;
 import com.icy.icy_backend.db.entity.member.DirectMessage;
 import com.icy.icy_backend.db.entity.member.MemberFollowUp;
@@ -78,7 +79,7 @@ public class ReminderCampaignService {
 
         boolean sendNow = Boolean.TRUE.equals(request.sendNow());
         LocalDateTime scheduledAt = delivery == ReminderCampaign.Delivery.BOT && !sendNow ? request.scheduledAt() : null;
-        if (scheduledAt != null && scheduledAt.isBefore(LocalDateTime.now().minusMinutes(1))) {
+        if (scheduledAt != null && scheduledAt.isBefore(LocalDateTime.now(OperationLock.ZONE).minusMinutes(1))) {
             throw new BadRequestException("L'heure d'envoi programmée est déjà passée.");
         }
         ReminderCampaign campaign = campaigns.save(ReminderCampaign.builder()
@@ -91,7 +92,7 @@ public class ReminderCampaignService {
                 .scheduledAt(scheduledAt)
                 .createdBy(authorId)
                 .createdByName(authorName)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(OperationLock.ZONE))
                 .build());
 
         Map<UUID, Integer> days = activity.daysInactive(userIds);
@@ -117,7 +118,7 @@ public class ReminderCampaignService {
         campaign.setBody(MessageTemplateService.validBody(request.body()));
         campaign.setMediaFile(MessageTemplateService.validMedia(request.mediaFile()));
         if (campaign.getDelivery() == ReminderCampaign.Delivery.BOT) {
-            if (request.scheduledAt() != null && request.scheduledAt().isBefore(LocalDateTime.now().minusMinutes(1))) {
+            if (request.scheduledAt() != null && request.scheduledAt().isBefore(LocalDateTime.now(OperationLock.ZONE).minusMinutes(1))) {
                 throw new BadRequestException("L'heure d'envoi programmée est déjà passée.");
             }
             campaign.setScheduledAt(request.scheduledAt());
@@ -167,7 +168,7 @@ public class ReminderCampaignService {
     @Scheduled(fixedDelayString = "${iceforge.reminders.schedule-check-ms:60000}", initialDelayString = "${iceforge.reminders.schedule-check-ms:60000}")
     @Transactional
     public void sendDueCampaigns() {
-        for (ReminderCampaign campaign : campaigns.findByStatusAndScheduledAtLessThanEqual(ReminderCampaign.Status.PROGRAMMEE, LocalDateTime.now())) {
+        for (ReminderCampaign campaign : campaigns.findByStatusAndScheduledAtLessThanEqual(ReminderCampaign.Status.PROGRAMMEE, LocalDateTime.now(OperationLock.ZONE))) {
             List<MemberReminder> fiches = reminders.findByCampaignIdOrderByIdAsc(campaign.getId());
             MemberActivityDtos.SendResult result = dispatch(campaign, fiches, users.findAllById(ids(fiches)), campaign.getCreatedBy());
             log.info("Campagne de rappel {} envoyée à l'heure prévue : {} message(s), {} ignoré(s)", campaign.getId(), result.queued(), result.skipped().size());
@@ -188,7 +189,7 @@ public class ReminderCampaignService {
             }
         }
         sendOne(campaign, fiche, user, requestedBy);
-        fiche.setUpdatedAt(LocalDateTime.now());
+        fiche.setUpdatedAt(LocalDateTime.now(OperationLock.ZONE));
         fiche.setUpdatedBy(author);
         reminders.save(fiche);
         return reminderDto(fiche, campaign);
@@ -199,7 +200,7 @@ public class ReminderCampaignService {
         if (request == null) throw new BadRequestException("Modification vide.");
         MemberReminder fiche = findReminder(reminderId);
         ReminderCampaign campaign = find(fiche.getCampaignId());
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(OperationLock.ZONE);
         if (request.contacted() != null) {
             if (request.contacted() && fiche.getContactedAt() == null) fiche.setContactedAt(now);
             if (!request.contacted()) {
@@ -215,7 +216,7 @@ public class ReminderCampaignService {
             if (decision == MemberReminder.Decision.PAUSE && request.pauseUntil() == null) {
                 throw new BadRequestException("Indiquez jusqu'à quand le membre est en pause.");
             }
-            if (decision == MemberReminder.Decision.PAUSE && request.pauseUntil().isBefore(LocalDate.now())) {
+            if (decision == MemberReminder.Decision.PAUSE && request.pauseUntil().isBefore(LocalDate.now(OperationLock.ZONE))) {
                 throw new BadRequestException("La fin de la pause est déjà passée.");
             }
             fiche.setDecision(decision);
@@ -242,7 +243,7 @@ public class ReminderCampaignService {
         if (!ORIGIN.equals(event.origin())) return;
         reminders.findByDeliveryId(event.deliveryId()).ifPresent(fiche -> {
             if (event.status() == DirectMessage.Status.SENT && fiche.getContactedAt() == null) {
-                fiche.setContactedAt(LocalDateTime.now());
+                fiche.setContactedAt(LocalDateTime.now(OperationLock.ZONE));
                 reminders.save(fiche);
             }
         });
@@ -255,7 +256,7 @@ public class ReminderCampaignService {
     private void applyDecision(MemberReminder fiche, MemberReminder.Decision decision, String author) {
         if (decision == MemberReminder.Decision.REVIENT) {
             activity.markFromReminder(fiche.getUserId(), MemberFollowUp.ManualState.ACTIF,
-                    LocalDate.now().plusDays(activity.settings().getWatchDays()), author);
+                    LocalDate.now(OperationLock.ZONE).plusDays(activity.settings().getWatchDays()), author);
         } else if (decision == MemberReminder.Decision.PAUSE) {
             activity.markFromReminder(fiche.getUserId(), MemberFollowUp.ManualState.EN_PAUSE, fiche.getPauseUntil(), author);
         }
@@ -281,7 +282,7 @@ public class ReminderCampaignService {
         }
         reminders.saveAll(fiches);
         campaign.setStatus(ReminderCampaign.Status.EN_COURS);
-        campaign.setSentAt(LocalDateTime.now());
+        campaign.setSentAt(LocalDateTime.now(OperationLock.ZONE));
         campaigns.save(campaign);
         return new MemberActivityDtos.SendResult(queued, skipped);
     }

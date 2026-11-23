@@ -127,7 +127,7 @@ class ReminderCampaignServiceTest {
 
     @Test
     void aScheduledCampaignWaitsForItsTime() {
-        LocalDateTime tomorrow = LocalDateTime.now().plusDays(1);
+        LocalDateTime tomorrow = LocalDateTime.now(java.time.ZoneId.of("Europe/Paris")).plusDays(1);
         MemberActivityDtos.Campaign campaign = service.create(create("BOT", false, tomorrow), UUID.randomUUID(), "Kralone");
 
         assertThat(campaign.status()).isEqualTo("PROGRAMMEE");
@@ -143,7 +143,7 @@ class ReminderCampaignServiceTest {
 
     @Test
     void aScheduleInThePastIsRefused() {
-        assertThatThrownBy(() -> service.create(create("BOT", false, LocalDateTime.now().minusHours(1)), UUID.randomUUID(), "Kralone"))
+        assertThatThrownBy(() -> service.create(create("BOT", false, LocalDateTime.now(java.time.ZoneId.of("Europe/Paris")).minusHours(1)), UUID.randomUUID(), "Kralone"))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -166,7 +166,7 @@ class ReminderCampaignServiceTest {
         assertThatThrownBy(() -> service.updateReminder(fiche.getId(), new MemberActivityDtos.ReminderUpdate(null, null, "PAUSE", null, null), "Kralone"))
                 .isInstanceOf(BadRequestException.class);
 
-        LocalDate until = LocalDate.now().plusMonths(2);
+        LocalDate until = LocalDate.now(java.time.ZoneId.of("Europe/Paris")).plusMonths(2);
         MemberActivityDtos.Reminder updated = service.updateReminder(fiche.getId(),
                 new MemberActivityDtos.ReminderUpdate(null, null, "PAUSE", until, "Déménagement"), "Kralone");
 
@@ -184,7 +184,7 @@ class ReminderCampaignServiceTest {
 
         service.updateReminder(fiche.getId(), new MemberActivityDtos.ReminderUpdate(true, true, "REVIENT", null, null), "Kralone");
 
-        verify(activity).markFromReminder(vexa.getId(), MemberFollowUp.ManualState.ACTIF, LocalDate.now().plusDays(14), "Kralone");
+        verify(activity).markFromReminder(vexa.getId(), MemberFollowUp.ManualState.ACTIF, LocalDate.now(java.time.ZoneId.of("Europe/Paris")).plusDays(14), "Kralone");
     }
 
     @Test

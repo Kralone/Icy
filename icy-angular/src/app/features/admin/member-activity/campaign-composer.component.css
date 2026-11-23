@@ -1,0 +1,27 @@
+.composer { width: min(100vw, 680px); }
+.composer__body { display: grid; gap: 1.35rem; padding: clamp(1.25rem, 4vw, 2.5rem); padding-top: 1.5rem; }
+.eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #67e8f9; }
+h2 { margin-top: 0.3rem; font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 600; color: white; }
+.recipients { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; max-height: 7.5rem; overflow-y: auto; }
+.recipients li { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.65rem; border-radius: 9999px; border: 1px solid rgb(var(--tone) / 0.3); font-size: 0.78rem; }
+.recipients li > span { width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: rgb(var(--tone)); }
+.recipients small { color: rgb(148 163 184); }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.modes legend { margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600; color: rgb(203 213 225); letter-spacing: 0.04em; }
+.mode { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0.85rem; border-radius: 0.85rem; border: 1px solid rgb(255 255 255 / 0.1); background: rgb(255 255 255 / 0.02); font-size: 0.85rem; cursor: pointer; transition: border-color 160ms ease; }
+.mode:hover { border-color: rgb(125 211 252 / 0.5); }
+.mode:has(input:focus-visible) { outline: 2px solid #67e8f9; outline-offset: 2px; }
+.mode--active { border-color: #67e8f9; background: rgb(103 232 249 / 0.08); color: white; }
+.mode__radio { flex: none; width: 1rem; height: 1rem; border-radius: 9999px; border: 2px solid rgb(148 163 184); }
+.mode--active .mode__radio { border-color: #67e8f9; box-shadow: inset 0 0 0 3px #0b1324; background: #67e8f9; }
+.modes__help { grid-column: 1 / -1; line-height: 1.5; }
+.modes app-date-time-field { grid-column: 1 / -1; }
+.counter { justify-self: end; color: rgb(100 116 139); font-size: 0.72rem; }
+.counter--over { color: rgb(252 165 165); }
+.preview { display: grid; gap: 0.5rem; }
+.preview__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.composer__actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 0; background: linear-gradient(180deg, transparent, #0a111c 35%); }
+@media (max-width: 560px) {
+  .modes { grid-template-columns: 1fr; }
+  .composer__actions { flex-direction: column-reverse; }
+}

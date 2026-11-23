@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service.member;
 
+import com.icy.icy_backend.service.operation.OperationLock;
 import com.icy.icy_backend.controller.dto.member.MemberActivityDtos;
 import com.icy.icy_backend.db.entity.member.MessageTemplate;
 import com.icy.icy_backend.db.entity.user.Specialty;
@@ -49,7 +50,7 @@ public class MessageTemplateService {
         MessageTemplate template = get(code);
         template.setBody(validBody(request == null ? null : request.body()));
         template.setMediaFile(validMedia(request.mediaFile()));
-        template.setUpdatedAt(LocalDateTime.now());
+        template.setUpdatedAt(LocalDateTime.now(OperationLock.ZONE));
         template.setUpdatedBy(author);
         return toDto(templates.save(template));
     }

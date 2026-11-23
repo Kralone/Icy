@@ -1,5 +1,6 @@
 package com.icy.icy_backend.messaging;
 
+import com.icy.icy_backend.service.operation.OperationLock;
 import com.icy.icy_backend.config.RabbitConfig;
 import com.icy.icy_backend.db.entity.member.DirectMessage;
 import com.icy.icy_backend.db.entity.user.User;
@@ -67,7 +68,7 @@ public class DirectMessageService {
                 .embedTitle(request.embed() == null ? null : request.embed().title())
                 .mediaFile(blankToNull(request.mediaFile()))
                 .requestedBy(request.requestedBy())
-                .requestedAt(LocalDateTime.now())
+                .requestedAt(LocalDateTime.now(OperationLock.ZONE))
                 .status(DirectMessage.Status.PENDING)
                 .build());
 
@@ -106,7 +107,7 @@ public class DirectMessageService {
     @Scheduled(fixedDelayString = "${iceforge.direct-messages.sweep-ms:600000}", initialDelayString = "${iceforge.direct-messages.sweep-ms:600000}")
     @Transactional
     public void expireUnanswered() {
-        for (DirectMessage message : messages.findByStatusAndRequestedAtBefore(DirectMessage.Status.PENDING, LocalDateTime.now().minus(ANSWER_TIMEOUT))) {
+        for (DirectMessage message : messages.findByStatusAndRequestedAtBefore(DirectMessage.Status.PENDING, LocalDateTime.now(OperationLock.ZONE).minus(ANSWER_TIMEOUT))) {
             complete(message, DirectMessage.Status.FAILED, "no_answer");
         }
     }
@@ -114,7 +115,7 @@ public class DirectMessageService {
     private void complete(DirectMessage message, DirectMessage.Status status, String reason) {
         message.setStatus(status);
         message.setReason(reason == null ? null : reason.substring(0, Math.min(40, reason.length())));
-        message.setCompletedAt(LocalDateTime.now());
+        message.setCompletedAt(LocalDateTime.now(OperationLock.ZONE));
         messages.save(message);
         events.publishEvent(new DirectMessageResultEvent(message.getId(), message.getUserId(), message.getOrigin(),
                 message.getReference(), status, message.getReason()));

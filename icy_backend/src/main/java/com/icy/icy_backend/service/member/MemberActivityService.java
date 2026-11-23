@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service.member;
 
+import com.icy.icy_backend.service.operation.OperationLock;
 import com.icy.icy_backend.controller.dto.member.MemberActivityDtos;
 import com.icy.icy_backend.controller.dto.member.MemberActivityDtos.State;
 import com.icy.icy_backend.db.entity.member.DirectMessage;
@@ -58,7 +59,7 @@ public class MemberActivityService {
 
     @Transactional(readOnly = true)
     public MemberActivityDtos.Overview overview() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(OperationLock.ZONE);
         MemberActivitySettings settings = settings();
         Map<UUID, LocalDateTime> lastOperations = followUps.findLastConfirmedParticipations(now).stream()
                 .filter(row -> row.getUserId() != null && row.getLastAt() != null)
@@ -83,7 +84,7 @@ public class MemberActivityService {
     /** Jours sans activité de chaque membre actif, pour figer la valeur sur une fiche de rappel. */
     @Transactional(readOnly = true)
     public Map<UUID, Integer> daysInactive(Collection<UUID> userIds) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(OperationLock.ZONE);
         Map<UUID, LocalDateTime> lastOperations = followUps.findLastConfirmedParticipations(now).stream()
                 .collect(Collectors.toMap(MemberFollowUpRepository.LastParticipation::getUserId,
                         MemberFollowUpRepository.LastParticipation::getLastAt, (left, right) -> left));
@@ -98,14 +99,14 @@ public class MemberActivityService {
         MemberFollowUp.ManualState state = parseManual(request == null ? null : request.state());
         String note = request == null || request.note() == null || request.note().isBlank() ? null : request.note().strip();
         if (note != null && note.length() > 500) throw new BadRequestException("La note dépasse 500 caractères.");
-        if (state == MemberFollowUp.ManualState.EN_PAUSE && request.until() != null && request.until().isBefore(LocalDate.now())) {
+        if (state == MemberFollowUp.ManualState.EN_PAUSE && request.until() != null && request.until().isBefore(LocalDate.now(OperationLock.ZONE))) {
             throw new BadRequestException("La fin de la pause est déjà passée.");
         }
         MemberFollowUp followUp = followUps.findById(userId).orElseGet(() -> MemberFollowUp.builder().userId(userId).build());
         followUp.setManualState(state);
         followUp.setManualUntil(state == null ? null : request.until());
         followUp.setNote(note);
-        followUp.setUpdatedAt(LocalDateTime.now());
+        followUp.setUpdatedAt(LocalDateTime.now(OperationLock.ZONE));
         followUp.setUpdatedBy(author);
         followUps.save(followUp);
         return toManual(followUp);
@@ -117,7 +118,7 @@ public class MemberActivityService {
         MemberFollowUp followUp = followUps.findById(userId).orElseGet(() -> MemberFollowUp.builder().userId(userId).build());
         followUp.setManualState(state);
         followUp.setManualUntil(until);
-        followUp.setUpdatedAt(LocalDateTime.now());
+        followUp.setUpdatedAt(LocalDateTime.now(OperationLock.ZONE));
         followUp.setUpdatedBy(author);
         followUps.save(followUp);
     }

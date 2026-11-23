@@ -326,6 +326,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
           },
           {
+            path: 'members/activite',
+            loadComponent: () => import('./features/admin/member-activity/member-activity.component').then(m => m.MemberActivityComponent)
+          },
+          {
             path: 'collections',
             loadComponent: () => import('./features/admin/collection-management/collection-management.component').then(m => m.CollectionManagementComponent)
           },

@@ -132,6 +132,20 @@ describe('AdminDashboardComponent', () => {
     expect(updated.request.body.specialty).toBeNull();
     updated.flush({});
     http.expectOne('/api/users/all').flush({ data: [] });
+    const announce = http.expectOne('/api/member-activity/members/a/announce');
+    expect(announce.request.body.templateCode).toBe('PROMOTION_OFFICIER');
+    announce.flush({});
+  });
+
+  it('does not announce the promotion when the box is unchecked', () => {
+    component.editUser({ id: 'a', username: 'Torin', discordId: '42', active: true, createdAt: null, roles: ['ASSOCIE'], specialty: null });
+    component.newUser.role = 'INGENIEUR';
+    expect(component.announcementCodes).toEqual(['PROMOTION_INGENIEUR']);
+    component.announce = false;
+    component.updateUser();
+    http.expectOne('/api/users/update').flush({});
+    http.expectOne('/api/users/all').flush({ data: [] });
+    http.expectNone('/api/member-activity/members/a/announce');
   });
 
   it('shows the rank first, in its colour, with the pole and the treasurer function below', () => {

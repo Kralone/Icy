@@ -22,6 +22,10 @@
         (click)="setInactiveView(true)"
       >Membres désactivés</button>
     </div>
+    <a routerLink="/icy/admin/members/activite" data-testid="activity-link"
+      class="inline-flex items-center justify-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/5 px-5 py-2 text-sm font-semibold text-cyan-100 hover:border-cyan-300/70 transition w-full sm:w-auto">
+      Activité et rappels <span aria-hidden="true">→</span>
+    </a>
     <input
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()"
@@ -178,6 +182,10 @@
       </div>
     </div>
 
+    @if (announceNotice) {
+      <p class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full border border-cyan-300/40 bg-[#0b1324] px-5 py-3 text-sm text-cyan-100 shadow-2xl" role="status">{{ announceNotice }}</p>
+    }
+
     @if (!showInactive) {
       <app-availability-heatmap />
     }
@@ -283,6 +291,16 @@
                     <span class="block text-xs text-slate-400">Gère la banque : dépôts, dépenses, reversements. S'ajoute au grade.</span>
                   </span>
                   <span class="choice-check absolute right-2 top-2 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold" aria-hidden="true">✓</span>
+                </label>
+              }
+              @if (announcementCodes.length) {
+                <!-- Annonce en message privé par le bot : bienvenue, promotion ou nomination. -->
+                <label class="flex items-start gap-3 rounded-2xl border border-cyan-300/20 bg-cyan-400/5 px-4 py-3 cursor-pointer" data-testid="announce-choice">
+                  <input type="checkbox" name="announce" [(ngModel)]="announce" class="mt-1 h-4 w-4 accent-cyan-400">
+                  <span class="text-sm">
+                    <span class="block font-semibold text-white">Annoncer en message privé</span>
+                    <span class="block text-xs text-slate-400">Le bot envoie « {{ announcementLabel }} » avec son GIF à l’enregistrement.</span>
+                  </span>
                 </label>
               }
               <!-- Actions -->

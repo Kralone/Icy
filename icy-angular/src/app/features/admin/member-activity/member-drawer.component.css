@@ -1,0 +1,31 @@
+.drawer__body { display: grid; gap: 1.5rem; padding: clamp(1.25rem, 4vw, 2.25rem); padding-top: 1.5rem; }
+.drawer__head { display: flex; align-items: center; gap: 1rem; }
+.drawer__head h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 600; color: white; overflow-wrap: anywhere; }
+.drawer__head p { margin: 0.15rem 0 0.5rem; }
+.avatar--large { width: 4rem; height: 4rem; font-size: 1.4rem; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; border-block: 1px solid rgb(255 255 255 / 0.08); }
+.facts div { padding: 0.85rem 0.4rem; border-bottom: 1px solid rgb(255 255 255 / 0.05); }
+.facts dt { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(148 163 184); }
+.facts dd { margin-top: 0.25rem; color: rgb(226 232 240); font-size: 0.92rem; }
+.rule { margin-top: -0.75rem; line-height: 1.5; }
+.block { --tone: 125 211 252; display: grid; gap: 0.75rem; }
+.block > p { line-height: 1.5; margin-top: -0.25rem; }
+.segmented { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; justify-self: start; padding: 0.25rem; border-radius: 9999px; border: 1px solid rgb(255 255 255 / 0.1); background: #0b1324; }
+.segmented label { --tone: 125 211 252; padding: 0.4rem 0.9rem; border-radius: 9999px; font-size: 0.82rem; color: rgb(203 213 225); cursor: pointer; }
+.segmented label.on { background: rgb(var(--tone) / 0.18); color: white; box-shadow: inset 0 0 0 1px rgb(var(--tone) / 0.6); }
+.segmented label:has(input:focus-visible) { outline: 2px solid #67e8f9; }
+.inline { justify-self: start; }
+.input--date { width: auto; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.timeline, .messages { display: grid; gap: 0.5rem; }
+.timeline__item { display: flex; gap: 0.75rem; width: 100%; padding: 0.7rem 0.85rem; text-align: left; border-radius: 0.75rem; border: 1px solid rgb(255 255 255 / 0.06); background: #0b1324; }
+.timeline__item:hover { border-color: rgb(var(--tone) / 0.5); }
+.timeline__item strong, .messages strong { display: block; color: white; font-weight: 600; font-size: 0.88rem; }
+.timeline__item small, .messages small { display: block; }
+.timeline__dot { flex: none; width: 0.6rem; height: 0.6rem; margin-top: 0.35rem; border-radius: 9999px; background: rgb(var(--tone)); box-shadow: 0 0 8px rgb(var(--tone) / 0.7); }
+.note { color: rgb(203 213 225); font-style: italic; font-size: 0.8rem; margin-top: 0.2rem; }
+.messages li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0.2rem; border-bottom: 1px solid rgb(255 255 255 / 0.05); }
+.msg-status { --tone: 251 191 36; flex: none; min-width: 4.8rem; padding: 0.15rem 0.5rem; border-radius: 9999px; text-align: center; background: rgb(var(--tone) / 0.14); color: color-mix(in srgb, rgb(var(--tone)) 55%, white); font-size: 0.72rem; font-weight: 700; }
+.msg-status[data-status='SENT'] { --tone: 52 211 153; }
+.msg-status[data-status='FAILED'] { --tone: 251 113 133; }
+@media (max-width: 480px) { .facts { grid-template-columns: 1fr; } }
