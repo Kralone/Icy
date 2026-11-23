@@ -116,6 +116,7 @@ public class MemberWarningService {
         warning.setUserId(target.getId());
         warning.setCategory(category);
         warning.setReason(reason);
+        warnings.lockMember(target.getId());
         warning.setRank((int) warnings.countByUserIdAndRevokedAtIsNull(target.getId()) + 1);
         warning.setIssuedByUserId(author.getId());
         warning.setIssuedByName(author.getUsername());

@@ -119,6 +119,7 @@ class MemberWarningServiceTest {
         ModerationDtos.Record record = service.warn(member.getId(), new ModerationDtos.WarningRequest("ABSENCE", "Absent à l'opération"));
 
         assertThat(record.activeWarnings()).isEqualTo(2);
+        verify(warnings, Mockito.times(2)).lockMember(member.getId());
         assertThat(record.warnings()).extracting(ModerationDtos.Warning::rank).containsExactly(2, 1);
         assertThat(record.warnings().get(1).reason()).isEqualTo("Insultes en vocal");
         assertThat(record.warnings()).allMatch(w -> w.dmStatus().equals("PENDING") && w.issuedByName().equals("Vexa"));
