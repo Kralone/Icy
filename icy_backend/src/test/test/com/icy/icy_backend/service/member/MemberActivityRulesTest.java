@@ -43,6 +43,28 @@ class MemberActivityRulesTest {
     }
 
     @Test
+    void aDirectorIsNeverFlaggedInactiveOrWatched() {
+        MemberActivitySettings settings = new MemberActivitySettings();
+        User director = withRole("ADMIN");
+        User officer = withRole("OFFICIER");
+        assertThat(MemberActivityService.computedState(director, 90, settings)).isEqualTo(State.ACTIF);
+        assertThat(MemberActivityService.computedState(director, 20, settings)).isEqualTo(State.ACTIF);
+        assertThat(MemberActivityService.computedState(officer, 90, settings)).isEqualTo(State.INACTIF);
+        assertThat(MemberActivityService.isDirector(director)).isTrue();
+        assertThat(MemberActivityService.isDirector(officer)).isFalse();
+    }
+
+    private static User withRole(String name) {
+        User user = new User();
+        Role role = new Role();
+        role.setName(name);
+        UserRole userRole = new UserRole();
+        userRole.setRole(role);
+        user.getRoles().add(userRole);
+        return user;
+    }
+
+    @Test
     void aManualCorrectionStopsAfterItsLastDay() {
         MemberFollowUp followUp = MemberFollowUp.builder().manualState(MemberFollowUp.ManualState.EN_PAUSE).manualUntil(LocalDate.of(2026, 12, 31)).build();
         assertThat(followUp.appliesOn(LocalDate.of(2026, 12, 31))).isTrue();

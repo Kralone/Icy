@@ -78,6 +78,8 @@ public class ReminderCampaignService {
         if (userIds.size() > MAX_MEMBERS) throw new BadRequestException("Au plus " + MAX_MEMBERS + " membres par campagne.");
         List<User> members = users.findAllById(userIds);
         if (members.size() != userIds.size()) throw new BadRequestException("Un des membres choisis n'existe plus ou a été désactivé.");
+        if (members.stream().anyMatch(MemberActivityService::isDirector))
+            throw new BadRequestException("Les directeurs ne reçoivent pas de rappel d'inactivité.");
 
         checkRenderedLength(MessageTemplateService.validBody(request.body()), members);
         boolean sendNow = Boolean.TRUE.equals(request.sendNow());

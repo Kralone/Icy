@@ -114,6 +114,19 @@ class ReminderCampaignServiceTest {
     }
 
     @Test
+    void aDirectorCannotBePutInAReminderCampaign() {
+        com.icy.icy_backend.db.entity.user.Role role = new com.icy.icy_backend.db.entity.user.Role();
+        role.setName("ADMIN");
+        com.icy.icy_backend.db.entity.user.UserRole userRole = new com.icy.icy_backend.db.entity.user.UserRole();
+        userRole.setRole(role);
+        torin.getRoles().add(userRole);
+
+        assertThatThrownBy(() -> service.create(create("MANUEL", null, null), UUID.randomUUID(), "Kralone"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("directeurs");
+        verifyNoInteractions(directMessageService);
+    }
+
+    @Test
     void sendingByTheBotPersonalisesEachMessageAndKeepsTheGif() {
         service.create(create("BOT", true, null), UUID.randomUUID(), "Kralone");
 
