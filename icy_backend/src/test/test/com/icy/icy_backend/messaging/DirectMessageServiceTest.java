@@ -130,4 +130,28 @@ class DirectMessageServiceTest {
         assertThat(stuck.getReason()).isEqualTo("no_answer");
         verify(events).publishEvent(any(DirectMessageResultEvent.class));
     }
+
+    @Test
+    void aDeliveredMessageStaysDeliveredWhateverArrivesLater() {
+        DirectMessage sent = DirectMessage.builder().id(UUID.randomUUID()).userId(vexa.getId()).origin("REMINDER")
+                .status(DirectMessage.Status.SENT).requestedAt(LocalDateTime.now()).build();
+        when(messages.findById(sent.getId())).thenReturn(Optional.of(sent));
+
+        service.recordResult(sent.getId(), DirectMessage.Status.FAILED, "forbidden");
+
+        assertThat(sent.getStatus()).isEqualTo(DirectMessage.Status.SENT);
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void aLateConfirmationRepairsAMessageMarkedUnanswered() {
+        DirectMessage expired = DirectMessage.builder().id(UUID.randomUUID()).userId(vexa.getId()).origin("REMINDER")
+                .status(DirectMessage.Status.FAILED).reason("no_answer").requestedAt(LocalDateTime.now().minusHours(1)).build();
+        when(messages.findById(expired.getId())).thenReturn(Optional.of(expired));
+
+        service.recordResult(expired.getId(), DirectMessage.Status.SENT, null);
+
+        assertThat(expired.getStatus()).isEqualTo(DirectMessage.Status.SENT);
+        verify(events).publishEvent(any(DirectMessageResultEvent.class));
+    }
 }
