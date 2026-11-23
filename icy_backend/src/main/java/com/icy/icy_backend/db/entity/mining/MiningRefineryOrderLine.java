@@ -16,8 +16,11 @@ public class MiningRefineryOrderLine {
     @Column(name = "commodity_id", nullable = false) private int commodityId;
     @Column(name = "commodity_name", nullable = false, length = 80) private String commodityName;
     @Column(name = "quantity_cscu", nullable = false) private int quantityCscu;
-    /** Qualité notée (0 à 1000) : n'entre dans aucun calcul, le prix réel est saisi à la vente. */
-    @Column(nullable = false) private int quality;
+    /**
+     * Qualité notée (0 à 1000), obligatoire pour le minerai : n'entre dans aucun calcul, le prix réel est saisi à la vente.
+     * Absente (null) pour le salvage, qui n'a pas de qualité.
+     */
+    @Column private Integer quality;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 10) private Destination destination;
     @Column(nullable = false) private int position;
 

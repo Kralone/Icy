@@ -40,6 +40,7 @@ interface OperationFormPayload {
   imageUrl: string;
   allowShipProposals: boolean;
   miningSession: boolean;
+  salvageSession: boolean;
   defaultAssignmentMode: EffectiveAssignmentMode;
 }
 
@@ -261,7 +262,7 @@ export class OperationEditorComponent implements OnDestroy {
     });
   }
 
-  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, miningSession: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
+  form = { briefing: '', objectives: [] as OperationObjective[], meetingPoint: '', imageUrl: '', allowShipProposals: false, miningSession: false, salvageSession: false, defaultAssignmentMode: 'FREE' as EffectiveAssignmentMode };
 
   // --- Organisation : structure lue sur le serveur, un seul groupe édité à la fois.
   readonly organization = signal<OperationOrganization | null>(null);
@@ -556,7 +557,7 @@ export class OperationEditorComponent implements OnDestroy {
     this.previewCache = null;
     if (this.tab === 'publication') this.loadPreviewParticipations();
     this.lastValidImageUrl = operation.imageUrl || '';
-    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, miningSession: operation.miningSession ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
+    this.form = { briefing: operation.briefing || '', objectives: this.parseObjectives(operation.objectives), meetingPoint: operation.meetingPoint || '', imageUrl: operation.imageUrl || '', allowShipProposals: operation.allowShipProposals ?? false, miningSession: operation.miningSession ?? false, salvageSession: operation.salvageSession ?? false, defaultAssignmentMode: operation.defaultAssignmentMode ?? 'FREE' };
     this.loadOrganization(operation.id);
     this.autosave.auto = operation.publicationStatus !== 'PUBLISHED';
     this.autosave.reset(this.payload(), operation.revision ?? null, operation.updatedAt ? new Date(operation.updatedAt) : null);
@@ -583,6 +584,13 @@ export class OperationEditorComponent implements OnDestroy {
     if (response?.status === 409) return 'Cette opération a été modifiée depuis un autre onglet ou par un autre organisateur. « Garder ma version » remplace la version du serveur par vos saisies ; « Charger la version du serveur » les abandonne.';
     if (response?.status === 0 || response?.status === undefined) return 'Serveur injoignable. Vos saisies restent sur cette page ; elles partiront au prochain essai.';
     return (typeof response.error?.message === 'string' && response.error.message) || 'Enregistrement refusé. Vos saisies restent sur cette page.';
+  }
+
+  /** Une opération a au plus une fiche : cocher une session décoche l'autre. */
+  chooseSession(kind: 'mining' | 'salvage', checked: boolean): void {
+    if (kind === 'mining') { this.form.miningSession = checked; if (checked) this.form.salvageSession = false; }
+    else { this.form.salvageSession = checked; if (checked) this.form.miningSession = false; }
+    this.touch();
   }
 
   /** À appeler à chaque modification du formulaire. */

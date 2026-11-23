@@ -43,7 +43,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Fiches de minage V3 : création, participants, frais, ordres de raffinage, remise et ventes (docs/mining-v3/SPEC.md).
+ * Fiches de session : création, participants, frais, lots de cargo (ordres de raffinage, cargaisons de salvage), remise et ventes
+ * (docs/mining-v3/SPEC.md, docs/salvage/SPEC.md).
  * Chaque écriture verrouille la fiche ; les contrôles financiers et de droits sont faits ici, jamais seulement dans l'interface.
  */
 @Service
@@ -79,9 +80,11 @@ public class SessionSheetService {
     // ----- Lecture -----
 
     @Transactional(readOnly = true)
-    public List<SessionSummaryDTO> list() {
+    public List<SessionSummaryDTO> list(String activity) {
         UUID viewer = SessionAccess.currentUserId();
-        List<SessionSheet> all = sheets.findAllByOrderBySessionDateDescCreatedAtDesc();
+        String wanted = activity == null || activity.isBlank() ? null : activity(activity);
+        List<SessionSheet> all = sheets.findAllByOrderBySessionDateDescCreatedAtDesc().stream()
+                .filter(sheet -> wanted == null || wanted.equals(sheet.getActivity())).toList();
         Set<UUID> ids = all.stream().map(SessionSheet::getId).collect(Collectors.toSet());
         if (ids.isEmpty()) return List.of();
         Map<UUID, List<SessionParticipant>> people = participants.findBySheetIds(ids).stream().collect(Collectors.groupingBy(SessionParticipant::getSheetId));
@@ -94,7 +97,7 @@ public class SessionSheetService {
             List<SessionParticipant> members = people.getOrDefault(sheet.getId(), List.of());
             SessionData light = new SessionData(sheet, members, List.of(), sheetOrders.getOrDefault(sheet.getId(), List.of()), List.of(), java.util.Optional.empty());
             User organizer = organizers.get(sheet.getOrganizerUserId());
-            return new SessionSummaryDTO(sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name(), SessionViewBuilder.phase(light, now),
+            return new SessionSummaryDTO(sheet.getId(), sheet.getActivity(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name(), SessionViewBuilder.phase(light, now),
                     organizer == null ? null : new SessionSheetDTO.UserRef(organizer.getId(), organizer.getUsername(), organizer.getAvatarUrl()),
                     members.size(), salesTotal.getOrDefault(sheet.getId(), 0L), light.isParticipant(viewer), sheet.getOperationEventId());
         }).sorted(Comparator.comparing((SessionSummaryDTO summary) -> "CLOSED".equals(summary.status())).thenComparing(SessionSummaryDTO::sessionDate, Comparator.reverseOrder()))
@@ -107,9 +110,9 @@ public class SessionSheetService {
     }
 
     @Transactional(readOnly = true)
-    public UUID findByOperation(UUID operationEventId) {
-        return sheets.findByOperationEventId(operationEventId).map(SessionSheet::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Aucune fiche de minage pour cette opération."));
+    public SessionSheet findByOperation(UUID operationEventId) {
+        return sheets.findByOperationEventId(operationEventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune fiche de session pour cette opération."));
     }
 
     SessionSheetDTO view(SessionData data) {
@@ -125,19 +128,20 @@ public class SessionSheetService {
         UUID actor = SessionAccess.currentUserId();
         LocalDate date = request.sessionDate() != null ? request.sessionDate() : now().toLocalDate();
         List<UUID> people = request.participantIds() == null || request.participantIds().isEmpty() ? List.of(actor) : request.participantIds();
-        SessionSheet sheet = newSheet(name(request.name(), date), date, actor, null);
+        SessionSheet sheet = newSheet(activity(request.activity()), name(request.name(), date), date, actor, null);
         addParticipants(sheet.getId(), people);
         return view(loader.read(sheet.getId()));
     }
 
     /**
-     * Fiche liée à une opération « Session de minage » : créée une seule fois, avec tous les membres « Présent »,
-     * affectés à un groupe ou non. Ensuite la fiche se gère seule. Une fiche existante est renvoyée telle quelle.
+     * Fiche liée à une opération « Session de minage » ou « Session de salvage » : créée une seule fois, avec tous les membres
+     * « Présent », affectés à un groupe ou non. Ensuite la fiche se gère seule. Une fiche existante est renvoyée telle quelle,
+     * quelle que soit son activité : une opération n'a jamais deux fiches.
      */
     @Transactional
-    public UUID ensureForOperation(UUID operationEventId, String operationTitle, LocalDate date, UUID organizerId, List<UUID> presentUserIds) {
+    public UUID ensureForOperation(UUID operationEventId, String activity, String operationTitle, LocalDate date, UUID organizerId, List<UUID> presentUserIds) {
         return sheets.findByOperationEventId(operationEventId).map(SessionSheet::getId).orElseGet(() -> {
-            SessionSheet sheet = newSheet(name(operationTitle, date), date, organizerId, operationEventId);
+            SessionSheet sheet = newSheet(activity(activity), name(operationTitle, date), date, organizerId, operationEventId);
             addParticipants(sheet.getId(), presentUserIds);
             return sheet.getId();
         });
@@ -252,9 +256,13 @@ public class SessionSheetService {
     public SessionSheetDTO addOrder(UUID sheetId, SessionRequests.RefineryOrder request) {
         SessionData data = loader.lock(sheetId);
         UUID actor = editor(data);
-        if (request == null || request.remainingMinutes() == null) throw new BadRequestException("Indiquez la durée restante affichée par la raffinerie.");
-        MiningRefineryOrder order = MiningRefineryOrder.builder().sheetId(sheetId).createdAt(now()).build();
+        if (request == null) throw new BadRequestException("Lot de cargo invalide.");
+        MiningRefineryOrder.Kind kind = kind(data, request.kind());
+        if (kind == MiningRefineryOrder.Kind.REFINERY && request.remainingMinutes() == null) throw new BadRequestException("Indiquez la durée restante affichée par la raffinerie.");
+        MiningRefineryOrder order = MiningRefineryOrder.builder().sheetId(sheetId).kind(kind).createdAt(now()).build();
         applyOrder(data, order, request, actor);
+        // Une cargaison gardée par son détenteur pour la vendre lui-même est déjà dans sa soute : elle est remise d'office.
+        if (order.isHaul() && order.getLauncherUserId().equals(order.getRecipientUserId())) order.setHandedOverAt(now());
         orders.save(order);
         return saved(data.sheet());
     }
@@ -266,7 +274,7 @@ public class SessionSheetService {
         MiningRefineryOrder order = order(data, orderId);
         requireOwnerOrOrganizer(data, actor, order.getLauncherUserId(), "Vous ne modifiez que vos propres ordres.");
         applyOrder(data, order, request, actor);
-        requireStocksNotNegative(data, "Cette modification retirerait du minerai déjà vendu : corrigez d’abord la vente concernée.");
+        requireStocksNotNegative(data, "Cette modification retirerait " + goodsLower(data) + " déjà vendu : corrigez d’abord la vente concernée.");
         orders.save(order);
         return saved(data.sheet());
     }
@@ -278,7 +286,7 @@ public class SessionSheetService {
         MiningRefineryOrder order = order(data, orderId);
         requireOwnerOrOrganizer(data, actor, order.getLauncherUserId(), "Vous ne supprimez que vos propres ordres.");
         data.orders().remove(order);
-        requireStocksNotNegative(data, "Ce minerai a déjà été vendu : supprimez d’abord la vente concernée.");
+        requireStocksNotNegative(data, "Ce " + goodsWord(data) + " a déjà été vendu : supprimez d’abord la vente concernée.");
         orders.delete(order);
         return saved(data.sheet());
     }
@@ -299,7 +307,7 @@ public class SessionSheetService {
             LocalDateTime previous = order.getHandedOverAt();
             order.setHandedOverAt(null);
             try {
-                requireStocksNotNegative(data, "Ce minerai a déjà été vendu : la remise ne peut plus être annulée.");
+                requireStocksNotNegative(data, "Ce " + goodsWord(data) + " a déjà été vendu : la remise ne peut plus être annulée.");
             } catch (BadRequestException refused) {
                 order.setHandedOverAt(previous);
                 throw refused;
@@ -309,13 +317,42 @@ public class SessionSheetService {
         return saved(data.sheet());
     }
 
+    /**
+     * Ordre de raffinage : raffinerie UEX, méthode, durée restante, qualité obligatoire pour le minerai.
+     * Cargaison de salvage : lieu libre (vaisseau, station), ni raffinerie ni durée, prête dès sa saisie, sans qualité.
+     * Le type d'un lot ne change pas après sa création.
+     */
     private void applyOrder(SessionData data, MiningRefineryOrder order, SessionRequests.RefineryOrder request, UUID actor) {
-        if (request == null) throw new BadRequestException("Ordre de raffinage invalide.");
-        UUID launcher = chosenUser(data, actor, request.launcherUserId(), "Seul l’organisateur crée un ordre au nom d’un autre participant.");
+        if (request == null) throw new BadRequestException("Lot de cargo invalide.");
+        boolean haul = order.isHaul();
+        boolean salvage = data.sheet().isSalvage();
+        UUID launcher = chosenUser(data, actor, request.launcherUserId(), haul
+                ? "Seul l’organisateur déclare une cargaison au nom d’un autre participant."
+                : "Seul l’organisateur crée un ordre au nom d’un autre participant.");
         if (order.getLauncherUserId() != null && !SessionAccess.isOrganizer(data.sheet(), actor)) launcher = order.getLauncherUserId();
-        requireParticipant(data, launcher, "Le lanceur doit être un participant de la fiche.");
+        requireParticipant(data, launcher, haul ? "Le détenteur de la cargaison doit être un participant de la fiche." : "Le lanceur doit être un participant de la fiche.");
         UUID recipient = request.recipientUserId() != null ? request.recipientUserId() : launcher;
         requireParticipant(data, recipient, "Le vendeur destinataire doit être un participant de la fiche.");
+        if (haul) {
+            String location = text(request.locationLabel(), 200);
+            if (location == null) throw new BadRequestException("Indiquez où se trouve la cargaison (vaisseau ou station).");
+            List<MiningRefineryOrderLine> parsed = parseLines(data, order, request.lines(), salvage);
+            if (order.getFinishesAt() == null) {
+                // Prête dès sa saisie : jamais annoncée comme un raffinage sur Discord.
+                order.setFinishesAt(now());
+                order.setReadyNotifiedAt(now());
+            }
+            order.setLauncherUserId(launcher);
+            order.setRecipientUserId(recipient);
+            order.setTerminalId(null);
+            order.setTerminalLabel(location);
+            order.setMethodCode(null);
+            order.setMethodLabel(null);
+            order.setCost(amount(request.cost() == null ? 0L : request.cost(), true));
+            order.getLines().clear();
+            order.getLines().addAll(parsed);
+            return;
+        }
         if (request.terminalId() == null) throw new BadRequestException("Choisissez la raffinerie.");
         MiningMarketService.Terminal terminal = market.terminals().get(request.terminalId());
         if (terminal == null) throw new BadRequestException("Raffinerie inconnue dans les données UEX.");
@@ -331,22 +368,7 @@ public class SessionSheetService {
             if (!finishes.equals(order.getFinishesAt())) order.setReadyNotifiedAt(null);
             order.setFinishesAt(finishes);
         }
-        List<SessionRequests.OrderLine> lines = request.lines() == null ? List.of() : request.lines();
-        if (lines.isEmpty() || lines.size() > MAX_LINES) throw new BadRequestException("Un ordre contient de 1 à " + MAX_LINES + " minerais.");
-        Map<Integer, MiningMarketService.Commodity> commodities = market.commodities();
-        List<MiningRefineryOrderLine> parsed = new ArrayList<>();
-        int position = 0;
-        for (SessionRequests.OrderLine line : lines) {
-            if (line == null || line.commodityId() == null) throw new BadRequestException("Choisissez le minerai de chaque ligne.");
-            MiningMarketService.Commodity commodity = commodities.get(line.commodityId());
-            if (commodity == null) throw new BadRequestException("Minerai raffiné inconnu dans les données UEX.");
-            int quantity = quantity(line.quantityCscu());
-            if (line.quality() == null || line.quality() < 0 || line.quality() > 1000) throw new BadRequestException("La qualité est obligatoire, de 0 à 1000.");
-            parsed.add(MiningRefineryOrderLine.builder().order(order).commodityId(commodity.id()).commodityName(commodity.name())
-                    .quantityCscu(quantity).quality(line.quality())
-                    .destination(parseEnum(MiningRefineryOrderLine.Destination.class, line.destination() == null ? "SELL" : line.destination(), "Destination invalide."))
-                    .position(position++).build());
-        }
+        List<MiningRefineryOrderLine> parsed = parseLines(data, order, request.lines(), salvage);
         order.setLauncherUserId(launcher);
         order.setRecipientUserId(recipient);
         order.setTerminalId(terminal.id());
@@ -356,6 +378,45 @@ public class SessionSheetService {
         order.setCost(amount(request.cost() == null ? 0L : request.cost(), true));
         order.getLines().clear();
         order.getLines().addAll(parsed);
+    }
+
+    /**
+     * Lignes d'un lot : minerais raffinés (qualité obligatoire) pour le minage, matériaux de salvage (RMC, construction)
+     * pour le salvage, où la qualité n'existe pas : une qualité envoyée est ignorée plutôt que stockée.
+     */
+    private List<MiningRefineryOrderLine> parseLines(SessionData data, MiningRefineryOrder order, List<SessionRequests.OrderLine> requested, boolean salvage) {
+        List<SessionRequests.OrderLine> lines = requested == null ? List.of() : requested;
+        String word = goodsWord(data);
+        if (lines.isEmpty() || lines.size() > MAX_LINES) throw new BadRequestException("Un lot contient de 1 à " + MAX_LINES + " " + goodsPlural(data) + ".");
+        Map<Integer, MiningMarketService.Commodity> commodities = market.commoditiesFor(data.sheet().getActivity());
+        List<MiningRefineryOrderLine> parsed = new ArrayList<>();
+        int position = 0;
+        for (SessionRequests.OrderLine line : lines) {
+            if (line == null || line.commodityId() == null) throw new BadRequestException("Choisissez le " + word + " de chaque ligne.");
+            MiningMarketService.Commodity commodity = commodities.get(line.commodityId());
+            if (commodity == null) throw new BadRequestException(salvage ? "Matériau de salvage inconnu dans les données UEX." : "Minerai raffiné inconnu dans les données UEX.");
+            if (salvage && !order.isHaul() && !MiningMarketService.isRefinedSalvage(commodity.name()))
+                throw new BadRequestException("Un ordre de raffinage ne contient que le matériau raffiné (CMAT). Le RMC et le matériau brut se déclarent en cargaison.");
+            int quantity = quantity(line.quantityCscu());
+            Integer quality = null;
+            if (!salvage) {
+                if (line.quality() == null || line.quality() < 0 || line.quality() > 1000) throw new BadRequestException("La qualité est obligatoire, de 0 à 1000.");
+                quality = line.quality();
+            }
+            parsed.add(MiningRefineryOrderLine.builder().order(order).commodityId(commodity.id()).commodityName(commodity.name())
+                    .quantityCscu(quantity).quality(quality)
+                    .destination(parseEnum(MiningRefineryOrderLine.Destination.class, line.destination() == null ? "SELL" : line.destination(), "Destination invalide."))
+                    .position(position++).build());
+        }
+        return parsed;
+    }
+
+    /** Une cargaison (HAUL) n'existe que sur une fiche de salvage. */
+    private static MiningRefineryOrder.Kind kind(SessionData data, String requested) {
+        MiningRefineryOrder.Kind kind = requested == null || requested.isBlank() ? MiningRefineryOrder.Kind.REFINERY
+                : parseEnum(MiningRefineryOrder.Kind.class, requested, "Type de lot invalide.");
+        if (kind == MiningRefineryOrder.Kind.HAUL && !data.sheet().isSalvage()) throw new BadRequestException("Une cargaison récupérée ne se déclare que sur une fiche de salvage.");
+        return kind;
     }
 
     // ----- Ventes -----
@@ -409,21 +470,23 @@ public class SessionSheetService {
             if (label == null) throw new BadRequestException("Indiquez le lieu de vente.");
         }
         List<SessionRequests.SaleLine> lines = request.lines() == null ? List.of() : request.lines();
-        if (lines.isEmpty() || lines.size() > MAX_LINES) throw new BadRequestException("Une vente contient de 1 à " + MAX_LINES + " minerais.");
+        // Salvage : une vente sans ligne est une vente directe (composants démontés, récompense de contrat), hors stock.
+        boolean direct = lines.isEmpty() && data.sheet().isSalvage();
+        if ((lines.isEmpty() && !direct) || lines.size() > MAX_LINES) throw new BadRequestException("Une vente contient de 1 à " + MAX_LINES + " " + goodsPlural(data) + ".");
         Map<Integer, String> names = new HashMap<>();
         data.orders().forEach(o -> o.getLines().forEach(l -> names.putIfAbsent(l.getCommodityId(), l.getCommodityName())));
         List<MiningStock.Line> wanted = new ArrayList<>();
         for (SessionRequests.SaleLine line : lines) {
-            if (line == null || line.commodityId() == null) throw new BadRequestException("Choisissez le minerai de chaque ligne.");
+            if (line == null || line.commodityId() == null) throw new BadRequestException("Choisissez le " + goodsWord(data) + " de chaque ligne.");
             wanted.add(new MiningStock.Line(line.commodityId(), quantity(line.quantityCscu())));
         }
         Map<Integer, Long> stock = MiningStock.stockOf(seller, data.orders(), otherSales);
         List<MiningStock.Shortage> shortages = MiningStock.shortages(wanted, stock);
         if (!shortages.isEmpty()) {
-            String detail = shortages.stream().map(s -> names.getOrDefault(s.commodityId(), "Minerai " + s.commodityId()) + " : "
+            String detail = shortages.stream().map(s -> names.getOrDefault(s.commodityId(), SessionViewBuilder.goods(data) + " " + s.commodityId()) + " : "
                     + MiningNotifications.scu((int) Math.min(Integer.MAX_VALUE, s.wanted())) + " SCU demandés, "
                     + MiningNotifications.scu((int) s.available()) + " disponibles").collect(Collectors.joining(" ; "));
-            throw new BadRequestException("Stock insuffisant chez le vendeur. " + detail + ". Seul le minerai remis au vendeur peut être vendu.");
+            throw new BadRequestException("Stock insuffisant chez le vendeur. " + detail + ". Seul " + (data.sheet().isSalvage() ? "le matériau" : "le minerai") + " remis au vendeur peut être vendu.");
         }
         sale.setSellerUserId(seller);
         sale.setTerminalId(terminalId);
@@ -433,16 +496,16 @@ public class SessionSheetService {
         int position = 0;
         for (MiningStock.Line line : wanted) {
             sale.getLines().add(MiningSaleLine.builder().sale(sale).commodityId(line.commodityId())
-                    .commodityName(names.getOrDefault(line.commodityId(), "Minerai " + line.commodityId()))
+                    .commodityName(names.getOrDefault(line.commodityId(), SessionViewBuilder.goods(data) + " " + line.commodityId()))
                     .quantityCscu(line.quantityCscu()).position(position++).build());
         }
     }
 
     // ----- Outils -----
 
-    private SessionSheet newSheet(String name, LocalDate date, UUID organizer, UUID operationEventId) {
+    private SessionSheet newSheet(String activity, String name, LocalDate date, UUID organizer, UUID operationEventId) {
         LocalDateTime now = now();
-        SessionSheet sheet = sheets.save(SessionSheet.builder().name(name).sessionDate(date).organizerUserId(organizer)
+        SessionSheet sheet = sheets.save(SessionSheet.builder().activity(activity).name(name).sessionDate(date).organizerUserId(organizer)
                 .operationEventId(operationEventId).createdAt(now).updatedAt(now).build());
         events.changed(sheet.getId());
         return sheet;
@@ -544,6 +607,27 @@ public class SessionSheetService {
         if (trimmed.isEmpty()) return null;
         if (trimmed.length() > max) throw new BadRequestException("Texte trop long (" + max + " caractères au plus).");
         return trimmed;
+    }
+
+    /** Activité d'une fiche : MINING par défaut, ou SALVAGE. */
+    static String activity(String requested) {
+        if (requested == null || requested.isBlank()) return SessionSheet.MINING;
+        String value = requested.trim().toUpperCase();
+        if (!SessionSheet.MINING.equals(value) && !SessionSheet.SALVAGE.equals(value)) throw new BadRequestException("Activité de fiche invalide.");
+        return value;
+    }
+
+    /** « minerai » ou « matériau », pour les messages. */
+    static String goodsWord(SessionData data) {
+        return data.sheet().isSalvage() ? "matériau" : "minerai";
+    }
+
+    static String goodsPlural(SessionData data) {
+        return data.sheet().isSalvage() ? "matériaux" : "minerais";
+    }
+
+    static String goodsLower(SessionData data) {
+        return data.sheet().isSalvage() ? "du matériau" : "du minerai";
     }
 
     private static String name(String requested, LocalDate date) {

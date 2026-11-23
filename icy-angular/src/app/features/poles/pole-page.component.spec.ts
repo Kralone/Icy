@@ -51,14 +51,15 @@ describe('PolePageComponent', () => {
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Industrie');
     expect(text('pole-referents')).toContain('RéférentAda');
     expect(find('pole-manage')).toBeNull();
-    expect(text('pole-stats')).toMatch(/Fiches de minage\s*6\s*30 derniers jours/);
-    expect(text('pole-stats')).toMatch(/Ventes de minerai\s*1.250.000\s*aUEC/);
+    expect(text('pole-stats')).toMatch(/Fiches minage et salvage\s*6\s*30 derniers jours/);
+    expect(text('pole-stats')).toMatch(/Ventes minage et salvage\s*1.250.000\s*aUEC/);
     expect(find('pole-stats')!.querySelectorAll('.pole-stat').length).toBe(2);
     const groups = Array.from(find('pole-tools')!.querySelectorAll('h2')).map(title => title.textContent);
     expect(groups).toEqual(['Outils', 'Guides']);
     const tools = Array.from(fixture.nativeElement.querySelectorAll('a.pole-tool')) as HTMLAnchorElement[];
     expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-minage');
-    expect(tools.length).toBe(5);
+    expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-salvage');
+    expect(tools.length).toBe(6);
     expect(text('pole-news')).toMatch(/Sortie Quantanium\s*18 novembre 2026 · Ada\s*Samedi 21h\./);
     expect(find('pole-activity')!.querySelector('a')!.getAttribute('href')).toBe('/icy/outils/fiches-minage/abc');
     expect(text('pole-activity')).toContain('En cours');
@@ -185,7 +186,7 @@ describe('PolePageComponent', () => {
     await open('industrie');
     http.expectOne('/api/poles/INDUSTRIE').flush('x', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('a.pole-tool').length).toBe(5);
+    expect(fixture.nativeElement.querySelectorAll('a.pole-tool').length).toBe(6);
     find('pole-error')!.querySelector('button')!.click();
     http.expectOne('/api/poles/INDUSTRIE').flush(home('INDUSTRIE', { specialists: [{ id: '1', username: 'Ada' }] }));
     fixture.detectChanges();

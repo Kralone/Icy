@@ -5,17 +5,25 @@ import { ExpenseKind, MiningSessionService, SessionExpense, SessionSheet, server
 import { OperationIconComponent, OperationIconName } from '../../operations/briefing/operation-icon.component';
 import { groupDigits, parseAmount } from './session-input';
 
-export interface CostKind { value: ExpenseKind | 'REFINING'; label: string; icon: OperationIconName; color: string; }
+export interface CostKind { value: ExpenseKind | 'REFINING' | 'HAUL'; label: string; icon: OperationIconName; color: string; }
 
-/** Types de frais : même couleur et même pictogramme dans la liste et dans la saisie. */
-export const EXPENSE_KINDS: (CostKind & { value: ExpenseKind })[] = [
+/**
+ * Types de frais : même couleur et même pictogramme dans la liste et dans la saisie.
+ * salvageOnly : proposé seulement sur une fiche de salvage (claim Adagio Holdings, location de vaisseau).
+ */
+export const EXPENSE_KINDS: (CostKind & { value: ExpenseKind; salvageOnly?: boolean })[] = [
+  { value: 'CLAIM', label: 'Claim', icon: 'target', color: '#fcd34d', salvageOnly: true },
+  { value: 'RENTAL', label: 'Location', icon: 'ship', color: '#86efac', salvageOnly: true },
   { value: 'FUEL', label: 'Carburant', icon: 'fuel', color: '#fca5a5' },
   { value: 'REPAIR', label: 'Réparation', icon: 'wrench', color: '#93c5fd' },
   { value: 'MATERIAL', label: 'Matériel', icon: 'cargo', color: '#c4b5fd' },
   { value: 'OTHER', label: 'Autre', icon: 'dots', color: '#cbd5e1' }
 ];
+export const OTHER_KIND = EXPENSE_KINDS.find(kind => kind.value === 'OTHER')!;
 /** Le coût d'un ordre de raffinage, affiché parmi les frais. */
 export const REFINING_COST: CostKind = { value: 'REFINING', label: 'Raffinage', icon: 'flask', color: '#fdba74' };
+/** Un coût porté par une cargaison de salvage (rare : les claims se déclarent en frais). */
+export const HAUL_COST: CostKind = { value: 'HAUL', label: 'Cargaison', icon: 'cargo', color: '#fdba74' };
 
 /** Frais avancé hors raffinage : le coût d'un ordre se saisit sur l'ordre. */
 @Component({
@@ -46,7 +54,7 @@ export const REFINING_COST: CostKind = { value: 'REFINING', label: 'Raffinage', 
             </label>
           }
         </div>
-        <label class="field">Note (facultatif)<input name="note" [(ngModel)]="form.note" maxlength="200" placeholder="Plein du Prospector"></label>
+        <label class="field">Note (facultatif)<input name="note" [(ngModel)]="form.note" maxlength="200" [placeholder]="sheet().activity === 'SALVAGE' ? 'Claim Hammerhead' : 'Plein du Prospector'"></label>
         <p class="note">{{ form.payer && form.payer !== sheet().permissions.currentUserId ? 'Remboursé à ce membre avant le partage.' : 'Ce frais vous est remboursé avant le partage.' }}</p>
         @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
         <div class="dialog-actions">
@@ -79,13 +87,15 @@ export class ExpenseDialogComponent implements OnInit {
   readonly expense = input<SessionExpense | null>(null);
   readonly saved = output<SessionSheet>();
   readonly closed = output<void>();
-  readonly kinds = EXPENSE_KINDS;
+  kinds = EXPENSE_KINDS.filter(kind => !kind.salvageOnly);
   readonly group = groupDigits;
   readonly busy = signal(false);
   readonly error = signal('');
   form = { kind: 'FUEL' as ExpenseKind, amount: '', note: '', payer: '' };
 
   ngOnInit(): void {
+    const salvage = this.sheet().activity === 'SALVAGE';
+    this.kinds = EXPENSE_KINDS.filter(kind => salvage || !kind.salvageOnly || kind.value === this.expense()?.kind);
     const expense = this.expense();
     this.form = expense
       ? { kind: expense.kind, amount: groupDigits(expense.amount), note: expense.note ?? '', payer: expense.payer.id }

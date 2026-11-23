@@ -42,14 +42,15 @@ public class SessionViewBuilder {
 
     /**
      * Étape affichée : la plus en amont qui n'est pas terminée.
-     * MINING (aucun ordre), REFINING (un ordre n'est pas prêt), HANDOVER (un ordre prêt n'est pas remis),
-     * SELLING, puis PAYMENTS (comptes arrêtés) et DONE (fiche close).
+     * MINING (aucun ordre ; SALVAGING pour une fiche de salvage sans cargaison), REFINING (un ordre n'est pas prêt),
+     * HANDOVER (un lot prêt n'est pas remis), SELLING, puis PAYMENTS (comptes arrêtés) et DONE (fiche close).
+     * Une cargaison de salvage est prête dès sa saisie : elle passe directement à la remise.
      */
     public static String phase(SessionData data, LocalDateTime now) {
         SessionSheet sheet = data.sheet();
         if (sheet.getStatus() == SessionSheet.Status.SETTLEMENT) return "PAYMENTS";
         if (sheet.getStatus() == SessionSheet.Status.CLOSED) return "DONE";
-        if (data.orders().isEmpty()) return "MINING";
+        if (data.orders().isEmpty()) return sheet.isSalvage() ? "SALVAGING" : "MINING";
         if (data.orders().stream().anyMatch(order -> !order.isReady(now))) return "REFINING";
         if (data.orders().stream().anyMatch(order -> !order.isHandedOver())) return "HANDOVER";
         return "SELLING";
@@ -75,7 +76,7 @@ public class SessionViewBuilder {
                         active && (viewerIsOrganizer || Objects.equals(e.getPayerUserId(), viewerId))))
                 .toList();
         List<SessionSheetDTO.Order> orders = data.orders().stream().map(o -> new SessionSheetDTO.Order(
-                o.getId(), ref.apply(o.getLauncherUserId()), o.getTerminalId(), o.getTerminalLabel(), o.getMethodCode(), o.getMethodLabel(),
+                o.getId(), o.getKind().name(), ref.apply(o.getLauncherUserId()), o.getTerminalId(), o.getTerminalLabel(), o.getMethodCode(), o.getMethodLabel(),
                 o.getCost(), o.getFinishesAt(), o.isReady(now), ref.apply(o.getRecipientUserId()), o.getHandedOverAt(),
                 o.getLines().stream().map(l -> new SessionSheetDTO.OrderLine(l.getCommodityId(), l.getCommodityName(), l.getQuantityCscu(), l.getQuality(), l.getDestination().name())).toList(),
                 active && (viewerIsOrganizer || Objects.equals(o.getLauncherUserId(), viewerId)),
@@ -88,9 +89,9 @@ public class SessionViewBuilder {
         )).toList();
 
         Event event = sheet.getOperationEventId() == null ? null : events.findById(sheet.getOperationEventId()).orElse(null);
-        LocalDateTime lastFinish = data.orders().stream().map(MiningRefineryOrder::getFinishesAt).max(Comparator.naturalOrder()).orElse(null);
+        LocalDateTime lastFinish = data.orders().stream().filter(o -> !o.isHaul()).map(MiningRefineryOrder::getFinishesAt).max(Comparator.naturalOrder()).orElse(null);
         return new SessionSheetDTO(
-                sheet.getId(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name(), phase(data, now), sheet.getRevision(),
+                sheet.getId(), sheet.getActivity(), sheet.getName(), sheet.getSessionDate(), sheet.getStatus().name(), phase(data, now), sheet.getRevision(),
                 ref.apply(sheet.getOrganizerUserId()), sheet.getOperationEventId(), event == null ? null : event.getTitle(),
                 new SessionSheetDTO.Permissions(viewerId, viewerIsOrganizer, participant, canEdit),
                 participants, expenses, orders, sales, stock(data, sellers, ref), remaining(data), share(data, ref),
@@ -115,7 +116,7 @@ public class SessionViewBuilder {
             Set<Integer> commodities = new LinkedHashSet<>(inStock.keySet());
             commodities.addAll(awaiting.keySet());
             List<SessionSheetDTO.StockLine> lines = commodities.stream()
-                    .map(id -> new SessionSheetDTO.StockLine(id, names.getOrDefault(id, "Minerai " + id), Math.max(0, inStock.getOrDefault(id, 0L)), awaiting.getOrDefault(id, 0L)))
+                    .map(id -> new SessionSheetDTO.StockLine(id, names.getOrDefault(id, goods(data) + " " + id), Math.max(0, inStock.getOrDefault(id, 0L)), awaiting.getOrDefault(id, 0L)))
                     .filter(line -> line.inStockCscu() > 0 || line.awaitingCscu() > 0)
                     .toList();
             result.add(new SessionSheetDTO.Stock(ref.apply(seller), lines));
@@ -133,7 +134,7 @@ public class SessionViewBuilder {
         return commodities.stream().map(id -> {
             long total = data.totalToSell(id);
             long soldCscu = sold.getOrDefault(id, 0L);
-            return new SessionSheetDTO.Remaining(id, names.getOrDefault(id, "Minerai " + id), total, soldCscu, Math.max(0, total - soldCscu));
+            return new SessionSheetDTO.Remaining(id, names.getOrDefault(id, goods(data) + " " + id), total, soldCscu, Math.max(0, total - soldCscu));
         }).toList();
     }
 
@@ -174,6 +175,11 @@ public class SessionViewBuilder {
         return settlement.getTransfers().stream().sorted(Comparator.comparingInt(SessionSettlementTransfer::getPosition))
                 .map(t -> new SessionSheetDTO.Transfer(t.getId(), ref.apply(t.getFromUserId()), ref.apply(t.getToUserId()), t.getAmount(), t.getReceivedAt(), ref.apply(t.getReceivedByUserId())))
                 .toList();
+    }
+
+    /** Nom de repli d'une marchandise dont le nom n'est pas connu. */
+    static String goods(SessionData data) {
+        return data.sheet().isSalvage() ? "Matériau" : "Minerai";
     }
 
     private static Map<Integer, String> commodityNames(SessionData data) {

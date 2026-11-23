@@ -37,7 +37,7 @@ public final class PoleDtos {
     public record Stat(String key, long value) {
     }
 
-    /** Une activité récente du pôle. kind donne sa nature (MINING_SHEET, EVENT, OPERATION), id l'objet à ouvrir ; status ne vaut que pour une fiche. */
+    /** Une activité récente du pôle. kind donne sa nature (MINING_SHEET, SALVAGE_SHEET, EVENT, OPERATION), id l'objet à ouvrir ; status ne vaut que pour une fiche. */
     public record Activity(String kind, UUID id, String name, LocalDate date, String status) {
     }
 

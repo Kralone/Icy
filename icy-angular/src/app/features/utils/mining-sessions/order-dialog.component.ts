@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MarketReference, MiningSessionService, OreDestination, RefineryOrder, SessionSheet, serverMessage } from '../../../core/services/mining/mining-session.service';
 import { HintComponent } from './hint.component';
 import { hourLabel } from './mining-session-view';
+import { isRefinedSalvage } from './session-activity';
 import { SearchOption, SearchSelectComponent } from './search-select.component';
 import { Duration, clampQuality, groupDigits, parseAmountOrZero, parseScu, scuInput, stepDuration, toDuration, typedDuration } from './session-input';
 
@@ -84,16 +85,25 @@ interface LineForm { commodityId: number | null; scu: string; quality: string; d
 
         <section class="block">
           <div class="block__head">
-            <h3>Minerais raffinés<app-hint label="Minerais raffinés" text="Quantités en SCU, qualité de 0 à 1000. Un minerai conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
+            @if (salvage()) {
+              <h3>Matériau raffiné<app-hint label="Matériau raffiné" text="Ce que la raffinerie rendra, en SCU (Construction Materials, le CMAT). Le RMC et le matériau brut ne se raffinent pas ici : déclarez-les en cargaison. Un matériau conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
+            } @else {
+              <h3>Minerais raffinés<app-hint label="Minerais raffinés" text="Quantités en SCU, qualité de 0 à 1000. Un minerai conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
+            }
           </div>
+          @if (salvage() && !commodityOptions().length) {
+            <p class="alert" role="alert">Aucun matériau raffiné (Construction Materials) dans les données UEX : un administrateur doit rafraîchir le cache UEX.</p>
+          }
           @for (line of form.lines; track $index; let i = $index) {
-            <div class="line-row">
+            <div class="line-row" [class.line-row--salvage]="salvage()">
               <div class="field">
-                <label [for]="'order-ore-' + i">Minerai</label>
-                <app-search-select [inputId]="'order-ore-' + i" [name]="'commodity' + i" [(ngModel)]="line.commodityId" [options]="commodityOptions()" placeholder="Minerai" />
+                <label [for]="'order-ore-' + i">{{ salvage() ? 'Matériau' : 'Minerai' }}</label>
+                <app-search-select [inputId]="'order-ore-' + i" [name]="'commodity' + i" [(ngModel)]="line.commodityId" [options]="commodityOptions()" [placeholder]="salvage() ? 'Matériau' : 'Minerai'" />
               </div>
               <label class="field">SCU<input [name]="'scu' + i" inputmode="decimal" autocomplete="off" [(ngModel)]="line.scu" placeholder="14,8" required></label>
+              @if (!salvage()) {
               <label class="field">Qualité<input [name]="'quality' + i" inputmode="numeric" autocomplete="off" [ngModel]="line.quality" (ngModelChange)="line.quality = clamp($event)" placeholder="0 à 1000" required></label>
+              }
               <div class="dest" role="radiogroup" [attr.aria-label]="'Destination de la ligne ' + (i + 1)">
                 <button type="button" role="radio" class="dest__sell" [attr.aria-checked]="line.destination === 'SELL'" (click)="line.destination = 'SELL'">À vendre</button>
                 <button type="button" role="radio" class="dest__keep" [attr.aria-checked]="line.destination === 'KEEP'" (click)="line.destination = 'KEEP'">Conserver</button>
@@ -101,7 +111,7 @@ interface LineForm { commodityId: number | null; scu: string; quality: string; d
               <button type="button" class="btn small" [disabled]="form.lines.length === 1" (click)="form.lines.splice(i, 1)" [attr.aria-label]="'Retirer la ligne ' + (i + 1)">×</button>
             </div>
           }
-          <button type="button" class="btn small" style="justify-self: start" [disabled]="form.lines.length >= 20" (click)="addLine()">+ Minerai</button>
+          <button type="button" class="btn small" style="justify-self: start" [disabled]="form.lines.length >= 20" (click)="addLine()">{{ salvage() ? '+ Matériau' : '+ Minerai' }}</button>
         </section>
         @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
         <div class="dialog-actions">
@@ -140,6 +150,7 @@ interface LineForm { commodityId: number | null; scu: string; quality: string; d
     .time__end { padding: .25rem .8rem; border: 1px solid rgba(253, 186, 116, .6); border-radius: 999px; color: var(--s-refine); background: rgba(253, 186, 116, .1); font-size: .84rem; font-weight: 600; }
     .time--off .clock { opacity: .55; }
     .line-row { grid-template-columns: minmax(0, 2fr) minmax(0, .9fr) minmax(0, .9fr) auto auto; }
+    .line-row--salvage { grid-template-columns: minmax(0, 2fr) minmax(0, .9fr) auto auto; }
     .dest { display: inline-flex; min-height: 2.5rem; border: 1px solid var(--line-strong); border-radius: .45rem; overflow: hidden; }
     .dest button { padding: .3rem .65rem; border: 0; color: var(--muted); background: var(--field); font: inherit; font-size: .82rem; white-space: nowrap; cursor: pointer; }
     .dest button + button { border-left: 1px solid var(--line-strong); }
@@ -169,7 +180,14 @@ export class OrderDialogComponent implements OnInit {
   readonly group = groupDigits;
   readonly clamp = clampQuality;
   readonly refineryOptions = computed<SearchOption<number>[]>(() => this.reference().refineries.map(t => ({ value: t.id, label: t.name, detail: t.location })));
-  readonly commodityOptions = computed<SearchOption<number>[]>(() => this.reference().commodities.map(c => ({ value: c.id, label: c.name })));
+  readonly salvage = computed(() => this.sheet().activity === 'SALVAGE');
+  /**
+   * Ce qui sort de la raffinerie. Minage : minerais raffinés. Salvage : le seul matériau raffiné, le CMAT
+   * (Construction Materials) ; le RMC et le matériau brut se déclarent en cargaison.
+   */
+  readonly commodityOptions = computed<SearchOption<number>[]>(() => this.salvage()
+    ? (this.reference().salvageCommodities ?? []).filter(c => isRefinedSalvage(c.name)).map(c => ({ value: c.id, label: `${c.name} (CMAT)` }))
+    : this.reference().commodities.map(c => ({ value: c.id, label: c.name })));
 
   nameOf(userId: string): string {
     return this.sheet().participants.find(p => p.user.id === userId)?.user.username ?? 'Vous';
@@ -213,7 +231,7 @@ export class OrderDialogComponent implements OnInit {
       this.form = {
         launcher: order.launcher.id, terminalId: order.terminalId, methodCode: order.methodCode, cost: order.cost ? groupDigits(order.cost) : '',
         duration: toDuration(minutes), changeTime: false, recipient: order.recipient.id,
-        lines: order.lines.map(line => ({ commodityId: line.commodityId, scu: scuInput(line.quantityCscu), quality: String(line.quality), destination: line.destination }))
+        lines: order.lines.map(line => ({ commodityId: line.commodityId, scu: scuInput(line.quantityCscu), quality: line.quality === null ? '' : String(line.quality), destination: line.destination }))
       };
     } else {
       this.form = { launcher: me, terminalId: null, methodCode: null, cost: '', duration: { hours: 0, minutes: 0 }, changeTime: true, recipient: me, lines: [] };
@@ -233,8 +251,9 @@ export class OrderDialogComponent implements OnInit {
     for (const line of this.form.lines) {
       const quantityCscu = parseScu(line.scu);
       const quality = line.quality === '' || line.quality === null ? null : Number(line.quality);
-      if (!line.commodityId) { this.error.set('Choisissez le minerai de chaque ligne.'); return; }
+      if (!line.commodityId) { this.error.set(this.salvage() ? 'Choisissez le matériau de chaque ligne.' : 'Choisissez le minerai de chaque ligne.'); return; }
       if (!quantityCscu) { this.error.set('Quantité invalide : en SCU, deux décimales au plus (ex. 14,8).'); return; }
+      if (this.salvage()) { lines.push({ commodityId: line.commodityId, quantityCscu, quality: null, destination: line.destination }); continue; }
       if (quality === null || !Number.isInteger(quality) || quality < 0 || quality > 1000) { this.error.set('La qualité est obligatoire, de 0 à 1000.'); return; }
       lines.push({ commodityId: line.commodityId, quantityCscu, quality, destination: line.destination });
     }
@@ -242,6 +261,7 @@ export class OrderDialogComponent implements OnInit {
     const minutes = this.durationMinutes();
     const payload = {
       launcherUserId: this.sheet().permissions.organizer ? this.form.launcher : null,
+      kind: 'REFINERY' as const,
       terminalId: this.form.terminalId, methodCode: this.form.methodCode, cost,
       remainingMinutes: timeChanged ? minutes : null,
       recipientUserId: this.form.recipient || null, lines

@@ -1,21 +1,21 @@
 <main class="page">
   @switch (state()) {
     @case ('loading') { <app-async-state kind="loading" title="Chargement de la fiche…" /> }
-    @case ('missing') { <app-async-state kind="error" title="Fiche de minage introuvable." description="Elle a peut-être été supprimée, ou le lien est incomplet." /> }
+    @case ('missing') { <app-async-state kind="error" title="Fiche introuvable." description="Elle a peut-être été supprimée, ou le lien est incomplet." /> }
     @case ('error') { <app-async-state kind="error" title="La fiche n’a pas pu être chargée." actionLabel="Réessayer" (action)="load()" /> }
   }
 
   @if (state() === 'ready' && sheet(); as s) {
     <header class="hero">
-      <img class="hero__image" [src]="heroImage" alt="">
+      <img class="hero__image" [src]="heroImage()" alt="">
       <div class="hero__veil"></div>
       <div class="hero__content">
-        <a class="hero__back" routerLink="/icy/outils/fiches-minage"><span aria-hidden="true">←</span> Fiches de minage</a>
+        <a class="hero__back" [routerLink]="text().path"><span aria-hidden="true">←</span> {{ text().listTitle }}</a>
         <p class="hero__tags">
-          <span class="hero__type">Session de minage</span>
+          <span class="hero__type">{{ text().sessionLabel }}</span>
           <span class="hero__status" [attr.data-tone]="s.status === 'ACTIVE' ? 'live' : s.status === 'SETTLEMENT' || s.share.settlement?.closeKind === 'FORCED' ? 'settle' : 'done'">
             @switch (s.status) {
-              @case ('ACTIVE') { En cours · {{ steps[stepIndex()].label.toLowerCase() }} }
+              @case ('ACTIVE') { En cours · {{ steps()[stepIndex()].label.toLowerCase() }} }
               @case ('SETTLEMENT') { Comptes arrêtés }
               @default { @if (s.share.settlement?.closeKind === 'FORCED') { Clôturée · versement non confirmé } @else { Terminée } }
             }
@@ -25,7 +25,7 @@
         <dl class="hero__facts">
           <div><dt><app-operation-icon name="calendar" /><span class="sr-only">Date</span></dt><dd>{{ dateLabel(s.sessionDate) }}</dd></div>
           <div><dt><app-operation-icon name="users" /><span class="sr-only">Participants</span></dt><dd>{{ s.participants.length }} participant{{ s.participants.length > 1 ? 's' : '' }} · {{ s.share.totalSharesCenti / 100 }} part{{ s.share.totalSharesCenti > 100 ? 's' : '' }}</dd></div>
-          @if (s.orders.length) { <div><dt><app-operation-icon name="pin" /><span class="sr-only">Raffineries</span></dt><dd>{{ refineries(s) }}</dd></div> }
+          @if (s.orders.length) { <div><dt><app-operation-icon name="pin" /><span class="sr-only">{{ salvage() ? 'Lieux du cargo' : 'Raffineries' }}</span></dt><dd>{{ refineries(s) }}</dd></div> }
           @if (s.operationEventId) { <div><dt><app-operation-icon name="briefing" /><span class="sr-only">Opération liée</span></dt><dd><a [routerLink]="['/icy/operations', s.operationEventId]">{{ s.operationTitle || 'Opération liée' }}</a></dd></div> }
           <div><dt><app-operation-icon name="assignment" /><span class="sr-only">Organisateur</span></dt><dd>{{ s.organizer.username }}</dd></div>
         </dl>
@@ -34,7 +34,7 @@
 
     <nav class="section-nav" aria-label="Sections de la fiche">
       <button type="button" style="--c: var(--cyan)" (click)="goTo('situation')"><app-operation-icon name="assignment" /> Ma situation</button>
-      <button type="button" style="--c: var(--s-refine)" (click)="goTo('raffinage')"><app-operation-icon name="flask" /> Raffinage</button>
+      <button type="button" style="--c: var(--s-refine)" (click)="goTo('raffinage')">@if (salvage()) { <app-operation-icon name="wrench" /> Cargaisons } @else { <app-operation-icon name="flask" /> Raffinage }</button>
       <button type="button" style="--c: var(--s-sell)" (click)="goTo('vente')"><app-operation-icon name="cargo" /> Vente</button>
       <button type="button" style="--c: var(--s-share)" (click)="goTo('partage')"><app-operation-icon name="coins" /> Partage</button>
       <button type="button" style="--c: var(--s-costs)" (click)="goTo('frais')"><app-operation-icon name="wrench" /> Frais</button>
@@ -66,10 +66,11 @@
           <p class="note">La fiche est consultable par tous les membres ; l’organisateur gère les participants.</p>
         }
         @if (s.permissions.canEdit) {
-          <div class="actions">
+          <div class="actions" [class.actions--four]="salvage()">
             <button type="button" class="act" style="--a: var(--s-costs)" (click)="open({ kind: 'expense', expense: null })"><app-operation-icon name="coins" /> Frais</button>
+            @if (salvage()) { <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'haul', order: null })"><app-operation-icon name="wrench" /> Cargaison</button> }
             <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'order', order: null })"><app-operation-icon name="flask" /> Raffinage</button>
-            <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length" [attr.title]="s.orders.length ? null : 'Disponible après le premier ordre de raffinage'" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
+            <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length && !salvage()" [attr.title]="s.orders.length || salvage() ? null : 'Disponible après le premier ordre de raffinage'" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
           </div>
         }
       </section>
@@ -78,7 +79,7 @@
       <section class="panel p-progress" id="avancement" aria-labelledby="progress-h">
         <header><h2 id="progress-h"><app-operation-icon name="target" /> Avancement</h2></header>
         <ol class="steps">
-          @for (step of steps; track step.phase; let i = $index) {
+          @for (step of steps(); track step.phase; let i = $index) {
             <li [class.done]="stepClass(i) === 'done'" [class.now]="stepClass(i) === 'now'" [attr.aria-current]="stepClass(i) === 'now' ? 'step' : null">
               <b>{{ step.label }}</b>{{ stepClass(i) === 'done' ? 'Terminé' : stepClass(i) === 'now' ? 'En cours' : 'À venir' }}
             </li>
@@ -96,51 +97,61 @@
 
       <!-- Raffinage -->
       <section class="panel p-refine" id="raffinage" style="--section: var(--s-refine)" aria-labelledby="refine-h">
-        <header><h2 id="refine-h"><app-operation-icon name="flask" /> Raffinage</h2><span>@if (s.orders.length) { {{ s.orders.length }} ordre{{ s.orders.length > 1 ? 's' : '' }}@if (lastFinish(); as last) { · fin du dernier à {{ hour(last) }} } } @else { aucun ordre }</span></header>
+        @if (salvage()) {
+          <header><h2 id="refine-h"><app-operation-icon name="wrench" /> Cargaisons et raffinage<app-hint label="Cargaisons et raffinage" text="Une cargaison est ce qui a été récupéré à bord : RMC du grattage de coque, matériau de construction du démantèlement. Le matériau de construction brut peut être raffiné en CMAT : c’est un ordre de raffinage, avec son heure de fin." /></h2><span>@if (s.orders.length) { {{ lotsSummary() }}@if (lastFinish(); as last) { · fin du dernier raffinage à {{ hour(last) }} } } @else { aucune cargaison }</span></header>
+        } @else {
+          <header><h2 id="refine-h"><app-operation-icon name="flask" /> Raffinage</h2><span>@if (s.orders.length) { {{ s.orders.length }} ordre{{ s.orders.length > 1 ? 's' : '' }}@if (lastFinish(); as last) { · fin du dernier à {{ hour(last) }} } } @else { aucun ordre }</span></header>
+        }
         @if (s.orders.length) {
           <ul class="orders">
             @for (order of s.orders; track order.id) {
               <li class="order" [attr.data-state]="orderState(order)">
                 <div class="order__top">
-                  <div class="order__who"><h3>Ordre de {{ order.launcher.username }}</h3><span>{{ order.terminalLabel }}@if (order.methodLabel) { · {{ order.methodLabel }} }</span></div>
+                  <div class="order__who"><h3>{{ order.kind === 'HAUL' ? 'Cargaison de ' : 'Ordre de ' }}{{ order.launcher.username }}</h3><span>{{ order.terminalLabel }}@if (order.methodLabel) { · {{ order.methodLabel }} }</span></div>
                   <span class="badge" [class.badge--wait]="orderState(order) === 'wait'" [class.badge--ready]="orderState(order) === 'ready'" [class.badge--given]="orderState(order) === 'given'">{{ orderBadge(order) }}</span>
                 </div>
                 <div class="ores">
                   @for (line of order.lines; track $index) {
-                    <span class="ore" [class.kept]="line.destination === 'KEEP'" [style.--c]="color(line.commodityName)"><b>{{ line.commodityName }}</b><span class="num">{{ scu(line.quantityCscu) }} SCU</span><span class="q">qualité {{ line.quality }}</span>@if (line.destination === 'KEEP') { <span class="k">conservé</span> }</span>
+                    <span class="ore" [class.kept]="line.destination === 'KEEP'" [style.--c]="color(line.commodityName)"><b>{{ line.commodityName }}</b><span class="num">{{ scu(line.quantityCscu) }} SCU</span>@if (line.quality !== null) { <span class="q">qualité {{ line.quality }}</span> }@if (line.destination === 'KEEP') { <span class="k">conservé</span> }</span>
                   }
                 </div>
                 <div class="order__foot">
-                  @if (orderCountdown(order); as left) {
+                  @if (order.kind === 'HAUL') {
+                    <span class="timer timer--ready"><app-operation-icon name="clock" />Déclarée à {{ hour(order.finishesAt) }}</span>
+                  } @else if (orderCountdown(order); as left) {
                     <span class="timer" role="timer" [attr.aria-label]="'Prêt à ' + hour(order.finishesAt)"><app-operation-icon name="clock" /><b class="num">{{ left }}</b><span>prêt à {{ hour(order.finishesAt) }}</span></span>
                   } @else {
                     <span class="timer timer--ready"><app-operation-icon name="clock" />Prêt depuis {{ hour(order.finishesAt) }}</span>
                   }
-                  <span>Coût <strong class="num">{{ auec(order.cost) }}</strong></span>
-                  <span>@if (order.launcher.id === order.recipient.id) { Vendu par <strong>{{ order.recipient.username }}</strong>, son lanceur } @else { À remettre à <strong>{{ order.recipient.username }}</strong> }</span>
+                  @if (order.kind !== 'HAUL' || order.cost) { <span>Coût <strong class="num">{{ auec(order.cost) }}</strong></span> }
+                  <span>@if (order.launcher.id === order.recipient.id) { Vendu par <strong>{{ order.recipient.username }}</strong>, {{ order.kind === 'HAUL' ? 'qui l’a récupéré' : 'son lanceur' }} } @else { À remettre à <strong>{{ order.recipient.username }}</strong> }</span>
                   <span class="grow"></span>
                   @if (order.canHandOver && !order.handedOverAt && orderState(order) === 'ready') {
-                    <button type="button" class="btn small" [disabled]="busy()" (click)="handOver(order)">{{ order.launcher.id === order.recipient.id ? 'Je l’ai récupéré' : 'Marquer remis' }}</button>
+                    <button type="button" class="btn small" [disabled]="busy()" (click)="handOver(order)">{{ order.launcher.id === order.recipient.id ? 'Je l’ai récupéré' : order.kind === 'HAUL' ? 'Marquer remise' : 'Marquer remis' }}</button>
                   }
                   @if (order.canHandOver && order.handedOverAt) { <button type="button" class="btn small" [disabled]="busy()" (click)="cancelHandOver(order)">Annuler la remise</button> }
-                  @if (order.editable) { <button type="button" class="btn small" (click)="open({ kind: 'order', order })">Modifier</button> }
+                  @if (order.editable) { <button type="button" class="btn small" (click)="edit(order)">Modifier</button> }
                 </div>
               </li>
             }
           </ul>
           @if (keptLines().length) {
             <p class="note">Conservé, hors partage et hors stock à vendre :
-              @for (kept of keptLines(); track $index) { {{ kept.line.commodityName }} de {{ kept.order.launcher.username }} (qualité {{ kept.line.quality }}){{ $last ? '.' : ', ' }} }
+              @for (kept of keptLines(); track $index) { {{ kept.line.commodityName }} de {{ kept.order.launcher.username }}@if (kept.line.quality !== null) { (qualité {{ kept.line.quality }}) }{{ $last ? '.' : ', ' }} }
             </p>
           }
         } @else {
-          <p class="empty">Aucun ordre pour l’instant. Créez-en un à chaque lancement de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+          @if (salvage()) {
+            <p class="empty">Aucune cargaison pour l’instant. Déclarez ce que chacun ramène (RMC, matériau de construction) et qui le vendra. Pour raffiner le matériau de construction en CMAT, créez un ordre de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+          } @else {
+            <p class="empty">Aucun ordre pour l’instant. Créez-en un à chaque lancement de raffinage : la fiche suivra l’heure de fin et préviendra le lanceur sur Discord.</p>
+          }
         }
       </section>
 
       <!-- Frais -->
       <section class="panel p-costs" id="frais" style="--section: var(--s-costs)" aria-labelledby="costs-h">
-        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés<app-hint label="Frais avancés" text="Payés par un participant pour le groupe, raffinage compris. Chacun récupère ce qu’il a avancé avant le partage du bénéfice." /></h2></header>
+        <header><h2 id="costs-h"><app-operation-icon name="wrench" /> Frais avancés<app-hint label="Frais avancés" [text]="salvage() ? 'Payés par un participant pour le groupe : claim, location de vaisseau, carburant, réparations, raffinage. Chacun récupère ce qu’il a avancé avant le partage du bénéfice.' : 'Payés par un participant pour le groupe, raffinage compris. Chacun récupère ce qu’il a avancé avant le partage du bénéfice.'" /></h2></header>
         @if (costs().length) {
           <div class="rows">
             @for (cost of costs(); track $index) {
@@ -155,15 +166,15 @@
           </div>
           <div class="total-line"><span>Total</span><span class="num">{{ auec(s.share.totalExpenses) }} aUEC</span></div>
         } @else {
-          <p class="empty">Aucun frais déclaré. Carburant, réparations, matériel : chacun ajoute ce qu’il paie.</p>
+          <p class="empty">Aucun frais déclaré. {{ salvage() ? 'Claim, location, carburant, réparations' : 'Carburant, réparations, matériel' }} : chacun ajoute ce qu’il paie.</p>
         }
       </section>
 
       <!-- Vente -->
       <section class="panel p-sell" id="vente" style="--section: var(--s-sell)" aria-labelledby="sell-h">
-        <header><h2 id="sell-h"><app-operation-icon name="cargo" /> Vente</h2><span>@if (s.remaining.length) { {{ remainingTotal() > 0 ? 'reste ' + scu(remainingTotal()) + ' SCU à vendre' : 'tout est vendu' }} } @else { après le raffinage }</span></header>
-        @if (!s.remaining.length) {
-          <p class="empty">Les minerais à vendre et les suggestions de vente apparaîtront avec les premiers ordres de raffinage.</p>
+        <header><h2 id="sell-h"><app-operation-icon name="cargo" /> Vente</h2><span>@if (s.remaining.length) { {{ remainingTotal() > 0 ? 'reste ' + scu(remainingTotal()) + ' SCU à vendre' : 'tout est vendu' }} } @else { {{ salvage() ? 'après la première cargaison' : 'après le raffinage' }} }</span></header>
+        @if (!s.remaining.length && !(salvage() && (s.sales.length || s.permissions.canEdit))) {
+          <p class="empty">{{ salvage() ? 'Les matériaux à vendre et les suggestions de vente apparaîtront avec les premières cargaisons.' : 'Les minerais à vendre et les suggestions de vente apparaîtront avec les premiers ordres de raffinage.' }}</p>
         } @else {
           <div class="sell-grid">
             <div class="sell-list">
@@ -195,23 +206,23 @@
                         <button type="button" class="more-spots" [attr.aria-expanded]="openSpots().has(item.commodityId)" (click)="toggleSpots(item.commodityId)">{{ openSpots().has(item.commodityId) ? 'Masquer les autres lieux' : 'Voir ' + (points(item.commodityId).length - 2) + ' autres lieux' }}</button>
                       }
                     } @else if (suggestions()) {
-                      <p class="note">Aucun prix connu pour ce minerai dans les données UEX.</p>
+                      <p class="note">Aucun prix connu pour ce {{ text().goods }} dans les données UEX.</p>
                     }
                   }
                 </article>
               }
               @if (suggestions(); as sg) {
-                <p class="note">Estimations UEX@if (sg.pricesFetchedAt) { relevées le {{ dateTimeLabel(sg.pricesFetchedAt) }} }. Le prix réel dépend de l’offre, de la demande et de la qualité.@if (sg.singleStop; as stop) { Un seul arrêt : {{ stop.terminalName }} achète {{ stop.commodityNames.join(', ') }}. }</p>
+                <p class="note">Estimations UEX@if (sg.pricesFetchedAt) { relevées le {{ dateTimeLabel(sg.pricesFetchedAt) }} }. Le prix réel dépend de l’offre et de la demande{{ salvage() ? "" : " et de la qualité" }}.@if (sg.singleStop; as stop) { Un seul arrêt : {{ stop.terminalName }} achète {{ stop.commodityNames.join(', ') }}. }</p>
               }
             </div>
             <div class="sell-list">
-              @if (s.permissions.canEdit && remainingTotal() > 0) {
+              @if (s.permissions.canEdit && (remainingTotal() > 0 || salvage())) {
                 <div class="sale-cta">
                   <h3>Vendre</h3>
                   @if (myStock(); as stock) {
                     <div class="ores">@for (line of stock.lines; track line.commodityId) { @if (line.inStockCscu > 0) { <span class="ore" [style.--c]="color(line.commodityName)"><b>{{ line.commodityName }}</b><span class="num">{{ scu(line.inStockCscu) }} SCU</span></span> } }</div>
                   }
-                  <p class="note">Le montant saisi est celui reçu en jeu ; seul le minerai remis au vendeur peut être vendu.</p>
+                  <p class="note">Le montant saisi est celui reçu en jeu ; seul {{ text().theGoods }} remis au vendeur peut être vendu.@if (salvage()) { Composants démontés et récompenses de contrat s’enregistrent en vente directe, sans cargaison. }</p>
                   <button type="button" class="btn primary" (click)="open({ kind: 'sale', sale: null })">Enregistrer une vente</button>
                 </div>
               }
@@ -223,7 +234,7 @@
                       <div class="row">
                         <span><b>{{ sale.seller.username }}</b> · {{ sale.terminalLabel }}</span>
                         <b class="num pos">+ {{ auec(sale.amount) }}</b>
-                        <span class="sub">{{ dateTimeLabel(sale.soldAt) }} · @for (line of sale.lines; track $index) { {{ line.commodityName }} {{ scu(line.quantityCscu) }} SCU{{ $last ? '' : ', ' }} }@if (sale.editable) { <button type="button" class="link" (click)="open({ kind: 'sale', sale })">Modifier</button> }</span>
+                        <span class="sub">{{ dateTimeLabel(sale.soldAt) }} · @if (!sale.lines.length) { vente directe } @for (line of sale.lines; track $index) { {{ line.commodityName }} {{ scu(line.quantityCscu) }} SCU{{ $last ? '' : ', ' }} }@if (sale.editable) { <button type="button" class="link" (click)="open({ kind: 'sale', sale })">Modifier</button> }</span>
                       </div>
                     }
                   </div>
@@ -335,16 +346,18 @@
     </div>
 
     @if (s.permissions.canEdit) {
-      <div class="quickbar">
+      <div class="quickbar" [class.quickbar--four]="salvage()">
         <button type="button" class="act" style="--a: var(--s-costs)" (click)="open({ kind: 'expense', expense: null })"><app-operation-icon name="coins" /> Frais</button>
+        @if (salvage()) { <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'haul', order: null })"><app-operation-icon name="wrench" /> Cargaison</button> }
         <button type="button" class="act" style="--a: var(--s-refine)" (click)="open({ kind: 'order', order: null })"><app-operation-icon name="flask" /> Raffinage</button>
-        <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
+        <button type="button" class="act act--main" style="--a: var(--s-sell)" [disabled]="!s.orders.length && !salvage()" (click)="open({ kind: 'sale', sale: null })"><app-operation-icon name="cargo" /> Vente</button>
       </div>
     }
 
     @if (dialog(); as d) {
       @switch (d.kind) {
         @case ('expense') { <app-expense-dialog [sheet]="s" [expense]="$any(d).expense" (saved)="saved($event)" (closed)="dialog.set(null)" /> }
+        @case ('haul') { @if (reference(); as ref) { <app-haul-dialog [sheet]="s" [reference]="ref" [order]="$any(d).order" (saved)="saved($event)" (closed)="dialog.set(null)" /> } }
         @case ('order') { @if (reference(); as ref) { <app-order-dialog [sheet]="s" [reference]="ref" [order]="$any(d).order" (saved)="saved($event)" (closed)="dialog.set(null)" /> } }
         @case ('sale') { @if (reference(); as ref) { <app-sale-dialog [sheet]="s" [reference]="ref" [suggestions]="suggestions()" [sale]="$any(d).sale" (saved)="saved($event)" (changed)="apply($event)" (closed)="dialog.set(null)" /> } }
         @case ('participants') { <app-participants-dialog [sheet]="s" (saved)="saved($event)" (closed)="dialog.set(null)" /> }

@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/** Fiche de session (minage pour l'instant) : participants, frais, ventes et règlements s'y rattachent par sheet_id. */
+/** Fiche de session (activity : MINING ou SALVAGE) : participants, frais, ventes et règlements s'y rattachent par sheet_id. */
 @Entity
 @Table(name = "sheets", schema = "session")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -27,6 +27,13 @@ public class SessionSheet {
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
 
     public enum Status { ACTIVE, SETTLEMENT, CLOSED }
+
+    public static final String MINING = "MINING";
+    public static final String SALVAGE = "SALVAGE";
+
+    public boolean isSalvage() {
+        return SALVAGE.equals(activity);
+    }
 
     public void touch(LocalDateTime now) {
         revision++;

@@ -83,6 +83,12 @@ export class UtilsMenuComponent {
       scope: 'Interne' as UtilityScope,
     },
     {
+      label: 'Fiches salvage',
+      imageUrl: 'assets/images/tools/salvage-sheet.jpg',
+      path: 'fiches-salvage',
+      scope: 'Interne' as UtilityScope,
+    },
+    {
       label: 'Hangar executifs',
       imageUrl: 'https://media.starcitizen.tools/b/b8/Cutter_Approaching_Checkmate_Station.png',
       path: 'executive-hangar',

@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Messages Discord des fiches de minage, publiés dans le salon des notifications (celui des SC World Events).
+ * Messages Discord des fiches de minage et de salvage (même clé de routage mining.*), publiés dans le salon des notifications (celui des SC World Events).
  * Le texte est rédigé ici ; le bot ajoute les mentions et le lien vers la fiche (chemin relatif « path »).
  */
 @Component
@@ -84,12 +84,18 @@ public class MiningNotifications {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sheetId", sheet.getId());
         payload.put("sheetName", sheet.getName());
-        payload.put("path", "/icy/outils/fiches-minage/" + sheet.getId());
+        payload.put("path", path(sheet));
+        payload.put("footer", sheet.isSalvage() ? "Fiche de salvage" : "Fiche de minage");
         payload.put("title", title);
         payload.put("description", description);
         payload.put("lines", lines);
         payload.put("mentionDiscordIds", mentionIds);
         events.notifyDiscord(key, payload);
+    }
+
+    /** Lien relatif vers la fiche, selon son activité. */
+    static String path(SessionSheet sheet) {
+        return (sheet.isSalvage() ? "/icy/outils/fiches-salvage/" : "/icy/outils/fiches-minage/") + sheet.getId();
     }
 
     private Map<UUID, User> people(Collection<UUID> ids) {

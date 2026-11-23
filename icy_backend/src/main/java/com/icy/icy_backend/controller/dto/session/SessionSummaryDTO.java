@@ -6,6 +6,7 @@ import java.util.UUID;
 /** Ligne de la liste des fiches. */
 public record SessionSummaryDTO(
         UUID id,
+        String activity,
         String name,
         LocalDate sessionDate,
         String status,

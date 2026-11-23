@@ -48,6 +48,8 @@ class SessionFixture implements AutoCloseable {
     static final UUID XENO = new UUID(0, 9);
     static final int LARANITE = 47;
     static final int REFINERY = 236;
+    static final int RMC = 3001;
+    static final int CMAT = 3002;
     static final LocalDateTime NOW = LocalDateTime.of(2026, 10, 22, 22, 0);
 
     final SessionSheetRepository sheets = Mockito.mock(SessionSheetRepository.class);
@@ -109,6 +111,10 @@ class SessionFixture implements AutoCloseable {
         Mockito.doAnswer(invocation -> orders.remove(invocation.<MiningRefineryOrder>getArgument(0))).when(orderRepository).delete(any(MiningRefineryOrder.class));
         when(market.terminals()).thenReturn(Map.of(REFINERY, new MiningMarketService.Terminal(REFINERY, "CRU-L1 Ambitious Dream Station", "Stanton › Crusader", "Stanton", true)));
         when(market.commodities()).thenReturn(Map.of(LARANITE, new MiningMarketService.Commodity(LARANITE, "Laranite", "LARA")));
+        when(market.commoditiesFor("MINING")).thenReturn(Map.of(LARANITE, new MiningMarketService.Commodity(LARANITE, "Laranite", "LARA")));
+        when(market.commoditiesFor("SALVAGE")).thenReturn(Map.of(
+                RMC, new MiningMarketService.Commodity(RMC, "Recycled Material Composite", "RMC"),
+                CMAT, new MiningMarketService.Commodity(CMAT, "Construction Materials", "CMAT")));
         when(market.methods()).thenReturn(List.of());
         when(users.findAllById(any())).thenAnswer(invocation -> {
             List<User> found = new ArrayList<>();

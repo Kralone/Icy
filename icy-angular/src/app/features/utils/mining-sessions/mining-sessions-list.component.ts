@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { MiningSessionService, SessionPhase, SessionSummary, formatAuec, serverMessage } from '../../../core/services/mining/mining-session.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MiningSessionService, SessionActivity, SessionSummary, formatAuec, serverMessage } from '../../../core/services/mining/mining-session.service';
 import { UserService } from '../../../core/services/user/user.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { WebSocketService } from '../../../core/services/websocket/websocket.service';
@@ -11,17 +11,11 @@ import { AsyncStateComponent } from '../../../shared/async-state/async-state.com
 import { OperationIconComponent } from '../../operations/briefing/operation-icon.component';
 import { HintComponent } from './hint.component';
 import { SearchOption, SearchSelectComponent } from './search-select.component';
+import { PHASE_LABELS, activityText } from './session-activity';
 
-export const PHASE_LABELS: Record<SessionPhase, string> = {
-  MINING: 'Minage',
-  REFINING: 'Raffinage',
-  HANDOVER: 'Remise du cargo',
-  SELLING: 'Vente',
-  PAYMENTS: 'Versements',
-  DONE: 'Terminée'
-};
+export { PHASE_LABELS } from './session-activity';
 
-/** Liste des fiches de minage : en cours d'abord, puis l'historique. */
+/** Liste des fiches de minage ou de salvage (selon la route) : en cours d'abord, puis l'historique. */
 @Component({
   selector: 'app-mining-sessions-list',
   standalone: true,
@@ -37,6 +31,9 @@ export class MiningSessionsListComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  /** Activité de la page, donnée par la route : MINING par défaut. */
+  readonly activity: SessionActivity = inject(ActivatedRoute).snapshot.data['activity'] === 'SALVAGE' ? 'SALVAGE' : 'MINING';
+  readonly text = activityText(this.activity);
 
   readonly state = signal<'loading' | 'error' | 'ready'>('loading');
   readonly sheets = signal<SessionSummary[]>([]);
@@ -75,8 +72,8 @@ export class MiningSessionsListComponent {
 
   load(showLoading = true): void {
     if (showLoading) this.state.set('loading');
-    this.sessions.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: sheets => { this.sheets.set(sheets); this.state.set('ready'); },
+    this.sessions.list(this.activity).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: sheets => { this.sheets.set(sheets.filter(sheet => (sheet.activity ?? 'MINING') === this.activity)); this.state.set('ready'); },
       error: () => { if (showLoading) this.state.set('error'); }
     });
   }
@@ -126,9 +123,9 @@ export class MiningSessionsListComponent {
     if (this.saving()) return;
     this.saving.set(true);
     this.createError.set('');
-    this.sessions.create({ name: this.form.name.trim() || null, sessionDate: this.form.date || null, participantIds: this.form.participantIds })
+    this.sessions.create({ name: this.form.name.trim() || null, sessionDate: this.form.date || null, participantIds: this.form.participantIds, activity: this.activity })
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: sheet => { this.saving.set(false); this.creating.set(false); this.router.navigate(['/icy/outils/fiches-minage', sheet.id]); },
+        next: sheet => { this.saving.set(false); this.creating.set(false); this.router.navigate([this.text.path, sheet.id]); },
         error: error => { this.saving.set(false); this.createError.set(serverMessage(error, 'La fiche n’a pas pu être créée.')); }
       });
   }

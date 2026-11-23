@@ -9,11 +9,13 @@ import {
 import { WebSocketService } from '../../../core/services/websocket/websocket.service';
 import { AsyncStateComponent } from '../../../shared/async-state/async-state.component';
 import { OperationIconComponent } from '../../operations/briefing/operation-icon.component';
-import { CostKind, EXPENSE_KINDS, ExpenseDialogComponent, REFINING_COST } from './expense-dialog.component';
+import { CostKind, EXPENSE_KINDS, ExpenseDialogComponent, HAUL_COST, OTHER_KIND, REFINING_COST } from './expense-dialog.component';
 import { HintComponent } from './hint.component';
 import { ManageDialogComponent } from './manage-dialog.component';
-import { STEPS, countdownLabel, hourLabel, mySituation, progress, stepState } from './mining-session-view';
+import { countdownLabel, hourLabel, mySituation, progress, stepState, stepsFor } from './mining-session-view';
+import { HaulDialogComponent } from './haul-dialog.component';
 import { OrderDialogComponent } from './order-dialog.component';
+import { activityText } from './session-activity';
 import { ParticipantsDialogComponent } from './participants-dialog.component';
 import { SaleDialogComponent } from './sale-dialog.component';
 import { SessionFlowComponent } from './session-flow.component';
@@ -21,16 +23,20 @@ import { SessionFlowComponent } from './session-flow.component';
 type Dialog =
   | { kind: 'expense'; expense: SessionExpense | null }
   | { kind: 'order'; order: RefineryOrder | null }
+  | { kind: 'haul'; order: RefineryOrder | null }
   | { kind: 'sale'; sale: SessionSale | null }
   | { kind: 'participants' }
   | { kind: 'manage' };
 
-/** Fiche d'une session de minage (docs/mining-v3/SPEC.md, « Écran »), dans le style des fiches d'opération. */
+/**
+ * Fiche d'une session de minage ou de salvage (docs/mining-v3/SPEC.md, docs/salvage/SPEC.md, « Écran »),
+ * dans le style des fiches d'opération. L'activité vient de la fiche elle-même.
+ */
 @Component({
   selector: 'app-mining-session-page',
   standalone: true,
   imports: [RouterLink, AsyncStateComponent, OperationIconComponent, HintComponent, SessionFlowComponent, ExpenseDialogComponent, OrderDialogComponent,
-    SaleDialogComponent, ParticipantsDialogComponent, ManageDialogComponent],
+    HaulDialogComponent, SaleDialogComponent, ParticipantsDialogComponent, ManageDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mining-session-page.component.html',
   styleUrls: ['./mining-session-shared.css', './mining-session-page.component.css']
@@ -53,24 +59,36 @@ export class MiningSessionPageComponent {
   private clockOffset = 0;
   readonly now = signal(Date.now());
 
-  readonly steps = STEPS;
+  readonly text = computed(() => activityText(this.sheet()?.activity));
+  readonly salvage = computed(() => this.sheet()?.activity === 'SALVAGE');
+  readonly steps = computed(() => stepsFor(this.sheet() ?? { activity: 'MINING' }));
   private readonly kinds = new Map<string, CostKind>(EXPENSE_KINDS.map(kind => [kind.value, kind]));
   readonly auec = formatAuec;
   readonly scu = formatScu;
   readonly color = oreColor;
   readonly parts = sharesLabel;
   readonly hour = hourLabel;
-  readonly heroImage = '/assets/images/home/activities/mining.jpg';
+  readonly heroImage = computed(() => this.text().heroImage);
 
-  readonly stepIndex = computed(() => STEPS.findIndex(step => step.phase === this.sheet()?.phase));
+  readonly stepIndex = computed(() => Math.max(0, this.steps().findIndex(step => step.phase === this.sheet()?.phase)));
   readonly progress = computed(() => { const sheet = this.sheet(); return sheet ? progress(sheet, this.now()) : null; });
   readonly mine = computed(() => { const sheet = this.sheet(); return sheet ? mySituation(sheet) : null; });
   readonly costs = computed(() => {
     const sheet = this.sheet();
     if (!sheet) return [];
-    const orders = sheet.orders.filter(order => order.cost > 0).map(order => ({ kind: REFINING_COST, who: order.launcher.username, amount: order.cost, note: order.terminalLabel, expense: null as SessionExpense | null }));
-    const expenses = sheet.expenses.map(expense => ({ kind: this.kinds.get(expense.kind) ?? { ...EXPENSE_KINDS[3], label: expense.kind }, who: expense.payer.username, amount: expense.amount, note: expense.note ?? '', expense }));
+    const orders = sheet.orders.filter(order => order.cost > 0).map(order => ({ kind: order.kind === 'HAUL' ? HAUL_COST : REFINING_COST, who: order.launcher.username, amount: order.cost, note: order.terminalLabel, expense: null as SessionExpense | null }));
+    const expenses = sheet.expenses.map(expense => ({ kind: this.kinds.get(expense.kind) ?? { ...OTHER_KIND, label: expense.kind }, who: expense.payer.username, amount: expense.amount, note: expense.note ?? '', expense }));
     return [...orders, ...expenses];
+  });
+  readonly hauls = computed(() => (this.sheet()?.orders ?? []).filter(order => order.kind === 'HAUL'));
+  readonly refineryOrders = computed(() => (this.sheet()?.orders ?? []).filter(order => order.kind !== 'HAUL'));
+  readonly lotsSummary = computed(() => {
+    const hauls = this.hauls().length;
+    const orders = this.refineryOrders().length;
+    const parts = [];
+    if (hauls) parts.push(`${hauls} cargaison${hauls > 1 ? 's' : ''}`);
+    if (orders) parts.push(`${orders} ordre${orders > 1 ? 's' : ''} de raffinage`);
+    return parts.join(' · ');
   });
   readonly lastFinish = computed(() => this.sheet()?.lastOrderFinishesAt ?? null);
   readonly locked = computed(() => this.sheet()?.status !== 'ACTIVE');
@@ -85,7 +103,7 @@ export class MiningSessionPageComponent {
     this.load();
     this.sessions.reference().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: reference => this.reference.set(reference),
-      error: () => this.reference.set({ commodities: [], refineries: [], methods: [], saleTerminals: [], pricesFetchedAt: null })
+      error: () => this.reference.set({ commodities: [], salvageCommodities: [], refineries: [], methods: [], saleTerminals: [], pricesFetchedAt: null })
     });
     if (this.sheetId) inject(WebSocketService).watchMiningSession(this.sheetId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load(false));
     // Comptes à rebours des ordres : à la seconde.
@@ -124,7 +142,7 @@ export class MiningSessionPageComponent {
 
   deleted(): void {
     this.dialog.set(null);
-    void this.router.navigate(['/icy/outils/fiches-minage']);
+    void this.router.navigate([this.text().path]);
   }
 
   saved(sheet: SessionSheet): void {
@@ -175,11 +193,13 @@ export class MiningSessionPageComponent {
 
   orderState(order: RefineryOrder): 'wait' | 'ready' | 'given' {
     if (order.handedOverAt) return 'given';
+    if (order.kind === 'HAUL') return 'ready';
     return new Date(order.finishesAt).getTime() <= this.now() ? 'ready' : 'wait';
   }
 
   orderBadge(order: RefineryOrder): string {
     const state = this.orderState(order);
+    if (order.kind === 'HAUL') return state === 'given' ? (order.launcher.id === order.recipient.id ? 'Chez son vendeur' : 'Remise au vendeur') : 'À remettre';
     if (state === 'given') return order.launcher.id === order.recipient.id ? 'Récupéré' : 'Remis au vendeur';
     if (state === 'ready') return order.launcher.id === order.recipient.id ? 'Prêt · à récupérer' : 'Prêt · à remettre';
     return 'En raffinage';
@@ -218,6 +238,11 @@ export class MiningSessionPageComponent {
   dateTimeLabel(value: string): string {
     const date = new Date(value);
     return `${date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} à ${hourLabel(value)}`;
+  }
+
+  /** Ouvre la saisie d'un lot avec la bonne fenêtre : cargaison ou ordre de raffinage. */
+  edit(order: RefineryOrder): void {
+    this.open(order.kind === 'HAUL' ? { kind: 'haul', order } : { kind: 'order', order });
   }
 
   refineries(sheet: SessionSheet): string {

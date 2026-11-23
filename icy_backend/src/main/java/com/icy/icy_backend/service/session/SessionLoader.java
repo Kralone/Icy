@@ -39,6 +39,6 @@ public class SessionLoader {
     }
 
     static ResourceNotFoundException notFound() {
-        return new ResourceNotFoundException("Fiche de minage introuvable.");
+        return new ResourceNotFoundException("Fiche introuvable.");
     }
 }

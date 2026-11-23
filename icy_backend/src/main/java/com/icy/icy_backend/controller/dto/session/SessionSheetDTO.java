@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record SessionSheetDTO(
         UUID id,
+        String activity,
         String name,
         LocalDate sessionDate,
         String status,
@@ -45,10 +46,12 @@ public record SessionSheetDTO(
     public record Expense(UUID id, UserRef payer, String kind, long amount, String note, LocalDateTime createdAt, boolean editable) {
     }
 
-    public record OrderLine(int commodityId, String commodityName, int quantityCscu, int quality, String destination) {
+    /** quality : null pour le salvage, qui n'a pas de qualité. */
+    public record OrderLine(int commodityId, String commodityName, int quantityCscu, Integer quality, String destination) {
     }
 
-    public record Order(UUID id, UserRef launcher, Integer terminalId, String terminalLabel, String methodCode, String methodLabel,
+    /** kind : REFINERY (ordre de raffinage) ou HAUL (cargaison de salvage, prête dès sa saisie). */
+    public record Order(UUID id, String kind, UserRef launcher, Integer terminalId, String terminalLabel, String methodCode, String methodLabel,
                         long cost, LocalDateTime finishesAt, boolean ready, UserRef recipient, LocalDateTime handedOverAt,
                         List<OrderLine> lines, boolean editable, boolean canHandOver) {
     }
