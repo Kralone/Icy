@@ -114,6 +114,37 @@ class ReminderCampaignServiceTest {
     }
 
     @Test
+    void aDirectorCannotBePutInAReminderCampaign() {
+        com.icy.icy_backend.db.entity.user.Role role = new com.icy.icy_backend.db.entity.user.Role();
+        role.setName("ADMIN");
+        com.icy.icy_backend.db.entity.user.UserRole userRole = new com.icy.icy_backend.db.entity.user.UserRole();
+        userRole.setRole(role);
+        torin.getRoles().add(userRole);
+
+        assertThatThrownBy(() -> service.create(create("MANUEL", null, null), UUID.randomUUID(), "Kralone"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("directeurs");
+        verifyNoInteractions(directMessageService);
+    }
+
+    @Test
+    void aMemberPromotedDirectorAfterTheCampaignWasCreatedIsNotSent() {
+        MemberActivityDtos.Campaign campaign = service.create(create("BOT", false, LocalDateTime.now().plusDays(1)), UUID.randomUUID(), "Kralone");
+        com.icy.icy_backend.db.entity.user.Role role = new com.icy.icy_backend.db.entity.user.Role();
+        role.setName("ADMIN");
+        com.icy.icy_backend.db.entity.user.UserRole userRole = new com.icy.icy_backend.db.entity.user.UserRole();
+        userRole.setRole(role);
+        vexa.getRoles().add(userRole);
+
+        MemberActivityDtos.SendResult result = service.sendNow(campaign.id(), UUID.randomUUID());
+
+        assertThat(result.queued()).isEqualTo(1);
+        assertThat(result.skipped()).containsExactly("Vexa (directeur)");
+        MemberReminder vexaFiche = reminderStore.values().stream().filter(f -> f.getUserId().equals(vexa.getId())).findFirst().orElseThrow();
+        assertThatThrownBy(() -> service.resend(vexaFiche.getId(), UUID.randomUUID(), "Kralone"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("directeurs");
+    }
+
+    @Test
     void sendingByTheBotPersonalisesEachMessageAndKeepsTheGif() {
         service.create(create("BOT", true, null), UUID.randomUUID(), "Kralone");
 

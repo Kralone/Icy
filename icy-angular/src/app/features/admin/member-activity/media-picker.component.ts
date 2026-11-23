@@ -3,6 +3,12 @@ import { ImageLibraryService } from '../../../core/services/image/image-library.
 import { ImageMetadata } from '../../../model/image-metadata.model';
 
 const MEDIA = /\.(gif|webp|png|jpe?g|avif)$/i;
+/** Catégorie de la bibliothèque réservée aux GIF des messages privés. */
+export const BOT_MEDIA_CATEGORY = 'Messages du bot';
+
+export function isBotMedia(image: ImageMetadata): boolean {
+  return MEDIA.test(image.name) && (image.category ?? '').trim().toLowerCase() === BOT_MEDIA_CATEGORY.toLowerCase();
+}
 
 /**
  * GIF joint à un message privé : choisi dans la bibliothèque d'images. Le bot le lit dans le même dossier
@@ -27,9 +33,9 @@ const MEDIA = /\.(gif|webp|png|jpe?g|avif)$/i;
             @for (image of images(); track image.name) { <option [value]="image.name" [selected]="image.name === file()">{{ image.name }}</option> }
           </select>
           @if (file() && !current() && loaded()) {
-            <small class="media__warning">« {{ file() }} » n’est pas dans la bibliothèque d’images : importez-le sous ce nom (Admin › Images) ou choisissez-en un autre. Sans lui, le texte part seul.</small>
+            <small class="media__warning">« {{ file() }} » n’est pas dans la catégorie « {{ category }} » de la bibliothèque d’images : importez-le dans cette catégorie (Admin › Images) ou choisissez-en un autre. Sans lui, le texte part seul.</small>
           } @else {
-            <small class="muted">Les fichiers viennent de la bibliothèque d’images (Admin › Images).</small>
+            <small class="muted">Les fichiers de la catégorie « {{ category }} » de la bibliothèque d’images (Admin › Images).</small>
           }
         </div>
       </div>
@@ -48,12 +54,13 @@ export class MediaPickerComponent implements OnInit {
   readonly file = model<string | null>(null);
   readonly images = signal<ImageMetadata[]>([]);
   readonly loaded = signal(false);
+  readonly category = BOT_MEDIA_CATEGORY;
   readonly current = computed(() => this.images().find(image => image.name === this.file()) ?? null);
 
   ngOnInit(): void {
     this.library.getAll().subscribe({
       next: images => {
-        this.images.set((images ?? []).filter(image => MEDIA.test(image.name)).sort((a, b) => a.name.localeCompare(b.name)));
+        this.images.set((images ?? []).filter(isBotMedia).sort((a, b) => a.name.localeCompare(b.name)));
         this.loaded.set(true);
       },
       error: () => this.loaded.set(true)

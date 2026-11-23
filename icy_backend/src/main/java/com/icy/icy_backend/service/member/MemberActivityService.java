@@ -111,7 +111,7 @@ public class MemberActivityService {
             if (Boolean.FALSE.equals(user.getActive())) {
                 state = "PARTI";
             } else {
-                State current = computedState(days(last, user, now), settings);
+                State current = computedState(user, days(last, user, now), settings);
                 MemberFollowUp followUp = manual.get(user.getId());
                 if (followUp != null && followUp.appliesOn(now.toLocalDate())) {
                     current = followUp.getManualState() == MemberFollowUp.ManualState.EN_PAUSE ? State.EN_PAUSE : State.ACTIF;
@@ -211,6 +211,15 @@ public class MemberActivityService {
         return (int) Duration.between(since, now).toDays();
     }
 
+    /** Les directeurs ne sont jamais signalés inactifs ni à surveiller. */
+    static State computedState(User user, int days, MemberActivitySettings settings) {
+        return isDirector(user) ? State.ACTIF : computedState(days, settings);
+    }
+
+    static boolean isDirector(User user) {
+        return "ADMIN".equals(MemberRanks.rank(user));
+    }
+
     static State computedState(int days, MemberActivitySettings settings) {
         if (days >= settings.getInactiveDays()) return State.INACTIF;
         if (days >= settings.getWatchDays()) return State.A_SURVEILLER;
@@ -222,7 +231,7 @@ public class MemberActivityService {
                                                Map<UUID, DirectMessage> deliveries) {
         LocalDateTime lastActivity = lastActivity(user, lastOperation);
         int days = days(lastActivity, user, now);
-        State computed = computedState(days, settings);
+        State computed = computedState(user, days, settings);
         State state = computed;
         if (manual != null && manual.appliesOn(now.toLocalDate())) {
             state = manual.getManualState() == MemberFollowUp.ManualState.EN_PAUSE ? State.EN_PAUSE : State.ACTIF;
