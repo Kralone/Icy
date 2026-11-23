@@ -65,7 +65,7 @@ interface LineForm { commodityId: number | null; scu: string; destination: OreDe
             </div>
           }
           <button type="button" class="btn small" style="justify-self: start" [disabled]="form.lines.length >= 20" (click)="addLine()">+ Matériau</button>
-          <p class="note">Les composants démontés (armes, boucliers…) ne sont pas des marchandises UEX : déclarez leur vente comme une vente directe, sans cargaison.</p>
+          <p class="note">Les composants démontés (armes, boucliers…) ne sont pas des marchandises UEX : leur vente s’enregistre en vente directe, sans cargaison.</p>
         </section>
         @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
         <div class="dialog-actions">

@@ -86,7 +86,7 @@ interface LineForm { commodityId: number | null; scu: string; quality: string; d
         <section class="block">
           <div class="block__head">
             @if (salvage()) {
-              <h3>Matériau raffiné<app-hint label="Matériau raffiné" text="Ce que la raffinerie rendra, en SCU (Construction Materials, le CMAT). Le RMC et le matériau brut ne se raffinent pas ici : déclarez-les en cargaison. Un matériau conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
+              <h3>Matériau raffiné<app-hint label="Matériau raffiné" text="Ce que la raffinerie rendra, en SCU (Construction Materials, le CMAT). Le RMC et le matériau brut ne passent pas par un ordre de raffinage : ils sont déclarés en cargaison. Un matériau conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
             } @else {
               <h3>Minerais raffinés<app-hint label="Minerais raffinés" text="Quantités en SCU, qualité de 0 à 1000. Un minerai conservé reste à son propriétaire : il ne compte ni dans les ventes ni dans le partage." /></h3>
             }

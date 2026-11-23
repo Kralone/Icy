@@ -79,17 +79,17 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
       return {
         headline: 'Récupération en cours.',
         tasks: [
-          { text: 'Chacun déclare ses claims, locations, pleins et réparations.', userId: null, later: false },
-          { text: 'À chaque retour en station, déclarer la cargaison récupérée (RMC, matériau de construction) et son vendeur.', userId: null, later: true },
-          { text: 'Le matériau de construction brut se raffine en CMAT : créer un ordre de raffinage à son lancement.', userId: null, later: true }
+          { text: 'Déclaration des frais avancés : claims, locations, carburant et réparations.', userId: null, later: false },
+          { text: 'Déclaration des cargaisons récupérées (RMC, matériau de construction) et de leur vendeur, à chaque retour en station.', userId: null, later: true },
+          { text: 'Raffinage du matériau de construction en CMAT : un ordre de raffinage par lancement.', userId: null, later: true }
         ]
       };
     case 'MINING':
       return {
         headline: 'Minage en cours.',
         tasks: [
-          { text: 'Chacun déclare ses pleins, réparations et achats.', userId: null, later: false },
-          { text: 'À chaque lancement en raffinerie, créer un ordre de raffinage.', userId: null, later: true }
+          { text: 'Déclaration des frais avancés : carburant, réparations et achats.', userId: null, later: false },
+          { text: 'Un ordre de raffinage par lancement en raffinerie.', userId: null, later: true }
         ]
       };
     case 'REFINING': {
@@ -136,7 +136,7 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
           ]
         };
       }
-      return { headline: 'Session terminée : tous les versements ont été reçus.', tasks: [{ text: 'Une erreur ? L’organisateur peut rouvrir la fiche depuis « Gérer la fiche ».', userId: null, later: true }] };
+      return { headline: 'Session terminée : tous les versements ont été reçus.', tasks: [{ text: 'En cas d’erreur, l’organisateur peut rouvrir la fiche depuis « Gérer la fiche ».', userId: null, later: true }] };
     }
   }
 }

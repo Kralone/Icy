@@ -39,8 +39,8 @@ public class MiningNotifications {
     public void orderReady(SessionSheet sheet, MiningRefineryOrder order) {
         Map<UUID, User> people = people(List.of(order.getLauncherUserId(), order.getRecipientUserId()));
         boolean own = order.getLauncherUserId().equals(order.getRecipientUserId());
-        String description = "Votre raffinage à " + order.getTerminalLabel() + " est prêt : " + ores(order) + ".";
-        String next = own ? "Récupérez-le, puis marquez-le comme récupéré sur la fiche avant de le vendre."
+        String description = "Raffinage prêt à " + order.getTerminalLabel() + " : " + ores(order) + ".";
+        String next = own ? "À récupérer, puis à marquer comme récupéré sur la fiche avant la vente."
                 : "À remettre à " + name(people, order.getRecipientUserId()) + ".";
         send(ORDER_READY, sheet, "Raffinage prêt · " + sheet.getName(), description + " " + next, List.of(),
                 mentions(people, List.of(order.getLauncherUserId())));
@@ -55,7 +55,7 @@ public class MiningNotifications {
                 .map(o -> name(people, o.getLauncherUserId()) + " : " + o.getTerminalLabel() + " → " + name(people, o.getRecipientUserId()))
                 .toList();
         send(ALL_READY, sheet, "Tous les raffinages sont prêts · " + sheet.getName(),
-                "Récupérez vos ordres et remettez-les à leur vendeur.", lines,
+                "Les ordres sont à récupérer et à remettre à leur vendeur.", lines,
                 mentions(people, waiting.stream().map(MiningRefineryOrder::getLauncherUserId).toList()));
     }
 
@@ -66,7 +66,7 @@ public class MiningNotifications {
         List<String> lines = settlement.getTransfers().stream()
                 .map(t -> name(people, t.getFromUserId()) + " verse " + amount(t.getAmount()) + " aUEC à " + name(people, t.getToUserId()))
                 .toList();
-        String description = lines.isEmpty() ? "Aucun versement n'est nécessaire." : "Faites vos versements en jeu ; chaque receveur confirme sur la fiche.";
+        String description = lines.isEmpty() ? "Aucun versement n'est nécessaire." : "Les versements se font en jeu ; chaque receveur confirme la réception sur la fiche.";
         send(SETTLED, sheet, "Comptes arrêtés · " + sheet.getName(), description, lines,
                 mentions(people, settlement.getTransfers().stream().map(t -> t.getFromUserId()).toList()));
     }
