@@ -11,6 +11,11 @@ button, .primary, .secondary { display: inline-flex; align-items: center; justif
 button:hover, .secondary:hover { background: #24445e; color: #fff; }
 .primary { border-color: #67e8f9; background: #67e8f9; color: #082f49; }
 .primary:hover { background: #a5f3fc; }
+/* Action destructrice : même rose que la confirmation, en contour pour rester secondaire à côté de « Reprendre l’édition ». */
+.danger { border-color: #774457; background: transparent; color: #fda4af; }
+.danger:hover { border-color: #fda4af; background: #351f2a; color: #ffe4e6; }
+.danger:disabled { opacity: .55; cursor: progress; }
+.delete-draft { margin-left: auto; }
 a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #72ddf7; outline-offset: 3px; }
 
 /* Une teinte par section : prévues en vert, brouillons en ambre, historique en gris-bleu. */
@@ -44,4 +49,4 @@ dt { font-size: 11px; color: #9db6cb; text-transform: uppercase; letter-spacing:
 dd { margin: 2px 0 0; font-size: 14px; color: #e7f2ff; }
 dd::first-letter { text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .fold > summary::before { transition: none; } }
-@media (max-width: 480px) { .draft-card { grid-template-columns: 1fr; } .draft-card__visual { min-height: 110px; } .draft-card__actions > a { flex: 1 1 100%; } }
+@media (max-width: 480px) { .draft-card { grid-template-columns: 1fr; } .draft-card__visual { min-height: 110px; } .draft-card__actions > a, .draft-card__actions > button { flex: 1 1 100%; } .delete-draft { margin-left: 0; } }

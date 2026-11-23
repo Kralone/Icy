@@ -125,6 +125,17 @@ export class DraftAutosave<T> {
     });
   }
 
+  /** Le brouillon n'existe plus (supprimé) : plus rien ne part, et une réponse encore en route est ignorée. */
+  discard(): void {
+    this.clearTimer();
+    this.sequence++;
+    this.inFlight = false;
+    this.pending = null;
+    this.auto = false;
+    this.errorMessage = '';
+    this.setStatus('saved');
+  }
+
   private clearTimer(): void {
     if (this.timer !== null) { clearTimeout(this.timer); this.timer = null; }
   }

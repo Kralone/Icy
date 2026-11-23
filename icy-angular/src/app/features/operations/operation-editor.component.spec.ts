@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { OperationEditorComponent } from './operation-editor.component';
 import { EventService } from '../../core/services/event/event.service';
@@ -15,10 +15,12 @@ describe('OperationEditorComponent', () => {
   let createOperationGroup: ReturnType<typeof vi.fn>;
   let organizationGroups: any[];
   let assignOperationMember: ReturnType<typeof vi.fn>;
+  let deleteOperationDraft: ReturnType<typeof vi.fn>;
   const coordinationData = { organizer: true, present: [{ userId: 'u1', username: 'Mira' }], maybe: [], unavailable: [], unassigned: [{ userId: 'u1', username: 'Mira' }], requests: [], groups: [{ id: 3, parentId: null, name: 'Escadrille', capacity: 4, effectiveMode: 'MANAGED', container: false, memberCount: 0, freeSeats: 4, ownFreeSeats: 4, responsibleUsername: null, manageable: true, members: [] }] };
 
   beforeEach(async () => {
     organizationGroups = [];
+    deleteOperationDraft = vi.fn(() => of(undefined));
     assignOperationMember = vi.fn(() => of({}));
     createOperationGroup = vi.fn(() => of({ data: { id: 5 } }));
     updateOperation = vi.fn()
@@ -42,6 +44,7 @@ describe('OperationEditorComponent', () => {
           getOperationShipRequirements: vi.fn(() => of({ data: [] })),
           getOperationShips: vi.fn(() => of({ data: [] })),
           updateOperation,
+          deleteOperationDraft,
         } },
         { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } },
         { provide: UserService, useValue: { getAllUsers: vi.fn(() => of({ data: [] })), getMyProfile: vi.fn(() => of({ data: { roles: ['OFFICIER'] } })) } },
@@ -321,5 +324,23 @@ describe('OperationEditorComponent', () => {
     expect(current()).toEqual(['Objectifs']);
     const fields: HTMLInputElement[] = Array.from(fixture.nativeElement.querySelectorAll('.objective-row input'));
     expect(fields.map(field => field.getAttribute('aria-label'))).toEqual(['Objectif 1', 'Objectif 2']);
+  });
+
+  it('deletes a draft after confirmation, drops pending edits and returns to the operations list', async () => {
+    const ask = vi.spyOn(TestBed.inject(OperationConfirmService), 'ask').mockResolvedValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    updateOperation.mockReset().mockReturnValue(of({ revision: 8 }));
+    component.form.briefing = 'Saisie en attente';
+    component.touch();
+
+    (fixture.nativeElement.querySelector('.editor-banner__delete') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(ask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Supprimer le brouillon « QA » ?', danger: true }));
+    expect(deleteOperationDraft).toHaveBeenCalledWith('op');
+    expect(navigate).toHaveBeenCalledWith(['/icy/admin/operations']);
+    expect(component.canLeave()).toBe(true);
+    fixture.destroy();
+    expect(updateOperation).not.toHaveBeenCalled();
   });
 });

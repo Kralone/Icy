@@ -1,7 +1,7 @@
 import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, HostListener, inject, OnDestroy, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OperationLoadFailure, operationLoadFailure } from './operation-load-failure';
 import { BehaviorSubject, catchError, combineLatest, debounceTime, firstValueFrom, forkJoin, map, Observable, of, shareReplay, startWith, Subject, switchMap, take, tap } from 'rxjs';
 import { EventService } from '../../core/services/event/event.service';
@@ -57,6 +57,7 @@ type OperationEditorState =
 })
 export class OperationEditorComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly eventService = inject(EventService);
   private readonly toast = inject(HotToastService);
   private readonly confirmService = inject(OperationConfirmService);
@@ -591,6 +592,7 @@ export class OperationEditorComponent implements OnDestroy {
 
   /** Vrai si quitter la page maintenant ne perd rien : tout est confirmé, ou un brouillon peut encore partir. */
   private get leavingIsSafe(): boolean {
+    if (this.draftDeleted) return true;
     if (this.imageUrlPending || this.groupSettingsDirty() || (this.crewBuilderParent() !== undefined && this.crewBuilderDirty())) return false;
     if (!this.autosave.hasUnsavedChanges) return true;
     return this.autosave.auto && (this.autosave.status === 'dirty' || this.autosave.status === 'saving');
@@ -676,6 +678,39 @@ export class OperationEditorComponent implements OnDestroy {
   }
 
   publishing = false;
+  deletingDraft = false;
+  /** Le brouillon vient d'être supprimé : on quitte l'éditeur sans rien envoyer. */
+  private draftDeleted = false;
+
+  /** Supprime le brouillon après confirmation, puis revient à la liste des opérations. */
+  async deleteDraft(operation: { id: string; title?: string; publicationStatus?: string }): Promise<void> {
+    if (this.deletingDraft || operation.publicationStatus === 'PUBLISHED') return;
+    const confirmed = await this.confirmService.ask({
+      title: `Supprimer le brouillon « ${operation.title || 'Sans titre'} » ?`,
+      message: 'Le briefing, les objectifs, les groupes et les besoins en vaisseaux de ce brouillon sont supprimés définitivement. Il n’a jamais été publié : aucun membre n’est prévenu.',
+      confirmLabel: 'Supprimer le brouillon',
+      cancelLabel: 'Conserver',
+      danger: true
+    });
+    if (!confirmed) return;
+    this.deletingDraft = true;
+    this.changeDetector.markForCheck();
+    this.eventService.deleteOperationDraft(operation.id).subscribe({
+      next: () => {
+        this.deletingDraft = false;
+        this.draftDeleted = true;
+        this.autosave.discard();
+        this.notify('success', 'Brouillon supprimé.');
+        this.router.navigate(['/icy/admin/operations']);
+      },
+      error: error => {
+        this.deletingDraft = false;
+        this.notify('error', (typeof error?.error?.message === 'string' && error.error.message) || 'Suppression du brouillon impossible.');
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
 
   publish(operation: { id: string; publicationStatus?: string; defaultAssignmentMode?: string }) {
     // On ne publie que ce que le serveur a confirmé.
