@@ -60,6 +60,11 @@ public class Operation {
     @Builder.Default
     private boolean miningSession = false;
 
+    /** Session de salvage : même principe, avec une fiche de salvage. Exclusive de la session de minage (une fiche par opération). */
+    @Column(name = "salvage_session", nullable = false)
+    @Builder.Default
+    private boolean salvageSession = false;
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

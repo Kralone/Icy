@@ -184,6 +184,12 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
           imageUrl: 'https://media.starcitizen.tools/thumb/d/d3/Comm-Link-Orion_Mining.jpg/1200px-Comm-Link-Orion_Mining.jpg.webp'
         },
         {
+          label: 'Fiches de salvage',
+          description: 'Sessions de salvage : cargaisons récupérées, raffinage du CMAT, ventes, frais et partage des gains.',
+          route: '/icy/outils/fiches-salvage',
+          imageUrl: 'assets/images/home/activities/salvage.jpg'
+        },
+        {
           label: 'Ressources de minage',
           description: 'Où trouver chaque minerai et avec quel équipement.',
           route: '/icy/outils/ressources-minage',

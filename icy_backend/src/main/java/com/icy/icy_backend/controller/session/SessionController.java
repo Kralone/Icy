@@ -4,6 +4,7 @@ import com.icy.icy_backend.controller.dto.session.SaleSuggestionDTO;
 import com.icy.icy_backend.controller.dto.session.SessionRequests;
 import com.icy.icy_backend.controller.dto.session.SessionSheetDTO;
 import com.icy.icy_backend.controller.dto.session.SessionSummaryDTO;
+import com.icy.icy_backend.db.entity.session.SessionSheet;
 import com.icy.icy_backend.service.session.MiningMarketService;
 import com.icy.icy_backend.service.session.SessionSettlementService;
 import com.icy.icy_backend.service.session.SessionSheetService;
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Fiches de minage V3 (docs/mining-v3/SPEC.md, « API »). Tout membre connecté lit les fiches ;
+ * Fiches de minage V3 et fiches de salvage (docs/mining-v3/SPEC.md, docs/salvage/SPEC.md, « API »). Tout membre connecté lit les fiches ;
  * les droits d'écriture (participant, organisateur, receveur) sont vérifiés par les services.
  */
 @RestController
@@ -31,20 +32,22 @@ public class SessionController {
     private final SessionSuggestionService suggestions;
     private final MiningMarketService market;
 
+    /** activity : MINING ou SALVAGE pour ne lister que ces fiches ; absent, toutes. */
     @GetMapping
-    public List<SessionSummaryDTO> list() {
-        return sheets.list();
+    public List<SessionSummaryDTO> list(@RequestParam(required = false) String activity) {
+        return sheets.list(activity);
     }
 
-    /** Raffineries, méthodes, minerais raffinés et terminaux de vente connus d'UEX. */
+    /** Raffineries, méthodes, minerais raffinés, matériaux de salvage et terminaux de vente connus d'UEX. */
     @GetMapping("/reference")
     public MiningMarketService.Reference reference() {
         return market.reference();
     }
 
     @GetMapping("/by-operation/{operationEventId}")
-    public Map<String, UUID> byOperation(@PathVariable UUID operationEventId) {
-        return Map.of("sheetId", sheets.findByOperation(operationEventId));
+    public Map<String, Object> byOperation(@PathVariable UUID operationEventId) {
+        SessionSheet sheet = sheets.findByOperation(operationEventId);
+        return Map.of("sheetId", sheet.getId(), "activity", sheet.getActivity());
     }
 
     @GetMapping("/{id}")

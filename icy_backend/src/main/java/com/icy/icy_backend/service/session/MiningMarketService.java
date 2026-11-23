@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Données UEX utiles aux fiches de minage, lues dans le cache local (utils.uex_dataset_cache) :
- * minerais raffinés, raffineries, méthodes de raffinage, terminaux de vente et prix.
+ * Données UEX utiles aux fiches de minage et de salvage, lues dans le cache local (utils.uex_dataset_cache) :
+ * minerais raffinés, matériaux de salvage, raffineries, méthodes de raffinage, terminaux de vente et prix.
  * Aucune valeur n'est inventée : un champ absent de la source reste absent (null).
  */
 @Service
@@ -40,8 +40,17 @@ public class MiningMarketService {
     public record SalePoint(Terminal terminal, int pricePerScu, Integer demandScu, OffsetDateTime observedAt) {
     }
 
-    public record Reference(List<Commodity> commodities, List<Terminal> refineries, List<Method> methods, List<Terminal> saleTerminals, OffsetDateTime pricesFetchedAt) {
+    public record Reference(List<Commodity> commodities, List<Commodity> salvageCommodities, List<Terminal> refineries, List<Method> methods,
+                            List<Terminal> saleTerminals, OffsetDateTime pricesFetchedAt) {
     }
+
+    /**
+     * Matériaux issus du salvage, reconnus à leur nom dans la liste UEX : RMC (grattage de coque), matériaux de construction
+     * bruts (Construction Rubble, Pieces, Salvage : démantèlement) et Construction Materials (CMAT, après raffinage).
+     * Seuls les noms présents dans la source sont proposés ; rien n'est ajouté à la main.
+     */
+    static final List<String> SALVAGE_NAME_PATTERNS = List.of("recycled material composite", "construction material", "construction rubble",
+            "construction pieces", "construction salvage", "scrap");
 
     public Reference reference() {
         List<Terminal> terminals = new ArrayList<>(terminals().values());
@@ -51,7 +60,8 @@ public class MiningMarketService {
                 .values().stream().sorted(Comparator.comparing(Terminal::name, String.CASE_INSENSITIVE_ORDER)).toList();
         List<Terminal> refineries = terminals.stream().filter(Terminal::refinery)
                 .sorted(Comparator.comparing(Terminal::name, String.CASE_INSENSITIVE_ORDER)).toList();
-        return new Reference(new ArrayList<>(commodities().values()), refineries, methods(), saleTerminals, fetchedAt("commodities_prices"));
+        return new Reference(new ArrayList<>(commodities().values()), new ArrayList<>(salvageCommodities().values()), refineries, methods(), saleTerminals,
+                fetchedAt("commodities_prices"));
     }
 
     /** Minerais raffinés vendables, par identifiant UEX. */
@@ -65,6 +75,28 @@ public class MiningMarketService {
         }
         return result.values().stream().sorted(Comparator.comparing(Commodity::name, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toMap(Commodity::id, commodity -> commodity, (left, right) -> left, LinkedHashMap::new));
+    }
+
+    /** Matériaux de salvage vendables, par identifiant UEX (voir SALVAGE_NAME_PATTERNS). */
+    public Map<Integer, Commodity> salvageCommodities() {
+        Map<Integer, Commodity> result = new LinkedHashMap<>();
+        for (JsonNode row : rows("commodities")) {
+            String name = text(row, "name");
+            if (name == null || !row.path("id").canConvertToInt() || !isSalvageMaterial(name)) continue;
+            result.put(row.path("id").asInt(), new Commodity(row.path("id").asInt(), name, text(row, "code")));
+        }
+        return result.values().stream().sorted(Comparator.comparing(Commodity::name, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toMap(Commodity::id, commodity -> commodity, (left, right) -> left, LinkedHashMap::new));
+    }
+
+    /** Minerais raffinés pour une fiche de minage, matériaux de salvage pour une fiche de salvage. */
+    public Map<Integer, Commodity> commoditiesFor(String activity) {
+        return com.icy.icy_backend.db.entity.session.SessionSheet.SALVAGE.equals(activity) ? salvageCommodities() : commodities();
+    }
+
+    static boolean isSalvageMaterial(String name) {
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        return SALVAGE_NAME_PATTERNS.stream().anyMatch(lower::contains);
     }
 
     public Map<Integer, Terminal> terminals() {

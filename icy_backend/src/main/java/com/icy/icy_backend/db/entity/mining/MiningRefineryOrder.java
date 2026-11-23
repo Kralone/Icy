@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Ordre de raffinage : le minerai raffiné reste sur le compte du lanceur jusqu'à sa remise au vendeur destinataire.
- * « Prêt » se déduit de finishes_at ; « remis » ne vient que d'une action explicite, même quand le lanceur est le destinataire.
+ * Lot de cargo d'une fiche de session : ordre de raffinage (REFINERY) ou cargaison récupérée en salvage (HAUL).
+ * Le cargo reste sur le compte du lanceur jusqu'à sa remise au vendeur destinataire.
+ * « Prêt » se déduit de finishes_at (une cargaison est prête dès sa saisie) ; « remis » ne vient que d'une action explicite,
+ * même quand le lanceur est le destinataire.
  */
 @Entity
 @Table(name = "refinery_orders", schema = "mining")
@@ -18,6 +20,8 @@ import java.util.UUID;
 public class MiningRefineryOrder {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "sheet_id", nullable = false) private UUID sheetId;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
+    @Builder.Default private Kind kind = Kind.REFINERY;
     @Column(name = "launcher_user_id", nullable = false) private UUID launcherUserId;
     @Column(name = "terminal_id") private Integer terminalId;
     @Column(name = "terminal_label", nullable = false, length = 200) private String terminalLabel;
@@ -33,8 +37,15 @@ public class MiningRefineryOrder {
     @OrderBy("position ASC")
     @Builder.Default private List<MiningRefineryOrderLine> lines = new ArrayList<>();
 
+    /** REFINERY : ordre lancé en raffinerie, avec une heure de fin. HAUL : cargaison de salvage, à bord dès sa saisie. */
+    public enum Kind { REFINERY, HAUL }
+
     public boolean isReady(LocalDateTime now) {
-        return !now.isBefore(finishesAt);
+        return kind == Kind.HAUL || !now.isBefore(finishesAt);
+    }
+
+    public boolean isHaul() {
+        return kind == Kind.HAUL;
     }
 
     public boolean isHandedOver() {

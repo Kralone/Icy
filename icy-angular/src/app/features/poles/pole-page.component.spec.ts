@@ -58,7 +58,8 @@ describe('PolePageComponent', () => {
     expect(groups).toEqual(['Outils', 'Guides']);
     const tools = Array.from(fixture.nativeElement.querySelectorAll('a.pole-tool')) as HTMLAnchorElement[];
     expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-minage');
-    expect(tools.length).toBe(5);
+    expect(tools.map(tool => tool.getAttribute('href'))).toContain('/icy/outils/fiches-salvage');
+    expect(tools.length).toBe(6);
     expect(text('pole-news')).toMatch(/Sortie Quantanium\s*18 novembre 2026 · Ada\s*Samedi 21h\./);
     expect(find('pole-activity')!.querySelector('a')!.getAttribute('href')).toBe('/icy/outils/fiches-minage/abc');
     expect(text('pole-activity')).toContain('En cours');
@@ -185,7 +186,7 @@ describe('PolePageComponent', () => {
     await open('industrie');
     http.expectOne('/api/poles/INDUSTRIE').flush('x', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('a.pole-tool').length).toBe(5);
+    expect(fixture.nativeElement.querySelectorAll('a.pole-tool').length).toBe(6);
     find('pole-error')!.querySelector('button')!.click();
     http.expectOne('/api/poles/INDUSTRIE').flush(home('INDUSTRIE', { specialists: [{ id: '1', username: 'Ada' }] }));
     fixture.detectChanges();

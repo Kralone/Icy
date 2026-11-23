@@ -1,7 +1,8 @@
 import { RefineryOrder, SessionPhase, SessionSheet, Transfer, formatAuec, formatScu } from '../../../core/services/mining/mining-session.service';
 
 /** Étapes affichées en haut de la fiche, dans l'ordre. */
-export const STEPS: { phase: SessionPhase; label: string }[] = [
+export interface Step { phase: SessionPhase; label: string; }
+export const STEPS: Step[] = [
   { phase: 'MINING', label: 'Minage' },
   { phase: 'REFINING', label: 'Raffinage' },
   { phase: 'HANDOVER', label: 'Remise du cargo' },
@@ -9,6 +10,20 @@ export const STEPS: { phase: SessionPhase; label: string }[] = [
   { phase: 'PAYMENTS', label: 'Versements' },
   { phase: 'DONE', label: 'Terminée' }
 ];
+
+/** Salvage : récupération à bord, raffinage éventuel du matériau de construction en CMAT, puis la même suite. */
+export const SALVAGE_STEPS: Step[] = [
+  { phase: 'SALVAGING', label: 'Récupération' },
+  { phase: 'REFINING', label: 'Raffinage' },
+  { phase: 'HANDOVER', label: 'Remise du cargo' },
+  { phase: 'SELLING', label: 'Vente' },
+  { phase: 'PAYMENTS', label: 'Versements' },
+  { phase: 'DONE', label: 'Terminée' }
+];
+
+export function stepsFor(sheet: Pick<SessionSheet, 'activity'>): Step[] {
+  return sheet.activity === 'SALVAGE' ? SALVAGE_STEPS : STEPS;
+}
 
 export interface Task { text: string; userId: string | null; later: boolean; }
 export interface Progress { headline: string; tasks: Task[]; }
@@ -36,11 +51,11 @@ export function countdownLabel(ms: number): string {
 }
 
 /**
- * État d'une étape du bandeau d'avancement. Le minage continue tant que des ordres raffinent :
+ * État d'une étape du bandeau d'avancement. Le minage (ou la récupération) continue tant que des ordres raffinent :
  * il n'est terminé qu'à la remise du cargo.
  */
 export function stepState(sheet: SessionSheet, index: number): 'done' | 'now' | 'next' {
-  const current = STEPS.findIndex(step => step.phase === sheet.phase);
+  const current = stepsFor(sheet).findIndex(step => step.phase === sheet.phase);
   if (sheet.status === 'CLOSED') return 'done';
   if (index === 0 && sheet.phase === 'REFINING') return 'now';
   if (index < current) return 'done';
@@ -58,8 +73,17 @@ export function joinNames(names: string[]): string {
  */
 export function progress(sheet: SessionSheet, nowMs: number): Progress {
   const tasks: Task[] = [];
-  const isReady = (order: RefineryOrder) => new Date(order.finishesAt).getTime() <= nowMs;
+  const isReady = (order: RefineryOrder) => order.kind === 'HAUL' || new Date(order.finishesAt).getTime() <= nowMs;
   switch (sheet.phase) {
+    case 'SALVAGING':
+      return {
+        headline: 'Récupération en cours.',
+        tasks: [
+          { text: 'Chacun déclare ses claims, locations, pleins et réparations.', userId: null, later: false },
+          { text: 'À chaque retour en station, déclarer la cargaison récupérée (RMC, matériau de construction) et son vendeur.', userId: null, later: true },
+          { text: 'Le matériau de construction brut se raffine en CMAT : créer un ordre de raffinage à son lancement.', userId: null, later: true }
+        ]
+      };
     case 'MINING':
       return {
         headline: 'Minage en cours.',
@@ -82,7 +106,7 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
       const pending = sheet.orders.filter(order => !order.handedOverAt);
       pending.forEach(order => tasks.push(handoverTask(order, false)));
       sellerTasks(sheet).forEach(task => tasks.push({ ...task, later: true }));
-      return { headline: `Tous les ordres sont prêts. ${pending.length} remise${pending.length > 1 ? 's' : ''} de cargo ${pending.length > 1 ? 'restent' : 'reste'} à faire.`, tasks };
+      return { headline: `${sheet.activity === 'SALVAGE' ? 'Tout le cargo est prêt.' : 'Tous les ordres sont prêts.'} ${pending.length} remise${pending.length > 1 ? 's' : ''} de cargo ${pending.length > 1 ? 'restent' : 'reste'} à faire.`, tasks };
     }
     case 'SELLING': {
       const left = sheet.remaining.reduce((sum, item) => sum + item.remainingCscu, 0);
@@ -119,6 +143,11 @@ export function progress(sheet: SessionSheet, nowMs: number): Progress {
 
 function handoverTask(order: RefineryOrder, later: boolean): Task {
   const own = order.launcher.id === order.recipient.id;
+  if (order.kind === 'HAUL') {
+    return own
+      ? { text: `${order.launcher.username} : marquer sa cargaison (${order.terminalLabel}) récupérée`, userId: order.launcher.id, later }
+      : { text: `${order.launcher.username} : apporter la cargaison (${order.terminalLabel}) à ${order.recipient.username}`, userId: order.launcher.id, later };
+  }
   return own
     ? { text: `${order.launcher.username} : récupérer son ordre à ${order.terminalLabel}, puis le marquer récupéré`, userId: order.launcher.id, later }
     : { text: `${order.launcher.username} : récupérer l’ordre à ${order.terminalLabel} et l’apporter à ${order.recipient.username}`, userId: order.launcher.id, later };

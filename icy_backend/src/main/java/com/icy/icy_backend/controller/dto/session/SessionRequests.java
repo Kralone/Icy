@@ -9,7 +9,8 @@ public final class SessionRequests {
     private SessionRequests() {
     }
 
-    public record CreateSheet(String name, LocalDate sessionDate, List<UUID> participantIds) {
+    /** activity : MINING (par défaut) ou SALVAGE. */
+    public record CreateSheet(String name, LocalDate sessionDate, List<UUID> participantIds, String activity) {
     }
 
     public record UpdateSheet(String name, LocalDate sessionDate) {
@@ -30,11 +31,13 @@ public final class SessionRequests {
     }
 
     /**
-     * remainingMinutes : durée restante affichée par la raffinerie au lancement, d'où l'heure de fin.
-     * À la modification, null garde l'heure de fin déjà enregistrée.
+     * Lot de cargo. kind : REFINERY (par défaut) ou HAUL (cargaison de salvage, fiches de salvage seulement).
+     * REFINERY : remainingMinutes est la durée restante affichée par la raffinerie au lancement, d'où l'heure de fin ;
+     * à la modification, null garde l'heure de fin déjà enregistrée.
+     * HAUL : ni raffinerie, ni méthode, ni durée ; locationLabel dit où se trouve le cargo (vaisseau, station).
      */
-    public record RefineryOrder(UUID launcherUserId, Integer terminalId, String methodCode, Long cost, Integer remainingMinutes,
-                                UUID recipientUserId, List<OrderLine> lines) {
+    public record RefineryOrder(UUID launcherUserId, String kind, Integer terminalId, String locationLabel, String methodCode, Long cost,
+                                Integer remainingMinutes, UUID recipientUserId, List<OrderLine> lines) {
     }
 
     public record SaleLine(Integer commodityId, Integer quantityCscu) {

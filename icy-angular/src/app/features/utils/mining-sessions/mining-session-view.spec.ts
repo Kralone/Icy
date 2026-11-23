@@ -1,5 +1,5 @@
 import { SessionSheet, UserRef } from '../../../core/services/mining/mining-session.service';
-import { countdownLabel, mySituation, progress, stepState } from './mining-session-view';
+import { SALVAGE_STEPS, countdownLabel, mySituation, progress, stepState, stepsFor } from './mining-session-view';
 import { clampQuality, groupDigits, parseAmount, parseScu, stepDuration, typedDuration } from './session-input';
 
 const kralone: UserRef = { id: 'k', username: 'Kralone', avatarUrl: null };
@@ -9,7 +9,7 @@ const NOW = new Date('2026-10-22T22:00:00').getTime();
 
 function sheet(overrides: Partial<SessionSheet> = {}): SessionSheet {
   return {
-    id: 's', name: 'Quanta du jeudi', sessionDate: '2026-10-22', status: 'ACTIVE', phase: 'MINING', revision: 1, organizer: kralone,
+    id: 's', activity: 'MINING', name: 'Quanta du jeudi', sessionDate: '2026-10-22', status: 'ACTIVE', phase: 'MINING', revision: 1, organizer: kralone,
     operationEventId: null, operationTitle: null,
     permissions: { currentUserId: 't', organizer: false, participant: true, canEdit: true },
     participants: [kralone, vexa, torin].map(user => ({ user, sharesCenti: 100, joinedAt: '2026-10-22T19:00:00', seller: false })),
@@ -70,7 +70,7 @@ describe('Ma situation', () => {
 describe('Avancement', () => {
   it('annonce la fin du dernier raffinage', () => {
     const order = (finishesAt: string, launcher: UserRef) => ({
-      id: finishesAt, launcher, terminalId: 1, terminalLabel: 'CRU-L1', methodCode: null, methodLabel: null, cost: 0, finishesAt, ready: false,
+      id: finishesAt, kind: 'REFINERY' as const, launcher, terminalId: 1, terminalLabel: 'CRU-L1', methodCode: null, methodLabel: null, cost: 0, finishesAt, ready: false,
       recipient: vexa, handedOverAt: null, lines: [], editable: false, canHandOver: false
     });
     const result = progress(sheet({ phase: 'REFINING', orders: [order('2026-10-22T21:05:00', kralone), order('2026-10-22T23:12:00', torin)] }), NOW);
@@ -154,5 +154,33 @@ describe('Avancement en direct', () => {
     const selling = sheet({ phase: 'SELLING' });
     expect(stepState(selling, 0)).toBe('done');
     expect(stepState(sheet({ status: 'CLOSED', phase: 'DONE' }), 5)).toBe('done');
+  });
+});
+
+describe('Fiche de salvage', () => {
+  const haul = (launcher: UserRef, recipient: UserRef, handedOverAt: string | null = null) => ({
+    id: launcher.id, kind: 'HAUL' as const, launcher, terminalId: null, terminalLabel: 'Vulture', methodCode: null, methodLabel: null, cost: 0,
+    finishesAt: '2026-10-22T21:00:00', ready: true, recipient, handedOverAt, lines: [], editable: false, canHandOver: true
+  });
+
+  it('commence par la récupération, avec ses propres étapes', () => {
+    const salvage = sheet({ activity: 'SALVAGE', phase: 'SALVAGING' });
+    expect(stepsFor(salvage)).toBe(SALVAGE_STEPS);
+    expect(stepsFor(salvage)[0].label).toBe('Récupération');
+    expect(stepState(salvage, 0)).toBe('now');
+    expect(progress(salvage, NOW).headline).toBe('Récupération en cours.');
+  });
+
+  it('demande d’apporter une cargaison au vendeur, sans compte à rebours', () => {
+    const result = progress(sheet({ activity: 'SALVAGE', phase: 'HANDOVER', orders: [haul(torin, vexa)] }), NOW);
+    expect(result.headline).toBe('Tout le cargo est prêt. 1 remise de cargo reste à faire.');
+    expect(result.tasks[0].text).toBe('Torin : apporter la cargaison (Vulture) à Vexa');
+  });
+
+  it('ne compte pas une cargaison comme un raffinage en cours', () => {
+    const refinery = { ...haul(kralone, vexa), id: 'r', kind: 'REFINERY' as const, terminalId: 1, terminalLabel: 'CRU-L1', finishesAt: '2026-10-22T23:12:00', ready: false };
+    const result = progress(sheet({ activity: 'SALVAGE', phase: 'REFINING', orders: [haul(torin, vexa), refinery] }), NOW);
+    expect(result.headline).toBe('Dernier raffinage prêt à 23 h 12, dans 1 h 12.');
+    expect(result.tasks.map(task => task.text)).toContain('Torin : apporter la cargaison (Vulture) à Vexa');
   });
 });

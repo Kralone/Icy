@@ -2,16 +2,22 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-/** Types de l'API /api/sessions (fiches de minage V3). Tous les montants et le partage sont calculés par le serveur. */
+/** Types de l'API /api/sessions (fiches de minage V3 et de salvage). Tous les montants et le partage sont calculés par le serveur. */
+export type SessionActivity = 'MINING' | 'SALVAGE';
 export type SessionStatus = 'ACTIVE' | 'SETTLEMENT' | 'CLOSED';
-export type SessionPhase = 'MINING' | 'REFINING' | 'HANDOVER' | 'SELLING' | 'PAYMENTS' | 'DONE';
-export type ExpenseKind = 'FUEL' | 'REPAIR' | 'MATERIAL' | 'OTHER';
+/** SALVAGING : fiche de salvage sans cargaison, l'équivalent de MINING. */
+export type SessionPhase = 'MINING' | 'SALVAGING' | 'REFINING' | 'HANDOVER' | 'SELLING' | 'PAYMENTS' | 'DONE';
+/** CLAIM et RENTAL : claim de récupération et location de vaisseau, proposés sur les fiches de salvage. */
+export type ExpenseKind = 'FUEL' | 'REPAIR' | 'MATERIAL' | 'OTHER' | 'CLAIM' | 'RENTAL';
+/** REFINERY : ordre de raffinage. HAUL : cargaison de salvage, prête dès sa saisie. */
+export type LotKind = 'REFINERY' | 'HAUL';
 export type OreDestination = 'SELL' | 'KEEP';
 
 export interface UserRef { id: string; username: string; avatarUrl: string | null; }
 
 export interface SessionSummary {
   id: string;
+  activity: SessionActivity;
   name: string;
   sessionDate: string;
   status: SessionStatus;
@@ -25,9 +31,11 @@ export interface SessionSummary {
 
 export interface SessionParticipant { user: UserRef; sharesCenti: number; joinedAt: string; seller: boolean; }
 export interface SessionExpense { id: string; payer: UserRef; kind: ExpenseKind; amount: number; note: string | null; createdAt: string; editable: boolean; }
-export interface RefineryOrderLine { commodityId: number; commodityName: string; quantityCscu: number; quality: number; destination: OreDestination; }
+/** quality : null pour le salvage, qui n'a pas de qualité. */
+export interface RefineryOrderLine { commodityId: number; commodityName: string; quantityCscu: number; quality: number | null; destination: OreDestination; }
 export interface RefineryOrder {
   id: string;
+  kind: LotKind;
   launcher: UserRef;
   terminalId: number | null;
   terminalLabel: string;
@@ -66,6 +74,7 @@ export interface CancelledSettlement { id: string; createdAt: string; cancelledA
 
 export interface SessionSheet {
   id: string;
+  activity: SessionActivity;
   name: string;
   sessionDate: string;
   status: SessionStatus;
@@ -91,7 +100,7 @@ export interface SessionSheet {
 export interface MarketCommodity { id: number; name: string; code: string | null; }
 export interface MarketTerminal { id: number; name: string; location: string | null; system: string | null; refinery: boolean; }
 export interface MarketMethod { code: string; name: string; ratingYield: number | null; ratingSpeed: number | null; ratingCost: number | null; }
-export interface MarketReference { commodities: MarketCommodity[]; refineries: MarketTerminal[]; methods: MarketMethod[]; saleTerminals: MarketTerminal[]; pricesFetchedAt: string | null; }
+export interface MarketReference { commodities: MarketCommodity[]; salvageCommodities: MarketCommodity[]; refineries: MarketTerminal[]; methods: MarketMethod[]; saleTerminals: MarketTerminal[]; pricesFetchedAt: string | null; }
 
 export interface SalePoint { terminalId: number | null; terminalName: string; location: string | null; pricePerScu: number; demandScu: number | null; estimatedAuec: number; observedAt: string | null; }
 export interface SaleSuggestions {
@@ -103,7 +112,10 @@ export interface SaleSuggestions {
 export interface ExpensePayload { payerUserId?: string | null; kind: ExpenseKind; amount: number; note?: string | null; }
 export interface OrderPayload {
   launcherUserId?: string | null;
+  kind?: LotKind;
   terminalId: number | null;
+  /** Cargaison de salvage : vaisseau ou station où se trouve le cargo. */
+  locationLabel?: string | null;
   methodCode?: string | null;
   cost: number;
   /** Durée restante affichée par la raffinerie ; null à la modification garde l'heure de fin. */
@@ -118,13 +130,15 @@ export class MiningSessionService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/sessions';
 
-  list(): Observable<SessionSummary[]> { return this.http.get<SessionSummary[]>(this.base); }
+  list(activity?: SessionActivity): Observable<SessionSummary[]> {
+    return this.http.get<SessionSummary[]>(this.base, activity ? { params: { activity } } : {});
+  }
   get(id: string): Observable<SessionSheet> { return this.http.get<SessionSheet>(`${this.base}/${id}`); }
   reference(): Observable<MarketReference> { return this.http.get<MarketReference>(`${this.base}/reference`); }
-  byOperation(operationId: string): Observable<{ sheetId: string }> { return this.http.get<{ sheetId: string }>(`${this.base}/by-operation/${operationId}`); }
+  byOperation(operationId: string): Observable<{ sheetId: string; activity: SessionActivity }> { return this.http.get<{ sheetId: string; activity: SessionActivity }>(`${this.base}/by-operation/${operationId}`); }
   suggestions(id: string): Observable<SaleSuggestions> { return this.http.get<SaleSuggestions>(`${this.base}/${id}/sale-suggestions`); }
 
-  create(payload: { name: string | null; sessionDate: string | null; participantIds: string[] }): Observable<SessionSheet> { return this.http.post<SessionSheet>(this.base, payload); }
+  create(payload: { name: string | null; sessionDate: string | null; participantIds: string[]; activity?: SessionActivity }): Observable<SessionSheet> { return this.http.post<SessionSheet>(this.base, payload); }
   update(id: string, payload: { name?: string | null; sessionDate?: string | null }): Observable<SessionSheet> { return this.http.put<SessionSheet>(`${this.base}/${id}`, payload); }
   delete(id: string): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
   setParticipants(id: string, participants: { userId: string; sharesCenti: number }[]): Observable<SessionSheet> { return this.http.put<SessionSheet>(`${this.base}/${id}/participants`, { participants }); }
@@ -148,6 +162,11 @@ export class MiningSessionService {
   forceClose(id: string, reason: string): Observable<SessionSheet> { return this.http.post<SessionSheet>(`${this.base}/${id}/close`, { reason }); }
   confirmReceipt(id: string, transferId: string): Observable<SessionSheet> { return this.http.post<SessionSheet>(`${this.base}/${id}/transfers/${transferId}/received`, {}); }
   withdrawReceipt(id: string, transferId: string): Observable<SessionSheet> { return this.http.delete<SessionSheet>(`${this.base}/${id}/transfers/${transferId}/received`); }
+}
+
+/** Chemin de la liste des fiches d'une activité ; la fiche est à `${sessionsPath(activity)}/${id}`. */
+export function sessionsPath(activity: SessionActivity | null | undefined): string {
+  return activity === 'SALVAGE' ? '/icy/outils/fiches-salvage' : '/icy/outils/fiches-minage';
 }
 
 /** cSCU → texte en SCU, à la française : 1480 → « 14,8 ». */

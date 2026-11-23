@@ -98,7 +98,7 @@ class SessionSheetServiceTest {
 
     @Test
     void onlySpecialistsOfficersAndAdminsCreateASheet() {
-        assertThatThrownBy(() -> fixture.as(VEXA).sheetService.create(new SessionRequests.CreateSheet("Session", null, List.of())))
+        assertThatThrownBy(() -> fixture.as(VEXA).sheetService.create(new SessionRequests.CreateSheet("Session", null, List.of(), null)))
                 .isInstanceOf(ForbiddenException.class);
     }
 
@@ -112,7 +112,7 @@ class SessionSheetServiceTest {
 
     @Test
     void orderRequiresQualityOnEveryLine() {
-        SessionRequests.RefineryOrder request = new SessionRequests.RefineryOrder(null, REFINERY, null, 12_000L, 90, null,
+        SessionRequests.RefineryOrder request = new SessionRequests.RefineryOrder(null, null, REFINERY, null, null, 12_000L, 90, null,
                 List.of(new SessionRequests.OrderLine(LARANITE, 1_480, null, "SELL")));
 
         assertThatThrownBy(() -> fixture.as(TORIN).sheetService.addOrder(fixture.sheet.getId(), request)).isInstanceOf(BadRequestException.class);
@@ -120,7 +120,7 @@ class SessionSheetServiceTest {
 
     @Test
     void orderStoresItsFinishTimeFromTheRemainingDuration() {
-        fixture.as(TORIN).sheetService.addOrder(fixture.sheet.getId(), new SessionRequests.RefineryOrder(null, REFINERY, null, 12_000L, 90, VEXA,
+        fixture.as(TORIN).sheetService.addOrder(fixture.sheet.getId(), new SessionRequests.RefineryOrder(null, null, REFINERY, null, null, 12_000L, 90, VEXA,
                 List.of(new SessionRequests.OrderLine(LARANITE, 1_480, 701, "SELL"))));
 
         assertThat(fixture.orders).singleElement().satisfies(order -> {
@@ -200,7 +200,7 @@ class SessionSheetServiceTest {
     void orderChangeThatWouldRemoveSoldOreIsRefused() {
         MiningRefineryOrder order = fixture.order(TORIN, VEXA, 1_000, true);
         fixture.sale(VEXA, 50_000, 600);
-        SessionRequests.RefineryOrder smaller = new SessionRequests.RefineryOrder(null, REFINERY, null, 0L, null, VEXA,
+        SessionRequests.RefineryOrder smaller = new SessionRequests.RefineryOrder(null, null, REFINERY, null, null, 0L, null, VEXA,
                 List.of(new SessionRequests.OrderLine(LARANITE, 500, 700, "SELL")));
 
         assertThatThrownBy(() -> fixture.as(TORIN).sheetService.updateOrder(fixture.sheet.getId(), order.getId(), smaller)).isInstanceOf(BadRequestException.class);
@@ -232,7 +232,7 @@ class SessionSheetServiceTest {
         });
         fixture.participants.clear();
 
-        java.util.UUID created = fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "Quanta du jeudi", java.time.LocalDate.of(2026, 10, 22), KRALONE, List.of(VEXA, TORIN));
+        java.util.UUID created = fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "MINING", "Quanta du jeudi", java.time.LocalDate.of(2026, 10, 22), KRALONE, List.of(VEXA, TORIN));
 
         assertThat(created).isNotNull();
         assertThat(fixture.participants).extracting(p -> p.getUserId()).containsExactly(VEXA, TORIN);
@@ -244,7 +244,7 @@ class SessionSheetServiceTest {
         java.util.UUID operationId = java.util.UUID.randomUUID();
         org.mockito.Mockito.when(fixture.sheets.findByOperationEventId(operationId)).thenReturn(java.util.Optional.of(fixture.sheet));
 
-        assertThat(fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "x", java.time.LocalDate.now(), KRALONE, List.of(XENO)))
+        assertThat(fixture.as(KRALONE).sheetService.ensureForOperation(operationId, "MINING", "x", java.time.LocalDate.now(), KRALONE, List.of(XENO)))
                 .isEqualTo(fixture.sheet.getId());
         org.mockito.Mockito.verify(fixture.participantRepository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any());
     }

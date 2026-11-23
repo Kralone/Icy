@@ -10,6 +10,7 @@
     <nav class="section-nav" data-tuto="operation-sections" aria-label="Sections de la fiche">
       @for (section of visibleSections(); track section.id) { <button type="button" (click)="goTo(section.id)"><app-operation-icon [name]="section.icon" /> {{ section.label }}</button> }
       @if (operation.miningSession) { <a class="section-nav__mining" [routerLink]="['/icy/outils/fiches-minage/operation', operation.id]"><app-operation-icon name="flask" /> Fiche de minage</a> }
+      @else if (operation.salvageSession) { <a class="section-nav__mining" [routerLink]="['/icy/outils/fiches-minage/operation', operation.id]"><app-operation-icon name="cargo" /> Fiche de salvage</a> }
       @if (canManage) { <a class="section-nav__manage" [routerLink]="['/icy/operations', operation.id, 'edit']">Gérer l’opération</a> }
     </nav>
     <div class="sheet">

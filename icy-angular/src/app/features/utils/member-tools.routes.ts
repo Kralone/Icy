@@ -28,6 +28,15 @@ export const memberToolsRoutes: Routes = [
     loadComponent: () => import('./mining-sessions/mining-session-page.component').then(m => m.MiningSessionPageComponent)
   },
   {
+    path: 'fiches-salvage',
+    data: { activity: 'SALVAGE' },
+    loadComponent: () => import('./mining-sessions/mining-sessions-list.component').then(m => m.MiningSessionsListComponent)
+  },
+  {
+    path: 'fiches-salvage/:id',
+    loadComponent: () => import('./mining-sessions/mining-session-page.component').then(m => m.MiningSessionPageComponent)
+  },
+  {
     path: 'executive-hangar',
     loadComponent: () => import('./executive-hangar/executive-hangar.component').then(m => m.ExecutiveHangarComponent)
   },

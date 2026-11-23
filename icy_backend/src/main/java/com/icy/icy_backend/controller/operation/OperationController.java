@@ -108,6 +108,7 @@ public class OperationController {
         seed.setImageUrl(request.getImageUrl());
         seed.setAllowShipProposals(request.getAllowShipProposals());
         seed.setMiningSession(source.isMiningSession());
+        seed.setSalvageSession(source.isSalvageSession());
         seed.setDefaultAssignmentMode(source.getDefaultAssignmentMode());
         return operationService.update(eventId, seed);
     }

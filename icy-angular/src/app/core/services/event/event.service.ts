@@ -147,7 +147,7 @@ export class EventService {
     return this.http.put<any>(`/api/operations/${eventId}/pole`, { pole }).pipe(map(res => (res.data ?? null) as string | null));
   }
 
-  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; miningSession?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
+  updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; miningSession?: boolean; salvageSession?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {
     return this.http.put<any>(`/api/operations/${eventId}`, payload, options.keepalive ? { keepalive: true } : {}).pipe(map(res => res.data));
   }
 

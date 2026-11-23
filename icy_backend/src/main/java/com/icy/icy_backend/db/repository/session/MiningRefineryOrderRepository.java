@@ -17,10 +17,11 @@ public interface MiningRefineryOrderRepository extends JpaRepository<MiningRefin
     @Query("select o from MiningRefineryOrder o where o.sheetId in :sheetIds")
     List<MiningRefineryOrder> findBySheetIds(@Param("sheetIds") Collection<UUID> sheetIds);
 
-    /** Ordres devenus prêts et pas encore annoncés, sur une fiche encore en cours. */
+    /** Ordres de raffinage devenus prêts et pas encore annoncés, sur une fiche encore en cours. Les cargaisons de salvage n'en font pas partie. */
     @Query("""
             select o from MiningRefineryOrder o
             where o.readyNotifiedAt is null and o.finishesAt <= :now
+              and o.kind = com.icy.icy_backend.db.entity.mining.MiningRefineryOrder.Kind.REFINERY
               and exists (select s.id from SessionSheet s where s.id = o.sheetId
                           and s.status = com.icy.icy_backend.db.entity.session.SessionSheet.Status.ACTIVE)
             order by o.finishesAt asc""")

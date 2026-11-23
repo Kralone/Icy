@@ -47,7 +47,7 @@ public class MiningReadyNotifier {
                 order.setReadyNotifiedAt(now);
                 notifications.orderReady(sheet, order);
             }
-            List<MiningRefineryOrder> all = orders.findBySheetWithLines(sheet.getId());
+            List<MiningRefineryOrder> all = orders.findBySheetWithLines(sheet.getId()).stream().filter(order -> !order.isHaul()).toList();
             if (all.stream().allMatch(order -> order.isReady(now)) && all.size() > 1) notifications.allReady(sheet, all);
             // L'étape affichée change (prêt) : les fiches ouvertes se relisent.
             events.changed(sheet.getId());

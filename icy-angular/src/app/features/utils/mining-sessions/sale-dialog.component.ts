@@ -26,6 +26,14 @@ interface SaleLineForm { commodityId: number; name: string; availableCscu: numbe
             <select name="seller" [(ngModel)]="seller" (ngModelChange)="rebuild()">@for (p of current().participants; track p.user.id) { <option [ngValue]="p.user.id">{{ p.user.username }}</option> }</select>
           </label>
         }
+        @if (salvage()) {
+          <div class="mode" role="radiogroup" aria-label="Type de vente">
+            <button type="button" role="radio" [attr.aria-checked]="!direct" (click)="direct = false">Vente de cargaison</button>
+            <button type="button" role="radio" [attr.aria-checked]="direct" (click)="direct = true">Vente directe</button>
+          </div>
+          @if (direct) { <small>Composants démontés, cargo trouvé à bord, récompense de contrat : seul le montant reçu compte, aucun stock n’est déduit.</small> }
+        }
+        @if (!direct) {
         <div class="field">
           <span>Disponible chez {{ sellerName() }}</span>
           @if (lines.length) {
@@ -38,16 +46,18 @@ interface SaleLineForm { commodityId: number; name: string; availableCscu: numbe
             }
             <small>Une vente partielle laisse le reste en stock.</small>
           } @else {
-            <small>Rien en stock pour l’instant. Seul le minerai remis au vendeur peut être vendu.</small>
+            <small>Rien en stock pour l’instant. Seul {{ salvage() ? 'le matériau' : 'le minerai' }} remis au vendeur peut être vendu.</small>
           }
           @for (order of waitingOrders(); track order.id) {
             <span class="waiting">
-              @if (order.launcher.id === order.recipient.id) { Votre ordre de {{ order.terminalLabel }} est prêt. } @else { Ordre de {{ order.launcher.username }} prêt à {{ order.terminalLabel }}, pas encore remis. }
+              @if (order.kind === 'HAUL') { Cargaison de {{ order.launcher.username }} ({{ order.terminalLabel }}), pas encore remise. }
+              @else if (order.launcher.id === order.recipient.id) { Votre ordre de {{ order.terminalLabel }} est prêt. } @else { Ordre de {{ order.launcher.username }} prêt à {{ order.terminalLabel }}, pas encore remis. }
               <button type="button" class="btn small" [disabled]="busy()" (click)="handOver(order)">{{ order.launcher.id === order.recipient.id ? 'Je l’ai récupéré' : 'Je l’ai reçu' }}</button>
             </span>
           }
         </div>
-        @if (lines.length) {
+        }
+        @if (lines.length || direct) {
           <div class="fields">
             <label class="field">Lieu de vente
               <select name="terminal" [(ngModel)]="terminalId">
@@ -66,7 +76,7 @@ interface SaleLineForm { commodityId: number; name: string; availableCscu: numbe
         <div class="dialog-actions">
           @if (sale()) { <button type="button" class="btn danger" [disabled]="busy()" (click)="remove()">Supprimer</button> }
           <button type="button" class="btn" (click)="closed.emit()">Annuler</button>
-          <button type="submit" class="btn primary" [disabled]="busy() || !lines.length">{{ busy() ? 'Enregistrement…' : 'Enregistrer la vente' }}</button>
+          <button type="submit" class="btn primary" [disabled]="busy() || (!lines.length && !direct)">{{ busy() ? 'Enregistrement…' : 'Enregistrer la vente' }}</button>
         </div>
       </form>
     </div>
@@ -76,6 +86,10 @@ interface SaleLineForm { commodityId: number; name: string; availableCscu: numbe
     .sale-line b { color: var(--c); }
     .sale-line input:not([type]) { padding: .4rem .5rem; border: 1px solid var(--line-strong); border-radius: .4rem; color: var(--fg); background: var(--field); font: inherit; }
     .inline { display: inline-flex; gap: .4rem; align-items: center; }
+    .mode { display: inline-flex; justify-self: start; border: 1px solid var(--line-strong); border-radius: .45rem; overflow: hidden; }
+    .mode button { padding: .4rem .75rem; border: 0; color: var(--muted); background: var(--field); font: inherit; font-size: .86rem; cursor: pointer; }
+    .mode button + button { border-left: 1px solid var(--line-strong); }
+    .mode button[aria-checked="true"] { color: #042f2e; background: var(--s-sell); font-weight: 700; }
     .waiting { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; padding: .45rem .6rem; border: 1px dashed var(--gold); border-radius: .5rem; color: var(--fg); font-size: .84rem; }
   `]
 })
@@ -98,6 +112,9 @@ export class SaleDialogComponent implements OnInit {
   terminalId: number | null = null;
   otherLabel = '';
   amount = '';
+  /** Salvage : vente sans cargaison (composants, contrat). */
+  direct = false;
+  readonly salvage = computed(() => this.current().activity === 'SALVAGE');
 
   readonly scu = formatScu;
   readonly group = groupDigits;
@@ -114,8 +131,10 @@ export class SaleDialogComponent implements OnInit {
       this.terminalId = sale.terminalId;
       this.otherLabel = sale.terminalId === null ? sale.terminalLabel : '';
       this.amount = groupDigits(sale.amount);
+      this.direct = sale.lines.length === 0 && this.sheet().activity === 'SALVAGE';
     }
     this.rebuild();
+    if (!sale && this.salvage() && !this.lines.length) this.direct = true;
     // Nouvelle vente : meilleur lieu suggéré pour le premier minerai, modifiable.
     if (!sale) {
       const first = this.lines[0];
@@ -145,10 +164,10 @@ export class SaleDialogComponent implements OnInit {
 
   estimateLabel(): string {
     const suggestions = this.suggestions();
-    if (this.terminalId === null || !suggestions) return '';
+    if (this.terminalId === null || !suggestions || this.direct) return '';
     let total = 0;
     let known = false;
-    for (const line of this.lines.filter(item => item.include)) {
+    for (const line of this.direct ? [] : this.lines.filter(item => item.include)) {
       const cscu = parseScu(line.scu) ?? 0;
       const point = suggestions.commodities.find(item => item.commodityId === line.commodityId)?.points.find(p => p.terminalId === this.terminalId);
       if (point) { known = true; total += point.pricePerScu * cscu / 100; }
@@ -168,8 +187,8 @@ export class SaleDialogComponent implements OnInit {
   save(): void {
     const amount = parseAmount(this.amount);
     if (!amount) { this.error.set('Indiquez le montant reçu en jeu, supérieur à zéro.'); return; }
-    const chosen = this.lines.filter(line => line.include);
-    if (!chosen.length) { this.error.set('Cochez au moins un minerai vendu.'); return; }
+    const chosen = this.direct ? [] : this.lines.filter(line => line.include);
+    if (!chosen.length && !this.direct) { this.error.set(this.salvage() ? 'Cochez au moins un matériau vendu.' : 'Cochez au moins un minerai vendu.'); return; }
     const lines = [];
     for (const line of chosen) {
       const quantityCscu = parseScu(line.scu);

@@ -19,5 +19,6 @@ public class SessionExpense {
     @Column(length = 200) private String note;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
 
-    public enum Kind { FUEL, REPAIR, MATERIAL, OTHER }
+    /** CLAIM et RENTAL : claim de récupération et location de vaisseau, proposés sur les fiches de salvage. */
+    public enum Kind { FUEL, REPAIR, MATERIAL, OTHER, CLAIM, RENTAL }
 }

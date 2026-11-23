@@ -217,6 +217,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/utils/mining-sessions/mining-sessions-list.component').then(m => m.MiningSessionsListComponent)
       },
       {
+        path: 'fiches-salvage',
+        canActivate: [authGuard],
+        data: {
+          animation: 'SalvageSheetsPage',
+          activity: 'SALVAGE',
+          seo: {
+            title: 'Fiches Salvage | IceForge Industries',
+            description: 'Suivi interne des sessions de salvage, raffinage et repartition des couts.',
+            robots: 'noindex,nofollow'
+          }
+        },
+        loadComponent: () => import('./features/utils/mining-sessions/mining-sessions-list.component').then(m => m.MiningSessionsListComponent)
+      },
+      {
         path: 'guides',
         data: {
           seo: {

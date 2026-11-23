@@ -114,6 +114,11 @@ public class OperationService {
         if (!closed && request.getAllowShipProposals() != null) operation.setAllowShipProposals(request.getAllowShipProposals());
         // Décocher l'option ne supprime jamais une fiche déjà créée.
         if (request.getMiningSession() != null) operation.setMiningSession(request.getMiningSession());
+        if (request.getSalvageSession() != null) operation.setSalvageSession(request.getSalvageSession());
+        // Une opération a au plus une fiche de session : minage ou salvage, pas les deux.
+        if (operation.isMiningSession() && operation.isSalvageSession()) {
+            throw new IllegalArgumentException("Une opération est une session de minage ou de salvage, pas les deux.");
+        }
         if (!closed && request.getDefaultAssignmentMode() != null) {
             if (request.getDefaultAssignmentMode() == com.icy.icy_backend.db.entity.event.OperationGroup.AssignmentMode.INHERITED) throw new IllegalArgumentException("Mode d’affectation par défaut invalide");
             operation.setDefaultAssignmentMode(request.getDefaultAssignmentMode());
@@ -181,17 +186,20 @@ public class OperationService {
     }
 
     /**
-     * Opération publiée avec l'option « Session de minage » : sa fiche de minage est créée une seule fois,
+     * Opération publiée avec l'option « Session de minage » ou « Session de salvage » : sa fiche est créée une seule fois,
      * avec tous les membres « Présent », affectés à un groupe ou non. Ensuite la fiche se gère seule.
      */
     private void ensureMiningSheet(Event event, Operation operation) {
-        if (sessionSheetService == null || !operation.isMiningSession() || operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) return;
+        boolean wanted = operation.isMiningSession() || operation.isSalvageSession();
+        if (sessionSheetService == null || !wanted || operation.getPublicationStatus() != Operation.PublicationStatus.PUBLISHED) return;
         java.util.List<UUID> present = participationRepository == null ? java.util.List.of()
                 : participationRepository.findAllByEvent(event).orElse(java.util.List.of()).stream()
                 .filter(participation -> participation.getStatus() == 1 && participation.getUser() != null)
                 .map(participation -> participation.getUser().getId()).toList();
         java.time.LocalDate date = event.getStartDateTime() != null ? event.getStartDateTime().toLocalDate() : LocalDateTime.now(OperationLock.ZONE).toLocalDate();
-        sessionSheetService.ensureForOperation(event.getId(), event.getTitle(), date,
+        String activity = operation.isSalvageSession()
+                ? com.icy.icy_backend.db.entity.session.SessionSheet.SALVAGE : com.icy.icy_backend.db.entity.session.SessionSheet.MINING;
+        sessionSheetService.ensureForOperation(event.getId(), activity, event.getTitle(), date,
                 com.icy.icy_backend.security.AuthUtils.getCurrentUserId(), present);
     }
 
