@@ -7,7 +7,7 @@ CREATE TABLE core.member_warnings (
     user_id           UUID         NOT NULL REFERENCES core.users (id) ON DELETE CASCADE,
     category          VARCHAR(16)  NOT NULL,
     reason            TEXT         NOT NULL,
-    rank              SMALLINT     NOT NULL,
+    rank              INTEGER      NOT NULL,
     issued_by_user_id UUID REFERENCES core.users (id) ON DELETE SET NULL,
     issued_by_name    VARCHAR(255) NOT NULL,
     created_at        TIMESTAMP    NOT NULL,
