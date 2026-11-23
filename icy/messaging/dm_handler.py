@@ -165,7 +165,8 @@ class DirectMessageHandler:
                 return "FAILED", "discord_rejected"
             # Limite de débit ou panne de Discord : RabbitMQ réessaiera.
             raise
-        logger.info("Message privé %s envoyé (%s)", payload.get("deliveryId"), payload.get("origin"))
+        # Rien du message n'est journalisé : son contenu ne regarde que le membre.
+        logger.info("Message privé envoyé")
         return "SENT", reason
 
     async def _report(self, payload, status, reason):
