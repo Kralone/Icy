@@ -9,10 +9,11 @@ import { EventService, EventDTO } from '../../../core/services/event/event.servi
 import { EventType } from '../../../model/event-type.model';
 
 import { AvailabilityHintComponent } from '../../../shared/availability/availability-hint.component';
+import { EventTypeManagerComponent } from './event-type-manager/event-type-manager.component';
 @Component({
   selector: 'app-event-management',
   standalone: true,
-  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule, AvailabilityHintComponent],
+  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule, AvailabilityHintComponent, EventTypeManagerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-management.component.html',
 })
@@ -41,8 +42,6 @@ export class EventManagementComponent implements OnInit {
 
   // === Types ===
   types: EventType[] = [];
-  currentPageTypes = 1;
-  itemsPerPageTypes = 8;
   isLoadingTypes = false;
 
   // === État de création / édition ===
@@ -51,24 +50,20 @@ export class EventManagementComponent implements OnInit {
   isUpdatingEvent = false;
   isViewMode = false;
 
-  // === Types d’événements ===
-  newType: EventType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
-  isTypeSubmitting = false;
-  editingType: any = null;
-  isTypeUpdating = false;
-
   // === Filtre par type ===
   selectedTypeFilter: string = 'ALL';
   filteredEvents: EventDTO[] = [];
 
-  get paginatedTypes(): EventType[] {
-    const start = (this.currentPageTypes - 1) * this.itemsPerPageTypes;
-    return this.types.slice(start, start + this.itemsPerPageTypes);
+  /** Types proposés à la création : les types archivés n'y figurent plus. */
+  get activeTypes(): EventType[] {
+    return this.types.filter(type => !type.archived);
   }
-  get totalPagesTypes(): number { return Math.max(1, Math.ceil(this.types.length / this.itemsPerPageTypes)); }
-  prevPageTypes(): void { if (this.currentPageTypes > 1) this.currentPageTypes--; }
-  nextPageTypes(): void { if (this.currentPageTypes < this.totalPagesTypes) this.currentPageTypes++; }
-  onItemsPerPageTypesChange(): void { this.currentPageTypes = 1; }
+
+  /** Types proposés en modification : les types actifs, plus le type actuel de l'événement s'il est archivé. */
+  get typesForEdit(): EventType[] {
+    const current = this.editingEvent?.type?.name;
+    return this.types.filter(type => !type.archived || type.name === current);
+  }
 
   get previewType(): EventType | undefined {
     return this.types.find(t => t.name === this.newEvent.type);
@@ -266,7 +261,8 @@ export class EventManagementComponent implements OnInit {
 
     this.newEvent = {
       title: this.editingEvent.title || '',
-      type: this.editingEvent.type?.name || '',
+      // Un type archivé n'est plus proposé : il faut en choisir un autre.
+      type: this.activeTypes.some(type => type.name === this.editingEvent?.type?.name) ? this.editingEvent.type.name : '',
       description: this.editingEvent.description || '',
       startDateTime: '',
       endDateTime: '',
@@ -299,57 +295,7 @@ export class EventManagementComponent implements OnInit {
     });
   }
 
-  // === Types ===
-  createType() {
-    if (!this.newType.name.trim()) return;
-    this.isTypeSubmitting = true;
 
-    this.eventService.createType(this.newType).subscribe({
-      next: () => {
-        this.isTypeSubmitting = false;
-        this.newType = { name: '', textColor: '', backgroundColor: '', imageUrl: '' };
-        this.loadTypes();
-      },
-      error: (err) => {
-        console.error('Erreur création type', err);
-        this.isTypeSubmitting = false;
-      },
-    });
-  }
-
-  deleteType(name: string) {
-    if (!confirm(`Supprimer le type "${name}" ?`)) return;
-
-    this.eventService.deleteType(name).subscribe({
-      next: () => this.loadTypes(),
-      error: (err) => console.error('Erreur suppression type', err),
-    });
-  }
-
-  editType(type: any) {
-    this.editingType = { ...type };
-  }
-
-  cancelEditType() {
-    this.editingType = null;
-  }
-
-  updateType() {
-    if (!this.editingType) return;
-    this.isTypeUpdating = true;
-
-    this.eventService.updateEventType(this.editingType).subscribe({
-      next: () => {
-        this.isTypeUpdating = false;
-        this.editingType = null;
-        this.loadTypes();
-      },
-      error: (err) => {
-        console.error('Erreur mise à jour type', err);
-        this.isTypeUpdating = false;
-      },
-    });
-  }
 
   applyEventFilter(): void {
     if (this.selectedTypeFilter === 'ALL') {

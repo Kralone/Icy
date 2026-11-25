@@ -31,7 +31,9 @@ class OperationTypeValidationTest {
 
     @Test
     void acceptsKnownTypeAndTrimsIt() {
-        when(eventTypeRepository.findByName("Combat")).thenReturn(new EventType());
+        EventType stored = new EventType();
+        stored.setName("Combat");
+        when(eventTypeRepository.findByName("Combat")).thenReturn(stored);
         assertThat(service.requireExistingEventTypeName("  Combat ")).isEqualTo("Combat");
     }
 
@@ -42,6 +44,17 @@ class OperationTypeValidationTest {
         when(eventTypeRepository.findByName("combat")).thenReturn(null);
         when(eventTypeRepository.findAll()).thenReturn(List.of(stored));
         assertThat(service.requireExistingEventTypeName(" combat ")).isEqualTo("Combat");
+    }
+
+    @Test
+    void rejectsArchivedType() {
+        EventType archived = new EventType();
+        archived.setName("Ancien");
+        archived.setArchived(true);
+        when(eventTypeRepository.findByName("Ancien")).thenReturn(archived);
+        assertThatThrownBy(() -> service.requireExistingEventTypeName("Ancien"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("archivé");
     }
 
     @Test

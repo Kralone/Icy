@@ -1,0 +1,157 @@
+<div class="etm">
+  <header class="etm-head">
+    <div>
+      <p class="etm-kicker">Configuration</p>
+      <h2 class="etm-title">Types d’événement</h2>
+    </div>
+    <button type="button" class="etm-btn etm-btn--ghost" (click)="startCreate(true)">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg> Nouveau type
+    </button>
+  </header>
+
+  <div class="etm-layout">
+    <!-- Liste -->
+    <div class="etm-list-col">
+      @if (loading() && !types().length) {
+        <p class="etm-empty">Chargement des types…</p>
+      } @else if (!activeTypes().length) {
+        <p class="etm-empty">Aucun type actif. Créez-en un avec le formulaire.</p>
+      } @else {
+        <ul class="etm-grid" data-testid="event-type-list">
+          @for (type of activeTypes(); track type.name) {
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: type }" />
+          }
+        </ul>
+      }
+
+      @if (archivedTypes().length) {
+        <div class="etm-archived">
+          <button type="button" class="etm-archived-toggle" (click)="showArchived.set(!showArchived())" [attr.aria-expanded]="showArchived()">
+            <svg viewBox="0 0 20 20" aria-hidden="true" [class.etm-rot]="showArchived()"><path d="m7 5 5 5-5 5" /></svg>
+            Archivés ({{ archivedTypes().length }})
+          </button>
+          <p class="etm-archived-note">Plus proposés à la création. Les activités qui les utilisent les affichent toujours.</p>
+          @if (showArchived()) {
+            <ul class="etm-grid" data-testid="event-type-archived">
+              @for (type of archivedTypes(); track type.name) {
+                <ng-container *ngTemplateOutlet="card; context: { $implicit: type }" />
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Formulaire -->
+    <form class="etm-form" (submit)="submit($event)" novalidate data-testid="event-type-form" [attr.aria-label]="editing() ? 'Modifier le type' : 'Nouveau type'">
+      <div class="etm-form-head">
+        <h3>{{ editing() ? 'Modifier « ' + editing()!.name + ' »' : 'Nouveau type' }}</h3>
+        @if (editing()) { <button type="button" class="etm-link" (click)="startCreate()">Annuler</button> }
+      </div>
+
+      <!-- Aperçu, identique aux cartes de l'agenda -->
+      <div class="etm-preview" aria-label="Aperçu dans l’agenda" role="img"
+        [style.--accent]="form().backgroundColor" [style.--label]="form().textColor">
+        @if (previewImage(); as src) {
+          <img [src]="src" alt="" (error)="imageFailed.set(true)" (load)="imageFailed.set(false)" [hidden]="imageFailed()" />
+        }
+        <div class="etm-preview-date"><span>24</span><span>nov. 2026</span></div>
+        <div class="etm-preview-body">
+          <span class="etm-chip">{{ form().name.trim() || 'Nom du type' }}</span>
+          <strong>Titre de l’événement</strong>
+          <small>mardi · 21:00</small>
+        </div>
+      </div>
+
+      <div class="etm-field">
+        <label for="event-type-name">Nom</label>
+        <input id="event-type-name" class="etm-input" [value]="form().name" (input)="update('name', inputValue($event))"
+          maxlength="100" autocomplete="off" placeholder="Exploration, Minage, Combat…"
+          [attr.aria-invalid]="submitted() && !!nameError()" aria-describedby="event-type-name-msg" />
+        <p id="event-type-name-msg" class="etm-msg" [class.etm-msg--error]="submitted() && nameError()">
+          @if (submitted() && nameError()) { {{ nameError() }} }
+          @else if (renameNote()) { {{ renameNote() }} }
+        </p>
+      </div>
+
+      <div class="etm-colors">
+        <app-color-field label="Couleur d’accent" hint="Fond de la carte et de l’étiquette."
+          [value]="form().backgroundColor" (valueChange)="update('backgroundColor', $event)" [presets]="accentPresets" fallback="#27647c" />
+        <app-color-field label="Couleur de l’étiquette" hint="Texte du nom du type."
+          [value]="form().textColor" (valueChange)="update('textColor', $event)" [presets]="labelPresets" fallback="#e3f4fb" />
+      </div>
+
+      @if (contrast(); as ratio) {
+        <div class="etm-contrast" [class.etm-contrast--low]="!readable()" role="status">
+          <span class="etm-contrast-dot" aria-hidden="true"></span>
+          <span>Lisibilité {{ ratio.toFixed(1) }}:1 · {{ readable() ? 'bonne' : 'faible' }}</span>
+          @if (!readable()) {
+            <button type="button" class="etm-link" (click)="update('textColor', suggestedLabel())">
+              Utiliser {{ suggestedLabel() === '#ffffff' ? 'du blanc' : 'du noir' }}
+            </button>
+          }
+        </div>
+      }
+
+      <div class="etm-field">
+        <label for="event-type-image">Image <span class="etm-optional">facultative</span></label>
+        <input id="event-type-image" class="etm-input" [value]="form().imageUrl" (input)="update('imageUrl', inputValue($event))"
+          inputmode="url" autocomplete="off" placeholder="https://… ou /img/…" [attr.aria-invalid]="!!imageError()" aria-describedby="event-type-image-msg" />
+        <p id="event-type-image-msg" class="etm-msg" [class.etm-msg--error]="imageError()">
+          {{ imageError() || 'Affichée à droite des cartes de l’agenda.' }}
+        </p>
+      </div>
+
+      @if (formError()) { <p class="etm-alert" role="alert">{{ formError() }}</p> }
+
+      <div class="etm-form-actions">
+        @if (editing()) { <button type="button" class="etm-btn etm-btn--ghost" (click)="startCreate()">Annuler</button> }
+        <button type="submit" class="etm-btn etm-btn--primary" [disabled]="busy()">
+          {{ busy() ? 'Enregistrement…' : editing() ? 'Enregistrer' : 'Créer le type' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<ng-template #card let-type>
+  <li class="etm-card" [class.etm-card--editing]="editing()?.name === type.name" [class.etm-card--archived]="type.archived"
+    [style.--accent]="accent(type)" [style.--label]="label(type)">
+    <div class="etm-card-banner">
+      @if (image(type); as src) { <img [src]="src" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" /> }
+      <span class="etm-chip">{{ type.name }}</span>
+    </div>
+    <div class="etm-card-body">
+      <div class="etm-card-meta">
+        <span class="etm-usage" [class.etm-usage--none]="!type.usageCount">{{ usageLabel(type) }}</span>
+        @if (type.archived) { <span class="etm-badge">Archivé</span> }
+      </div>
+
+      @if (confirmDelete() === type.name) {
+        <div class="etm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + type.name">
+          <span>Supprimer définitivement ?</span>
+          <div class="etm-card-actions">
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="cancelDelete()">Annuler</button>
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--danger" (click)="delete(type)" [disabled]="pending() === type.name">Supprimer</button>
+          </div>
+        </div>
+      } @else {
+        <div class="etm-card-actions">
+          @if (!type.archived) {
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="startEdit(type)" [attr.aria-label]="'Modifier ' + type.name">Modifier</button>
+          } @else {
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="setArchived(type, false)" [disabled]="pending() === type.name">Restaurer</button>
+          }
+          @if (type.usageCount) {
+            @if (!type.archived) {
+              <button type="button" class="etm-btn etm-btn--sm etm-btn--warn" (click)="setArchived(type, true)" [disabled]="pending() === type.name"
+                [title]="'Utilisé par ' + usageLabel(type) + ' : il ne peut pas être supprimé.'" [attr.aria-label]="'Archiver ' + type.name">Archiver</button>
+            }
+          } @else {
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--danger-ghost" (click)="askDelete(type)" [attr.aria-label]="'Supprimer ' + type.name">Supprimer</button>
+          }
+        </div>
+      }
+    </div>
+  </li>
+</ng-template>

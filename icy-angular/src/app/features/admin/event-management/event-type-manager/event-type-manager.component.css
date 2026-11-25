@@ -1,0 +1,121 @@
+/* Types d'événement, style glace-forge. --accent / --label : couleurs du type affiché. */
+:host { display: block; --ice: 125 211 252; color: rgb(226 232 240); }
+
+.etm-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.etm-kicker { font-size: .7rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: rgb(148 163 184); }
+.etm-title { margin-top: .2rem; font-size: 1.25rem; font-weight: 600; color: #a5f3fc; }
+
+.etm-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (min-width: 1024px) { .etm-layout { grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem); } .etm-form { position: sticky; top: 1.25rem; } }
+@media (min-width: 2400px) { :host { zoom: 1.4; } .etm-layout { grid-template-columns: minmax(0, 1fr) 28rem; } }
+
+.etm-empty { padding: 2rem 1rem; text-align: center; color: rgb(148 163 184); border: 1px dashed rgb(255 255 255 / .14); border-radius: 1rem; }
+
+/* Cartes */
+.etm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: .9rem; }
+.etm-card {
+  display: flex; flex-direction: column; overflow: hidden; border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, #3b5266);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, #0b1626), #0b1324);
+  box-shadow: 0 18px 40px rgb(0 0 0 / .28); transition: border-color .15s, transform .15s;
+}
+.etm-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, white); }
+.etm-card--editing { border-color: rgb(var(--ice) / .85); box-shadow: 0 0 0 2px rgb(var(--ice) / .35), 0 18px 40px rgb(0 0 0 / .28); }
+.etm-card--archived { filter: saturate(.45); opacity: .85; }
+.etm-card-banner {
+  position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 5.25rem; padding: .85rem;
+  border-left: 4px solid var(--accent); background: color-mix(in srgb, var(--accent) 30%, #0b1826);
+}
+.etm-card-banner img, .etm-preview img {
+  position: absolute; z-index: -1; inset: 0 0 0 auto; width: 55%; height: 100%; object-fit: cover; opacity: .75;
+  mask-image: linear-gradient(to right, transparent, #000 85%); pointer-events: none;
+}
+.etm-chip {
+  display: inline-block; max-width: 100%; padding: .22rem .55rem; border-radius: .3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--accent); color: var(--label); font-size: .78rem; font-weight: 600; letter-spacing: .02em;
+}
+.etm-card-body { display: grid; gap: .7rem; padding: .8rem .85rem .9rem; }
+.etm-card-meta { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
+.etm-usage { color: #cfe9f2; }
+.etm-usage--none { color: rgb(148 163 184); }
+.etm-badge { padding: .08rem .5rem; border-radius: 999px; font-size: .7rem; font-weight: 600; color: #fde68a; border: 1px solid rgb(251 191 36 / .4); background: rgb(251 191 36 / .08); }
+.etm-card-actions { display: flex; gap: .45rem; flex-wrap: wrap; }
+.etm-confirm { display: grid; gap: .5rem; font-size: .82rem; color: #fecaca; }
+
+/* Boutons */
+.etm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 2.5rem; padding: .45rem 1.1rem;
+  border-radius: 999px; border: 1px solid transparent; font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.etm-btn svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.etm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.etm-btn:focus-visible, .etm-link:focus-visible, .etm-archived-toggle:focus-visible { outline: 2px solid #aee8f2; outline-offset: 2px; }
+.etm-btn--sm { min-height: 2.1rem; padding: .3rem .85rem; font-size: .8rem; }
+.etm-btn--primary { color: #0b1220; background: linear-gradient(90deg, #22d3ee, #38bdf8); box-shadow: 0 6px 18px rgb(34 211 238 / .25); }
+.etm-btn--primary:hover:not(:disabled) { background: linear-gradient(90deg, #67e8f9, #7dd3fc); }
+.etm-btn--ghost { color: #e2e8f0; border-color: rgb(255 255 255 / .14); background: rgb(255 255 255 / .03); }
+.etm-btn--ghost:hover:not(:disabled) { border-color: rgb(var(--ice) / .55); }
+.etm-btn--warn { color: #fde68a; border-color: rgb(251 191 36 / .4); background: rgb(251 191 36 / .07); }
+.etm-btn--warn:hover:not(:disabled) { border-color: rgb(251 191 36 / .75); }
+.etm-btn--danger-ghost { color: #fca5a5; border-color: rgb(248 113 113 / .35); background: transparent; }
+.etm-btn--danger-ghost:hover:not(:disabled) { border-color: rgb(248 113 113 / .7); }
+.etm-btn--danger { color: #fff; background: #b91c1c; border-color: #ef4444; }
+.etm-btn--danger:hover:not(:disabled) { background: #dc2626; }
+.etm-link { font-size: .82rem; font-weight: 600; color: #7dd3fc; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Archivés */
+.etm-archived { margin-top: 1.5rem; display: grid; gap: .6rem; }
+.etm-archived-toggle { display: inline-flex; align-items: center; gap: .35rem; width: fit-content; font-size: .9rem; font-weight: 600; color: #cbd5e1; cursor: pointer; }
+.etm-archived-toggle svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; transition: transform .15s; }
+.etm-archived-toggle svg.etm-rot { transform: rotate(90deg); }
+.etm-archived-note { font-size: .78rem; color: rgb(148 163 184); }
+
+/* Formulaire */
+.etm-form {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 1.25rem; border-radius: 1.1rem;
+  border: 1px solid rgb(var(--ice) / .2); background: linear-gradient(180deg, #0d182b, #0a111c);
+  box-shadow: 0 25px 60px rgb(0 0 0 / .35);
+}
+.etm-form-head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.etm-form-head h3 { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; overflow-wrap: anywhere; }
+.etm-field label { display: block; margin-bottom: .4rem; font-size: .8rem; font-weight: 600; color: rgb(203 213 225); }
+.etm-optional { font-weight: 400; color: rgb(148 163 184); }
+.etm-input {
+  width: 100%; min-height: 2.75rem; padding: .55rem .9rem; border-radius: .8rem; color: #f1f5f9; background: #0b1324;
+  border: 1px solid rgb(255 255 255 / .12); outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.etm-input::placeholder { color: rgb(100 116 139); }
+.etm-input:focus { border-color: rgb(var(--ice) / .6); box-shadow: 0 0 0 3px rgb(var(--ice) / .12); }
+.etm-input[aria-invalid='true'] { border-color: rgb(248 113 113 / .7); }
+.etm-msg { min-height: 1rem; margin-top: .3rem; font-size: .72rem; color: rgb(148 163 184); }
+.etm-msg--error { color: #fca5a5; }
+.etm-colors { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem 1rem; }
+@media (min-width: 480px) and (max-width: 1023px) { .etm-colors { grid-template-columns: 1fr 1fr; } }
+.etm-contrast { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: -.4rem; font-size: .8rem; color: #bbf7d0; }
+.etm-contrast-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #34d399; }
+.etm-contrast--low { color: #fde68a; }
+.etm-contrast--low .etm-contrast-dot { background: #fbbf24; }
+.etm-alert { padding: .6rem .8rem; border-radius: .7rem; font-size: .85rem; color: #fecaca; border: 1px solid rgb(248 113 113 / .4); background: rgb(127 29 29 / .25); }
+.etm-form-actions { display: flex; justify-content: flex-end; gap: .6rem; flex-wrap: wrap; }
+
+/* Aperçu : reprend la carte de l'agenda (/icy/events). */
+.etm-preview {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; gap: 1rem; min-height: 6.5rem; padding: 1rem 1.1rem;
+  border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--accent) 70%, #658091); border-left: 4px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, #0b1826);
+}
+.etm-preview-date { flex: none; display: flex; flex-direction: column; width: 3.6rem; padding-right: .9rem; text-align: center; border-right: 1px solid #375163; }
+.etm-preview-date span:first-child { font-size: 1.6rem; font-weight: 700; line-height: 1.15; color: #b4f0fb; }
+.etm-preview-date span:last-child { font-size: .65rem; color: #a9bdcf; }
+.etm-preview-body { display: grid; gap: .3rem; min-width: 0; justify-items: start; }
+.etm-preview-body strong { font-size: 1rem; font-weight: 600; color: #f8fafc; }
+.etm-preview-body small { font-size: .78rem; color: #b3c4d3; }
+
+@media (max-width: 639px) {
+  .etm-form { padding: 1rem; }
+  .etm-grid { grid-template-columns: 1fr; }
+  .etm-card-banner { min-height: 3.75rem; padding: .65rem .75rem; }
+  .etm-card-body { gap: .55rem; padding: .65rem .75rem .75rem; }
+  .etm-head .etm-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .etm-card, .etm-btn, .etm-archived-toggle svg { transition: none; } }

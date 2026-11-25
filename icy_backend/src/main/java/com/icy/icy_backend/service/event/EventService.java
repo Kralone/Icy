@@ -1,6 +1,9 @@
 package com.icy.icy_backend.service.event;
 
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
+import com.icy.icy_backend.controller.dto.response.event.EventTypeResponseDTO;
+import com.icy.icy_backend.controller.dto.event.EventTypeRequest;
+import com.icy.icy_backend.exception.definition.ResourceInUseException;
 import com.icy.icy_backend.controller.dto.response.event.EventParticipationResponseDTO;
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
@@ -218,8 +221,12 @@ public class EventService {
         }
 
         // 🔹 Création de l’événement
+        EventType eventType = getEventTypeByName(type);
+        if (eventType != null && eventType.isArchived()) {
+            throw new BadRequestException("Le type « " + eventType.getName() + " » est archivé. Choisissez un type dans la liste.");
+        }
         Event event = new Event();
-        event.setType(getEventTypeByName(type));
+        event.setType(eventType);
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
@@ -319,7 +326,13 @@ public class EventService {
         }
 
         // --- Mise à jour event
-        event.setType(getEventTypeByName(type));
+        EventType newType = getEventTypeByName(type);
+        // Un type archivé reste accepté s'il est déjà celui de l'événement, jamais pour une réaffectation.
+        boolean sameType = event.getType() != null && newType != null && event.getType().getName().equals(newType.getName());
+        if (newType != null && newType.isArchived() && !sameType) {
+            throw new BadRequestException("Le type « " + newType.getName() + " » est archivé. Choisissez un type dans la liste.");
+        }
+        event.setType(newType);
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
@@ -634,15 +647,13 @@ public class EventService {
             throw new BadRequestException("Choisissez un type d’opération.");
         }
         String trimmed = name.trim();
-        if (eventTypeRepository.findByName(trimmed) != null) {
-            return trimmed;
-        }
         // Tolère une différence de casse et renvoie le nom enregistré.
-        return eventTypeRepository.findAll().stream()
-                .map(EventType::getName)
-                .filter(trimmed::equalsIgnoreCase)
-                .findFirst()
+        EventType type = findTypeIgnoreCase(trimmed)
                 .orElseThrow(() -> new BadRequestException("Type d’opération inconnu : « " + trimmed + " ». Choisissez un type dans la liste."));
+        if (type.isArchived()) {
+            throw new BadRequestException("Le type « " + type.getName() + " » est archivé. Choisissez un type dans la liste.");
+        }
+        return type.getName();
     }
 
     private EventType getEventTypeByName(String name) {
@@ -725,61 +736,133 @@ public class EventService {
 // Types d'événements
 // -----------------------------
 
-    public ResponseEntity<MessageResponse<List<EventType>>> getAllEventsTypes() {
-        return messageService.buildResponse("event.type.list", eventTypeRepository.findAll());
+    private static final java.util.regex.Pattern HEX_COLOR = java.util.regex.Pattern.compile("^#[0-9a-fA-F]{6}$");
+    private static final int TYPE_NAME_MAX = 100;
+
+    /** Tous les types, actifs puis archivés, avec le nombre d'activités qui les utilisent. */
+    @Transactional(readOnly = true)
+    public ResponseEntity<MessageResponse<List<EventTypeResponseDTO>>> getAllEventsTypes() {
+        Map<String, Long> usage = new HashMap<>();
+        for (Object[] row : eventRepository.countByTypeName()) {
+            usage.put((String) row[0], ((Number) row[1]).longValue());
+        }
+        List<EventTypeResponseDTO> types = eventTypeRepository.findAll().stream()
+                .sorted(Comparator.comparing(EventType::isArchived)
+                        .thenComparing(EventType::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(type -> new EventTypeResponseDTO(type, usage.getOrDefault(type.getName(), 0L)))
+                .toList();
+        return messageService.buildResponse("event.type.list", types);
     }
 
-    public ResponseEntity<MessageResponse<EventType>> createEventType(
-            String name,
-            String textColor,
-            String backgroundColor,
-            String imageUrl
-    ) {
-        if (eventTypeRepository.existsById(name)) {
+    @Transactional
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> createEventType(EventTypeRequest request) {
+        String name = validTypeName(request.getName());
+        if (findTypeIgnoreCase(name).isPresent()) {
             logger.warn("Tentative de création d’un type d’événement existant : {}", name);
-            throw new ResourceAlreadyExistsException("Le type d’événement existe déjà : " + name);
+            throw new ResourceAlreadyExistsException("Un type « " + name + " » existe déjà.");
         }
 
         EventType newType = new EventType();
         newType.setName(name);
-        newType.setTextColor(textColor);
-        newType.setBackgroundColor(backgroundColor); // ✅ FIX ICI
-        newType.setImageUrl(imageUrl);
+        applyTypeAppearance(newType, request);
 
         EventType saved = eventTypeRepository.save(newType);
         logger.info("Type d’événement créé : {}", saved.getName());
-        return messageService.buildResponse("event.type.created", saved);
+        return messageService.buildResponse("event.type.created", new EventTypeResponseDTO(saved, 0), saved.getName());
     }
 
-    public ResponseEntity<MessageResponse<EventType>> updateEventType(String name, EventType updatedType) {
+    /**
+     * Met à jour l'apparence d'un type. Un renommage crée le nouveau nom, y rattache les activités
+     * puis retire l'ancien, dans la même transaction : la clé étrangère reste satisfaite à chaque étape.
+     */
+    @Transactional
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> updateEventType(String name, EventTypeRequest request) {
         EventType existing = eventTypeRepository.findById(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Type d’événement introuvable : " + name));
+        String newName = request.getName() == null ? name : validTypeName(request.getName());
 
-        existing.setTextColor(updatedType.getTextColor());
-        existing.setImageUrl(updatedType.getImageUrl());
-        existing.setBackgroundColor(updatedType.getBackgroundColor());
-
-        // Si on veut aussi pouvoir renommer :
-        if (updatedType.getName() != null && !updatedType.getName().equals(name)) {
-            eventTypeRepository.deleteById(name);
-            existing.setName(updatedType.getName());
+        if (newName.equals(name)) {
+            applyTypeAppearance(existing, request);
+            EventType saved = eventTypeRepository.save(existing);
+            logger.info("Type d’événement mis à jour : {}", saved.getName());
+            return messageService.buildResponse("event.type.updated",
+                    new EventTypeResponseDTO(saved, eventRepository.countByType_Name(saved.getName())), saved.getName());
         }
 
-        EventType saved = eventTypeRepository.save(existing);
-        logger.info("Type d’événement mis à jour : {}", saved.getName());
-        return messageService.buildResponse("event.type.updated", saved);
+        if (findTypeIgnoreCase(newName).filter(other -> !other.getName().equals(name)).isPresent()) {
+            throw new ResourceAlreadyExistsException("Un type « " + newName + " » existe déjà.");
+        }
+        EventType renamed = new EventType();
+        renamed.setName(newName);
+        renamed.setArchived(existing.isArchived());
+        applyTypeAppearance(renamed, request);
+        renamed = eventTypeRepository.saveAndFlush(renamed);
+        int moved = eventRepository.reassignType(existing, renamed);
+        eventTypeRepository.delete(existing);
+        eventTypeRepository.flush();
+        logger.info("Type d’événement renommé : {} → {} ({} activité(s) rattachée(s))", name, newName, moved);
+        return messageService.buildResponse("event.type.updated", new EventTypeResponseDTO(renamed, moved), newName);
     }
 
-
+    /** Supprime un type inutilisé. Un type encore utilisé est refusé avec le nombre d'activités concernées. */
+    @Transactional
     public ResponseEntity<MessageResponse<Void>> deleteEventType(String name) {
         if (!eventTypeRepository.existsById(name)) {
             logger.warn("Tentative de suppression d’un type d’événement inexistant : {}", name);
             throw new ResourceNotFoundException("Type d’événement introuvable : " + name);
         }
+        long usage = eventRepository.countByType_Name(name);
+        if (usage > 0) {
+            throw new ResourceInUseException("« " + name + " » est utilisé par " + usage
+                    + (usage > 1 ? " activités" : " activité")
+                    + ". Archivez-le pour le retirer des listes sans toucher à ces activités.");
+        }
 
         eventTypeRepository.deleteById(name);
         logger.info("Type d’événement supprimé : {}", name);
-        return messageService.buildResponse("event.type.deleted", null);
+        return messageService.buildResponse("event.type.deleted", null, name);
+    }
+
+    /** Archive ou restaure un type : un type archivé n'est plus proposé à la création. */
+    @Transactional
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> setEventTypeArchived(String name, boolean archived) {
+        EventType type = eventTypeRepository.findById(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Type d’événement introuvable : " + name));
+        type.setArchived(archived);
+        EventType saved = eventTypeRepository.save(type);
+        logger.info("Type d’événement {} : {}", archived ? "archivé" : "restauré", name);
+        return messageService.buildResponse(archived ? "event.type.archived" : "event.type.restored",
+                new EventTypeResponseDTO(saved, eventRepository.countByType_Name(name)), name);
+    }
+
+    private Optional<EventType> findTypeIgnoreCase(String name) {
+        EventType exact = eventTypeRepository.findByName(name);
+        if (exact != null) return Optional.of(exact);
+        return eventTypeRepository.findAll().stream().filter(type -> type.getName().equalsIgnoreCase(name)).findFirst();
+    }
+
+    private static String validTypeName(String raw) {
+        String name = raw == null ? "" : raw.trim();
+        if (name.isEmpty()) throw new BadRequestException("Donnez un nom au type.");
+        if (name.length() > TYPE_NAME_MAX) throw new BadRequestException("Le nom du type dépasse " + TYPE_NAME_MAX + " caractères.");
+        if (name.contains("/") || name.contains("\\")) throw new BadRequestException("Le nom du type ne peut pas contenir de barre oblique.");
+        return name;
+    }
+
+    private static void applyTypeAppearance(EventType type, EventTypeRequest request) {
+        type.setTextColor(validColor(request.getTextColor(), "du texte"));
+        type.setBackgroundColor(validColor(request.getBackgroundColor(), "du fond"));
+        String image = request.getImageUrl() == null ? "" : request.getImageUrl().trim();
+        if (image.length() > 255) throw new BadRequestException("L’adresse de l’image dépasse 255 caractères.");
+        type.setImageUrl(image.isEmpty() ? null : image);
+    }
+
+    private static String validColor(String raw, String label) {
+        String color = raw == null ? "" : raw.trim();
+        if (!HEX_COLOR.matcher(color).matches()) {
+            throw new BadRequestException("Couleur " + label + " invalide : utilisez le format #RRGGBB.");
+        }
+        return color.toLowerCase(Locale.ROOT);
     }
 
 

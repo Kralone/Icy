@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { WebSocketService } from '../websocket/websocket.service';
-import { EventType } from '../../../model/event-type.model';
+import { EventType, EventTypeRequest } from '../../../model/event-type.model';
 import { OperationOrganization } from '../../../features/operations/organization/operation-organization.model';
 import { CrewPreset, CrewPresetPayload, OperationCrew, PositionDraft } from '../../../features/operations/organization/operation-crew.model';
 import { OperationCoordination } from '../../../features/operations/organization/operation-coordination-board.component';
@@ -114,18 +114,23 @@ export class EventService {
     );
   }
 
-  createType(type: any): Observable<EventType> {
-    return this.http.post<{ data: EventType }>(`${this.baseUrl}/types`, type).pipe(
-      map(res => res.data)
-    );
+  createType(type: EventTypeRequest): Observable<EventType> {
+    return this.http.post<{ data: EventType }>(`${this.baseUrl}/types`, type).pipe(map(res => res.data));
   }
 
+  /** Refusé (409) tant que des activités utilisent ce type : il faut alors l'archiver. */
   deleteType(name: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/types/${name}`);
+    return this.http.delete<void>(`${this.baseUrl}/types/${encodeURIComponent(name)}`);
   }
 
-  updateEventType(type: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/types/${type.name}`, type);
+  setTypeArchived(name: string, archived: boolean): Observable<EventType> {
+    return this.http.put<{ data: EventType }>(`${this.baseUrl}/types/${encodeURIComponent(name)}/archived`, null, { params: { archived } })
+      .pipe(map(res => res.data));
+  }
+
+  /** {@code originalName} : nom actuel ; {@code type.name} peut être un nouveau nom. */
+  updateEventType(originalName: string, type: EventTypeRequest): Observable<EventType> {
+    return this.http.put<{ data: EventType }>(`${this.baseUrl}/types/${encodeURIComponent(originalName)}`, type).pipe(map(res => res.data));
   }
 
   // --- Participations ---

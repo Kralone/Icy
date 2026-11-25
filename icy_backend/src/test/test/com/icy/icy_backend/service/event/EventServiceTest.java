@@ -223,6 +223,44 @@ class EventServiceTest {
     }
 
     @Test
+    void updateEventRefusesMovingToAnArchivedTypeButKeepsTheCurrentOne() {
+        EventRepository eventRepository = Mockito.mock(EventRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        EventTypeRepository eventTypeRepository = Mockito.mock(EventTypeRepository.class);
+        EventService service = new EventService(eventRepository, messageService, Mockito.mock(EventWebSocketService.class),
+                eventTypeRepository, Mockito.mock(EventParticipationRepository.class), Mockito.mock(UserService.class),
+                Mockito.mock(AuthService.class), Mockito.mock(EventPublisher.class), Mockito.mock(NotificationPushService.class));
+
+        EventType current = new EventType();
+        current.setName("Ancien");
+        current.setArchived(true);
+        EventType other = new EventType();
+        other.setName("Saison 3");
+        other.setArchived(true);
+        when(eventTypeRepository.findByName("Ancien")).thenReturn(current);
+        when(eventTypeRepository.findByName("Saison 3")).thenReturn(other);
+
+        Event event = new Event();
+        event.setId(UUID.randomUUID());
+        event.setType(current);
+        event.setStartDateTime(LocalDateTime.now().plusHours(1));
+        event.setEndDateTime(LocalDateTime.now().plusHours(2));
+        when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.doReturn(okResponse(new EventResponseDTO(event))).when(messageService).buildResponse(eq("event.updated"), any());
+
+        assertThatThrownBy(() -> service.updateEvent(event.getId(), "Saison 3", "Title", "Desc",
+                event.getStartDateTime(), event.getEndDateTime(), false))
+                .isInstanceOf(com.icy.icy_backend.exception.definition.BadRequestException.class)
+                .hasMessageContaining("archivé");
+        assertThat(event.getType()).isSameAs(current);
+
+        service.updateEvent(event.getId(), "Ancien", "Title 2", "Desc", event.getStartDateTime(), event.getEndDateTime(), false);
+        assertThat(event.getTitle()).isEqualTo("Title 2");
+        assertThat(event.getType()).isSameAs(current);
+    }
+
+    @Test
     void deleteEventRemovesParticipationsBeforeDeletingEvent() {
         EventRepository eventRepository = Mockito.mock(EventRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);

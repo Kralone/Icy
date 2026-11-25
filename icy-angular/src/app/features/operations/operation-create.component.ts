@@ -98,7 +98,8 @@ export class OperationCreateComponent implements OnInit {
     this.eventService.getAllTypes().subscribe({
       next: types => {
         this.typesLoading = false;
-        this.types = types ?? [];
+        // Les types archivés ne sont plus proposés à la création.
+        this.types = (types ?? []).filter(type => !type.archived);
         if (!this.types.length) this.typesError = 'Aucun type d’opération n’est configuré. Ajoutez-en un dans la gestion des événements.';
         if (this.form.type && !this.isKnownType(this.form.type)) this.form.type = '';
         this.changeDetector.markForCheck();

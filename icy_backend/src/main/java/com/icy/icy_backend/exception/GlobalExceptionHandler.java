@@ -55,6 +55,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", ex.getMessage()));
     }
 
+    @ExceptionHandler(com.icy.icy_backend.exception.definition.ResourceInUseException.class)
+    public ResponseEntity<Map<String, String>> handleResourceInUse(com.icy.icy_backend.exception.definition.ResourceInUseException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", ex.getMessage()));
+    }
+
     @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
     public ResponseEntity<?> handleStaleWrite(Exception ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Conflict", "message", "Ce contenu a été modifié ailleurs depuis votre dernière lecture."));
