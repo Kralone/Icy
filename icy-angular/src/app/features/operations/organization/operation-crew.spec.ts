@@ -189,7 +189,7 @@ describe('OperationCrewBuilderComponent', () => {
     };
     await TestBed.configureTestingModule({
       imports: [OperationCrewBuilderComponent],
-      providers: [{ provide: EventService, useValue: events }, { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [carrack] } })) } }]
+      providers: [{ provide: EventService, useValue: events }, { provide: CatalogService, useValue: { searchShips: vi.fn(() => of({ data: { items: [carrack] } })) } }]
     }).compileComponents();
     fixture = TestBed.createComponent(OperationCrewBuilderComponent);
     fixture.componentRef.setInput('operationId', 'op');

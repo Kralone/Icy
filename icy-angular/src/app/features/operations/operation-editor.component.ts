@@ -169,7 +169,7 @@ export class OperationEditorComponent implements OnDestroy {
     map(query => query.trim()),
     tap(query => { this.catalogError.set(''); this.catalogSearched.set(false); this.catalogLoading.set(query.length >= 2); if (query.length < 2) this.catalogResults.set([]); }),
     debounceTime(250),
-    switchMap(query => query.length < 2 ? of(null) : this.catalogService.browse({ query, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 24 }).pipe(
+    switchMap(query => query.length < 2 ? of(null) : this.catalogService.searchShips(query).pipe(
       map(response => response.data.items),
       catchError(() => { this.catalogError.set('Le catalogue ne peut pas être chargé.'); return of(null); })))
   ).subscribe(items => {

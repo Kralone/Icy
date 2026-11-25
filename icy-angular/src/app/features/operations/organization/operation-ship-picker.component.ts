@@ -66,7 +66,7 @@ export class OperationShipPickerComponent {
       tap(query => { this.error.set(''); this.searched.set(false); this.searching.set(query.length >= 2); if (query.length < 2) this.results.set([]); }),
       // Pas de filtre sur les valeurs identiques : « Réessayer » et une même recherche refaite doivent repartir.
       debounceTime(250),
-      switchMap(query => query.length < 2 ? of(null) : this.catalogService.browse({ query, family: 'SHIP', catalogGroup: 'ALL', status: 'ACTIVE', image: 'ALL', sort: 'name', page: 0, pageSize: 24 }).pipe(
+      switchMap(query => query.length < 2 ? of(null) : this.catalogService.searchShips(query).pipe(
         map(response => response.data.items),
         catchError(() => { this.error.set('Le catalogue ne peut pas être chargé.'); return of(null); }))),
       takeUntilDestroyed(inject(DestroyRef))

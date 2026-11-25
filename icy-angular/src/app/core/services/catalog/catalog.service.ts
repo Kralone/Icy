@@ -96,6 +96,12 @@ export class CatalogService {
 
     return this.http.get<ApiResponse<CatalogPage>>(this.baseUrl, { params });
   }
+
+  /** Vaisseaux actifs pour l'éditeur d'opération : ouvert aux référents de pôle, contrairement au catalogue d'administration. */
+  searchShips(query: string, page = 0, pageSize = 24): Observable<ApiResponse<CatalogPage>> {
+    const params = new HttpParams().set('query', query.trim()).set('page', page).set('pageSize', pageSize);
+    return this.http.get<ApiResponse<CatalogPage>>('/api/operations/ship-catalog', { params });
+  }
 }
 
 export interface CatalogImageCorrection { id: number; name: string; sourceImageUrl: string | null; overrideImageUrl: string | null; imageUrl: string | null; fallbackImage: boolean; }
