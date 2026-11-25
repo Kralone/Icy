@@ -46,7 +46,7 @@ describe('OperationEditorComponent', () => {
           updateOperation,
           deleteOperationDraft,
         } },
-        { provide: CatalogService, useValue: { browse: vi.fn(() => of({ data: { items: [] } })) } },
+        { provide: CatalogService, useValue: { searchShips: vi.fn(() => of({ data: { items: [] } })) } },
         { provide: UserService, useValue: { getAllUsers: vi.fn(() => of({ data: [] })), getMyProfile: vi.fn(() => of({ data: { roles: ['OFFICIER'] } })) } },
         { provide: HotToastService, useValue: { success: vi.fn(), error: vi.fn() } },
       ]

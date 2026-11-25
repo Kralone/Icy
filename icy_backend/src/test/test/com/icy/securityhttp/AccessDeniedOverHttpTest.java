@@ -82,6 +82,7 @@ class AccessDeniedOverHttpTest {
     @EnableAutoConfiguration
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class, BotApiKeyAuthenticationFilter.class, GlobalExceptionHandler.class,
             MessageService.class, OperationController.class, OperationShipService.class, Probe.class,
+            com.icy.icy_backend.controller.operation.OperationShipCatalogController.class,
             com.icy.icy_backend.service.pole.PoleAccess.class})
     static class App {}
 
@@ -125,6 +126,7 @@ class AccessDeniedOverHttpTest {
     @MockitoBean private OperationShipRequirementRepository requirements;
     @MockitoBean private OperationLock operationLock;
     @MockitoBean private com.icy.icy_backend.db.repository.user.UserRepository userRepository;
+    @MockitoBean private com.icy.icy_backend.service.catalog.CatalogBrowseService catalogBrowseService;
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final UUID operationId = UUID.randomUUID();
@@ -324,6 +326,24 @@ class AccessDeniedOverHttpTest {
         // Un Spécialiste sans pôle n'organise rien.
         referent.setSpecialty(null);
         assertThat(call("PUT", pilotPath(null), "jeton-referent").statusCode()).isEqualTo(403);
+    }
+
+    @Test
+    void aPoleReferentSearchesShipsForTheirOperationButAMemberCannot() throws Exception {
+        User referent = token("jeton-referent", "referent", "SPECIALISTE");
+        referent.setSpecialty(com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE);
+        when(userRepository.findById(referent.getId())).thenReturn(Optional.of(referent));
+        String search = "/api/operations/ship-catalog?query=iron";
+
+        assertThat(call("GET", search, "jeton-referent").statusCode()).isEqualTo(200);
+        assertThat(call("GET", search, "jeton-officier").statusCode()).isEqualTo(200);
+        assertThat(call("GET", search, "jeton-membre").statusCode()).isEqualTo(403);
+        verify(catalogBrowseService, org.mockito.Mockito.times(2))
+                .browse("iron", "SHIP", "ALL", "ACTIVE", "ALL", null, "name", 0, 24);
+
+        // Un Spécialiste sans pôle n'organise rien : pas de catalogue non plus.
+        referent.setSpecialty(null);
+        assertThat(call("GET", search, "jeton-referent").statusCode()).isEqualTo(403);
     }
 
     @Test
