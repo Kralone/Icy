@@ -8,12 +8,13 @@ PREFLIGHT_ONLY=0
 FRESH_BACKUP=0
 # Une archive complète de moins de 7 jours est réutilisée : voir select-predeploy-backup.sh.
 MAX_BACKUP_AGE_DAYS=7
-# Flyway version this release must reach. Missing migrations (V39 to V53) are applied by the backend at startup.
+# Flyway version this release must reach. Missing migrations (V39 to V54) are applied by the backend at startup.
 # V45 is destructive (mining sheets V1 dropped); V46 adds goals.goal_members, V47 core.user_tutorials,
 # V48 the bank schema and the TRESORIER role, V49 core.user_availability,
 # V50 core.users.specialty, V51 member activity and bot direct messages, V52 member warnings,
-# V53 salvage sheets (additive). Any database below V53 triggers a fresh backup, see select-predeploy-backup.sh.
-TARGET_FLYWAY_VERSION=53
+# V53 salvage sheets (additive), V54 event types archive (additive).
+# Any database below V54 triggers a fresh backup, see select-predeploy-backup.sh.
+TARGET_FLYWAY_VERSION=54
 
 usage() {
   echo "Usage: $0 --revision <git-sha> --age-recipient 'age1...'|\"ssh-ed25519 AAAA...\" [--fresh-backup] [--preflight]" >&2
@@ -73,6 +74,7 @@ required_files=(
   "$BACKEND_DIR/verify-flyway-v50.sql"
   "$BACKEND_DIR/verify-flyway-v52.sql"
   "$BACKEND_DIR/verify-flyway-v53.sql"
+  "$BACKEND_DIR/verify-flyway-v54.sql"
   "$BOT_DIR/docker-compose.bot-amqp-redaction.yml"
   "$FRONTEND_DIR/docker-compose.frontend-angular22.yml"
   "$ROOT_DIR/ops/production/backup-before-deploy.sh"
@@ -93,6 +95,7 @@ grep -Fq 'FLYWAY_V49_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v49.sql"   || { 
 grep -Fq 'FLYWAY_V50_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v50.sql"   || { echo 'verify-flyway-v50.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V52_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v52.sql"   || { echo 'verify-flyway-v52.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V53_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v53.sql"   || { echo 'verify-flyway-v53.sql invalide.' >&2; exit 1; }
+grep -Fq 'FLYWAY_V54_PRODUCTION_OK' "$BACKEND_DIR/verify-flyway-v54.sql"   || { echo 'verify-flyway-v54.sql invalide.' >&2; exit 1; }
 grep -Fq 'FLYWAY_V38_CHECKSUMS_OK' "$BACKEND_DIR/verify-flyway-v38-checksums.sql"   || { echo 'verify-flyway-v38-checksums.sql invalide.' >&2; exit 1; }
 for image in "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE"; do
   docker image inspect "$image" >/dev/null || { echo "Image candidate absente: $image" >&2; exit 1; }
@@ -152,40 +155,44 @@ case "$current_version" in
     db_psql <"$BACKEND_DIR/verify-flyway-v38-checksums.sql" >/dev/null
     ;;
   43)
-    # V44 à V53 restent à appliquer : l'historique V1-V43 livré doit être intact.
+    # V44 à V54 restent à appliquer : l'historique V1-V43 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v43.sql" >/dev/null
     ;;
   44)
-    # V45 à V53 restent à appliquer : l'historique V1-V44 livré doit être intact.
+    # V45 à V54 restent à appliquer : l'historique V1-V44 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v44.sql" >/dev/null
     ;;
   45)
-    # V46 à V53 restent à appliquer : l'historique V1-V45 livré doit être intact.
+    # V46 à V54 restent à appliquer : l'historique V1-V45 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v45.sql" >/dev/null
     ;;
   46)
-    # V47 à V53 restent à appliquer : l'historique V1-V46 livré doit être intact.
+    # V47 à V54 restent à appliquer : l'historique V1-V46 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v46.sql" >/dev/null
     ;;
   48)
-    # V49 à V53 restent à appliquer : l'historique V1-V48 livré doit être intact.
+    # V49 à V54 restent à appliquer : l'historique V1-V48 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v48.sql" >/dev/null
     ;;
   49)
-    # V50 à V53 restent à appliquer : l'historique V1-V49 livré doit être intact.
+    # V50 à V54 restent à appliquer : l'historique V1-V49 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v49.sql" >/dev/null
     ;;
   50)
-    # V51 à V53 restent à appliquer : l'historique V1-V50 livré doit être intact.
+    # V51 à V54 restent à appliquer : l'historique V1-V50 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v50.sql" >/dev/null
     ;;
   52)
-    # V53 reste à appliquer : l'historique V1-V52 livré doit être intact.
+    # V53 et V54 restent à appliquer : l'historique V1-V52 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v52.sql" >/dev/null
     ;;
   53)
-    # Release already applied: the same command can be run again.
+    # V54 reste à appliquer : l'historique V1-V53 livré doit être intact.
     db_psql <"$BACKEND_DIR/verify-flyway-v53.sql" >/dev/null
+    ;;
+  54)
+    # Release already applied: the same command can be run again.
+    db_psql <"$BACKEND_DIR/verify-flyway-v54.sql" >/dev/null
     ;;
   *) echo "Version Flyway de production refusée: $current_version" >&2; exit 1 ;;
 esac
