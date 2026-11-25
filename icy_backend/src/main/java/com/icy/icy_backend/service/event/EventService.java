@@ -326,7 +326,13 @@ public class EventService {
         }
 
         // --- Mise à jour event
-        event.setType(getEventTypeByName(type));
+        EventType newType = getEventTypeByName(type);
+        // Un type archivé reste accepté s'il est déjà celui de l'événement, jamais pour une réaffectation.
+        boolean sameType = event.getType() != null && newType != null && event.getType().getName().equals(newType.getName());
+        if (newType != null && newType.isArchived() && !sameType) {
+            throw new BadRequestException("Le type « " + newType.getName() + " » est archivé. Choisissez un type dans la liste.");
+        }
+        event.setType(newType);
         event.setTitle(title);
         event.setDescription(description);
         event.setStartDateTime(start);
