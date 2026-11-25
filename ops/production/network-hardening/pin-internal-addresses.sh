@@ -5,10 +5,13 @@
 #
 #   pin-internal-addresses.sh --check
 #   pin-internal-addresses.sh --apply --verified-backup /var/backups/iceforge/iceforge-<date>.tar.gz.age
+#   pin-internal-addresses.sh --finish
 #
-# --check ne modifie rien. --apply arrête toute la stack applicative (coupure du
-# site de quelques minutes), supprime puis recrée le réseau, relance la stack et
-# laisse Vault scellé : il faut ensuite l'unseal depuis Windows.
+# --check ne modifie rien. --apply arrête toute la stack (coupure du site de
+# quelques minutes), recrée le réseau et relance seulement vault, db, rabbitmq
+# et libretranslate : le backend refuse de démarrer tant que Vault est scellé, et
+# bot/frontend attendent le backend. Après l'unseal depuis Windows, --finish
+# relance le reste de la stack.
 set -Eeuo pipefail
 
 ROOT_DIR=${ICEFORGE_ROOT:-/root/iceforge}
@@ -18,15 +21,19 @@ IP_RANGE=172.19.128.0/17
 DB_ADDRESS=172.19.0.2
 MODE=
 VERIFIED_BACKUP=
+# Images applicatives en cours, gardées entre --apply et --finish (tmpfs root).
+IMAGES_FILE=/run/iceforge-pin-internal-images.env
+INFRA_SERVICES=(vault db rabbitmq libretranslate)
 
 usage() {
-  echo "Usage: $0 --check | --apply --verified-backup <archive.tar.gz.age>" >&2
+  echo "Usage: $0 --check | --apply --verified-backup <archive.tar.gz.age> | --finish" >&2
 }
 
 while (($#)); do
   case "$1" in
     --check) MODE=check; shift ;;
     --apply) MODE=apply; shift ;;
+    --finish) MODE=finish; shift ;;
     --verified-backup) VERIFIED_BACKUP=${2:?}; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
@@ -38,9 +45,17 @@ for command in docker jq sha256sum; do
   command -v "$command" >/dev/null 2>&1 || { echo "commande requise absente: $command" >&2; exit 2; }
 done
 
-BACKEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_backend)
-BOT_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_bot)
-FRONTEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_frontend)
+if [[ $MODE == finish ]]; then
+  [[ -f $IMAGES_FILE && ! -L $IMAGES_FILE ]] || { echo "Images introuvables ($IMAGES_FILE) : --apply n'a pas tourné." >&2; exit 1; }
+  BACKEND_IMAGE=$(sed -n 's/^BACKEND_IMAGE=//p' "$IMAGES_FILE")
+  BOT_IMAGE=$(sed -n 's/^BOT_IMAGE=//p' "$IMAGES_FILE")
+  FRONTEND_IMAGE=$(sed -n 's/^FRONTEND_IMAGE=//p' "$IMAGES_FILE")
+else
+  BACKEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_backend)
+  BOT_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_bot)
+  FRONTEND_IMAGE=$(docker inspect --format '{{.Config.Image}}' iceforge_frontend)
+fi
+[[ -n $BACKEND_IMAGE && -n $BOT_IMAGE && -n $FRONTEND_IMAGE ]] || { echo 'Images applicatives inconnues.' >&2; exit 1; }
 export BACKEND_IMAGE BOT_IMAGE FRONTEND_IMAGE
 source "$ROOT_DIR/ops/stateful/load-runtime.sh"
 load_stateful_runtime "$ROOT_DIR"
@@ -59,6 +74,20 @@ bash "$NETWORK_DIR/verify.sh" -- "${compose_args[@]}" | grep -Fx "DB_INTERNAL_AD
   echo 'La surcharge réseau du serveur ne fixe pas encore 172.19.0.2 : copier celle de main.' >&2
   exit 1
 }
+
+if [[ $MODE == finish ]]; then
+  [[ $(docker inspect --format "{{(index .NetworkSettings.Networks \"$NETWORK\").IPAddress}}" iceforge_db) == "$DB_ADDRESS" ]] || {
+    echo "PostgreSQL n'est pas en $DB_ADDRESS : relancer --check." >&2
+    exit 1
+  }
+  vault_status=0
+  docker exec -e VAULT_ADDR=http://127.0.0.1:8200 iceforge_vault vault status >/dev/null 2>&1 || vault_status=$?
+  [[ $vault_status -eq 0 ]] || { echo 'Vault est encore scellé : lancer unseal-from-windows.ps1 puis relancer --finish.' >&2; exit 1; }
+  "${compose[@]}" up -d --no-build --pull never
+  rm -f -- "$IMAGES_FILE"
+  echo 'PIN_STATUS=FINISHED'
+  exit 0
+fi
 
 network_json=$(docker network inspect "$NETWORK")
 current_subnet=$(jq -r '.[0].IPAM.Config[0].Subnet // ""' <<<"$network_json")
@@ -115,7 +144,11 @@ if docker network inspect "$NETWORK" >/dev/null 2>&1; then
   docker network rm "$NETWORK"
 fi
 
-"${compose[@]}" up -d --no-build --pull never
+umask 077
+printf 'BACKEND_IMAGE=%s\nBOT_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$BACKEND_IMAGE" "$BOT_IMAGE" "$FRONTEND_IMAGE" >"$IMAGES_FILE"
+
+# Seulement l'infrastructure : le backend ne démarre pas tant que Vault est scellé.
+"${compose[@]}" up -d --no-build --pull never "${INFRA_SERVICES[@]}"
 
 for name in "${foreign[@]}"; do
   docker network connect "$NETWORK" "$name"
@@ -130,5 +163,5 @@ db_address=$(docker inspect --format "{{(index .NetworkSettings.Networks \"$NETW
 [[ $db_address == "$DB_ADDRESS" ]] || { echo "PostgreSQL a reçu $db_address au lieu de $DB_ADDRESS." >&2; exit 1; }
 
 printf 'DB_ADDRESS=%s\n' "$db_address"
-echo 'PIN_STATUS=APPLIED'
-echo 'Vault est scellé : lancer unseal-from-windows.ps1, puis vérifier backend, bot et site.'
+echo 'PIN_STATUS=INFRA_STARTED'
+echo 'Vault est scellé : lancer unseal-from-windows.ps1, puis pin-internal-addresses.sh --finish.'

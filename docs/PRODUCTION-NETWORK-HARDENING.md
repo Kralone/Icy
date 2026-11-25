@@ -182,11 +182,15 @@ Procédure (créneau de maintenance, staging en veille, aucun déploiement en co
    doit afficher `PIN_STATUS=READY_TO_APPLY`, le sous-réseau `172.19.0.0/16` et
    la liste des conteneurs étrangers (supervision), qui seront reconnectés.
 4. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --apply --verified-backup <archive>` :
-   `down` sans `-v` (volumes conservés), suppression du réseau, `up` avec les
-   images en cours, reconnexion de la supervision, contrôle de `172.19.0.2`.
-5. Déverrouiller Vault avec `ops/production/vault/unseal-from-windows.ps1`, puis
-   vérifier les conteneurs, le site, `/api/front/members`, la supervision et le
-   tunnel IntelliJ.
+   `down` sans `-v` (volumes conservés), suppression du réseau, puis relance de
+   `vault`, `db`, `rabbitmq` et `libretranslate` seulement, reconnexion de la
+   supervision et contrôle de `172.19.0.2`. Le backend ne démarre pas tant que
+   Vault est scellé, et bot et frontend attendent le backend.
+5. Déverrouiller Vault avec `ops/production/vault/unseal-from-windows.ps1`.
+6. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --finish` :
+   vérifie que Vault est déverrouillé et relance le reste de la stack avec les
+   mêmes images. Vérifier ensuite les conteneurs, le site, `/api/front/members`,
+   la supervision et le tunnel IntelliJ.
 
 Retour arrière : si le réseau ne peut pas être créé, retirer le bloc `networks`
 et l'adresse de `db` de la surcharge du serveur, relancer `docker compose ... up -d`
