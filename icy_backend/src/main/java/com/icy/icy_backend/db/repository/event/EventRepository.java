@@ -53,6 +53,19 @@ public interface EventRepository extends CrudRepository<Event, UUID> {
     long countParticipantsOfPoleBetween(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole,
                                         @Param("since") LocalDateTime since, @Param("now") LocalDateTime now);
 
+    /** Nombre d'activités (événements et opérations) par nom de type. */
+    @Query("select e.type.name, count(e) from Event e where e.type is not null group by e.type.name")
+    List<Object[]> countByTypeName();
+
+    /** Nombre d'activités qui utilisent ce type. */
+    long countByType_Name(String name);
+
+    /** Rattache au type {@code to} toutes les activités du type {@code from} (renommage d'un type). */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update Event e set e.type = :to where e.type = :from")
+    int reassignType(@Param("from") com.icy.icy_backend.db.entity.event.EventType from,
+                     @Param("to") com.icy.icy_backend.db.entity.event.EventType to);
+
     @Query("SELECT e FROM Event e WHERE e.startDateTime BETWEEN :start AND :end")
     List<Event> findAllBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 

@@ -6,7 +6,8 @@ import com.icy.icy_backend.controller.dto.event.UpdateEventRequest;
 import com.icy.icy_backend.controller.dto.response.event.EventResponseDTO;
 import com.icy.icy_backend.controller.dto.response.event.EventParticipationResponseDTO;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
-import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.controller.dto.event.EventTypeRequest;
+import com.icy.icy_backend.controller.dto.response.event.EventTypeResponseDTO;
 import com.icy.icy_backend.service.event.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,25 +56,28 @@ public class EventController {
     }
 
     @GetMapping("/types")
-    public ResponseEntity<MessageResponse<List<EventType>>> getAllTypes() {
+    public ResponseEntity<MessageResponse<List<EventTypeResponseDTO>>> getAllTypes() {
         return eventService.getAllEventsTypes();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PostMapping("/types")
-    public ResponseEntity<MessageResponse<EventType>> createType(@RequestBody EventType type) {
-        return eventService.createEventType(
-                type.getName(),
-                type.getTextColor(),
-                type.getBackgroundColor(),
-                type.getImageUrl()
-        );
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> createType(@RequestBody EventTypeRequest type) {
+        return eventService.createEventType(type);
     }
 
+    /** Refusé (409) si des activités utilisent encore ce type : il faut alors l'archiver. */
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @DeleteMapping("/types/{name}")
     public ResponseEntity<MessageResponse<Void>> deleteType(@PathVariable String name) {
         return eventService.deleteEventType(name);
+    }
+
+    /** Archive ({@code true}) ou restaure ({@code false}) un type. */
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    @PutMapping("/types/{name}/archived")
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> setTypeArchived(@PathVariable String name, @RequestParam boolean archived) {
+        return eventService.setEventTypeArchived(name, archived);
     }
 
     @PostMapping( "/participation")
@@ -93,7 +97,7 @@ public class EventController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
     @PutMapping("/types/{name}")
-    public ResponseEntity<MessageResponse<EventType>> updateType(@PathVariable String name, @RequestBody EventType updatedType) {
+    public ResponseEntity<MessageResponse<EventTypeResponseDTO>> updateType(@PathVariable String name, @RequestBody EventTypeRequest updatedType) {
         return eventService.updateEventType(name, updatedType);
     }
 

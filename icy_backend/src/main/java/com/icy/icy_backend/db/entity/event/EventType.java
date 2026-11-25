@@ -29,10 +29,8 @@ public class EventType {
 
     @Column
     private String imageUrl;
+
+    /** Archivé : absent des listes de création, conservé sur les événements qui l'utilisent. */
+    @Column(nullable = false)
+    private boolean archived = false;
 }
-
-
-
-
-
-

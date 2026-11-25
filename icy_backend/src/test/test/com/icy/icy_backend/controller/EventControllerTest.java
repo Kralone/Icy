@@ -9,6 +9,8 @@ import com.icy.icy_backend.controller.dto.response.event.EventParticipationRespo
 import com.icy.icy_backend.db.entity.event.Event;
 import com.icy.icy_backend.db.entity.event.EventParticipation;
 import com.icy.icy_backend.db.entity.event.EventType;
+import com.icy.icy_backend.controller.dto.event.EventTypeRequest;
+import com.icy.icy_backend.controller.dto.response.event.EventTypeResponseDTO;
 import com.icy.icy_backend.db.entity.user.User;
 import com.icy.icy_backend.exception.GlobalExceptionHandler;
 import com.icy.icy_backend.security.JwtAuthenticationFilter;
@@ -71,8 +73,8 @@ class EventControllerTest {
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
         when(eventService.deleteEvent(any())).thenReturn(okResponse(null));
         when(eventService.getAllEvents()).thenReturn(okResponse(List.of(new EventResponseDTO(new Event()))));
-        when(eventService.getAllEventsTypes()).thenReturn(okResponse(List.of(new EventType())));
-        when(eventService.createEventType(any(), any(), any(), any())).thenReturn(okResponse(new EventType()));
+        when(eventService.getAllEventsTypes()).thenReturn(okResponse(List.of(new EventTypeResponseDTO(new EventType(), 0))));
+        when(eventService.createEventType(any())).thenReturn(okResponse(new EventTypeResponseDTO(new EventType(), 0)));
         when(eventService.deleteEventType(eq("type"))).thenReturn(okResponse(null));
         when(eventService.setParticipation(any(), anyInt())).thenReturn(okResponse(null));
         Event participationEvent = new Event();
@@ -92,7 +94,8 @@ class EventControllerTest {
                 .thenReturn(okResponse(List.of(new EventParticipationResponseDTO(participation))));
         when(eventService.getUpcomingEvents())
                 .thenReturn(okResponse(List.of(new EventResponseDTO(new Event()))));
-        when(eventService.updateEventType(eq("type"), any(EventType.class))).thenReturn(okResponse(new EventType()));
+        when(eventService.updateEventType(eq("type"), any(EventTypeRequest.class))).thenReturn(okResponse(new EventTypeResponseDTO(new EventType(), 0)));
+        when(eventService.setEventTypeArchived(eq("type"), eq(true))).thenReturn(okResponse(new EventTypeResponseDTO(new EventType(), 2)));
 
         CreateEventRequest createRequest = new CreateEventRequest();
         createRequest.setType("type");
@@ -130,6 +133,8 @@ class EventControllerTest {
                         .content(objectMapper.writeValueAsString(new EventType())))
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/events/types/type"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/events/types/type/archived").param("archived", "true"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/events/participation")
                         .contentType("application/json")

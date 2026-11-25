@@ -1,0 +1,35 @@
+<div class="cf" [class.cf--open]="open()">
+  <label class="cf-label" [for]="fieldId">{{ label() }}</label>
+  <div class="cf-row">
+    <button type="button" class="cf-swatch" [style.background]="hex()" (click)="toggle()"
+      [attr.aria-expanded]="open()" [attr.aria-controls]="fieldId + '-panel'" [attr.aria-label]="'Choisir : ' + label()"></button>
+    <input class="cf-hex" [id]="fieldId" [value]="draft()" (input)="onHexInput($event)" (blur)="commitDraft()"
+      maxlength="7" spellcheck="false" autocomplete="off" placeholder="#rrggbb" [attr.aria-invalid]="invalid()"
+      [attr.aria-describedby]="fieldId + '-hint'" />
+    <button type="button" class="cf-toggle" (click)="toggle()" [attr.aria-expanded]="open()" tabindex="-1" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m5 8 5 5 5-5" /></svg>
+    </button>
+  </div>
+  <p class="cf-hint" [id]="fieldId + '-hint'" [class.cf-hint--error]="invalid()">
+    {{ invalid() ? 'Format attendu : #rrggbb, par exemple #27647c.' : hint() }}
+  </p>
+
+  @if (open()) {
+    <div class="cf-panel" [id]="fieldId + '-panel'">
+      <div class="cf-area" role="slider" tabindex="0" [attr.aria-label]="'Saturation et luminosité, ' + label()"
+        [attr.aria-valuetext]="areaText()" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="thumbX()"
+        [style.--cf-hue]="hueColor()" (pointerdown)="onAreaPointerDown($event)" (pointermove)="onAreaPointerMove($event)" (keydown)="onAreaKey($event)">
+        <span class="cf-thumb" [style.left.%]="thumbX()" [style.top.%]="thumbY()" [style.background]="hex()"></span>
+      </div>
+      <input type="range" class="cf-hue" min="0" max="359" step="1" [value]="hue()" (input)="onHue($event)" [attr.aria-label]="'Teinte, ' + label()" />
+      @if (presets().length) {
+        <div class="cf-presets" role="group" [attr.aria-label]="'Nuancier, ' + label()">
+          @for (color of presets(); track color) {
+            <button type="button" class="cf-preset" [style.background]="color" [class.cf-preset--on]="isSelected(color)"
+              [attr.aria-pressed]="isSelected(color)" [attr.aria-label]="color" [title]="color" (click)="choose(color)"></button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
