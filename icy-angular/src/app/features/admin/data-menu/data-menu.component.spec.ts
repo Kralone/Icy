@@ -3,13 +3,15 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../../app.routes';
 import { DataMenuComponent } from './data-menu.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('DataMenuComponent catalogue shortcuts', () => {
   it('redirects an old ship-management bookmark to the filtered catalogue', async () => {
     const admin = routes.find(route => route.path === 'icy')?.children?.find(route => route.path === 'admin');
     const legacy = admin?.children?.find(route => route.path === 'ships');
     expect(legacy?.redirectTo).toBeTruthy();
-    await TestBed.configureTestingModule({providers: [provideRouter([
+    await TestBed.configureTestingModule({providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([
       {path: 'icy/admin', children: [legacy!, {path: 'catalog', component: DataMenuComponent}]}
     ])]}).compileComponents();
     const harness = await RouterTestingHarness.create();
@@ -18,7 +20,7 @@ describe('DataMenuComponent catalogue shortcuts', () => {
   });
 
   it('links families directly to the internal catalogue and retains images and CIG Watch', async () => {
-    await TestBed.configureTestingModule({imports: [DataMenuComponent], providers: [provideRouter([])]}).compileComponents();
+    await TestBed.configureTestingModule({imports: [DataMenuComponent], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]}).compileComponents();
     const fixture = TestBed.createComponent(DataMenuComponent);
     fixture.detectChanges();
     const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];

@@ -153,6 +153,12 @@ export class ResourcesSalesPanelComponent implements OnDestroy {
     return selectedSell - material.bestSell;
   }
 
+  /** Largeur de la barre du revenu, relative au meilleur prix du tableau. */
+  revenueBarWidth(bestSell: number | null): string {
+    if (bestSell === null || bestSell <= 0 || !this.bestSellMax) return '0%';
+    return `${Math.max(3, Math.round((bestSell / this.bestSellMax) * 100))}%`;
+  }
+
   bestSellPriceStyle(bestSell: number | null): { [key: string]: string } {
     if (bestSell === null || bestSell <= 0) {
       return { color: 'rgba(191, 219, 254, 0.72)', borderColor: 'rgba(148, 163, 184, 0.3)' };

@@ -58,19 +58,19 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
     {
       id: 'ships',
       title: 'Vaisseaux',
-      subtitle: 'Fleet de minage',
+      subtitle: 'Flotte de minage',
       imageUrl: '/assets/images/home/activities/mining.jpg'
     },
     {
       id: 'modules',
       title: 'Modules',
-      subtitle: 'Tetes et modules',
+      subtitle: 'Têtes et modules',
       imageUrl: 'https://media.starcitizen.tools/2/20/Helix_I_-_Terminal_Display_-_3.10.2.png'
     },
     {
       id: 'tools',
       title: 'Gadgets de minage',
-      subtitle: 'Outils terrain',
+      subtitle: 'Outils de terrain',
       imageUrl: 'https://media.starcitizen.tools/9/97/Optimax_in-game_cutout_-_Mesh_BG_SCT_logo.jpg'
     }
   ];
@@ -87,7 +87,7 @@ export class ResourcesFitPanelComponent implements OnInit, OnChanges, OnDestroy 
   activeModuleFilter: ModuleFilterId = 'all';
   readonly moduleFilters: ModuleFilterOption[] = [
     { id: 'all', label: 'Tous' },
-    { id: 'mining_laser', label: 'Tetes de minage' },
+    { id: 'mining_laser', label: 'Têtes de minage' },
     { id: 'cargo_pod', label: 'Sacs cargo' }
   ];
   toolsLoading = false;

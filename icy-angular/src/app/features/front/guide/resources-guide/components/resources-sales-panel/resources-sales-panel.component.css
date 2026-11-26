@@ -1,221 +1,68 @@
-.resource-sales-controls {
-  margin-top: 0.78rem;
-  width: fit-content;
-  max-width: 100%;
-  border: 1px solid rgba(103, 232, 249, 0.24);
-  border-radius: 999px;
-  background: rgba(6, 24, 43, 0.66);
-  padding: 0.3rem 0.5rem;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.44rem;
-  color: #d2f4ff;
-  font-size: 0.76rem;
-  opacity: 0.88;
+/* Prix de vente : réglages sur une ligne, tableau lisible, revenu mis en avant. */
+:host {
+  display: block;
+  --tone: var(--res-gold, 251 191 36);
+  --line: var(--res-line, rgb(255 255 255 / 0.09));
 }
+.sales-state { padding: 2rem 1.25rem; border: 1px dashed rgb(255 255 255 / 0.14); border-radius: 14px; color: #94a3b8; text-align: center; }
+.sales-state--error { border-color: rgb(248 113 113 / 0.4); color: #fecaca; }
 
-.resource-sales-controls label {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.68rem;
-  color: #a7e6ff;
-}
+.sales-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(160deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015)); }
+.sales-cargo { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgb(var(--tone) / 0.35); background: rgb(var(--tone) / 0.06); }
+.sales-cargo span { color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.sales-cargo input { width: 4.5rem; background: transparent; color: #f8fafc; font-size: 1rem; font-weight: 600; text-align: right; outline: 0; font-variant-numeric: tabular-nums; }
+.sales-cargo small { color: rgb(var(--tone)); font-size: 12px; font-weight: 600; }
+.sales-terminal { position: relative; flex: 1 1 16rem; }
+.sales-terminal__field { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgb(255 255 255 / 0.08); background: #0b1324; }
+.sales-terminal__field:focus-within { border-color: rgb(125 211 252 / 0.55); }
+.sales-terminal input { flex: 1; min-width: 0; background: transparent; color: #f1f5f9; font-size: 0.9rem; outline: 0; }
+.sales-terminal input::placeholder { color: #64748b; }
+.sales-terminal__reset { color: #94a3b8; font-size: 1.3rem; line-height: 1; }
+.sales-suggestions { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; right: 0; display: grid; max-height: 18rem; overflow-y: auto; padding: 6px; border-radius: 12px; border: 1px solid rgb(255 255 255 / 0.12); background: #0d1628; box-shadow: 0 20px 40px rgb(0 0 0 / 0.5); }
+.sales-suggestions button { min-height: 36px; padding: 6px 10px; border-radius: 8px; color: #cbd5e1; font-size: 13px; text-align: left; }
+.sales-suggestions button:hover { background: rgb(125 211 252 / 0.1); color: #f8fafc; }
+.sales-shortcuts { display: flex; flex-wrap: wrap; gap: 4px; }
+.sales-chip { min-height: 34px; padding: 4px 12px; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.08); color: #cbd5e1; font-size: 12.5px; white-space: nowrap; }
+.sales-chip:hover { border-color: rgb(125 211 252 / 0.45); color: #f8fafc; }
+.sales-chip--active { border-color: rgb(125 211 252 / 0.7); background: rgb(125 211 252 / 0.14); color: #f8fafc; }
 
-.resource-sales-controls input {
-  width: 72px;
-  border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.38);
-  background: rgba(4, 15, 31, 0.7);
-  color: #ecfeff;
-  padding: 0.24rem 0.5rem;
-  outline: none;
-  font-size: 0.76rem;
-}
+.sales-source { margin: 10px 2px 14px; color: #64748b; font-size: 12px; }
 
-.resource-sales-controls__reset {
-  border: 1px solid rgba(56, 189, 248, 0.45);
-  background: rgba(8, 26, 48, 0.75);
-  color: #cceeff;
-  border-radius: 999px;
-  padding: 0.24rem 0.62rem;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
+.sales-table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid var(--line); background: #0b1324; box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.08), 0 20px 50px rgb(0 0 0 / 0.3); }
+.sales-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sales-table th { padding: 12px 14px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / 0.025); color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+.sales-table td { padding: 10px 14px; border-bottom: 1px solid rgb(255 255 255 / 0.04); vertical-align: middle; }
+.sales-table tbody tr:hover td { background: rgb(var(--tone) / 0.04); }
+.sales-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sales-table__name { color: #f8fafc; font-weight: 600; }
+.sales-table__price { color: #f1f5f9; font-weight: 600; }
+.sales-table__terminal span { display: block; color: #cbd5e1; font-size: 13px; }
+.sales-table__terminal small, .sales-table__local small { display: block; color: #64748b; font-size: 11.5px; }
+.sales-table__local span { color: #e0f2fe; font-weight: 600; }
+.sales-table__local small { color: #6ee7b7; }
+.sales-table__local small.neg { color: #fca5a5; }
+.sales-table__revenue-head { width: 32%; }
+.sales-table__revenue { white-space: nowrap; }
+.sales-bar { position: relative; display: inline-block; width: calc(100% - 9.5rem); min-width: 3rem; height: 6px; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 0.07); vertical-align: middle; }
+.sales-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--tone) / 0.5), rgb(var(--tone))); }
+.sales-table__revenue b { display: inline-block; min-width: 8.5rem; margin-left: 10px; color: rgb(var(--tone)); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 
-.resource-sales-table-wrap {
-  margin-top: 0.9rem;
-  border: 1px solid rgba(147, 197, 253, 0.22);
-  border-radius: 12px;
-  background: rgba(3, 12, 24, 0.82);
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
+button { cursor: pointer; font: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
-.resource-sales-state {
-  margin-top: 0.82rem;
-  border: 1px solid rgba(147, 197, 253, 0.22);
-  border-radius: 12px;
-  background: rgba(3, 12, 24, 0.82);
-  color: #cceeff;
-  padding: 0.85rem 0.95rem;
-  font-size: 0.92rem;
-}
-
-.resource-sales-state--error {
-  border-color: rgba(248, 113, 113, 0.35);
-  color: #fecaca;
-}
-
-.resource-sales-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 860px;
-}
-
-.resource-sales-table th,
-.resource-sales-table td {
-  padding: 0.56rem 0.7rem;
-  font-size: 0.95rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  text-align: left;
-  white-space: nowrap;
-  vertical-align: top;
-}
-
-.resource-sales-table th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: linear-gradient(180deg, rgba(8, 26, 48, 0.98), rgba(6, 21, 39, 0.96));
-  color: #bfe9ff;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.76rem;
-}
-
-.resource-sales-table__name {
-  font-weight: 700;
-  color: #ecfeff;
-}
-
-.resource-sales-table__price {
-  display: inline-block;
-  min-width: 122px;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, rgba(249, 115, 22, 0.2) 50%, rgba(34, 197, 94, 0.2) 100%);
-  font-weight: 800;
-}
-
-.resource-sales-table__revenue {
-  font-weight: 900;
-}
-
-.resource-sales-table__subline {
-  margin-top: 0.22rem;
-  font-size: 0.74rem;
-  color: rgba(186, 230, 253, 0.8);
-}
-
-.resource-sales-table__location-header {
-  min-width: 280px;
-}
-
-.resource-sales-table__location-title {
-  margin-bottom: 0.35rem;
-  color: #d8f4ff;
-}
-
-.resource-sales-table__location-search {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.resource-sales-table__location-search input {
-  width: 100%;
-  min-width: 160px;
-  border-radius: 10px;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  background: rgba(3, 12, 24, 0.9);
-  color: #ecfeff;
-  padding: 0.34rem 0.48rem;
-  font-size: 0.72rem;
-  text-transform: none;
-}
-
-.resource-sales-suggestions {
-  margin-top: 0.35rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.28rem;
-}
-
-.resource-sales-suggestions__item,
-.resource-sales-shortcuts__item {
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(8, 26, 48, 0.74);
-  color: #cceeff;
-  border-radius: 999px;
-  padding: 0.2rem 0.52rem;
-  font-size: 0.66rem;
-  cursor: pointer;
-  text-transform: none;
-}
-
-.resource-sales-shortcuts {
-  margin-top: 0.35rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.28rem;
-}
-
-.resource-sales-shortcuts__item--active {
-  border-color: rgba(34, 197, 94, 0.65);
-  color: #dcfce7;
-  background: rgba(22, 101, 52, 0.42);
-}
-
+/* Mobile : le terminal passe sous le prix, la barre de revenu disparaît. */
 @media (max-width: 760px) {
-  .resource-sales-controls {
-    width: 100%;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.35rem 0.48rem;
-    border-radius: 12px;
-    padding: 0.42rem 0.55rem;
-  }
-
-  .resource-sales-controls label {
-    align-self: center;
-    font-size: 0.64rem;
-  }
-
-  .resource-sales-controls input {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .resource-sales-table {
-    min-width: 720px;
-  }
-
-  .resource-sales-table th,
-  .resource-sales-table td {
-    padding: 0.48rem 0.55rem;
-    font-size: 0.82rem;
-  }
-
-  .resource-sales-table__price {
-    min-width: 100px;
-    font-size: 0.78rem;
-  }
+  .sales-shortcuts { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; }
+  .sales-chip { flex: none; }
+  .sales-table { font-size: 13px; }
+  .sales-table th:nth-child(3), .sales-table td.sales-table__terminal { display: none; }
+  .sales-table th, .sales-table td { padding: 9px 10px; }
+  .sales-bar, .sales-hide-mobile { display: none; }
+  .sales-table__revenue b { min-width: 0; margin-left: 0; }
+  .sales-table__revenue-head { width: auto; }
 }
-.resource-source-note {
-  margin: 0.55rem 0 0;
-  color: rgba(191, 219, 254, 0.58);
-  font-size: 0.72rem;
+
+@media (min-width: 2400px) {
+  .sales-table { font-size: 16px; }
 }
