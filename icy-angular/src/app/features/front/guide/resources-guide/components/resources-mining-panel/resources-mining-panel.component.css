@@ -78,6 +78,7 @@
 .mine-table__freq { width: 40%; white-space: nowrap; }
 .mine-table__freq .mine-bar { width: calc(100% - 4.5rem); max-width: 20rem; }
 .mine-table__freq b { margin-left: 10px; color: rgb(var(--tone)); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mine-table__method { display: block; margin-top: 2px; color: #64748b; font-size: 11px; font-weight: 400; }
 .mine-table__row--match td { background: rgb(var(--tone) / 0.08); }
 .mine-source { margin-top: 12px; color: #64748b; font-size: 12px; line-height: 1.5; }
 .mine-source a { color: #7dd3fc; }
@@ -96,8 +97,11 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .mine-zone { flex: none; }
   .mine-detail__body { padding: 4px 10px 12px; }
   .mine-table { font-size: 13px; }
-  .mine-table th:nth-child(3), .mine-table td:nth-child(3), .mine-table th:nth-child(5), .mine-table td:nth-child(5) { display: none; }
-  .mine-table__freq .mine-bar { width: 3.5rem; }
+  .mine-col--wide { display: none; }
+  .mine-table td, .mine-table th { padding: 9px 6px; }
+  .mine-table__freq { width: auto; }
+  .mine-table__freq .mine-bar { width: 2.5rem; }
+  .mine-table__freq b { margin-left: 6px; }
 }
 
 @media (min-width: 2400px) {

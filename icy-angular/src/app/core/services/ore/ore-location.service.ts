@@ -17,6 +17,11 @@ export interface OreMix {
   minPct: number | null;
   maxPct: number | null;
   medPct: number | null;
+  /** Fichiers du jeu uniquement : mode de minage (Vaisseau, Véhicule, À pied) et taille des amas. */
+  method?: string | null;
+  clusterMin?: number | null;
+  clusterMax?: number | null;
+  clusterProbability?: number | null;
 }
 
 export interface OreLocation {

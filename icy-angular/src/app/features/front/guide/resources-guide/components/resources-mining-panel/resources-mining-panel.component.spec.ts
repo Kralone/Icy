@@ -31,4 +31,17 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
       vi.useRealTimers();
     }
   });
+
+  it('formats game-file ranges and clusters without inventing missing values', () => {
+    const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
+      { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
+    expect(component.formatConcentrationRange(0.283, 0.783)).toBe('28 – 78 %');
+    expect(component.formatConcentrationRange(null, null)).toBe('—');
+    expect(component.formatConcentrationRange(0.05, null)).toBe('5,0 %');
+    const ore = { oreCode: 'Quantainium', probability: 0.02, minPct: null, maxPct: null, medPct: null };
+    expect(component.formatCluster(ore)).toBe('—');
+    expect(component.formatCluster({ ...ore, clusterMin: 2, clusterMax: 2, clusterProbability: 0.25 })).toBe('2 rochers');
+    expect(component.formatCluster({ ...ore, clusterMin: 2, clusterMax: 4 })).toBe('2 à 4 rochers');
+    expect(component.clusterTitle({ ...ore, clusterProbability: 0.25 })).toBe('Apparaît en amas dans 25 % des cas');
+  });
 });

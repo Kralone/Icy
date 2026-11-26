@@ -219,6 +219,35 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     return `${pct < 10 ? pct.toFixed(1).replace('.', ',') : Math.round(pct)} %`;
   }
 
+  /** Zone issue des fichiers du jeu (API Star Citizen Wiki) plutôt que d'un relevé importé. */
+  isGameData(location: ParsedOreLocation): boolean {
+    return location.key.startsWith('wiki:');
+  }
+
+  get hasMedian(): boolean {
+    return this.selectedLocationOres.some((ore) => ore.medPct != null);
+  }
+
+  get hasClusters(): boolean {
+    return this.selectedLocationOres.some((ore) => ore.clusterMax != null);
+  }
+
+  formatConcentrationRange(min: number | null | undefined, max: number | null | undefined): string {
+    if (min == null && max == null) return '—';
+    if (min == null || max == null || min === max) return this.formatConcentration(min ?? max);
+    return `${this.formatConcentration(min).replace(' %', '')} – ${this.formatConcentration(max)}`;
+  }
+
+  formatCluster(ore: OreMix): string {
+    if (ore.clusterMax == null) return '—';
+    const min = ore.clusterMin ?? ore.clusterMax;
+    return min === ore.clusterMax ? `${min} rochers` : `${min} à ${ore.clusterMax} rochers`;
+  }
+
+  clusterTitle(ore: OreMix): string | null {
+    return ore.clusterProbability == null ? null : `Apparaît en amas dans ${this.formatPercent(ore.clusterProbability)} des cas`;
+  }
+
   oreName(code: string): string {
     return formatOreName(code);
   }
