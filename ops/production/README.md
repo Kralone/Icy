@@ -9,7 +9,7 @@ Avant la première modification, le script :
 - valide les trois images et la configuration Compose durcie ;
 - vérifie en lecture seule l'historique Flyway, la continuité administrateur et
   les préconditions de V30 ;
-- applique la politique de sauvegarde des 7 jours (ci-dessous) ;
+- applique la politique de sauvegarde des 48 h (ci-dessous) ;
 - conserve les trois références d'images précédentes dans un fichier `0600`.
 
 Les composants sont ensuite recréés et vérifiés dans l'ordre backend, bot,
@@ -33,7 +33,7 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
   --age-recipient 'ssh-ed25519 AAAA...'
 ```
 
-## Politique de sauvegarde : 7 jours
+## Politique de sauvegarde : 48 h
 
 Le contrôle de sauvegarde reste obligatoire, mais une nouvelle archive n'est plus créée à chaque
 livraison. `select-predeploy-backup.sh` décide en lecture seule, et le précontrôle affiche sa décision
@@ -41,18 +41,19 @@ livraison. `select-predeploy-backup.sh` décide en lecture seule, et le précont
 
 La plus récente archive `/var/backups/iceforge/iceforge-AAAAMMJJTHHMMSSZ.tar.gz.age` est réutilisée si :
 
-- elle a moins de 7 jours, d'après son horodatage ;
+- elle a moins de 48 h, d'après son horodatage ;
 - c'est un fichier ordinaire non vide, et son `.sha256` est conforme ;
 - son en-tête age contient une entrée pour le destinataire passé en `--age-recipient` (étiquette de la
-  clé `ssh-ed25519`) : l'identité validée la déchiffre ;
-- elle est postérieure à la dernière migration Flyway appliquée : elle contient le schéma en place et
-  se restaure avec les images actuelles. La restauration PostgreSQL de chaque archive est par ailleurs
-  vérifiée en instance isolée au moment de sa création.
+  clé `ssh-ed25519`) : l'identité validée la déchiffre.
 
-Une archive écartée est signalée avec sa raison, et la précédente est examinée. Sinon, ou si la release
-applique une migration (`TARGET_FLYWAY_VERSION` différent de la version en base), une sauvegarde complète
-est prise avec `backup-before-deploy.sh` ; son échec arrête le déploiement avant toute modification des
-services. Une sauvegarde fraîche peut aussi être imposée :
+La restauration PostgreSQL de chaque archive est par ailleurs vérifiée en instance isolée au moment de sa
+création. Une release qui applique une migration Flyway réutilise elle aussi une archive de moins de 48 h
+(décision du 26/11/2026) : cette archive est alors antérieure à la migration, et une restauration revient
+au schéma d'avant, avec les images de la release précédente (fichier de rollback applicatif).
+
+Une archive écartée est signalée avec sa raison, et la précédente est examinée. Si aucune ne convient, une
+sauvegarde complète est prise avec `backup-before-deploy.sh` ; son échec arrête le déploiement avant toute
+modification des services. Une sauvegarde fraîche peut aussi être imposée :
 
 ```bash
 sudo /root/iceforge/ops/production/deploy-application-release.sh \
@@ -62,7 +63,8 @@ sudo /root/iceforge/ops/production/deploy-application-release.sh \
 ```
 
 Aucune archive n'est supprimée ni écrasée. Une restauration depuis une archive réutilisée perd ce qui a
-été saisi depuis sa date : c'est le compromis accepté pour une release sans changement de schéma.
+été saisi depuis sa date : c'est le compromis accepté, migration ou non. Pour une migration risquée,
+utiliser `--fresh-backup`.
 
 Essais isolés de la politique (dossier temporaire et projet Compose de test, production seulement lue) :
 

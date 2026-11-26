@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Choisit la sauvegarde de production à utiliser avant un déploiement, sans rien écrire ni supprimer.
 #
-# Politique : une archive complète de moins de 7 jours est réutilisée si elle est intègre, chiffrée pour le
-# destinataire validé et postérieure à la dernière migration Flyway (elle se restaure donc avec les images en place).
-# Une sauvegarde fraîche reste obligatoire dès que la release applique une migration, ou si aucune archive ne convient.
+# Politique (décision de Florian, 26/11/2026) : une archive complète de moins de 48 h est réutilisée si elle est
+# intègre et chiffrée pour le destinataire validé, même si la release applique une migration Flyway.
+# Une sauvegarde fraîche n'est prise que si aucune archive ne convient, ou sur demande (--force-fresh).
 #
 # Sortie, une seule ligne :
 #   BACKUP-PLAN=REUSE archive=/var/backups/iceforge/iceforge-AAAAMMJJTHHMMSSZ.tar.gz.age age_seconds=N
@@ -13,7 +13,7 @@ set -euo pipefail
 
 BACKUP_DIR=/var/backups/iceforge
 AGE_RECIPIENT=
-MAX_AGE_DAYS=7
+MAX_AGE_HOURS=48
 CURRENT_VERSION=
 TARGET_VERSION=
 LAST_MIGRATION_EPOCH=
@@ -21,14 +21,15 @@ NOW_EPOCH=$(date -u +%s)
 FORCE_FRESH=0
 
 usage() {
-  echo "Usage: $0 --age-recipient 'ssh-ed25519 AAAA...'|'age1...' --current-version N --target-version N --last-migration-epoch S [--backup-dir DIR] [--max-age-days N] [--force-fresh]" >&2
+  echo "Usage: $0 --age-recipient 'ssh-ed25519 AAAA...'|'age1...' --current-version N --target-version N --last-migration-epoch S [--backup-dir DIR] [--max-age-hours N] [--force-fresh]" >&2
 }
 
 while (($#)); do
   case "$1" in
     --backup-dir) BACKUP_DIR=${2:?}; shift 2 ;;
     --age-recipient) AGE_RECIPIENT=${2:?}; shift 2 ;;
-    --max-age-days) MAX_AGE_DAYS=${2:?}; shift 2 ;;
+    --max-age-hours) MAX_AGE_HOURS=${2:?}; shift 2 ;;
+    --max-age-days) MAX_AGE_HOURS=$(( ${2:?} * 24 )); shift 2 ;;
     --current-version) CURRENT_VERSION=${2:?}; shift 2 ;;
     --target-version) TARGET_VERSION=${2:?}; shift 2 ;;
     --last-migration-epoch) LAST_MIGRATION_EPOCH=${2:?}; shift 2 ;;
@@ -40,16 +41,15 @@ while (($#)); do
 done
 
 [[ $AGE_RECIPIENT == age1* || $AGE_RECIPIENT == 'ssh-ed25519 '* ]] || { echo 'Destinataire age invalide.' >&2; exit 2; }
-for value in "$MAX_AGE_DAYS" "$CURRENT_VERSION" "$TARGET_VERSION" "$LAST_MIGRATION_EPOCH" "$NOW_EPOCH"; do
+for value in "$MAX_AGE_HOURS" "$CURRENT_VERSION" "$TARGET_VERSION" "$LAST_MIGRATION_EPOCH" "$NOW_EPOCH"; do
   [[ $value =~ ^[0-9]+$ ]] || { usage; exit 2; }
 done
 [[ -d $BACKUP_DIR && ! -L $BACKUP_DIR ]] || { echo "BACKUP-PLAN=FRESH reason=backup-dir-missing"; exit 0; }
 
 if ((FORCE_FRESH)); then echo "BACKUP-PLAN=FRESH reason=requested"; exit 0; fi
-# Une migration modifie le schéma : seule une sauvegarde prise juste avant permet de revenir en arrière sans perte.
-if ((TARGET_VERSION != CURRENT_VERSION)); then echo "BACKUP-PLAN=FRESH reason=flyway-migration-V${CURRENT_VERSION}-to-V${TARGET_VERSION}"; exit 0; fi
-
-max_age=$((MAX_AGE_DAYS * 86400))
+# Les versions Flyway et la date de la dernière migration restent lues pour l'affichage, mais ne déclenchent plus
+# de sauvegarde : une archive de moins de 48 h suffit, avec ou sans migration.
+max_age=$((MAX_AGE_HOURS * 3600))
 
 # Étiquette qu'age inscrit dans l'en-tête pour un destinataire ssh-ed25519 : 4 premiers octets du SHA-256 de la clé, en base64 sans remplissage.
 expected_stanza() {
@@ -96,15 +96,14 @@ for name in "${candidates[@]}"; do
   created=$(date -u -d "${stamp:0:4}-${stamp:4:2}-${stamp:6:2} ${stamp:9:2}:${stamp:11:2}:${stamp:13:2}" +%s 2>/dev/null) || { echo "écartée $name : horodatage illisible" >&2; continue; }
   age_seconds=$((NOW_EPOCH - created))
   # Les noms sont triés du plus récent au plus ancien : au-delà de la limite, les suivants le sont aussi.
-  ((age_seconds <= max_age)) || { echo "écartée $name : plus de $MAX_AGE_DAYS jours" >&2; break; }
+  ((age_seconds <= max_age)) || { echo "écartée $name : plus de $MAX_AGE_HOURS h" >&2; break; }
   ((age_seconds >= 0)) || { echo "écartée $name : datée dans le futur" >&2; continue; }
   [[ ! -L $archive && -s $archive && -r $archive ]] || { echo "écartée $name : fichier vide ou illisible" >&2; continue; }
   [[ -f $archive.sha256 && ! -L $archive.sha256 ]] || { echo "écartée $name : empreinte absente" >&2; continue; }
   (cd "$BACKUP_DIR" && sha256sum -c --status "$name.sha256") || { echo "écartée $name : empreinte non conforme" >&2; continue; }
   header_matches "$archive" "$expected" || { echo "écartée $name : non chiffrée pour le destinataire validé" >&2; continue; }
-  ((created >= LAST_MIGRATION_EPOCH)) || { echo "écartée $name : antérieure à la dernière migration Flyway" >&2; continue; }
   echo "BACKUP-PLAN=REUSE archive=$archive age_seconds=$age_seconds"
   exit 0
 done
 
-echo "BACKUP-PLAN=FRESH reason=no-valid-backup-within-${MAX_AGE_DAYS}-days"
+echo "BACKUP-PLAN=FRESH reason=no-valid-backup-within-${MAX_AGE_HOURS}-hours"

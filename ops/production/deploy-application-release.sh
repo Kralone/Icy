@@ -6,15 +6,15 @@ REVISION=
 AGE_RECIPIENT=
 PREFLIGHT_ONLY=0
 FRESH_BACKUP=0
-# Une archive complète de moins de 7 jours est réutilisée : voir select-predeploy-backup.sh.
-MAX_BACKUP_AGE_DAYS=7
+# Une archive complète de moins de 48 h est réutilisée, même avec une migration : voir select-predeploy-backup.sh.
+MAX_BACKUP_AGE_HOURS=48
 # Flyway version this release must reach. Missing migrations (V39 to V56) are applied by the backend at startup.
 # V45 is destructive (mining sheets V1 dropped); V46 adds goals.goal_members, V47 core.user_tutorials,
 # V48 the bank schema and the TRESORIER role, V49 core.user_availability,
 # V50 core.users.specialty, V51 member activity and bot direct messages, V52 member warnings,
 # V53 salvage sheets (additive), V54 event types archive (additive), V55 event poles (additive),
 # V56 drops the imported ore location tables (destructive: old Regolith JSON import).
-# Any database below V56 triggers a fresh backup, see select-predeploy-backup.sh.
+# A fresh backup is taken only when no valid archive is under 48 h old (or with --fresh-backup).
 TARGET_FLYWAY_VERSION=56
 
 usage() {
@@ -221,7 +221,7 @@ esac
 # Date de la dernière migration appliquée : une archive plus ancienne ne contient pas le schéma actuel.
 last_migration_epoch=$(db_psql -Atc \
   "SELECT coalesce(extract(epoch FROM max(installed_on) AT TIME ZONE current_setting('TimeZone'))::bigint, 0) FROM public.flyway_schema_history WHERE success")
-backup_args=(--age-recipient "$AGE_RECIPIENT" --max-age-days "$MAX_BACKUP_AGE_DAYS"
+backup_args=(--age-recipient "$AGE_RECIPIENT" --max-age-hours "$MAX_BACKUP_AGE_HOURS"
   --current-version "$current_version" --target-version "$TARGET_FLYWAY_VERSION" --last-migration-epoch "$last_migration_epoch")
 if ((FRESH_BACKUP)); then backup_args+=(--force-fresh); fi
 backup_plan=$("$ROOT_DIR/ops/production/select-predeploy-backup.sh" "${backup_args[@]}")
