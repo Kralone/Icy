@@ -11,7 +11,7 @@
 # quelques minutes), recrée le réseau et relance seulement vault, db, rabbitmq
 # et libretranslate : le backend refuse de démarrer tant que Vault est scellé, et
 # bot/frontend attendent le backend. Après l'unseal depuis Windows, --finish
-# relance le reste de la stack.
+# relance backend, bot et frontend, dans cet ordre.
 set -Eeuo pipefail
 
 ROOT_DIR=${ICEFORGE_ROOT:-/root/iceforge}
@@ -24,6 +24,7 @@ VERIFIED_BACKUP=
 # Images applicatives en cours, gardées entre --apply et --finish (tmpfs root).
 IMAGES_FILE=/run/iceforge-pin-internal-images.env
 INFRA_SERVICES=(vault db rabbitmq libretranslate)
+APP_SERVICES=(backend bot frontend)
 
 usage() {
   echo "Usage: $0 --check | --apply --verified-backup <archive.tar.gz.age> | --finish" >&2
@@ -83,7 +84,11 @@ if [[ $MODE == finish ]]; then
   vault_status=0
   docker exec -e VAULT_ADDR=http://127.0.0.1:8200 iceforge_vault vault status >/dev/null 2>&1 || vault_status=$?
   [[ $vault_status -eq 0 ]] || { echo 'Vault est encore scellé : lancer unseal-from-windows.ps1 puis relancer --finish.' >&2; exit 1; }
-  "${compose[@]}" up -d --no-build --pull never
+  # Seulement l'applicatif arrêté par --apply : un « up » complet créerait aussi des services
+  # qui ne tournaient pas avant (le 26/11, icy-images, dont l'image était absente de l'hôte).
+  for service in "${APP_SERVICES[@]}"; do
+    "${compose[@]}" up -d --no-deps --no-build --pull never --wait "$service"
+  done
   rm -f -- "$IMAGES_FILE"
   echo 'PIN_STATUS=FINISHED'
   exit 0
