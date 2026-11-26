@@ -44,4 +44,17 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     expect(component.formatCluster({ ...ore, clusterMin: 2, clusterMax: 4 })).toBe('2 à 4 rochers');
     expect(component.clusterTitle({ ...ore, clusterProbability: 0.25 })).toBe('Apparaît en amas dans 25 % des cas');
   });
+
+  it('reuses the planet groups between reads so the page does not rebuild them on every check', () => {
+    const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
+      { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
+    component.catalogLocations = [{ name: 'Daymar', systemName: 'Stanton', imageUrl: 'daymar.jpg' }] as never;
+    component.parsedLocations = [{ key: 'wiki:daymar', displayLabel: 'Daymar', visibilityKind: 'MOON', groupPlanet: 'Daymar', ores: [], oresText: '' }] as never;
+    const first = component.systemGroups;
+    expect(component.systemGroups).toBe(first);
+    expect(component.selectedPlanetGroup).toBe(component.selectedPlanetGroup);
+    expect(first[0].groups[0]).toMatchObject({ planetName: 'Daymar', systemName: 'Stanton', imageUrl: 'daymar.jpg' });
+    component.miningSearch = 'zzz';
+    expect(component.systemGroups).not.toBe(first);
+  });
 });

@@ -68,6 +68,8 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   availableOreCodes: string[] = [];
 
   private oreLocationResultsByCode = new Map<string, OreLocationResult[]>();
+  /** Résultats des accesseurs coûteux, recalculés seulement quand leurs entrées changent de référence. */
+  private readonly memoCache = new Map<string, { deps: readonly unknown[]; value: unknown }>();
 
   private miningLoadSubscription?: Subscription;
   private celestialLoadSubscription?: Subscription;
@@ -121,7 +123,52 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     return `${row.locationKey}-${row.probability}`;
   }
 
+  /**
+   * Le gabarit lit ces accesseurs des centaines de fois par rafraîchissement (chaque astre, chaque ligne).
+   * Sans cache, chaque lecture reconstruisait toute la liste et la page se figeait avec les données réelles.
+   */
+  private memo<T>(key: string, deps: readonly unknown[], compute: () => T): T {
+    const hit = this.memoCache.get(key);
+    if (hit && hit.deps.length === deps.length && hit.deps.every((dep, index) => dep === deps[index])) {
+      return hit.value as T;
+    }
+    const value = compute();
+    this.memoCache.set(key, { deps, value });
+    return value;
+  }
+
+  /** Index nom normalisé → image et système, construit une fois par chargement. */
+  private get placeIndex(): Map<string, { imageUrl: string | null; systemName: string | null }> {
+    return this.memo('placeIndex', [this.planets, this.catalogLocations], () => {
+      // Même priorité qu'avant : première image du catalogue, sinon celle de l'astre ; système de l'astre d'abord.
+      const firstCatalog = new Map<string, CatalogLocationImage>();
+      for (const row of this.catalogLocations) {
+        const key = this.normalizeText(row.name);
+        if (!firstCatalog.has(key)) firstCatalog.set(key, row);
+      }
+      const firstPlanet = new Map<string, CelestialBody>();
+      for (const planet of this.planets) {
+        const key = this.normalizeText(planet.name);
+        if (!firstPlanet.has(key)) firstPlanet.set(key, planet);
+      }
+      const index = new Map<string, { imageUrl: string | null; systemName: string | null }>();
+      for (const key of new Set([...firstCatalog.keys(), ...firstPlanet.keys()])) {
+        const row = firstCatalog.get(key);
+        const planet = firstPlanet.get(key);
+        index.set(key, {
+          imageUrl: row?.imageUrl || planet?.imageUrl || null,
+          systemName: planet?.systemName ?? row?.systemName ?? null
+        });
+      }
+      return index;
+    });
+  }
+
   get sortedPlanetGroups(): PlanetGroupCard[] {
+    return this.memo('sortedPlanetGroups', [this.parsedLocations, this.planets, this.catalogLocations], () => this.buildPlanetGroups());
+  }
+
+  private buildPlanetGroups(): PlanetGroupCard[] {
     const visibleLocations = this.parsedLocations;
     const planetMap = new Map<string, PlanetGroupCard>();
 
@@ -166,13 +213,16 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   get filteredPlanetGroups(): PlanetGroupCard[] {
-    const search = this.normalizeText(this.miningSearch);
-    if (!search) {
-      return this.sortedPlanetGroups;
-    }
-    return this.sortedPlanetGroups
-      .map((group) => this.filterGroupBySearch(group, search))
-      .filter((group): group is PlanetGroupCard => group !== null);
+    const sorted = this.sortedPlanetGroups;
+    return this.memo('filteredPlanetGroups', [sorted, this.miningSearch], () => {
+      const search = this.normalizeText(this.miningSearch);
+      if (!search) {
+        return sorted;
+      }
+      return sorted
+        .map((group) => this.filterGroupBySearch(group, search))
+        .filter((group): group is PlanetGroupCard => group !== null);
+    });
   }
 
   get totalPlanetPages(): number {
@@ -186,14 +236,17 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
 
   /** Astres qui ont au moins une zone, rangés par système pour la barre de sélection. */
   get systemGroups(): { system: string; groups: PlanetGroupCard[] }[] {
-    const bySystem = new Map<string, PlanetGroupCard[]>();
-    for (const group of this.filteredPlanetGroups.filter((candidate) => candidate.locations.length)) {
-      const system = group.systemName || 'Autres';
-      bySystem.set(system, [...(bySystem.get(system) ?? []), group]);
-    }
-    return [...bySystem.entries()]
-      .sort(([a], [b]) => this.systemRank(a) - this.systemRank(b) || a.localeCompare(b))
-      .map(([system, groups]) => ({ system, groups }));
+    const filtered = this.filteredPlanetGroups;
+    return this.memo('systemGroups', [filtered], () => {
+      const bySystem = new Map<string, PlanetGroupCard[]>();
+      for (const group of filtered.filter((candidate) => candidate.locations.length)) {
+        const system = group.systemName || 'Autres';
+        bySystem.set(system, [...(bySystem.get(system) ?? []), group]);
+      }
+      return [...bySystem.entries()]
+        .sort(([a], [b]) => this.systemRank(a) - this.systemRank(b) || a.localeCompare(b))
+        .map(([system, groups]) => ({ system, groups }));
+    });
   }
 
   /** Stanton d'abord, puis les autres systèmes ; les astres hors catalogue en dernier. */
@@ -566,16 +619,11 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   private findSystemFor(name: string): string | null {
-    const key = this.normalizeText(name);
-    return this.planets.find((body) => this.normalizeText(body.name) === key)?.systemName
-      ?? this.catalogLocations.find((row) => this.normalizeText(row.name) === key)?.systemName
-      ?? null;
+    return this.placeIndex.get(this.normalizeText(name))?.systemName ?? null;
   }
 
   private findImageForPlanet(planetName: string): string | null {
-    const key = this.normalizeText(planetName);
-    const match = this.planets.find((planet) => this.normalizeText(planet.name) === key);
-    return this.catalogLocations.find(row => this.normalizeText(row.name) === key)?.imageUrl || match?.imageUrl || null;
+    return this.placeIndex.get(this.normalizeText(planetName))?.imageUrl ?? null;
   }
 
   private filterGroupBySearch(group: PlanetGroupCard, search: string): PlanetGroupCard | null {
