@@ -38,13 +38,7 @@
                    bg-cyan-400/10 blur-xl opacity-80"
                 ></span>
               }
-              <span class="text-xl relative">
-                @if (item.poleIcon) {
-                  <app-pole-icon [key]="item.poleIcon" size="h-6 w-6" class="text-yellow-400 align-middle" />
-                } @else {
-                  {{ item.icon }}
-                }
-              </span>
+              <app-nav-icon [key]="item.icon" class="nav-icon-halo relative" />
               <span class="text-sm uppercase tracking-wide relative">
                 {{ item.label }}
               </span>
@@ -71,7 +65,7 @@
                  text-blue-400 hover:bg-blue-400/10 transition-colors duration-300"
               (click)="onClose()"
               >
-              <span class="text-xl">🛡️</span>
+              <app-nav-icon key="admin" class="nav-icon-halo" />
               <span class="text-sm uppercase tracking-wide">Admin</span>
             </a>
           </li>
