@@ -54,7 +54,7 @@ describe('EventTypeManagerComponent', () => {
     buttons('Supprimer')[0].click();
     fixture.detectChanges();
     expect(events['deleteType']).not.toHaveBeenCalled();
-    expect(el().textContent).toContain('Supprimer définitivement ?');
+    expect(el().textContent).toContain('Supprimer ?');
     buttons('Supprimer')[0].click();
     expect(events['deleteType']).toHaveBeenCalledWith('Minage');
     expect(changed).toHaveBeenCalled();
@@ -107,7 +107,7 @@ describe('EventTypeManagerComponent', () => {
     component.update('backgroundColor', '#fde68a');
     component.update('textColor', '#ffffff');
     fixture.detectChanges();
-    expect(el().textContent).toContain('faible');
+    expect(el().textContent).toContain('peu lisible');
     buttons('Utiliser du noir')[0].click();
     expect(component.form().textColor).toBe('#0b1220');
   });

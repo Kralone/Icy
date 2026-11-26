@@ -77,14 +77,14 @@
       <div class="etm-colors">
         <app-color-field label="Couleur d’accent" hint="Fond de la carte et de l’étiquette."
           [value]="form().backgroundColor" (valueChange)="update('backgroundColor', $event)" [presets]="accentPresets" fallback="#27647c" />
-        <app-color-field label="Couleur de l’étiquette" hint="Texte du nom du type."
+        <app-color-field label="Couleur de l’étiquette" hint="Texte du nom du type, posé sur la couleur d’accent."
           [value]="form().textColor" (valueChange)="update('textColor', $event)" [presets]="labelPresets" fallback="#e3f4fb" />
       </div>
 
       @if (contrast(); as ratio) {
         <div class="etm-contrast" [class.etm-contrast--low]="!readable()" role="status">
           <span class="etm-contrast-dot" aria-hidden="true"></span>
-          <span>Lisibilité {{ ratio.toFixed(1) }}:1 · {{ readable() ? 'bonne' : 'faible' }}</span>
+          <span>Étiquette sur l’accent : contraste {{ ratio.toFixed(1) }}:1 · {{ readable() ? 'lisible' : 'peu lisible' }}</span>
           @if (!readable()) {
             <button type="button" class="etm-link" (click)="update('textColor', suggestedLabel())">
               Utiliser {{ suggestedLabel() === '#ffffff' ? 'du blanc' : 'du noir' }}
@@ -117,41 +117,38 @@
 <ng-template #card let-type>
   <li class="etm-card" [class.etm-card--editing]="editing()?.name === type.name" [class.etm-card--archived]="type.archived"
     [style.--accent]="accent(type)" [style.--label]="label(type)">
-    <div class="etm-card-banner">
+    <div class="etm-thumb" aria-hidden="true">
       @if (image(type); as src) { <img [src]="src" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" /> }
+    </div>
+    <div class="etm-card-main">
       <span class="etm-chip">{{ type.name }}</span>
+      <span class="etm-usage" [class.etm-usage--none]="!type.usageCount">
+        {{ usageLabel(type) }}@if (type.archived) { <span class="etm-badge">Archivé</span> }
+      </span>
     </div>
-    <div class="etm-card-body">
-      <div class="etm-card-meta">
-        <span class="etm-usage" [class.etm-usage--none]="!type.usageCount">{{ usageLabel(type) }}</span>
-        @if (type.archived) { <span class="etm-badge">Archivé</span> }
-      </div>
 
-      @if (confirmDelete() === type.name) {
-        <div class="etm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + type.name">
-          <span>Supprimer définitivement ?</span>
-          <div class="etm-card-actions">
-            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="cancelDelete()">Annuler</button>
-            <button type="button" class="etm-btn etm-btn--sm etm-btn--danger" (click)="delete(type)" [disabled]="pending() === type.name">Supprimer</button>
-          </div>
-        </div>
-      } @else {
-        <div class="etm-card-actions">
+    @if (confirmDelete() === type.name) {
+      <div class="etm-card-actions etm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + type.name">
+        <span>Supprimer ?</span>
+        <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="cancelDelete()">Annuler</button>
+        <button type="button" class="etm-btn etm-btn--sm etm-btn--danger" (click)="delete(type)" [disabled]="pending() === type.name">Supprimer</button>
+      </div>
+    } @else {
+      <div class="etm-card-actions">
+        @if (!type.archived) {
+          <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="startEdit(type)" [attr.aria-label]="'Modifier ' + type.name">Modifier</button>
+        } @else {
+          <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="setArchived(type, false)" [disabled]="pending() === type.name">Restaurer</button>
+        }
+        @if (type.usageCount) {
           @if (!type.archived) {
-            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="startEdit(type)" [attr.aria-label]="'Modifier ' + type.name">Modifier</button>
-          } @else {
-            <button type="button" class="etm-btn etm-btn--sm etm-btn--ghost" (click)="setArchived(type, false)" [disabled]="pending() === type.name">Restaurer</button>
+            <button type="button" class="etm-btn etm-btn--sm etm-btn--warn" (click)="setArchived(type, true)" [disabled]="pending() === type.name"
+              [title]="'Utilisé par ' + usageLabel(type) + ' : il ne peut pas être supprimé.'" [attr.aria-label]="'Archiver ' + type.name">Archiver</button>
           }
-          @if (type.usageCount) {
-            @if (!type.archived) {
-              <button type="button" class="etm-btn etm-btn--sm etm-btn--warn" (click)="setArchived(type, true)" [disabled]="pending() === type.name"
-                [title]="'Utilisé par ' + usageLabel(type) + ' : il ne peut pas être supprimé.'" [attr.aria-label]="'Archiver ' + type.name">Archiver</button>
-            }
-          } @else {
-            <button type="button" class="etm-btn etm-btn--sm etm-btn--danger-ghost" (click)="askDelete(type)" [attr.aria-label]="'Supprimer ' + type.name">Supprimer</button>
-          }
-        </div>
-      }
-    </div>
+        } @else {
+          <button type="button" class="etm-btn etm-btn--sm etm-btn--danger-ghost" (click)="askDelete(type)" [attr.aria-label]="'Supprimer ' + type.name">Supprimer</button>
+        }
+      </div>
+    }
   </li>
 </ng-template>
