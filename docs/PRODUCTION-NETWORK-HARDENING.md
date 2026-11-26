@@ -165,6 +165,8 @@ la base est passée de `172.19.0.4` à `172.19.0.2` et RabbitMQ a pris `.4`. Le 
 échouait alors avec « Connection refused », puis « open failed » une fois IntelliJ
 réglé sur la nouvelle adresse, car les deux règles ci-dessus visaient encore `.4`.
 
+La surcharge fixe aussi les noms `iceforge_db` et `iceforge_rabbitmq`, qu'attendent les scripts. Le 26/11, sans eux, la recréation a nommé ces conteneurs `iceforge-db-1` et `iceforge-rabbitmq-1`, et `--apply` a échoué. Ils ont été renommés à la main. Poser cette surcharge sur un serveur où ces conteneurs existent déjà les fait recréer au prochain `up` complet, le temps d'un redémarrage.
+
 La surcharge déclare donc le sous-réseau `172.19.0.0/16` (celui que Docker avait
 choisi), réserve `172.19.128.0/17` aux adresses dynamiques et fixe la base en
 `172.19.0.2`. Docker n'applique un sous-réseau qu'à la création d'un réseau : le

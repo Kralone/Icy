@@ -62,6 +62,8 @@ printf '%s' "$resolved" | jq -e '
   network_names($services.bot) == ["external", "internal"] and
   network_names($services.db) == ["internal"] and
   ($services.db.networks.internal.ipv4_address == "172.19.0.2") and
+  ($services.db.container_name == "iceforge_db") and
+  ($services.rabbitmq.container_name == "iceforge_rabbitmq") and
   ((.networks.internal.ipam.config // []) | length) == 1 and
   (.networks.internal.ipam.config[0].subnet == "172.19.0.0/16") and
   (.networks.internal.ipam.config[0].ip_range == "172.19.128.0/17") and
