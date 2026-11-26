@@ -151,11 +151,14 @@
     radial-gradient(circle at 72% 22%, rgb(var(--tone) / 0.22), transparent 62%),
     linear-gradient(160deg, #16233a, #0b1324);
 }
+/* Bas de l'image fondu par un masque : zoomée au survol, elle ne laisse plus voir une ligne de pixels sous le dégradé. */
 .admin-card-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0.78;
+  -webkit-mask-image: linear-gradient(0deg, transparent, #000 12%);
+  mask-image: linear-gradient(0deg, transparent, #000 12%);
   transition: opacity 500ms ease, transform 700ms ease;
 }
 .admin-card-media::after {

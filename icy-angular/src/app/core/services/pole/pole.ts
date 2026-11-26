@@ -72,6 +72,8 @@ export interface PoleAgendaEntry {
   imageUrl?: string | null;
   startDateTime: string;
   endDateTime: string;
+  /** Tous les pôles de l'activité, celui de la page compris. */
+  poles?: string[];
 }
 
 export interface PoleNews {

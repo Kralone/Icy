@@ -47,10 +47,24 @@ public class Event {
     @Builder.Default
     private ActivityType activityType = ActivityType.EVENT;
 
-    /** Pôle auquel l'activité est rattachée ; null si elle ne concerne aucun pôle en particulier. */
+    /** Pôles auxquels l'activité est rattachée ; vide si elle ne concerne aucun pôle en particulier. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_poles", schema = "events", joinColumns = @JoinColumn(name = "event_id"))
     @Enumerated(EnumType.STRING)
-    @Column(length = 16)
-    private com.icy.icy_backend.db.entity.user.Specialty pole;
+    @Column(name = "pole", length = 16, nullable = false)
+    @Builder.Default
+    @Setter(AccessLevel.NONE)
+    private java.util.Set<com.icy.icy_backend.db.entity.user.Specialty> poles = new java.util.HashSet<>();
+
+    /**
+     * Ancienne colonne à pôle unique, tenue à jour avec le premier pôle de la liste
+     * pour qu'une version précédente de l'application relise des données cohérentes après un retour arrière.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pole", length = 16)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private com.icy.icy_backend.db.entity.user.Specialty legacyPole;
 
     // 🔗 Synchronisation Discord
     @Column(name = "discord_channel_id", length = 50)
@@ -70,6 +84,28 @@ public class Event {
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    void onCreate() {
+        this.legacyPole = com.icy.icy_backend.db.entity.user.Specialty.first(poles);
+    }
+
+    /** Remplace les pôles de l'activité ; null ou vide : aucun pôle. */
+    public void setPoles(java.util.Collection<com.icy.icy_backend.db.entity.user.Specialty> wanted) {
+        if (poles == null) poles = new java.util.HashSet<>();
+        poles.clear();
+        if (wanted != null) wanted.stream().filter(java.util.Objects::nonNull).forEach(poles::add);
+        legacyPole = com.icy.icy_backend.db.entity.user.Specialty.first(poles);
+    }
+
+    /** Pôles dans l'ordre d'affichage (Logistique, Militaire, Industrie). */
+    public java.util.List<com.icy.icy_backend.db.entity.user.Specialty> sortedPoles() {
+        return poles == null ? java.util.List.of() : poles.stream().sorted().toList();
+    }
+
+    public boolean concerns(com.icy.icy_backend.db.entity.user.Specialty pole) {
+        return pole != null && poles != null && poles.contains(pole);
     }
 }
 

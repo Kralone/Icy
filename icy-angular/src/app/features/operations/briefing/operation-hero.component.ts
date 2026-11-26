@@ -5,6 +5,7 @@ import { eventColor, eventImage } from '../../events/event-appearance';
 import { OperationIconComponent } from './operation-icon.component';
 import { OperationSheet } from './operation-sheet.model';
 import { PoleBadgeComponent } from '../../../shared/pole-badge/pole-badge.component';
+import { polesOf } from '../../../core/services/user/member-rank';
 
 type HeroStatus = 'draft' | 'upcoming' | 'running' | 'done';
 const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming: 'À venir', running: 'En cours', done: 'Terminée' };
@@ -20,6 +21,8 @@ const STATUS_LABELS: Record<HeroStatus, string> = { draft: 'Brouillon', upcoming
 })
 export class OperationHeroComponent {
   readonly operation = input.required<OperationSheet>();
+  /** Pôles de l'opération, dans l'ordre d'affichage. */
+  readonly poles = computed(() => polesOf(this.operation()));
   /** Nombre de membres inscrits Présent ; null tant qu'il n'est pas connu. */
   readonly presentCount = input<number | null>(null);
   /** Aperçu dans l'éditeur : pas de lien de navigation. */

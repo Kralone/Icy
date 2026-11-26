@@ -144,6 +144,13 @@
                         <span class="block text-[0.65rem] font-semibold uppercase tracking-[0.16em] pole-agenda-kind">{{ agendaKind(entry) }}@if (entry.type) { · {{ entry.type }} }</span>
                         <span class="block truncate font-semibold text-white">{{ entry.title }}</span>
                         <span class="block text-xs text-slate-400 first-letter:uppercase">{{ moment(entry.startDateTime) }}</span>
+                        @if (otherPoles(entry, pole.key); as others) {
+                          @if (others.length) {
+                            <span class="mt-1 flex flex-wrap items-center gap-1 text-xs text-slate-400" data-testid="pole-agenda-shared">Avec
+                              @for (other of others; track other) { <app-pole-badge [pole]="other" [small]="true" /> }
+                            </span>
+                          }
+                        }
                       </span>
                     </a>
                   </li>

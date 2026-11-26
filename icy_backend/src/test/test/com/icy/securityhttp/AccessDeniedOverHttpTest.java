@@ -314,12 +314,12 @@ class AccessDeniedOverHttpTest {
 
         // Opération sans pôle, puis d'un autre pôle : le référent n'y touche pas.
         assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(403);
-        operation.setPole(com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE);
+        operation.setPoles(java.util.List.of(com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE));
         assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(403);
         assertThat(proposal.getPilotUserId()).isNull();
 
-        // Opération de son pôle : il l'organise.
-        operation.setPole(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+        // Opération qui concerne aussi son pôle : il l'organise.
+        operation.setPoles(java.util.List.of(com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE, com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE));
         assertThat(call("PUT", pilotPath(pilotId), "jeton-referent").statusCode()).isEqualTo(200);
         assertThat(proposal.getPilotUserId()).isEqualTo(pilotId);
 

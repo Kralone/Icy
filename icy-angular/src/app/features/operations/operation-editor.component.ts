@@ -25,7 +25,8 @@ import { OperationCrewPanelComponent } from './organization/operation-crew-panel
 import { OperationSheet } from './briefing/operation-sheet.model';
 import { OperationIconComponent, OperationIconName } from './briefing/operation-icon.component';
 import { eventColor, eventImage } from '../events/event-appearance';
-import { SPECIALTIES, isOrganizer } from '../../core/services/user/member-rank';
+import { isOrganizer, polesOf, referentPole } from '../../core/services/user/member-rank';
+import { PolePickerComponent } from '../../shared/pole-picker/pole-picker.component';
 import { ParticipationsByStatus } from '../../shared/participation-panel/participation-panel.component';
 
 export interface OperationObjective {
@@ -51,7 +52,7 @@ type OperationEditorState =
 
 @Component({
   standalone: true,
-  imports: [FormsModule, AsyncPipe, DatePipe, RouterLink, NgTemplateOutlet, OperationIconComponent, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationCrewBuilderComponent, OperationCrewPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent],
+  imports: [FormsModule, AsyncPipe, DatePipe, RouterLink, NgTemplateOutlet, OperationIconComponent, OperationStructureTreeComponent, OperationGroupPanelComponent, OperationCrewBuilderComponent, OperationCrewPanelComponent, OperationOverviewComponent, OperationCoordinationBoardComponent, OperationFleetCardsComponent, OperationPreviewComponent, PolePickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation-editor.component.html',
   styleUrls: ['./operation-editor.component.css', './operation-requirement-form.css']
@@ -235,28 +236,32 @@ export class OperationEditorComponent implements OnDestroy {
   readonly ships$ = this.route.paramMap.pipe(switchMap(params => this.shipRefresh.pipe(switchMap(() => this.fleetRead<FleetShip>(this.eventService.getOperationShips(params.get('id')!), this.shipsLoadError)))), shareReplay({ bufferSize: 1, refCount: true }));
   requirementForm = { groupId: null as number | null, shipModelId: null as number | null, quantity: 1, notes: '', status: 'OPEN' };
   editingRequirementId: string | null = null;
-  readonly poles = SPECIALTIES;
   poleSaving = false;
-  /** Seul un organisateur change le pôle : un référent perdrait la main sur l'opération en la déplaçant. */
-  canChoosePole = false;
+  /** Pôle d'un référent : toujours rattaché, il ne se décoche pas, sinon le référent perdrait la main sur l'opération. Vide pour un organisateur. */
+  ownPole = '';
   private readonly poleRights = inject(UserService).getMyProfile().subscribe({
-    next: response => { this.canChoosePole = isOrganizer(response?.data?.roles); this.changeDetector.markForCheck(); },
+    next: response => {
+      const roles = response?.data?.roles;
+      this.ownPole = isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '';
+      this.changeDetector.markForCheck();
+    },
     error: () => undefined
   });
   poleError = '';
+  readonly polesOf = polesOf;
 
-  /** Le pôle s'enregistre à part du brouillon : il ne dépend ni de la révision ni de l'enregistrement automatique. */
-  assignPole(operation: { id: string; pole?: string | null }, pole: string): void {
-    const previous = operation.pole ?? null;
-    operation.pole = pole || null;
+  /** Les pôles s'enregistrent à part du brouillon : ils ne dépendent ni de la révision ni de l'enregistrement automatique. */
+  assignPoles(operation: { id: string; poles?: string[]; pole?: string | null }, poles: string[]): void {
+    const previous = polesOf(operation);
+    operation.poles = poles;
     this.poleSaving = true;
     this.poleError = '';
-    this.eventService.assignOperationPole(operation.id, pole || null).subscribe({
-      next: saved => { operation.pole = saved; this.poleSaving = false; this.changeDetector.markForCheck(); },
+    this.eventService.assignOperationPoles(operation.id, poles).subscribe({
+      next: saved => { operation.poles = saved; this.poleSaving = false; this.changeDetector.markForCheck(); },
       error: () => {
-        operation.pole = previous;
+        operation.poles = previous;
         this.poleSaving = false;
-        this.poleError = 'Le pôle n’a pas pu être enregistré. Réessayez.';
+        this.poleError = 'Les pôles n’ont pas pu être enregistrés. Réessayez.';
         this.changeDetector.markForCheck();
       }
     });

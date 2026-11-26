@@ -28,9 +28,12 @@ public final class PoleDtos {
     public record Goal(Long id, String name, long current, long target, boolean completed) {
     }
 
-    /** Événement ou opération à venir rattaché au pôle. kind vaut EVENT ou OPERATION ; imageUrl peut manquer. */
+    /**
+     * Événement ou opération à venir rattaché au pôle. kind vaut EVENT ou OPERATION ; imageUrl peut manquer.
+     * poles : tous les pôles de l'activité, celui de la page compris, dans l'ordre d'affichage.
+     */
     public record Agenda(UUID id, String kind, String title, String type, String imageUrl,
-                         LocalDateTime startDateTime, LocalDateTime endDateTime) {
+                         LocalDateTime startDateTime, LocalDateTime endDateTime, List<String> poles) {
     }
 
     /** Un chiffre du pôle ; le libellé est porté par l'interface, à partir de key. */

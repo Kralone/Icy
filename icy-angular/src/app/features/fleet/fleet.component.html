@@ -11,23 +11,33 @@
     <header class="fleet-head">
       <h1 class="fleet-title">Flotte</h1>
       @if (!isLoading && objectKeys(fleetSummary).length > 0) {
-        <div class="fleet-stats" aria-label="Résumé de la flotte">
-          <span class="fleet-stat"><strong>{{ totalModels() }}</strong> modèles</span>
-          <span class="fleet-stat"><strong>{{ totalShips() }}</strong> vaisseaux</span>
-          <span class="fleet-stat"><strong>{{ totalOwners() }}</strong> propriétaires</span>
-        </div>
+        <span class="fleet-stat"><strong>{{ totalShips() }}</strong> vaisseaux</span>
+        <label class="fleet-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Rechercher un vaisseau ou un propriétaire"
+            aria-label="Rechercher un vaisseau ou un propriétaire"
+            autocomplete="off"
+            [value]="query"
+            (input)="onSearch($any($event.target).value)"
+            (keydown.escape)="onSearch('')"
+          />
+        </label>
       }
     </header>
 
     @if (!isLoading && fleetSummary && objectKeys(fleetSummary).length > 0) {
-      @for (focus of objectKeys(fleetSummary); track focus) {
+      @for (focus of objectKeys(visibleFleet); track focus) {
         <section class="fleet-category" [style.--tone]="roleTone(focus)">
           <h2 class="fleet-focus-title">
             {{ focus }}
             <span class="fleet-focus-count">{{ shipCount(focus) }} {{ shipCount(focus) === 1 ? 'vaisseau' : 'vaisseaux' }}</span>
           </h2>
           <div class="fleet-ship-grid">
-            @for (ship of fleetSummary[focus]; track ship.name) {
+            @for (ship of visibleFleet[focus]; track ship.name) {
               <div
                 class="fleet-ship-card"
                 role="button" tabindex="0" (click)="openShip(ship)" (keydown.enter)="openShip(ship)" (keydown.space)="openShip(ship); $event.preventDefault()"
@@ -64,6 +74,8 @@
             }
           </div>
         </section>
+      } @empty {
+        <p class="fleet-no-match">Aucun vaisseau ne correspond à « {{ query.trim() }} ».</p>
       }
     } @else if (!isLoading) {
       <div class="fleet-empty">
@@ -75,6 +87,8 @@
       </div>
     }
   </div>
-
-  <app-ship-detail-modal [ship]="selectedShip" [owners]="selectedShip?.owners || []" (closed)="closeShip()"></app-ship-detail-modal>
 </div>
+
+<!-- Hors de .loading-reveal : son transform faisait du conteneur la référence du position:fixed,
+     la fenêtre se centrait alors sur toute la hauteur de la page, hors de l'écran. -->
+<app-ship-detail-modal [ship]="selectedShip" [owners]="selectedShip?.owners || []" (closed)="closeShip()"></app-ship-detail-modal>

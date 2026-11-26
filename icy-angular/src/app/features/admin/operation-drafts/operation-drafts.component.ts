@@ -1,4 +1,4 @@
-import { isOrganizer, referentPole } from '../../../core/services/user/member-rank';
+import { isOrganizer, polesOf, referentPole } from '../../../core/services/user/member-rank';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { DatePipe, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -36,9 +36,9 @@ export class OperationDraftsComponent implements OnInit {
   readonly publishedLoading = signal(false);
   readonly publishedError = signal('');
   /** Les plus proches d'abord. */
-  /** Pôle d'un référent : il ne voit que les opérations publiées de son pôle, les seules qu'il peut modifier. Vide pour un organisateur. */
+  /** Pôle d'un référent : il ne voit que les opérations publiées qui concernent son pôle, les seules qu'il peut modifier. Vide pour un organisateur. */
   readonly lockedPole = signal('');
-  private readonly manageable = computed(() => this.published().filter(operation => !this.lockedPole() || operation.pole === this.lockedPole()));
+  private readonly manageable = computed(() => this.published().filter(operation => !this.lockedPole() || (operation.poles ?? []).includes(this.lockedPole())));
   readonly planned = computed(() => this.manageable().filter(operation => !this.finishedIds().has(operation.id))
     .sort((a, b) => a.startDateTime.localeCompare(b.startDateTime)));
   /** Les plus récentes d'abord. */
@@ -119,7 +119,7 @@ export class OperationDraftsComponent implements OnInit {
     return {
       id: event.id, title: event.title, type: event.type?.name, typeTextColor: event.type?.textColor,
       typeBackgroundColor: event.type?.backgroundColor, typeImageUrl: event.type?.imageUrl,
-      startDateTime: event.startDateTime, endDateTime: event.endDateTime, pole: event.pole
+      startDateTime: event.startDateTime, endDateTime: event.endDateTime, poles: polesOf(event)
     };
   }
 }

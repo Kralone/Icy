@@ -38,4 +38,25 @@ describe('FleetComponent', () => {
     expect(component.shipCount('Minage')).toBe(2);
     expect(fixture.nativeElement.querySelector('.fleet-quantity')).toBeNull();
   });
+
+  it('filters ships by name or owner as the user types, ignoring case and accents', () => {
+    const ship = (name: string, focus: string, owners: string[]) => ({name, focus, imageUrl: '', brandImageUrl: '', owners});
+    fleetUpdates.next(JSON.stringify({fleet: [ship('Prospector', 'Minage', ['Hélène']), ship('Cutlass Black', 'Combat', ['Marc'])]}));
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('.fleet-search input');
+    input.value = 'PROSP';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(Object.keys(component.visibleFleet)).toEqual(['Minage']);
+    component.onSearch('helene');
+    fixture.detectChanges();
+    expect(component.visibleFleet['Minage'].map(s => s.name)).toEqual(['Prospector']);
+    component.onSearch('zzz');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.fleet-no-match')?.textContent).toContain('zzz');
+    component.onSearch('');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.fleet-ship-card').length).toBe(2);
+    expect(fixture.nativeElement.textContent).not.toContain('modèles');
+  });
 });

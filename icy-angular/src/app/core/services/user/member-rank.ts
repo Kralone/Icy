@@ -43,13 +43,31 @@ export function referentPole(roles: readonly (string | null | undefined)[] | nul
 }
 
 /**
- * Le membre organise-t-il les activités de ce pôle ? Un organisateur les organise toutes, un référent celles de son pôle.
- * Sans pôle précisé : peut-il organiser au moins une activité.
+ * Pôles d'une activité, dans l'ordre d'affichage. Lit `poles`, ou à défaut l'ancien champ `pole`
+ * d'une réponse produite avant le passage à plusieurs pôles.
  */
-export function organizes(roles: readonly (string | null | undefined)[] | null | undefined, specialty: string | null | undefined, pole?: string | null): boolean {
+export function polesOf(activity: { poles?: readonly (string | null | undefined)[] | null; pole?: string | null } | null | undefined): string[] {
+  const raw = activity?.poles ?? (activity?.pole ? [activity.pole] : []);
+  const keys = new Set(raw.map(key => (key ?? '').trim().toUpperCase()));
+  return SPECIALTIES.map(entry => entry.key as string).filter(key => keys.has(key));
+}
+
+/** Ces pôles plus `pole` s'il est donné (celui d'un référent, toujours rattaché), dans l'ordre d'affichage. */
+export function withPole(poles: readonly string[] | null | undefined, pole: string | null | undefined): string[] {
+  return polesOf({ poles: [...(poles ?? []), ...(pole ? [pole] : [])] });
+}
+
+/**
+ * Le membre organise-t-il une activité rattachée à ces pôles ? Un organisateur les organise toutes,
+ * un référent celles dont son pôle fait partie. Sans pôles précisés : peut-il organiser au moins une activité.
+ */
+export function organizes(roles: readonly (string | null | undefined)[] | null | undefined, specialty: string | null | undefined, poles?: readonly string[] | string | null): boolean {
   if (isOrganizer(roles)) return true;
   const own = referentPole(roles, specialty);
-  return !!own && (pole === undefined || pole === own);
+  if (!own) return false;
+  if (poles === undefined) return true;
+  const list = poles === null ? [] : typeof poles === 'string' ? [poles] : poles;
+  return list.some(pole => (pole ?? '').trim().toUpperCase() === own);
 }
 
 export function hasRole(roles: readonly (string | null | undefined)[] | null | undefined, role: string): boolean {

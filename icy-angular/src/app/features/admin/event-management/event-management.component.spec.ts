@@ -40,22 +40,34 @@ describe('EventManagementComponent', () => {
     expect(statuses).toEqual(['Brouillon', 'À venir', 'Terminé']);
   });
 
-  it('sends the chosen pole when creating and when updating an event', () => {
+  it('sends the chosen poles when creating and when updating an event', () => {
     const http = TestBed.inject(HttpTestingController);
-    const options = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="new-event-pole"] option')) as HTMLOptionElement[];
-    expect(options.map(option => option.textContent!.trim())).toEqual(['Aucun pôle', 'Logistique', 'Militaire', 'Industrie']);
+    const choice = (key: string) => fixture.nativeElement.querySelector(`[data-testid="new-event-pole-${key}"]`) as HTMLButtonElement;
+    choice('INDUSTRIE').click();
+    fixture.detectChanges();
+    choice('LOGISTIQUE').click();
+    fixture.detectChanges();
+    expect(component.newEvent.poles).toEqual(['LOGISTIQUE', 'INDUSTRIE']);
+    expect(choice('MILITAIRE').getAttribute('aria-pressed')).toBe('false');
 
-    component.newEvent = { title: 'Sortie', type: 'Minage', description: '', startDateTime: '2099-10-20T20:00', endDateTime: '2099-10-20T23:00', pole: 'INDUSTRIE' };
+    component.newEvent = { ...component.newEvent, title: 'Sortie', type: 'Minage', startDateTime: '2099-10-20T20:00', endDateTime: '2099-10-20T23:00' };
     component.createEvent();
     const created = http.expectOne({ method: 'POST', url: '/api/events/create' });
-    expect(created.request.body.pole).toBe('INDUSTRIE');
+    expect(created.request.body.poles).toEqual(['LOGISTIQUE', 'INDUSTRIE']);
     created.flush({ data: {} });
 
-    component.editingEvent = { id: 'a', title: 'Sortie', description: '', startDateTime: '2099-10-20T20:00', endDateTime: '2099-10-20T23:00', finished: false, type: { name: 'Minage' }, pole: null } as any;
+    // Une réponse à l'ancien format (un seul pôle) est reprise telle quelle.
+    component.editingEvent = { id: 'a', title: 'Sortie', description: '', startDateTime: '2099-10-20T20:00', endDateTime: '2099-10-20T23:00', finished: false, type: { name: 'Minage' }, pole: 'MILITAIRE' } as any;
     component.isViewMode = false;
     component.updateEvent();
     const updated = http.expectOne({ method: 'PUT', url: '/api/events/update' });
-    expect(updated.request.body.pole).toBeNull();
+    expect(updated.request.body.poles).toEqual(['MILITAIRE']);
     updated.flush({ data: {} });
+
+    component.editingEvent = { id: 'a', title: 'Sortie', description: '', startDateTime: '2099-10-20T20:00', endDateTime: '2099-10-20T23:00', finished: false, type: { name: 'Minage' }, poles: [] } as any;
+    component.updateEvent();
+    const cleared = http.expectOne({ method: 'PUT', url: '/api/events/update' });
+    expect(cleared.request.body.poles).toEqual([]);
+    cleared.flush({ data: {} });
   });
 });

@@ -28,28 +28,28 @@ public interface EventRepository extends CrudRepository<Event, UUID> {
             + "and o.publicationStatus = com.icy.icy_backend.db.entity.event.Operation.PublicationStatus.PUBLISHED)) ";
 
     /** Activités d'un pôle pas encore terminées, les plus proches d'abord ; les opérations non publiées n'y figurent pas. */
-    @Query("select e from Event e where e.pole = :pole and e.endDateTime >= :now and " + POLE_VISIBLE
+    @Query("select e from Event e where :pole member of e.poles and e.endDateTime >= :now and " + POLE_VISIBLE
             + "order by e.startDateTime asc")
     List<Event> findUpcomingOfPole(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole, @Param("now") LocalDateTime now,
                                    org.springframework.data.domain.Pageable page);
 
-    @Query("select count(e) from Event e where e.pole = :pole and e.endDateTime >= :now and " + POLE_VISIBLE)
+    @Query("select count(e) from Event e where :pole member of e.poles and e.endDateTime >= :now and " + POLE_VISIBLE)
     long countUpcomingOfPole(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole, @Param("now") LocalDateTime now);
 
     /** Activités d'un pôle déjà terminées, les plus récentes d'abord. */
-    @Query("select e from Event e where e.pole = :pole and e.endDateTime < :now and " + POLE_VISIBLE
+    @Query("select e from Event e where :pole member of e.poles and e.endDateTime < :now and " + POLE_VISIBLE
             + "order by e.endDateTime desc")
     List<Event> findPastOfPole(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole, @Param("now") LocalDateTime now,
                                org.springframework.data.domain.Pageable page);
 
     /** Nombre d'activités d'un pôle terminées entre deux instants. */
-    @Query("select count(e) from Event e where e.pole = :pole and e.endDateTime >= :since and e.endDateTime < :now and " + POLE_VISIBLE)
+    @Query("select count(e) from Event e where :pole member of e.poles and e.endDateTime >= :since and e.endDateTime < :now and " + POLE_VISIBLE)
     long countEndedOfPoleBetween(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole,
                                  @Param("since") LocalDateTime since, @Param("now") LocalDateTime now);
 
     /** Nombre de membres distincts ayant confirmé leur présence à une activité du pôle terminée entre deux instants. */
     @Query("select count(distinct p.user.id) from EventParticipation p join p.event e where p.status = 1 "
-            + "and e.pole = :pole and e.endDateTime >= :since and e.endDateTime < :now and " + POLE_VISIBLE)
+            + "and :pole member of e.poles and e.endDateTime >= :since and e.endDateTime < :now and " + POLE_VISIBLE)
     long countParticipantsOfPoleBetween(@Param("pole") com.icy.icy_backend.db.entity.user.Specialty pole,
                                         @Param("since") LocalDateTime since, @Param("now") LocalDateTime now);
 

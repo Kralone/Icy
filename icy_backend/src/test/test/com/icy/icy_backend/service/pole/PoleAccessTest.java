@@ -40,9 +40,17 @@ class PoleAccessTest {
             assertThat(access.canCreate()).isTrue();
             assertThat(access.manages(eventId)).isTrue();
             assertThat(access.manages(UUID.randomUUID())).isTrue();
-            assertThat(access.poleFor("LOGISTIQUE")).isEqualTo("LOGISTIQUE");
-            assertThat(access.poleFor(null)).isNull();
+            assertThat(access.polesFor(List.of("LOGISTIQUE"))).containsExactly(Specialty.LOGISTIQUE);
+            assertThat(access.polesFor(List.of("industrie", "LOGISTIQUE", "INDUSTRIE"))).containsExactly(Specialty.LOGISTIQUE, Specialty.INDUSTRIE);
+            assertThat(access.polesFor(null)).isEmpty();
         }
+    }
+
+    @Test
+    void aReferentOrganizesAnActivityThatConcernsTheirPoleAmongOthers() {
+        signIn("SPECIALISTE", Specialty.MILITAIRE);
+        assertThat(access.manages(event(Specialty.INDUSTRIE, Specialty.MILITAIRE))).isTrue();
+        assertThat(access.manages(event(Specialty.INDUSTRIE, Specialty.LOGISTIQUE))).isFalse();
     }
 
     @Test
@@ -51,17 +59,18 @@ class PoleAccessTest {
         assertThat(access.canCreate()).isTrue();
         assertThat(access.manages(event(Specialty.MILITAIRE))).isTrue();
         assertThat(access.manages(event(Specialty.INDUSTRIE))).isFalse();
-        assertThat(access.manages(event(null))).isFalse();
+        assertThat(access.manages(event())).isFalse();
         assertThat(access.manages(UUID.randomUUID())).isFalse();
         assertThat(access.managesPole(Specialty.MILITAIRE)).isTrue();
         assertThat(access.managesPole(Specialty.LOGISTIQUE)).isFalse();
     }
 
     @Test
-    void aReferentAlwaysCreatesInTheirOwnPole() {
+    void aReferentAddsOtherPolesButAlwaysKeepsTheirOwn() {
         signIn("SPECIALISTE", Specialty.MILITAIRE);
-        assertThat(access.poleFor("INDUSTRIE")).isEqualTo("MILITAIRE");
-        assertThat(access.poleFor(null)).isEqualTo("MILITAIRE");
+        assertThat(access.polesFor(List.of("INDUSTRIE"))).containsExactly(Specialty.MILITAIRE, Specialty.INDUSTRIE);
+        assertThat(access.polesFor(null)).containsExactly(Specialty.MILITAIRE);
+        assertThat(access.polesFor(List.of())).containsExactly(Specialty.MILITAIRE);
     }
 
     @Test
@@ -70,17 +79,17 @@ class PoleAccessTest {
         signIn("INGENIEUR", null);
         assertThat(access.canCreate()).isFalse();
         assertThat(access.manages(eventId)).isFalse();
-        assertThatThrownBy(() -> access.poleFor("MILITAIRE")).isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> access.polesFor(List.of("MILITAIRE"))).isInstanceOf(AccessDeniedException.class);
         // Un Spécialiste sans pôle n'est référent de rien.
         signIn("SPECIALISTE", null);
         assertThat(access.canCreate()).isFalse();
         assertThat(access.manages(eventId)).isFalse();
     }
 
-    private UUID event(Specialty pole) {
+    private UUID event(Specialty... poles) {
         Event event = new Event();
         event.setId(UUID.randomUUID());
-        event.setPole(pole);
+        event.setPoles(List.of(poles));
         when(events.findById(event.getId())).thenReturn(Optional.of(event));
         return event.getId();
     }

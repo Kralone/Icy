@@ -23,6 +23,22 @@ public enum Specialty {
         }
     }
 
+    /** Pôles facultatifs d'une activité, sans doublon et dans l'ordre d'affichage ; refus d'un pôle inconnu. */
+    public static java.util.EnumSet<Specialty> optionalAll(java.util.Collection<String> requested) {
+        java.util.EnumSet<Specialty> poles = java.util.EnumSet.noneOf(Specialty.class);
+        if (requested == null) return poles;
+        for (String value : requested) {
+            Specialty pole = optional(value);
+            if (pole != null) poles.add(pole);
+        }
+        return poles;
+    }
+
+    /** Premier pôle dans l'ordre d'affichage, ou null. */
+    public static Specialty first(java.util.Collection<Specialty> poles) {
+        return poles == null ? null : poles.stream().filter(java.util.Objects::nonNull).sorted().findFirst().orElse(null);
+    }
+
     public static Specialty forRank(String rank, String requested) {
         if (rank == null || !RANK.equals(rank.trim().toUpperCase())) {
             return null;

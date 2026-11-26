@@ -35,13 +35,7 @@
         <label>Briefing<textarea [(ngModel)]="form.briefing" (ngModelChange)="touch()" rows="12" maxlength="50000"></textarea></label>
         <label>Point de rendez-vous<input [(ngModel)]="form.meetingPoint" (ngModelChange)="touch()" maxlength="255"></label>
         <label>Image de mission (URL autorisée)<input [(ngModel)]="form.imageUrl" (ngModelChange)="touch()" maxlength="2000" [attr.aria-invalid]="imageUrlPending" aria-describedby="operation-image-help">@if (imageUrlPending) { <small id="operation-image-help" class="field-warning">Adresse incomplète : elle sera enregistrée dès qu’elle commencera par https:// et sera complète. Le reste du brouillon est enregistré.</small> }</label>
-        <label>Pôle
-          <select [ngModel]="operation.pole || ''" (ngModelChange)="assignPole(operation, $event)" [disabled]="poleSaving || !canChoosePole" data-testid="operation-editor-pole">
-            <option value="">Aucun pôle</option>
-            @for (pole of poles; track pole.key) { <option [value]="pole.key">{{ pole.label }}</option> }
-          </select>
-          <small class="muted" role="status">{{ poleError || (canChoosePole ? 'L’opération apparaît sur la page de ce pôle une fois publiée. Enregistré dès le choix.' : 'Seuls les Officiers et les Administrateurs changent le pôle d’une opération.') }}</small>
-        </label>
+        <ng-container *ngTemplateOutlet="polePicker; context: { $implicit: operation }" />
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()"> Autoriser les membres présents à proposer un vaisseau de leur hangar</label>
         <label class="toggle-row"><input type="checkbox" [ngModel]="form.miningSession" (ngModelChange)="chooseSession('mining', $event)"> Session de minage : créer une fiche de minage à la publication, avec les membres présents</label>
         <label class="toggle-row"><input type="checkbox" [ngModel]="form.salvageSession" (ngModelChange)="chooseSession('salvage', $event)"> Session de salvage : créer une fiche de salvage à la publication, avec les membres présents</label>
@@ -128,13 +122,7 @@
           <p class="editor-loading" role="status">Chargement de la coordination…</p>
         }
         <section class="coordination-fleet" aria-label="Vaisseaux proposés par les membres">
-          <label>Pôle
-          <select [ngModel]="operation.pole || ''" (ngModelChange)="assignPole(operation, $event)" [disabled]="poleSaving" data-testid="operation-editor-pole">
-            <option value="">Aucun pôle</option>
-            @for (pole of poles; track pole.key) { <option [value]="pole.key">{{ pole.label }}</option> }
-          </select>
-          <small class="muted" role="status">{{ poleError || 'L’opération apparaît sur la page de ce pôle une fois publiée. Enregistré dès le choix.' }}</small>
-        </label>
+          <ng-container *ngTemplateOutlet="polePicker; context: { $implicit: operation }" />
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.allowShipProposals" (ngModelChange)="touch()" [disabled]="!!operation.locked"> Autoriser les membres présents à proposer un vaisseau depuis leur hangar</label>
           @if (fleetLoadError()) { <p class="organization__error" role="alert">La flotte n’a pas pu être chargée. <button type="button" (click)="refreshFleet()">Réessayer</button></p> }
           <app-operation-fleet-cards [showRequirements]="false" [requirements]="(shipRequirements$ | async) ?? []" [ships]="(ships$ | async) ?? []" [groups]="organizationGroups()" [organizer]="true" [locked]="!!operation.locked" [busy]="fleetBusy()" [requirementsUnavailable]="requirementsLoadError()" [shipsUnavailable]="shipsLoadError()" [members]="(members$ | async) ?? []"
@@ -160,3 +148,11 @@
     }
   }
 </main>
+
+<ng-template #polePicker let-operation>
+  <div class="pole-field" role="group" aria-labelledby="operation-editor-poles-label">
+    <span id="operation-editor-poles-label">Pôles</span>
+    <app-pole-picker [value]="polesOf(operation)" (valueChange)="assignPoles(operation, $event)" [locked]="ownPole" [disabled]="poleSaving" testId="operation-editor-pole" />
+    <small class="muted" role="status">{{ poleError || (ownPole ? 'Votre pôle reste rattaché. L’opération apparaît sur la page de chaque pôle choisi une fois publiée. Enregistré dès le choix.' : 'L’opération apparaît sur la page de chaque pôle choisi une fois publiée. Enregistré dès le choix.') }}</small>
+  </div>
+</ng-template>

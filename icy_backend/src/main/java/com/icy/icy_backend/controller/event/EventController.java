@@ -31,17 +31,17 @@ public class EventController {
     @PostMapping("/create")
     public ResponseEntity<MessageResponse<EventResponseDTO>> create(@RequestBody CreateEventRequest req) {
         // Le pôle est contrôlé avant la création : un pôle inconnu ne laisse pas d'événement derrière lui.
-        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
+        java.util.EnumSet<com.icy.icy_backend.db.entity.user.Specialty> poles = poleAccess.polesFor(req.requestedPoles());
         // Le pôle est enregistré avec l'événement : la diffusion temps réel le porte déjà.
-        return eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), true, pole);
+        return eventService.createEvent(req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), true, poles);
     }
 
     @PreAuthorize("@poleAccess.manages(#req.id)")
     @PutMapping("/update")
     public ResponseEntity<MessageResponse<EventResponseDTO>> update(@RequestBody UpdateEventRequest req) {
-        com.icy.icy_backend.db.entity.user.Specialty pole = com.icy.icy_backend.db.entity.user.Specialty.optional(poleAccess.poleFor(req.getPole()));
+        java.util.EnumSet<com.icy.icy_backend.db.entity.user.Specialty> poles = poleAccess.polesFor(req.requestedPoles());
         return eventService.updateEvent(req.getId(), req.getType(), req.getTitle(), req.getDescription(), req.getStartDateTime(), req.getEndDateTime(), req.isFinished(),
-                Boolean.TRUE.equals(req.getKeepParticipants()), java.util.Optional.ofNullable(pole));
+                Boolean.TRUE.equals(req.getKeepParticipants()), poles);
     }
 
     @PreAuthorize("@poleAccess.manages(#id)")

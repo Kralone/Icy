@@ -43,7 +43,8 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
   newsForm = {
     title: '',
     type: null as NewsType | null,
-    content: ''
+    content: '',
+    imageUrl: ''
   };
   draftSavedAt: Date | null = null;
 
@@ -110,11 +111,12 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
       this.newsForm = {
         title: news.title,
         type: this.types.find(t => t.id === news.type?.id) || null,
-        content: news.content
+        content: news.content,
+        imageUrl: news.imageUrl ?? ''
       };
     } else {
       this.editingNews = null;
-      this.newsForm = { title: '', type: null, content: '' };
+      this.newsForm = { title: '', type: null, content: '', imageUrl: '' };
     }
 
     this.restoreDraft();
@@ -129,7 +131,7 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
     this.stopAutoSave();
     this.showForm = false;
     this.editingNews = null;
-    this.newsForm = { title: '', type: null, content: '' };
+    this.newsForm = { title: '', type: null, content: '', imageUrl: '' };
     this.draftSavedAt = null;
     this.pendingDraftTypeId = null;
     this.lastAutoSavedPayload = '';
@@ -140,6 +142,8 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
       title: this.newsForm.title,
       typeId: this.newsForm.type?.id,
       content: this.newsForm.content,
+      // An empty value removes the image; the backend accepts only https addresses.
+      imageUrl: this.newsForm.imageUrl.trim(),
     };
 
     if (!payload.title || !payload.typeId || !payload.content) {
@@ -155,7 +159,10 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
           this.loadNews();
           this.closeForm(false);
         },
-        error: (err) => console.error('Erreur mise à jour news', err),
+        error: (err) => {
+          console.error('Erreur mise à jour news', err);
+          alert(err?.error?.message ?? 'La mise à jour de l’actualité a échoué.');
+        },
       });
     } else {
       // Création
@@ -165,7 +172,10 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
           this.loadNews();
           this.closeForm(false);
         },
-        error: (err) => console.error('Erreur création news', err),
+        error: (err) => {
+          console.error('Erreur création news', err);
+          alert(err?.error?.message ?? 'La création de l’actualité a échoué.');
+        },
       });
     }
   }
@@ -238,6 +248,11 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
     return this.newsForm.type;
   }
 
+  /** The news image wins over the type image, as on the dashboard and in Discord. */
+  get previewImageUrl(): string | null {
+    return this.newsForm.imageUrl.trim() || this.newsForm.type?.imageUrl || null;
+  }
+
   private startAutoSave(): void {
     this.stopAutoSave();
     this.autoSaveIntervalId = setInterval(() => this.persistDraft(), 5000);
@@ -262,12 +277,14 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
     title: string;
     typeId: number | null | undefined;
     content: string;
+    imageUrl: string;
     savedAt: string;
   } {
     return {
       title: this.newsForm.title,
       typeId: this.newsForm.type?.id,
       content: this.newsForm.content,
+      imageUrl: this.newsForm.imageUrl,
       savedAt: new Date().toISOString(),
     };
   }
@@ -313,11 +330,13 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
         title?: string;
         typeId?: number;
         content?: string;
+        imageUrl?: string;
         savedAt?: string;
       };
 
       this.newsForm.title = parsed.title ?? this.newsForm.title;
       this.newsForm.content = parsed.content ?? this.newsForm.content;
+      this.newsForm.imageUrl = parsed.imageUrl ?? this.newsForm.imageUrl;
 
       if (typeof parsed.typeId === 'number') {
         this.pendingDraftTypeId = parsed.typeId;

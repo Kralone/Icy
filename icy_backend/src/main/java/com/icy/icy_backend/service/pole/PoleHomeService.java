@@ -205,7 +205,8 @@ public class PoleHomeService {
             if ((image == null || image.isBlank()) && event.getType() != null) image = event.getType().getImageUrl();
             return new PoleDtos.Agenda(event.getId(), event.getActivityType().name(), event.getTitle(),
                     event.getType() == null ? null : event.getType().getName(),
-                    image == null || image.isBlank() ? null : image, event.getStartDateTime(), event.getEndDateTime());
+                    image == null || image.isBlank() ? null : image, event.getStartDateTime(), event.getEndDateTime(),
+                    event.sortedPoles().stream().map(Enum::name).toList());
         }).toList();
     }
 

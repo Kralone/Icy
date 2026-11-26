@@ -1,6 +1,7 @@
 import { UserService } from '../../../core/services/user/user.service';
 import { DateTimeFieldComponent } from '../../../shared/date-time-field/date-time-field.component';
-import { SPECIALTIES, isOrganizer, referentPole } from '../../../core/services/user/member-rank';
+import { isOrganizer, polesOf, referentPole, withPole } from '../../../core/services/user/member-rank';
+import { PolePickerComponent } from '../../../shared/pole-picker/pole-picker.component';
 import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +14,7 @@ import { EventTypeManagerComponent } from './event-type-manager/event-type-manag
 @Component({
   selector: 'app-event-management',
   standalone: true,
-  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule, AvailabilityHintComponent, EventTypeManagerComponent],
+  imports: [DateTimeFieldComponent, CommonModule, FormsModule, RouterModule, AvailabilityHintComponent, EventTypeManagerComponent, PolePickerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './event-management.component.html',
 })
@@ -25,11 +26,8 @@ export class EventManagementComponent implements OnInit {
     description: '',
     startDateTime: '',
     endDateTime: '',
-    pole: '',
+    poles: [] as string[],
   };
-
-  /** Pôles auxquels un événement peut être rattaché. */
-  readonly poles = SPECIALTIES;
 
   // === Liste des événements ===
   events: EventDTO[] = [];
@@ -70,7 +68,7 @@ export class EventManagementComponent implements OnInit {
   }
 
 
-  /** Pôle imposé à un référent : il ne crée et ne gère que les événements de son pôle. Vide pour un organisateur. */
+  /** Pôle d'un référent : toujours rattaché aux événements qu'il crée ou modifie, d'autres pôles peuvent s'y ajouter. Vide pour un organisateur. */
   lockedPole = '';
   private readonly userService = inject(UserService);
 
@@ -81,7 +79,7 @@ export class EventManagementComponent implements OnInit {
       next: response => {
         const roles = response?.data?.roles;
         this.lockedPole = isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '';
-        if (this.lockedPole) this.newEvent.pole = this.lockedPole;
+        if (this.lockedPole) this.newEvent.poles = withPole(this.newEvent.poles, this.lockedPole);
       },
       error: () => undefined
     });
@@ -172,10 +170,10 @@ export class EventManagementComponent implements OnInit {
     if (this.isFormInvalid) return;
     this.isSubmitting = true;
 
-    this.eventService.createEvent(this.newEvent).subscribe({
+    this.eventService.createEvent({ ...this.newEvent, poles: withPole(this.newEvent.poles, this.lockedPole) }).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', pole: this.lockedPole };
+        this.newEvent = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', poles: withPole([], this.lockedPole) };
         this.loadAllEvents();
       },
       error: (err) => {
@@ -217,6 +215,11 @@ export class EventManagementComponent implements OnInit {
     };
   }
 
+  /** Pôles de l'événement en cours de modification, y compris ceux d'une réponse à l'ancien format. */
+  get editingPoles(): string[] {
+    return polesOf(this.editingEvent);
+  }
+
   cancelEditEvent() {
     this.editingEvent = null;
     this.isViewMode = false;
@@ -235,7 +238,7 @@ export class EventManagementComponent implements OnInit {
       finished: this.editingEvent.finished ?? false,
       type: this.editingEvent.type?.name || (this.editingEvent as any).type,
       keepParticipants: this.keepParticipants,
-      pole: this.editingEvent.pole || null
+      poles: withPole(polesOf(this.editingEvent), this.lockedPole)
     };
 
     this.eventService.updateEvent(payload).subscribe({
@@ -266,7 +269,7 @@ export class EventManagementComponent implements OnInit {
       description: this.editingEvent.description || '',
       startDateTime: '',
       endDateTime: '',
-      pole: this.editingEvent.pole || '',
+      poles: withPole(polesOf(this.editingEvent), this.lockedPole),
     };
 
     this.cancelEditEvent();

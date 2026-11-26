@@ -48,26 +48,31 @@ describe('EventsComponent', () => {
     expect(component.calendarTitle).toBe(component.calendarComponent?.getApi().view.title);
   });
 
-  it('shows the pole of an activity and keeps only the chosen pole', async () => {
+  it('shows the poles of an activity and keeps those that concern the chosen pole', async () => {
     TestBed.inject(HttpTestingController).expectOne('/api/events/all').flush({data: [
-      {id: 'escort', title: 'Escorte', type: {name: 'Combat'}, pole: 'MILITAIRE', startDateTime: '2099-06-01T20:00:00', finished: false},
-      {id: 'mining', title: 'Minage', type: {name: 'Minage'}, pole: 'INDUSTRIE', startDateTime: '2099-06-02T20:00:00', finished: false},
-      {id: 'free', title: 'Soirée libre', type: {name: 'Social'}, pole: null, startDateTime: '2099-06-03T20:00:00', finished: false}
+      {id: 'escort', title: 'Escorte', type: {name: 'Combat'}, poles: ['MILITAIRE'], startDateTime: '2099-06-01T20:00:00', finished: false},
+      {id: 'mining', title: 'Minage', type: {name: 'Minage'}, poles: ['MILITAIRE', 'INDUSTRIE'], startDateTime: '2099-06-02T20:00:00', finished: false},
+      {id: 'old', title: 'Convoi', type: {name: 'Transport'}, pole: 'LOGISTIQUE', startDateTime: '2099-06-03T20:00:00', finished: false},
+      {id: 'free', title: 'Soirée libre', type: {name: 'Social'}, poles: [], startDateTime: '2099-06-04T20:00:00', finished: false}
     ]});
     fixture.detectChanges();
     const badges = () => Array.from(fixture.nativeElement.querySelectorAll('.events-agenda app-pole-badge:not([hidden])')).map((badge: any) => badge.textContent.trim());
-    expect(badges()).toEqual(['Militaire', 'Industrie']);
+    expect(badges()).toEqual(['Militaire', 'Militaire', 'Industrie', 'Logistique']);
 
     component.setPoleFilter('MILITAIRE');
     await new Promise(resolve => setTimeout(resolve, 20));
     fixture.detectChanges();
     expect(component.poleFilter).toBe('MILITAIRE');
-    expect(component.upcomingEvents.map(event => event.id)).toEqual(['escort']);
-    expect(component.calendarEvents.length).toBe(1);
+    expect(component.upcomingEvents.map(event => event.id)).toEqual(['escort', 'mining']);
+    expect(component.calendarEvents.length).toBe(2);
+
+    component.setPoleFilter('INDUSTRIE');
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(component.upcomingEvents.map(event => event.id)).toEqual(['mining']);
 
     component.setPoleFilter('');
     await new Promise(resolve => setTimeout(resolve, 20));
-    expect(component.upcomingEvents.length).toBe(3);
+    expect(component.upcomingEvents.length).toBe(4);
   });
 
   it('loads from HTTP without waiting for WebSocket and sorts future events', () => {

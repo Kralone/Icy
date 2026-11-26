@@ -81,4 +81,47 @@ class NewsServiceTest {
         assertThatThrownBy(() -> service.createType(type))
                 .isInstanceOf(ResourceAlreadyExistsException.class);
     }
+
+    @Test
+    void updateChangesImageAndPublishesTheUpdatedNews() {
+        NewsRepository newsRepository = Mockito.mock(NewsRepository.class);
+        NewsTypeRepository typeRepository = Mockito.mock(NewsTypeRepository.class);
+        NewsMessagingService newsMessagingService = Mockito.mock(NewsMessagingService.class);
+        NewsService service = new NewsService(newsRepository, typeRepository, Mockito.mock(UserService.class),
+                newsMessagingService, Mockito.mock(NotificationPushService.class));
+        NewsType type = new NewsType();
+        type.setId(1L);
+        News existing = new News();
+        existing.setId(5L);
+        existing.setImageUrl("https://media.robertsspaceindustries.com/old.jpg");
+        when(newsRepository.findById(5L)).thenReturn(Optional.of(existing));
+        when(typeRepository.findById(1L)).thenReturn(Optional.of(type));
+        when(newsRepository.save(any(News.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        News keep = new News();
+        keep.setType(type);
+        service.update(5L, keep);
+        assertThat(existing.getImageUrl()).isEqualTo("https://media.robertsspaceindustries.com/old.jpg");
+
+        News change = new News();
+        change.setType(type);
+        change.setImageUrl("  https://media.robertsspaceindustries.com/cover.jpg ");
+        service.update(5L, change);
+        assertThat(existing.getImageUrl()).isEqualTo("https://media.robertsspaceindustries.com/cover.jpg");
+        verify(newsMessagingService, Mockito.times(2)).sendNewsUpdated(existing);
+
+        News clear = new News();
+        clear.setType(type);
+        clear.setImageUrl(" ");
+        service.update(5L, clear);
+        assertThat(existing.getImageUrl()).isNull();
+    }
+
+    @Test
+    void rejectsImagesThatAreNotHttps() {
+        for (String value : new String[]{"http://example.com/a.jpg", "javascript:alert(1)", "/images/a.jpg", "https://user@example.com/a.jpg"}) {
+            assertThatThrownBy(() -> NewsService.normalizeImageUrl(value))
+                    .isInstanceOf(com.icy.icy_backend.exception.definition.BadRequestException.class);
+        }
+    }
 }

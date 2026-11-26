@@ -69,7 +69,7 @@ describe('PolePageComponent', () => {
     await load('industrie', home('INDUSTRIE', {
       agenda: [
         { id: 'e1', kind: 'EVENT', title: 'Sortie Quantanium', type: 'Minage', imageUrl: '/images/minage.webp', startDateTime: '2026-11-21T21:00:00', endDateTime: '2026-11-21T23:00:00' },
-        { id: 'o1', kind: 'OPERATION', title: 'Opération Halo', type: null, imageUrl: null, startDateTime: '2026-11-28T21:00:00', endDateTime: '2026-11-28T23:00:00' }
+        { id: 'o1', kind: 'OPERATION', title: 'Opération Halo', type: null, imageUrl: null, startDateTime: '2026-11-28T21:00:00', endDateTime: '2026-11-28T23:00:00', poles: ['LOGISTIQUE', 'INDUSTRIE'] }
       ]
     }));
     const links = Array.from(find('pole-agenda')!.querySelectorAll('a')) as HTMLAnchorElement[];
@@ -78,6 +78,9 @@ describe('PolePageComponent', () => {
     expect(links[0].querySelector('img')!.getAttribute('src')).toBe('https://iceforge.fr/images/minage.webp');
     expect(links[1].textContent).toContain('Opération');
     expect(links[1].querySelector('img')!.getAttribute('src')).toBe('assets/images/poles/industrie.jpg');
+    // Une activité partagée nomme les autres pôles concernés, pas celui de la page.
+    expect(links[0].querySelector('[data-testid="pole-agenda-shared"]')).toBeNull();
+    expect(links[1].querySelector('[data-testid="pole-agenda-shared"]')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('Avec Logistique');
   });
 
   it('says so when a pole has no referent and no news, and hides empty sections', async () => {

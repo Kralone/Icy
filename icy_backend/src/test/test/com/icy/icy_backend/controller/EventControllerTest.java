@@ -66,7 +66,7 @@ class EventControllerTest {
 
     @Test
     void eventEndpointsReturnOk() throws Exception {
-        when(poleAccess.poleFor(any())).thenAnswer(call -> call.getArgument(0));
+        when(poleAccess.polesFor(any())).thenAnswer(call -> com.icy.icy_backend.db.entity.user.Specialty.optionalAll(call.getArgument(0)));
         when(eventService.createEvent(any(), any(), any(), any(), any(), anyBoolean(), any()))
                 .thenReturn(okResponse(new EventResponseDTO(new Event())));
         when(eventService.updateEvent(any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))

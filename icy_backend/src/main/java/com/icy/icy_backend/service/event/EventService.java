@@ -85,13 +85,13 @@ public class EventService {
      * Une opération non publiée n'existe pas pour les membres : ni listes, ni temps réel, ni Discord, ni notifications.
      * Les événements classiques ne sont jamais concernés.
      */
-    /** Rattache l'activité à un pôle, ou la détache (null ou vide). Seul le calendrier temps réel est prévenu : le pôle ne figure dans aucune annonce. */
+    /** Rattache l'activité à ces pôles (aucun si vide). Seul le calendrier temps réel est prévenu : les pôles ne figurent dans aucune annonce. */
     @Transactional
-    public void assignPole(UUID eventId, String pole) {
-        com.icy.icy_backend.db.entity.user.Specialty wanted = com.icy.icy_backend.db.entity.user.Specialty.optional(pole);
+    public void assignPoles(UUID eventId, java.util.Collection<com.icy.icy_backend.db.entity.user.Specialty> poles) {
+        java.util.Set<com.icy.icy_backend.db.entity.user.Specialty> wanted = poles == null ? Set.of() : Set.copyOf(poles);
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event introuvable"));
-        if (event.getPole() == wanted) return;
-        event.setPole(wanted);
+        if (event.getPoles().equals(wanted)) return;
+        event.setPoles(wanted);
         Event saved = eventRepository.save(event);
         // Les calendriers ouverts filtrent sur le pôle : une activité publiée leur est renvoyée à jour.
         if (!isUnpublishedOperation(saved)) eventWebSocketService.sendEventUpdate(saved, "UPDATE");
@@ -201,7 +201,7 @@ public class EventService {
         return createEvent(type, title, description, start, end, announce, null);
     }
 
-    /** {@code pole} : pôle enregistré avec l'événement, avant toute diffusion. {@code null} : aucun pôle. */
+    /** {@code poles} : pôles enregistrés avec l'événement, avant toute diffusion. {@code null} ou vide : aucun pôle. */
     @Transactional
     public ResponseEntity<MessageResponse<EventResponseDTO>> createEvent(
             String type,
@@ -210,7 +210,7 @@ public class EventService {
             LocalDateTime start,
             LocalDateTime end,
             boolean announce,
-            com.icy.icy_backend.db.entity.user.Specialty pole
+            java.util.Collection<com.icy.icy_backend.db.entity.user.Specialty> poles
     ) {
         validateEventDates(start, end);
         // 🔹 Récupération du créateur (user connecté)
@@ -235,7 +235,7 @@ public class EventService {
         event.setCreatedAt(LocalDateTime.now());
         event.setUpdatedAt(LocalDateTime.now());
         event.setCreator(creator); // ✅ Important
-        event.setPole(pole);
+        event.setPoles(poles);
 
         // 🔹 Persistance
         Event saved = eventRepository.save(event);
@@ -290,7 +290,7 @@ public class EventService {
         return updateEvent(id, type, title, description, start, end, finished, keepParticipants, null);
     }
 
-    /** {@code pole} : s'il est fourni, le pôle est enregistré avec la modification, avant toute diffusion. {@code null} : pôle inchangé. */
+    /** {@code poles} : s'ils sont fournis, les pôles sont enregistrés avec la modification, avant toute diffusion. {@code null} : pôles inchangés. */
     @Transactional
     public ResponseEntity<MessageResponse<EventResponseDTO>> updateEvent(
             UUID id,
@@ -301,7 +301,7 @@ public class EventService {
             LocalDateTime end,
             boolean finished,
             boolean keepParticipants,
-            java.util.Optional<com.icy.icy_backend.db.entity.user.Specialty> pole
+            java.util.Collection<com.icy.icy_backend.db.entity.user.Specialty> poles
     ) {
         validateEventDates(start, end);
         Event event = eventRepository.findById(id)
@@ -339,7 +339,7 @@ public class EventService {
         event.setEndDateTime(end);
         event.setFinished(finished);
         event.setUpdatedAt(LocalDateTime.now());
-        if (pole != null) event.setPole(pole.orElse(null));
+        if (poles != null) event.setPoles(poles);
 
         // --- Si date changée : on purge les participations d'un événement classique, sauf si l'organisateur choisit de les garder.
         // Une opération garde les siennes : ses affectations et ses vaisseaux en dépendent et ne sont pas réinitialisés.
@@ -453,8 +453,8 @@ public class EventService {
         if (!includeDrafts || (!currentUserIsOrganizer() && ownPole == null)) {
             return messageService.buildResponse("event.list", published.stream().map(EventResponseDTO::new).collect(Collectors.toList()));
         }
-        // Un référent ne gère que les activités de son pôle : sa liste de gestion s'y limite.
-        if (ownPole != null) all = all.stream().filter(event -> event.getPole() == ownPole).toList();
+        // Un référent ne gère que les activités qui concernent son pôle : sa liste de gestion s'y limite.
+        if (ownPole != null) all = all.stream().filter(event -> event.concerns(ownPole)).toList();
         Set<UUID> publishedIds = published.stream().map(Event::getId).collect(Collectors.toSet());
         List<EventResponseDTO> events = all.stream().map(event -> {
             EventResponseDTO dto = new EventResponseDTO(event);

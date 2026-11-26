@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,10 +128,11 @@ class PoleHomeServiceTest {
         type.setName("Minage");
         type.setImageUrl("/images/minage.webp");
         com.icy.icy_backend.db.entity.event.Event outing = com.icy.icy_backend.db.entity.event.Event.builder()
-                .id(UUID.randomUUID()).title("Sortie Quantanium").type(type)
+                .id(UUID.randomUUID()).title("Sortie Quantanium").type(type).poles(new java.util.HashSet<>(Set.of(Specialty.INDUSTRIE)))
                 .startDateTime(LocalDateTime.of(2026, 11, 21, 21, 0)).endDateTime(LocalDateTime.of(2026, 11, 21, 23, 0)).build();
         com.icy.icy_backend.db.entity.event.Event operation = com.icy.icy_backend.db.entity.event.Event.builder()
                 .id(UUID.randomUUID()).title("Opération Halo").type(type)
+                .poles(new java.util.HashSet<>(Set.of(Specialty.INDUSTRIE, Specialty.LOGISTIQUE)))
                 .activityType(com.icy.icy_backend.db.entity.event.ActivityType.OPERATION)
                 .startDateTime(LocalDateTime.of(2026, 11, 28, 21, 0)).endDateTime(LocalDateTime.of(2026, 11, 28, 23, 0)).build();
         com.icy.icy_backend.db.entity.event.Operation details = new com.icy.icy_backend.db.entity.event.Operation();
@@ -143,8 +145,8 @@ class PoleHomeServiceTest {
         List<PoleDtos.Agenda> agenda = service.home("INDUSTRIE").agenda();
 
         assertThat(agenda).containsExactly(
-                new PoleDtos.Agenda(outing.getId(), "EVENT", "Sortie Quantanium", "Minage", "/images/minage.webp", outing.getStartDateTime(), outing.getEndDateTime()),
-                new PoleDtos.Agenda(operation.getId(), "OPERATION", "Opération Halo", "Minage", "https://exemple.test/halo.jpg", operation.getStartDateTime(), operation.getEndDateTime()));
+                new PoleDtos.Agenda(outing.getId(), "EVENT", "Sortie Quantanium", "Minage", "/images/minage.webp", outing.getStartDateTime(), outing.getEndDateTime(), List.of("INDUSTRIE")),
+                new PoleDtos.Agenda(operation.getId(), "OPERATION", "Opération Halo", "Minage", "https://exemple.test/halo.jpg", operation.getStartDateTime(), operation.getEndDateTime(), List.of("LOGISTIQUE", "INDUSTRIE")));
     }
 
     @Test
