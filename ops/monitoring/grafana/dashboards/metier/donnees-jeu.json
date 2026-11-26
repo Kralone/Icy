@@ -797,122 +797,7 @@
       "gridPos": {
         "x": 0,
         "y": 14,
-        "w": 14,
-        "h": 11
-      }
-    },
-    {
-      "type": "table",
-      "title": "Emplacements de minerai par version du jeu",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT coalesce(game_version, 'Version inconnue') AS metric, count(*) AS value FROM public.ore_locations\n        GROUP BY 1 ORDER BY 1 DESC",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "metric": "Version",
-              "value": "Emplacements"
-            }
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "noValue": "Pas de donnée",
-          "custom": {
-            "align": "auto",
-            "filterable": false
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Emplacements"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "short"
-              },
-              {
-                "id": "min",
-                "value": 0
-              },
-              {
-                "id": "fieldMinMax",
-                "value": true
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "gauge",
-                  "mode": "basic",
-                  "valueDisplayMode": "text"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "thresholds"
-                }
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "value": null,
-                      "color": "blue"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Version"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 220
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false
-        }
-      },
-      "id": 10,
-      "gridPos": {
-        "x": 14,
-        "y": 14,
-        "w": 10,
+        "w": 24,
         "h": 11
       }
     },
@@ -970,72 +855,9 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 11,
+      "id": 10,
       "gridPos": {
         "x": 0,
-        "y": 25,
-        "w": 6,
-        "h": 4
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Scans de minerai cumulés",
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "postgres"
-      },
-      "description": "Scans communautaires agrégés dans les données d'emplacement importées.",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "postgres"
-          },
-          "refId": "A",
-          "rawSql": "SELECT sum(scans_count) FROM public.ore_locations",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "noValue": "Pas de donnée",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "id": 12,
-      "gridPos": {
-        "x": 6,
         "y": 25,
         "w": 6,
         "h": 4
@@ -1095,11 +917,11 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 13,
+      "id": 11,
       "gridPos": {
-        "x": 12,
+        "x": 6,
         "y": 25,
-        "w": 6,
+        "w": 9,
         "h": 4
       }
     },
@@ -1157,11 +979,11 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "id": 14,
+      "id": 12,
       "gridPos": {
-        "x": 18,
+        "x": 15,
         "y": 25,
-        "w": 6,
+        "w": 9,
         "h": 4
       }
     }

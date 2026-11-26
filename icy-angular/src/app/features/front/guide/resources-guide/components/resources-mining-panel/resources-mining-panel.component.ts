@@ -225,15 +225,14 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Un même lieu peut venir de deux sources (ancien relevé Regolith et fichiers du jeu) sous deux codes
-   * (« Calliope » et « CAL ») : on garde une seule zone par planète et onglet, celle des fichiers du jeu.
+   * Deux codes des fichiers du jeu peuvent désigner le même lieu (« Calliope » et « CAL ») :
+   * on garde une seule zone par planète et onglet.
    */
   private uniqueLocations(): ParsedOreLocation[] {
     const byPlace = new Map<string, ParsedOreLocation>();
     for (const location of this.parsedLocations) {
       const place = this.normalizeText(location.listed ? `${location.groupPlanet}|${location.tabLabel}` : `lieu|${location.displayLabel}`);
-      const current = byPlace.get(place);
-      if (!current || (!this.isGameData(current) && this.isGameData(location))) byPlace.set(place, location);
+      if (!byPlace.has(place)) byPlace.set(place, location);
     }
     return [...byPlace.values()];
   }
@@ -317,15 +316,6 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     if (value == null || !Number.isFinite(value)) return '—';
     const pct = value * 100;
     return `${pct < 10 ? pct.toFixed(1).replace('.', ',') : Math.round(pct)} %`;
-  }
-
-  /** Zone issue des fichiers du jeu (API Star Citizen Wiki) plutôt que d'un relevé importé. */
-  isGameData(location: ParsedOreLocation): boolean {
-    return location.key.startsWith('wiki:');
-  }
-
-  get hasMedian(): boolean {
-    return this.selectedLocationOres.some((ore) => ore.medPct != null);
   }
 
   get hasClusters(): boolean {
@@ -602,7 +592,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const oresText = parsedOres.map((ore) => ore.oreCode).join(' | ');
 
     return {
-      key: location.locationKey ?? (location.id != null ? `manual:${location.id}` : `legacy:${location.sourceUrl ?? ''}:${location.locationCode}`),
+      key: location.locationKey ?? `wiki:${location.locationCode}`,
       displayLabel: place.label,
       tabLabel: place.tabLabel,
       visibilityKind: place.kind,

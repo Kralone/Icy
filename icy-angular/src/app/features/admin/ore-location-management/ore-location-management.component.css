@@ -19,16 +19,10 @@ h1 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 600; letter-spacing: 
 .ore-button { position: relative; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .14); background: rgb(255 255 255 / .04); color: #e2e8f0; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 180ms ease, background 180ms ease; }
 .ore-button:hover { border-color: rgb(125 211 252 / .6); background: rgb(125 211 252 / .1); }
 .ore-button:disabled { opacity: .5; cursor: progress; }
-.ore-button--primary { border-color: rgb(var(--tone) / .55); background: rgb(var(--tone) / .14); color: #fef3c7; }
-.ore-button--primary:hover { border-color: rgb(var(--tone)); background: rgb(var(--tone) / .24); }
-.ore-button--busy { opacity: .6; cursor: progress; }
-.ore-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.ore-button:focus-within { outline: 2px solid rgb(var(--tone)); outline-offset: 2px; }
 
 .ore-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; color: #94a3b8; font-size: 13px; }
 .ore-summary strong { color: #f1f5f9; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ore-message { margin-top: 10px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
-.ore-message--ok { border: 1px solid rgb(52 211 153 / .35); background: rgb(52 211 153 / .08); color: #a7f3d0; }
 .ore-message--error { border: 1px solid rgb(248 113 113 / .4); background: rgb(248 113 113 / .08); color: #fecaca; }
 
 /* Barre d'outils : recherche, type de zone, affichage. */
@@ -53,7 +47,7 @@ h1 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 600; letter-spacing: 
 
 /* Liste des zones : une ligne par zone, détail déplié en dessous sur toute la largeur. */
 .zone-list { border-radius: 16px; border: 1px solid var(--line); background: #0b1324; overflow: hidden; box-shadow: inset 0 1px 0 rgb(226 240 255 / .08), 0 20px 50px rgb(0 0 0 / .3); }
-.zone-row { display: grid; width: 100%; grid-template-columns: minmax(10rem, 1.1fr) 5.5rem 7.5rem 5rem minmax(0, 3fr) 1.5rem; align-items: center; gap: 14px; padding: 10px 16px; color: inherit; text-align: left; }
+.zone-row { display: grid; width: 100%; grid-template-columns: minmax(10rem, 1.1fr) 7rem minmax(0, 3fr) 1.5rem; align-items: center; gap: 14px; padding: 10px 16px; color: inherit; text-align: left; }
 .zone-row--head { padding-block: 12px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / .025); color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .zone-item { border-bottom: 1px solid rgb(255 255 255 / .05); }
 .zone-item:last-child { border-bottom: 0; }
@@ -61,7 +55,7 @@ h1 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 600; letter-spacing: 
 .zone-item > .zone-row:hover { background: rgb(var(--tone) / .05); }
 .zone-item--open > .zone-row { background: rgb(var(--tone) / .08); box-shadow: inset 3px 0 0 rgb(var(--tone)); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
-.zone-row .num { color: #cbd5e1; font-size: 13px; }
+.zone-system { color: #cbd5e1; font-size: 13px; }
 .zone-name { display: flex; flex-direction: column; min-width: 0; }
 .zone-name strong { color: #f8fafc; font-size: 14px; font-weight: 600; }
 .zone-name small { color: #64748b; font-size: 11.5px; }
@@ -75,10 +69,6 @@ h1 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 600; letter-spacing: 
 .zone-item--open .zone-chevron { transform: rotate(180deg); color: rgb(var(--tone)); }
 
 .zone-detail { padding: 6px 16px 18px; background: rgb(var(--tone) / .03); border-top: 1px solid rgb(var(--tone) / .15); }
-.zone-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 8px; margin-top: 10px; }
-.zone-metrics div { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #0d1628; }
-.zone-metrics dt { color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-.zone-metrics dd { margin-top: 4px; color: #f1f5f9; font-size: 14px; font-variant-numeric: tabular-nums; }
 .zone-source { margin: 10px 0 12px; color: #64748b; font-size: 12px; }
 .zone-source a { color: #7dd3fc; }
 .zone-ore-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -114,7 +104,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid #7dd3fc; outline-offs
 
 @media (max-width: 1100px) {
   .ore-view { margin-left: 0; }
-  .zone-row { grid-template-columns: minmax(9rem, 1fr) 4.5rem 6.5rem 4rem minmax(0, 2fr) 1.2rem; gap: 10px; }
+  .zone-row { grid-template-columns: minmax(9rem, 1fr) 6rem minmax(0, 2fr) 1.2rem; gap: 10px; }
 }
 
 /* Mobile : chaque zone devient une carte compacte. */
@@ -125,15 +115,10 @@ button:focus-visible, a:focus-visible { outline: 2px solid #7dd3fc; outline-offs
   .ore-kinds { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; }
   .ore-chip { flex: none; }
   .zone-row--head { display: none; }
-  .zone-row { grid-template-columns: repeat(3, minmax(0, 1fr)) 1.2rem; gap: 6px 10px; padding: 12px 14px; }
-  .zone-name { grid-column: 1 / 4; }
-  .zone-chevron { grid-column: 4; grid-row: 1; justify-self: end; }
-  .zone-row .num { text-align: left; color: #f1f5f9; }
-  .zone-row .num::before { content: attr(data-label); display: block; color: #64748b; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  .zone-row { grid-template-columns: minmax(0, 1fr) auto 1.2rem; gap: 6px 10px; padding: 12px 14px; }
   .zone-ores { grid-column: 1 / -1; flex-wrap: wrap; }
   .zone-detail { padding: 4px 12px 14px; }
-  .zone-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .zone-ore-table th:nth-child(3), .zone-ore-table td:nth-child(3), .zone-ore-table th:nth-child(5), .zone-ore-table td:nth-child(5) { display: none; }
+  .zone-ore-table th:nth-child(5), .zone-ore-table td:nth-child(5) { display: none; }
   .freq { width: 4.5rem; }
 }
 

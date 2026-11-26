@@ -21,7 +21,6 @@ class CatalogOreDistributionServiceTest {
         CatalogOreDistributionService.add(rows, node, 42L, "/ore.png", null, null);
         var dto = rows.get("wiki:|HUR-L1").dto();
         assertThat(dto.locationKey()).isEqualTo("wiki:|HUR-L1");
-        assertThat(dto.users()).isNull();
         assertThat(dto.gameVersion()).isNull();
         assertThat(dto.systemName()).isNull();
         var ore = dto.ores().getFirst();
@@ -29,7 +28,6 @@ class CatalogOreDistributionServiceTest {
         assertThat(ore.maxPct()).isEqualTo(0.07);
         assertThat(ore.probability()).isEqualTo(0.3);
         assertThat(ore.method()).isNull();
-        assertThat(ore.medPct()).isNull();
         assertThat(ore.catalogEntryId()).isEqualTo(42L);
     }
     @Test

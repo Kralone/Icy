@@ -3,7 +3,6 @@ package com.icy.icy_backend.service.catalog;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icy.icy_backend.controller.dto.response.front.OreLocationDTO;
-import com.icy.icy_backend.controller.dto.response.front.OreMetricRangeDTO;
 import com.icy.icy_backend.controller.dto.response.front.OreMixDTO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -182,7 +181,7 @@ public class CatalogOreDistributionService {
         }
 
         OreMixDTO dto() {
-            return new OreMixDTO(name, probability, min, max, null, image, id,
+            return new OreMixDTO(name, probability, min, max, image, id,
                     methods.isEmpty() ? null : String.join(" · ", methods), clusterMin, clusterMax, clusterProbability);
         }
     }
@@ -209,9 +208,8 @@ public class CatalogOreDistributionService {
             this.updatedAt = updatedAt;
         }
         OreLocationDTO dto() {
-            OreMetricRangeDTO unknown = new OreMetricRangeDTO(null, null, null);
-            return new OreLocationDTO(null, code, "https://api.star-citizen.wiki/commodities", version,
-                    updatedAt, null, null, null, unknown, unknown, unknown, unknown, ores.values().stream().map(OreAccumulator::dto).toList(), locationKey, systemName);
+            return new OreLocationDTO(code, "https://api.star-citizen.wiki/commodities", version,
+                    updatedAt, ores.values().stream().map(OreAccumulator::dto).toList(), locationKey, systemName);
         }
     }
 }

@@ -1,18 +1,12 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import {
-  OreLocation,
-  OreLocationService,
-  OreLocationUploadResult,
-  OreMetricRange,
-  OreMix
-} from '../../../core/services/ore/ore-location.service';
+import { OreLocation, OreLocationService, OreMix } from '../../../core/services/ore/ore-location.service';
 import {
   ORE_ZONE_KIND_LABELS,
   OreZoneKind,
   formatOreName,
-  parseOreZoneCode,
+  resolveOrePlace,
   sortOresByProbability
 } from '../../../core/services/ore/ore-location-label';
 import { CatalogIconComponent } from '../../../shared/catalog-icon/catalog-icon.component';
@@ -23,6 +17,7 @@ export interface OreZoneRow {
   key: string;
   label: string;
   planet: string;
+  system: string | null;
   kind: OreZoneKind;
   ores: OreMix[];
 }
@@ -56,9 +51,7 @@ export class OreLocationManagementComponent implements OnInit {
   kindFilter: KindFilter = 'ALL';
   viewMode: ViewMode = 'zones';
   loading = false;
-  uploading = false;
   errorMessage = '';
-  successMessage = '';
   currentPage = 1;
   readonly pageSize = 25;
 
@@ -90,38 +83,6 @@ export class OreLocationManagementComponent implements OnInit {
       error: () => {
         this.loading = false;
         this.errorMessage = 'Impossible de charger les zones de minage.';
-      }
-    });
-  }
-
-  onUploadFile(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    const file = target?.files?.[0] ?? null;
-    if (!file) return;
-
-    if (!file.name.toLowerCase().endsWith('.json')) {
-      this.errorMessage = 'Le fichier doit être un JSON.';
-      if (target) target.value = '';
-      return;
-    }
-
-    this.uploading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.oreLocationService.uploadAndReset(file).subscribe({
-      next: (response) => {
-        const result = response?.data as OreLocationUploadResult | null;
-        this.successMessage = result
-          ? `Import terminé : ${result.locationCount} zones et ${result.oreEntryCount} relevés de minerai remplacent les précédents.`
-          : 'Import terminé.';
-        this.uploading = false;
-        if (target) target.value = '';
-        this.loadLocations();
-      },
-      error: () => {
-        this.uploading = false;
-        this.errorMessage = 'Import impossible. Vérifiez le fichier JSON et réessayez ; les zones actuelles sont conservées.';
-        if (target) target.value = '';
       }
     });
   }
@@ -173,10 +134,6 @@ export class OreLocationManagementComponent implements OnInit {
     return filter === 'ALL' ? this.rows.length : this.rows.filter((row) => row.kind === filter).length;
   }
 
-  get totalScans(): number {
-    return this.rows.reduce((total, row) => total + (row.location.scans ?? 0), 0);
-  }
-
   get latestUpdate(): { version: string | null; date: string | null } {
     const latest = [...this.rows].sort((a, b) => (Date.parse(b.location.updatedAt ?? '') || 0) - (Date.parse(a.location.updatedAt ?? '') || 0))[0];
     return { version: latest?.location.gameVersion ?? null, date: latest?.location.updatedAt ?? null };
@@ -194,16 +151,6 @@ export class OreLocationManagementComponent implements OnInit {
     return `${pct < 10 ? pct.toFixed(1).replace('.', ',') : Math.round(pct)} %`;
   }
 
-  formatNumber(value: number | null | undefined): string {
-    if (value == null || !Number.isFinite(value)) return '—';
-    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value);
-  }
-
-  formatRange(range: OreMetricRange | null | undefined): string {
-    if (!range || (range.min == null && range.med == null && range.max == null)) return 'Non renseigné';
-    return `${this.formatNumber(range.min)} · ${this.formatNumber(range.med)} · ${this.formatNumber(range.max)}`;
-  }
-
   formatDate(value: string | null | undefined): string {
     if (!value) return 'date inconnue';
     const parsed = new Date(value);
@@ -216,13 +163,14 @@ export class OreLocationManagementComponent implements OnInit {
   }
 
   private toRow(location: OreLocation, index: number): OreZoneRow {
-    const parsed = parseOreZoneCode(location.locationCode);
+    const place = resolveOrePlace(location.locationCode);
     return {
       location,
-      key: location.locationKey ?? (location.id != null ? `id:${location.id}` : `row:${index}`),
-      label: parsed.displayLabel,
-      planet: parsed.groupPlanet,
-      kind: parsed.kind,
+      key: location.locationKey ?? `row:${index}`,
+      label: place.label,
+      planet: place.planet ?? place.label,
+      system: location.systemName ?? place.system,
+      kind: place.kind === 'PLANET' || place.kind === 'LAGRANGE' ? place.kind : 'OTHER',
       ores: sortOresByProbability(location)
     };
   }
