@@ -58,9 +58,12 @@ if docker exec "$bot_container" touch /app/.root-filesystem-write-check >/dev/nu
   exit 1
 fi
 
+# Logs depuis le démarrage du conteneur : si le bot tourne déjà sur l'image demandée, Compose ne le
+# recrée pas et ses marqueurs de connexion peuvent dater de plus de 10 minutes.
+bot_started_at="$(docker inspect --format '{{.State.StartedAt}}' "$bot_container")"
 recent_logs=
 for _ in $(seq 1 30); do
-  recent_logs="$(docker logs --since 10m "$bot_container" 2>&1)"
+  recent_logs="$(docker logs --since "$bot_started_at" "$bot_container" 2>&1)"
   if grep -Fq 'Connecté en tant que' <<<"$recent_logs" \
     && grep -Fq 'RabbitMQ connecté et en écoute' <<<"$recent_logs"; then
     break
