@@ -1,554 +1,271 @@
-<!-- ================== ADMIN IMAGE LIBRARY - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-10">
+<div class="il">
+  <a routerLink="/icy/admin/data" class="il-back"><span aria-hidden="true">←</span> Retour aux données</a>
 
-  <!-- HEADER -->
-  <div class="flex items-center justify-between">
-    <a
-      routerLink="/icy/admin/data"
-      class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-      >
-      <span class="text-base leading-none">←</span>
-      <span>Retour Data</span>
-    </a>
-
-    <label
-      class="cursor-pointer bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-             text-white font-semibold px-5 py-2 rounded-xl shadow-lg transition transform hover:scale-105 inline-flex items-center gap-2"
-      >
-      ⬆️ Uploader une image
-      <input type="file" class="hidden" (change)="onFilePick($event)" accept="image/*" />
-    </label>
-  </div>
-
-  <!-- ========================== SECTION BIBLIOTHÈQUE ========================== -->
-  <section class="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl p-6 space-y-6">
-    <h1 class="text-2xl font-bold text-cyan-300">📸 Bibliothèque d’images</h1>
-
-    <!-- Catégories -->
-    <div class="space-y-3">
-      <h2 class="text-sm uppercase tracking-widest text-slate-300">Catégories</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <button
-          (click)="selectCategory('Toutes')"
-          class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
-          [class.ring-2]="selectedCategory === 'Toutes'"
-          [class.ring-cyan-400]="selectedCategory === 'Toutes'"
-          >
-          <div class="h-16 bg-gradient-to-br from-cyan-500/20 to-blue-600/20"></div>
-          <div class="p-2 text-xs">
-            <div class="font-semibold text-white">Toutes</div>
-            <div class="text-slate-400">{{ images.length }} images</div>
-          </div>
-        </button>
-        @for (c of categories; track c) {
-          <button
-            (click)="selectCategory(c.name)"
-            class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
-            [class.ring-2]="selectedCategory === c.name"
-            [class.ring-cyan-400]="selectedCategory === c.name"
-            >
-            <div
-              class="h-16 bg-black/30 bg-center bg-cover"
-              [style.backgroundImage]="c.coverUrl ? 'url(' + c.coverUrl + ')' : 'none'"
-            ></div>
-            <div class="p-2 text-xs">
-              <div class="font-semibold text-white truncate" [title]="c.name">{{ c.name }}</div>
-              <div class="text-slate-400">{{ c.count }} images</div>
-            </div>
-          </button>
-        }
-      </div>
+  <header class="il-head">
+    <div>
+      <p class="il-kicker">Administration</p>
+      <h1 class="il-title">Bibliothèque d’images</h1>
     </div>
+    <label class="il-btn il-btn--primary">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 14V4M6 8l4-4 4 4M4 16h12" /></svg> Ajouter une image
+      <input type="file" class="il-sr" (change)="onFilePick($event)" accept="image/*" />
+    </label>
+  </header>
 
-    <!-- Sous-catégories -->
-    @if (selectedCategory !== 'Toutes') {
-      <div class="space-y-3">
-        <h2 class="text-sm uppercase tracking-widest text-slate-300">Sous-catégories</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <button
-            (click)="selectSubcategory('Toutes')"
-            class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
-            [class.ring-2]="selectedSubcategory === 'Toutes'"
-            [class.ring-cyan-400]="selectedSubcategory === 'Toutes'"
-            >
-            <div class="h-14 bg-gradient-to-br from-cyan-500/10 to-blue-600/10"></div>
-            <div class="p-2 text-xs">
-              <div class="font-semibold text-white">Toutes</div>
-            </div>
+  <div class="il-layout">
+    <!-- Filtres -->
+    <aside class="il-panel il-filters" aria-label="Filtres">
+      <div class="il-search">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5" /><path d="m13.2 13.2 3.3 3.3" /></svg>
+        <input type="search" class="il-input" [(ngModel)]="query" placeholder="Nom, tag ou description" aria-label="Rechercher une image" />
+      </div>
+
+      <div class="il-group">
+        <h2 class="il-label">Catégories</h2>
+        <div class="il-cats">
+          <button type="button" class="il-cat" [class.il-cat--on]="selectedCategory === 'Toutes'" [attr.aria-pressed]="selectedCategory === 'Toutes'" (click)="selectCategory('Toutes')">
+            <span class="il-cat-cover" aria-hidden="true"></span>
+            <span class="il-cat-name">Toutes</span><span class="il-count">{{ images.length }}</span>
           </button>
-          @for (sc of subcategoryCards(selectedCategory); track sc) {
-            <button
-              (click)="selectSubcategory(sc.name)"
-              class="rounded-xl border border-white/20 overflow-hidden text-left hover:scale-[1.02] transition"
-              [class.ring-2]="selectedSubcategory === sc.name"
-              [class.ring-cyan-400]="selectedSubcategory === sc.name"
-              >
-              <div
-                class="h-14 bg-black/30 bg-center bg-cover"
-                [style.backgroundImage]="sc.coverUrl ? 'url(' + sc.coverUrl + ')' : 'none'"
-              ></div>
-              <div class="p-2 text-xs">
-                <div class="font-semibold text-white truncate" [title]="sc.name">{{ sc.name }}</div>
-                <div class="text-slate-400">{{ sc.count }} images</div>
-              </div>
+          @for (c of categories; track c.name) {
+            <button type="button" class="il-cat" [class.il-cat--on]="selectedCategory === c.name" [attr.aria-pressed]="selectedCategory === c.name" (click)="selectCategory(c.name)">
+              <span class="il-cat-cover" aria-hidden="true" [style.backgroundImage]="c.coverUrl ? 'url(' + c.coverUrl + ')' : 'none'"></span>
+              <span class="il-cat-name" [title]="c.name">{{ c.name }}</span><span class="il-count">{{ c.count }}</span>
             </button>
           }
         </div>
       </div>
-    }
 
-    <!-- Tags -->
-    <div class="space-y-2">
-      <h2 class="text-sm uppercase tracking-widest text-slate-300">Tags</h2>
-      <div class="flex flex-wrap gap-2">
-        <button
-          (click)="selectTag('Tous')"
-          class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
-          [ngClass]="selectedTag === 'Tous' ? 'bg-cyan-500/20 text-cyan-200' : ''"
-          >
-          Tous
-        </button>
-        @for (tag of availableTags; track tag) {
-          <button
-            (click)="selectTag(tag)"
-            class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
-            [ngClass]="selectedTag === tag ? 'text-white' : 'text-slate-200'"
-            [style.backgroundColor]="selectedTag === tag ? tagColor(tag) : 'transparent'"
-            >
-            #{{ tag }}
-          </button>
-        }
-        @if (availableTags.length === 0) {
-          <span class="text-xs text-slate-400 italic">Aucun tag</span>
-        }
+      @if (selectedCategory !== 'Toutes') {
+        <div class="il-group">
+          <h2 class="il-label">Sous-catégories</h2>
+          <div class="il-cats">
+            <button type="button" class="il-cat" [class.il-cat--on]="selectedSubcategory === 'Toutes'" [attr.aria-pressed]="selectedSubcategory === 'Toutes'" (click)="selectSubcategory('Toutes')">
+              <span class="il-cat-cover" aria-hidden="true"></span><span class="il-cat-name">Toutes</span>
+            </button>
+            @for (sc of subcategoryCards(selectedCategory); track sc.name) {
+              <button type="button" class="il-cat" [class.il-cat--on]="selectedSubcategory === sc.name" [attr.aria-pressed]="selectedSubcategory === sc.name" (click)="selectSubcategory(sc.name)">
+                <span class="il-cat-cover" aria-hidden="true" [style.backgroundImage]="sc.coverUrl ? 'url(' + sc.coverUrl + ')' : 'none'"></span>
+                <span class="il-cat-name" [title]="sc.name">{{ sc.name }}</span><span class="il-count">{{ sc.count }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="il-group">
+        <h2 class="il-label">Tags</h2>
+        <div class="il-tags">
+          <button type="button" class="il-tag" [class.il-tag--on]="selectedTag === 'Tous'" [style.--tag]="'#22d3ee'" (click)="selectTag('Tous')">Tous</button>
+          @for (tag of availableTags; track tag) {
+            <button type="button" class="il-tag" [class.il-tag--on]="selectedTag === tag" [style.--tag]="tagColor(tag)" (click)="selectTag(tag)">#{{ tag }}</button>
+          }
+          @if (availableTags.length === 0) { <span class="il-msg">Aucun tag</span> }
+        </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- Barre de recherche -->
-    <div class="flex items-center gap-3">
-      <input
-        type="text"
-        [(ngModel)]="query"
-        placeholder="🔍 Rechercher une image (nom, tag, description)..."
-        class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-               focus:ring-2 focus:ring-cyan-400 outline-none"
-        />
+    <!-- Images -->
+    <section class="il-main" aria-label="Images">
+      <div class="il-drop" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13V4M6 8l4-4 4 4M4 16h12" /></svg>
+        Glissez une image ici pour l’ajouter
       </div>
 
-      <!-- Dropzone -->
-      <div
-        (drop)="onDrop($event)"
-        (dragover)="onDragOver($event)"
-        class="border-2 border-dashed border-white/30 rounded-2xl p-6 text-center text-slate-300 bg-white/5 hover:bg-white/10 transition"
-        >
-        Glisse-dépose une image ici pour l’uploader
-      </div>
-
-      <!-- Loader -->
       @if (isLoading) {
-        <div class="text-center text-gray-300 py-6">
-          <span class="animate-pulse">Chargement des images...</span>
-        </div>
-      }
-
-      <!-- Empty -->
-      @if (!isLoading && filtered.length === 0) {
-        <div class="text-center italic text-gray-400 py-6">
-          Aucune image trouvée.
-        </div>
-      }
-
-      <!-- Grille d’images -->
-      @if (!isLoading && filtered.length > 0) {
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <p class="il-empty">Chargement des images…</p>
+      } @else if (filtered.length === 0) {
+        <p class="il-empty">Aucune image ne correspond aux filtres.</p>
+      } @else {
+        <ul class="il-grid">
           @for (img of filtered; track img) {
-            <div
-              class="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl overflow-hidden group transition hover:scale-[1.02]">
-              <div class="aspect-video bg-black/30 overflow-hidden">
-                <img [src]="urlOf(img)" [alt]="img.name" class="w-full h-full object-cover group-hover:scale-105 transition" />
-              </div>
-              <div class="p-4 space-y-2">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 class="text-white font-semibold truncate max-w-[220px]" [title]="img.name">{{ img.name }}</h3>
-                    <p class="text-slate-400 text-xs">{{ img.size | number }} octets • {{ img.uploadedAt | date:'medium' }}</p>
-                    @if (img.category || img.subcategory) {
-                      <p class="text-slate-300 text-xs mt-1">
-                        {{ img.category || '—' }} / {{ img.subcategory || '—' }}
-                      </p>
-                    }
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button (click)="openEditModal(img)"
-                      class="text-yellow-300 hover:text-yellow-200 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-2 py-1 text-xs transition">
-                      ✏️
-                    </button>
-                    <button (click)="delete(img)"
-                      class="text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg px-2 py-1 text-xs transition">
-                      🗑
-                    </button>
-                  </div>
-                </div>
+            <li class="il-card">
+              <a class="il-card-media" [href]="urlOf(img)" target="_blank" rel="noopener" [attr.aria-label]="'Ouvrir ' + img.name">
+                <img [src]="urlOf(img)" [alt]="img.name" loading="lazy" />
+              </a>
+              <div class="il-card-body">
+                <strong class="il-card-title" [title]="img.name">{{ img.name }}</strong>
+                <p class="il-meta">{{ (img.size / 1024) | number: '1.0-0' }} Ko · {{ img.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                @if (img.category || img.subcategory) {
+                  <p class="il-path">{{ img.category || '—' }}<span aria-hidden="true"> / </span>{{ img.subcategory || '—' }}</p>
+                }
                 @if (img.tags?.length) {
-                  <div class="flex flex-wrap gap-2">
-                    @for (tag of img.tags; track tag) {
-                      <span
-                        class="text-xs text-white border border-white/20 rounded-full px-2 py-0.5"
-                        [style.backgroundColor]="tagColor(tag)">
-                        #{{ tag }}
-                      </span>
-                    }
+                  <div class="il-tags">
+                    @for (tag of img.tags; track tag) { <span class="il-tag il-tag--on il-tag--sm" [style.--tag]="tagColor(tag)">#{{ tag }}</span> }
                   </div>
                 }
-                <div class="flex items-center justify-between">
-                  <a [href]="urlOf(img)" target="_blank"
-                  class="text-cyan-300 hover:text-cyan-200 text-sm underline underline-offset-4">Ouvrir</a>
-                  <!-- ✅ Bouton copier -->
-                  <button (click)="copyLink(img)"
-                    class="text-xs text-cyan-200 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20
-                           border border-cyan-500/30 rounded-lg px-2 py-1 transition">
-                    📋 Copier le lien
+                <div class="il-card-actions">
+                  <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="copyLink(img)">Copier le lien</button>
+                  <button type="button" class="il-icon-btn" (click)="openEditModal(img)" [attr.aria-label]="'Modifier ' + img.name" title="Modifier">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16h3l8.5-8.5-3-3L4 13v3ZM11 6l3 3" /></svg>
+                  </button>
+                  <button type="button" class="il-icon-btn il-icon-btn--danger" (click)="delete(img)" [attr.aria-label]="'Supprimer ' + img.name" title="Supprimer">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6h10M8 6V4h4v2M6.5 6l.7 10h5.6l.7-10" /></svg>
                   </button>
                 </div>
               </div>
-            </div>
+            </li>
           }
-        </div>
+        </ul>
       }
     </section>
-
-    <!-- ✅ Toast visuel -->
-    @if (toastMessage) {
-      <div
-       class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white/10 text-cyan-200 border border-white/20
-              backdrop-blur-xl px-6 py-3 rounded-xl shadow-lg animate-fade-in-out">
-        {{ toastMessage }}
-      </div>
-    }
   </div>
 
-  <!-- Modal upload -->
-  @if (uploadModalOpen) {
-    <div
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-      <div class="w-full max-w-3xl bg-[#0d1b2a] border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 class="text-lg font-semibold text-cyan-200">Ajouter une image</h2>
-          <button (click)="closeUploadModal()" class="text-slate-300 hover:text-white">✕</button>
+  @if (toastMessage) { <div class="il-toast" role="status">{{ toastMessage }}</div> }
+</div>
+
+@if (uploadModalOpen) {
+  <div class="il-backdrop">
+    <div class="il-dialog" role="dialog" aria-modal="true" aria-labelledby="il-upload-title">
+      <div class="il-dialog-head">
+        <h2 id="il-upload-title">Ajouter une image</h2>
+        <button type="button" class="il-icon-btn" (click)="closeUploadModal()" aria-label="Fermer">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+        </button>
+      </div>
+      <div class="il-dialog-body">
+        <div class="il-preview">
+          @if (uploadPreviewUrl) { <img [src]="uploadPreviewUrl" alt="Aperçu" /> } @else { <span class="il-msg">Aperçu indisponible</span> }
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-          <div class="bg-black/30 rounded-xl overflow-hidden border border-white/10">
-            @if (uploadPreviewUrl) {
-              <img [src]="uploadPreviewUrl" alt="Apercu"
-                class="w-full h-full object-contain max-h-[320px]" />
-            }
-            @if (!uploadPreviewUrl) {
-              <div class="text-center text-slate-400 p-6">Apercu non disponible</div>
-            }
+        <div class="il-form">
+          <div class="il-field">
+            <label class="il-label" for="il-upload-cat">Catégorie</label>
+            <div class="il-inline">
+              @if (!useNewCategory) {
+                <select id="il-upload-cat" class="il-input" [(ngModel)]="uploadCategory" (change)="onCategorySelectChange(uploadCategory)">
+                  <option value="">Choisir</option>
+                  @for (c of categoriesDb; track c) { <option [value]="c">{{ c }}</option> }
+                </select>
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="enableNewCategory()">Nouvelle</button>
+              } @else {
+                <input id="il-upload-cat" class="il-input" [(ngModel)]="newCategoryName" placeholder="Nouvelle catégorie" />
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="saveNewCategory()">Valider</button>
+                <button type="button" class="il-icon-btn" (click)="cancelNewCategory()" aria-label="Annuler la nouvelle catégorie">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+                </button>
+              }
+            </div>
           </div>
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <label class="text-xs uppercase tracking-widest text-slate-300">Catégorie</label>
-              <div class="flex items-center gap-2">
-                @if (!useNewCategory) {
-                  <select
-                    [(ngModel)]="uploadCategory"
-                    (change)="onCategorySelectChange(uploadCategory)"
-              class="flex-1 px-4 py-2 rounded-lg
-                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                     border border-white/20 text-white
-                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
-                    >
-                    <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
-                    @for (c of categoriesDb; track c) {
-                      <option [value]="c" class="bg-[#1b263b] text-white">{{ c }}</option>
-                    }
-                  </select>
-                }
-                @if (useNewCategory) {
-                  <input
-                    type="text"
-                    [(ngModel)]="newCategoryName"
-                    placeholder="Nouvelle catégorie"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                    />
-                }
-                @if (!useNewCategory) {
-                  <button (click)="enableNewCategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    +
-                  </button>
-                }
-                @if (useNewCategory) {
-                  <button (click)="saveNewCategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    ✓
-                  </button>
-                }
-                @if (useNewCategory) {
-                  <button (click)="cancelNewCategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    ✕
-                  </button>
-                }
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs uppercase tracking-widest text-slate-300">Sous-catégorie</label>
-              <div class="flex items-center gap-2">
-                @if (!useNewSubcategory) {
-                  <select
-                    [(ngModel)]="uploadSubcategory"
-              class="flex-1 px-4 py-2 rounded-lg
-                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                     border border-white/20 text-white
-                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
-                    >
-                    <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
-                    @for (sc of subcategoriesDb; track sc) {
-                      <option [value]="sc" class="bg-[#1b263b] text-white">{{ sc }}</option>
-                    }
-                  </select>
-                }
-                @if (useNewSubcategory) {
-                  <input
-                    type="text"
-                    [(ngModel)]="newSubcategoryName"
-                    placeholder="Nouvelle sous-catégorie"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                    />
-                }
-                @if (!useNewSubcategory) {
-                  <button (click)="enableNewSubcategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    +
-                  </button>
-                }
-                @if (useNewSubcategory) {
-                  <button (click)="saveNewSubcategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    ✓
-                  </button>
-                }
-                @if (useNewSubcategory) {
-                  <button (click)="cancelNewSubcategory()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    ✕
-                  </button>
-                }
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs uppercase tracking-widest text-slate-300">Tags</label>
-              <div class="flex flex-wrap gap-2">
-                @for (tag of availableTagsForUpload; track tag) {
-                  <button
-                    (click)="toggleUploadTag(tag)"
-                    class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
-                    [ngClass]="uploadTags.includes(tag) ? 'text-white' : 'text-slate-200'"
-                    [style.backgroundColor]="uploadTags.includes(tag) ? tagColor(tag) : 'transparent'"
-                    >
-                    #{{ tag }}
-                  </button>
-                }
-                @if (availableTagsForUpload.length === 0) {
-                  <span class="text-xs text-slate-400 italic">Aucun tag</span>
-                }
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs uppercase tracking-widest text-slate-300">Nouveau tag</label>
-              <div class="flex items-center gap-2">
-                <input
-                  type="text"
-                  [(ngModel)]="newTagName"
-                  placeholder="Nom du tag"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                  />
-                  <input type="color" [(ngModel)]="newTagColor" class="h-10 w-12 rounded border border-white/20 bg-transparent" />
-                  <button (click)="addNewTag()"
-                    class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    Ajouter
-                  </button>
-                </div>
-              </div>
-              <div class="flex gap-3 justify-end">
-                <button (click)="closeUploadModal()"
-                  class="px-4 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                  Annuler
+          <div class="il-field">
+            <label class="il-label" for="il-upload-sub">Sous-catégorie</label>
+            <div class="il-inline">
+              @if (!useNewSubcategory) {
+                <select id="il-upload-sub" class="il-input" [(ngModel)]="uploadSubcategory">
+                  <option value="">Choisir</option>
+                  @for (sc of subcategoriesDb; track sc) { <option [value]="sc">{{ sc }}</option> }
+                </select>
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="enableNewSubcategory()">Nouvelle</button>
+              } @else {
+                <input id="il-upload-sub" class="il-input" [(ngModel)]="newSubcategoryName" placeholder="Nouvelle sous-catégorie" />
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="saveNewSubcategory()">Valider</button>
+                <button type="button" class="il-icon-btn" (click)="cancelNewSubcategory()" aria-label="Annuler la nouvelle sous-catégorie">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
                 </button>
-                <button (click)="confirmUpload()"
-                  class="px-5 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-400 text-white font-semibold">
-                  Upload
-                </button>
-              </div>
+              }
+            </div>
+          </div>
+          <div class="il-field">
+            <span class="il-label">Tags</span>
+            <div class="il-tags">
+              @for (tag of availableTagsForUpload; track tag) {
+                <button type="button" class="il-tag" [class.il-tag--on]="uploadTags.includes(tag)" [attr.aria-pressed]="uploadTags.includes(tag)"
+                  [style.--tag]="tagColor(tag)" (click)="toggleUploadTag(tag)">#{{ tag }}</button>
+              }
+              @if (availableTagsForUpload.length === 0) { <span class="il-msg">Aucun tag</span> }
+            </div>
+          </div>
+          <div class="il-field">
+            <label class="il-label" for="il-upload-tag">Nouveau tag</label>
+            <div class="il-inline">
+              <input id="il-upload-tag" class="il-input" [(ngModel)]="newTagName" placeholder="Nom du tag" />
+              <input type="color" class="il-color" [(ngModel)]="newTagColor" aria-label="Couleur du tag" />
+              <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="addNewTag()">Ajouter</button>
             </div>
           </div>
         </div>
       </div>
-    }
+      <div class="il-dialog-foot">
+        <button type="button" class="il-btn il-btn--ghost" (click)="closeUploadModal()">Annuler</button>
+        <button type="button" class="il-btn il-btn--primary" (click)="confirmUpload()">Ajouter</button>
+      </div>
+    </div>
+  </div>
+}
 
-    <!-- Modal edit -->
-    @if (editModalOpen) {
-      <div
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-        <div class="w-full max-w-3xl bg-[#0d1b2a] border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
-            <h2 class="text-lg font-semibold text-cyan-200">Modifier l'image</h2>
-            <button (click)="closeEditModal()" class="text-slate-300 hover:text-white">✕</button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-            <div class="bg-black/30 rounded-xl overflow-hidden border border-white/10">
-              @if (editingImage) {
-                <img [src]="urlOf(editingImage)" alt="Apercu"
-                  class="w-full h-full object-contain max-h-[320px]" />
+@if (editModalOpen) {
+  <div class="il-backdrop">
+    <div class="il-dialog" role="dialog" aria-modal="true" aria-labelledby="il-edit-title">
+      <div class="il-dialog-head">
+        <h2 id="il-edit-title">Modifier l’image</h2>
+        <button type="button" class="il-icon-btn" (click)="closeEditModal()" aria-label="Fermer">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+        </button>
+      </div>
+      <div class="il-dialog-body">
+        <div class="il-preview">
+          @if (editingImage) { <img [src]="urlOf(editingImage)" alt="Aperçu" /> }
+        </div>
+        <div class="il-form">
+          <div class="il-field">
+            <label class="il-label" for="il-edit-cat">Catégorie</label>
+            <div class="il-inline">
+              @if (!editUseNewCategory) {
+                <select id="il-edit-cat" class="il-input" [(ngModel)]="editCategory" (change)="onEditCategorySelectChange(editCategory)">
+                  <option value="">Choisir</option>
+                  @for (c of categoriesDb; track c) { <option [value]="c">{{ c }}</option> }
+                </select>
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="enableNewCategoryEdit()">Nouvelle</button>
+              } @else {
+                <input id="il-edit-cat" class="il-input" [(ngModel)]="editNewCategoryName" placeholder="Nouvelle catégorie" />
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="saveNewCategoryEdit()">Valider</button>
+                <button type="button" class="il-icon-btn" (click)="cancelNewCategoryEdit()" aria-label="Annuler la nouvelle catégorie">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+                </button>
               }
             </div>
-            <div class="space-y-4">
-              <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-300">Catégorie</label>
-                <div class="flex items-center gap-2">
-                  @if (!editUseNewCategory) {
-                    <select
-                      [(ngModel)]="editCategory"
-                      (change)="onEditCategorySelectChange(editCategory)"
-              class="flex-1 px-4 py-2 rounded-lg
-                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                     border border-white/20 text-white
-                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
-                      >
-                      <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
-                      @for (c of categoriesDb; track c) {
-                        <option [value]="c" class="bg-[#1b263b] text-white">{{ c }}</option>
-                      }
-                    </select>
-                  }
-                  @if (editUseNewCategory) {
-                    <input
-                      type="text"
-                      [(ngModel)]="editNewCategoryName"
-                      placeholder="Nouvelle catégorie"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                      />
-                  }
-                  @if (!editUseNewCategory) {
-                    <button (click)="enableNewCategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      +
-                    </button>
-                  }
-                  @if (editUseNewCategory) {
-                    <button (click)="saveNewCategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      ✓
-                    </button>
-                  }
-                  @if (editUseNewCategory) {
-                    <button (click)="cancelNewCategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      ✕
-                    </button>
-                  }
-                </div>
-              </div>
-              <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-300">Sous-catégorie</label>
-                <div class="flex items-center gap-2">
-                  @if (!editUseNewSubcategory) {
-                    <select
-                      [(ngModel)]="editSubcategory"
-              class="flex-1 px-4 py-2 rounded-lg
-                     bg-gradient-to-r from-cyan-600/30 to-blue-700/30
-                     border border-white/20 text-white
-                     focus:ring-2 focus:ring-cyan-400 outline-none transition"
-                      >
-                      <option value="" class="bg-[#1b263b] text-gray-400">Sélectionner</option>
-                      @for (sc of subcategoriesDb; track sc) {
-                        <option [value]="sc" class="bg-[#1b263b] text-white">{{ sc }}</option>
-                      }
-                    </select>
-                  }
-                  @if (editUseNewSubcategory) {
-                    <input
-                      type="text"
-                      [(ngModel)]="editNewSubcategoryName"
-                      placeholder="Nouvelle sous-catégorie"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                      />
-                  }
-                  @if (!editUseNewSubcategory) {
-                    <button (click)="enableNewSubcategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      +
-                    </button>
-                  }
-                  @if (editUseNewSubcategory) {
-                    <button (click)="saveNewSubcategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      ✓
-                    </button>
-                  }
-                  @if (editUseNewSubcategory) {
-                    <button (click)="cancelNewSubcategoryEdit()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      ✕
-                    </button>
-                  }
-                </div>
-              </div>
-              <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-300">Tags</label>
-                <div class="flex flex-wrap gap-2">
-                  @for (tag of availableTagsForEdit; track tag) {
-                    <button
-                      (click)="toggleEditTag(tag)"
-                      class="text-xs rounded-full px-3 py-1 border border-white/20 hover:border-cyan-400 transition"
-                      [ngClass]="editTags.includes(tag) ? 'text-white' : 'text-slate-200'"
-                      [style.backgroundColor]="editTags.includes(tag) ? tagColor(tag) : 'transparent'"
-                      >
-                      #{{ tag }}
-                    </button>
-                  }
-                  @if (availableTagsForEdit.length === 0) {
-                    <span class="text-xs text-slate-400 italic">Aucun tag</span>
-                  }
-                </div>
-              </div>
-              <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-300">Nouveau tag</label>
-                <div class="flex items-center gap-2">
-                  <input
-                    type="text"
-                    [(ngModel)]="editNewTagName"
-                    placeholder="Nom du tag"
-              class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400
-                     focus:ring-2 focus:ring-cyan-400 outline-none"
-                    />
-                    <input type="color" [(ngModel)]="editNewTagColor" class="h-10 w-12 rounded border border-white/20 bg-transparent" />
-                    <button (click)="addNewEditTag()"
-                      class="px-3 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                      Ajouter
-                    </button>
-                  </div>
-                </div>
-                <div class="flex gap-3 justify-end">
-                  <button (click)="closeEditModal()"
-                    class="px-4 py-2 rounded-xl border border-white/20 text-slate-200 hover:text-white">
-                    Annuler
-                  </button>
-                  <button (click)="confirmEdit()"
-                    class="px-5 py-2 rounded-xl bg-cyan-500/90 hover:bg-cyan-400 text-white font-semibold">
-                    Enregistrer
-                  </button>
-                </div>
-              </div>
+          </div>
+          <div class="il-field">
+            <label class="il-label" for="il-edit-sub">Sous-catégorie</label>
+            <div class="il-inline">
+              @if (!editUseNewSubcategory) {
+                <select id="il-edit-sub" class="il-input" [(ngModel)]="editSubcategory">
+                  <option value="">Choisir</option>
+                  @for (sc of subcategoriesDb; track sc) { <option [value]="sc">{{ sc }}</option> }
+                </select>
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="enableNewSubcategoryEdit()">Nouvelle</button>
+              } @else {
+                <input id="il-edit-sub" class="il-input" [(ngModel)]="editNewSubcategoryName" placeholder="Nouvelle sous-catégorie" />
+                <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="saveNewSubcategoryEdit()">Valider</button>
+                <button type="button" class="il-icon-btn" (click)="cancelNewSubcategoryEdit()" aria-label="Annuler la nouvelle sous-catégorie">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+                </button>
+              }
+            </div>
+          </div>
+          <div class="il-field">
+            <span class="il-label">Tags</span>
+            <div class="il-tags">
+              @for (tag of availableTagsForEdit; track tag) {
+                <button type="button" class="il-tag" [class.il-tag--on]="editTags.includes(tag)" [attr.aria-pressed]="editTags.includes(tag)"
+                  [style.--tag]="tagColor(tag)" (click)="toggleEditTag(tag)">#{{ tag }}</button>
+              }
+              @if (availableTagsForEdit.length === 0) { <span class="il-msg">Aucun tag</span> }
+            </div>
+          </div>
+          <div class="il-field">
+            <label class="il-label" for="il-edit-tag">Nouveau tag</label>
+            <div class="il-inline">
+              <input id="il-edit-tag" class="il-input" [(ngModel)]="editNewTagName" placeholder="Nom du tag" />
+              <input type="color" class="il-color" [(ngModel)]="editNewTagColor" aria-label="Couleur du tag" />
+              <button type="button" class="il-btn il-btn--sm il-btn--ghost" (click)="addNewEditTag()">Ajouter</button>
             </div>
           </div>
         </div>
-      }
+      </div>
+      <div class="il-dialog-foot">
+        <button type="button" class="il-btn il-btn--ghost" (click)="closeEditModal()">Annuler</button>
+        <button type="button" class="il-btn il-btn--primary" (click)="confirmEdit()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+}
