@@ -92,7 +92,7 @@ export class DataMenuComponent implements OnInit {
       links: [
         {label: 'Zones de minage', description: 'Minerais par planète, lune et point de Lagrange', icon: 'ore', route: '/icy/admin/ore-locations',
           imageUrl: 'https://static.wikia.nocookie.net/starcitizen/images/6/6d/Aphorite_vitrine.jpg/revision/latest/scale-to-width-down/300?cb=20210215061436'},
-        {label: 'Minerais du catalogue', description: 'Fiches des ressources et de leurs prix', icon: 'price', route: '/icy/admin/catalog',
+        {label: 'Prix des marchandises', description: 'Achat et vente de chaque marchandise, terminal par terminal', icon: 'price', route: '/icy/admin/catalog',
           queryParams: {family: 'COMMODITY', catalogGroup: 'STANDARD'}, imageUrl: 'assets/images/home/activities/cargo.jpg'}
       ]
     },

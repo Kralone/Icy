@@ -94,9 +94,11 @@
 .catalog-card h3 { margin-top: 4px; overflow: hidden; color: #f8fafc; font-size: 1.05rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .catalog-card__description { margin-top: 0.4rem; overflow: hidden; color: #94a3b8; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .catalog-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 12px; margin-top: auto; }
-.price-block { display: flex; align-items: baseline; gap: 6px; }
+.price-stack { display: grid; gap: 2px; }
+.price-block { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
 .price-block span { color: #94a3b8; font-size: 12px; }
 .price-block strong { color: rgb(var(--tone)); font-size: 14px; font-weight: 600; }
+.price-block--sell strong { color: #6ee7b7; }
 .card-arrow { display: grid; width: 1.9rem; height: 1.9rem; place-items: center; border-radius: 50%; color: #64748b; transition: 180ms ease; }
 .catalog-card:hover .card-arrow { color: #0b1324; background: rgb(var(--tone)); }
 

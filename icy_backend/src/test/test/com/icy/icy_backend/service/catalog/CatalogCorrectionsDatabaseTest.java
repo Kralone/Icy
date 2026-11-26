@@ -41,7 +41,7 @@ class CatalogCorrectionsDatabaseTest {
  @Test void explicitAssociationSurvivesEconomyImportAndResetRestoresSource() throws Exception {
   long original=entry("correction-source","Correction Source","ITEM"),manual=entry("correction-manual","Correction Manual","ITEM");
   var cache=mock(UexDatasetCacheRepository.class);
-  for(String key:List.of("items_prices","vehicles_purchases_prices","vehicles_rentals_prices")) {
+  for(String key:List.of("items_prices","vehicles_purchases_prices","vehicles_rentals_prices","commodities_prices")) {
    var dataset=new UexDatasetCache();dataset.setDatasetKey(key);dataset.setPayload(json.readTree(key.equals("items_prices")?"[{\"id\":987654321,\"id_terminal\":987654321,\"item_uuid\":\"correction-source\",\"item_name\":\"Correction Source\",\"terminal_name\":\"Correction Test\",\"price_buy\":25}]":"[]"));when(cache.findById(key)).thenReturn(Optional.of(dataset));
   }
   var mapper=new CatalogEconomyMapper(cache,named,json);mapper.map(run);
@@ -51,6 +51,17 @@ class CatalogCorrectionsDatabaseTest {
   assertThat(jdbc.queryForObject("SELECT source_entry_id FROM catalog.offers WHERE id=?",Long.class,offer)).isEqualTo(original);
   service.resetAssociation(offer);
   assertThat(jdbc.queryForObject("SELECT entry_id FROM catalog.offers WHERE id=?",Long.class,offer)).isEqualTo(original);
+ }
+ @Test void commodityPricesBecomeBuyAndSellOffersOfTheCommodityEntry() throws Exception {
+  entry("commodity-item-homonym","Correction Ore","ITEM");long commodity=entry("commodity-entry","Correction Ore","COMMODITY");
+  var cache=mock(UexDatasetCacheRepository.class);
+  for(String key:List.of("items_prices","vehicles_purchases_prices","vehicles_rentals_prices","commodities_prices")) {
+   var dataset=new UexDatasetCache();dataset.setDatasetKey(key);dataset.setPayload(json.readTree(key.equals("commodities_prices")?"[{\"id\":987654322,\"id_commodity\":77,\"id_terminal\":987654322,\"commodity_name\":\"Correction Ore\",\"terminal_name\":\"Correction Refinery\",\"price_buy\":0,\"price_sell\":31.5}]":"[]"));when(cache.findById(key)).thenReturn(Optional.of(dataset));
+  }
+  new CatalogEconomyMapper(cache,named,json).map(run);
+  assertThat(jdbc.queryForObject("SELECT entry_id FROM catalog.offers WHERE external_id='commodities_prices:987654322:987654322:SELL'",Long.class)).isEqualTo(commodity);
+  assertThat(jdbc.queryForObject("SELECT price FROM catalog.offers WHERE external_id='commodities_prices:987654322:987654322:SELL'",java.math.BigDecimal.class)).isEqualByComparingTo("31.5");
+  assertThat(jdbc.queryForObject("SELECT count(*) FROM catalog.offers WHERE external_id='commodities_prices:987654322:987654322:BUY'",Long.class)).isZero();
  }
  @Test void suggestionsPreserveVariantsAndNeverAssociateOnRead() {
   long exact=entry("correction-exact","Correction Rifle Red","FPS_WEAPON");entry("correction-variant","Correction Rifle Blue","FPS_WEAPON");

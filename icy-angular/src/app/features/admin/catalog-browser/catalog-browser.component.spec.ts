@@ -67,6 +67,21 @@ describe('CatalogBrowserComponent offer places', () => {
   });
 });
 
+describe('CatalogBrowserComponent prices', () => {
+  it('shows the cheapest purchase and the best resale of a commodity', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CatalogBrowserComponent],
+      providers: [provideRouter([]), {provide: CatalogService, useValue: {}}]
+    }).compileComponents();
+    const component = TestBed.createComponent(CatalogBrowserComponent).componentInstance;
+    const offer = (type: string, price: number) => ({type, price, currency: 'aUEC', location: type + price} as CatalogOffer);
+    const entry = {offers: [offer('SELL', 30), offer('BUY', 12), offer('SELL', 41), offer('BUY', 9), offer('SELL', 0)]} as any;
+    expect(component.cheapestOffer(entry)?.price).toBe(9);
+    expect(component.bestSellOffer(entry)?.price).toBe(41);
+    expect(component.bestSellOffer({offers: [offer('BUY', 5)]} as any)).toBeNull();
+  });
+});
+
 describe('CatalogBrowserComponent family column', () => {
   it('groups families by colour and hides empty ones unless selected', async () => {
     await TestBed.configureTestingModule({
