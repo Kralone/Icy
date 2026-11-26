@@ -45,7 +45,7 @@
                 <span class="mine-ranking__rank">{{ result.probability == null ? '—' : idx + 1 }}</span>
                 <span class="mine-ranking__place">
                   <strong>{{ result.displayLabel }}</strong>
-                  <small>{{ result.visibilityKind === 'LAGRANGE' ? 'Point de Lagrange · ' + result.groupPlanet : (result.visibilityKind === 'PLANET' ? 'Planète' : 'Lune ou site') }}</small>
+                  <small>{{ result.context }}</small>
                 </span>
                 <span class="mine-bar"><i [style.width]="oreBarWidth(result.probability)"></i></span>
                 <b>{{ formatPercent(result.probability) }}</b>
@@ -59,10 +59,28 @@
     </section>
   }
 
-  @if (!systemGroups.length) {
+  @if (matchingPlaces.length) {
+    <section class="mine-places" aria-labelledby="mine-places-title">
+      <header class="mine-section-head">
+        <h3 id="mine-places-title">Lieux correspondants</h3>
+        <span>{{ matchingPlaces.length }} bases, stations ou amas</span>
+      </header>
+      <div class="mine-places__list">
+        @for (place of matchingPlaces.slice(0, 40); track place.key) {
+          <button type="button" class="mine-place" [class.mine-place--active]="selectedPlanetGroup?.key === place.key" (click)="selectPlanet(place.key)">
+            {{ place.planetName }}
+          </button>
+        }
+        @if (matchingPlaces.length > 40) { <span class="mine-places__more">Précisez la recherche pour voir les {{ matchingPlaces.length - 40 }} autres.</span> }
+      </div>
+    </section>
+  }
+
+  @if (!systemGroups.length && !matchingPlaces.length) {
     <div class="mine-state">Aucun astre ne correspond à cette recherche.</div>
   } @else {
     <!-- Astres en barre pleine largeur, rangés par système. -->
+    @if (systemGroups.length) {
     <nav class="mine-bodies" aria-label="Astres">
       @for (system of systemGroups; track system.system) {
         <div class="mine-system">
@@ -82,6 +100,7 @@
         </div>
       }
     </nav>
+    }
 
     @if (selectedPlanetGroup; as selectedGroup) {
       <section class="mine-detail" aria-labelledby="mine-detail-title">
@@ -90,7 +109,7 @@
             <img class="mine-detail__image" [src]="selectedGroup.imageUrl" alt="" loading="lazy" decoding="async" />
           }
           <div class="mine-detail__title">
-            <p>{{ selectedGroup.systemName || 'Système inconnu' }}</p>
+            <p>{{ selectedGroup.hidden ? 'Lieu de minage' + (selectedGroup.systemName ? ' · ' + selectedGroup.systemName : '') : (selectedGroup.systemName || 'Système inconnu') }}</p>
             <h3 id="mine-detail-title">{{ selectedGroup.planetName }}</h3>
           </div>
           @if (selectedGroup.locations.length > 1) {
@@ -98,7 +117,7 @@
               @for (location of selectedGroup.locations; track trackLocation($index, location)) {
                 <button type="button" role="tab" class="mine-zone" [class.mine-zone--active]="selectedLocation?.key === location.key"
                   [attr.aria-selected]="selectedLocation?.key === location.key" (click)="selectLocation(location.key)">
-                  {{ location.visibilityKind === 'LAGRANGE' ? location.displayLabel.replace(selectedGroup.planetName + ' ', '') : 'Surface' }}
+                  {{ location.tabLabel }}
                 </button>
               }
             </div>

@@ -2,7 +2,7 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
-import { formatOreName } from '../../../../../../core/services/ore/ore-location-label';
+import { formatOreName, OrePlaceKind, resolveOrePlace } from '../../../../../../core/services/ore/ore-location-label';
 import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 import { CatalogLocationImage, CelestialBody, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
@@ -10,8 +10,13 @@ import { CatalogLocationImage, CelestialBody, CelestialBodyService } from '../..
 interface ParsedOreLocation {
   key: string;
   displayLabel: string;
-  visibilityKind: 'PLANET' | 'LAGRANGE' | 'OTHER';
+  /** Onglet dans la fiche de la planète : « Surface », nom de la lune, « L1 », ceinture. */
+  tabLabel: string;
+  visibilityKind: OrePlaceKind;
   groupPlanet: string;
+  systemName: string | null;
+  /** Rattachée à une planète ; sinon lieu isolé (base, station, amas) trouvable seulement par la recherche. */
+  listed: boolean;
   ores: ParsedOreEntry[];
   oresText: string;
   sourceUrl: string | null;
@@ -30,6 +35,8 @@ interface PlanetGroupCard {
   imageUrl: string | null;
   /** Système de l'astre d'après le catalogue ; null s'il n'y figure pas. */
   systemName: string | null;
+  /** Lieu isolé : absent de la barre des astres, affiché seulement depuis la recherche. */
+  hidden: boolean;
   locations: ParsedOreLocation[];
 }
 
@@ -37,9 +44,14 @@ interface OreLocationResult {
   locationKey: string;
   displayLabel: string;
   groupPlanet: string;
-  visibilityKind: 'PLANET' | 'LAGRANGE' | 'OTHER';
+  /** Rattachement affiché sous le nom : « Lune de Crusader · Stanton », « Lieu de minage ». */
+  context: string;
   probability: number | null;
 }
+
+/** Ordre des planètes dans leur système ; les autres suivent par ordre alphabétique. */
+const PLANET_ORDER = ['Hurston', 'Crusader', 'ArcCorp', 'microTech', 'Pyro I', 'Monox', 'Bloom', 'Pyro IV', 'Pyro V', 'Terminus'];
+const ZONE_ORDER: Record<OrePlaceKind, number> = { PLANET: 0, MOON: 1, BELT: 2, LAGRANGE: 3, OTHER: 4 };
 
 @Component({
   selector: 'front-resources-mining-panel',
@@ -51,6 +63,7 @@ interface OreLocationResult {
 })
 export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   parsedLocations: ParsedOreLocation[] = [];
+  private rawLocations: OreLocation[] = [];
   planets: CelestialBody[] = [];
   catalogLocations: CatalogLocationImage[] = [];
 
@@ -84,7 +97,10 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.catalogLoadSubscription = this.celestialBodyService.listFrontLocationImages().subscribe({
-      next: response => this.catalogLocations = response.data ?? [],
+      next: response => {
+        this.catalogLocations = response.data ?? [];
+        this.reparseLocations();
+      },
       error: () => this.catalogLocations = []
     });
     this.loadCelestialBodies();
@@ -169,47 +185,48 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   }
 
   private buildPlanetGroups(): PlanetGroupCard[] {
-    const visibleLocations = this.parsedLocations;
     const planetMap = new Map<string, PlanetGroupCard>();
+    const isolated: PlanetGroupCard[] = [];
 
-    for (const planet of this.planets.filter((body) => body.bodyType === 'PLANET')) {
-      const key = this.normalizeText(planet.name);
-      planetMap.set(key, {
-        key,
-        planetName: planet.name,
-        imageUrl: this.findImageForPlanet(planet.name),
-        systemName: planet.systemName || null,
-        locations: []
-      });
-    }
-
-    for (const location of visibleLocations) {
+    for (const location of this.parsedLocations) {
+      if (!location.listed) {
+        isolated.push({
+          key: `lieu:${location.key}`,
+          planetName: location.displayLabel,
+          imageUrl: this.findImageForPlanet(location.displayLabel),
+          systemName: location.systemName,
+          hidden: true,
+          locations: [location]
+        });
+        continue;
+      }
       const key = this.normalizeText(location.groupPlanet);
       if (!planetMap.has(key)) {
         planetMap.set(key, {
           key,
           planetName: location.groupPlanet,
           imageUrl: this.findImageForPlanet(location.groupPlanet),
-          systemName: this.findSystemFor(location.groupPlanet),
+          systemName: location.systemName ?? this.findSystemFor(location.groupPlanet),
+          hidden: false,
           locations: []
         });
       }
       planetMap.get(key)?.locations.push(location);
     }
 
-    const groups = Array.from(planetMap.values()).sort((a, b) =>
-      a.planetName.localeCompare(b.planetName, undefined, { sensitivity: 'base' })
-    );
-
-    for (const group of groups) {
-      group.locations.sort((a, b) => {
-        if (a.visibilityKind !== b.visibilityKind) {
-          return a.visibilityKind === 'PLANET' ? -1 : 1;
-        }
-        return a.displayLabel.localeCompare(b.displayLabel, undefined, { sensitivity: 'base' });
-      });
+    const byName = (a: PlanetGroupCard, b: PlanetGroupCard) => a.planetName.localeCompare(b.planetName, undefined, { sensitivity: 'base' });
+    const planets = Array.from(planetMap.values()).sort((a, b) => this.planetRank(a.planetName) - this.planetRank(b.planetName) || byName(a, b));
+    for (const group of planets) {
+      group.locations.sort((a, b) =>
+        ZONE_ORDER[a.visibilityKind] - ZONE_ORDER[b.visibilityKind]
+        || a.tabLabel.localeCompare(b.tabLabel, undefined, { sensitivity: 'base', numeric: true }));
     }
-    return groups;
+    return [...planets, ...isolated.sort(byName)];
+  }
+
+  private planetRank(name: string): number {
+    const index = PLANET_ORDER.findIndex((planet) => this.normalizeText(planet) === this.normalizeText(name));
+    return index < 0 ? PLANET_ORDER.length : index;
   }
 
   get filteredPlanetGroups(): PlanetGroupCard[] {
@@ -239,7 +256,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const filtered = this.filteredPlanetGroups;
     return this.memo('systemGroups', [filtered], () => {
       const bySystem = new Map<string, PlanetGroupCard[]>();
-      for (const group of filtered.filter((candidate) => candidate.locations.length)) {
+      for (const group of filtered.filter((candidate) => !candidate.hidden && candidate.locations.length)) {
         const system = group.systemName || 'Autres';
         bySystem.set(system, [...(bySystem.get(system) ?? []), group]);
       }
@@ -259,6 +276,16 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const groups = this.filteredPlanetGroups;
     const chosen = this.selectedPlanetKey ? groups.find((group) => group.key === this.selectedPlanetKey) : null;
     return chosen ?? this.systemGroups[0]?.groups[0] ?? null;
+  }
+
+  /** Lieux isolés dont le nom correspond à la recherche : bases, stations, amas. */
+  get matchingPlaces(): PlanetGroupCard[] {
+    const filtered = this.filteredPlanetGroups;
+    return this.memo('matchingPlaces', [filtered, this.miningSearch], () => {
+      const search = this.normalizeText(this.miningSearch);
+      if (search.length < 2) return [];
+      return filtered.filter((group) => group.hidden && this.normalizeText(group.planetName).includes(search));
+    });
   }
 
   oreBarWidth(value: number | null | undefined): string {
@@ -516,9 +543,8 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     this.miningError = '';
     this.miningLoadSubscription = this.oreLocationService.listFrontLocations().subscribe({
       next: (response: ApiResponse<OreLocation[]>) => {
-        const rows = response?.data ?? [];
-        this.parsedLocations = rows.map((location) => this.toParsedLocation(location));
-        this.rebuildOreSearchIndex();
+        this.rawLocations = response?.data ?? [];
+        this.reparseLocations();
         this.miningLoaded = true;
         this.miningLoading = false;
         this.syncSelectedPlanet();
@@ -533,7 +559,9 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
   private loadCelestialBodies(): void {
     this.celestialLoadSubscription = this.celestialBodyService.listFrontBodies().subscribe({
       next: (response: ApiResponse<CelestialBody[]>) => {
-        this.planets = (response?.data ?? []).filter((body) => body.bodyType === 'PLANET');
+        // Planètes et lunes : les lunes servent à rattacher leurs zones à la bonne planète.
+        this.planets = response?.data ?? [];
+        this.reparseLocations();
       },
       error: () => {
         this.planets = [];
@@ -541,16 +569,26 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Situe à nouveau les zones quand les astres du catalogue arrivent après elles. */
+  private reparseLocations(): void {
+    this.parsedLocations = this.rawLocations.map((location) => this.toParsedLocation(location));
+    this.rebuildOreSearchIndex();
+    this.syncSelectedPlanet();
+  }
+
   private toParsedLocation(location: OreLocation): ParsedOreLocation {
-    const parsed = this.parseLocationCode(location.locationCode);
+    const place = resolveOrePlace(location.locationCode, this.planets);
     const parsedOres = this.extractOres(location.ores ?? []);
     const oresText = parsedOres.map((ore) => ore.oreCode).join(' | ');
 
     return {
       key: location.locationKey ?? (location.id != null ? `manual:${location.id}` : `legacy:${location.sourceUrl ?? ''}:${location.locationCode}`),
-      displayLabel: parsed.displayLabel,
-      visibilityKind: parsed.visibilityKind,
-      groupPlanet: parsed.groupPlanet,
+      displayLabel: place.label,
+      tabLabel: place.tabLabel,
+      visibilityKind: place.kind,
+      groupPlanet: place.planet ?? place.label,
+      systemName: place.system ?? this.findSystemFor(place.label),
+      listed: place.planet != null,
       ores: parsedOres,
       oresText,
       sourceUrl: location.sourceUrl ?? null,
@@ -578,44 +616,6 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       }
       return left.oreCode.localeCompare(right.oreCode, undefined, { sensitivity: 'base' });
     });
-  }
-
-  private parseLocationCode(rawCode: string): { displayLabel: string; groupPlanet: string; visibilityKind: 'PLANET' | 'LAGRANGE' | 'OTHER' } {
-    const raw = (rawCode ?? '').trim();
-    const upper = raw.toUpperCase();
-    const aliasMap: Record<string, string> = {
-      HUR: 'Hurston',
-      ARC: 'ArcCorp',
-      MIC: 'microTech',
-      CRU: 'Crusader',
-      PYR: 'Pyro'
-    };
-
-    const lagrangeMatch = upper.match(/(HUR|ARC|MIC|CRU|PYR)\s*[-_ ]?L([1-6])/);
-    if (lagrangeMatch) {
-      const planet = aliasMap[lagrangeMatch[1]] ?? lagrangeMatch[1];
-      return {
-        displayLabel: `${planet} L${lagrangeMatch[2]}`,
-        groupPlanet: planet,
-        visibilityKind: 'LAGRANGE'
-      };
-    }
-
-    const bodyMatch = upper.match(/\b(HUR|ARC|MIC|CRU|PYR)\b/);
-    if (bodyMatch) {
-      const planet = aliasMap[bodyMatch[1]] ?? bodyMatch[1];
-      return {
-        displayLabel: planet,
-        groupPlanet: planet,
-        visibilityKind: 'PLANET'
-      };
-    }
-
-    return {
-      displayLabel: raw,
-      groupPlanet: raw,
-      visibilityKind: 'OTHER'
-    };
   }
 
   private findSystemFor(name: string): string | null {
@@ -680,7 +680,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
           locationKey: location.key,
           displayLabel: location.displayLabel,
           groupPlanet: location.groupPlanet,
-          visibilityKind: location.visibilityKind,
+          context: this.placeContext(location),
           probability: ore.probability
         });
       }
@@ -702,6 +702,17 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     this.availableOreCodes = Array.from(oreCodesByNormalized.values())
       .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
     this.oreLocationResultsByCode = oreResults;
+  }
+
+  private placeContext(location: ParsedOreLocation): string {
+    const system = location.systemName ? ` · ${location.systemName}` : '';
+    switch (location.visibilityKind) {
+      case 'PLANET': return `Planète${system}`;
+      case 'MOON': return `Lune de ${location.groupPlanet}${system}`;
+      case 'LAGRANGE': return `Point de Lagrange de ${location.groupPlanet}`;
+      case 'BELT': return `Ceinture · ${location.groupPlanet}`;
+      default: return `Lieu de minage${system}`;
+    }
   }
 
   private normalizeOreKey(value: string): string {
