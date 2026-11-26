@@ -28,12 +28,17 @@ public class CatalogMiningService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> list() {
-        return jdbc.queryForList("""
+        return jdbc.queryForList(sql());
+    }
+
+    /** Pas de String.formatted : les motifs LIKE « %baliaga% » seraient lus comme des formats et lèveraient une exception. */
+    static String sql() {
+        return """
             SELECT id, name, manufacturer, description,
                    CASE WHEN image_is_fallback THEN NULL ELSE image_url END AS "imageUrl",
                    source_image_url AS "sourceImageUrl",
                    COALESCE(focus, source_payload->>'role') AS focus, scu, size, crew,
-                   %s AS "flightReady",
+                   {FLIGHT_READY} AS "flightReady",
                    source, source_url AS "sourceUrl", source_version AS "gameVersion",
                    COALESCE(source_updated_at, last_seen_at) AS "updatedAt",
                    CASE
@@ -52,7 +57,7 @@ public class CatalogMiningService {
             FROM catalog.entries
             WHERE active = TRUE AND (
               (family IN ('SHIP', 'GROUND_VEHICLE')
-                 AND %s = TRUE
+                 AND {FLIGHT_READY} = TRUE
                  AND LOWER(COALESCE(focus, source_payload->>'role')) ~ '(mining|minage|prospecting)')
               OR source_payload->>'classification' IN ('Mining.Gadget', 'Mining.Module', 'Ship.Mining.Gun')
               OR source_payload->>'type' IN ('WeaponMining', 'MiningModifier', 'MiningPod')
@@ -61,6 +66,6 @@ public class CatalogMiningService {
               OR LOWER(CONCAT_WS(' ', name, manufacturer, description)) LIKE '%baliaga%'
             )
             ORDER BY LOWER(name), id
-            """.formatted(FLIGHT_READY_SQL, FLIGHT_READY_SQL));
+            """.replace("{FLIGHT_READY}", FLIGHT_READY_SQL);
     }
 }
