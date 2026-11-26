@@ -76,7 +76,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
-        eventService.assignPole(eventId, poleAccess.poleFor(request.getPole()));
+        eventService.assignPoles(eventId, poleAccess.polesFor(request.requestedPoles()));
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());
         seed.setImageUrl(request.getImageUrl());
@@ -99,7 +99,7 @@ public class OperationController {
         ResponseEntity<MessageResponse<EventResponseDTO>> created = eventService.createEvent(type, request.getTitle(), request.getDescription(), request.getStartDateTime(), request.getEndDateTime(), false);
         UUID eventId = created.getBody().getData().getId();
         operationService.convert(eventId);
-        eventService.assignPole(eventId, poleAccess.poleFor(request.getPole()));
+        eventService.assignPoles(eventId, poleAccess.polesFor(request.requestedPoles()));
         replanService.copyOrganization(id, eventId);
         OperationUpdateRequest seed = new OperationUpdateRequest();
         seed.setBriefing(request.getDescription());
@@ -371,16 +371,23 @@ public class OperationController {
         return operationService.update(id, request);
     }
 
-    /** Rattache l'opération à un pôle, ou la détache (pôle absent ou vide). Enregistré tout de suite, hors du brouillon. */
-    @PutMapping("/{id}/pole")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICIER')")
+    /**
+     * Rattache l'opération à ces pôles, ou la détache de tous (liste absente ou vide). Enregistré tout de suite, hors du brouillon.
+     * Un référent garde toujours son propre pôle dans la liste.
+     */
+    @PutMapping("/{id}/poles")
+    @PreAuthorize("@poleAccess.manages(#id)")
     @Transactional
-    public ResponseEntity<MessageResponse<String>> assignPole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+    public ResponseEntity<MessageResponse<List<String>>> assignPoles(@PathVariable UUID id, @RequestBody(required = false) PolesRequest body) {
         eventRepository.findById(id).filter(event -> event.getActivityType() == ActivityType.OPERATION)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération introuvable"));
-        eventService.assignPole(id, body == null ? null : body.get("pole"));
-        return messageService.buildResponse("operation.updated", eventRepository.findById(id).map(Event::getPole).map(Enum::name).orElse(null));
+        eventService.assignPoles(id, poleAccess.polesFor(body == null ? null : body.poles()));
+        return messageService.buildResponse("operation.updated", eventRepository.findById(id)
+                .map(event -> event.sortedPoles().stream().map(Enum::name).toList()).orElse(List.of()));
     }
+
+    /** Pôles demandés pour une opération. */
+    public record PolesRequest(List<String> poles) {}
 
     @PostMapping("/{id}/publish")
     @PreAuthorize("@poleAccess.manages(#id)")
@@ -434,11 +441,11 @@ public class OperationController {
     @PreAuthorize("@poleAccess.canCreate()")
     @Transactional(readOnly = true)
     public ResponseEntity<MessageResponse<List<OperationDraftSummaryDTO>>> drafts() {
-        // Un référent ne voit que les brouillons de son pôle.
+        // Un référent ne voit que les brouillons qui concernent son pôle.
         com.icy.icy_backend.db.entity.user.Specialty ownPole = com.icy.icy_backend.service.pole.PoleAccess.organizer() ? null : poleAccess.ownPole();
         List<OperationDraftSummaryDTO> drafts = operationRepository.findByPublicationStatusOrderByUpdatedAtDesc(Operation.PublicationStatus.DRAFT).stream()
                 .filter(operation -> operation.getEvent() != null)
-                .filter(operation -> ownPole == null || operation.getEvent().getPole() == ownPole)
+                .filter(operation -> ownPole == null || operation.getEvent().concerns(ownPole))
                 .map(OperationDraftSummaryDTO::new)
                 .toList();
         return messageService.buildResponse("operation.drafts", drafts);

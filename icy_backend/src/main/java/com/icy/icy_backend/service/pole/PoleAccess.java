@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Qui organise quoi. Un Administrateur ou un Officier organise tous les événements et opérations ;
- * un Spécialiste référent organise ceux de son pôle, et seulement ceux-là.
+ * un Spécialiste référent organise ceux qui concernent son pôle, même s'ils concernent aussi d'autres pôles.
  * Les contrôles statiques servent aux services qui n'ont que l'identifiant de l'activité.
  */
 @Component("poleAccess")
@@ -66,7 +66,7 @@ public class PoleAccess {
         if (organizer()) return true;
         Specialty own = ownPole();
         if (own == null || eventId == null) return false;
-        return events.findById(eventId).map(event -> event.getPole() == own).orElse(false);
+        return events.findById(eventId).map(event -> event.concerns(own)).orElse(false);
     }
 
     public boolean managesPole(Specialty pole) {
@@ -74,13 +74,16 @@ public class PoleAccess {
     }
 
     /**
-     * Pôle à enregistrer pour une activité créée ou modifiée par le membre connecté :
-     * celui demandé pour un organisateur, toujours le sien pour un référent.
+     * Pôles à enregistrer pour une activité créée ou modifiée par le membre connecté :
+     * ceux demandés pour un organisateur ; pour un référent, ceux demandés plus le sien, toujours inclus,
+     * pour qu'il garde la main sur l'activité.
      */
-    public String poleFor(String requested) {
-        if (organizer()) return requested;
+    public java.util.EnumSet<Specialty> polesFor(java.util.Collection<String> requested) {
+        java.util.EnumSet<Specialty> poles = Specialty.optionalAll(requested);
+        if (organizer()) return poles;
         Specialty own = ownPole();
         if (own == null) throw new AccessDeniedException("Réservé aux organisateurs et aux référents de pôle");
-        return own.name();
+        poles.add(own);
+        return poles;
     }
 }

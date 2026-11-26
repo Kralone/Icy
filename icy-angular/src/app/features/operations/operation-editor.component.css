@@ -107,3 +107,5 @@ header a:focus-visible, .tabs button:focus-visible { outline: 2px solid #72ddf7;
 .publish-bar p { margin: 0; }
 .publish-bar .publication-state { margin-right: auto; }
 textarea { resize: vertical; max-height: 80vh; }
+.pole-field { display: grid; gap: .4rem; color: #cbd5e1; }
+.pole-field > span:first-child { font-weight: 600; }

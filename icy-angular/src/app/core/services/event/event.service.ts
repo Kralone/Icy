@@ -15,8 +15,8 @@ export interface EventCreateRequest {
   endDateTime: string;
   imageUrl?: string;
   allowShipProposals?: boolean;
-  /** Pôle rattaché (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; vide ou absent : aucun. */
-  pole?: string | null;
+  /** Pôles rattachés (LOGISTIQUE, MILITAIRE, INDUSTRIE) ; vide ou absent : aucun. */
+  poles?: string[];
 }
 
 export interface EventDTO {
@@ -31,7 +31,9 @@ export interface EventDTO {
   activityType?: 'EVENT' | 'OPERATION';
   /** Liste de gestion uniquement : opération pas encore publiée, invisible des membres. */
   draft?: boolean;
-  /** Pôle rattaché, ou null. */
+  /** Pôles rattachés, dans l'ordre d'affichage ; vide si aucun. */
+  poles?: string[];
+  /** Premier pôle rattaché : ancien champ, lu seulement à défaut de `poles`. */
   pole?: string | null;
 }
 
@@ -44,8 +46,8 @@ export interface OperationDraftSummary {
   typeImageUrl?: string | null;
   startDateTime: string;
   endDateTime: string;
-  /** Pôle de rattachement, s'il y en a un. */
-  pole?: string | null;
+  /** Pôles de rattachement (opérations publiées seulement : la liste des brouillons est déjà filtrée par le serveur). */
+  poles?: string[];
   updatedAt?: string | null;
 }
 
@@ -147,9 +149,9 @@ export class EventService {
   }
 
   /** `expectedRevision` : le serveur refuse (409) si l'opération a changé depuis cette révision. */
-  /** Rattache l'opération à un pôle, ou la détache avec null. Renvoie le pôle enregistré. */
-  assignOperationPole(eventId: string, pole: string | null) {
-    return this.http.put<any>(`/api/operations/${eventId}/pole`, { pole }).pipe(map(res => (res.data ?? null) as string | null));
+  /** Rattache l'opération à ces pôles, ou à aucun avec une liste vide. Renvoie les pôles enregistrés. */
+  assignOperationPoles(eventId: string, poles: string[]) {
+    return this.http.put<any>(`/api/operations/${eventId}/poles`, { poles }).pipe(map(res => (res.data ?? []) as string[]));
   }
 
   updateOperation(eventId: string, payload: { briefing?: string; objectives?: string; meetingPoint?: string; imageUrl?: string; allowShipProposals?: boolean; miningSession?: boolean; salvageSession?: boolean; expectedRevision?: number | null }, options: { keepalive?: boolean } = {}) {

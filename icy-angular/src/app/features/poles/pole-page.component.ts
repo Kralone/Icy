@@ -7,6 +7,7 @@ import { POLE_STAT_LABELS, PoleActivity, PoleAgendaEntry, PoleHome, PoleNews, po
 import { PoleService } from '../../core/services/pole/pole.service';
 import { eventImage } from '../events/event-appearance';
 import { PoleIconComponent } from '../../shared/pole-icon/pole-icon.component';
+import { PoleBadgeComponent } from '../../shared/pole-badge/pole-badge.component';
 
 const ACTIVITY_STATUS: Record<string, string> = { ACTIVE: 'En cours', SETTLEMENT: 'Comptes arrêtés', CLOSED: 'Clôturée' };
 const ACTIVITY_KIND: Record<string, string> = { MINING_SHEET: 'Fiche de minage', SALVAGE_SHEET: 'Fiche de salvage', EVENT: 'Événement', OPERATION: 'Opération' };
@@ -18,7 +19,7 @@ const DAY = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', ye
 @Component({
   selector: 'app-pole-page',
   standalone: true,
-  imports: [RouterLink, FormsModule, PoleIconComponent],
+  imports: [RouterLink, FormsModule, PoleIconComponent, PoleBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pole-page.component.html',
   styleUrl: './poles.css'
@@ -194,6 +195,11 @@ export class PolePageComponent implements OnInit, OnDestroy {
   moment(value: string): string {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? '' : MOMENT.format(date);
+  }
+
+  /** Autres pôles concernés par l'activité : elle figure aussi sur leur page. */
+  otherPoles(entry: PoleAgendaEntry, current: string): string[] {
+    return (entry.poles ?? []).filter(key => key !== current);
   }
 
   agendaKind(entry: PoleAgendaEntry): string {

@@ -38,7 +38,7 @@
           <div class="agenda-content">
             @if (event.activityType === 'OPERATION') { <span class="operation-badge"><span class="operation-mark" aria-hidden="true">◆</span> Opération</span> }
             <span class="agenda-type">{{ event.type?.name || 'Événement' }}</span>
-            <app-pole-badge class="agenda-pole" [pole]="event.pole" />
+            @for (pole of polesOf(event); track pole) { <app-pole-badge class="agenda-pole" [pole]="pole" /> }
             <h2>{{ event.title }}</h2>
             <p>{{ event.startDateTime | date:'EEEE':'':'fr' }} · {{ event.startDateTime | date:'HH:mm' }}
               @if (event.endDateTime) { <span> → {{ event.endDateTime | date:'dd/MM à HH:mm' }}</span> }
@@ -105,7 +105,9 @@
           <span class="calendar-event-time">{{ arg.event.start | date:'HH:mm' }}</span>
           <strong>{{ arg.event.title }}</strong>
           <span class="calendar-event-type">{{ arg.event.extendedProps.type?.name || 'Événement' }}</span>
-          <app-pole-badge class="calendar-pole" [pole]="arg.event.extendedProps.pole" [small]="true" />
+          @if (arg.event.extendedProps.poles?.length) {
+            <span class="calendar-poles">@for (pole of arg.event.extendedProps.poles; track pole) { <app-pole-badge [pole]="pole" [small]="true" /> }</span>
+          }
         </div>
       </ng-template>
     </full-calendar>
