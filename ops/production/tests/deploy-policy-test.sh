@@ -56,6 +56,7 @@ check "migrations V51 et V52 : sauvegarde fraîche" "$(plan "$d" 50 52)" "BACKUP
 check "migration V53 : sauvegarde fraîche" "$(plan "$d" 52 53)" "BACKUP-PLAN=FRESH reason=flyway-migration-V52-to-V53"
 check "migration V54 : sauvegarde fraîche" "$(plan "$d" 53 54)" "BACKUP-PLAN=FRESH reason=flyway-migration-V53-to-V54"
 check "migration V55 : sauvegarde fraîche" "$(plan "$d" 54 55)" "BACKUP-PLAN=FRESH reason=flyway-migration-V54-to-V55"
+check "migration V56 : sauvegarde fraîche" "$(plan "$d" 55 56)" "BACKUP-PLAN=FRESH reason=flyway-migration-V55-to-V56"
 check "sauvegarde fraîche demandée : fraîche" "$(plan "$d" 43 43 0 --force-fresh)" "BACKUP-PLAN=FRESH reason=requested"
 d=$WORK/b8; mkdir -p "$d"; old=$(make_archive "$d" $((now - 3 * 86400))); bad=$(make_archive "$d" $((now - 3600))); : >"$bad"; (cd "$d" && sha256sum "$(basename "$bad")" >"$bad.sha256")
 check "la plus récente vide : la précédente valide est réutilisée" "$(plan "$d")" "BACKUP-PLAN=REUSE archive=$old age_seconds=$((3 * 86400))"
