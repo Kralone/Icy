@@ -1,5 +1,8 @@
 services:
   db:
+    # Nom attendu par les scripts d'exploitation (sauvegarde, déploiement, contrôles, tunnel) :
+    # sans lui, une recréation par Compose nomme le conteneur iceforge-db-1.
+    container_name: iceforge_db
     ports: !override []
     # Adresse fixe : le tunnel SSH d'administration (compte iceforge-db-admin,
     # PermitOpen et authorized_keys) vise cette adresse. Elle est hors de la plage
@@ -9,6 +12,7 @@ services:
         ipv4_address: 172.19.0.2
 
   rabbitmq:
+    container_name: iceforge_rabbitmq
     ports: !override
       - "127.0.0.1:15672:15672"
     networks: !override [internal]
