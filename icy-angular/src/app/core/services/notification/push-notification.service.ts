@@ -5,6 +5,16 @@ import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NotificationService } from './notification.service';
 
+// Safari iOS n'expose pas `Notification` hors d'une app ajoutée à l'écran d'accueil :
+// y accéder directement lève une ReferenceError et casse le chargement de la page.
+function notificationApi(): typeof Notification | null {
+  return typeof Notification === 'undefined' ? null : Notification;
+}
+
+function currentPermission(): NotificationPermission {
+  return notificationApi()?.permission ?? 'default';
+}
+
 type PushSubscriptionRequest = {
   endpoint: string;
   keys: {
@@ -17,7 +27,7 @@ type PushSubscriptionRequest = {
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
   private readonly baseUrl = '/api/notifications/push';
-  permission: NotificationPermission = Notification.permission;
+  permission: NotificationPermission = currentPermission();
   private hasSubscription = false;
   private localFallbackEnabled = false;
 
@@ -35,7 +45,7 @@ export class PushNotificationService {
   }
 
   isSupported(): boolean {
-    return this.swPush.isEnabled;
+    return this.swPush.isEnabled && !!notificationApi();
   }
 
   isEnabled(): boolean {
@@ -59,7 +69,7 @@ export class PushNotificationService {
   }
 
   async enable(): Promise<void> {
-    if (!this.swPush.isEnabled) {
+    if (!this.swPush.isEnabled || !notificationApi()) {
       throw new Error('PUSH_UNSUPPORTED');
     }
 
@@ -70,7 +80,7 @@ export class PushNotificationService {
       throw new Error('SW_NOT_READY');
     }
 
-    if (Notification.permission !== 'granted') {
+    if (currentPermission() !== 'granted') {
       const permission = await this.requestPermissionWithTimeout(6000);
       this.permission = permission;
       if (permission !== 'granted') {
@@ -141,7 +151,7 @@ export class PushNotificationService {
     } catch (error) {
       throw error;
     }
-    this.permission = Notification.permission;
+    this.permission = currentPermission();
     this.hasSubscription = true;
   }
 
@@ -162,7 +172,7 @@ export class PushNotificationService {
     );
 
     await subscription.unsubscribe();
-    this.permission = Notification.permission;
+    this.permission = currentPermission();
     this.hasSubscription = false;
   }
 
@@ -232,8 +242,10 @@ export class PushNotificationService {
   }
 
   private async requestPermissionWithTimeout(timeoutMs: number): Promise<NotificationPermission> {
+    const api = notificationApi();
+    if (!api) return 'denied';
     return Promise.race([
-      Notification.requestPermission(),
+      api.requestPermission(),
       new Promise<NotificationPermission>((_, reject) =>
         setTimeout(() => reject(new Error('PERMISSION_TIMEOUT')), timeoutMs)
       ),
