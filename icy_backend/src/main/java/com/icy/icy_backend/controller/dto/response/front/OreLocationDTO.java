@@ -1,39 +1,16 @@
 package com.icy.icy_backend.controller.dto.response.front;
 
-import java.util.List;
 import java.time.OffsetDateTime;
+import java.util.List;
 
+/** Zone de minage tirée des fichiers du jeu (Star Citizen Wiki). */
 public record OreLocationDTO(
-        Long id,
         String locationCode,
         String sourceUrl,
         String gameVersion,
         OffsetDateTime updatedAt,
-        Integer users,
-        Integer scans,
-        Integer clusters,
-        OreMetricRangeDTO clusterCount,
-        OreMetricRangeDTO mass,
-        OreMetricRangeDTO inst,
-        OreMetricRangeDTO res,
         List<OreMixDTO> ores,
         String locationKey,
-        /** Système d'après les fichiers du jeu (Star Citizen Wiki) ; null pour un relevé importé. */
         String systemName
 ) {
-    public OreLocationDTO(Long id, String locationCode, String sourceUrl, String gameVersion,
-            OffsetDateTime updatedAt, Integer users, Integer scans, Integer clusters,
-            OreMetricRangeDTO clusterCount, OreMetricRangeDTO mass, OreMetricRangeDTO inst,
-            OreMetricRangeDTO res, List<OreMixDTO> ores, String locationKey) {
-        this(id, locationCode, sourceUrl, gameVersion, updatedAt, users, scans, clusters,
-                clusterCount, mass, inst, res, ores, locationKey, null);
-    }
-
-    public OreLocationDTO(Long id, String locationCode, String sourceUrl, String gameVersion,
-            OffsetDateTime updatedAt, Integer users, Integer scans, Integer clusters,
-            OreMetricRangeDTO clusterCount, OreMetricRangeDTO mass, OreMetricRangeDTO inst,
-            OreMetricRangeDTO res, List<OreMixDTO> ores) {
-        this(id, locationCode, sourceUrl, gameVersion, updatedAt, users, scans, clusters,
-                clusterCount, mass, inst, res, ores, id == null ? "manual:" + locationCode : "manual:" + id);
-    }
 }

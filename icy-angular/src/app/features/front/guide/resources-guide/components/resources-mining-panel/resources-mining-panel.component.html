@@ -132,9 +132,8 @@
                   <thead>
                     <tr>
                       <th>Minerai</th>
-                      <th>{{ isGameData(location) ? 'Apparition' : 'Fréquence' }}</th>
+                      <th>Apparition</th>
                       <th class="num">Concentration</th>
-                      @if (hasMedian) { <th class="num mine-col--wide">Médiane</th> }
                       @if (hasClusters) { <th class="num mine-col--wide">Amas</th> }
                     </tr>
                   </thead>
@@ -151,7 +150,6 @@
                           <b>{{ formatPercent(ore.probability) }}</b>
                         </td>
                         <td class="num">{{ formatConcentrationRange(ore.minPct, ore.maxPct) }}</td>
-                        @if (hasMedian) { <td class="num mine-col--wide">{{ formatConcentration(ore.medPct) }}</td> }
                         @if (hasClusters) { <td class="num mine-col--wide" [attr.title]="clusterTitle(ore)">{{ formatCluster(ore) }}</td> }
                       </tr>
                     }
@@ -159,16 +157,12 @@
                 </table>
               </div>
             } @else {
-              <div class="mine-state">Aucun minerai relevé pour {{ location.displayLabel }}.</div>
+              <div class="mine-state">Aucun minerai connu pour {{ location.displayLabel }}.</div>
             }
             <p class="mine-source">
-              @if (isGameData(location)) {
-                Données du jeu via Star Citizen Wiki · {{ location.gameVersion || 'version non renseignée' }} · mises à jour le {{ formatSourceDate(location.updatedAt) }}
-                <br />L’apparition est la chance qu’un rocher de l’astre contienne ce minerai d’après les fichiers du jeu, pas une fréquence relevée par des joueurs.
-              } @else {
-                {{ location.gameVersion || 'Version non renseignée' }} · relevé du {{ formatSourceDate(location.updatedAt) }}
-              }
+              Données du jeu via Star Citizen Wiki · {{ location.gameVersion || 'version non renseignée' }} · mises à jour le {{ formatSourceDate(location.updatedAt) }}
               @if (location.sourceUrl) { · <a [href]="location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
+              <br />L’apparition est la chance qu’un rocher de l’astre contienne ce minerai.
             </p>
           } @else {
             <div class="mine-state">Aucune zone visible pour cet astre.</div>

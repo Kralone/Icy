@@ -76,7 +76,6 @@ GRANT SELECT (id, active, published_at) ON catalog.wikelo_equipment_recipes TO i
 GRANT SELECT (dataset_key, item_count, fetched_at, game_version) ON utils.uex_dataset_cache TO iceforge_grafana;
 GRANT SELECT (id, scraped_at, updated_at) ON utils.wikelo_ships TO iceforge_grafana;
 GRANT SELECT (user_id, has_exec_ship, updated_at) ON utils.exec_hangar_player_status TO iceforge_grafana;
-GRANT SELECT (id, location_code, game_version, users_count, scans_count, updated_at) ON public.ore_locations TO iceforge_grafana;
 GRANT SELECT (id, body_type, system_name) ON public.celestial_bodies TO iceforge_grafana;
 GRANT SELECT (id, system_name, station_kind) ON public.orbital_stations TO iceforge_grafana;
 GRANT SELECT (id) ON icelink.icelink_block TO iceforge_grafana;

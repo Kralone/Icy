@@ -3,12 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../../../model/api-response.model';
 
-export interface OreMetricRange {
-  min: number | null;
-  max: number | null;
-  med: number | null;
-}
-
 export interface OreMix {
   imageUrl?: string | null;
   catalogEntryId?: number | null;
@@ -16,8 +10,7 @@ export interface OreMix {
   probability: number | null;
   minPct: number | null;
   maxPct: number | null;
-  medPct: number | null;
-  /** Fichiers du jeu uniquement : mode de minage (Vaisseau, Véhicule, À pied) et taille des amas. */
+  /** Mode de minage (Vaisseau, Véhicule, À pied) et taille des amas. */
   method?: string | null;
   clusterMin?: number | null;
   clusterMax?: number | null;
@@ -25,27 +18,14 @@ export interface OreMix {
 }
 
 export interface OreLocation {
-  id: number | null;
   locationKey?: string | null;
-  /** Système indiqué par les fichiers du jeu ; absent pour un relevé importé. */
+  /** Système indiqué par les fichiers du jeu, quand il est connu. */
   systemName?: string | null;
   locationCode: string;
   sourceUrl?: string | null;
   gameVersion?: string | null;
   updatedAt?: string | null;
-  users: number | null;
-  scans: number | null;
-  clusters: number | null;
-  clusterCount: OreMetricRange;
-  mass: OreMetricRange;
-  inst: OreMetricRange;
-  res: OreMetricRange;
   ores: OreMix[];
-}
-
-export interface OreLocationUploadResult {
-  locationCount: number;
-  oreEntryCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -58,11 +38,5 @@ export class OreLocationService {
 
   listFrontLocations(): Observable<ApiResponse<OreLocation[]>> {
     return this.http.request<ApiResponse<OreLocation[]>>('GET', '/api/front/ore-locations');
-  }
-
-  uploadAndReset(file: File): Observable<ApiResponse<OreLocationUploadResult>> {
-    const payload = new FormData();
-    payload.append('file', file);
-    return this.http.post<ApiResponse<OreLocationUploadResult>>('/api/admin/ore-locations/upload', payload);
   }
 }

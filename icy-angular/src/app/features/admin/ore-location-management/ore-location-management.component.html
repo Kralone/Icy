@@ -8,21 +8,15 @@
         <div class="ore-actions">
           <a class="ore-button" routerLink="/utilitaires/ressources-minage" [queryParams]="{line: 'locations'}">Voir la page publique</a>
           <button type="button" class="ore-button" (click)="loadLocations()" [disabled]="loading">Recharger</button>
-          <label class="ore-button ore-button--primary" title="Remplace toutes les zones par le contenu du fichier" [class.ore-button--busy]="uploading">
-            <input type="file" accept=".json,application/json" (change)="onUploadFile($event)" [disabled]="uploading" />
-            {{ uploading ? 'Import en cours…' : 'Importer un JSON' }}
-          </label>
         </div>
       </div>
       @if (rows.length) {
         <p class="ore-summary">
           <span><strong>{{ rows.length }}</strong> zones</span>
           <span><strong>{{ rankings.length }}</strong> minerais</span>
-          <span><strong>{{ formatNumber(totalScans) }}</strong> scans</span>
-          <span>Version <strong>{{ latestUpdate.version || 'non renseignée' }}</strong> · relevé du {{ formatDate(latestUpdate.date) }}</span>
+          <span>Fichiers du jeu <strong>{{ latestUpdate.version || 'version non renseignée' }}</strong> · mis à jour le {{ formatDate(latestUpdate.date) }}</span>
         </p>
       }
-      @if (successMessage) { <p class="ore-message ore-message--ok" role="status">{{ successMessage }}</p> }
       @if (errorMessage) { <p class="ore-message ore-message--error" role="alert">{{ errorMessage }}</p> }
     </header>
 
@@ -50,7 +44,7 @@
     @if (loading) {
       <div class="ore-state" role="status">Chargement des zones…</div>
     } @else if (!rows.length) {
-      <div class="ore-state">Aucune zone importée. Importez un fichier JSON pour commencer.</div>
+      <div class="ore-state">Aucune zone dans les fichiers du jeu. Lancez une synchronisation du catalogue Star Citizen Wiki.</div>
     } @else if (viewMode === 'zones') {
       @if (!filteredRows.length) {
         <div class="ore-state">Aucune zone ne correspond à cette recherche.</div>
@@ -58,9 +52,7 @@
         <div class="zone-list" role="table" aria-label="Zones de minage">
           <div class="zone-row zone-row--head" role="row">
             <span role="columnheader">Zone</span>
-            <span role="columnheader" class="num">Scans</span>
-            <span role="columnheader" class="num">Contributeurs</span>
-            <span role="columnheader" class="num">Amas</span>
+            <span role="columnheader">Système</span>
             <span role="columnheader">Minerais les plus fréquents</span>
             <span aria-hidden="true"></span>
           </div>
@@ -71,9 +63,7 @@
                   <strong>{{ row.label }}</strong>
                   <small>{{ kindLabels[row.kind] }}@if (row.kind === 'LAGRANGE') { · {{ row.planet }} }</small>
                 </span>
-                <span class="num" role="cell" data-label="Scans">{{ formatNumber(row.location.scans) }}</span>
-                <span class="num" role="cell" data-label="Contributeurs">{{ formatNumber(row.location.users) }}</span>
-                <span class="num" role="cell" data-label="Amas">{{ formatNumber(row.location.clusters) }}</span>
+                <span class="zone-system" role="cell">{{ row.system || '—' }}</span>
                 <span class="zone-ores" role="cell">
                   @for (ore of row.ores.slice(0, 3); track ore.oreCode) {
                     <span class="ore-pill">
@@ -89,19 +79,13 @@
 
               @if (expandedKey === row.key) {
                 <div class="zone-detail">
-                  <dl class="zone-metrics">
-                    <div><dt>Rochers par amas</dt><dd title="min · médiane · max">{{ formatRange(row.location.clusterCount) }}</dd></div>
-                    <div><dt>Masse</dt><dd title="min · médiane · max">{{ formatRange(row.location.mass) }}</dd></div>
-                    <div><dt>Instabilité</dt><dd title="min · médiane · max">{{ formatRange(row.location.inst) }}</dd></div>
-                    <div><dt>Résistance</dt><dd title="min · médiane · max">{{ formatRange(row.location.res) }}</dd></div>
-                  </dl>
                   <p class="zone-source">
-                    Code {{ row.location.locationCode }} · {{ row.location.gameVersion || 'version non renseignée' }} · relevé du {{ formatDate(row.location.updatedAt) }}
+                    Code {{ row.location.locationCode }} · {{ row.location.gameVersion || 'version non renseignée' }} · mis à jour le {{ formatDate(row.location.updatedAt) }}
                     @if (row.location.sourceUrl) { · <a [href]="row.location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
                   </p>
                   <table class="zone-ore-table">
                     <thead>
-                      <tr><th>Minerai</th><th>Fréquence</th><th class="num">Concentration min.</th><th class="num">Médiane</th><th class="num">Max.</th></tr>
+                      <tr><th>Minerai</th><th>Apparition</th><th class="num">Concentration min.</th><th class="num">Max.</th><th>Mode de minage</th></tr>
                     </thead>
                     <tbody>
                       @for (ore of row.ores; track ore.oreCode) {
@@ -112,8 +96,8 @@
                             <b>{{ formatPercent(ore.probability) }}</b>
                           </td>
                           <td class="num">{{ formatConcentration(ore.minPct) }}</td>
-                          <td class="num">{{ formatConcentration(ore.medPct) }}</td>
                           <td class="num">{{ formatConcentration(ore.maxPct) }}</td>
+                          <td>{{ ore.method || '—' }}</td>
                         </tr>
                       }
                     </tbody>

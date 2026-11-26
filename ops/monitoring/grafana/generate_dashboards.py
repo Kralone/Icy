@@ -1162,16 +1162,11 @@ def game_data():
         FROM utils.uex_dataset_cache ORDER BY fetched_at, dataset_key'''),
         columns={"Récupéré le": {"unit": "dateTimeAsLocal", "width": 170},
                  "Âge": {"unit": "s", "width": 110, "steps": [(None, GREEN), (7 * 86400, ORANGE), (30 * 86400, RED)]}},
-        w=14, h=11, description="Prix et terminaux servis par les outils publics. Un jeu ancien donne des prix périmés.")
-    b.bars("Emplacements de minerai par version du jeu", Sql('''
-        SELECT coalesce(game_version, 'Version inconnue') AS metric, count(*) AS value FROM public.ore_locations
-        GROUP BY 1 ORDER BY 1 DESC'''), "", w=10, h=11, label="Version", value="Emplacements")
+        w=24, h=11, description="Prix et terminaux servis par les outils publics. Un jeu ancien donne des prix périmés.")
     b.stat("Planètes, lunes et stations", Sql('''
         SELECT (SELECT count(*) FROM public.celestial_bodies) + (SELECT count(*) FROM public.orbital_stations)'''), w=6)
-    b.stat("Scans de minerai cumulés", Sql("SELECT sum(scans_count) FROM public.ore_locations"), w=6,
-           description="Scans communautaires agrégés dans les données d'emplacement importées.")
-    b.stat("Images hébergées", Sql("SELECT sum(size) FROM media.image_metadata"), unit="bytes", w=6)
-    b.stat("Blocs IceLink", Sql("SELECT count(*) FROM icelink.icelink_block"), w=6)
+    b.stat("Images hébergées", Sql("SELECT sum(size) FROM media.image_metadata"), unit="bytes", w=9)
+    b.stat("Blocs IceLink", Sql("SELECT count(*) FROM icelink.icelink_block"), w=9)
     b.write()
 
 

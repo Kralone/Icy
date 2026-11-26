@@ -7,8 +7,8 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     vi.useFakeTimers();
     const component = new ResourcesMiningPanelComponent({
       listFrontLocations: () => of({ data: [
-        { id: null, locationKey: 'wiki:hur-l1', locationCode: 'HUR-L1', ores: [{ oreCode: 'Gold', probability: null }] },
-        { id: null, locationKey: 'wiki:hur-l2', locationCode: 'HUR-L2', ores: [{ oreCode: 'Gold', probability: 0 }] }
+        { locationKey: 'wiki:hur-l1', locationCode: 'HUR-L1', ores: [{ oreCode: 'Gold', probability: null }] },
+        { locationKey: 'wiki:hur-l2', locationCode: 'HUR-L2', ores: [{ oreCode: 'Gold', probability: 0 }] }
       ] })
     } as never, {
       listFrontBodies: () => of({ data: [] }),
@@ -38,7 +38,7 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     expect(component.formatConcentrationRange(0.283, 0.783)).toBe('28 – 78 %');
     expect(component.formatConcentrationRange(null, null)).toBe('—');
     expect(component.formatConcentrationRange(0.05, null)).toBe('5,0 %');
-    const ore = { oreCode: 'Quantainium', probability: 0.02, minPct: null, maxPct: null, medPct: null };
+    const ore = { oreCode: 'Quantainium', probability: 0.02, minPct: null, maxPct: null };
     expect(component.formatCluster(ore)).toBe('—');
     expect(component.formatCluster({ ...ore, clusterMin: 2, clusterMax: 2, clusterProbability: 0.25 })).toBe('2 rochers');
     expect(component.formatCluster({ ...ore, clusterMin: 2, clusterMax: 4 })).toBe('2 à 4 rochers');
@@ -63,7 +63,7 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
       { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
     (component as unknown as { rawLocations: unknown[] }).rawLocations = ['DAY', 'CRU', 'PYR1-L1', 'RMB-ALME', 'Stanton'].map((code, i) => ({
       id: i, locationKey: 'wiki:' + code, locationCode: code, sourceUrl: null, gameVersion: null, updatedAt: null,
-      ores: [{ oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null, medPct: null }]
+      ores: [{ oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null }]
     }));
     (component as unknown as { reparseLocations(): void }).reparseLocations();
     expect(component.systemGroups.map((system) => [system.system, system.groups.map((group) => group.planetName)]))
@@ -73,19 +73,19 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     expect(component.matchingPlaces.map((place) => place.planetName)).toEqual(['RMB-ALME']);
   });
 
-  it('keeps one zone per place when the old survey and the game files both list it', () => {
+  it('keeps one zone per place when two game codes name it', () => {
     const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
       { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
-    const ore = { oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null, medPct: null };
+    const ore = { oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null };
     (component as unknown as { rawLocations: unknown[] }).rawLocations = [
-      { id: 1, locationKey: 'manual:1', locationCode: 'Calliope', ores: [ore] },
-      { id: null, locationKey: 'wiki:cal', locationCode: 'CAL', ores: [ore] },
-      { id: null, locationKey: 'wiki:mic', locationCode: 'MIC', ores: [ore] },
-      { id: null, locationKey: 'wiki:st', locationCode: 'ST-G04-CH0', systemName: 'Pyro', ores: [ore] }
+      { locationKey: 'wiki:calliope', locationCode: 'Calliope', ores: [ore] },
+      { locationKey: 'wiki:cal', locationCode: 'CAL', ores: [ore] },
+      { locationKey: 'wiki:mic', locationCode: 'MIC', ores: [ore] },
+      { locationKey: 'wiki:st', locationCode: 'ST-G04-CH0', systemName: 'Pyro', ores: [ore] }
     ];
     (component as unknown as { reparseLocations(): void }).reparseLocations();
     const microTech = component.systemGroups[0].groups[0];
-    expect(microTech.locations.map((location) => location.key)).toEqual(['wiki:mic', 'wiki:cal']);
+    expect(microTech.locations.map((location) => location.key)).toEqual(['wiki:mic', 'wiki:calliope']);
     component.selectOreSuggestion('Gold');
     expect(component.activeOreResults.map((result) => result.context)).toContain('Lieu de minage · Pyro');
     expect(component.activeOreResults).toHaveLength(3);

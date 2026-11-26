@@ -102,7 +102,7 @@ const SYSTEM_NAMES = new Set(['stanton', 'pyro', 'nyx']);
 const compact = (value: string) => (value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /**
- * Situe un code de zone (Regolith ou Star Citizen Wiki) : « DAY » est la lune Daymar de Crusader,
+ * Situe un code de zone des fichiers du jeu : « DAY » est la lune Daymar de Crusader,
  * « PYR1-L1 » le point L1 de Pyro I, « YELB » la ceinture de Yela ; « RMB-ALME » reste un lieu isolé.
  */
 export function resolveOrePlace(rawCode: string, catalogBodies: readonly OreBodyRef[] = []): OrePlace {

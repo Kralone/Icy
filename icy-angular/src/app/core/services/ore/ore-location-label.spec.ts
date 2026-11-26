@@ -10,9 +10,9 @@ describe('ore zone labels', () => {
 
   it('sorts ores by frequency and keeps unknown frequencies last', () => {
     const sorted = sortOresByProbability({ ores: [
-      { oreCode: 'IRON', probability: null, minPct: null, maxPct: null, medPct: null },
-      { oreCode: 'GOLD', probability: 0.2, minPct: null, maxPct: null, medPct: null },
-      { oreCode: 'QUANTANIUM', probability: 0.8, minPct: null, maxPct: null, medPct: null }
+      { oreCode: 'IRON', probability: null, minPct: null, maxPct: null },
+      { oreCode: 'GOLD', probability: 0.2, minPct: null, maxPct: null },
+      { oreCode: 'QUANTANIUM', probability: 0.8, minPct: null, maxPct: null }
     ] });
     expect(sorted.map(ore => ore.oreCode)).toEqual(['QUANTANIUM', 'GOLD', 'IRON']);
   });

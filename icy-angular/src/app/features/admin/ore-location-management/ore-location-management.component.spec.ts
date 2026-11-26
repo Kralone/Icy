@@ -2,14 +2,13 @@ import { of } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { OreLocationManagementComponent } from './ore-location-management.component';
 
-const range = { min: 1, med: 2, max: 3 };
 function create() {
   const component = new OreLocationManagementComponent({
     listAdminLocations: () => of({ data: [
-      { id: 1, locationCode: 'HUR-L2', users: 3, scans: 40, clusters: 5, clusterCount: range, mass: range, inst: range, res: range,
-        ores: [{ oreCode: 'GOLD', probability: 0.4, minPct: null, maxPct: null, medPct: null }, { oreCode: 'QUANTANIUM', probability: 0.9, minPct: null, maxPct: null, medPct: null }] },
-      { id: 2, locationCode: 'Daymar', users: 1, scans: 10, clusters: 2, clusterCount: range, mass: range, inst: range, res: range,
-        ores: [{ oreCode: 'GOLD', probability: 0.7, minPct: null, maxPct: null, medPct: null }] }
+      { locationKey: 'wiki:hur-l2', locationCode: 'HUR-L2',
+        ores: [{ oreCode: 'GOLD', probability: 0.4, minPct: null, maxPct: null }, { oreCode: 'QUANTANIUM', probability: 0.9, minPct: null, maxPct: null }] },
+      { locationKey: 'wiki:day', locationCode: 'DAY', systemName: 'Stanton',
+        ores: [{ oreCode: 'GOLD', probability: 0.7, minPct: null, maxPct: null }] }
     ] })
   } as never);
   component.ngOnInit();
@@ -22,7 +21,7 @@ describe('OreLocationManagementComponent', () => {
     expect(component.rows.map(row => row.label)).toEqual(['Hurston L2', 'Daymar']);
     const gold = component.rankings.find(ranking => ranking.code === 'GOLD')!;
     expect(gold.zones.map(zone => zone.row.label)).toEqual(['Daymar', 'Hurston L2']);
-    expect(component.totalScans).toBe(50);
+    expect(component.rows.map(row => row.system)).toEqual(['Stanton', 'Stanton']);
   });
 
   it('filters by zone type and by ore', () => {
