@@ -59,6 +59,7 @@ export class NewsManagementComponent implements OnInit, OnDestroy {
 
   // === TYPES DE NEWS ===
   types: NewsType[] = [];
+  typesOpen = false;
   typesLoading = false;
   /** Type en cours d'édition ; null : création. */
   editingType: NewsType | null = null;

@@ -7,46 +7,33 @@
       <h1 class="nm-title">Actualités</h1>
     </div>
     @if (!showForm) {
-      <button type="button" class="nm-btn nm-btn--primary" (click)="openForm()" data-testid="news-create">
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg> Nouvelle actualité
-      </button>
+      <div class="nm-actions">
+        <button type="button" class="nm-btn nm-btn--ghost" (click)="typesOpen = !typesOpen" [attr.aria-expanded]="typesOpen" aria-controls="news-types">
+          Types d’actualité <span class="nm-count">{{ types.length }}</span>
+        </button>
+        <button type="button" class="nm-btn nm-btn--primary" (click)="openForm()" data-testid="news-create">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg> Nouvelle actualité
+        </button>
+      </div>
     }
   </header>
 
   @if (showForm) {
     <!-- ========================== ÉDITEUR ========================== -->
-    <div class="nm-editor-layout">
-      <form class="nm-panel nm-editor" (submit)="$event.preventDefault(); saveNews()" novalidate data-testid="news-form"
-        [attr.aria-label]="editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité'">
-        <div class="nm-panel-head">
-          <h2>{{ editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité' }}</h2>
-          <button type="button" class="nm-link" (click)="closeForm()">Fermer</button>
-        </div>
+    <form class="nm-panel nm-editor" (submit)="$event.preventDefault(); saveNews()" novalidate data-testid="news-form"
+      [attr.aria-label]="editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité'">
+      <div class="nm-panel-head">
+        <h2>{{ editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité' }}</h2>
+        <button type="button" class="nm-link" (click)="closeForm()">Fermer</button>
+      </div>
 
+      <div class="nm-grid-2">
         <div class="nm-field">
           <label for="news-title">Titre</label>
           <input id="news-title" class="nm-input" [(ngModel)]="newsForm.title" name="title" maxlength="255" autocomplete="off"
             placeholder="Titre de l’actualité" [attr.aria-invalid]="submitted && !!titleError" aria-describedby="news-title-msg" />
           @if (submitted && titleError) { <p id="news-title-msg" class="nm-msg nm-msg--error">{{ titleError }}</p> }
         </div>
-
-        <fieldset class="nm-field">
-          <legend>Type</legend>
-          @if (types.length) {
-            <div class="nm-type-picker" role="radiogroup" aria-label="Type d’actualité">
-              @for (t of types; track t.id) {
-                <button type="button" role="radio" class="nm-type-option" [class.nm-type-option--on]="newsForm.type?.id === t.id"
-                  [attr.aria-checked]="newsForm.type?.id === t.id" [style.--accent]="t.color" (click)="selectType(t)">
-                  <span class="nm-dot" aria-hidden="true"></span>{{ t.name }}
-                </button>
-              }
-            </div>
-          } @else {
-            <p class="nm-msg">Aucun type : créez-en un depuis la liste des actualités.</p>
-          }
-          @if (submitted && typeMissing) { <p class="nm-msg nm-msg--error">{{ typeMissing }}</p> }
-        </fieldset>
-
         <div class="nm-field">
           <label for="news-image-url">Image <span class="nm-optional">facultative</span></label>
           <input id="news-image-url" class="nm-input" [(ngModel)]="newsForm.imageUrl" name="imageUrl" type="url" inputmode="url" autocomplete="off"
@@ -55,47 +42,45 @@
             {{ imageUrlError || 'Vide : l’image du type est utilisée.' }}
           </p>
         </div>
+      </div>
 
-        <div class="nm-field">
-          <label for="news-content">Contenu</label>
-          <angular-editor id="news-content" class="nm-rte" [(ngModel)]="newsForm.content" name="content" [config]="editorConfig"
-            [class.nm-rte--invalid]="submitted && !!contentError"></angular-editor>
-          @if (submitted && contentError) { <p class="nm-msg nm-msg--error">{{ contentError }}</p> }
-        </div>
-
-        @if (formError) { <p class="nm-alert" role="alert">{{ formError }}</p> }
-
-        <div class="nm-editor-foot">
-          <p class="nm-draft">
-            @if (draftSavedAt) {
-              Brouillon local enregistré à {{ draftSavedAt | date: 'HH:mm' }}
-              · <button type="button" class="nm-link" (click)="discardDraft()">Abandonner le brouillon</button>
-            } @else {
-              {{ editingNews ? 'Le message Discord est mis à jour à l’enregistrement.' : 'Publiée sur Discord et notifiée aux membres.' }}
+      <fieldset class="nm-field">
+        <legend>Type</legend>
+        @if (types.length) {
+          <div class="nm-type-picker" role="radiogroup" aria-label="Type d’actualité">
+            @for (t of types; track t.id) {
+              <button type="button" role="radio" class="nm-type-option" [class.nm-type-option--on]="newsForm.type?.id === t.id"
+                [attr.aria-checked]="newsForm.type?.id === t.id" [style.--accent]="t.color" (click)="selectType(t)">
+                <span class="nm-dot" aria-hidden="true"></span>{{ t.name }}
+              </button>
             }
-          </p>
-          <div class="nm-actions">
-            <button type="button" class="nm-btn nm-btn--ghost" (click)="closeForm()">Annuler</button>
-            <button type="submit" class="nm-btn nm-btn--primary" [disabled]="isSaving" data-testid="news-save">
-              {{ isSaving ? 'Enregistrement…' : editingNews ? 'Enregistrer' : 'Publier' }}
-            </button>
           </div>
-        </div>
-      </form>
+        } @else {
+          <p class="nm-msg">Aucun type : créez-en un depuis « Types d’actualité ».</p>
+        }
+        @if (submitted && typeMissing) { <p class="nm-msg nm-msg--error">{{ typeMissing }}</p> }
+      </fieldset>
+
+      <div class="nm-field">
+        <label for="news-content">Contenu</label>
+        <angular-editor id="news-content" class="nm-rte" [(ngModel)]="newsForm.content" name="content" [config]="editorConfig"
+          [class.nm-rte--invalid]="submitted && !!contentError"></angular-editor>
+        @if (submitted && contentError) { <p class="nm-msg nm-msg--error">{{ contentError }}</p> }
+      </div>
 
       <!-- Aperçu : reprend la carte du tableau de bord -->
-      <aside class="nm-preview-col" aria-label="Aperçu au tableau de bord">
-        <p class="nm-kicker">Aperçu au tableau de bord</p>
+      <div class="nm-field">
+        <span class="nm-label">Aperçu au tableau de bord</span>
         <article class="nm-preview" [style.--accent]="newsForm.type?.color || '#38bdf8'">
           <div class="nm-preview-media">
             @if (newsImage({ imageUrl: newsForm.imageUrl, type: newsForm.type }); as src) {
               <img [src]="src" alt="" (error)="imageFailed(src)" />
             }
-            @if (newsForm.type) { <span class="nm-preview-badge">{{ newsForm.type.name }}</span> }
+            @if (newsForm.type) { <span class="nm-chip nm-preview-badge">{{ newsForm.type.name }}</span> }
           </div>
           <div class="nm-preview-body">
             <h3>{{ newsForm.title.trim() || 'Titre de l’actualité' }}</h3>
-            <p class="nm-preview-date">{{ previewDate | date: 'dd MMM yyyy' }}</p>
+            <p class="nm-meta">{{ previewDate | date: 'dd MMM yyyy' }}</p>
             @if (newsForm.content.trim()) {
               <div class="nm-preview-content markdown-content" [innerHTML]="newsForm.content | markdown"></div>
             } @else {
@@ -104,70 +89,34 @@
             <span class="nm-preview-more" aria-hidden="true">Lire la suite →</span>
           </div>
         </article>
-      </aside>
-    </div>
-  } @else {
-    <div class="nm-layout">
-      <!-- ========================== LISTE DES ACTUALITÉS ========================== -->
-      <section class="nm-list-col" aria-labelledby="news-list-title">
-        <div class="nm-section-head">
-          <h2 id="news-list-title">Publiées</h2>
-          @if (totalElements) { <span class="nm-count">{{ totalElements }}</span> }
+      </div>
+
+      @if (formError) { <p class="nm-alert" role="alert">{{ formError }}</p> }
+
+      <div class="nm-editor-foot">
+        <p class="nm-msg">
+          @if (draftSavedAt) {
+            Brouillon local enregistré à {{ draftSavedAt | date: 'HH:mm' }}
+            · <button type="button" class="nm-link" (click)="discardDraft()">Abandonner le brouillon</button>
+          } @else {
+            {{ editingNews ? 'Le message Discord est mis à jour à l’enregistrement.' : 'Publiée sur Discord et notifiée aux membres.' }}
+          }
+        </p>
+        <div class="nm-actions">
+          <button type="button" class="nm-btn nm-btn--ghost" (click)="closeForm()">Annuler</button>
+          <button type="submit" class="nm-btn nm-btn--primary" [disabled]="isSaving" data-testid="news-save">
+            {{ isSaving ? 'Enregistrement…' : editingNews ? 'Enregistrer' : 'Publier' }}
+          </button>
         </div>
-
-        @if (isLoading && !news.length) {
-          <p class="nm-empty">Chargement des actualités…</p>
-        } @else if (loadError) {
-          <p class="nm-empty nm-empty--error">{{ loadError }} <button type="button" class="nm-link" (click)="loadNews()">Réessayer</button></p>
-        } @else if (!news.length) {
-          <p class="nm-empty">Aucune actualité. Publiez la première avec « Nouvelle actualité ».</p>
-        } @else {
-          <ul class="nm-list" data-testid="news-list" [class.nm-list--loading]="isLoading">
-            @for (n of news; track n.id) {
-              <li class="nm-card" [style.--accent]="n.type?.color || '#38bdf8'">
-                <div class="nm-thumb" aria-hidden="true">
-                  @if (newsImage(n); as src) { <img [src]="src" alt="" loading="lazy" (error)="imageFailed(src)" /> }
-                </div>
-                <div class="nm-card-main">
-                  <div class="nm-card-top">
-                    @if (n.type) { <span class="nm-chip">{{ n.type.name }}</span> }
-                    <span class="nm-meta">{{ n.createdAt | date: 'dd MMM yyyy · HH:mm' }} · {{ n.author }}</span>
-                  </div>
-                  <strong class="nm-card-title">{{ n.title }}</strong>
-                  @if (excerpt(n); as text) { <p class="nm-excerpt">{{ text }}</p> }
-                </div>
-
-                @if (confirmDeleteId === n.id) {
-                  <div class="nm-card-actions nm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + n.title">
-                    <span>Supprimer, aussi sur Discord ?</span>
-                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="cancelDeleteNews()">Annuler</button>
-                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger" (click)="deleteNews(n.id)" [disabled]="pendingNewsId === n.id">Supprimer</button>
-                  </div>
-                } @else {
-                  <div class="nm-card-actions">
-                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="openForm(n)" [attr.aria-label]="'Modifier ' + n.title">Modifier</button>
-                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger-ghost" (click)="askDeleteNews(n)" [attr.aria-label]="'Supprimer ' + n.title">Supprimer</button>
-                  </div>
-                }
-              </li>
-            }
-          </ul>
-        }
-
-        @if (totalPages > 1) {
-          <nav class="nm-pager" aria-label="Pages des actualités">
-            <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="prevPage()" [disabled]="currentPage === 0 || isLoading">← Précédentes</button>
-            <span>Page {{ currentPage + 1 }} sur {{ totalPages }}</span>
-            <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1 || isLoading">Suivantes →</button>
-          </nav>
-        }
-      </section>
-
-      <!-- ========================== TYPES ========================== -->
-      <section class="nm-panel nm-types" aria-labelledby="news-types-title">
+      </div>
+    </form>
+  } @else {
+    <!-- ========================== TYPES ========================== -->
+    @if (typesOpen) {
+      <section id="news-types" class="nm-panel nm-types" aria-labelledby="news-types-title">
         <div class="nm-panel-head">
-          <h2 id="news-types-title">Types</h2>
-          @if (editingType) { <button type="button" class="nm-link" (click)="startCreateType()">Nouveau type</button> }
+          <h2 id="news-types-title">Types d’actualité</h2>
+          <button type="button" class="nm-link" (click)="typesOpen = false">Fermer</button>
         </div>
 
         @if (typesLoading && !types.length) {
@@ -178,6 +127,9 @@
           <ul class="nm-type-list" data-testid="news-type-list">
             @for (type of types; track type.id) {
               <li class="nm-type-row" [class.nm-type-row--editing]="editingType?.id === type.id" [style.--accent]="type.color">
+                <span class="nm-type-thumb" aria-hidden="true">
+                  @if (type.imageUrl) { <img [src]="type.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" /> }
+                </span>
                 <span class="nm-chip">{{ type.name }}</span>
                 @if (confirmDeleteTypeId === type.id) {
                   <span class="nm-type-actions nm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + type.name">
@@ -202,31 +154,27 @@
         <form class="nm-type-form" (submit)="$event.preventDefault(); saveType()" novalidate data-testid="news-type-form"
           [attr.aria-label]="editingType ? 'Modifier le type' : 'Nouveau type'">
           <h3>{{ editingType ? 'Modifier « ' + editingType.name + ' »' : 'Nouveau type' }}</h3>
-
-          <div class="nm-type-sample" [style.--accent]="typePreviewColor" aria-hidden="true">
-            @if (typeForm.imageUrl.trim()) { <img [src]="typeForm.imageUrl.trim()" alt="" (error)="$any($event.target).style.display = 'none'" (load)="$any($event.target).style.display = ''" /> }
-            <span class="nm-chip">{{ typeForm.name.trim() || 'Nom du type' }}</span>
+          <div class="nm-type-fields">
+            <div class="nm-field">
+              <label for="news-type-name">Nom</label>
+              <input id="news-type-name" class="nm-input" [(ngModel)]="typeForm.name" name="typeName" maxlength="100" autocomplete="off"
+                placeholder="Annonce, Patch, CIG Watch…" [attr.aria-invalid]="typeSubmitted && !!typeNameError" />
+              @if (typeSubmitted && typeNameError) { <p class="nm-msg nm-msg--error">{{ typeNameError }}</p> }
+            </div>
+            <app-color-field label="Couleur" hint="Fond du badge, sous un texte sombre." [value]="typeForm.color"
+              (valueChange)="typeForm.color = $event" [presets]="typePresets" fallback="#38bdf8" />
+            <div class="nm-field">
+              <label for="news-type-image">Image par défaut <span class="nm-optional">facultative</span></label>
+              <input id="news-type-image" class="nm-input" [(ngModel)]="typeForm.imageUrl" name="typeImage" inputmode="url" autocomplete="off"
+                placeholder="https://… ou /img/…" />
+              <p class="nm-msg">Pour les actualités de ce type sans image.</p>
+            </div>
+            <div class="nm-type-sample" [style.--accent]="typePreviewColor" aria-hidden="true">
+              @if (typeForm.imageUrl.trim()) { <img [src]="typeForm.imageUrl.trim()" alt="" (error)="$any($event.target).style.display = 'none'" (load)="$any($event.target).style.display = ''" /> }
+              <span class="nm-chip">{{ typeForm.name.trim() || 'Nom du type' }}</span>
+            </div>
           </div>
-
-          <div class="nm-field">
-            <label for="news-type-name">Nom</label>
-            <input id="news-type-name" class="nm-input" [(ngModel)]="typeForm.name" name="typeName" maxlength="100" autocomplete="off"
-              placeholder="Annonce, Patch, CIG Watch…" [attr.aria-invalid]="typeSubmitted && !!typeNameError" />
-            @if (typeSubmitted && typeNameError) { <p class="nm-msg nm-msg--error">{{ typeNameError }}</p> }
-          </div>
-
-          <app-color-field label="Couleur" hint="Fond du badge, sous un texte sombre." [value]="typeForm.color"
-            (valueChange)="typeForm.color = $event" [presets]="typePresets" fallback="#38bdf8" />
-
-          <div class="nm-field">
-            <label for="news-type-image">Image par défaut <span class="nm-optional">facultative</span></label>
-            <input id="news-type-image" class="nm-input" [(ngModel)]="typeForm.imageUrl" name="typeImage" inputmode="url" autocomplete="off"
-              placeholder="https://… ou /img/…" />
-            <p class="nm-msg">Utilisée par les actualités de ce type qui n’ont pas d’image.</p>
-          </div>
-
           @if (typeError) { <p class="nm-alert" role="alert">{{ typeError }}</p> }
-
           <div class="nm-actions">
             @if (editingType) { <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="cancelEdit()">Annuler</button> }
             <button type="submit" class="nm-btn nm-btn--sm nm-btn--primary" [disabled]="isTypeSaving">
@@ -235,6 +183,64 @@
           </div>
         </form>
       </section>
-    </div>
+    }
+
+    <!-- ========================== ACTUALITÉS ========================== -->
+    <section aria-labelledby="news-list-title">
+      <div class="nm-section-head">
+        <h2 id="news-list-title">Publiées @if (totalElements) { <span class="nm-count">{{ totalElements }}</span> }</h2>
+        @if (totalPages > 1) {
+          <nav class="nm-pager" aria-label="Pages des actualités">
+            <button type="button" class="nm-icon-btn" aria-label="Page précédente" (click)="prevPage()" [disabled]="currentPage === 0 || isLoading">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5" /></svg>
+            </button>
+            <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
+            <button type="button" class="nm-icon-btn" aria-label="Page suivante" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1 || isLoading">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5" /></svg>
+            </button>
+          </nav>
+        }
+      </div>
+
+      @if (isLoading && !news.length) {
+        <p class="nm-empty">Chargement des actualités…</p>
+      } @else if (loadError) {
+        <p class="nm-empty nm-empty--error">{{ loadError }} <button type="button" class="nm-link" (click)="loadNews()">Réessayer</button></p>
+      } @else if (!news.length) {
+        <p class="nm-empty">Aucune actualité. Publiez la première avec « Nouvelle actualité ».</p>
+      } @else {
+        <ul class="nm-grid" data-testid="news-list" [class.nm-grid--loading]="isLoading">
+          @for (n of news; track n.id) {
+            <li class="nm-card" [style.--accent]="n.type?.color || '#38bdf8'">
+              <div class="nm-card-media" aria-hidden="true">
+                @if (newsImage(n); as src) { <img [src]="src" alt="" loading="lazy" (error)="imageFailed(src)" /> }
+                @if (n.type) { <span class="nm-chip nm-preview-badge">{{ n.type.name }}</span> }
+              </div>
+              <div class="nm-card-body">
+                <strong class="nm-card-title">{{ n.title }}</strong>
+                <span class="nm-meta">{{ n.createdAt | date: 'dd MMM yyyy · HH:mm' }} · {{ n.author }}</span>
+                @if (excerpt(n); as text) { <p class="nm-excerpt">{{ text }}</p> }
+              </div>
+              @if (confirmDeleteId === n.id) {
+                <div class="nm-card-foot nm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + n.title">
+                  <span>Supprimer, aussi sur Discord ?</span>
+                  <span class="nm-actions">
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="cancelDeleteNews()">Annuler</button>
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger" (click)="deleteNews(n.id)" [disabled]="pendingNewsId === n.id">Supprimer</button>
+                  </span>
+                </div>
+              } @else {
+                <div class="nm-card-foot">
+                  <span class="nm-actions">
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger-ghost" (click)="askDeleteNews(n)" [attr.aria-label]="'Supprimer ' + n.title">Supprimer</button>
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="openForm(n)" [attr.aria-label]="'Modifier ' + n.title">Modifier</button>
+                  </span>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
   }
 </div>

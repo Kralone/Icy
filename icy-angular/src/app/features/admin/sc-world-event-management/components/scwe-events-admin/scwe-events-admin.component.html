@@ -7,46 +7,41 @@
       @if (editingEvent) { <button type="button" class="sw-btn sw-btn--sm sw-btn--ghost" (click)="createNew()">Annuler</button> }
     </div>
 
-    <div class="sw-field">
-      <label for="scwe-title">Titre</label>
-      <input id="scwe-title" class="sw-input" [(ngModel)]="eventForm.title" name="title" placeholder="Alliance Aid - Première initiative" />
-    </div>
-
-    <div class="sw-field">
-      <label for="scwe-type">Type</label>
-      <select id="scwe-type" class="sw-input" [(ngModel)]="eventForm.typeName" name="typeName">
-        @for (t of types; track t) {
-          <option [ngValue]="t.name">{{ t.name }}</option>
-        }
-      </select>
-    </div>
-
-    <div class="sw-grid">
+    <div class="sw-form-grid">
+      <div class="sw-field sw-col-2">
+        <label for="scwe-title">Titre</label>
+        <input id="scwe-title" class="sw-input" [(ngModel)]="eventForm.title" name="title" placeholder="Alliance Aid - Première initiative" />
+      </div>
       <div class="sw-field">
+        <label for="scwe-type">Type</label>
+        <select id="scwe-type" class="sw-input" [(ngModel)]="eventForm.typeName" name="typeName">
+          @for (t of types; track t) {
+            <option [ngValue]="t.name">{{ t.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="sw-field">
+        <label for="scwe-banner">Bannière</label>
+        <input id="scwe-banner" class="sw-input" [(ngModel)]="eventForm.bannerImageUrl" name="banner" inputmode="url" placeholder="https://… ou /img/sc/banner.png" />
+      </div>
+      <div class="sw-field sw-col-2">
         <span class="sw-label">Début</span>
         <app-date-time-field [(ngModel)]="eventForm.startAtLocal" name="startAt" label="Début" />
       </div>
-      <div class="sw-field">
+      <div class="sw-field sw-col-2">
         <span class="sw-label">Fin <span class="sw-optional">facultative</span></span>
         <app-date-time-field [(ngModel)]="eventForm.endAtLocal" name="endAt" label="Fin" />
       </div>
-    </div>
-
-    <div class="sw-field">
-      <label for="scwe-banner">Bannière</label>
-      <input id="scwe-banner" class="sw-input" [(ngModel)]="eventForm.bannerImageUrl" name="banner" inputmode="url" placeholder="https://… ou /img/sc/banner.png" />
-    </div>
-
-    <div class="sw-field">
-      <label for="scwe-description">Description</label>
-      <textarea id="scwe-description" class="sw-input" [(ngModel)]="eventForm.description" name="description"
-        placeholder="Objectifs, déroulé, récompenses…"></textarea>
-    </div>
-
-    <div class="sw-field">
-      <label for="scwe-gallery">Galerie <span class="sw-optional">JSON</span></label>
-      <textarea id="scwe-gallery" class="sw-input sw-mono" rows="6" [(ngModel)]="eventForm.gallery" name="gallery"
-        placeholder='[{"url":"https://...","caption":"..."}]'></textarea>
+      <div class="sw-field sw-col-2">
+        <label for="scwe-description">Description</label>
+        <textarea id="scwe-description" class="sw-input" rows="5" [(ngModel)]="eventForm.description" name="description"
+          placeholder="Objectifs, déroulé, récompenses…"></textarea>
+      </div>
+      <div class="sw-field sw-col-2">
+        <label for="scwe-gallery">Galerie <span class="sw-optional">JSON</span></label>
+        <textarea id="scwe-gallery" class="sw-input sw-mono" rows="5" [(ngModel)]="eventForm.gallery" name="gallery"
+          placeholder='[{"url":"https://...","caption":"..."}]'></textarea>
+      </div>
     </div>
 
     <div class="sw-form-actions">

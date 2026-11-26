@@ -17,15 +17,14 @@
 .sw-tab:hover { color: #f1f5f9; background: rgb(255 255 255 / .05); }
 .sw-tab--on, .sw-tab--on:hover { color: #0b1220; background: linear-gradient(90deg, #22d3ee, #38bdf8); }
 
-/* Mises en page : formulaire d'abord dans le DOM, liste à gauche sur grand écran */
-.sw-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-@media (min-width: 1024px) {
-  .sw-layout--events { grid-template-columns: minmax(0, 1fr) 26rem; grid-template-areas: 'list form'; }
-  .sw-layout--types { grid-template-columns: 20rem minmax(0, 1fr); grid-template-areas: 'list form'; }
-  .sw-layout > .sw-form-area { grid-area: form; }
-  .sw-layout > .sw-list-area { grid-area: list; }
-  .sw-layout--events > .sw-form-area { position: sticky; top: 1.25rem; }
-}
+/* Mises en page : une seule colonne pleine largeur ; les types listés avant leur formulaire */
+.sw-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.sw-layout--types > .sw-list-area { order: -1; }
+.sw-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .9rem 1rem; align-items: start; }
+@media (min-width: 768px) { .sw-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sw-col-2 { grid-column: span 2; } }
+@media (min-width: 1280px) { .sw-form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sw-list-area .sw-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 34rem), 1fr)); }
+.sw-layout--types .sw-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
 
 .sw-panel { display: grid; gap: .9rem; padding: 1rem; border-radius: 1rem; border: 1px solid rgb(var(--ice) / .2); background: linear-gradient(180deg, #0d182b, #0a111c); box-shadow: 0 25px 60px rgb(0 0 0 / .35); }
 .sw-panel-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
