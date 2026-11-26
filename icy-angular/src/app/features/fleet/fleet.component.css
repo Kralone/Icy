@@ -21,7 +21,6 @@
   background-clip: text;
   color: transparent;
 }
-.fleet-stats { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .fleet-stat {
   display: flex;
   flex-direction: column;
@@ -34,6 +33,29 @@
   color: rgb(148 163 184);
 }
 .fleet-stat strong { font-size: 1.25rem; font-weight: 600; color: rgb(241 245 249); font-variant-numeric: tabular-nums; }
+
+.fleet-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  width: min(100%, 24rem);
+}
+.fleet-search svg { position: absolute; left: 0.85rem; width: 1.05rem; height: 1.05rem; color: rgb(148 163 184); pointer-events: none; }
+.fleet-search input {
+  width: 100%;
+  padding: 0.7rem 0.95rem 0.7rem 2.5rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(11 19 36 / 0.8);
+  color: rgb(241 245 249);
+  font-size: 0.95rem;
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / 0.08);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.fleet-search input::placeholder { color: rgb(100 116 139); }
+.fleet-search input:focus { outline: none; border-color: rgb(125 211 252 / 0.6); box-shadow: 0 0 0 3px rgb(125 211 252 / 0.15); }
+.fleet-no-match { margin-top: 2.5rem; text-align: center; color: rgb(148 163 184); }
 
 .fleet-category { --tone: 203 213 225; margin-top: 1.75rem; }
 .fleet-focus-title {
@@ -150,6 +172,8 @@
   .fleet-content { max-width: 2800px; }
   .fleet-title { font-size: 2.9rem; }
   .fleet-stat { font-size: 0.95rem; padding: 0.7rem 1.2rem; }
+  .fleet-search { width: 32rem; }
+  .fleet-search input { font-size: 1.15rem; padding-block: 0.9rem; }
   .fleet-stat strong { font-size: 1.6rem; }
   .fleet-focus-title { font-size: 0.95rem; }
   .fleet-ship-grid { grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr)); gap: 1.4rem; }
@@ -159,8 +183,7 @@
 }
 @media (max-width: 639px) {
   .fleet-page { padding-top: 2rem; }
-  .fleet-stats { margin-left: 0; width: 100%; }
-  .fleet-stat { flex: 1; }
+  .fleet-search { margin-left: 0; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fleet-ship-card, .fleet-ship-media img { transition: none; }
