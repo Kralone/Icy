@@ -61,6 +61,10 @@ printf '%s' "$resolved" | jq -e '
   network_names($services.backend) == ["external", "internal"] and
   network_names($services.bot) == ["external", "internal"] and
   network_names($services.db) == ["internal"] and
+  ($services.db.networks.internal.ipv4_address == "172.19.0.2") and
+  ((.networks.internal.ipam.config // []) | length) == 1 and
+  (.networks.internal.ipam.config[0].subnet == "172.19.0.0/16") and
+  (.networks.internal.ipam.config[0].ip_range == "172.19.128.0/17") and
   network_names($services.rabbitmq) == ["internal"] and
   network_names($services.vault) == ["internal"] and
   (ports($services.backend) | length) == 0 and
@@ -85,5 +89,6 @@ unset resolved
 printf 'NETWORK_HARDENING_CONFIG_VALID=true\n'
 printf 'COMPOSE_VERSION=%s\n' "$compose_version"
 printf 'PUBLIC_PORTS=80,443\n'
+printf 'DB_INTERNAL_ADDRESS=172.19.0.2\n'
 printf 'LOCALHOST_ADMIN_PORTS=8200,15672\n'
 printf 'VAULT_APPROLE_CONFIG_VALID=true\n'

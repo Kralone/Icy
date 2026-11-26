@@ -148,6 +148,55 @@ La trace sanitisée d'avant opération est conservée sur l'hôte dans le réper
 de sauvegardes IceForge. Les scripts de vérification temporaires et leurs traces
 en clair sous `/run` doivent être supprimés après fusion de la branche.
 
+## Adresse fixe de PostgreSQL
+
+L'accès d'administration à la base (IntelliJ) passe par un tunnel SSH du compte
+`iceforge-db-admin` vers l'adresse interne du conteneur `iceforge_db`. Ce compte
+ne peut ouvrir un tunnel que vers une seule adresse, inscrite à deux endroits du
+serveur :
+
+- `PermitOpen 172.19.0.2:5432` dans `/etc/ssh/sshd_config.d/60-iceforge-db-admin.conf` ;
+- l'option `permitopen="172.19.0.2:5432"` de la clé dans
+  `~iceforge-db-admin/.ssh/authorized_keys`, qui s'applique en plus de la config.
+
+Tant que `iceforge_internal` n'avait pas de sous-réseau déclaré, Docker attribuait
+les adresses dans l'ordre de démarrage : après le redémarrage du 20 novembre 2026,
+la base est passée de `172.19.0.4` à `172.19.0.2` et RabbitMQ a pris `.4`. Le tunnel
+échouait alors avec « Connection refused », puis « open failed » une fois IntelliJ
+réglé sur la nouvelle adresse, car les deux règles ci-dessus visaient encore `.4`.
+
+La surcharge déclare donc le sous-réseau `172.19.0.0/16` (celui que Docker avait
+choisi), réserve `172.19.128.0/17` aux adresses dynamiques et fixe la base en
+`172.19.0.2`. Docker n'applique un sous-réseau qu'à la création d'un réseau : le
+réseau existant doit être recréé une fois, ce qui arrête toute la stack.
+
+Procédure (créneau de maintenance, staging en veille, aucun déploiement en cours) :
+
+1. Merger la PR juste avant le créneau, puis copier sur le serveur
+   `docker-compose.network-hardening.yml`, `verify.sh` et
+   `pin-internal-addresses.sh` dans `/root/iceforge/ops/network-hardening/`.
+   Tant que le réseau n'est pas recréé, ne lancer aucun déploiement avec la
+   nouvelle surcharge.
+2. Prendre un snapshot hPanel et vérifier une sauvegarde chiffrée récente.
+3. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --check`
+   doit afficher `PIN_STATUS=READY_TO_APPLY`, le sous-réseau `172.19.0.0/16` et
+   la liste des conteneurs étrangers (supervision), qui seront reconnectés.
+4. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --apply --verified-backup <archive>` :
+   `down` sans `-v` (volumes conservés), suppression du réseau, puis relance de
+   `vault`, `db`, `rabbitmq` et `libretranslate` seulement, reconnexion de la
+   supervision et contrôle de `172.19.0.2`. Le backend ne démarre pas tant que
+   Vault est scellé, et bot et frontend attendent le backend.
+5. Déverrouiller Vault avec `ops/production/vault/unseal-from-windows.ps1`.
+6. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --finish` :
+   vérifie que Vault est déverrouillé et relance le reste de la stack avec les
+   mêmes images. Vérifier ensuite les conteneurs, le site, `/api/front/members`,
+   la supervision et le tunnel IntelliJ.
+
+Retour arrière : si le réseau ne peut pas être créé, retirer le bloc `networks`
+et l'adresse de `db` de la surcharge du serveur, relancer `docker compose ... up -d`
+avec les mêmes fichiers, puis unseal Vault. En dernier recours, restaurer le
+snapshot hPanel.
+
 ## Rollback
 
 Le retour arrière consiste à relancer les mêmes services avec seulement les deux

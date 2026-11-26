@@ -1,7 +1,12 @@
 services:
   db:
     ports: !override []
-    networks: !override [internal]
+    # Adresse fixe : le tunnel SSH d'administration (compte iceforge-db-admin,
+    # PermitOpen et authorized_keys) vise cette adresse. Elle est hors de la plage
+    # dynamique ci-dessous, donc aucun autre conteneur ne peut la prendre.
+    networks: !override
+      internal:
+        ipv4_address: 172.19.0.2
 
   rabbitmq:
     ports: !override
@@ -23,3 +28,15 @@ services:
     ports: !override
       - "127.0.0.1:8200:8200"
     networks: !override [internal]
+
+networks:
+  internal:
+    # Plage déclarée explicitement : Docker n'accepte une adresse fixe que sur un
+    # réseau dont le sous-réseau est déclaré. 172.19.0.0/16 est celui que Docker
+    # avait attribué automatiquement : la plage ne change pas. Les conteneurs sans
+    # adresse fixe reçoivent désormais une adresse dans 172.19.128.0/17.
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+          ip_range: 172.19.128.0/17
+          gateway: 172.19.0.1

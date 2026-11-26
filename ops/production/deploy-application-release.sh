@@ -122,6 +122,13 @@ db_psql() {
 }
 
 "${compose[@]}" config --quiet
+# La surcharge réseau fixe l'adresse de PostgreSQL : Docker ne l'accepte que sur un
+# réseau recréé avec son sous-réseau déclaré (pin-internal-addresses.sh).
+internal_range=$(docker network inspect iceforge_internal --format '{{range .IPAM.Config}}{{.IPRange}}{{end}}')
+[[ $internal_range == 172.19.128.0/17 ]] || {
+  echo 'Réseau iceforge_internal pas encore recréé : lancer pin-internal-addresses.sh avant de déployer.' >&2
+  exit 1
+}
 translation_image=$("${compose[@]}" config --format json | python3 -c \
   'import json,sys; print(json.load(sys.stdin)["services"]["libretranslate"]["image"])')
 [[ $translation_image =~ @sha256:[0-9a-f]{64}$ ]] || {
