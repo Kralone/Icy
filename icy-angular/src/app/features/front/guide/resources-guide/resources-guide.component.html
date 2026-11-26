@@ -1,62 +1,48 @@
-<section class="resources-page" aria-label="Ressources guides">
-  <div class="resources-page__bg"></div>
+<section class="resources-page" aria-labelledby="resources-title">
+  <header class="resources-hero">
+    <img class="resources-hero__image" src="assets/images/home/activities/mining-advanced.jpg" alt="" fetchpriority="high" decoding="async" />
+    <div class="resources-hero__content">
+      <p class="resources-hero__eyebrow">Utilitaires · Minage</p>
+      <h1 id="resources-title">Ressources minage</h1>
+      <p class="resources-hero__lead">Où trouver chaque minerai, où le vendre, où le raffiner et avec quel équipement.</p>
+    </div>
+  </header>
 
-  <div class="resources-layout">
-    <div class="resources-stage" [class.resources-stage--focused]="!!selectedLineId">
-      <div class="resources-lines">
-        @for (line of lines; track trackLine($index, line)) {
-          <button
-            type="button"
-            class="resource-line"
-            [id]="'resource-line-' + line.id"
-            [style.--band-height.px]="line.bandHeight || 176"
-            [style.--line-order]="$index"
-            [class.resource-line--active]="selectedLineId === line.id"
-            [class.resource-line--hidden]="!!selectedLineId && selectedLineId !== line.id"
-            (click)="selectLine(line)"
-          >
-            <img
-              class="resource-line__image"
-              [src]="line.imageUrl"
-              [style.object-position]="line.imagePosition || 'center 22%'"
-              [alt]="line.title"
-              loading="eager"
-              [attr.fetchpriority]="line.id === 'planning' ? 'high' : 'auto'"
-              decoding="async"
-            />
-            <span class="resource-line__fade" aria-hidden="true"></span>
-            <span class="resource-line__label">{{ line.ribbon }}</span>
-          </button>
-        }
-      </div>
-
-      @if (selectedLine) {
-        <section class="resource-content" [class.resource-content--visible]="contentVisible">
-          <div class="resource-content__head">
-            <h2>{{ selectedLine.title }}</h2>
-          </div>
-          <p>{{ selectedLine.description }}</p>
-
-          @if (selectedLine.id === 'planning') {
-            <front-resources-sales-panel></front-resources-sales-panel>
-          }
-
-          @if (selectedLine.id === 'refining') {
-            <front-resources-refining-panel></front-resources-refining-panel>
-          }
-
-          @if (selectedLine.id === 'locations') {
-            <front-resources-mining-panel></front-resources-mining-panel>
-          }
-
-          @if (selectedLine.id === 'fit') {
-            <front-resources-fit-panel
-              [requestedTab]="fitRequestedTab"
-              [requestedModuleFilter]="fitRequestedModuleFilter"
-            ></front-resources-fit-panel>
-          }
-        </section>
+  <nav class="resources-tabs" aria-label="Rubriques des ressources minage">
+    <div class="resources-tabs__inner" role="tablist">
+      @for (line of lines; track line.id) {
+        <button
+          type="button"
+          role="tab"
+          class="resources-tab"
+          [id]="'resource-line-' + line.id"
+          [attr.aria-selected]="selectedLineId === line.id"
+          [attr.aria-controls]="'resource-panel-' + line.id"
+          [class.resources-tab--active]="selectedLineId === line.id"
+          (click)="selectLine(line)"
+        >
+          <app-catalog-icon [key]="line.icon" class="catalog-icon-halo" />
+          <span class="resources-tab__text">
+            <strong>{{ line.title }}</strong>
+            <small>{{ line.hint }}</small>
+          </span>
+        </button>
       }
     </div>
-  </div>
+  </nav>
+
+  @if (selectedLine; as line) {
+    <section class="resources-panel" role="tabpanel" [id]="'resource-panel-' + line.id" [attr.aria-labelledby]="'resource-line-' + line.id">
+      <p class="resources-panel__intro">{{ line.description }}</p>
+
+      @switch (line.id) {
+        @case ('locations') { <front-resources-mining-panel /> }
+        @case ('planning') { <front-resources-sales-panel /> }
+        @case ('refining') { <front-resources-refining-panel /> }
+        @case ('fit') {
+          <front-resources-fit-panel [requestedTab]="fitRequestedTab" [requestedModuleFilter]="fitRequestedModuleFilter" />
+        }
+      }
+    </section>
+  }
 </section>

@@ -1,4 +1,5 @@
 import { CatalogCorrectionsComponent } from '../catalog-corrections/catalog-corrections.component';
+import { CatalogIconComponent, CatalogIconKey, FAMILY_ICONS } from '../../../shared/catalog-icon/catalog-icon.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -42,7 +43,7 @@ export const FAMILY_GROUPS: { label: string; tone: string; families: string[] }[
 @Component({
   selector: 'app-catalog-browser',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CatalogCorrectionsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CatalogCorrectionsComponent, CatalogIconComponent],
   templateUrl: './catalog-browser.component.html',
   styleUrl: './catalog-browser.component.css',
   changeDetection: ChangeDetectionStrategy.Eager
@@ -79,9 +80,9 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
   readonly standardFamilies = this.families.filter((family) => family.value !== 'SHIP');
 
   canCorrect = false;
-  /** Colonne des familles dépliée (sur mobile, elle est repliée en menu). */
-  familiesOpen = false;
   viewMode: 'grid' | 'list' = 'grid';
+  /** Filtres dépliés sur mobile ; sur grand écran, ils restent toujours visibles. */
+  filtersOpen = false;
   correctionsOpen = false;
   imageCorrectionOpen = false;
 
@@ -204,6 +205,45 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
 
   groupFamilyCount(group: Exclude<CatalogGroup, 'ALL'>, family: string): number {
     return this.result?.groupFamilyCounts?.[group]?.[family] ?? 0;
+  }
+
+  readonly shipVariants: { value: 'STANDARD' | 'PYAM_EXEC' | 'BATTAGLIA'; label: string }[] = [
+    { value: 'STANDARD', label: 'Standard' }, { value: 'PYAM_EXEC', label: 'PYAM Exec' }, { value: 'BATTAGLIA', label: 'Battaglia' }
+  ];
+
+  readonly groupIcons: Record<string, CatalogIconKey> = {
+    'Vaisseaux et véhicules': 'ship', Armement: 'weapon', 'Équipement': 'component', Lieux: 'planet', Ressources: 'ore'
+  };
+
+  /** Grand groupe affiché dans la barre : celui de la famille choisie, Wikelo ou Tout. */
+  get activeGroupLabel(): string {
+    if (this.catalogGroup === 'WIKELO') return 'Wikelo';
+    if (!this.family) return 'Tout';
+    return FAMILY_GROUPS.find((group) => group.families.includes(this.family))?.label ?? 'Tout';
+  }
+
+  get activeGroup(): { label: string; tone: string; ships: boolean; families: FamilyOption[] } | null {
+    return this.familyGroups.find((group) => group.label === this.activeGroupLabel) ?? null;
+  }
+
+  groupTotal(group: { ships: boolean; families: FamilyOption[] }): number {
+    return (group.ships ? this.nonWikeloShipCount : 0)
+      + group.families.reduce((total, option) => total + this.groupFamilyCount('STANDARD', option.value), 0);
+  }
+
+  /** Un grand groupe ouvre sa première famille. */
+  selectGroup(group: { ships: boolean; families: FamilyOption[] }): void {
+    if (group.ships) this.selectShipGroup('STANDARD');
+    else if (group.families.length) this.selectFamily(group.families[0].value);
+  }
+
+  /** Filtres modifiés par rapport aux valeurs par défaut, signalés sur le bouton mobile. */
+  get activeFilterCount(): number {
+    return [this.status !== 'ACTIVE', this.image !== 'ALL', !!this.source, this.sort !== 'name'].filter(Boolean).length;
+  }
+
+  familyIcon(value: string): CatalogIconKey {
+    return FAMILY_ICONS[value] ?? 'item';
   }
 
   get nonWikeloShipCount(): number {

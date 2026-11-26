@@ -1,26 +1,75 @@
 <section class="data-menu">
-  <header class="data-menu-heading">
-    <h1>Catalogue</h1>
-    <nav aria-label="Navigation du catalogue">
-      <a routerLink="/icy/admin">← Administration</a>
-      <a routerLink="/icy/admin/catalog">Tout le catalogue</a>
-      <a routerLink="/icy/admin/uex-cache">Synchronisation</a>
-    </nav>
-  </header>
-  <div class="data-menu-grid">
-    @for (item of menuItems; track item.label) {
-      <section class="data-menu-card">
-        <a class="data-menu-card-main" [routerLink]="item.route" [queryParams]="item.queryParams">
-          <img [src]="item.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
-          <h2>{{ item.label }}</h2><span aria-hidden="true">↗</span>
-        </a>
-        @if (item.shortcuts?.length) {
-          <nav class="data-menu-shortcuts" [attr.aria-label]="item.label">
-            @for (shortcut of item.shortcuts; track shortcut.label) {
-              <a routerLink="/icy/admin/catalog" [queryParams]="{family: shortcut.family, catalogGroup: shortcut.catalogGroup || 'STANDARD'}">{{ shortcut.label }}</a>
-            }
-          </nav>
+  <div class="data-menu-content">
+    <header class="data-menu-heading">
+      <span class="data-menu-emblem"><app-catalog-icon key="catalog" class="catalog-icon-halo" /></span>
+      <h1>Catalogue</h1>
+      <nav aria-label="Navigation du catalogue">
+        <a routerLink="/icy/admin">← Administration</a>
+        <a routerLink="/icy/admin/catalog">Tout le catalogue</a>
+      </nav>
+    </header>
+
+    <form class="data-menu-search" role="search" (ngSubmit)="searchCatalog()">
+      <span class="data-menu-search__icon" aria-hidden="true"></span>
+      <label class="sr-only" for="catalog-hub-search">Rechercher dans le catalogue</label>
+      <input id="catalog-hub-search" name="q" type="search" [(ngModel)]="search" autocomplete="off"
+        placeholder="Rechercher un vaisseau, un objet, un lieu…" />
+      <button type="submit">Rechercher</button>
+      @if (counts) {
+        <p class="data-menu-search__meta">
+          <strong>{{ counts.activeElements }}</strong> fiches actives
+          @if (counts.fallbackImages) { · <strong class="data-menu-warn">{{ counts.fallbackImages }}</strong> visuels à enrichir }
+        </p>
+      }
+    </form>
+
+    <section class="data-menu-group" style="--tone: 186 230 253" aria-labelledby="catalog-group-fiches">
+      <h2 class="data-menu-group__title" id="catalog-group-fiches">Fiches</h2>
+      <div class="domain-grid">
+        @for (domain of domains; track domain.label) {
+          <article class="domain-card" [style.--tone]="domain.tone">
+            <a class="domain-card__head" routerLink="/icy/admin/catalog" [queryParams]="domain.queryParams">
+              <span class="domain-card__media">
+                <img [src]="domain.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+              </span>
+              <span class="domain-card__icon"><app-catalog-icon [key]="domain.icon" class="catalog-icon-halo" /></span>
+              <span class="domain-card__title">
+                <h3>{{ domain.label }}</h3>
+                @if (domainCount(domain) !== null) { <span>{{ domainCount(domain) }} fiches</span> }
+              </span>
+            </a>
+            <nav class="domain-card__links" [attr.aria-label]="domain.label">
+              @for (shortcut of domain.shortcuts; track shortcut.label) {
+                <a routerLink="/icy/admin/catalog" [queryParams]="{family: shortcut.family, catalogGroup: shortcut.catalogGroup || 'STANDARD'}">
+                  <app-catalog-icon [key]="shortcut.icon" />
+                  <span>{{ shortcut.label }}</span>
+                  @if (shortcutCount(shortcut) !== null) { <strong>{{ shortcutCount(shortcut) }}</strong> }
+                </a>
+              }
+            </nav>
+          </article>
         }
+      </div>
+    </section>
+
+    @for (group of groups; track group.label; let g = $index) {
+      <section class="data-menu-group" [style.--tone]="group.tone" [attr.aria-labelledby]="'catalog-group-' + g">
+        <h2 class="data-menu-group__title" [id]="'catalog-group-' + g">{{ group.label }}</h2>
+        <div class="hub-grid">
+          @for (link of group.links; track link.label) {
+            <a class="hub-card" [routerLink]="link.route" [queryParams]="link.queryParams">
+              <span class="hub-card__media">
+                <img [src]="link.imageUrl" alt="" loading="lazy" (error)="$any($event.target).style.display = 'none'" />
+              </span>
+              <span class="hub-card__icon"><app-catalog-icon [key]="link.icon" class="catalog-icon-halo" /></span>
+              <span class="hub-card__text">
+                <span class="hub-card__label">{{ link.label }}</span>
+                <span class="hub-card__description">{{ link.description }}</span>
+                @if (linkMeta(link); as meta) { <span class="hub-card__meta">{{ meta }}</span> }
+              </span>
+            </a>
+          }
+        </div>
       </section>
     }
   </div>

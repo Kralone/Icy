@@ -1,65 +1,147 @@
-.ore-file-input {
-  border: 1px solid rgba(103, 232, 249, 0.25);
-  background: rgba(8, 33, 55, 0.7);
-  border-radius: 0.75rem;
-  padding: 0.35rem 0.55rem;
-  color: #c9f3ff;
-  max-width: 460px;
+/* Zones de minage, style glace-forge ; --tone est l'ambre du groupe Ressources de minage. */
+:host { display: block; }
+.ore-admin {
+  --tone: 251 191 36;
+  --line: rgb(255 255 255 / .09);
+  min-height: 100vh;
+  color: #e2e8f0;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  background: linear-gradient(180deg, #0a111c, #0f172a 45%, #111827);
+}
+.ore-content { max-width: 1800px; margin: 0 auto; }
+
+.back-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 36px; color: #94a3b8; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; }
+.back-link:hover { color: #f8fafc; }
+.ore-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 6px; }
+.ore-emblem { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; --catalog-icon-size: 1.55rem; border: 1px solid rgb(var(--tone) / .35); background: rgb(11 19 36 / .8); box-shadow: 0 0 22px rgb(var(--tone) / .12); }
+h1 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 600; letter-spacing: .2em; text-transform: uppercase; background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ore-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.ore-button { position: relative; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .14); background: rgb(255 255 255 / .04); color: #e2e8f0; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 180ms ease, background 180ms ease; }
+.ore-button:hover { border-color: rgb(125 211 252 / .6); background: rgb(125 211 252 / .1); }
+.ore-button:disabled { opacity: .5; cursor: progress; }
+.ore-button--primary { border-color: rgb(var(--tone) / .55); background: rgb(var(--tone) / .14); color: #fef3c7; }
+.ore-button--primary:hover { border-color: rgb(var(--tone)); background: rgb(var(--tone) / .24); }
+.ore-button--busy { opacity: .6; cursor: progress; }
+.ore-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ore-button:focus-within { outline: 2px solid rgb(var(--tone)); outline-offset: 2px; }
+
+.ore-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; color: #94a3b8; font-size: 13px; }
+.ore-summary strong { color: #f1f5f9; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ore-import-note { margin-top: 4px; color: #64748b; font-size: 12px; }
+.ore-message { margin-top: 10px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
+.ore-message--ok { border: 1px solid rgb(52 211 153 / .35); background: rgb(52 211 153 / .08); color: #a7f3d0; }
+.ore-message--error { border: 1px solid rgb(248 113 113 / .4); background: rgb(248 113 113 / .08); color: #fecaca; }
+
+/* Barre d'outils : recherche, type de zone, affichage. */
+.ore-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0 16px; padding: 8px; border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(160deg, rgb(255 255 255 / .05), rgb(255 255 255 / .015)); box-shadow: inset 0 1px 0 rgb(226 240 255 / .1); }
+.ore-search { display: flex; flex: 1 1 22rem; align-items: center; gap: .7rem; min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid rgb(255 255 255 / .08); background: #0b1324; }
+.ore-search:focus-within { border-color: rgb(125 211 252 / .55); }
+.ore-search__icon { position: relative; width: .85rem; height: .85rem; border: 1.5px solid #64748b; border-radius: 50%; flex: none; }
+.ore-search__icon::after { content: ''; position: absolute; width: .4rem; height: 1.5px; right: -.3rem; bottom: -.12rem; background: #64748b; transform: rotate(45deg); }
+.ore-search input { flex: 1; min-width: 0; background: transparent; color: #f1f5f9; font-size: .9rem; outline: 0; }
+.ore-search input::placeholder { color: #64748b; }
+.ore-kinds { display: flex; flex-wrap: wrap; gap: 4px; }
+.ore-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1px solid transparent; color: #cbd5e1; font-size: 13px; white-space: nowrap; transition: 160ms ease; }
+.ore-chip strong { color: #64748b; font-size: 11px; font-weight: 500; }
+.ore-chip:hover { background: rgb(var(--tone) / .08); color: #f8fafc; }
+.ore-chip--active { background: rgb(var(--tone) / .16); border-color: rgb(var(--tone) / .55); color: #f8fafc; }
+.ore-chip--active strong { color: rgb(var(--tone)); }
+.ore-view { display: inline-flex; padding: 3px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .1); background: #0b1324; margin-left: auto; }
+.ore-view button { min-height: 32px; padding: 4px 14px; border-radius: 999px; color: #94a3b8; font-size: 12px; }
+.ore-view .ore-view--active { background: rgb(var(--tone) / .18); color: #f8fafc; }
+
+.ore-state { padding: 3rem 1.5rem; border: 1px dashed rgb(255 255 255 / .14); border-radius: 16px; color: #94a3b8; text-align: center; }
+
+/* Liste des zones : une ligne par zone, détail déplié en dessous sur toute la largeur. */
+.zone-list { border-radius: 16px; border: 1px solid var(--line); background: #0b1324; overflow: hidden; box-shadow: inset 0 1px 0 rgb(226 240 255 / .08), 0 20px 50px rgb(0 0 0 / .3); }
+.zone-row { display: grid; width: 100%; grid-template-columns: minmax(10rem, 1.1fr) 5.5rem 7.5rem 5rem minmax(0, 3fr) 1.5rem; align-items: center; gap: 14px; padding: 10px 16px; color: inherit; text-align: left; }
+.zone-row--head { padding-block: 12px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / .025); color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.zone-item { border-bottom: 1px solid rgb(255 255 255 / .05); }
+.zone-item:last-child { border-bottom: 0; }
+.zone-item > .zone-row { transition: background 160ms ease; }
+.zone-item > .zone-row:hover { background: rgb(var(--tone) / .05); }
+.zone-item--open > .zone-row { background: rgb(var(--tone) / .08); box-shadow: inset 3px 0 0 rgb(var(--tone)); }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.zone-row .num { color: #cbd5e1; font-size: 13px; }
+.zone-name { display: flex; flex-direction: column; min-width: 0; }
+.zone-name strong { color: #f8fafc; font-size: 14px; font-weight: 600; }
+.zone-name small { color: #64748b; font-size: 11.5px; }
+.zone-ores { display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow: hidden; }
+.ore-pill { position: relative; display: inline-flex; align-items: center; gap: 6px; overflow: hidden; padding: 4px 10px 6px; border-radius: 8px; border: 1px solid rgb(255 255 255 / .08); background: rgb(255 255 255 / .03); font-size: 12px; white-space: nowrap; }
+.ore-pill span { color: #e2e8f0; }
+.ore-pill b { color: rgb(var(--tone)); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ore-pill i { position: absolute; left: 0; bottom: 0; height: 2px; background: rgb(var(--tone) / .8); }
+.ore-more { align-self: center; color: #64748b; font-size: 12px; }
+.zone-chevron { color: #64748b; transition: transform 200ms ease; }
+.zone-item--open .zone-chevron { transform: rotate(180deg); color: rgb(var(--tone)); }
+
+.zone-detail { padding: 6px 16px 18px; background: rgb(var(--tone) / .03); border-top: 1px solid rgb(var(--tone) / .15); }
+.zone-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 8px; margin-top: 10px; }
+.zone-metrics div { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #0d1628; }
+.zone-metrics dt { color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.zone-metrics dd { margin-top: 4px; color: #f1f5f9; font-size: 14px; font-variant-numeric: tabular-nums; }
+.zone-source { margin: 10px 0 12px; color: #64748b; font-size: 12px; }
+.zone-source a { color: #7dd3fc; }
+.zone-ore-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.zone-ore-table th { padding: 8px 10px; border-bottom: 1px solid var(--line); color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-align: left; text-transform: uppercase; }
+.zone-ore-table th.num { text-align: right; }
+.zone-ore-table td { padding: 8px 10px; border-bottom: 1px solid rgb(255 255 255 / .04); color: #cbd5e1; }
+.zone-ore-table td:first-child { color: #f8fafc; font-weight: 500; }
+.zone-ore-table td b { margin-left: 8px; color: rgb(var(--tone)); font-weight: 600; font-variant-numeric: tabular-nums; }
+.freq { display: inline-block; position: relative; width: min(12rem, 40vw); height: 6px; border-radius: 999px; background: rgb(255 255 255 / .06); vertical-align: middle; overflow: hidden; }
+.freq i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--tone) / .55), rgb(var(--tone))); }
+
+.ore-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; color: #94a3b8; font-size: 13px; }
+.ore-pager button { min-height: 38px; padding: 6px 14px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .12); color: #cbd5e1; }
+.ore-pager button:disabled { opacity: .3; cursor: not-allowed; }
+
+/* Vue par minerai : une carte par minerai, zones classées par fréquence. */
+.ranking-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 14px; }
+.ranking-card { padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: #0b1324; box-shadow: inset 0 1px 0 rgb(226 240 255 / .08); }
+.ranking-card header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.ranking-card h2 { color: #f8fafc; font-size: 15px; font-weight: 600; }
+.ranking-card header span { color: #64748b; font-size: 12px; }
+.ranking-card ol { display: grid; gap: 2px; }
+.ranking-card li button { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) 5.5rem 3.2rem; align-items: center; gap: 10px; min-height: 32px; padding: 2px 6px; border-radius: 8px; color: #cbd5e1; font-size: 13px; text-align: left; }
+.ranking-card li button:hover { background: rgb(var(--tone) / .08); color: #f8fafc; }
+.ranking-card li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-card .freq { width: 100%; }
+.ranking-card li b { color: rgb(var(--tone)); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.ranking-more { margin-top: 6px; color: #64748b; font-size: 12px; }
+
+button { cursor: pointer; font: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 1100px) {
+  .ore-view { margin-left: 0; }
+  .zone-row { grid-template-columns: minmax(9rem, 1fr) 4.5rem 6.5rem 4rem minmax(0, 2fr) 1.2rem; gap: 10px; }
 }
 
-.ore-search {
-  width: 100%;
-  border: 1px solid rgba(103, 232, 249, 0.25);
-  border-radius: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  background: rgba(7, 20, 35, 0.85);
-  color: #e5f7ff;
+/* Mobile : chaque zone devient une carte compacte. */
+@media (max-width: 760px) {
+  .ore-admin { padding: 1rem 1rem 3rem; }
+  .ore-actions { margin-left: 0; width: 100%; }
+  .ore-button { min-height: 36px; padding: 6px 12px; font-size: 12px; }
+  .ore-kinds { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; }
+  .ore-chip { flex: none; }
+  .zone-row--head { display: none; }
+  .zone-row { grid-template-columns: repeat(3, minmax(0, 1fr)) 1.2rem; gap: 6px 10px; padding: 12px 14px; }
+  .zone-name { grid-column: 1 / 4; }
+  .zone-chevron { grid-column: 4; grid-row: 1; justify-self: end; }
+  .zone-row .num { text-align: left; color: #f1f5f9; }
+  .zone-row .num::before { content: attr(data-label); display: block; color: #64748b; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  .zone-ores { grid-column: 1 / -1; flex-wrap: wrap; }
+  .zone-detail { padding: 4px 12px 14px; }
+  .zone-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .zone-ore-table th:nth-child(3), .zone-ore-table td:nth-child(3), .zone-ore-table th:nth-child(5), .zone-ore-table td:nth-child(5) { display: none; }
+  .freq { width: 4.5rem; }
 }
 
-.ore-search::placeholder {
-  color: rgba(173, 216, 230, 0.6);
-}
-
-.ore-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  padding: 0.14rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  margin-right: 0.35rem;
-  margin-bottom: 0.3rem;
-  background: rgba(7, 33, 52, 0.7);
-  color: #d6f0ff;
-}
-
-.ore-row-selected {
-  background: rgba(6, 182, 212, 0.16);
-}
-
-.ore-label {
-  color: rgba(186, 230, 253, 0.84);
-  font-weight: 600;
-}
-
-.ore-ore-list {
-  border: 1px solid rgba(125, 211, 252, 0.2);
-  border-radius: 0.75rem;
-  max-height: 320px;
-  overflow: auto;
-}
-
-.ore-ore-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.7rem;
-  border-bottom: 1px solid rgba(125, 211, 252, 0.12);
-  font-size: 0.85rem;
-}
-
-.ore-ore-row:last-child {
-  border-bottom: 0;
+@media (min-width: 2400px) {
+  .ore-content { max-width: 2800px; }
+  .zone-row { font-size: 1.1rem; padding-block: 14px; }
+  .zone-name strong { font-size: 1.1rem; }
+  .ore-pill { font-size: 14px; }
+  .ranking-grid { grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr)); }
 }

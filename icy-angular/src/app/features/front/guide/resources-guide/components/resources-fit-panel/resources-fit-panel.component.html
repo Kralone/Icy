@@ -1,21 +1,12 @@
-<section class="fit-tabs">
+<nav class="fit-tabs" role="tablist" aria-label="Équipement de minage">
   @for (tab of fitTabs; track trackTab($index, tab)) {
-    <button
-      type="button"
-      class="fit-tab-card"
-      [class.fit-tab-card--active]="activeTab === tab.id"
-      (click)="setActiveTab(tab.id)"
-      >
-      <img class="fit-tab-card__image" [src]="tab.imageUrl" [alt]="tab.title" loading="lazy" decoding="async" />
-      <span class="fit-tab-card__veil"></span>
-      <span class="fit-tab-card__text">
-        <strong>{{ tab.title }}</strong>
-        <small>{{ tab.subtitle }}</small>
-      </span>
+    <button type="button" role="tab" class="fit-tab" [class.fit-tab--active]="activeTab === tab.id"
+      [attr.aria-selected]="activeTab === tab.id" (click)="setActiveTab(tab.id)">
+      {{ tab.title }}
+      <small>{{ tab.subtitle }}</small>
     </button>
   }
-</section>
-
+</nav>
 
 @if (activeTab === 'ships') {
   <section class="fit-panel">
@@ -26,7 +17,7 @@
       <div class="fit-state fit-state--error">{{ shipsError }}</div>
     }
     @if (!shipsLoading && !shipsError && !miningShips.length) {
-      <div class="fit-state">Aucun vaisseau de minage flight ready trouve.</div>
+      <div class="fit-state">Aucun vaisseau de minage trouvé.</div>
     }
     @if (!shipsLoading && !shipsError && miningShips.length) {
       <div class="ship-grid">
@@ -40,26 +31,14 @@
               }
             </div>
             <div class="ship-card__body">
+              <p class="ship-card__maker">{{ brandName(ship) }}</p>
               <h3>{{ ship.name }}</h3>
-              <p>{{ brandName(ship) }} · {{ ship.focus || 'Focus non renseigne' }}</p>
               <dl class="ship-card__stats">
-                <div>
-                  <dt>Taille</dt>
-                  <dd>{{ ship.size || '-' }}</dd>
-                </div>
-                <div>
-                  <dt>Equipage</dt>
-                  <dd>{{ ship.crew || '-' }}</dd>
-                </div>
-                <div>
-                  <dt>SCU</dt>
-                  <dd>{{ formatScu(ship.scu) }}</dd>
-                </div>
+                <div><dt>Taille</dt><dd>{{ ship.size || '—' }}</dd></div>
+                <div><dt>Équipage</dt><dd>{{ ship.crew || '—' }}</dd></div>
+                <div><dt>Soute</dt><dd>{{ formatScu(ship.scu) }}@if (ship.scu != null) { SCU }</dd></div>
               </dl>
-              <section class="ship-card__notes">
-                <h4>Notes fit</h4>
-                <p>{{ ship.notes || 'Espace reserve pour recommandations de fit, modules equipes et role operationnel.' }}</p>
-              </section>
+              @if (ship.notes) { <p class="ship-card__notes">{{ ship.notes }}</p> }
             </div>
           </article>
         }

@@ -2,6 +2,7 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OreLocation, OreLocationService, OreMix } from '../../../../../../core/services/ore/ore-location.service';
+import { formatOreName } from '../../../../../../core/services/ore/ore-location-label';
 import { AsyncStateComponent } from '../../../../../../shared/async-state/async-state.component';
 import { ApiResponse } from '../../../../../../model/api-response.model';
 import { CatalogLocationImage, CelestialBody, CelestialBodyService } from '../../../../../../core/services/celestial/celestial-body.service';
@@ -27,6 +28,8 @@ interface PlanetGroupCard {
   key: string;
   planetName: string;
   imageUrl: string | null;
+  /** Système de l'astre d'après le catalogue ; null s'il n'y figure pas. */
+  systemName: string | null;
   locations: ParsedOreLocation[];
 }
 
@@ -128,6 +131,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
         key,
         planetName: planet.name,
         imageUrl: this.findImageForPlanet(planet.name),
+        systemName: planet.systemName || null,
         locations: []
       });
     }
@@ -139,6 +143,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
           key,
           planetName: location.groupPlanet,
           imageUrl: this.findImageForPlanet(location.groupPlanet),
+          systemName: this.findSystemFor(location.groupPlanet),
           locations: []
         });
       }
@@ -179,11 +184,43 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     return this.filteredPlanetGroups.slice(start, start + this.planetPageSize);
   }
 
-  get selectedPlanetGroup(): PlanetGroupCard | null {
-    if (!this.selectedPlanetKey) {
-      return null;
+  /** Astres qui ont au moins une zone, rangés par système pour la barre de sélection. */
+  get systemGroups(): { system: string; groups: PlanetGroupCard[] }[] {
+    const bySystem = new Map<string, PlanetGroupCard[]>();
+    for (const group of this.filteredPlanetGroups.filter((candidate) => candidate.locations.length)) {
+      const system = group.systemName || 'Autres';
+      bySystem.set(system, [...(bySystem.get(system) ?? []), group]);
     }
-    return this.filteredPlanetGroups.find((group) => group.key === this.selectedPlanetKey) ?? null;
+    return [...bySystem.entries()]
+      .sort(([a], [b]) => this.systemRank(a) - this.systemRank(b) || a.localeCompare(b))
+      .map(([system, groups]) => ({ system, groups }));
+  }
+
+  /** Stanton d'abord, puis les autres systèmes ; les astres hors catalogue en dernier. */
+  private systemRank(system: string): number {
+    return system === 'Stanton' ? 0 : system === 'Autres' ? 2 : 1;
+  }
+
+  /** Astre affiché : celui choisi, sinon le premier qui a des zones. */
+  get selectedPlanetGroup(): PlanetGroupCard | null {
+    const groups = this.filteredPlanetGroups;
+    const chosen = this.selectedPlanetKey ? groups.find((group) => group.key === this.selectedPlanetKey) : null;
+    return chosen ?? this.systemGroups[0]?.groups[0] ?? null;
+  }
+
+  oreBarWidth(value: number | null | undefined): string {
+    if (value == null || !Number.isFinite(value)) return '0%';
+    return `${Math.max(2, Math.min(100, value * 100))}%`;
+  }
+
+  formatConcentration(value: number | null | undefined): string {
+    if (value == null || !Number.isFinite(value)) return '—';
+    const pct = value * 100;
+    return `${pct < 10 ? pct.toFixed(1).replace('.', ',') : Math.round(pct)} %`;
+  }
+
+  oreName(code: string): string {
+    return formatOreName(code);
   }
 
   get selectedLocation(): ParsedOreLocation | null {
@@ -270,7 +307,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       this.miningSearchDebounceTimer = undefined;
     }
     this.selectedOreCode = oreCode;
-    this.miningSearch = oreCode;
+    this.miningSearch = formatOreName(oreCode);
     this.currentPlanetPage = 1;
     this.syncSelectedPlanet();
   }
@@ -499,6 +536,13 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     };
   }
 
+  private findSystemFor(name: string): string | null {
+    const key = this.normalizeText(name);
+    return this.planets.find((body) => this.normalizeText(body.name) === key)?.systemName
+      ?? this.catalogLocations.find((row) => this.normalizeText(row.name) === key)?.systemName
+      ?? null;
+  }
+
   private findImageForPlanet(planetName: string): string | null {
     const key = this.normalizeText(planetName);
     const match = this.planets.find((planet) => this.normalizeText(planet.name) === key);
@@ -526,16 +570,8 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       return location;
     }
 
-    const filteredOres = location.ores.filter((ore) => this.normalizeText(ore.oreCode).includes(search));
-    if (filteredOres.length === 0) {
-      return null;
-    }
-
-    return {
-      ...location,
-      ores: filteredOres,
-      oresText: filteredOres.map((ore) => ore.oreCode).join(' | ')
-    };
+    // La zone garde tous ses minerais : celui recherché est mis en évidence dans le tableau.
+    return location.ores.some((ore) => this.normalizeText(ore.oreCode).includes(search)) ? location : null;
   }
 
   private normalizeText(value: string): string {

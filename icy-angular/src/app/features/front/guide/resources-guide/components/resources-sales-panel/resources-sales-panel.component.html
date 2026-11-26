@@ -1,117 +1,89 @@
+@if (salesLoading) {
+  <app-async-state kind="loading" title="Chargement des prix…" />
+}
+@if (!salesLoading && salesError) {
+  <div class="sales-state sales-state--error">{{ salesError }}</div>
+}
+@if (!salesLoading && !salesError && salesMaterials.length === 0) {
+  <div class="sales-state">Aucun prix de vente disponible pour le moment.</div>
+}
+
 @if (!salesLoading && !salesError && salesMaterials.length > 0) {
-  <div class="resource-sales-controls">
-    <label for="cargo-scu-input">SCU</label>
-    <input
-      id="cargo-scu-input"
-      type="number"
-      min="1"
-      step="1"
-      [value]="cargoScu"
-      (input)="updateCargoScu(($any($event.target)).value)"
-      />
+  <!-- Réglages : taille de la cargaison et terminal à comparer. -->
+  <section class="sales-toolbar" aria-label="Réglages du calcul">
+    <label class="sales-cargo">
+      <span>Cargaison</span>
+      <input id="cargo-scu-input" type="number" min="1" step="1" inputmode="numeric" [value]="cargoScu"
+        (input)="updateCargoScu(($any($event.target)).value)" />
+      <small>SCU</small>
+    </label>
+
+    <div class="sales-terminal">
+      <label class="sales-terminal__field">
+        <span class="sr-only">Comparer avec un terminal</span>
+        <input id="sale-location-input" type="text" [value]="locationSearchTerm" placeholder="Comparer avec un terminal…"
+          autocomplete="off" (input)="updateLocationSearch(($any($event.target)).value)" />
+        @if (locationSearchTerm || selectedLocation) {
+          <button type="button" class="sales-terminal__reset" (click)="resetLocation()" aria-label="Effacer le terminal">×</button>
+        }
+      </label>
+      @if (locationSuggestions.length > 0) {
+        <div class="sales-suggestions" role="listbox">
+          @for (location of locationSuggestions; track location) {
+            <button type="button" role="option" (click)="selectLocation(location)">{{ location }}</button>
+          }
+        </div>
+      }
     </div>
-  }
 
-  @if (salesLoading) {
-    <app-async-state kind="loading" title="Chargement des prix…" />
-  }
-  @if (!salesLoading && salesError) {
-    <div class="resource-sales-state resource-sales-state--error">{{ salesError }}</div>
-  }
-  @if (!salesLoading && !salesError && salesMaterials.length === 0) {
-    <div class="resource-sales-state">Aucune donnee de prix disponible pour le moment.</div>
-  }
+    <div class="sales-shortcuts" role="group" aria-label="Terminaux fréquents">
+      @for (location of locationShortcuts; track location) {
+        <button type="button" class="sales-chip" [class.sales-chip--active]="isSelectedLocationShortcut(location)"
+          [attr.aria-pressed]="isSelectedLocationShortcut(location)" (click)="selectLocationShortcut(location)">{{ location }}</button>
+      }
+    </div>
+  </section>
 
-  @if (!salesLoading && !salesError && salesMaterials.length > 0) {
-    @if (sourceFetchedAt || sourceGameVersion) {
-      <p class="resource-source-note">Prix UEX · {{ sourceGameVersion || 'version non renseignée' }} · relevé {{ formatSourceDate(sourceFetchedAt) }}</p>
-    }
-    <p class="resource-source-note">Prix par SCU, relevés depuis moins de 30 jours. Les prix anciens ou sans date sont exclus des estimations.</p>
-    <div class="resource-sales-table-wrap" aria-label="Tableau des prix de vente">
-      <table class="resource-sales-table">
-        <thead>
+  <p class="sales-source">
+    Prix UEX par SCU{{ sourceGameVersion ? ' · ' + sourceGameVersion : '' }} · relevé du {{ formatSourceDate(sourceFetchedAt) }}.
+    Seuls les prix relevés depuis moins de 30 jours entrent dans les estimations.
+  </p>
+
+  <div class="sales-table-wrap">
+    <table class="sales-table" aria-label="Prix de vente des minerais">
+      <thead>
+        <tr>
+          <th>Minerai</th>
+          <th class="num">Meilleur prix</th>
+          <th>Terminal</th>
+          @if (selectedLocation) { <th class="num">{{ selectedLocation }}</th> }
+          <th class="sales-table__revenue-head">Revenu<span class="sales-hide-mobile"> pour {{ formatUec(cargoScu) }} SCU</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (material of salesMaterials; track trackMaterial($index, material)) {
           <tr>
-            <th>Materiau</th>
-            <th>Meilleurs prix de vente</th>
-            <th class="resource-sales-table__location-header">
-              <div class="resource-sales-table__location-title">Prix {{ selectedLocationLabel() }}</div>
-              <div class="resource-sales-table__location-search">
-                <input
-                  id="sale-location-input"
-                  type="text"
-                  [value]="locationSearchTerm"
-                  placeholder="Rechercher un terminal..."
-                  autocomplete="off"
-                  (input)="updateLocationSearch(($any($event.target)).value)"
-                  />
-                  @if (locationSearchTerm || selectedLocation) {
-                    <button
-                      type="button"
-                      class="resource-sales-controls__reset"
-                      (click)="resetLocation()"
-                      >
-                      Effacer
-                    </button>
-                  }
-                </div>
-                @if (locationSuggestions.length > 0) {
-                  <div class="resource-sales-suggestions">
-                    @for (location of locationSuggestions; track location) {
-                      <button
-                        type="button"
-                        class="resource-sales-suggestions__item"
-                        (click)="selectLocation(location)"
-                        >
-                        {{ location }}
-                      </button>
-                    }
-                  </div>
+            <td class="sales-table__name">{{ material.displayName }}</td>
+            <td class="num sales-table__price">{{ formatUecWithUnit(material.bestSell) }}</td>
+            <td class="sales-table__terminal">
+              <span>{{ material.bestSellTerminal || '—' }}</span>
+              <small>{{ observationLabel(material) }}</small>
+            </td>
+            @if (selectedLocation) {
+              <td class="num sales-table__local">
+                <span>{{ formatUecWithUnit(selectedLocationSell(material)) }}</span>
+                @if (selectedLocationDelta(material); as delta) {
+                  <small [class.neg]="delta < 0">{{ delta > 0 ? '+' : '' }}{{ formatUecWithUnit(delta) }}</small>
                 }
-                <div class="resource-sales-shortcuts">
-                  @for (location of locationShortcuts; track location) {
-                    <button
-                      type="button"
-                      class="resource-sales-shortcuts__item"
-                      [class.resource-sales-shortcuts__item--active]="isSelectedLocationShortcut(location)"
-                      (click)="selectLocationShortcut(location)"
-                      >
-                      {{ location }}
-                    </button>
-                  }
-                </div>
-              </th>
-              <th>Revenu</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (material of salesMaterials; track trackMaterial($index, material)) {
-              <tr>
-                <td><div class="resource-sales-table__name">{{ material.displayName }}</div></td>
-                <td>
-                  <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(material.bestSell)">
-                    {{ formatUecWithUnit(material.bestSell) }}
-                  </span>
-                  <div class="resource-sales-table__subline">{{ material.bestSellTerminal || '-' }}</div>
-                  <div class="resource-sales-table__subline">{{ observationLabel(material) }}</div>
-                </td>
-                <td>
-                  <span class="resource-sales-table__price" [ngStyle]="bestSellPriceStyle(selectedLocationSell(material))">
-                    {{ formatUecWithUnit(selectedLocationSell(material)) }}
-                  </span>
-                  @if (selectedLocation) {
-                    <div class="resource-sales-table__subline">
-                      {{ observationLabel(material, true) }}<br>Écart : {{ formatUecWithUnit(selectedLocationDelta(material)) }}
-                    </div>
-                  }
-                </td>
-                <td>
-                  <span class="resource-sales-table__revenue" [ngStyle]="revenueStyle(material.bestSell)">
-                    {{ formatUecWithUnit(computeRevenue(material.bestSell)) }}
-                  </span>
-                </td>
-              </tr>
+              </td>
             }
-          </tbody>
-        </table>
-      </div>
-    }
+            <td class="sales-table__revenue">
+              <span class="sales-bar"><i [style.width]="revenueBarWidth(material.bestSell)"></i></span>
+              <b>{{ formatUecWithUnit(computeRevenue(material.bestSell)) }}</b>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

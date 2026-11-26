@@ -1,142 +1,165 @@
-<div class="ore-admin min-h-screen w-full bg-gradient-to-b from-[#071421] via-[#0b1a2d] to-[#132238] text-slate-100 p-8">
-  <section class="space-y-7">
-    <a
-      routerLink="/icy/admin/data"
-      class="inline-flex items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-300/45 hover:bg-cyan-400/20 transition"
-      >
-      <span class="text-base leading-none">←</span>
-      <span>Retour Data</span>
-    </a>
-
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-      <div>
-        <h2 class="text-3xl font-semibold tracking-[0.08em] uppercase text-cyan-200">Ore Locations</h2>
-        <p class="text-sm text-cyan-100/70 mt-1">Import JSON avec reset complet + visualisation simple des zones et minerais.</p>
-      </div>
-      <button
-        type="button"
-        (click)="loadLocations()"
-        class="px-4 py-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-400/20 transition"
-        >
-        Recharger
-      </button>
-    </div>
-
-    <div class="rounded-2xl border border-cyan-300/20 bg-[#071324]/70 p-6 shadow-2xl space-y-4">
-      <div class="flex flex-wrap items-center gap-4">
-        <label class="text-xs uppercase tracking-[0.14em] text-cyan-100/70">Reset via JSON</label>
-        <input
-          type="file"
-          accept=".json,application/json"
-          (change)="onUploadFile($event)"
-          [disabled]="uploading"
-          class="ore-file-input"
-          />
+<section class="ore-admin">
+  <div class="ore-content">
+    <header class="ore-head">
+      <a routerLink="/icy/admin/data" class="back-link"><span aria-hidden="true">←</span> Accueil du catalogue</a>
+      <div class="ore-hero">
+        <span class="ore-emblem"><app-catalog-icon key="ore" class="catalog-icon-halo" /></span>
+        <h1>Zones de minage</h1>
+        <div class="ore-actions">
+          <a class="ore-button" routerLink="/utilitaires/ressources-minage" [queryParams]="{line: 'locations'}">Voir la page publique</a>
+          <button type="button" class="ore-button" (click)="loadLocations()" [disabled]="loading">Recharger</button>
+          <label class="ore-button ore-button--primary" [class.ore-button--busy]="uploading">
+            <input type="file" accept=".json,application/json" (change)="onUploadFile($event)" [disabled]="uploading" />
+            {{ uploading ? 'Import en cours…' : 'Importer un JSON' }}
+          </label>
         </div>
-        @if (successMessage) {
-          <p class="text-sm text-emerald-300">{{ successMessage }}</p>
-        }
-        @if (errorMessage) {
-          <p class="text-sm text-red-300">{{ errorMessage }}</p>
+      </div>
+      @if (rows.length) {
+        <p class="ore-summary">
+          <span><strong>{{ rows.length }}</strong> zones</span>
+          <span><strong>{{ rankings.length }}</strong> minerais</span>
+          <span><strong>{{ formatNumber(totalScans) }}</strong> scans</span>
+          <span>Version <strong>{{ latestUpdate.version || 'non renseignée' }}</strong> · relevé du {{ formatDate(latestUpdate.date) }}</span>
+        </p>
+      }
+      <p class="ore-import-note">L’import remplace toutes les zones et leurs minerais par le contenu du fichier.</p>
+      @if (successMessage) { <p class="ore-message ore-message--ok" role="status">{{ successMessage }}</p> }
+      @if (errorMessage) { <p class="ore-message ore-message--error" role="alert">{{ errorMessage }}</p> }
+    </header>
+
+    <section class="ore-toolbar" aria-label="Filtres des zones">
+      <label class="ore-search">
+        <span class="ore-search__icon" aria-hidden="true"></span>
+        <span class="sr-only">Rechercher</span>
+        <input type="search" [(ngModel)]="search" (ngModelChange)="onSearchChange()" autocomplete="off"
+          placeholder="Rechercher une zone ou un minerai (Quantanium, Hurston L2…)" />
+      </label>
+      <div class="ore-kinds" role="group" aria-label="Type de zone">
+        @for (filter of kindFilters; track filter.value) {
+          <button type="button" class="ore-chip" [class.ore-chip--active]="kindFilter === filter.value"
+            [attr.aria-pressed]="kindFilter === filter.value" (click)="setKindFilter(filter.value)">
+            {{ filter.label }} <strong>{{ kindCount(filter.value) }}</strong>
+          </button>
         }
       </div>
+      <div class="ore-view" role="group" aria-label="Affichage">
+        <button type="button" [class.ore-view--active]="viewMode === 'zones'" [attr.aria-pressed]="viewMode === 'zones'" (click)="setViewMode('zones')">Par zone</button>
+        <button type="button" [class.ore-view--active]="viewMode === 'ores'" [attr.aria-pressed]="viewMode === 'ores'" (click)="setViewMode('ores')">Par minerai</button>
+      </div>
+    </section>
 
-      <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
-        <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 overflow-hidden shadow-xl">
-          <div class="p-4 border-b border-cyan-300/15">
-            <input
-              type="text"
-              [(ngModel)]="search"
-              (ngModelChange)="onSearchChange()"
-              class="ore-search"
-              placeholder="Rechercher location ou minerai (ex: GLACIUM, QUANTANIUM)"
-              />
-            </div>
-            <div class="overflow-auto">
-              <table class="min-w-full text-sm">
-                <thead class="bg-cyan-600/10 text-cyan-100 uppercase tracking-[0.12em] text-xs">
-                  <tr>
-                    <th class="px-4 py-3 text-left">Code</th>
-                    <th class="px-4 py-3 text-left">Users</th>
-                    <th class="px-4 py-3 text-left">Scans</th>
-                    <th class="px-4 py-3 text-left">Clusters</th>
-                    <th class="px-4 py-3 text-left">Top minerais</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @if (loading) {
-                    <tr>
-                      <td class="px-4 py-4 text-cyan-100/70" colspan="5">Chargement...</td>
-                    </tr>
-                  }
-                  @for (location of pagedLocations(); track location) {
-                    <tr
-                      class="border-t border-cyan-300/10 hover:bg-cyan-500/5 transition cursor-pointer"
-                      [class.ore-row-selected]="selectedLocation === location"
-                      (click)="selectLocation(location)"
-                      >
-                      <td class="px-4 py-3 font-semibold text-cyan-100">{{ location.locationCode }}</td>
-                      <td class="px-4 py-3">{{ location.users }}</td>
-                      <td class="px-4 py-3">{{ location.scans }}</td>
-                      <td class="px-4 py-3">{{ location.clusters }}</td>
-                      <td class="px-4 py-3">
-                        @for (ore of topOres(location, 3); track ore) {
-                          <span class="ore-badge">
-                            {{ ore.oreCode }} {{ formatPercent(ore.probability) }}
-                          </span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                  @if (!loading && !pagedLocations().length) {
-                    <tr>
-                      <td class="px-4 py-4 text-cyan-100/70" colspan="5">Aucune donnee.</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+    @if (loading) {
+      <div class="ore-state" role="status">Chargement des zones…</div>
+    } @else if (!rows.length) {
+      <div class="ore-state">Aucune zone importée. Importez un fichier JSON pour commencer.</div>
+    } @else if (viewMode === 'zones') {
+      @if (!filteredRows.length) {
+        <div class="ore-state">Aucune zone ne correspond à cette recherche.</div>
+      } @else {
+        <div class="zone-list" role="table" aria-label="Zones de minage">
+          <div class="zone-row zone-row--head" role="row">
+            <span role="columnheader">Zone</span>
+            <span role="columnheader" class="num">Scans</span>
+            <span role="columnheader" class="num">Contributeurs</span>
+            <span role="columnheader" class="num">Amas</span>
+            <span role="columnheader">Minerais les plus fréquents</span>
+            <span aria-hidden="true"></span>
           </div>
-
-          <div class="rounded-2xl border border-cyan-300/20 bg-[#061325]/70 p-5 shadow-xl">
-            <h3 class="text-lg font-semibold text-cyan-100 mb-3">Detail location</h3>
-            @if (!selectedLocation) {
-              <div class="text-sm text-cyan-100/70">Selectionne une ligne pour voir le detail.</div>
-            }
-
-            @if (selectedLocation) {
-              <div class="space-y-2 text-sm">
-                <p><span class="ore-label">Code:</span> {{ selectedLocation.locationCode }}</p>
-                <p><span class="ore-label">Users / Scans:</span> {{ selectedLocation.users }} / {{ selectedLocation.scans }}</p>
-                <p><span class="ore-label">Clusters:</span> {{ selectedLocation.clusters }}</p>
-                <p><span class="ore-label">ClusterCount (min-med-max):</span> {{ selectedLocation.clusterCount.min }} / {{ selectedLocation.clusterCount.med }} / {{ selectedLocation.clusterCount.max }}</p>
-                <p><span class="ore-label">Mass (min-med-max):</span> {{ selectedLocation.mass.min }} / {{ selectedLocation.mass.med }} / {{ selectedLocation.mass.max }}</p>
-                <p><span class="ore-label">Inst (min-med-max):</span> {{ selectedLocation.inst.min }} / {{ selectedLocation.inst.med }} / {{ selectedLocation.inst.max }}</p>
-                <p><span class="ore-label">Res (min-med-max):</span> {{ selectedLocation.res.min }} / {{ selectedLocation.res.med }} / {{ selectedLocation.res.max }}</p>
-              </div>
-              <div class="mt-5">
-                <h4 class="text-sm uppercase tracking-[0.14em] text-cyan-100/80 mb-2">Minerais</h4>
-                <div class="ore-ore-list">
-                  @for (ore of topOres(selectedLocation, 12); track ore) {
-                    <div class="ore-ore-row">
-                      <span class="font-semibold">{{ ore.oreCode }}</span>
-                      <span>{{ formatPercent(ore.probability) }}</span>
-                    </div>
+          @for (row of pagedRows(); track row.key) {
+            <div class="zone-item" [class.zone-item--open]="expandedKey === row.key" role="rowgroup">
+              <button type="button" class="zone-row" role="row" (click)="toggleRow(row)" [attr.aria-expanded]="expandedKey === row.key">
+                <span class="zone-name" role="cell">
+                  <strong>{{ row.label }}</strong>
+                  <small>{{ kindLabels[row.kind] }}@if (row.kind === 'LAGRANGE') { · {{ row.planet }} }</small>
+                </span>
+                <span class="num" role="cell" data-label="Scans">{{ formatNumber(row.location.scans) }}</span>
+                <span class="num" role="cell" data-label="Contributeurs">{{ formatNumber(row.location.users) }}</span>
+                <span class="num" role="cell" data-label="Amas">{{ formatNumber(row.location.clusters) }}</span>
+                <span class="zone-ores" role="cell">
+                  @for (ore of row.ores.slice(0, 3); track ore.oreCode) {
+                    <span class="ore-pill">
+                      <span>{{ oreName(ore.oreCode) }}</span>
+                      <b>{{ formatPercent(ore.probability) }}</b>
+                      <i [style.width]="barWidth(ore.probability)"></i>
+                    </span>
                   }
+                  @if (row.ores.length > 3) { <span class="ore-more">+{{ row.ores.length - 3 }}</span> }
+                </span>
+                <span class="zone-chevron" aria-hidden="true">▾</span>
+              </button>
+
+              @if (expandedKey === row.key) {
+                <div class="zone-detail">
+                  <dl class="zone-metrics">
+                    <div><dt>Rochers par amas</dt><dd>{{ formatRange(row.location.clusterCount) }}</dd></div>
+                    <div><dt>Masse</dt><dd>{{ formatRange(row.location.mass) }}</dd></div>
+                    <div><dt>Instabilité</dt><dd>{{ formatRange(row.location.inst) }}</dd></div>
+                    <div><dt>Résistance</dt><dd>{{ formatRange(row.location.res) }}</dd></div>
+                  </dl>
+                  <p class="zone-source">
+                    Valeurs min · médiane · max. Code {{ row.location.locationCode }} · {{ row.location.gameVersion || 'version non renseignée' }} · relevé du {{ formatDate(row.location.updatedAt) }}
+                    @if (row.location.sourceUrl) { · <a [href]="row.location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
+                  </p>
+                  <table class="zone-ore-table">
+                    <thead>
+                      <tr><th>Minerai</th><th>Fréquence</th><th class="num">Concentration min.</th><th class="num">Médiane</th><th class="num">Max.</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (ore of row.ores; track ore.oreCode) {
+                        <tr>
+                          <td>{{ oreName(ore.oreCode) }}</td>
+                          <td>
+                            <span class="freq"><i [style.width]="barWidth(ore.probability)"></i></span>
+                            <b>{{ formatPercent(ore.probability) }}</b>
+                          </td>
+                          <td class="num">{{ formatConcentration(ore.minPct) }}</td>
+                          <td class="num">{{ formatConcentration(ore.medPct) }}</td>
+                          <td class="num">{{ formatConcentration(ore.maxPct) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
 
-        <div class="flex justify-center items-center gap-4 text-sm text-cyan-100/85">
-          <button type="button" (click)="previousPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-            Precedent
-          </button>
-          <span>Page {{ currentPage }} / {{ totalPages() }}</span>
-          <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages()" class="px-3 py-1.5 rounded-lg border border-cyan-300/20 disabled:opacity-40">
-            Suivant
-          </button>
+        @if (totalPages() > 1) {
+          <nav class="ore-pager" aria-label="Pagination">
+            <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">← Précédent</button>
+            <span>Page {{ currentPage }} / {{ totalPages() }}</span>
+            <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages()">Suivant →</button>
+          </nav>
+        }
+      }
+    } @else {
+      @if (!filteredRankings.length) {
+        <div class="ore-state">Aucun minerai ne correspond à cette recherche.</div>
+      } @else {
+        <div class="ranking-grid">
+          @for (ranking of filteredRankings; track ranking.code) {
+            <article class="ranking-card">
+              <header>
+                <h2>{{ ranking.name }}</h2>
+                <span>{{ ranking.zones.length }} zone{{ ranking.zones.length > 1 ? 's' : '' }}</span>
+              </header>
+              <ol>
+                @for (entry of ranking.zones.slice(0, 6); track entry.row.key) {
+                  <li>
+                    <button type="button" (click)="openZone(entry.row)">
+                      <span>{{ entry.row.label }}</span>
+                      <span class="freq"><i [style.width]="barWidth(entry.ore.probability)"></i></span>
+                      <b>{{ formatPercent(entry.ore.probability) }}</b>
+                    </button>
+                  </li>
+                }
+              </ol>
+              @if (ranking.zones.length > 6) { <p class="ranking-more">et {{ ranking.zones.length - 6 }} autres zones</p> }
+            </article>
+          }
         </div>
-      </section>
-    </div>
+      }
+    }
+  </div>
+</section>

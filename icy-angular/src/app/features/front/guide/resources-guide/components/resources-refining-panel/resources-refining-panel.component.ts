@@ -101,6 +101,38 @@ export class ResourcesRefiningPanelComponent implements OnInit, OnDestroy {
     this.pulseSearchAnimation();
   }
 
+  /** Minerai choisi dans les pastilles : classe les raffineries selon leur rendement pour ce minerai. */
+  focusOre: string | null = null;
+
+  get commodities(): string[] {
+    const names = new Set<string>();
+    this.refineries.forEach((row) => row.yields.forEach((yieldRow) => names.add(yieldRow.commodity)));
+    return [...names].sort((a, b) => a.localeCompare(b, 'fr'));
+  }
+
+  setFocusOre(commodity: string | null): void {
+    this.focusOre = this.focusOre === commodity ? null : commodity;
+  }
+
+  /** Raffineries classées pour le minerai choisi, de la plus favorable à la moins favorable. */
+  get focusRanking(): { row: RefinerySummaryRow; value: number | null }[] {
+    if (!this.focusOre) return [];
+    return this.refineries
+      .map((row) => ({ row, value: row.yields.find((yieldRow) => yieldRow.commodity === this.focusOre)?.bestYieldPct ?? null }))
+      .filter((entry) => entry.value !== null)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+  }
+
+  /** Rendements d'une raffinerie, bonus d'abord. */
+  sortedYields(row: RefinerySummaryRow): RefineryCommodityYield[] {
+    return [...row.yields].sort((a, b) => (b.bestYieldPct ?? -999) - (a.bestYieldPct ?? -999) || a.commodity.localeCompare(b.commodity));
+  }
+
+  formatSigned(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) return '—';
+    return `${value > 0 ? '+' : ''}${this.formatNumber(value)} %`;
+  }
+
   get filteredRefineries(): RefinerySummaryRow[] {
     const query = this.normalizeText(this.searchQuery);
     if (!query) {

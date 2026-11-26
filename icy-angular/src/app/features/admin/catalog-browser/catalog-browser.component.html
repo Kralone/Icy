@@ -1,10 +1,17 @@
 <main class="catalog-shell" #catalogTop>
   <header class="catalog-header">
-    <div class="catalog-header__topline">
-      <a routerLink="/icy/admin/data" class="back-link" aria-label="Retour à l’administration des données">
-        <span aria-hidden="true">←</span>
-        Retour aux données
-      </a>
+    <a routerLink="/icy/admin/data" class="back-link" aria-label="Retour à l’accueil du catalogue">
+      <span aria-hidden="true">←</span>
+      Accueil du catalogue
+    </a>
+    <div class="catalog-hero">
+      <span class="catalog-emblem"><app-catalog-icon key="catalog" class="catalog-icon-halo" /></span>
+      <h1>Catalogue</h1>
+      <div class="catalog-vitals" aria-label="Résumé du catalogue">
+        <span><strong>{{ result?.activeElements ?? '—' }}</strong> fiches actives</span>
+        <span><strong class="vital-warn">{{ result?.fallbackImages ?? '—' }}</strong> visuels à enrichir</span>
+        <span><strong>{{ result?.inactiveElements ?? '—' }}</strong> archives</span>
+      </div>
       <div class="catalog-header__actions">
         @if (canCorrect) {
           <button type="button" class="sync-link" (click)="correctionsOpen = !correctionsOpen" [attr.aria-expanded]="correctionsOpen">{{ correctionsOpen ? 'Masquer les associations' : 'Associations des offres' }}</button>
@@ -12,85 +19,85 @@
         <a routerLink="/icy/admin/uex-cache" class="sync-link">Synchronisation</a>
       </div>
     </div>
-
-    <div class="catalog-hero">
-      <div>
-        <p class="catalog-kicker">Administration</p>
-        <h1>Catalogue</h1>
-      </div>
-
-      <div class="catalog-vitals" aria-label="Résumé du catalogue">
-        <div class="vital vital--primary">
-          <span class="vital__value">{{ result?.activeElements ?? '—' }}</span>
-          <span class="vital__label">fiches actives</span>
-        </div>
-        <div class="vital">
-          <span class="vital__value">{{ result?.fallbackImages ?? '—' }}</span>
-          <span class="vital__label">visuels à enrichir</span>
-        </div>
-        <div class="vital">
-          <span class="vital__value">{{ result?.inactiveElements ?? '—' }}</span>
-          <span class="vital__label">archives</span>
-        </div>
-      </div>
-    </div>
   </header>
 
   @if (canCorrect && correctionsOpen) { <div class="catalog-corrections-panel glace-panel"><app-catalog-corrections /></div> }
 
-  <div class="catalog-layout">
-    <aside class="family-panel glace-panel">
-      <button type="button" class="family-panel__toggle" (click)="familiesOpen = !familiesOpen"
-        [attr.aria-expanded]="familiesOpen" aria-controls="catalog-families">
-        <span>Familles</span>
-        <strong>{{ resultTitle }}</strong>
-        <span aria-hidden="true">{{ familiesOpen ? '▴' : '▾' }}</span>
+  <!-- Familles en barre pleine largeur : grands groupes en onglets, puis familles du groupe choisi. -->
+  <nav class="family-bar" aria-label="Familles du catalogue">
+    <div class="group-tabs" role="tablist" aria-label="Grands groupes">
+      <button type="button" role="tab" class="group-tab" style="--tone: 186 230 253" [class.group-tab--active]="activeGroupLabel === 'Tout'"
+        [attr.aria-selected]="activeGroupLabel === 'Tout'" (click)="selectFamily('')">
+        <app-catalog-icon key="catalog" />
+        <span>Tout</span>
+        <strong>{{ result?.activeElements ?? 0 }}</strong>
       </button>
-    <nav class="family-rail" id="catalog-families" [class.family-rail--open]="familiesOpen" aria-label="Familles du catalogue">
-      <div class="family-group" style="--tone: 186 230 253">
-        <span class="family-group__label">Tout</span>
-        <div class="family-group__chips">
-          <button type="button" class="family-item" [class.family-item--active]="catalogGroup === 'ALL' && !family"
-            [attr.aria-pressed]="catalogGroup === 'ALL' && !family" (click)="selectFamily(''); familiesOpen = false">
-            <span>Tout</span>
-            <strong>{{ result?.activeElements ?? 0 }}</strong>
-          </button>
-        </div>
-      </div>
       @for (group of familyGroups; track group.label) {
-        <div class="family-group" [style.--tone]="group.tone">
-          <span class="family-group__label">{{ group.label }}</span>
-          <div class="family-group__chips">
-            @if (group.ships) {
-              <button type="button" class="family-item" [class.family-item--active]="family === 'SHIP' && catalogGroup !== 'WIKELO'"
-                [attr.aria-pressed]="family === 'SHIP' && catalogGroup !== 'WIKELO'" (click)="selectShipGroup('STANDARD'); familiesOpen = false">
-                <span>Vaisseaux</span>
-                <strong>{{ nonWikeloShipCount }}</strong>
-              </button>
-            }
-            @for (option of group.families; track option.value) {
-              <button type="button" class="family-item" [class.family-item--active]="isStandardFamily(option.value)"
-                [attr.aria-pressed]="isStandardFamily(option.value)" (click)="selectFamily(option.value); familiesOpen = false">
-                <span>{{ option.shortLabel }}</span>
-                <strong>{{ groupFamilyCount('STANDARD', option.value) }}</strong>
-              </button>
-            }
-          </div>
-        </div>
+        <button type="button" role="tab" class="group-tab" [style.--tone]="group.tone" [class.group-tab--active]="activeGroupLabel === group.label"
+          [attr.aria-selected]="activeGroupLabel === group.label" (click)="selectGroup(group)">
+          <app-catalog-icon [key]="groupIcons[group.label] || 'item'" />
+          <span>{{ group.label }}</span>
+          <strong>{{ groupTotal(group) }}</strong>
+        </button>
       }
-      <div class="family-group" [style.--tone]="wikeloTone">
-        <span class="family-group__label">Wikelo</span>
-        <div class="family-group__chips">
-          <button type="button" class="family-item" [class.family-item--active]="catalogGroup === 'WIKELO'"
-            [attr.aria-pressed]="catalogGroup === 'WIKELO'" (click)="selectWikelo(); familiesOpen = false">
-            <span>Wikelo</span>
-            <strong>{{ groupCount('WIKELO') }}</strong>
-          </button>
-        </div>
-      </div>
-    </nav>
-    </aside>
+      <button type="button" role="tab" class="group-tab" [style.--tone]="wikeloTone" [class.group-tab--active]="activeGroupLabel === 'Wikelo'"
+        [attr.aria-selected]="activeGroupLabel === 'Wikelo'" (click)="selectWikelo()">
+        <app-catalog-icon key="item" />
+        <span>Wikelo</span>
+        <strong>{{ groupCount('WIKELO') }}</strong>
+      </button>
+    </div>
 
+    @if (activeGroup; as group) {
+      <div class="family-row" [style.--tone]="group.tone" role="group" [attr.aria-label]="group.label">
+        @if (group.ships) {
+          <button type="button" class="family-item" [class.family-item--active]="family === 'SHIP' && catalogGroup !== 'WIKELO'"
+            [attr.aria-pressed]="family === 'SHIP' && catalogGroup !== 'WIKELO'" (click)="selectShipGroup('STANDARD')">
+            <app-catalog-icon key="ship" />
+            <span>Vaisseaux</span>
+            <strong>{{ nonWikeloShipCount }}</strong>
+          </button>
+        }
+        @for (option of group.families; track option.value) {
+          <button type="button" class="family-item" [class.family-item--active]="isStandardFamily(option.value)"
+            [attr.aria-pressed]="isStandardFamily(option.value)" (click)="selectFamily(option.value)">
+            <app-catalog-icon [key]="familyIcon(option.value)" />
+            <span>{{ option.shortLabel }}</span>
+            <strong>{{ groupFamilyCount('STANDARD', option.value) }}</strong>
+          </button>
+        }
+        @if (family === 'SHIP' && catalogGroup !== 'WIKELO') {
+          <span class="family-row__divider" aria-hidden="true"></span>
+          <span class="family-row__label">Variantes</span>
+          @for (variant of shipVariants; track variant.value) {
+            <button type="button" class="family-item family-item--variant" [class.family-item--active]="catalogGroup === variant.value"
+              [attr.aria-pressed]="catalogGroup === variant.value" (click)="selectShipGroup(variant.value)">
+              <span>{{ variant.label }}</span>
+              <strong>{{ groupFamilyCount(variant.value, 'SHIP') }}</strong>
+            </button>
+          }
+        }
+      </div>
+    }
+
+    @if (catalogGroup === 'WIKELO') {
+      <div class="family-row" [style.--tone]="wikeloTone" role="group" aria-label="Catégories Wikelo">
+        <button type="button" class="family-item" [class.family-item--active]="!family" [attr.aria-pressed]="!family" (click)="selectWikelo()">
+          <span>Tout</span> <strong>{{ groupCount('WIKELO') }}</strong>
+        </button>
+        @for (option of wikeloFamilies; track option.value) {
+          <button type="button" class="family-item" [class.family-item--active]="family === option.value"
+            [attr.aria-pressed]="family === option.value" (click)="selectWikelo(option.value)">
+            <app-catalog-icon [key]="familyIcon(option.value)" />
+            <span>{{ option.shortLabel }}</span>
+            <strong>{{ groupFamilyCount('WIKELO', option.value) }}</strong>
+          </button>
+        }
+      </div>
+    }
+  </nav>
+
+  <div class="catalog-layout">
     <div class="catalog-main">
     <section class="catalog-controls" aria-label="Filtres du catalogue">
       <label class="search-box">
@@ -108,7 +115,10 @@
         }
       </label>
 
-      <div class="select-grid">
+      <button type="button" class="filters-toggle" (click)="filtersOpen = !filtersOpen" [attr.aria-expanded]="filtersOpen" aria-controls="catalog-filters">
+        Filtres @if (activeFilterCount) { <strong>{{ activeFilterCount }}</strong> }
+      </button>
+      <div class="select-grid" id="catalog-filters" [class.select-grid--open]="filtersOpen">
         <label>
           <span>État</span>
           <select [(ngModel)]="status" (change)="applyFilters()">
@@ -144,39 +154,6 @@
       </div>
     </section>
 
-    @if (family === 'SHIP' && catalogGroup !== 'WIKELO') {
-      <nav class="subcategory-rail" style="--tone: 34 211 238" aria-label="Variantes de vaisseaux">
-        <span>Variantes</span>
-        <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'STANDARD'"
-        [attr.aria-pressed]="catalogGroup === 'STANDARD'" (click)="selectShipGroup('STANDARD')">
-          Standard <strong>{{ groupFamilyCount('STANDARD', 'SHIP') }}</strong>
-        </button>
-        <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'PYAM_EXEC'"
-        [attr.aria-pressed]="catalogGroup === 'PYAM_EXEC'" (click)="selectShipGroup('PYAM_EXEC')">
-          PYAM Exec <strong>{{ groupFamilyCount('PYAM_EXEC', 'SHIP') }}</strong>
-        </button>
-        <button type="button" class="family-chip" [class.family-chip--active]="catalogGroup === 'BATTAGLIA'"
-        [attr.aria-pressed]="catalogGroup === 'BATTAGLIA'" (click)="selectShipGroup('BATTAGLIA')">
-          Battaglia <strong>{{ groupFamilyCount('BATTAGLIA', 'SHIP') }}</strong>
-        </button>
-      </nav>
-    }
-
-    @if (catalogGroup === 'WIKELO') {
-      <nav class="subcategory-rail" [style.--tone]="wikeloTone" aria-label="Catégories Wikelo">
-        <span>Wikelo</span>
-        <button type="button" class="family-chip" [class.family-chip--active]="!family"
-        [attr.aria-pressed]="!family" (click)="selectWikelo()">
-          Tout <strong>{{ groupCount('WIKELO') }}</strong>
-        </button>
-        @for (option of wikeloFamilies; track option.value) {
-          <button type="button" class="family-chip" [class.family-chip--active]="family === option.value"
-        [attr.aria-pressed]="family === option.value" (click)="selectWikelo(option.value)">
-            {{ option.shortLabel }} <strong>{{ groupFamilyCount('WIKELO', option.value) }}</strong>
-          </button>
-        }
-      </nav>
-    }
     <section class="catalog-results">
       <div class="results-heading">
         <div>

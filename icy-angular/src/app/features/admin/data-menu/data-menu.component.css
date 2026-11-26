@@ -1,73 +1,163 @@
-/* Sous-menu Catalogue, style glace-forge du menu d'administration ; --tone est la teinte du groupe Données. */
+/* Accueil du catalogue, style glace-forge du menu d'administration ; --tone est la teinte de chaque groupe. */
 :host { display: block; }
 .data-menu {
-  --tone: 203 213 225;
   min-height: 100vh;
   color: rgb(226 232 240);
-  padding: 3rem clamp(1rem, 3vw, 3rem);
+  padding: 2.5rem clamp(1rem, 3vw, 3rem) 3rem;
   background: linear-gradient(180deg, #0a111c, #0f172a 45%, #111827);
 }
-.data-menu-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1800px; margin: 0 auto 2rem; }
-h1 {
-  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.data-menu-content { max-width: 1800px; margin: 0 auto; }
+
+/* En-tête : emblème, titre argenté, liens. */
+.data-menu-heading { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.1rem; margin-bottom: 1.5rem; }
+.data-menu-emblem {
+  display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 1rem;
+  --catalog-icon-size: 1.7rem;
+  border: 1px solid rgb(125 211 252 / .35); background: rgb(11 19 36 / .8); box-shadow: 0 0 22px rgb(34 211 238 / .12);
 }
-.data-menu-heading nav { display: flex; flex-wrap: wrap; gap: .6rem; }
-.data-menu-heading a {
-  padding: .5rem .95rem;
-  border: 1px solid rgb(255 255 255 / .12);
-  border-radius: 9999px;
-  color: rgb(203 213 225);
-  font-size: .8rem;
-  font-weight: 500;
-  background: rgb(255 255 255 / .04);
+h1 {
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem); font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
+  background: linear-gradient(180deg, #f8fafc 10%, #a8b8c8 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.data-menu-heading nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+.data-menu-heading nav a {
+  padding: .5rem .95rem; border: 1px solid rgb(255 255 255 / .12); border-radius: 9999px;
+  color: rgb(203 213 225); font-size: .8rem; font-weight: 500; background: rgb(255 255 255 / .04);
   transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
 }
-.data-menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.2rem; max-width: 1800px; margin: 0 auto; }
-.data-menu-card {
-  position: relative;
-  border: 1px solid rgb(255 255 255 / .09);
-  border-radius: 1rem;
-  overflow: hidden;
-  background: linear-gradient(160deg, rgb(255 255 255 / .06), rgb(255 255 255 / .02));
-  box-shadow: inset 0 1px 0 rgb(226 240 255 / .12), 0 18px 40px rgb(0 0 0 / .3);
+.data-menu-heading nav a:hover { color: #f8fafc; border-color: rgb(125 211 252 / .6); background: rgb(125 211 252 / .1); }
+
+/* Recherche globale : ouvre le catalogue filtré. */
+.data-menu-search {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: 2rem; padding: .6rem;
+  border: 1px solid rgb(255 255 255 / .09); border-radius: 1rem;
+  background: linear-gradient(160deg, rgb(255 255 255 / .055), rgb(255 255 255 / .015)); box-shadow: inset 0 1px 0 rgb(226 240 255 / .12);
+}
+.data-menu-search__icon { position: relative; width: .9rem; height: .9rem; margin-left: .6rem; border: 1.5px solid #64748b; border-radius: 50%; flex: none; }
+.data-menu-search__icon::after { content: ''; position: absolute; width: .42rem; height: 1.5px; right: -.32rem; bottom: -.14rem; background: #64748b; transform: rotate(45deg); }
+.data-menu-search input { flex: 1 1 16rem; min-width: 0; min-height: 2.6rem; background: transparent; color: #f1f5f9; font-size: .95rem; outline: 0; }
+.data-menu-search input::placeholder { color: #64748b; }
+.data-menu-search button {
+  min-height: 2.6rem; padding: 0 1.1rem; border-radius: .75rem; border: 1px solid rgb(125 211 252 / .45);
+  background: rgb(125 211 252 / .12); color: #e0f2fe; font-size: .85rem; font-weight: 600;
+}
+.data-menu-search button:hover { background: rgb(125 211 252 / .22); }
+.data-menu-search__meta { flex: 1 0 100%; padding: 0 .6rem .2rem; color: #64748b; font-size: .78rem; }
+.data-menu-search__meta strong { color: #cbd5e1; font-weight: 600; }
+.data-menu-search__meta .data-menu-warn { color: #fcd34d; }
+
+/* Groupes : titre à pastille et filet, comme le menu d'administration. */
+.data-menu-group + .data-menu-group { margin-top: 2rem; }
+.data-menu-group__title {
+  display: flex; align-items: center; gap: .65rem; margin-bottom: .9rem;
+  font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgb(203 213 225);
+}
+.data-menu-group__title::before { content: ''; width: .5rem; height: .5rem; border-radius: 9999px; background: rgb(var(--tone)); box-shadow: 0 0 8px rgb(var(--tone) / .8); }
+.data-menu-group__title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgb(var(--tone) / .35), transparent); }
+
+/* Cartes de domaine : bandeau illustré puis liste des familles avec leur nombre de fiches. */
+.domain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.5rem), 1fr)); gap: 1.25rem; }
+.domain-card {
+  position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / .1); background: #0b1324;
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / .12), 0 20px 50px rgb(0 0 0 / .35);
   transition: border-color 250ms ease, box-shadow 250ms ease;
 }
-.data-menu-card:hover { border-color: rgb(var(--tone) / .45); box-shadow: inset 0 1px 0 rgb(226 240 255 / .2), 0 24px 50px rgb(var(--tone) / .1); }
-.data-menu-card-main {
-  min-height: 145px; display: flex; align-items: flex-end; justify-content: space-between; position: relative; isolation: isolate; padding: 1.2rem; gap: 1rem;
-  background: radial-gradient(circle at 75% 15%, rgb(var(--tone) / .14), transparent 60%), linear-gradient(160deg, #16233a, #0b1324);
+.domain-card::after { content: ''; position: absolute; inset: auto 0 0 0; height: 3px; background: rgb(var(--tone)); opacity: .75; }
+.domain-card:hover { border-color: rgb(var(--tone) / .45); box-shadow: inset 0 1px 0 rgb(226 240 255 / .2), 0 24px 56px rgb(var(--tone) / .12); }
+.domain-card__head { position: relative; display: block; }
+.domain-card__media {
+  display: block; height: 7rem; overflow: hidden;
+  background: radial-gradient(circle at 72% 22%, rgb(var(--tone) / .22), transparent 62%), linear-gradient(160deg, #16233a, #0b1324);
 }
-.data-menu-card-main img { position: absolute; z-index: -2; inset: 0; height: 100%; width: 100%; object-fit: cover; opacity: .8; }
-.data-menu-card-main::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(0deg, #0b1324f2, #0b132415); }
-.data-menu-card-main h2 { font-size: 1.15rem; font-weight: 600; color: rgb(248 250 252); }
-.data-menu-card-main > span { color: rgb(var(--tone) / .7); }
-.data-menu-shortcuts { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem; border-top: 1px solid rgb(255 255 255 / .06); }
-.data-menu-shortcuts a {
-  color: rgb(203 213 225);
-  background: rgb(255 255 255 / .04);
-  border: 1px solid rgb(255 255 255 / .1);
-  border-radius: 9999px;
-  padding: .35rem .75rem;
-  font-size: .75rem;
-  transition: border-color 200ms ease, background 200ms ease, color 200ms ease;
+.domain-card__media img {
+  width: 100%; height: 100%; object-fit: cover; opacity: .72;
+  -webkit-mask-image: linear-gradient(0deg, transparent, #000 40%); mask-image: linear-gradient(0deg, transparent, #000 40%);
+  transition: opacity 500ms ease, transform 700ms ease;
 }
-.data-menu-heading a:hover, .data-menu-shortcuts a:hover { color: rgb(248 250 252); border-color: rgb(var(--tone) / .6); background: rgb(var(--tone) / .1); }
-a:focus-visible { outline: 2px solid rgb(186 230 253); outline-offset: 2px; }
+.domain-card__head:hover img { opacity: .95; transform: scale(1.04); }
+.domain-card__icon, .hub-card__icon {
+  position: absolute; z-index: 1; left: 1rem; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .9rem;
+  background: rgb(11 19 36 / .88); border: 1px solid rgb(var(--tone) / .45); box-shadow: 0 0 18px rgb(var(--tone) / .18); backdrop-filter: blur(6px);
+}
+.domain-card__icon { top: calc(7rem - 1.5rem); }
+.domain-card__title { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; padding: 2rem 1.15rem .6rem; }
+.domain-card__title h3 { font-size: 1.1rem; font-weight: 600; color: #f8fafc; }
+.domain-card__title span { color: rgb(var(--tone)); font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.domain-card__links { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: 2px .4rem; padding: .2rem .7rem 1.1rem; }
+.domain-card__links a {
+  --catalog-icon-size: 1rem;
+  display: flex; align-items: center; gap: .55rem; min-height: 2.35rem; padding: .3rem .5rem; border-radius: .6rem;
+  color: #cbd5e1; font-size: .84rem; transition: background 160ms ease, color 160ms ease;
+}
+.domain-card__links app-catalog-icon { color: rgb(var(--tone) / .8); }
+.domain-card__links span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.domain-card__links strong { color: #64748b; font-size: .74rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.domain-card__links a:hover { background: rgb(var(--tone) / .1); color: #f8fafc; }
+.domain-card__links a:hover strong { color: rgb(var(--tone)); }
+
+/* Cartes secondaires, identiques à celles du menu d'administration. */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr)); gap: 1.25rem; }
+.hub-card {
+  position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / .1); background: #0b1324;
+  box-shadow: inset 0 1px 0 rgb(226 240 255 / .12), 0 20px 50px rgb(0 0 0 / .35);
+  transition: transform 300ms cubic-bezier(.22, 1, .36, 1), border-color 250ms ease, box-shadow 250ms ease;
+}
+.hub-card::after { content: ''; position: absolute; inset: auto 0 0 0; height: 3px; background: rgb(var(--tone)); opacity: .75; }
+.hub-card:hover { transform: translateY(-3px); border-color: rgb(var(--tone) / .55); box-shadow: inset 0 1px 0 rgb(226 240 255 / .2), 0 28px 60px rgb(var(--tone) / .14); }
+.hub-card__media {
+  display: block; height: 6rem; overflow: hidden;
+  background: radial-gradient(circle at 72% 22%, rgb(var(--tone) / .22), transparent 62%), linear-gradient(160deg, #16233a, #0b1324);
+}
+.hub-card__media img {
+  width: 100%; height: 100%; object-fit: cover; opacity: .72;
+  -webkit-mask-image: linear-gradient(0deg, transparent, #000 40%); mask-image: linear-gradient(0deg, transparent, #000 40%);
+  transition: opacity 500ms ease, transform 700ms ease;
+}
+.hub-card:hover img { opacity: 1; transform: scale(1.04); }
+.hub-card__icon { top: calc(6rem - 1.5rem); }
+.hub-card__text { display: flex; flex-direction: column; gap: .2rem; padding: 1.9rem 1.15rem 1.2rem; }
+.hub-card__label { font-size: 1.05rem; font-weight: 600; color: #f8fafc; }
+.hub-card__description { font-size: .84rem; line-height: 1.4; color: #94a3b8; }
+.hub-card__meta { margin-top: .35rem; color: rgb(var(--tone)); font-size: .78rem; font-weight: 600; }
+
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid rgb(186 230 253); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 639px) {
+  .data-menu { padding-top: 1.5rem; }
+  .data-menu-heading nav { margin-left: 0; width: 100%; }
+  .data-menu-search button { flex: 1 0 100%; }
+  .domain-card__links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hub-grid { gap: .8rem; }
+  /* Sur téléphone, les cartes secondaires deviennent des lignes compactes. */
+  .hub-card { flex-direction: row; align-items: center; min-height: 4.5rem; }
+  .hub-card__media { display: none; }
+  .hub-card__icon { position: static; margin-left: .9rem; flex: none; }
+  .hub-card__text { padding: .8rem 1rem; }
+  .hub-card::after { inset: 0 auto 0 0; width: 3px; height: auto; }
+}
 
 /* Écrans 4K : grille plus large et textes plus grands. */
 @media (min-width: 2400px) {
-  .data-menu { padding-top: 4.5rem; }
-  .data-menu-heading, .data-menu-grid { max-width: 2800px; }
+  .data-menu { padding-top: 4rem; }
+  .data-menu-content { max-width: 2800px; }
   h1 { font-size: 2.9rem; }
-  .data-menu-grid { grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.5rem; }
-  .data-menu-card-main { min-height: 200px; }
-  .data-menu-card-main h2 { font-size: 1.5rem; }
-  .data-menu-heading a, .data-menu-shortcuts a { font-size: .95rem; }
+  .data-menu-emblem { width: 4.5rem; height: 4.5rem; --catalog-icon-size: 2.3rem; }
+  .data-menu-heading nav a { font-size: 1rem; }
+  .data-menu-search input { font-size: 1.15rem; }
+  .data-menu-group__title { font-size: .95rem; }
+  .domain-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.6rem; }
+  .hub-grid { grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 1.6rem; }
+  .domain-card__media { height: 10rem; }
+  .domain-card__icon { top: calc(10rem - 1.75rem); width: 3.5rem; height: 3.5rem; }
+  .domain-card__title h3, .hub-card__label { font-size: 1.4rem; }
+  .domain-card__links { grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); }
+  .domain-card__links a { font-size: 1.05rem; min-height: 2.9rem; --catalog-icon-size: 1.25rem; }
+  .hub-card__media { height: 9rem; }
+  .hub-card__icon { top: calc(9rem - 1.75rem); width: 3.5rem; height: 3.5rem; }
+  .hub-card__description { font-size: 1.02rem; }
 }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
