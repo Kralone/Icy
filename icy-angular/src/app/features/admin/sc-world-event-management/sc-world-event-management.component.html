@@ -1,57 +1,26 @@
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-10">
+<div class="sw-page">
+  <div class="sw-wrap">
+    <a routerLink="/icy/admin" class="sw-back"><span aria-hidden="true">←</span> Retour au tableau de bord</a>
 
-  <!-- Header -->
-  <div class="flex items-center justify-between gap-4 flex-wrap">
-    <div class="space-y-1">
-      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Console</p>
-      <h2 class="text-2xl font-semibold text-cyan-200">Admin SC World Events</h2>
-    </div>
+    <header class="sw-head">
+      <div>
+        <p class="sw-kicker">Administration</p>
+        <h1 class="sw-title">SC World Events</h1>
+      </div>
+      <div class="sw-tabs" role="tablist" aria-label="Sections">
+        <button type="button" role="tab" class="sw-tab" [class.sw-tab--on]="tab === 'events'" [attr.aria-selected]="tab === 'events'" (click)="switchTab('events')">Événements</button>
+        <button type="button" role="tab" class="sw-tab" [class.sw-tab--on]="tab === 'types'" [attr.aria-selected]="tab === 'types'" (click)="switchTab('types')">Types et barème</button>
+      </div>
+    </header>
 
-    <!-- Tabs -->
-    <div class="flex gap-2 bg-[#0b1324] border border-white/10 rounded-full p-1">
-      <button
-        (click)="switchTab('events')"
-        class="px-4 py-2 rounded-full transition active:scale-95"
-        [ngClass]="tab === 'events' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
-        >
-        Events
-      </button>
-      <button
-        (click)="switchTab('types')"
-        class="px-4 py-2 rounded-full transition active:scale-95"
-        [ngClass]="tab === 'types' ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-200' : 'text-white/70 hover:bg-white/10'"
-        >
-        Types & Schema
-      </button>
-    </div>
+    @if (error) { <p class="sw-alert" role="alert">{{ error }}</p> }
+    @if (success) { <p class="sw-alert sw-alert--ok" role="status">{{ success }}</p> }
+
+    @if (tab === 'events') {
+      <app-scwe-events-admin [types]="types" (message)="setMessage($event)"></app-scwe-events-admin>
+    }
+    @if (tab === 'types') {
+      <app-scwe-types-admin [types]="types" (typesUpdated)="reloadTypes()" (message)="setMessage($event)"></app-scwe-types-admin>
+    }
   </div>
-
-  <!-- Messages -->
-  @if (error) {
-    <div class="bg-red-500/10 border border-red-400/20 rounded-2xl p-4 text-red-200">
-      ⚠️ {{ error }}
-    </div>
-  }
-  @if (success) {
-    <div class="bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4 text-emerald-200">
-      ✅ {{ success }}
-    </div>
-  }
-
-  <!-- Content -->
-  @if (tab === 'events') {
-    <app-scwe-events-admin
-      [types]="types"
-      (message)="setMessage($event)"
-    ></app-scwe-events-admin>
-  }
-
-  @if (tab === 'types') {
-    <app-scwe-types-admin
-      [types]="types"
-      (typesUpdated)="reloadTypes()"
-      (message)="setMessage($event)"
-    ></app-scwe-types-admin>
-  }
-
 </div>

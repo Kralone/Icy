@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ScWorldEventService, ScWorldEventType } from '../../../core/services/scworldevent/sc-world-event.service';
 import { ScweEventsAdminComponent } from './components/scwe-events-admin/scwe-events-admin.component';
 import { ScweTypesAdminComponent } from './components/scwe-types-admin/scwe-types-admin.component';
@@ -9,9 +9,10 @@ type Tab = 'events' | 'types';
 @Component({
   selector: 'app-sc-world-event-management',
   standalone: true,
-  imports: [CommonModule, ScweEventsAdminComponent, ScweTypesAdminComponent],
+  imports: [RouterLink, ScweEventsAdminComponent, ScweTypesAdminComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sc-world-event-management.component.html',
+  styleUrl: './scwe-admin.css',
 })
 export class ScWorldEventManagementComponent implements OnInit {
   tab: Tab = 'events';

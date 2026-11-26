@@ -11,6 +11,7 @@ import { SchemaFormModel } from '../../models/scwe-schema.model';
   imports: [FormsModule, ScweSchemaBuilderComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-types-admin.component.html',
+  styleUrl: '../../scwe-admin.css',
 })
 export class ScweTypesAdminComponent {
   @Input() types: ScWorldEventType[] = [];

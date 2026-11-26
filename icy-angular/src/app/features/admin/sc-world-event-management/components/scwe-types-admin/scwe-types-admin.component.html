@@ -1,132 +1,71 @@
-<div class="space-y-8">
+<div class="sw-layout sw-layout--types">
+  <!-- Formulaire -->
+  <!-- Pas de <form> : Entrée dans le barème ne doit pas enregistrer le type. -->
+  <div class="sw-panel sw-form-area" role="form"
+    [attr.aria-label]="editingType ? 'Modifier le type' : 'Nouveau type'">
+    <div class="sw-panel-head">
+      <h2>{{ editingType ? 'Modifier « ' + editingType.name + ' »' : 'Nouveau type' }}</h2>
+      @if (editingType) { <button type="button" class="sw-btn sw-btn--sm sw-btn--ghost" (click)="reset()">Annuler</button> }
+    </div>
 
-  <!-- Form -->
-  <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl space-y-6">
-    <div class="flex items-center justify-between gap-3 flex-wrap">
-      <div class="text-lg font-semibold text-cyan-200">
-        {{ editingType ? '✏️ Édition Type' : '➕ Création Type' }}
+    <div class="sw-grid sw-grid--2">
+      <div class="sw-field">
+        <label for="scwe-type-name">Nom</label>
+        <input id="scwe-type-name" class="sw-input" [(ngModel)]="typeForm.name" name="name" [disabled]="!!editingType" placeholder="Alliance Aid" />
       </div>
-
-      <div class="flex items-center gap-2">
-        @if (editingType) {
-          <button
-            (click)="reset()"
-            class="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition active:scale-95"
-            >
-            Annuler
-          </button>
-        }
+      <div class="sw-field">
+        <label for="scwe-type-color">Couleur du texte</label>
+        <div class="sw-swatch-input">
+          <span class="sw-swatch" aria-hidden="true" [style.background]="typeForm.textColor || 'transparent'"></span>
+          <input id="scwe-type-color" class="sw-input sw-mono" [(ngModel)]="typeForm.textColor" name="textColor" placeholder="#67e8f9" aria-describedby="scwe-type-color-msg" />
+        </div>
+        <p id="scwe-type-color-msg" class="sw-msg">#RRGGBB, rgb(…), rgba(…) ou hsl(…)</p>
+      </div>
+      <div class="sw-field sw-span">
+        <label for="scwe-type-image">Image</label>
+        <input id="scwe-type-image" class="sw-input" [(ngModel)]="typeForm.imageUrl" name="imageUrl" inputmode="url" placeholder="https://… ou /img/sc/…" />
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div>
-        <label class="text-sm text-gray-300">Nom</label>
-        <input
-          [(ngModel)]="typeForm.name"
-          [disabled]="!!editingType"
-          placeholder="Alliance Aid"
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 placeholder:text-white/40
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition disabled:opacity-50"
-          />
-        </div>
+    <app-scwe-schema-builder
+      [model]="schemaModel"
+      [initialJson]="typeForm.scoreSchema"
+      (modelChange)="onSchemaModelChange($event)"
+      (jsonChange)="onSchemaJsonChange($event)"
+      (errorChange)="onSchemaErrorChange($event)"
+    ></app-scwe-schema-builder>
 
-        <div>
-          <label class="text-sm text-gray-300">Text color</label>
+    <div class="sw-form-actions">
+      @if (editingType) { <button type="button" class="sw-btn sw-btn--ghost" (click)="reset()">Annuler</button> }
+      <button type="button" class="sw-btn sw-btn--primary" (click)="saveType()" [disabled]="loading">{{ editingType ? 'Enregistrer' : 'Créer le type' }}</button>
+    </div>
+  </div>
 
-          <div class="relative">
-            <!-- preview -->
-            <div
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border border-white/25"
-              [style.background]="typeForm.textColor || 'transparent'"
-              [style.boxShadow]="typeForm.textColor ? '0 0 10px rgba(103,232,249,0.25)' : 'none'"
-              title="Preview"
-            ></div>
-
-            <input
-              [(ngModel)]="typeForm.textColor"
-              placeholder="#67e8f9"
-            class="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                   placeholder:text-white/40
-                   focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
+  <!-- Liste -->
+  <section class="sw-list-area" aria-labelledby="scwe-types-title">
+    <div class="sw-section-head"><h2 id="scwe-types-title">Types</h2></div>
+    @if (!types.length) {
+      <p class="sw-empty">Aucun type.</p>
+    } @else {
+      <ul class="sw-list">
+        @for (t of types; track t) {
+          <li class="sw-row" [class.sw-row--editing]="editingType?.name === t.name" [style.--accent]="t.textColor || '#67e8f9'">
+            <div class="sw-thumb sw-thumb--sq" aria-hidden="true">
+              @if (t.imageUrl) { <img [src]="t.imageUrl" alt="" loading="lazy" /> }
             </div>
-
-            <div class="text-xs text-white/50 mt-1">
-              Formats acceptés : #RRGGBB, rgb(...), rgba(...), hsl(...)
+            <div class="sw-row-main">
+              <div class="sw-row-title"><span [style.color]="t.textColor || '#67e8f9'">{{ t.name }}</span></div>
+              <div class="sw-meta sw-mono">{{ t.textColor || 'Couleur par défaut' }}</div>
             </div>
-          </div>
-
-          <div>
-            <label class="text-sm text-gray-300">Image URL</label>
-            <input
-              [(ngModel)]="typeForm.imageUrl"
-              placeholder="https://... ou /img/sc/..."
-          class="w-full min-h-[44px] px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white
-                 placeholder:text-white/40
-                 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-              />
+            <div class="sw-actions">
+              <button type="button" class="sw-btn sw-btn--sm sw-btn--ghost" (click)="editType(t)" [attr.aria-label]="'Modifier ' + t.name">Modifier</button>
+              <button type="button" class="sw-icon-btn" (click)="deleteType(t)" [attr.aria-label]="'Supprimer ' + t.name" title="Supprimer">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6h10M8 6V4h4v2M6.5 6l.7 10h5.6l.7-10" /></svg>
+              </button>
             </div>
-          </div>
-
-          <!-- Builder -->
-          <app-scwe-schema-builder
-            [model]="schemaModel"
-            [initialJson]="typeForm.scoreSchema"
-            (modelChange)="onSchemaModelChange($event)"
-            (jsonChange)="onSchemaJsonChange($event)"
-            (errorChange)="onSchemaErrorChange($event)"
-          ></app-scwe-schema-builder>
-
-          <div class="flex justify-end">
-            <button
-              (click)="saveType()"
-        class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500
-               transition font-semibold active:scale-95"
-              >
-              {{ editingType ? 'Mettre à jour' : '+ Ajouter' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- List -->
-        <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
-          @for (t of types; track t) {
-            <div class="border-b border-white/10">
-              <div class="flex items-center justify-between px-4 py-3 hover:bg-white/10 transition">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/15 overflow-hidden flex items-center justify-center">
-                    @if (t.imageUrl) {
-                      <img [src]="t.imageUrl" class="w-full h-full object-cover" />
-                    }
-                    @if (!t.imageUrl) {
-                      <span class="text-white/40">IMG</span>
-                    }
-                  </div>
-                  <div>
-                    <div class="font-semibold tracking-wide">{{ t.name }}</div>
-                    <div class="text-xs text-white/60">
-                      <span class="mr-2">textColor:</span>
-                      <span class="font-mono" [style.color]="t.textColor || '#67e8f9'">{{ t.textColor || '—' }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="flex gap-2">
-                  <button
-                    (click)="editType(t)"
-                    class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition active:scale-95"
-                    title="Éditer"
-                  >✏️</button>
-                  <button
-                    (click)="deleteType(t)"
-                    class="px-2 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-red-500/15 hover:border-red-400/30 transition active:scale-95"
-                    title="Supprimer"
-                  >🗑️</button>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-
-      </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>
