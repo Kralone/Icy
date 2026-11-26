@@ -140,10 +140,10 @@
                   </thead>
                   <tbody>
                     @for (ore of selectedLocationOres; track ore.oreCode) {
-                      <tr [class.mine-table__row--match]="activeOreCode === ore.oreCode">
+                      <tr class="mine-table__row" [class.mine-table__row--match]="activeOreCode === ore.oreCode" (click)="showOreRanking(ore.oreCode)">
                         <td class="mine-table__ore">
                           @if (ore.imageUrl) { <img [src]="ore.imageUrl" alt="" loading="lazy" width="28" height="28" /> }
-                          {{ oreName(ore.oreCode) }}
+                          <button type="button" class="mine-table__ore-link" [attr.aria-label]="'Où trouver ' + oreName(ore.oreCode)">{{ oreName(ore.oreCode) }}</button>
                           @if (ore.method) { <small class="mine-table__method">{{ ore.method }}</small> }
                         </td>
                         <td class="mine-table__freq">

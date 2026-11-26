@@ -17,8 +17,18 @@ public record OreLocationDTO(
         OreMetricRangeDTO inst,
         OreMetricRangeDTO res,
         List<OreMixDTO> ores,
-        String locationKey
+        String locationKey,
+        /** Système d'après les fichiers du jeu (Star Citizen Wiki) ; null pour un relevé importé. */
+        String systemName
 ) {
+    public OreLocationDTO(Long id, String locationCode, String sourceUrl, String gameVersion,
+            OffsetDateTime updatedAt, Integer users, Integer scans, Integer clusters,
+            OreMetricRangeDTO clusterCount, OreMetricRangeDTO mass, OreMetricRangeDTO inst,
+            OreMetricRangeDTO res, List<OreMixDTO> ores, String locationKey) {
+        this(id, locationCode, sourceUrl, gameVersion, updatedAt, users, scans, clusters,
+                clusterCount, mass, inst, res, ores, locationKey, null);
+    }
+
     public OreLocationDTO(Long id, String locationCode, String sourceUrl, String gameVersion,
             OffsetDateTime updatedAt, Integer users, Integer scans, Integer clusters,
             OreMetricRangeDTO clusterCount, OreMetricRangeDTO mass, OreMetricRangeDTO inst,

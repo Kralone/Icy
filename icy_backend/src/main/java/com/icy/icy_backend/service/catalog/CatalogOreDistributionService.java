@@ -90,7 +90,9 @@ public class CatalogOreDistributionService {
                 // Chance d'apparition de ce minerai sur l'astre, lue dans les fichiers du jeu (pas un relevé de joueurs).
                 Double placeProbability = probability(place.path("relative_probability"));
                 if (placeProbability != null) ore.probability = placeProbability;
-                Location location = target.computeIfAbsent(locationKey, key -> new Location(key, code, version, updatedAt));
+                String systemName = system.path("name").asText("").trim();
+                Location location = target.computeIfAbsent(locationKey,
+                        key -> new Location(key, code, systemName.isEmpty() ? null : systemName, version, updatedAt));
                 location.ores.merge(uuid, ore, OreAccumulator::merge);
                 if (!Objects.equals(location.version, version)) location.version = null;
                 if (updatedAt != null && (location.updatedAt == null || updatedAt.isBefore(location.updatedAt)))
@@ -195,19 +197,21 @@ public class CatalogOreDistributionService {
     static final class Location {
         private final String locationKey;
         private final String code;
+        private final String systemName;
         private String version;
         private OffsetDateTime updatedAt;
         private final Map<String, OreAccumulator> ores = new TreeMap<>();
-        Location(String locationKey, String code, String version, OffsetDateTime updatedAt) {
+        Location(String locationKey, String code, String systemName, String version, OffsetDateTime updatedAt) {
             this.locationKey = locationKey;
             this.code = code;
+            this.systemName = systemName;
             this.version = version;
             this.updatedAt = updatedAt;
         }
         OreLocationDTO dto() {
             OreMetricRangeDTO unknown = new OreMetricRangeDTO(null, null, null);
             return new OreLocationDTO(null, code, "https://api.star-citizen.wiki/commodities", version,
-                    updatedAt, null, null, null, unknown, unknown, unknown, unknown, ores.values().stream().map(OreAccumulator::dto).toList(), locationKey);
+                    updatedAt, null, null, null, unknown, unknown, unknown, unknown, ores.values().stream().map(OreAccumulator::dto).toList(), locationKey, systemName);
         }
     }
 }

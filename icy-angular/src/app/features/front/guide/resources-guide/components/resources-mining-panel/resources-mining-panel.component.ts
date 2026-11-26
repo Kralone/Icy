@@ -188,7 +188,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const planetMap = new Map<string, PlanetGroupCard>();
     const isolated: PlanetGroupCard[] = [];
 
-    for (const location of this.parsedLocations) {
+    for (const location of this.uniqueLocations()) {
       if (!location.listed) {
         isolated.push({
           key: `lieu:${location.key}`,
@@ -222,6 +222,26 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
         || a.tabLabel.localeCompare(b.tabLabel, undefined, { sensitivity: 'base', numeric: true }));
     }
     return [...planets, ...isolated.sort(byName)];
+  }
+
+  /**
+   * Un même lieu peut venir de deux sources (ancien relevé Regolith et fichiers du jeu) sous deux codes
+   * (« Calliope » et « CAL ») : on garde une seule zone par planète et onglet, celle des fichiers du jeu.
+   */
+  private uniqueLocations(): ParsedOreLocation[] {
+    const byPlace = new Map<string, ParsedOreLocation>();
+    for (const location of this.parsedLocations) {
+      const place = this.normalizeText(location.listed ? `${location.groupPlanet}|${location.tabLabel}` : `lieu|${location.displayLabel}`);
+      const current = byPlace.get(place);
+      if (!current || (!this.isGameData(current) && this.isGameData(location))) byPlace.set(place, location);
+    }
+    return [...byPlace.values()];
+  }
+
+  /** Ligne d'un minerai dans le tableau : affiche où le trouver ailleurs. */
+  showOreRanking(oreCode: string): void {
+    this.selectOreSuggestion(oreCode);
+    setTimeout(() => document.getElementById('mine-ranking-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   }
 
   private planetRank(name: string): number {
@@ -587,7 +607,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
       tabLabel: place.tabLabel,
       visibilityKind: place.kind,
       groupPlanet: place.planet ?? place.label,
-      systemName: place.system ?? this.findSystemFor(place.label),
+      systemName: place.system ?? location.systemName ?? this.findSystemFor(place.label),
       listed: place.planet != null,
       ores: parsedOres,
       oresText,
@@ -664,7 +684,7 @@ export class ResourcesMiningPanelComponent implements OnInit, OnDestroy {
     const oreCodesByNormalized = new Map<string, string>();
     const oreResults = new Map<string, OreLocationResult[]>();
 
-    for (const location of this.parsedLocations) {
+    for (const location of this.uniqueLocations()) {
       for (const ore of location.ores) {
         const normalized = this.normalizeOreKey(ore.oreCode);
         if (!normalized) {

@@ -23,6 +23,7 @@ class CatalogOreDistributionServiceTest {
         assertThat(dto.locationKey()).isEqualTo("wiki:|HUR-L1");
         assertThat(dto.users()).isNull();
         assertThat(dto.gameVersion()).isNull();
+        assertThat(dto.systemName()).isNull();
         var ore = dto.ores().getFirst();
         assertThat(ore.minPct()).isEqualTo(0.01);
         assertThat(ore.maxPct()).isEqualTo(0.07);
@@ -48,6 +49,7 @@ class CatalogOreDistributionServiceTest {
         var dto = rows.get("wiki:aberdeen").dto();
         var ore = dto.ores().getFirst();
         assertThat(dto.gameVersion()).isEqualTo("4.10.3-LIVE");
+        assertThat(dto.systemName()).isEqualTo("Stanton");
         assertThat(ore.probability()).isEqualTo(0.02);
         assertThat(ore.method()).isEqualTo("Vaisseau");
         assertThat(ore.clusterMin()).isEqualTo(2);

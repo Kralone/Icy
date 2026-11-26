@@ -72,4 +72,22 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     component.miningSearch = 'rmb';
     expect(component.matchingPlaces.map((place) => place.planetName)).toEqual(['RMB-ALME']);
   });
+
+  it('keeps one zone per place when the old survey and the game files both list it', () => {
+    const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
+      { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
+    const ore = { oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null, medPct: null };
+    (component as unknown as { rawLocations: unknown[] }).rawLocations = [
+      { id: 1, locationKey: 'manual:1', locationCode: 'Calliope', ores: [ore] },
+      { id: null, locationKey: 'wiki:cal', locationCode: 'CAL', ores: [ore] },
+      { id: null, locationKey: 'wiki:mic', locationCode: 'MIC', ores: [ore] },
+      { id: null, locationKey: 'wiki:st', locationCode: 'ST-G04-CH0', systemName: 'Pyro', ores: [ore] }
+    ];
+    (component as unknown as { reparseLocations(): void }).reparseLocations();
+    const microTech = component.systemGroups[0].groups[0];
+    expect(microTech.locations.map((location) => location.key)).toEqual(['wiki:mic', 'wiki:cal']);
+    component.selectOreSuggestion('Gold');
+    expect(component.activeOreResults.map((result) => result.context)).toContain('Lieu de minage · Pyro');
+    expect(component.activeOreResults).toHaveLength(3);
+  });
 });
