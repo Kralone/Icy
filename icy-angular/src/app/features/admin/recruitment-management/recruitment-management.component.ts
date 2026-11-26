@@ -12,6 +12,7 @@ import { RecruitmentService } from '../../../core/services/recruitment/recruitme
   imports: [CommonModule, FormsModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './recruitment-management.component.html',
+  styleUrl: './recruitment-management.component.css',
 })
 export class RecruitmentManagementComponent implements OnInit {
   openRecruitments: RecruitmentAdmin[] = [];
