@@ -611,6 +611,29 @@ class EventServiceTest {
         verify(fixture.participationRepository).save(any(EventParticipation.class));
     }
 
+    @Test
+    void oneHourReminderWindowsOfConsecutiveTicksNeverOverlap() {
+        java.time.ZoneId paris = java.time.ZoneId.of("Europe/Paris");
+        // Le passage de 20:00 démarre quelques millisecondes après l'heure pile.
+        LocalDateTime[] at2000 = EventService.oneHourReminderWindow(
+                java.time.ZonedDateTime.of(2026, 11, 26, 20, 0, 0, 123_000_000, paris));
+        LocalDateTime[] at2015 = EventService.oneHourReminderWindow(
+                java.time.ZonedDateTime.of(2026, 11, 26, 20, 15, 0, 87_000_000, paris));
+
+        LocalDateTime nine = LocalDateTime.of(2026, 11, 26, 21, 0);
+        LocalDateTime nineTen = LocalDateTime.of(2026, 11, 26, 21, 10);
+
+        assertThat(isInside(nine, at2000)).isTrue();
+        assertThat(isInside(nine, at2015)).isFalse();
+        assertThat(isInside(nineTen, at2000)).isFalse();
+        assertThat(isInside(nineTen, at2015)).isTrue();
+        assertThat(at2000[1]).isBefore(at2015[0]);
+    }
+
+    private static boolean isInside(LocalDateTime start, LocalDateTime[] window) {
+        return !start.isBefore(window[0]) && !start.isAfter(window[1]);
+    }
+
     private static <T> ResponseEntity<MessageResponse<T>> okResponse(T data) {
         MessageResponse<T> body = new MessageResponse<>(HttpStatus.OK, "title", "message", 0, data);
         return ResponseEntity.ok(body);

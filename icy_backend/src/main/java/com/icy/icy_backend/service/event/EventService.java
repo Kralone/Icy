@@ -43,6 +43,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -580,16 +581,17 @@ public class EventService {
 
     /**
      * ⏰ Toutes les 15 minutes : ping 1h avant chaque événement à venir.
+     * La fenêtre fait exactement 15 minutes, comme l'intervalle de la tâche : deux passages
+     * consécutifs ne retiennent jamais le même événement. Le bot ignore en plus tout rappel
+     * déjà envoyé pour le même événement et le même horaire (redémarrage du backend).
      */
     @Transactional(readOnly = true)
     @Scheduled(cron = "0 0/15 * * * *", zone = "Europe/Paris")
     public void sendOneHourReminder() {
         log.info("✅ [Startup] One hour event reminder ping");
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
-        ZonedDateTime from = now.plusMinutes(50);
-        ZonedDateTime to = now.plusMinutes(70);
+        LocalDateTime[] window = oneHourReminderWindow(ZonedDateTime.now(ZoneId.of("Europe/Paris")));
 
-        List<Event> upcomingEvents = withoutUnpublishedOperations(eventRepository.findAllBetween(from.toLocalDateTime(), to.toLocalDateTime()));
+        List<Event> upcomingEvents = withoutUnpublishedOperations(eventRepository.findAllBetween(window[0], window[1]));
 
         if (upcomingEvents.isEmpty()) {
             return;
@@ -633,6 +635,17 @@ public class EventService {
                 );
             }
         }
+    }
+
+
+    /**
+     * Fenêtre [maintenant + 55 min, maintenant + 70 min[ arrondie à la minute : un événement
+     * à 21:00 est rappelé au passage de 20:00, un événement à 21:10 à celui de 20:15.
+     */
+    static LocalDateTime[] oneHourReminderWindow(ZonedDateTime now) {
+        LocalDateTime tick = now.truncatedTo(ChronoUnit.MINUTES).toLocalDateTime();
+        // BETWEEN est inclusif : la borne haute est retirée d'une microseconde (précision PostgreSQL).
+        return new LocalDateTime[] { tick.plusMinutes(55), tick.plusMinutes(70).minusNanos(1_000) };
     }
 
 
