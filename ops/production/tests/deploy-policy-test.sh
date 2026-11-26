@@ -33,33 +33,23 @@ plan() { "$SELECT" --backup-dir "$1" --age-recipient "$RECIPIENT" --current-vers
 kind() { sed -E 's/^BACKUP-PLAN=(REUSE|FRESH).*/\1/' <<<"$1"; }
 
 echo "## Choix de la sauvegarde"
-d=$WORK/b1; mkdir -p "$d"; a=$(make_archive "$d" $((now - 2 * 86400)))
-check "archive récente et valide : réutilisée" "$(plan "$d")" "BACKUP-PLAN=REUSE archive=$a age_seconds=$((2 * 86400))"
+d=$WORK/b1; mkdir -p "$d"; a=$(make_archive "$d" $((now - 86400)))
+check "archive de moins de 48 h et valide : réutilisée" "$(plan "$d")" "BACKUP-PLAN=REUSE archive=$a age_seconds=86400"
 d=$WORK/b2; mkdir -p "$d"
-check "aucune archive : nouvelle sauvegarde" "$(plan "$d")" "BACKUP-PLAN=FRESH reason=no-valid-backup-within-7-days"
-d=$WORK/b3; mkdir -p "$d"; make_archive "$d" $((now - 8 * 86400)) >/dev/null
-check "archive de plus de 7 jours : nouvelle sauvegarde" "$(kind "$(plan "$d")")" "FRESH"
+check "aucune archive : nouvelle sauvegarde" "$(plan "$d")" "BACKUP-PLAN=FRESH reason=no-valid-backup-within-48-hours"
+d=$WORK/b3; mkdir -p "$d"; make_archive "$d" $((now - 49 * 3600)) >/dev/null
+check "archive de plus de 48 h : nouvelle sauvegarde" "$(kind "$(plan "$d")")" "FRESH"
 d=$WORK/b4; mkdir -p "$d"; a=$(make_archive "$d" $((now - 3600))); printf 'x' >>"$a"
 check "empreinte non conforme : écartée" "$(kind "$(plan "$d")")" "FRESH"
 d=$WORK/b5; mkdir -p "$d"; other=$(age-keygen 2>/dev/null | sed -n 's/^# public key: //p'); make_archive "$d" $((now - 3600)) "$other" >/dev/null
 check "chiffrée pour un autre destinataire : écartée" "$(kind "$(plan "$d")")" "FRESH"
-d=$WORK/b6; mkdir -p "$d"; make_archive "$d" $((now - 2 * 86400)) >/dev/null
-check "antérieure à la dernière migration : écartée" "$(kind "$(plan "$d" 43 43 $((now - 86400)))")" "FRESH"
-d=$WORK/b7; mkdir -p "$d"; make_archive "$d" $((now - 3600)) >/dev/null
-check "migration Flyway à appliquer : sauvegarde fraîche" "$(plan "$d" 43 44)" "BACKUP-PLAN=FRESH reason=flyway-migration-V43-to-V44"
-check "migration destructive V45 : sauvegarde fraîche" "$(plan "$d" 44 45)" "BACKUP-PLAN=FRESH reason=flyway-migration-V44-to-V45"
-check "migration V46 : sauvegarde fraîche" "$(plan "$d" 45 46)" "BACKUP-PLAN=FRESH reason=flyway-migration-V45-to-V46"
-check "migrations V47 et V48 : sauvegarde fraîche" "$(plan "$d" 46 48)" "BACKUP-PLAN=FRESH reason=flyway-migration-V46-to-V48"
-check "migration V49 : sauvegarde fraîche" "$(plan "$d" 48 49)" "BACKUP-PLAN=FRESH reason=flyway-migration-V48-to-V49"
-check "migration V50 : sauvegarde fraîche" "$(plan "$d" 49 50)" "BACKUP-PLAN=FRESH reason=flyway-migration-V49-to-V50"
-check "migrations V51 et V52 : sauvegarde fraîche" "$(plan "$d" 50 52)" "BACKUP-PLAN=FRESH reason=flyway-migration-V50-to-V52"
-check "migration V53 : sauvegarde fraîche" "$(plan "$d" 52 53)" "BACKUP-PLAN=FRESH reason=flyway-migration-V52-to-V53"
-check "migration V54 : sauvegarde fraîche" "$(plan "$d" 53 54)" "BACKUP-PLAN=FRESH reason=flyway-migration-V53-to-V54"
-check "migration V55 : sauvegarde fraîche" "$(plan "$d" 54 55)" "BACKUP-PLAN=FRESH reason=flyway-migration-V54-to-V55"
-check "migration V56 : sauvegarde fraîche" "$(plan "$d" 55 56)" "BACKUP-PLAN=FRESH reason=flyway-migration-V55-to-V56"
+d=$WORK/b6; mkdir -p "$d"; make_archive "$d" $((now - 2 * 3600)) >/dev/null
+check "antérieure à la dernière migration mais de moins de 48 h : réutilisée" "$(kind "$(plan "$d" 56 56 $((now - 3600)))")" "REUSE"
+d=$WORK/b7; mkdir -p "$d"; a=$(make_archive "$d" $((now - 3600)))
+check "migration Flyway à appliquer, archive de moins de 48 h : réutilisée" "$(plan "$d" 55 56)" "BACKUP-PLAN=REUSE archive=$a age_seconds=3600"
 check "sauvegarde fraîche demandée : fraîche" "$(plan "$d" 43 43 0 --force-fresh)" "BACKUP-PLAN=FRESH reason=requested"
-d=$WORK/b8; mkdir -p "$d"; old=$(make_archive "$d" $((now - 3 * 86400))); bad=$(make_archive "$d" $((now - 3600))); : >"$bad"; (cd "$d" && sha256sum "$(basename "$bad")" >"$bad.sha256")
-check "la plus récente vide : la précédente valide est réutilisée" "$(plan "$d")" "BACKUP-PLAN=REUSE archive=$old age_seconds=$((3 * 86400))"
+d=$WORK/b8; mkdir -p "$d"; old=$(make_archive "$d" $((now - 30 * 3600))); bad=$(make_archive "$d" $((now - 3600))); : >"$bad"; (cd "$d" && sha256sum "$(basename "$bad")" >"$bad.sha256")
+check "la plus récente vide : la précédente valide est réutilisée" "$(plan "$d")" "BACKUP-PLAN=REUSE archive=$old age_seconds=$((30 * 3600))"
 d=$WORK/b9; mkdir -p "$d"; a=$(make_archive "$d" $((now - 3600))); head -c 20 "$a" >"$a.t" && mv "$a.t" "$a"; (cd "$d" && sha256sum "$(basename "$a")" >"$a.sha256")
 check "en-tête age tronqué : écartée" "$(kind "$(plan "$d")")" "FRESH"
 check "destinataire invalide : refus" "$("$SELECT" --backup-dir "$WORK/b1" --age-recipient nope --current-version 43 --target-version 43 --last-migration-epoch 0 >/dev/null 2>&1; echo $?)" "2"
