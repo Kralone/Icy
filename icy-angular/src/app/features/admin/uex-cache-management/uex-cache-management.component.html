@@ -46,6 +46,9 @@
                 <span aria-hidden="true">↻</span> Actualiser la categorie
               </button>
             </div>
+            @if (selectedMapScope === 'COMMODITIES') {
+              <p class="publish-hint">Relue automatiquement chaque nuit à 5&nbsp;h&nbsp;30 depuis l’API Star Citizen Wiki. Lancez-la ici pour suivre un patch sans attendre.</p>
+            }
           </div>
         </article>
       </div>
