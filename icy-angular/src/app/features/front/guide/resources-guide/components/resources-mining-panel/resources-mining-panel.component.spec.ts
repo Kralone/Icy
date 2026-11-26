@@ -49,12 +49,27 @@ describe('ResourcesMiningPanelComponent catalogue locations', () => {
     const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
       { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
     component.catalogLocations = [{ name: 'Daymar', systemName: 'Stanton', imageUrl: 'daymar.jpg' }] as never;
-    component.parsedLocations = [{ key: 'wiki:daymar', displayLabel: 'Daymar', visibilityKind: 'MOON', groupPlanet: 'Daymar', ores: [], oresText: '' }] as never;
+    component.parsedLocations = [{ key: 'wiki:daymar', displayLabel: 'Daymar', tabLabel: 'Daymar', visibilityKind: 'MOON', groupPlanet: 'Daymar', systemName: null, listed: true, ores: [], oresText: '' }] as never;
     const first = component.systemGroups;
     expect(component.systemGroups).toBe(first);
     expect(component.selectedPlanetGroup).toBe(component.selectedPlanetGroup);
     expect(first[0].groups[0]).toMatchObject({ planetName: 'Daymar', systemName: 'Stanton', imageUrl: 'daymar.jpg' });
     component.miningSearch = 'zzz';
     expect(component.systemGroups).not.toBe(first);
+  });
+
+  it('keeps bases and stations out of the body bar and finds them by search', () => {
+    const component = new ResourcesMiningPanelComponent({ listFrontLocations: () => of({ data: [] }) } as never,
+      { listFrontBodies: () => of({ data: [] }), listFrontLocationImages: () => of({ data: [] }) } as never);
+    (component as unknown as { rawLocations: unknown[] }).rawLocations = ['DAY', 'CRU', 'PYR1-L1', 'RMB-ALME', 'Stanton'].map((code, i) => ({
+      id: i, locationKey: 'wiki:' + code, locationCode: code, sourceUrl: null, gameVersion: null, updatedAt: null,
+      ores: [{ oreCode: 'Gold', probability: 0.5, minPct: null, maxPct: null, medPct: null }]
+    }));
+    (component as unknown as { reparseLocations(): void }).reparseLocations();
+    expect(component.systemGroups.map((system) => [system.system, system.groups.map((group) => group.planetName)]))
+      .toEqual([['Stanton', ['Crusader']], ['Pyro', ['Pyro I']]]);
+    expect(component.systemGroups[0].groups[0].locations.map((location) => location.tabLabel)).toEqual(['Surface', 'Daymar']);
+    component.miningSearch = 'rmb';
+    expect(component.matchingPlaces.map((place) => place.planetName)).toEqual(['RMB-ALME']);
   });
 });
