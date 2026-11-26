@@ -42,7 +42,8 @@
   background: rgb(var(--tone));
   opacity: 0.7;
 }
-.pole-card img { transition: opacity 500ms ease, transform 700ms ease; }
+/* Bas de l'image fondu par un masque : zoomée au survol, elle ne laisse plus voir une ligne de pixels sous le dégradé. */
+.pole-card img { transition: opacity 500ms ease, transform 700ms ease; -webkit-mask-image: linear-gradient(0deg, transparent, #000 12%); mask-image: linear-gradient(0deg, transparent, #000 12%); }
 .pole-card:hover img { opacity: 1; transform: scale(1.03); }
 
 /* Page d'un pôle. */
@@ -220,11 +221,14 @@
   inset: 0;
   background: linear-gradient(0deg, rgb(11 19 36 / 0.95), rgb(11 19 36 / 0.1) 65%);
 }
+/* Bas de l'image fondu par un masque : zoomée au survol, elle ne laisse plus voir une ligne de pixels sous le dégradé. */
 .pole-tool-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0.85;
+  -webkit-mask-image: linear-gradient(0deg, transparent, #000 12%);
+  mask-image: linear-gradient(0deg, transparent, #000 12%);
   transition: transform 700ms ease, opacity 400ms ease;
 }
 .pole-tool-body {
