@@ -190,7 +190,7 @@ Procédure (créneau de maintenance, staging en veille, aucun déploiement en co
    Vault est scellé, et bot et frontend attendent le backend.
 5. Déverrouiller Vault avec `ops/production/vault/unseal-from-windows.ps1`.
 6. `sudo /root/iceforge/ops/network-hardening/pin-internal-addresses.sh --finish` :
-   vérifie que Vault est déverrouillé et relance le reste de la stack avec les
+   vérifie que Vault est déverrouillé et relance backend, bot et frontend avec les
    mêmes images. Vérifier ensuite les conteneurs, le site, `/api/front/members`,
    la supervision et le tunnel IntelliJ.
 
