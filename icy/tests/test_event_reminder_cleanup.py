@@ -97,3 +97,59 @@ class EventReminderCleanupTest(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EventReminderDeduplicationTest(unittest.IsolatedAsyncioTestCase):
+    PAYLOAD = {
+        "eventId": "event-1",
+        "title": "Quantumania",
+        "date": "2026-11-26T21:00",
+        "participants": [{"username": "User", "status": 1}],
+    }
+
+    @staticmethod
+    def _bot_with_channel():
+        sent = MagicMock()
+        sent.id = 456
+        sent.channel.id = 123
+        channel = MagicMock()
+        channel.send = AsyncMock(return_value=sent)
+        bot = MagicMock()
+        bot.get_channel.return_value = channel
+        return bot, channel
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_same_reminder_published_twice_is_sent_once(self):
+        bot, channel = self._bot_with_channel()
+        handler = EventHandler(bot, AsyncMock())
+
+        await handler.handle_reminder_one_hour(dict(self.PAYLOAD))
+        await handler.handle_reminder_one_hour(dict(self.PAYLOAD))
+
+        channel.send.assert_awaited_once()
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_reminder_is_not_resent_after_bot_restart_or_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = DiscordLinkStore(os.path.join(directory, "links.sqlite3"))
+            bot, channel = self._bot_with_channel()
+            channel.fetch_message = AsyncMock(return_value=MagicMock(delete=AsyncMock()))
+
+            first = EventHandler(bot, AsyncMock(), store)
+            await first.handle_reminder_one_hour(dict(self.PAYLOAD))
+            await first.cleanup_event_notifications({"id": "event-1"})
+
+            restarted = EventHandler(bot, AsyncMock(), store)
+            await restarted.handle_reminder_one_hour(dict(self.PAYLOAD))
+
+            channel.send.assert_awaited_once()
+
+    @patch.dict(os.environ, {"DISCORD_EVENTS_CHANNEL_ID": "123"}, clear=False)
+    async def test_rescheduled_event_gets_a_new_reminder(self):
+        bot, channel = self._bot_with_channel()
+        handler = EventHandler(bot, AsyncMock())
+
+        await handler.handle_reminder_one_hour(dict(self.PAYLOAD))
+        await handler.handle_reminder_one_hour({**self.PAYLOAD, "date": "2026-11-27T21:00"})
+
+        self.assertEqual(2, channel.send.await_count)

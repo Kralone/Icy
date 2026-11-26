@@ -16,6 +16,9 @@ from messaging.discord_link_store import DiscordLink
 logger = logging.getLogger("icy.event_handler")
 EVENT_BUTTON_CUSTOM_ID_RE = re.compile(r"^event:([0-9a-fA-F-]{36}):(-?1|0|1)$")
 EVENT_REMINDER_RESOURCE_TYPE = "event_reminder_one_hour"
+# Trace durable « rappel 1h déjà envoyé » : elle survit au nettoyage des messages
+# et aux redémarrages, pour qu'un même rappel publié deux fois ne parte qu'une fois.
+EVENT_REMINDER_SENT_RESOURCE_TYPE = "event_reminder_one_hour_sent"
 
 
 def is_supported_discord_image_url(value: object) -> bool:
@@ -174,6 +177,8 @@ class EventHandler:
         self.channel_id = self._read_channel_id("DISCORD_EVENTS_CHANNEL_ID")
         self._daily_ping_messages: Dict[int, Dict[str, object]] = {}
         self._reminder_one_hour_messages: Dict[str, List[Tuple[int, int]]] = {}
+        self._reminders_sent: set = set()
+        self._reminder_lock = asyncio.Lock()
         self._registered_message_views = set()
         self._event_lock = asyncio.Lock()
 
@@ -814,6 +819,34 @@ class EventHandler:
             logger.info(f"⚠️ Aucun participant à notifier pour {title}")
             return
 
+        # Le backend peut publier deux fois le même rappel (redémarrage, tâche planifiée
+        # relancée) : un seul message par événement et par horaire de début.
+        async with self._reminder_lock:
+            await self._send_reminder_one_hour_once(channel, payload, title, participants)
+
+    @staticmethod
+    def _reminder_sent_key(payload: dict) -> Optional[str]:
+        event_id = payload.get("eventId")
+        if event_id is None:
+            return None
+        # L'horaire fait partie de la clé : un événement reprogrammé reçoit un nouveau rappel.
+        return f"{event_id}@{payload.get('date') or ''}"
+
+    def _reminder_already_sent(self, sent_key: Optional[str]) -> bool:
+        if sent_key is None:
+            return False
+        if sent_key in self._reminders_sent:
+            return True
+        if self.discord_link_store:
+            return bool(self.discord_link_store.get_message_refs(EVENT_REMINDER_SENT_RESOURCE_TYPE, sent_key))
+        return False
+
+    async def _send_reminder_one_hour_once(self, channel, payload: dict, title, participants):
+        sent_key = self._reminder_sent_key(payload)
+        if self._reminder_already_sent(sent_key):
+            logger.info(f"⏭️ Rappel 1h déjà envoyé pour {title}, doublon ignoré.")
+            return
+
         # Séparation confirmés / indécis
         confirmed = [p for p in participants if p.get("status") == 1]
         maybe     = [p for p in participants if p.get("status") == 0]
@@ -836,6 +869,16 @@ class EventHandler:
         )
 
         sent = await channel.send(msg)
+
+        if sent_key is not None:
+            self._reminders_sent.add(sent_key)
+            if self.discord_link_store:
+                self.discord_link_store.add_message_ref(
+                    EVENT_REMINDER_SENT_RESOURCE_TYPE,
+                    sent_key,
+                    sent.channel.id,
+                    sent.id,
+                )
 
         event_id = payload.get("eventId")
         if event_id is not None:
