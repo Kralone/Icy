@@ -1,32 +1,13 @@
 <div
-  class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white login-screen"
+  class="relative w-full login-screen-height flex items-center justify-center overflow-hidden px-4 py-8 bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white login-screen"
   >
-  <!-- Effets lumineux d'arrière-plan -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/20 blur-3xl rounded-full animate-pulse"></div>
-    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-cyan-400/10 blur-3xl rounded-full animate-pulse delay-1000"></div>
-  </div>
-  <!-- Superposition hexagonale (ton fond d'origine stylisé) -->
-  <div class="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay">
-    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <mask id="hex-mask">
-          <rect width="100%" height="100%" fill="white"/>
-          <pattern id="a" width="29" height="50.115" patternUnits="userSpaceOnUse">
-            <path stroke-width="4" fill="none" stroke="black" d="
-              M14.498 16.858 0 8.488.002-8.257l14.5-8.374L29-8.26l-.002 16.745zm0 50.06
-              L0 58.548l.002-16.745 14.5-8.373L29 41.8l-.002 16.744zM28.996 41.8
-              l-14.498-8.37.002-16.744L29 8.312l14.498 8.37-.002 16.745zm-29 0
-              -14.498-8.37.002-16.744L0 8.312l14.498 8.37-.002 16.745z"/>
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#a)"/>
-          </mask>
-        </defs>
-        <rect width="100%" height="100%" fill="#5B5B5B" mask="url(#hex-mask)"/>
-      </svg>
-    </div>
+  <!-- Effets lumineux et motif hexagonal : dégradés et image de fond, sans filtre ni mélange,
+       que Safari iOS affiche mal (aplats gris, carrés, scintillement). -->
+  <div class="login-glow login-glow--top" aria-hidden="true"></div>
+  <div class="login-glow login-glow--bottom" aria-hidden="true"></div>
+  <div class="login-hex" aria-hidden="true"></div>
     <!-- Carte de connexion -->
-    <div class="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20 w-[420px]">
+    <div class="relative z-10 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-[420px] p-6 sm:p-8">
       <!-- Logo -->
       <div class="flex flex-col items-center mb-6">
         <img src="assets/images/home/iceforgeLogo.png" alt="Logo ICY" class="w-40 h-40 drop-shadow-lg mb-3" />
@@ -71,7 +52,7 @@
         <!-- Modal de réinitialisation -->
         @if (showResetModal) {
           <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-            <div class="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-xl w-[400px] border border-white/20">
+            <div class="bg-white/10 backdrop-blur-xl p-6 rounded-xl shadow-xl w-[calc(100%-2rem)] max-w-[400px] border border-white/20">
               <h2 class="text-xl font-bold text-cyan-300 mb-4 text-center">🔐 Réinitialisation requise</h2>
               <p class="text-gray-300 mb-6 text-center">Tu dois changer ton mot de passe temporaire avant d'accéder à l'application.</p>
               <form [formGroup]="passwordForm" class="flex flex-col space-y-4">
