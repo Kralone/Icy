@@ -44,7 +44,7 @@
                 type="button"
                 (click)="openEvent(event)"
               class="glace-item dashboard-event group w-full p-0 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/50"
-                [style.--event-color]="event.typeTextColor || 'rgb(125 211 252)'"
+                [style.--event-color]="event.typeBackgroundColor || 'rgb(125 211 252)'"
                 >
                 @if (event.typeImageUrl) {
                   <div
@@ -90,8 +90,8 @@
                       }
                     </div>
                     <div class="flex-1">
-                      <p class="text-sm font-semibold group-hover:brightness-125 transition"
-                        [style.color]="event.typeTextColor || '#ffffff'">
+                      <!-- La couleur d'étiquette ne vaut que sur l'accent du type : le titre reste clair sur la carte sombre. -->
+                      <p class="text-sm font-semibold text-white group-hover:text-sky-100 transition">
                         {{ event.name }}
                       </p>
                       <p class="text-xs text-gray-300 mt-1">

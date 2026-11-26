@@ -50,11 +50,26 @@ describe('EventTypeManagerComponent', () => {
     expect(el().textContent).toContain('Archivés (1)');
   });
 
+  it('filters types by name, ignoring accents and case, including archived ones', () => {
+    const search = el().querySelector('[data-testid="event-type-search"]') as HTMLInputElement;
+    search.value = 'ANCIÉN';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(el().querySelectorAll('[data-testid="event-type-list"] .etm-card').length).toBe(0);
+    expect(el().textContent).toContain('Aucun type actif ne correspond');
+    expect(Array.from(el().querySelectorAll('[data-testid="event-type-archived"] .etm-chip')).map(c => c.textContent!.trim())).toEqual(['Ancien']);
+
+    search.value = 'min';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(Array.from(el().querySelectorAll('[data-testid="event-type-list"] .etm-chip')).map(c => c.textContent!.trim())).toEqual(['Minage']);
+  });
+
   it('asks for confirmation before deleting, then reloads', () => {
     buttons('Supprimer')[0].click();
     fixture.detectChanges();
     expect(events['deleteType']).not.toHaveBeenCalled();
-    expect(el().textContent).toContain('Supprimer définitivement ?');
+    expect(el().textContent).toContain('Supprimer ?');
     buttons('Supprimer')[0].click();
     expect(events['deleteType']).toHaveBeenCalledWith('Minage');
     expect(changed).toHaveBeenCalled();
@@ -107,7 +122,7 @@ describe('EventTypeManagerComponent', () => {
     component.update('backgroundColor', '#fde68a');
     component.update('textColor', '#ffffff');
     fixture.detectChanges();
-    expect(el().textContent).toContain('faible');
+    expect(el().textContent).toContain('peu lisible');
     buttons('Utiliser du noir')[0].click();
     expect(component.form().textColor).toBe('#0b1220');
   });
