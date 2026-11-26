@@ -85,6 +85,9 @@ updates:
       # Le bot est testé en CI sous Python 3.14 : passer à 3.15 ensemble, image et CI.
       - dependency-name: python
         versions: [">= 3.15"]
+      # Node 24 partout (CI, .nvmrc, engines) : changer de version majeure ensemble.
+      - dependency-name: node
+        versions: [">= 25"]
     groups:
       compatible-updates:
         patterns: ["*"]
