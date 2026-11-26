@@ -42,9 +42,6 @@ h1 {
   background: rgb(125 211 252 / .12); color: #e0f2fe; font-size: .85rem; font-weight: 600;
 }
 .data-menu-search button:hover { background: rgb(125 211 252 / .22); }
-.data-menu-search__meta { flex: 1 0 100%; padding: 0 .6rem .2rem; color: #64748b; font-size: .78rem; }
-.data-menu-search__meta strong { color: #cbd5e1; font-weight: 600; }
-.data-menu-search__meta .data-menu-warn { color: #fcd34d; }
 
 /* Groupes : titre à pastille et filet, comme le menu d'administration. */
 .data-menu-group + .data-menu-group { margin-top: 2rem; }

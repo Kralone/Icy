@@ -15,12 +15,6 @@
       <input id="catalog-hub-search" name="q" type="search" [(ngModel)]="search" autocomplete="off"
         placeholder="Rechercher un vaisseau, un objet, un lieu…" />
       <button type="submit">Rechercher</button>
-      @if (counts) {
-        <p class="data-menu-search__meta">
-          <strong>{{ counts.activeElements }}</strong> fiches actives
-          @if (counts.fallbackImages) { · <strong class="data-menu-warn">{{ counts.fallbackImages }}</strong> visuels à enrichir }
-        </p>
-      }
     </form>
 
     <section class="data-menu-group" style="--tone: 186 230 253" aria-labelledby="catalog-group-fiches">
