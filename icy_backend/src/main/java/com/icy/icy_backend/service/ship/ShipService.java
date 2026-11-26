@@ -14,7 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.icy.icy_backend.controller.dto.response.ship.ShipCatalogStats;
+
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ShipService {
@@ -82,6 +86,10 @@ public class ShipService {
                 });
         enrichment.enrich(List.of(ship));
         return ship;
+    }
+
+    public Map<Long, ShipCatalogStats> catalogStats(Collection<Long> shipIds) {
+        return enrichment.stats(shipIds);
     }
 
     private ResponseStatusException catalogManagedException() {

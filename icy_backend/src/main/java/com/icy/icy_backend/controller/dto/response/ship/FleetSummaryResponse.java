@@ -13,6 +13,11 @@ public class FleetSummaryResponse {
     private String brandName;
     private String brandImageUrl;
     private List<String> owners;
+    private String crew;
+    private Integer scu;
+    private String size;
+    /** Caractéristiques du catalogue ; null si la fiche source est absente. */
+    private ShipCatalogStats stats;
 
     public FleetSummaryResponse(String name, String imageUrl, String focus, String brandName, String brandImageUrl) {
         this.name = name;

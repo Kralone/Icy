@@ -2,6 +2,7 @@ package com.icy.icy_backend.service.ship;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icy.icy_backend.controller.dto.response.ship.ShipCatalogStats;
 import com.icy.icy_backend.db.entity.ship.Ship;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,23 @@ public class ShipCatalogEnrichment {
                 if (rs.getString("image_override_url") != null) ship.setImageIsBase(false);
             }
         });
+    }
+
+    /** Caractéristiques du catalogue par identifiant de vaisseau, en une seule requête. */
+    public Map<Long, ShipCatalogStats> stats(Collection<Long> shipIds) {
+        Set<Long> ids = new HashSet<>();
+        for (Long id : shipIds) if (id != null) ids.add(id);
+        if (ids.isEmpty()) return Map.of();
+        Map<Long, ShipCatalogStats> result = new HashMap<>();
+        jdbc.query("SELECT id, source_payload::text FROM catalog.entries WHERE id IN (:ids)", Map.of("ids", ids), rs -> {
+            try {
+                ShipCatalogStats stats = ShipCatalogStats.from(mapper.readTree(rs.getString("source_payload")));
+                if (stats != null) result.put(rs.getLong("id"), stats);
+            } catch (java.io.IOException ignored) {
+                // Une fiche illisible ne doit pas priver toute la flotte de ses caractéristiques.
+            }
+        });
+        return result;
     }
 
     public static void applyPayload(Ship ship, JsonNode payload) {

@@ -4,7 +4,7 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
-import {ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
+import {ShipCatalogStats, ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
 import {nameInitials, shipRoleTone} from '../../shared/ship-role/ship-role-tone';
 
 const normalize = (value: string): string =>
@@ -16,6 +16,9 @@ interface FleetShipGroup {
   brandImageUrl?: string;
   brand?: string;
   focus?: string;
+  crew?: string;
+  cargo?: string;
+  stats?: ShipCatalogStats | null;
   count: number;
   owners?: string[];
 }
@@ -133,7 +136,7 @@ export class FleetComponent implements OnInit, OnDestroy {
     }
     this.visibleFleet = result;
   }
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandName?: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandName?: string; brandImageUrl?: string; crew?: string | null; scu?: number | null; stats?: ShipCatalogStats | null }[]): Record<string, FleetShipGroup[]> {
     const result: Record<string, FleetShipGroup[]> = {};
 
     for (const ship of fleet) {
@@ -149,7 +152,7 @@ export class FleetComponent implements OnInit, OnDestroy {
           if (!existing.owners?.includes(owner)) existing.owners?.push(owner);
         }
       } else {
-        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, brand: ship.brandName || undefined, focus, count: 1, owners: (ship as any).owners ?? [] });
+        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, brand: ship.brandName || undefined, focus, crew: ship.crew || undefined, cargo: ship.scu != null ? `${ship.scu} SCU` : undefined, stats: ship.stats ?? null, count: 1, owners: (ship as any).owners ?? [] });
       }
     }
 
