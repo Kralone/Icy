@@ -304,7 +304,7 @@ class EventServiceTest {
     }
 
     @Test
-    void theRealtimeMessageOfANewEventAlreadyCarriesItsPole() {
+    void theRealtimeMessageOfANewEventAlreadyCarriesItsPoles() {
         EventRepository eventRepository = Mockito.mock(EventRepository.class);
         MessageService messageService = Mockito.mock(MessageService.class);
         EventWebSocketService eventWebSocketService = Mockito.mock(EventWebSocketService.class);
@@ -317,12 +317,13 @@ class EventServiceTest {
         try (MockedStatic<AuthUtils> mockedAuth = Mockito.mockStatic(AuthUtils.class)) {
             mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(UUID.randomUUID());
             service.createEvent("Type", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusHours(1), true,
-                    com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+                    java.util.EnumSet.of(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE, com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE));
         }
 
         org.mockito.ArgumentCaptor<Event> sent = org.mockito.ArgumentCaptor.forClass(Event.class);
         verify(eventWebSocketService).sendEventUpdate(sent.capture(), eq("ADD"));
-        assertThat(sent.getValue().getPole()).isEqualTo(com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE);
+        assertThat(sent.getValue().sortedPoles()).containsExactly(
+                com.icy.icy_backend.db.entity.user.Specialty.MILITAIRE, com.icy.icy_backend.db.entity.user.Specialty.INDUSTRIE);
     }
 
     @Test
@@ -337,10 +338,14 @@ class EventServiceTest {
         when(eventRepository.findById(event.getId())).thenReturn(java.util.Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.assignPole(event.getId(), "LOGISTIQUE");
+        service.assignPoles(event.getId(), java.util.EnumSet.of(com.icy.icy_backend.db.entity.user.Specialty.LOGISTIQUE));
 
-        assertThat(event.getPole()).isEqualTo(com.icy.icy_backend.db.entity.user.Specialty.LOGISTIQUE);
+        assertThat(event.getPoles()).containsExactly(com.icy.icy_backend.db.entity.user.Specialty.LOGISTIQUE);
         verify(eventWebSocketService).sendEventUpdate(event, "UPDATE");
+
+        // Mêmes pôles : rien n'est réenregistré ni renvoyé aux calendriers.
+        service.assignPoles(event.getId(), java.util.List.of(com.icy.icy_backend.db.entity.user.Specialty.LOGISTIQUE));
+        verify(eventRepository, Mockito.times(1)).save(event);
     }
 
     @Test

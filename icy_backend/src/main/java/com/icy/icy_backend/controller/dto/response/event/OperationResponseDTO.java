@@ -13,7 +13,9 @@ import java.util.UUID;
 public class OperationResponseDTO {
     private UUID id;
     private String title;
-    /** Pôle rattaché, ou null. */
+    /** Pôles rattachés, dans l'ordre d'affichage ; vide si aucun. */
+    private java.util.List<String> poles;
+    /** Premier pôle rattaché, ou null : ancien champ, gardé pour les écrans pas encore rechargés. */
     private String pole;
     private String description;
     private LocalDateTime startDateTime;
@@ -43,7 +45,8 @@ public class OperationResponseDTO {
     public OperationResponseDTO(Event event, Operation operation) {
         this.id = event.getId();
         this.title = event.getTitle();
-        this.pole = event.getPole() == null ? null : event.getPole().name();
+        this.poles = event.sortedPoles().stream().map(Enum::name).toList();
+        this.pole = this.poles.isEmpty() ? null : this.poles.get(0);
         this.description = event.getDescription();
         this.startDateTime = event.getStartDateTime();
         this.endDateTime = event.getEndDateTime();

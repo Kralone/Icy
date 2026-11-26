@@ -17,7 +17,7 @@ import { catchError, finalize, forkJoin, map, of, Subscription } from 'rxjs';
 import { EventDetailsModalComponent } from './event-details-modal/event-details-modal.component';
 import { AsyncStateComponent } from '../../shared/async-state/async-state.component';
 import { eventColor, eventImage } from './event-appearance';
-import { SPECIALTIES, organizes } from '../../core/services/user/member-rank';
+import { SPECIALTIES, organizes, polesOf } from '../../core/services/user/member-rank';
 import { PoleFilterComponent } from '../../shared/pole-filter/pole-filter.component';
 import { PoleBadgeComponent } from '../../shared/pole-badge/pole-badge.component';
 
@@ -249,16 +249,18 @@ export class EventsComponent implements AfterViewInit, OnDestroy {
   }
 
   /** Garde ou retire le filtre de pôle, et le reporte dans l'adresse pour qu'un lien le conserve. */
+  readonly polesOf = polesOf;
+
   setPoleFilter(pole: string): void {
     this.router.navigate([], { relativeTo: this.route, queryParams: { pole: pole ? pole.toLowerCase() : null }, queryParamsHandling: 'merge' });
   }
 
   /** Affiche les activités chargées, limitées au pôle choisi s'il y en a un. */
   private showEvents(): void {
-    const events = this.poleFilter ? this.eventSnapshot.filter(event => event.pole === this.poleFilter) : this.eventSnapshot;
+    const events = this.poleFilter ? this.eventSnapshot.filter(event => polesOf(event).includes(this.poleFilter)) : this.eventSnapshot;
     this.calendarEvents = events.map(event => ({
       id: event.id, title: event.title, start: event.startDateTime, end: event.endDateTime,
-      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event), activityType: event.activityType, pole: event.pole }
+      extendedProps: { type: event.type, description: event.description, finished: this.isEventFinished(event), activityType: event.activityType, poles: polesOf(event) }
     }));
     this.upcomingEvents = events.filter(event => !this.isEventFinished(event))
       .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());

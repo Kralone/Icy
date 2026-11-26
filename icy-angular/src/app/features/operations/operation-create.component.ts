@@ -1,5 +1,6 @@
 import { DateTimeFieldComponent } from '../../shared/date-time-field/date-time-field.component';
-import { SPECIALTIES, isOrganizer, referentPole } from '../../core/services/user/member-rank';
+import { SPECIALTIES, isOrganizer, polesOf, referentPole, withPole } from '../../core/services/user/member-rank';
+import { PolePickerComponent } from '../../shared/pole-picker/pole-picker.component';
 import { UserService } from '../../core/services/user/user.service';
 import { ChangeDetectorRef, Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
@@ -14,7 +15,7 @@ import { AvailabilityHintComponent } from '../../shared/availability/availabilit
 
 @Component({
   standalone: true,
-  imports: [DateTimeFieldComponent, FormsModule, RouterLink, DatePipe, OperationIconComponent, AvailabilityHintComponent],
+  imports: [DateTimeFieldComponent, FormsModule, RouterLink, DatePipe, OperationIconComponent, AvailabilityHintComponent, PolePickerComponent],
   templateUrl: './operation-create.component.html',
   styleUrl: './operation-create.component.css'
 })
@@ -26,16 +27,14 @@ export class OperationCreateComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
-  /** Pôle imposé à un référent : il ne crée que des opérations de son pôle. Vide pour un organisateur. */
+  /** Pôle d'un référent : toujours rattaché aux opérations qu'il crée, d'autres pôles peuvent s'y ajouter. Vide pour un organisateur. */
   lockedPole = '';
   types: EventType[] = [];
   typesLoading = false;
   typesError = '';
   saving = false;
   error = '';
-  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false, pole: '' };
-  /** Pôles auxquels l'opération peut être rattachée. */
-  readonly poles = SPECIALTIES;
+  form = { title: '', type: '', description: '', startDateTime: '', endDateTime: '', imageUrl: '', allowShipProposals: false, poles: [] as string[] };
   /** Replanification : opération dont le nouveau brouillon reprend le cadre et l'organisation, avec de nouvelles dates. */
   sourceId: string | null = null;
   sourceTitle = '';
@@ -46,12 +45,12 @@ export class OperationCreateComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
     // Lien depuis la page d'un pôle : le pôle est déjà choisi.
     const asked = (this.route.snapshot.queryParamMap.get('pole') ?? '').trim().toUpperCase();
-    if (SPECIALTIES.some(entry => entry.key === asked)) this.form.pole = asked;
+    if (SPECIALTIES.some(entry => entry.key === asked)) this.form.poles = [asked];
     this.userService.getMyProfile().subscribe({
       next: response => {
         const roles = response?.data?.roles;
         this.lockedPole = isOrganizer(roles) ? '' : referentPole(roles, response?.data?.specialty) ?? '';
-        if (this.lockedPole) this.form.pole = this.lockedPole;
+        if (this.lockedPole) this.form.poles = withPole(this.form.poles, this.lockedPole);
         this.changeDetector.markForCheck();
       },
       error: () => undefined
@@ -79,7 +78,7 @@ export class OperationCreateComponent implements OnInit {
           endDateTime: '',
           imageUrl: operation?.imageUrl ?? '',
           allowShipProposals: !!operation?.allowShipProposals,
-          pole: this.lockedPole || (operation?.pole ?? '')
+          poles: withPole(polesOf(operation), this.lockedPole)
         };
         this.changeDetector.markForCheck();
       },
@@ -123,6 +122,11 @@ export class OperationCreateComponent implements OnInit {
     return accent === invalid || label === invalid ? { accent: '#27647c', label: '#e3f4fb' } : { accent, label };
   }
 
+  get poleHelp(): string {
+    if (this.lockedPole) return 'Votre pôle reste rattaché. Ajoutez les autres pôles concernés : l’opération apparaîtra sur la page de chacun une fois publiée.';
+    return 'L’opération apparaîtra sur la page de chaque pôle choisi une fois publiée. Aucun : elle ne figure sur aucune page de pôle.';
+  }
+
   isKnownType(name: string): boolean { return this.types.some(type => type.name === name); }
 
   get datesInvalid(): boolean {
@@ -137,7 +141,7 @@ export class OperationCreateComponent implements OnInit {
     if (this.invalid) return;
     this.saving = true;
     this.error = '';
-    const payload = { ...this.form, title: this.form.title.trim(), pole: this.lockedPole || this.form.pole || null };
+    const payload = { ...this.form, title: this.form.title.trim(), poles: withPole(this.form.poles, this.lockedPole) };
     const request = this.sourceId ? this.eventService.replanOperation(this.sourceId, payload) : this.eventService.createOperation(payload);
     request.subscribe({
       next: operation => {

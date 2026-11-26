@@ -145,5 +145,5 @@ button:focus-visible, a:focus-visible { outline: 2px solid #aee8f2; outline-offs
 
 /* Pastille de pôle sur les cartes. */
 .agenda-pole { margin-left: .4rem; }
-.calendar-pole { margin-top: .15rem; }
-@media (max-width: 639px) { .calendar-pole { display: none; } }
+.calendar-poles { display: flex; flex-wrap: wrap; gap: .2rem; margin-top: .15rem; }
+@media (max-width: 639px) { .calendar-poles { display: none; } }

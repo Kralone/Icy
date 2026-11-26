@@ -10,7 +10,7 @@ import { WebSocketService } from '../../core/services/websocket/websocket.servic
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../core/services/event/event.service';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { isOrganizer, organizes } from '../../core/services/user/member-rank';
+import { isOrganizer, organizes, polesOf } from '../../core/services/user/member-rank';
 import { UserService } from '../../core/services/user/user.service';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { OperationConfirmService } from './operation-confirm.service';
@@ -223,7 +223,7 @@ export class OperationPageComponent {
   private refreshCanManage(): void {
     // Pour un référent, le droit dépend du pôle de l'opération : il n'est connu qu'une fois la fiche chargée.
     const allowed = isOrganizer(this.profileRoles)
-      || (!!this.currentOperation && organizes(this.profileRoles, this.profileSpecialty, this.currentOperation.pole ?? null));
+      || (!!this.currentOperation && organizes(this.profileRoles, this.profileSpecialty, polesOf(this.currentOperation)));
     const gained = allowed && !this.canManage;
     this.canManage = allowed;
     if (gained && this.shownOperationId) this.loadCoordination(this.shownOperationId);
