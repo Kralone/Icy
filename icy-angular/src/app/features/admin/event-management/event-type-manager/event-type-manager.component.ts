@@ -56,8 +56,16 @@ export class EventTypeManagerComponent {
   readonly pending = signal<string | null>(null);
   readonly showArchived = signal(false);
 
-  readonly activeTypes = computed(() => this.types().filter(type => !type.archived));
-  readonly archivedTypes = computed(() => this.types().filter(type => type.archived));
+  /** Recherche par nom, sans tenir compte des accents ni de la casse. */
+  readonly query = signal('');
+  private readonly matching = computed(() => {
+    const query = fold(this.query());
+    return query ? this.types().filter(type => fold(type.name).includes(query)) : this.types();
+  });
+  readonly activeTypes = computed(() => this.matching().filter(type => !type.archived));
+  readonly archivedTypes = computed(() => this.matching().filter(type => type.archived));
+  /** Une recherche montre aussi les archivés qui correspondent. */
+  readonly archivedOpen = computed(() => this.showArchived() || (!!this.query().trim() && this.archivedTypes().length > 0));
 
   readonly nameError = computed(() => {
     const name = this.form().name.trim();
@@ -223,6 +231,10 @@ export class EventTypeManagerComponent {
     this.formError.set('');
     this.imageFailed.set(false);
   }
+}
+
+function fold(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
 function emptyForm(): TypeForm {

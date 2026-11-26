@@ -12,10 +12,15 @@
   <div class="etm-layout">
     <!-- Liste -->
     <div class="etm-list-col">
+      <div class="etm-search">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5" /><path d="m13.2 13.2 3.3 3.3" /></svg>
+        <input type="search" class="etm-input" [value]="query()" (input)="query.set(inputValue($event))" placeholder="Rechercher un type"
+          aria-label="Rechercher un type d’événement" data-testid="event-type-search" />
+      </div>
       @if (loading() && !types().length) {
         <p class="etm-empty">Chargement des types…</p>
       } @else if (!activeTypes().length) {
-        <p class="etm-empty">Aucun type actif. Créez-en un avec le formulaire.</p>
+        <p class="etm-empty">{{ query().trim() ? 'Aucun type actif ne correspond à « ' + query().trim() + ' ».' : 'Aucun type actif. Créez-en un avec le formulaire.' }}</p>
       } @else {
         <ul class="etm-grid" data-testid="event-type-list">
           @for (type of activeTypes(); track type.name) {
@@ -26,12 +31,12 @@
 
       @if (archivedTypes().length) {
         <div class="etm-archived">
-          <button type="button" class="etm-archived-toggle" (click)="showArchived.set(!showArchived())" [attr.aria-expanded]="showArchived()">
-            <svg viewBox="0 0 20 20" aria-hidden="true" [class.etm-rot]="showArchived()"><path d="m7 5 5 5-5 5" /></svg>
+          <button type="button" class="etm-archived-toggle" (click)="showArchived.set(!archivedOpen())" [attr.aria-expanded]="archivedOpen()">
+            <svg viewBox="0 0 20 20" aria-hidden="true" [class.etm-rot]="archivedOpen()"><path d="m7 5 5 5-5 5" /></svg>
             Archivés ({{ archivedTypes().length }})
           </button>
           <p class="etm-archived-note">Plus proposés à la création. Les activités qui les utilisent les affichent toujours.</p>
-          @if (showArchived()) {
+          @if (archivedOpen()) {
             <ul class="etm-grid" data-testid="event-type-archived">
               @for (type of archivedTypes(); track type.name) {
                 <ng-container *ngTemplateOutlet="card; context: { $implicit: type }" />

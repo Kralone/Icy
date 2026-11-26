@@ -50,6 +50,21 @@ describe('EventTypeManagerComponent', () => {
     expect(el().textContent).toContain('Archivés (1)');
   });
 
+  it('filters types by name, ignoring accents and case, including archived ones', () => {
+    const search = el().querySelector('[data-testid="event-type-search"]') as HTMLInputElement;
+    search.value = 'ANCIÉN';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(el().querySelectorAll('[data-testid="event-type-list"] .etm-card').length).toBe(0);
+    expect(el().textContent).toContain('Aucun type actif ne correspond');
+    expect(Array.from(el().querySelectorAll('[data-testid="event-type-archived"] .etm-chip')).map(c => c.textContent!.trim())).toEqual(['Ancien']);
+
+    search.value = 'min';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(Array.from(el().querySelectorAll('[data-testid="event-type-list"] .etm-chip')).map(c => c.textContent!.trim())).toEqual(['Minage']);
+  });
+
   it('asks for confirmation before deleting, then reloads', () => {
     buttons('Supprimer')[0].click();
     fixture.detectChanges();
