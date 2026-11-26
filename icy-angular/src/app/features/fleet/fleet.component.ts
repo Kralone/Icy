@@ -14,6 +14,8 @@ interface FleetShipGroup {
   name: string;
   imageUrl: string;
   brandImageUrl?: string;
+  brand?: string;
+  focus?: string;
   count: number;
   owners?: string[];
 }
@@ -131,7 +133,7 @@ export class FleetComponent implements OnInit, OnDestroy {
     }
     this.visibleFleet = result;
   }
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandName?: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
     const result: Record<string, FleetShipGroup[]> = {};
 
     for (const ship of fleet) {
@@ -147,7 +149,7 @@ export class FleetComponent implements OnInit, OnDestroy {
           if (!existing.owners?.includes(owner)) existing.owners?.push(owner);
         }
       } else {
-        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, count: 1, owners: (ship as any).owners ?? [] });
+        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, brand: ship.brandName || undefined, focus, count: 1, owners: (ship as any).owners ?? [] });
       }
     }
 
