@@ -71,7 +71,7 @@ import static org.mockito.Mockito.when;
                 + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
                 + "org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration,"
                 + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,"
-                + "org.springframework.boot.amqp.autoconfigure.RabbitAutoConfiguration"
+                + "org.springframework.boot.rabbitmq.autoconfigure.RabbitAutoConfiguration"
 })
 class AccessDeniedOverHttpTest {
     /**
