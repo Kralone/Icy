@@ -6,8 +6,8 @@
 .etm-title { margin-top: .2rem; font-size: 1.25rem; font-weight: 600; color: #a5f3fc; }
 
 .etm-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-@media (min-width: 1024px) { .etm-layout { grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem); } .etm-form { position: sticky; top: 1.25rem; } }
-@media (min-width: 2400px) { :host { zoom: 1.4; } .etm-layout { grid-template-columns: minmax(0, 1fr) 28rem; } }
+@media (min-width: 1024px) { .etm-layout { grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.25rem; } .etm-form { position: sticky; top: 1.25rem; } }
+@media (min-width: 2400px) { :host { zoom: 1.4; } .etm-layout { grid-template-columns: minmax(0, 1fr) 21rem; } }
 
 .etm-empty { padding: 2rem 1rem; text-align: center; color: rgb(148 163 184); border: 1px dashed rgb(255 255 255 / .14); border-radius: 1rem; }
 
@@ -118,3 +118,22 @@
   .etm-head .etm-btn { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .etm-card, .etm-btn, .etm-archived-toggle svg { transition: none; } }
+
+/* Formulaire compact : même densité que la liste. */
+.etm-form { gap: .7rem; padding: .9rem; border-radius: .9rem; }
+.etm-form-head h3 { font-size: .95rem; }
+.etm-field label { margin-bottom: .25rem; font-size: .74rem; }
+.etm-input { min-height: 2.2rem; padding: .35rem .7rem; border-radius: .6rem; font-size: .85rem; }
+.etm-msg { min-height: 0; margin-top: .2rem; font-size: .68rem; }
+.etm-msg:empty { display: none; }
+.etm-colors { gap: .4rem .75rem; }
+.etm-contrast { margin-top: -.2rem; font-size: .72rem; }
+.etm-form .etm-btn { min-height: 2.1rem; padding: .3rem .9rem; font-size: .8rem; }
+.etm-preview { min-height: 4.25rem; gap: .7rem; padding: .6rem .75rem; border-radius: .75rem; }
+.etm-preview-date { width: 2.6rem; padding-right: .6rem; }
+.etm-preview-date span:first-child { font-size: 1.2rem; }
+.etm-preview-date span:last-child { font-size: .58rem; }
+.etm-preview-body { gap: .15rem; }
+.etm-preview-body strong { font-size: .85rem; }
+.etm-preview-body small { font-size: .68rem; }
+.etm-preview .etm-chip { font-size: .68rem; }

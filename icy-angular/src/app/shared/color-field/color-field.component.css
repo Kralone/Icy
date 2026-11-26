@@ -55,3 +55,14 @@
 .cf-preset:hover { transform: scale(1.08); }
 .cf-preset--on { box-shadow: 0 0 0 2px #0b1324, 0 0 0 4px #aee8f2; }
 @media (prefers-reduced-motion: reduce) { .cf-preset, .cf-toggle svg { transition: none; } }
+
+/* Densité compacte : formulaires d'administration. */
+.cf-label { margin-bottom: .25rem; font-size: .74rem; }
+.cf-row { min-height: 2.2rem; padding: .2rem .3rem .2rem .2rem; border-radius: .6rem; gap: .45rem; }
+.cf-swatch { width: 1.7rem; height: 1.7rem; border-radius: .4rem; }
+.cf-hex { font-size: .82rem; }
+.cf-toggle { width: 1.5rem; height: 1.5rem; }
+.cf-hint { min-height: 0; margin-top: .2rem; font-size: .68rem; }
+.cf-panel { gap: .55rem; padding: .6rem; }
+.cf-area { height: 7rem; }
+.cf-presets { grid-template-columns: repeat(auto-fill, minmax(1.45rem, 1fr)); gap: .3rem; }
