@@ -1,429 +1,240 @@
-<!-- ================== ADMIN NEWS - STYLE ICY ================== -->
-<div class="min-h-screen w-full bg-gradient-to-b from-[#0a111c] via-[#0f172a] to-[#111827] text-white p-8 space-y-10">
-  <!-- HEADER -->
-  <div class="flex items-center justify-between">
-    <a
-      routerLink="/icy/admin"
-      class="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-200 inline-flex items-center gap-2 transition"
-      >
-      <span class="text-lg">←</span> Retour au tableau de bord
-    </a>
+<div class="nm">
+  <a routerLink="/icy/admin" class="nm-back"><span aria-hidden="true">←</span> Retour au tableau de bord</a>
 
-    <button
-      (click)="openForm()"
-      class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-             text-slate-900 font-semibold px-6 py-2 rounded-full shadow-[0_18px_40px_rgba(0,255,255,0.2)]
-             transition transform hover:scale-[1.02]"
-      >
-      + Nouvelle actualité
-    </button>
-  </div>
-
-  <!-- ========================== SECTION ACTUALITÉS ========================== -->
-  <section class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
-    <div class="space-y-1">
-      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Actualites</p>
-      <h1 class="text-2xl font-semibold text-cyan-200">Actualites</h1>
+  <header class="nm-head">
+    <div>
+      <p class="nm-kicker">Administration</p>
+      <h1 class="nm-title">Actualités</h1>
     </div>
-
-    <!-- Loader -->
-    @if (isLoading) {
-      <div class="text-center text-slate-400 py-6">
-        <span class="animate-pulse">Chargement des actualités...</span>
-      </div>
+    @if (!showForm) {
+      <button type="button" class="nm-btn nm-btn--primary" (click)="openForm()" data-testid="news-create">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg> Nouvelle actualité
+      </button>
     }
+  </header>
 
-    <!-- Empty -->
-    @if (!isLoading && news.length === 0) {
-      <div
-        class="text-center italic text-slate-400 py-6"
-        >
-        Aucune actualité pour le moment.
-      </div>
-    }
+  @if (showForm) {
+    <!-- ========================== ÉDITEUR ========================== -->
+    <div class="nm-editor-layout">
+      <form class="nm-panel nm-editor" (submit)="$event.preventDefault(); saveNews()" novalidate data-testid="news-form"
+        [attr.aria-label]="editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité'">
+        <div class="nm-panel-head">
+          <h2>{{ editingNews ? 'Modifier l’actualité' : 'Nouvelle actualité' }}</h2>
+          <button type="button" class="nm-link" (click)="closeForm()">Fermer</button>
+        </div>
 
-    <!-- Table -->
-    @if (!isLoading && news.length > 0) {
-      <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
-        <table
-          class="min-w-full text-sm text-gray-200 divide-y divide-white/10"
-          >
-          <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
-            <tr>
-              <th class="px-4 py-3 text-left">Titre</th>
-              <th class="px-4 py-3 text-left">Type</th>
-              <th class="px-4 py-3 text-left">Auteur</th>
-              <th class="px-4 py-3 text-left">Date</th>
-              <th class="px-4 py-3 text-right w-40">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (n of news; track n) {
-              <tr
-                class="hover:bg-white/5 border-b border-white/10 transition"
-                >
-                <td class="px-4 py-3 font-semibold">{{ n.title }}</td>
-                <td class="px-4 py-3 align-middle">
-                  <div class="flex items-center gap-2">
-                    <span
-                      class="inline-block w-4 h-4 rounded-full border border-white/30"
-                      [style.backgroundColor]="n.type?.color"
-                    ></span>
-                    <span>{{ n.type?.name }}</span>
-                  </div>
-                </td>
-                <td class="px-4 py-3">{{ n.author }}</td>
-                <td class="px-4 py-3">{{ n.createdAt | date: 'medium' }}</td>
-                <td class="px-4 py-3 text-right space-x-3">
-                  <button
-                    (click)="openForm(n)"
-                    class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition"
-                    >
-                    Modifier
-                  </button>
-                  <button
-                    (click)="deleteNews(n.id)"
-                    class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition"
-                    >
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+        <div class="nm-field">
+          <label for="news-title">Titre</label>
+          <input id="news-title" class="nm-input" [(ngModel)]="newsForm.title" name="title" maxlength="255" autocomplete="off"
+            placeholder="Titre de l’actualité" [attr.aria-invalid]="submitted && !!titleError" aria-describedby="news-title-msg" />
+          @if (submitted && titleError) { <p id="news-title-msg" class="nm-msg nm-msg--error">{{ titleError }}</p> }
+        </div>
 
-    <!-- Pagination -->
-    @if (totalPages > 1) {
-      <div
-        class="flex justify-center items-center gap-3 text-slate-300"
-        >
-        <button
-          (click)="prevPage()"
-          [disabled]="currentPage === 0"
-          class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
-          >
-          ← Précédent
-        </button>
-        <span>Page {{ currentPage + 1 }} / {{ totalPages }}</span>
-        <button
-          (click)="nextPage()"
-          [disabled]="currentPage === totalPages - 1"
-          class="px-3 py-1 bg-[#0b1324] border border-white/10 rounded-full disabled:opacity-40 hover:border-cyan-400/40 transition"
-          >
-          Suivant →
-        </button>
-      </div>
-    }
-  </section>
-
-  <!-- ========================== SECTION TYPES D’ACTUALITÉS ========================== -->
-  <section class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
-    <div class="space-y-1">
-      <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Configuration</p>
-      <h2 class="text-2xl font-semibold text-cyan-200">Types d’actualites</h2>
-    </div>
-
-    <!-- Ajout d’un type -->
-    <!-- Ajout d’un type -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
-
-      <!-- Nom -->
-      <input
-        [(ngModel)]="newType.name"
-        placeholder="Nom du type"
-        class="px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
-           placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-        />
-
-        <!-- Couleur + aperçu -->
-        <div class="relative flex items-center">
-          <span
-            class="absolute left-3 w-4 h-4 rounded-full border border-white/30"
-            [style.backgroundColor]="newType.color || 'transparent'"
-          ></span>
-          <input
-            [(ngModel)]="newType.color"
-            placeholder="Couleur (#00ffff)"
-          class="pl-10 pr-3 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
-             placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none w-full"
-            />
-          </div>
-
-          <!-- Image -->
-          <input
-            [(ngModel)]="newType.imageUrl"
-            placeholder="Image (URL)"
-        class="px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
-           placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-            />
-          </div>
-
-          <div class="flex justify-end">
-            <button
-              (click)="createType()"
-              [disabled]="isTypeSubmitting"
-        class="mt-4 bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-           text-slate-900 font-semibold px-6 py-2 rounded-full shadow-md transition transform hover:scale-[1.02] disabled:opacity-60"
-              >
-              ➕ Ajouter le type
-            </button>
-          </div>
-
-
-          <!-- Tableau des types -->
-          <div class="overflow-x-auto rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
-            @if (types.length > 0) {
-              <table
-                class="min-w-full text-sm text-gray-200 divide-y divide-white/10"
-                >
-                <thead class="bg-[#0b1324] text-cyan-200 uppercase tracking-[0.2em] border-b border-white/10">
-                  <tr>
-                    <th class="px-4 py-3 text-left">Nom</th>
-                    <th class="px-4 py-3 text-left">Couleur</th>
-                    <th class="px-4 py-3 text-left">Image</th>
-                    <th class="px-4 py-3 text-right w-40">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (type of types; track type) {
-                    <tr
-                      class="hover:bg-white/5 border-b border-white/10 transition"
-                      >
-                      <td class="px-4 py-3 font-medium">{{ type.name }}</td>
-                      <td class="px-4 py-3">
-                        <div class="flex items-center h-full gap-2">
-                          <span
-                            class="block w-5 h-5 rounded-full border border-white/30"
-                            [style.backgroundColor]="type.color"
-                          ></span>
-                          {{ type.color }}
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">
-                        @if (type.imageUrl) {
-                          <img
-                            [src]="type.imageUrl"
-                            alt="aperçu"
-                            class="w-32 h-16 object-cover rounded-lg border border-white/20"
-                            />
-                        } @else {
-                          <span class="text-gray-400">–</span>
-                        }
-                      </td>
-                      <td class="px-4 py-3 text-right space-x-3">
-                        <button
-                          (click)="editType(type)"
-                          class="px-3 py-1 rounded-full border border-white/10 hover:border-cyan-400/40 transition"
-                          >
-                          Modifier
-                        </button>
-                        <button
-                          (click)="deleteType(type.id)"
-                          class="px-3 py-1 rounded-full border border-red-400/40 text-red-300 hover:border-red-400/70 transition"
-                          >
-                          Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            } @else {
-              <p class="text-center py-6 text-slate-400 italic">
-                Aucun type d’actualité enregistré.
-              </p>
-            }
-
-          </div>
-        </section>
-
-        <!-- ========================== MODAL TYPE ========================== -->
-        @if (editingType) {
-          <div
-            class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            (click)="cancelEdit()"
-            >
-            <div
-              class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-md p-8 relative text-white"
-              (click)="$event.stopPropagation()"
-              >
-              <button
-                (click)="cancelEdit()"
-                class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
-                >
-                ✖
-              </button>
-              <h2 class="text-2xl font-semibold mb-6 text-cyan-200">
-                Modifier le type d’actualité
-              </h2>
-              <div class="space-y-4">
-                <input
-                  [(ngModel)]="editingType.name"
-                  readonly
-                  class="w-full px-4 py-2 bg-[#101a2f] border border-white/10 rounded-xl text-gray-400 cursor-not-allowed"
-                  />
-                  <input
-                    [(ngModel)]="editingType.color"
-                    placeholder="Couleur (#00ffff)"
-                    class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-                    />
-                    <input
-                      [(ngModel)]="editingType.imageUrl"
-                      placeholder="Image (URL)"
-                      class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-                      />
-                    </div>
-                    <div class="flex justify-end gap-4 pt-6">
-                      <button
-                        type="button"
-                        class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
-                        (click)="cancelEdit()"
-                        >
-                        Annuler
-                      </button>
-                      <button
-                        type="button"
-                        (click)="updateType()"
-                        [disabled]="isTypeUpdating"
-          class="bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-                 text-slate-900 px-5 py-2 rounded-full font-semibold shadow-md transition"
-                        >
-                        {{ isTypeUpdating ? 'Mise à jour…' : 'Sauvegarder' }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+        <fieldset class="nm-field">
+          <legend>Type</legend>
+          @if (types.length) {
+            <div class="nm-type-picker" role="radiogroup" aria-label="Type d’actualité">
+              @for (t of types; track t.id) {
+                <button type="button" role="radio" class="nm-type-option" [class.nm-type-option--on]="newsForm.type?.id === t.id"
+                  [attr.aria-checked]="newsForm.type?.id === t.id" [style.--accent]="t.color" (click)="selectType(t)">
+                  <span class="nm-dot" aria-hidden="true"></span>{{ t.name }}
+                </button>
               }
             </div>
+          } @else {
+            <p class="nm-msg">Aucun type : créez-en un depuis la liste des actualités.</p>
+          }
+          @if (submitted && typeMissing) { <p class="nm-msg nm-msg--error">{{ typeMissing }}</p> }
+        </fieldset>
 
-            <!-- ========================== MODAL NOUVELLE ACTUALITÉ ========================== -->
-            @if (showForm) {
-              <div
-                class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                >
-                <div
-    class="bg-[#0b1324] border border-white/10 rounded-2xl shadow-[0_28px_60px_rgba(0,0,0,0.6)] w-full max-w-4xl p-8 relative text-white
-           max-h-[85vh] overflow-y-auto"
-                  (click)="$event.stopPropagation()"
-                  >
-                  <!-- Bouton fermeture -->
-                  <button
-                    (click)="closeForm()"
-                    class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
-                    >
-                    ✖
-                  </button>
-                  <h2 class="text-2xl font-semibold mb-6 text-cyan-200">
-                    {{ editingNews ? 'Modifier une actualité' : 'Nouvelle actualité' }}
-                  </h2>
-                  <!-- Champ titre -->
-                  <div class="mb-4">
-                    <label class="block text-sm mb-1 text-slate-300">Titre</label>
-                    <input
-                      [(ngModel)]="newsForm.title"
-                      type="text"
-        class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
-               placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-                      placeholder="Titre de l’actualité..."
-                      />
-                    </div>
-                    <!-- Sélecteur de type -->
-                    <div class="flex flex-col gap-2 mb-4">
-                      <label class="text-slate-300 text-sm">Type d’actualité</label>
-                      <select
-                        [(ngModel)]="newsForm.type"
-                        name="type"
-                        class="w-full p-2 rounded-xl border border-white/10 bg-[#0b1324] text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                        >
-                        <option [ngValue]="null" disabled>— Sélectionner un type —</option>
-                        @for (t of types; track t) {
-                          <option
-                            [ngValue]="t"
-                            [style.backgroundColor]="t.color"
-                            class="text-black"
-                            >
-                            {{ t.name }}
-                          </option>
-                        }
-                      </select>
-                    </div>
-                    <!-- Image de l'actualité -->
-                    <div class="mb-4">
-                      <label for="news-image-url" class="block text-sm mb-1 text-slate-300">Image (URL https, facultative)</label>
-                      <input
-                        id="news-image-url"
-                        [(ngModel)]="newsForm.imageUrl"
-                        type="url"
-                        inputmode="url"
-                        class="w-full px-4 py-2 bg-[#0b1324] border border-white/10 rounded-xl text-white
-                               placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 outline-none"
-                        placeholder="https://media.robertsspaceindustries.com/…"
-                        />
-                      <p class="mt-1 text-xs text-slate-400">Vide : l'image du type est utilisée. Le message Discord est mis à jour à l'enregistrement.</p>
-                    </div>
-                    <!-- Editeur riche -->
-                    <div class="mb-6">
-                      <label class="block text-sm mb-1 text-slate-300">Contenu</label>
-                      <angular-editor
-                        [(ngModel)]="newsForm.content"
-                        [config]="editorConfig"
-                        class="rounded-xl bg-[#0b1324] border border-white/10 text-white"
-                      ></angular-editor>
-                    </div>
-                    <!-- Aperçu -->
-                    <div class="mt-6 border-t border-white/10 pt-4">
-                      <h3 class="text-lg font-semibold text-cyan-200 mb-4">Aperçu</h3>
-                      @if (selectedType) {
-                        <div
-                          class="flex items-start gap-4 bg-[#0b1324] border border-white/10 rounded-2xl p-4"
-                          >
-                          <img
-                            [src]="previewImageUrl"
-                            alt="aperçu image"
-                            class="w-32 h-20 object-cover rounded-lg border border-white/20"
-                            />
-                            <div class="flex-1">
-                              <h4 class="text-xl font-semibold text-white mb-1">
-                                {{ newsForm.title || 'Nouvelle actualité' }}
-                              </h4>
-                              <p class="text-sm text-slate-400 mb-3">Type : {{ selectedType.name }}</p>
-                              <div
-                                class="prose prose-invert max-w-none text-gray-200"
-                                [innerHTML]="newsForm.content"
-                              ></div>
-                            </div>
-                          </div>
-                        }
-                        @if (!selectedType) {
-                          <div class="text-slate-400 italic">
-                            Sélectionnez un type pour voir l’aperçu...
-                          </div>
-                        }
-                      </div>
-                      <!-- Boutons -->
-                      <div class="flex justify-end gap-4 mt-6">
-                        @if (draftSavedAt) {
-                          <div class="mr-auto text-xs text-slate-400 self-center">
-                            Brouillon local sauvegardé à {{ draftSavedAt | date:'shortTime' }}
-                          </div>
-                        }
-                        <button
-                          (click)="closeForm()"
-                          class="px-4 py-2 rounded-full border border-white/10 text-gray-300 hover:border-cyan-400/40 transition"
-                          >
-                          Annuler
-                        </button>
-                        <button
-                          (click)="saveNews()"
-        class="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-300 hover:to-sky-400
-               text-slate-900 font-semibold shadow-md transition"
-                          >
-                          💾 Sauvegarder
-                        </button>
-                      </div>
-                    </div>
+        <div class="nm-field">
+          <label for="news-image-url">Image <span class="nm-optional">facultative</span></label>
+          <input id="news-image-url" class="nm-input" [(ngModel)]="newsForm.imageUrl" name="imageUrl" type="url" inputmode="url" autocomplete="off"
+            placeholder="https://media.robertsspaceindustries.com/…" [attr.aria-invalid]="!!imageUrlError" aria-describedby="news-image-msg" />
+          <p id="news-image-msg" class="nm-msg" [class.nm-msg--error]="imageUrlError">
+            {{ imageUrlError || 'Vide : l’image du type est utilisée.' }}
+          </p>
+        </div>
+
+        <div class="nm-field">
+          <label for="news-content">Contenu</label>
+          <angular-editor id="news-content" class="nm-rte" [(ngModel)]="newsForm.content" name="content" [config]="editorConfig"
+            [class.nm-rte--invalid]="submitted && !!contentError"></angular-editor>
+          @if (submitted && contentError) { <p class="nm-msg nm-msg--error">{{ contentError }}</p> }
+        </div>
+
+        @if (formError) { <p class="nm-alert" role="alert">{{ formError }}</p> }
+
+        <div class="nm-editor-foot">
+          <p class="nm-draft">
+            @if (draftSavedAt) {
+              Brouillon local enregistré à {{ draftSavedAt | date: 'HH:mm' }}
+              · <button type="button" class="nm-link" (click)="discardDraft()">Abandonner le brouillon</button>
+            } @else {
+              {{ editingNews ? 'Le message Discord est mis à jour à l’enregistrement.' : 'Publiée sur Discord et notifiée aux membres.' }}
+            }
+          </p>
+          <div class="nm-actions">
+            <button type="button" class="nm-btn nm-btn--ghost" (click)="closeForm()">Annuler</button>
+            <button type="submit" class="nm-btn nm-btn--primary" [disabled]="isSaving" data-testid="news-save">
+              {{ isSaving ? 'Enregistrement…' : editingNews ? 'Enregistrer' : 'Publier' }}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Aperçu : reprend la carte du tableau de bord -->
+      <aside class="nm-preview-col" aria-label="Aperçu au tableau de bord">
+        <p class="nm-kicker">Aperçu au tableau de bord</p>
+        <article class="nm-preview" [style.--accent]="newsForm.type?.color || '#38bdf8'">
+          <div class="nm-preview-media">
+            @if (newsImage({ imageUrl: newsForm.imageUrl, type: newsForm.type }); as src) {
+              <img [src]="src" alt="" (error)="imageFailed(src)" />
+            }
+            @if (newsForm.type) { <span class="nm-preview-badge">{{ newsForm.type.name }}</span> }
+          </div>
+          <div class="nm-preview-body">
+            <h3>{{ newsForm.title.trim() || 'Titre de l’actualité' }}</h3>
+            <p class="nm-preview-date">{{ previewDate | date: 'dd MMM yyyy' }}</p>
+            @if (newsForm.content.trim()) {
+              <div class="nm-preview-content markdown-content" [innerHTML]="newsForm.content | markdown"></div>
+            } @else {
+              <p class="nm-preview-content nm-muted">Le début du contenu s’affiche ici.</p>
+            }
+            <span class="nm-preview-more" aria-hidden="true">Lire la suite →</span>
+          </div>
+        </article>
+      </aside>
+    </div>
+  } @else {
+    <div class="nm-layout">
+      <!-- ========================== LISTE DES ACTUALITÉS ========================== -->
+      <section class="nm-list-col" aria-labelledby="news-list-title">
+        <div class="nm-section-head">
+          <h2 id="news-list-title">Publiées</h2>
+          @if (totalElements) { <span class="nm-count">{{ totalElements }}</span> }
+        </div>
+
+        @if (isLoading && !news.length) {
+          <p class="nm-empty">Chargement des actualités…</p>
+        } @else if (loadError) {
+          <p class="nm-empty nm-empty--error">{{ loadError }} <button type="button" class="nm-link" (click)="loadNews()">Réessayer</button></p>
+        } @else if (!news.length) {
+          <p class="nm-empty">Aucune actualité. Publiez la première avec « Nouvelle actualité ».</p>
+        } @else {
+          <ul class="nm-list" data-testid="news-list" [class.nm-list--loading]="isLoading">
+            @for (n of news; track n.id) {
+              <li class="nm-card" [style.--accent]="n.type?.color || '#38bdf8'">
+                <div class="nm-thumb" aria-hidden="true">
+                  @if (newsImage(n); as src) { <img [src]="src" alt="" loading="lazy" (error)="imageFailed(src)" /> }
+                </div>
+                <div class="nm-card-main">
+                  <div class="nm-card-top">
+                    @if (n.type) { <span class="nm-chip">{{ n.type.name }}</span> }
+                    <span class="nm-meta">{{ n.createdAt | date: 'dd MMM yyyy · HH:mm' }} · {{ n.author }}</span>
+                  </div>
+                  <strong class="nm-card-title">{{ n.title }}</strong>
+                  @if (excerpt(n); as text) { <p class="nm-excerpt">{{ text }}</p> }
+                </div>
+
+                @if (confirmDeleteId === n.id) {
+                  <div class="nm-card-actions nm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + n.title">
+                    <span>Supprimer, aussi sur Discord ?</span>
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="cancelDeleteNews()">Annuler</button>
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger" (click)="deleteNews(n.id)" [disabled]="pendingNewsId === n.id">Supprimer</button>
+                  </div>
+                } @else {
+                  <div class="nm-card-actions">
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="openForm(n)" [attr.aria-label]="'Modifier ' + n.title">Modifier</button>
+                    <button type="button" class="nm-btn nm-btn--sm nm-btn--danger-ghost" (click)="askDeleteNews(n)" [attr.aria-label]="'Supprimer ' + n.title">Supprimer</button>
                   </div>
                 }
+              </li>
+            }
+          </ul>
+        }
+
+        @if (totalPages > 1) {
+          <nav class="nm-pager" aria-label="Pages des actualités">
+            <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="prevPage()" [disabled]="currentPage === 0 || isLoading">← Précédentes</button>
+            <span>Page {{ currentPage + 1 }} sur {{ totalPages }}</span>
+            <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1 || isLoading">Suivantes →</button>
+          </nav>
+        }
+      </section>
+
+      <!-- ========================== TYPES ========================== -->
+      <section class="nm-panel nm-types" aria-labelledby="news-types-title">
+        <div class="nm-panel-head">
+          <h2 id="news-types-title">Types</h2>
+          @if (editingType) { <button type="button" class="nm-link" (click)="startCreateType()">Nouveau type</button> }
+        </div>
+
+        @if (typesLoading && !types.length) {
+          <p class="nm-msg">Chargement des types…</p>
+        } @else if (!types.length) {
+          <p class="nm-msg">Aucun type. Créez-en un pour publier une actualité.</p>
+        } @else {
+          <ul class="nm-type-list" data-testid="news-type-list">
+            @for (type of types; track type.id) {
+              <li class="nm-type-row" [class.nm-type-row--editing]="editingType?.id === type.id" [style.--accent]="type.color">
+                <span class="nm-chip">{{ type.name }}</span>
+                @if (confirmDeleteTypeId === type.id) {
+                  <span class="nm-type-actions nm-confirm" role="group" [attr.aria-label]="'Confirmer la suppression de ' + type.name">
+                    <button type="button" class="nm-btn nm-btn--xs nm-btn--ghost" (click)="cancelDeleteType()">Annuler</button>
+                    <button type="button" class="nm-btn nm-btn--xs nm-btn--danger" (click)="deleteType(type)" [disabled]="pendingTypeId === type.id">Supprimer</button>
+                  </span>
+                } @else {
+                  <span class="nm-type-actions">
+                    <button type="button" class="nm-icon-btn" (click)="editType(type)" [attr.aria-label]="'Modifier ' + type.name" title="Modifier">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16h3l8.5-8.5-3-3L4 13v3ZM11 6l3 3" /></svg>
+                    </button>
+                    <button type="button" class="nm-icon-btn nm-icon-btn--danger" (click)="askDeleteType(type)" [attr.aria-label]="'Supprimer ' + type.name" title="Supprimer">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6h10M8 6V4h4v2M6.5 6l.7 10h5.6l.7-10" /></svg>
+                    </button>
+                  </span>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <form class="nm-type-form" (submit)="$event.preventDefault(); saveType()" novalidate data-testid="news-type-form"
+          [attr.aria-label]="editingType ? 'Modifier le type' : 'Nouveau type'">
+          <h3>{{ editingType ? 'Modifier « ' + editingType.name + ' »' : 'Nouveau type' }}</h3>
+
+          <div class="nm-type-sample" [style.--accent]="typePreviewColor" aria-hidden="true">
+            @if (typeForm.imageUrl.trim()) { <img [src]="typeForm.imageUrl.trim()" alt="" (error)="$any($event.target).style.display = 'none'" (load)="$any($event.target).style.display = ''" /> }
+            <span class="nm-chip">{{ typeForm.name.trim() || 'Nom du type' }}</span>
+          </div>
+
+          <div class="nm-field">
+            <label for="news-type-name">Nom</label>
+            <input id="news-type-name" class="nm-input" [(ngModel)]="typeForm.name" name="typeName" maxlength="100" autocomplete="off"
+              placeholder="Annonce, Patch, CIG Watch…" [attr.aria-invalid]="typeSubmitted && !!typeNameError" />
+            @if (typeSubmitted && typeNameError) { <p class="nm-msg nm-msg--error">{{ typeNameError }}</p> }
+          </div>
+
+          <app-color-field label="Couleur" hint="Fond du badge, sous un texte sombre." [value]="typeForm.color"
+            (valueChange)="typeForm.color = $event" [presets]="typePresets" fallback="#38bdf8" />
+
+          <div class="nm-field">
+            <label for="news-type-image">Image par défaut <span class="nm-optional">facultative</span></label>
+            <input id="news-type-image" class="nm-input" [(ngModel)]="typeForm.imageUrl" name="typeImage" inputmode="url" autocomplete="off"
+              placeholder="https://… ou /img/…" />
+            <p class="nm-msg">Utilisée par les actualités de ce type qui n’ont pas d’image.</p>
+          </div>
+
+          @if (typeError) { <p class="nm-alert" role="alert">{{ typeError }}</p> }
+
+          <div class="nm-actions">
+            @if (editingType) { <button type="button" class="nm-btn nm-btn--sm nm-btn--ghost" (click)="cancelEdit()">Annuler</button> }
+            <button type="submit" class="nm-btn nm-btn--sm nm-btn--primary" [disabled]="isTypeSaving">
+              {{ isTypeSaving ? 'Enregistrement…' : editingType ? 'Enregistrer' : 'Créer le type' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+</div>
