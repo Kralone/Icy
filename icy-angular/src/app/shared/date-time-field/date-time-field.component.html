@@ -2,7 +2,7 @@
   <div class="inputs">
     <input type="date" [value]="date" [disabled]="disabled" [attr.aria-label]="label() + ' : date'" [attr.aria-invalid]="invalid() || null" [attr.aria-describedby]="describedBy()"
       (change)="setDate($any($event.target).value)" (blur)="touched()">
-    <input type="time" step="300" [value]="time" [disabled]="disabled" [attr.aria-label]="label() + ' : heure'" [attr.aria-invalid]="invalid() || null" [attr.aria-describedby]="describedBy()"
+    <input type="time" [attr.step]="time === endOfDay ? 60 : 300" [value]="time" [disabled]="disabled" [attr.aria-label]="label() + ' : heure'" [attr.aria-invalid]="invalid() || null" [attr.aria-describedby]="describedBy()"
       (change)="setTime($any($event.target).value)" (blur)="touched()">
   </div>
   @if (!disabled) {
@@ -14,6 +14,7 @@
       @for (hour of hours(); track hour) {
         <button type="button" [attr.aria-pressed]="isHour(hour)" (click)="pickHour(hour)">{{ hour }} h</button>
       }
+      <button type="button" [attr.aria-pressed]="time === endOfDay" (click)="pickEndOfDay()" title="23:59">Fin de journée</button>
     </div>
   }
   <p class="summary" aria-live="polite">{{ summary || 'Date et heure à choisir' }}</p>

@@ -26,6 +26,9 @@ export class DateTimeFieldComponent implements ControlValueAccessor {
   /** Heures proposées en raccourci. */
   readonly hours = input<number[]>([20, 21, 22]);
 
+  /** Dernière minute de la journée, proposée en raccourci. */
+  readonly endOfDay = '23:59';
+
   private readonly changeDetector = inject(ChangeDetectorRef);
   date = '';
   time = '';
@@ -54,6 +57,7 @@ export class DateTimeFieldComponent implements ControlValueAccessor {
   setTime(value: string): void { this.time = value; this.emit(); }
   pickDay(day: Date): void { this.date = toDate(day); if (!this.time) this.time = '21:00'; this.emit(); }
   pickHour(hour: number): void { this.time = `${pad(hour)}:00`; if (!this.date) this.date = toDate(new Date()); this.emit(); }
+  pickEndOfDay(): void { this.time = this.endOfDay; if (!this.date) this.date = toDate(new Date()); this.emit(); }
   touched(): void { this.onTouched(); }
 
   isDay(day: Date): boolean { return this.date === toDate(day); }

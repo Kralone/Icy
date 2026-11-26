@@ -10,6 +10,7 @@ import { ScWorldEventService, ScWorldEvent, ScWorldEventType, Page } from '../..
   imports: [DateTimeFieldComponent, CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-events-admin.component.html',
+  styleUrl: '../../scwe-admin.css',
 })
 export class ScweEventsAdminComponent implements OnInit, OnChanges {
   @Input() types: ScWorldEventType[] = [];

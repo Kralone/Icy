@@ -37,6 +37,17 @@ describe('DateTimeFieldComponent', () => {
     expect(component.isDay(tomorrow)).toBe(true);
   });
 
+  it('sets the time to 23:59 with the end of day shortcut', () => {
+    const { fixture, component, changes } = create();
+    component.setDate('2026-10-20');
+    const button = Array.from(fixture.nativeElement.querySelectorAll('.shortcuts button') as NodeListOf<HTMLButtonElement>)
+      .find(b => b.textContent?.trim() === 'Fin de journée')!;
+    button.click();
+    fixture.detectChanges();
+    expect(changes.at(-1)).toBe('2026-10-20T23:59');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('hides the shortcuts when disabled', () => {
     const { fixture, component } = create();
     component.setDisabledState(true);

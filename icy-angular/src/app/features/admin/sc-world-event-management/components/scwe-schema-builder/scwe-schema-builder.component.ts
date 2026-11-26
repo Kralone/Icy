@@ -9,6 +9,7 @@ import { SchemaFormModel, FieldForm, MilestoneForm, SchemaTab } from '../../mode
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './scwe-schema-builder.component.html',
+  styleUrl: '../../scwe-admin.css',
 })
 export class ScweSchemaBuilderComponent implements OnInit, OnChanges {
   @Input() model: SchemaFormModel | null = null;

@@ -10,13 +10,14 @@
 
 .catalog-header__topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 20px; flex-wrap: wrap; }
 .catalog-header__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #94a3b8; font-size: 13px; min-height: 42px; transition: color 180ms ease; }
+.back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #94a3b8; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; min-height: 42px; transition: color 180ms ease; }
 .back-link:hover { color: #f8fafc; }
 .sync-link { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.14); background: rgb(255 255 255 / 0.04); color: #e2e8f0; font-size: 13px; font-weight: 600; transition: border-color 180ms ease, background 180ms ease; }
 .sync-link:hover { border-color: rgb(125 211 252 / 0.6); background: rgb(125 211 252 / 0.1); }
 
 .catalog-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 24px; flex-wrap: wrap; }
-.catalog-hero h1 { margin: 0; font-size: clamp(24px, 3vw, 32px); }
+.catalog-hero h1 { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 600; color: #a5f3fc; }
+.catalog-kicker { font-size: .68rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: #94a3b8; }
 .eyebrow { color: rgb(var(--tone, 125 211 252)); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
 
 .catalog-vitals { display: flex; flex-wrap: wrap; gap: 10px; }

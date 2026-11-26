@@ -11,7 +11,8 @@ import { ImageLibraryService } from '../../../core/services/image/image-library.
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.Eager,
-  templateUrl: './image-library.component.html'
+  templateUrl: './image-library.component.html',
+  styleUrl: './image-library.component.css'
 })
 export class ImageLibraryComponent implements OnInit {
 
