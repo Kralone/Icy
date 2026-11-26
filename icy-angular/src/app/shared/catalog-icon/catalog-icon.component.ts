@@ -22,6 +22,7 @@ export type CatalogIconKey =
   | 'refinery'
   | 'price'
   | 'drill'
+  | 'pickaxe'
   | 'image'
   | 'watch'
   | 'sync'
@@ -96,9 +97,11 @@ export type CatalogIconKey =
           <circle cx="20.6" cy="9.2" r="1.3" fill="currentColor" stroke="none" />
         }
         @case ('planet') {
-          <circle cx="12" cy="12" r="6.6" />
-          <path d="M5.9 9.6C2.6 11 1 12.6 1.6 13.8c.9 1.9 6.4 1.2 12.2-1.6s9.8-6.4 8.9-8.3c-.5-1.1-2.6-1.3-5.4-.7" stroke-width="1.4" />
-          <path class="star-fill" stroke="none" d="M19.4 15.6Q19.76 17.04 21.2 17.4Q19.76 17.76 19.4 19.2Q19.04 17.76 17.6 17.4Q19.04 17.04 19.4 15.6Z" />
+          <circle cx="12" cy="12" r="6.2" />
+          <g transform="rotate(-20 12 12)" stroke-width="1.4">
+            <path d="M1.5 12A10.5 3.2 0 0 0 22.5 12" /><path d="M1.5 12A10.5 3.2 0 0 1 5.6 9.3M18.4 9.3A10.5 3.2 0 0 1 22.5 12" />
+          </g>
+          <path class="star-fill" stroke="none" d="M19.6 1.6Q20 3.2 21.6 3.6Q20 4 19.6 5.6Q19.2 4 17.6 3.6Q19.2 3.2 19.6 1.6Z" />
         }
         @case ('moon') {
           <path d="M20.4 14.6A8.6 8.6 0 1 1 9.4 3.6a6.8 6.8 0 0 0 11 11Z" />
@@ -128,9 +131,9 @@ export type CatalogIconKey =
           <path d="M7.2 3.4h9.6l4.6 6.4L12 21 2.6 9.8Z" /><path d="M2.6 9.8h18.8M9.4 3.4 7.8 9.8 12 21l4.2-11.2-1.6-6.4" stroke-width="1.3" />
         }
         @case ('refinery') {
-          <path d="M4 21V9.6l4.4 2.6V9.6l4.4 2.6V4h4.4l1.2 17Z" /><path d="M2.6 21h18.8" />
-          <path d="M14.6 1.4c1.4.6 1.6 1.6.8 2.6" stroke-width="1.3" />
-          <path d="M7.6 16.4h1.6M11.6 16.4h1.6" stroke-width="1.3" />
+          <path d="M3.5 20.5v-9.3l4.6 2.8v-2.8l4.6 2.8V3.6h4.6v16.9" /><path d="M2 20.5h20" />
+          <path d="M6.4 17.2h1.8M10.6 17.2h1.8" stroke-width="1.4" />
+          <path class="star-fill" stroke="none" d="M6 2.8Q6.4 4.4 8 4.8Q6.4 5.2 6 6.8Q5.6 5.2 4 4.8Q5.6 4.4 6 2.8Z" />
         }
         @case ('price') {
           <path d="M3 12.6V4.2A1.2 1.2 0 0 1 4.2 3h8.4l8.4 8.4-9.6 9.6Z" />
@@ -141,6 +144,11 @@ export type CatalogIconKey =
           <path d="M3.4 20.6 10 14" /><path d="M8.2 12.2 11.8 15.8l3.6-1.2 6.2-6.2-4-4-6.2 6.2Z" />
           <path d="M14.2 6.8l3 3" stroke-width="1.3" />
           <path class="star-fill" stroke="none" d="M5.4 3.4Q5.84 5.16 7.6 5.6Q5.84 6.04 5.4 7.8Q4.96 6.04 3.2 5.6Q4.96 5.16 5.4 3.4Z" />
+        }
+        @case ('pickaxe') {
+          <path d="M8.6 3.4Q20.8 3.2 20.6 15.4Q17.6 6.4 8.6 3.4Z" />
+          <path d="M16 8 3.8 20.2" stroke-width="2" />
+          <path class="star-fill" stroke="none" d="M5.2 9.6Q5.6 11.2 7.2 11.6Q5.6 12 5.2 13.6Q4.8 12 3.2 11.6Q4.8 11.2 5.2 9.6Z" />
         }
         @case ('image') {
           <rect x="3" y="4" width="18" height="16" rx="2.2" /><path d="m3.6 17.4 5.2-5.4 4 4 2.6-2.6 4.8 4.6" />

@@ -94,7 +94,7 @@ export class DataMenuComponent implements OnInit {
           imageUrl: 'https://static.wikia.nocookie.net/starcitizen/images/6/6d/Aphorite_vitrine.jpg/revision/latest/scale-to-width-down/300?cb=20210215061436'},
         {label: 'Minerais du catalogue', description: 'Fiches des ressources et de leurs prix', icon: 'price', route: '/icy/admin/catalog',
           queryParams: {family: 'COMMODITY', catalogGroup: 'STANDARD'}, imageUrl: 'assets/images/home/activities/cargo.jpg'},
-        {label: 'Page Ressources minage', description: 'Ce que voient les membres et les visiteurs', icon: 'drill', route: '/utilitaires/ressources-minage',
+        {label: 'Page Ressources minage', description: 'Ce que voient les membres et les visiteurs', icon: 'pickaxe', route: '/utilitaires/ressources-minage',
           imageUrl: 'assets/images/home/activities/mining.jpg'}
       ]
     },

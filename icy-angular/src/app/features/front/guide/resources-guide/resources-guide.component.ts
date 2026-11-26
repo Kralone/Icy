@@ -22,7 +22,6 @@ interface ResourceLine {
   title: string;
   /** Sous-titre court de l'onglet. */
   hint: string;
-  description: string;
 }
 
 @Component({
@@ -39,29 +38,25 @@ export class ResourcesGuideComponent implements OnInit, OnDestroy {
       id: 'locations',
       icon: 'planet',
       title: 'Planètes et minerais',
-      hint: 'Où miner',
-      description: 'Fréquence et concentration de chaque minerai par planète, lune et point de Lagrange. Cherchez un minerai pour voir les meilleures zones.'
+      hint: 'Où miner'
     },
     {
       id: 'planning',
       icon: 'price',
       title: 'Prix de vente',
-      hint: 'Où vendre',
-      description: 'Meilleurs prix de vente par SCU et revenu estimé pour votre cargaison.'
+      hint: 'Où vendre'
     },
     {
       id: 'refining',
       icon: 'refinery',
       title: 'Raffinage',
-      hint: 'Où raffiner',
-      description: 'Bonus et malus de rendement de chaque raffinerie, minerai par minerai.'
+      hint: 'Où raffiner'
     },
     {
       id: 'fit',
-      icon: 'drill',
+      icon: 'pickaxe',
       title: 'Équipement',
-      hint: 'Vaisseaux, têtes, modules',
-      description: 'Vaisseaux de minage, têtes laser, modules et gadgets pour préparer votre configuration.'
+      hint: 'Vaisseaux, têtes, modules'
     }
   ];
 

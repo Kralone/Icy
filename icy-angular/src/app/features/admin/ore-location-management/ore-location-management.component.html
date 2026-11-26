@@ -8,7 +8,7 @@
         <div class="ore-actions">
           <a class="ore-button" routerLink="/utilitaires/ressources-minage" [queryParams]="{line: 'locations'}">Voir la page publique</a>
           <button type="button" class="ore-button" (click)="loadLocations()" [disabled]="loading">Recharger</button>
-          <label class="ore-button ore-button--primary" [class.ore-button--busy]="uploading">
+          <label class="ore-button ore-button--primary" title="Remplace toutes les zones par le contenu du fichier" [class.ore-button--busy]="uploading">
             <input type="file" accept=".json,application/json" (change)="onUploadFile($event)" [disabled]="uploading" />
             {{ uploading ? 'Import en cours…' : 'Importer un JSON' }}
           </label>
@@ -22,7 +22,6 @@
           <span>Version <strong>{{ latestUpdate.version || 'non renseignée' }}</strong> · relevé du {{ formatDate(latestUpdate.date) }}</span>
         </p>
       }
-      <p class="ore-import-note">L’import remplace toutes les zones et leurs minerais par le contenu du fichier.</p>
       @if (successMessage) { <p class="ore-message ore-message--ok" role="status">{{ successMessage }}</p> }
       @if (errorMessage) { <p class="ore-message ore-message--error" role="alert">{{ errorMessage }}</p> }
     </header>
@@ -91,13 +90,13 @@
               @if (expandedKey === row.key) {
                 <div class="zone-detail">
                   <dl class="zone-metrics">
-                    <div><dt>Rochers par amas</dt><dd>{{ formatRange(row.location.clusterCount) }}</dd></div>
-                    <div><dt>Masse</dt><dd>{{ formatRange(row.location.mass) }}</dd></div>
-                    <div><dt>Instabilité</dt><dd>{{ formatRange(row.location.inst) }}</dd></div>
-                    <div><dt>Résistance</dt><dd>{{ formatRange(row.location.res) }}</dd></div>
+                    <div><dt>Rochers par amas</dt><dd title="min · médiane · max">{{ formatRange(row.location.clusterCount) }}</dd></div>
+                    <div><dt>Masse</dt><dd title="min · médiane · max">{{ formatRange(row.location.mass) }}</dd></div>
+                    <div><dt>Instabilité</dt><dd title="min · médiane · max">{{ formatRange(row.location.inst) }}</dd></div>
+                    <div><dt>Résistance</dt><dd title="min · médiane · max">{{ formatRange(row.location.res) }}</dd></div>
                   </dl>
                   <p class="zone-source">
-                    Valeurs min · médiane · max. Code {{ row.location.locationCode }} · {{ row.location.gameVersion || 'version non renseignée' }} · relevé du {{ formatDate(row.location.updatedAt) }}
+                    Code {{ row.location.locationCode }} · {{ row.location.gameVersion || 'version non renseignée' }} · relevé du {{ formatDate(row.location.updatedAt) }}
                     @if (row.location.sourceUrl) { · <a [href]="row.location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
                   </p>
                   <table class="zone-ore-table">

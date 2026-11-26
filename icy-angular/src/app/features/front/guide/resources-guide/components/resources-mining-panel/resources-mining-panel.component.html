@@ -142,7 +142,6 @@
               <div class="mine-state">Aucun minerai relevé pour {{ location.displayLabel }}.</div>
             }
             <p class="mine-source">
-              Fréquence : part des scans où le minerai apparaît. Concentration : part du minerai dans la roche.
               {{ location.gameVersion || 'Version non renseignée' }} · relevé du {{ formatSourceDate(location.updatedAt) }}
               @if (location.sourceUrl) { · <a [href]="location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
             </p>
