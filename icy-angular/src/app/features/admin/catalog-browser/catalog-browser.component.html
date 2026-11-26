@@ -212,13 +212,20 @@
                   <p class="catalog-card__description">{{ entry.description }}</p>
                 }
                 <div class="catalog-card__footer">
-                  @if (cheapestOffer(entry); as offer) {
-                    <div class="price-block">
-                      <span>Dès</span>
-                      <strong>{{ formatPrice(offer.price, offer.currency) }}</strong>
+                  @let buy = cheapestOffer(entry);
+                  @let sell = bestSellOffer(entry);
+                  @let unit = priceUnit(entry);
+                  @if (buy || sell) {
+                    <div class="price-stack">
+                      @if (buy) {
+                        <div class="price-block"><span>{{ buy.type === 'RENT' ? 'Location dès' : 'Achat dès' }}</span><strong>{{ formatPrice(buy.price, buy.currency) }}{{ unit }}</strong></div>
+                      }
+                      @if (sell) {
+                        <div class="price-block price-block--sell"><span>Vente jusqu’à</span><strong>{{ formatPrice(sell.price, sell.currency) }}{{ unit }}</strong></div>
+                      }
                     </div>
                   } @else {
-                    <div class="price-block price-block--empty"><span>Aucune offre connue</span></div>
+                    <div class="price-block price-block--empty"><span>Aucun prix connu</span></div>
                   }
                   <span class="card-arrow" aria-hidden="true">↗</span>
                 </div>
@@ -301,12 +308,12 @@
                     <strong>{{ offer.location }}</strong><small>{{ offer.updatedAt ? (offer.updatedAt | date:'dd/MM/yyyy') : 'Date inconnue' }}</small>
                   }
                 </div>
-                <b>{{ formatPrice(offer.price, offer.currency) }}</b>
+                <b>{{ formatPrice(offer.price, offer.currency) }}{{ priceUnit(entry) }}</b>
               </div>
             }
           </div>
         } @else {
-          <p class="offers-empty">Aucun lieu d’achat ou de location n’est actuellement relié à cette fiche.</p>
+          <p class="offers-empty">Aucun terminal d’achat, de vente ou de location n’est relié à cette fiche.</p>
         }
       </section>
 

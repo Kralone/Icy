@@ -198,7 +198,7 @@ public class CatalogBrowseService {
                 AND t.terminal->>'id' = o.source_payload->>'id_terminal'
             LEFT JOIN pois p ON p.poi->>'id' = NULLIF(t.terminal->>'id_poi', '0')
             WHERE o.active = TRUE AND o.entry_id IN (:entryIds)
-            ORDER BY o.entry_id, o.offer_type, o.price, o.location_name
+            ORDER BY o.entry_id, o.offer_type, CASE WHEN o.offer_type = 'SELL' THEN -o.price ELSE o.price END, o.location_name
             """;
 
     private Map<Long, List<CatalogOfferViewDTO>> loadOffers(List<EntryRow> rows) {

@@ -37,7 +37,8 @@ public class CatalogEconomyMapper {
                      LIMIT 1),
                     (SELECT id FROM catalog.entries
                      WHERE LOWER(name) = LOWER(:entityName) AND active = TRUE
-                     ORDER BY CASE WHEN family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
+                     ORDER BY CASE WHEN :commodityOffer = TRUE AND family = 'COMMODITY' THEN 0
+                                   WHEN :commodityOffer = FALSE AND family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
                      LIMIT 1),
                     (SELECT MIN(id) FROM catalog.entries
                      WHERE :vehicleOffer = TRUE
@@ -52,7 +53,8 @@ public class CatalogEconomyMapper {
                      LIMIT 1),
                     (SELECT id FROM catalog.entries
                      WHERE LOWER(name) = LOWER(:entityName) AND active = TRUE
-                     ORDER BY CASE WHEN family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
+                     ORDER BY CASE WHEN :commodityOffer = TRUE AND family = 'COMMODITY' THEN 0
+                                   WHEN :commodityOffer = FALSE AND family IN ('SHIP', 'GROUND_VEHICLE') THEN 0 ELSE 1 END, id
                      LIMIT 1),
                     (SELECT MIN(id) FROM catalog.entries
                      WHERE :vehicleOffer = TRUE
@@ -105,6 +107,7 @@ public class CatalogEconomyMapper {
         addItemOffers(required("items_prices"), offers, runId);
         addVehicleOffers(required("vehicles_purchases_prices"), "BUY", "price_buy", offers, runId);
         addVehicleOffers(required("vehicles_rentals_prices"), "RENT", "price_rent", offers, runId);
+        addCommodityOffers(required("commodities_prices"), offers, runId);
         if (offers.isEmpty()) {
             throw new IllegalStateException("Les datasets UEX ne contiennent aucune offre exploitable");
         }
@@ -131,6 +134,14 @@ public class CatalogEconomyMapper {
         for (JsonNode node : cache.getPayload()) {
             addOffer(cache, node, "BUY", "price_buy", "item_uuid", "item_name", target, runId);
             addOffer(cache, node, "SELL", "price_sell", "item_uuid", "item_name", target, runId);
+        }
+    }
+
+    /** Marchandises (minerais, raffinés, cargaisons) : prix d'achat et de revente par terminal. */
+    private void addCommodityOffers(UexDatasetCache cache, List<MapSqlParameterSource> target, long runId) {
+        for (JsonNode node : cache.getPayload()) {
+            addOffer(cache, node, "BUY", "price_buy", "commodity_uuid", "commodity_name", target, runId);
+            addOffer(cache, node, "SELL", "price_sell", "commodity_uuid", "commodity_name", target, runId);
         }
     }
 
@@ -163,7 +174,7 @@ public class CatalogEconomyMapper {
             return;
         }
 
-        String rowId = firstText(node, "id", "id_item", "id_vehicle");
+        String rowId = firstText(node, "id", "id_item", "id_vehicle", "id_commodity");
         String terminalId = firstText(node, "id_terminal", "terminal_name");
         if (rowId == null || terminalId == null) {
             return;
@@ -175,6 +186,7 @@ public class CatalogEconomyMapper {
                 .addValue("entityExternalId", text(node, uuidField))
                 .addValue("entityName", name)
                 .addValue("vehicleOffer", "vehicle_uuid".equals(uuidField))
+                .addValue("commodityOffer", "commodity_uuid".equals(uuidField))
                 .addValue("offerType", offerType)
                 .addValue("locationName", location)
                 .addValue("price", price)

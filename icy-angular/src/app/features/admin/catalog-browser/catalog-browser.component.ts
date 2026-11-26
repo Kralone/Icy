@@ -303,6 +303,17 @@ export class CatalogBrowserComponent implements OnInit, OnDestroy {
     return offers.length ? offers.reduce((best, offer) => offer.price < best.price ? offer : best) : null;
   }
 
+  /** Meilleur prix de revente (le plus haut), pour les marchandises et les objets revendables. */
+  bestSellOffer(entry: CatalogEntry): CatalogOffer | null {
+    const offers = entry.offers.filter((offer) => offer.price > 0 && offer.type === 'SELL');
+    return offers.length ? offers.reduce((best, offer) => offer.price > best.price ? offer : best) : null;
+  }
+
+  /** Les marchandises s'achètent et se vendent à l'unité de cargo (SCU). */
+  priceUnit(entry: CatalogEntry): string {
+    return entry.family === 'COMMODITY' ? ' / SCU' : '';
+  }
+
   offerPlace(offer: CatalogOffer): string | null {
     const parts = [offer.planetName ?? offer.systemName, offer.moonName, offer.placeName]
       .map((part) => part?.trim())
