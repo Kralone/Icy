@@ -33,6 +33,7 @@ public class NewsController {
         News news = new News();
         news.setTitle(req.getTitle());
         news.setContent(req.getContent());
+        news.setImageUrl(req.getImageUrl());
         return service.create(news, req.getTypeId());
     }
 
@@ -42,6 +43,7 @@ public class NewsController {
         News updated = new News();
         updated.setTitle(req.getTitle());
         updated.setContent(req.getContent());
+        updated.setImageUrl(req.getImageUrl());
         NewsType type = new NewsType();
         type.setId(req.getTypeId());
         updated.setType(type);

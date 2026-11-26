@@ -6,6 +6,7 @@ import com.icy.icy_backend.db.entity.news.News;
 import com.icy.icy_backend.db.entity.news.NewsType;
 import com.icy.icy_backend.db.repository.news.NewsRepository;
 import com.icy.icy_backend.db.repository.news.NewsTypeRepository;
+import com.icy.icy_backend.exception.definition.BadRequestException;
 import com.icy.icy_backend.exception.definition.ResourceAlreadyExistsException;
 import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.messaging.NewsMessagingService;
@@ -72,6 +73,7 @@ public class NewsService {
         NewsType type = typeRepository.findById(typeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Type d’actualité non trouvé"));
         news.setType(type);
+        news.setImageUrl(normalizeImageUrl(news.getImageUrl()));
 
         news.setAuthor(userService.findUserById(AuthUtils.getCurrentUserId()).getUsername());
 
@@ -123,6 +125,8 @@ public class NewsService {
         existing.setTitle(updated.getTitle());
         existing.setContent(updated.getContent());
         existing.setType(getTypeById(updated.getType().getId()));
+        // null keeps the current image (older clients, CIG Watch); a blank value removes it.
+        if (updated.getImageUrl() != null) existing.setImageUrl(normalizeImageUrl(updated.getImageUrl()));
         log.info("Updating news id={}", id);
         News saved = newsRepository.save(existing);
         newsMessagingService.sendNewsUpdated(saved);
@@ -180,10 +184,18 @@ public class NewsService {
         log.info("Deleting NewsType id={}", id);
         typeRepository.delete(existing);
     }
+
+    /** Returns null for a blank value; otherwise only accepts an absolute https URL usable by the site and Discord. */
+    static String normalizeImageUrl(String value) {
+        if (value == null || value.isBlank()) return null;
+        String trimmed = value.trim();
+        try {
+            java.net.URI uri = new java.net.URI(trimmed);
+            if (trimmed.length() <= 2048 && "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+                    && uri.getUserInfo() == null) return uri.toASCIIString();
+        } catch (java.net.URISyntaxException ignored) {
+            // rejected below
+        }
+        throw new BadRequestException("L'image doit être une adresse https valide.");
+    }
 }
-
-
-
-
-
-
