@@ -35,7 +35,7 @@
     <section class="mine-ranking" aria-labelledby="mine-ranking-title">
       <header class="mine-section-head">
         <h3 id="mine-ranking-title">Où trouver {{ oreName(oreCode) }}</h3>
-        <span>{{ activeOreResults.length }} zones, de la plus fréquente à la moins fréquente</span>
+        <span>{{ activeOreResults.length }} zones, de la plus probable à la moins probable</span>
       </header>
       @if (activeOreResults.length) {
         <ol class="mine-ranking__list">
@@ -113,10 +113,10 @@
                   <thead>
                     <tr>
                       <th>Minerai</th>
-                      <th>Fréquence</th>
-                      <th class="num">Concentration min.</th>
-                      <th class="num">Médiane</th>
-                      <th class="num">Max.</th>
+                      <th>{{ isGameData(location) ? 'Apparition' : 'Fréquence' }}</th>
+                      <th class="num">Concentration</th>
+                      @if (hasMedian) { <th class="num mine-col--wide">Médiane</th> }
+                      @if (hasClusters) { <th class="num mine-col--wide">Amas</th> }
                     </tr>
                   </thead>
                   <tbody>
@@ -125,14 +125,15 @@
                         <td class="mine-table__ore">
                           @if (ore.imageUrl) { <img [src]="ore.imageUrl" alt="" loading="lazy" width="28" height="28" /> }
                           {{ oreName(ore.oreCode) }}
+                          @if (ore.method) { <small class="mine-table__method">{{ ore.method }}</small> }
                         </td>
                         <td class="mine-table__freq">
                           <span class="mine-bar"><i [style.width]="oreBarWidth(ore.probability)"></i></span>
                           <b>{{ formatPercent(ore.probability) }}</b>
                         </td>
-                        <td class="num">{{ formatConcentration(ore.minPct) }}</td>
-                        <td class="num">{{ formatConcentration(ore.medPct) }}</td>
-                        <td class="num">{{ formatConcentration(ore.maxPct) }}</td>
+                        <td class="num">{{ formatConcentrationRange(ore.minPct, ore.maxPct) }}</td>
+                        @if (hasMedian) { <td class="num mine-col--wide">{{ formatConcentration(ore.medPct) }}</td> }
+                        @if (hasClusters) { <td class="num mine-col--wide" [attr.title]="clusterTitle(ore)">{{ formatCluster(ore) }}</td> }
                       </tr>
                     }
                   </tbody>
@@ -142,7 +143,12 @@
               <div class="mine-state">Aucun minerai relevé pour {{ location.displayLabel }}.</div>
             }
             <p class="mine-source">
-              {{ location.gameVersion || 'Version non renseignée' }} · relevé du {{ formatSourceDate(location.updatedAt) }}
+              @if (isGameData(location)) {
+                Données du jeu via Star Citizen Wiki · {{ location.gameVersion || 'version non renseignée' }} · mises à jour le {{ formatSourceDate(location.updatedAt) }}
+                <br />L’apparition est la chance qu’un rocher de l’astre contienne ce minerai d’après les fichiers du jeu, pas une fréquence relevée par des joueurs.
+              } @else {
+                {{ location.gameVersion || 'Version non renseignée' }} · relevé du {{ formatSourceDate(location.updatedAt) }}
+              }
               @if (location.sourceUrl) { · <a [href]="location.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a> }
             </p>
           } @else {

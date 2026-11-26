@@ -80,6 +80,9 @@ icy:
     page-size: ${SC_WIKI_API_PAGE_SIZE:200}
     uex-delay-millis: ${UEX_API_DELAY_MILLIS:6500}
     user-agent: ${CATALOG_SYNC_USER_AGENT:IceForge/1.0 (https://iceforge.fr)}
+    # Minerais (zones de minage) relus chaque nuit depuis l'API Star Citizen Wiki.
+    mining-auto-enabled: ${CATALOG_MINING_AUTO_SYNC:true}
+    mining-auto-cron: ${CATALOG_MINING_AUTO_CRON:0 30 5 * * *}
 
 
 server:

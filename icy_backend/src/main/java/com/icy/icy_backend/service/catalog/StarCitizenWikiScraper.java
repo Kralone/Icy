@@ -81,6 +81,8 @@ public class StarCitizenWikiScraper {
                     String processed = detail.path("meta").path("processed_at").asText("");
                     if (!processed.isBlank()) ((com.fasterxml.jackson.databind.node.ObjectNode) record)
                             .put("updated_at", processed.replace(' ', 'T') + "Z");
+                    String gameVersion = gameVersion(detail);
+                    if (gameVersion != null) ((com.fasterxml.jackson.databind.node.ObjectNode) record).put("version", gameVersion);
                 }
                 if ("commodities".equals(datasetKey) && properties.getWikiVersion() != null
                         && !properties.getWikiVersion().isBlank()) {
@@ -116,6 +118,16 @@ public class StarCitizenWikiScraper {
         }
         rawStore.deactivateMissing(CatalogMapper.WIKI_SOURCE, datasetKey, runId);
         return imported;
+    }
+
+    /** Version du jeu annoncée par l'API (ex. 4.10.3-LIVE.13165946), limitée à la colonne source_version. */
+    static String gameVersion(JsonNode detail) {
+        for (JsonNode candidate : List.of(detail.path("data").path("version"),
+                detail.path("meta").path("version"), detail.path("meta").path("resource").path("version"))) {
+            String value = candidate.isTextual() ? candidate.asText().trim() : "";
+            if (!value.isEmpty() && value.length() <= 40 && value.matches("[0-9A-Za-z.\\-_]+")) return value;
+        }
+        return null;
     }
 
     private JsonNode fetchPage(String datasetKey, int page) {

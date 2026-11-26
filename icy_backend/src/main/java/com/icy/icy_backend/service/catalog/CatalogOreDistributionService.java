@@ -12,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-/** Game-file distribution is not a player scan sample; never infer occurrence or medians. */
+/**
+ * Répartition lue dans les fichiers du jeu via l'API Star Citizen Wiki.
+ * La chance d'apparition vient du jeu, ce n'est pas une fréquence relevée : aucune médiane n'est déduite.
+ */
 @Service
 public class CatalogOreDistributionService {
     private final JdbcTemplate jdbc;
@@ -60,27 +63,125 @@ public class CatalogOreDistributionService {
                 String placeUuid = place.path("uuid").asText("").trim();
                 String locationKey = "wiki:" + (placeUuid.isEmpty()
                         ? system.path("name").asText("").trim() + "|" + code : placeUuid);
-                Double min = null;
-                Double max = null;
-                boolean present = false;
+                OreAccumulator ore = new OreAccumulator(name, image, id);
                 for (JsonNode resource : place.path("resources")) {
+                    boolean inResource = false;
                     for (JsonNode material : resource.path("materials")) {
                         if (!uuid.equals(material.path("uuid").asText())) continue;
-                        present = true;
+                        inResource = true;
                         Double lo = fraction(material.path("min_percentage"));
                         Double hi = fraction(material.path("max_percentage"));
                         if (lo != null && hi != null && lo > hi) throw new IllegalStateException("Concentrations inversées");
-                        if (lo != null) min = min == null ? lo : Math.min(min, lo);
-                        if (hi != null) max = max == null ? hi : Math.max(max, hi);
+                        ore.min = lower(ore.min, lo);
+                        ore.max = higher(ore.max, hi);
+                    }
+                    if (!inResource) continue;
+                    ore.present = true;
+                    ore.addMethod(method(resource.path("group_name").asText("")));
+                    ore.probability = higher(ore.probability, probability(resource.path("relative_probability_max")));
+                    JsonNode clustering = resource.path("clustering");
+                    if (clustering.isObject()) {
+                        ore.clusterMin = lowerInt(ore.clusterMin, size(clustering.path("min_size")));
+                        ore.clusterMax = higherInt(ore.clusterMax, size(clustering.path("max_size")));
+                        ore.clusterProbability = higher(ore.clusterProbability, probability(clustering.path("probability")));
                     }
                 }
-                if (!present) continue;
+                if (!ore.present) continue;
+                // Chance d'apparition de ce minerai sur l'astre, lue dans les fichiers du jeu (pas un relevé de joueurs).
+                Double placeProbability = probability(place.path("relative_probability"));
+                if (placeProbability != null) ore.probability = placeProbability;
                 Location location = target.computeIfAbsent(locationKey, key -> new Location(key, code, version, updatedAt));
-                location.ores.put(uuid, new OreMixDTO(name, null, min, max, null, image, id));
+                location.ores.merge(uuid, ore, OreAccumulator::merge);
                 if (!Objects.equals(location.version, version)) location.version = null;
                 if (updatedAt != null && (location.updatedAt == null || updatedAt.isBefore(location.updatedAt)))
                     location.updatedAt = updatedAt;
             }
+        }
+    }
+
+    /** Famille de ressource du jeu vers mode de minage affiché. */
+    static String method(String groupName) {
+        String group = groupName.toLowerCase(Locale.ROOT);
+        if (group.startsWith("spaceship")) return "Vaisseau";
+        if (group.startsWith("groundvehicle")) return "Véhicule";
+        if (group.startsWith("fps")) return "À pied";
+        return null;
+    }
+
+    /** Une probabilité hors [0, 1] est ignorée plutôt que de bloquer toute la liste des zones. */
+    private static Double probability(JsonNode value) {
+        if (!value.isNumber()) return null;
+        double number = value.asDouble();
+        return Double.isFinite(number) && number >= 0 && number <= 1 ? number : null;
+    }
+
+    private static Integer size(JsonNode value) {
+        if (!value.isNumber()) return null;
+        int number = value.asInt();
+        return number > 0 && number < 1000 ? number : null;
+    }
+
+    private static Double lower(Double current, Double value) {
+        if (value == null) return current;
+        if (current == null) return value;
+        return Math.min(current, value);
+    }
+
+    private static Double higher(Double current, Double value) {
+        if (value == null) return current;
+        if (current == null) return value;
+        return Math.max(current, value);
+    }
+
+    private static Integer lowerInt(Integer current, Integer value) {
+        if (value == null) return current;
+        if (current == null) return value;
+        return Math.min(current, value);
+    }
+
+    private static Integer higherInt(Integer current, Integer value) {
+        if (value == null) return current;
+        if (current == null) return value;
+        return Math.max(current, value);
+    }
+
+    static final class OreAccumulator {
+        private final String name;
+        private final String image;
+        private final long id;
+        private boolean present;
+        private Double probability;
+        private Double min;
+        private Double max;
+        private Integer clusterMin;
+        private Integer clusterMax;
+        private Double clusterProbability;
+        private final Set<String> methods = new LinkedHashSet<>();
+
+        OreAccumulator(String name, String image, long id) {
+            this.name = name;
+            this.image = image;
+            this.id = id;
+        }
+
+        void addMethod(String method) {
+            if (method != null) methods.add(method);
+        }
+
+        OreAccumulator merge(OreAccumulator other) {
+            probability = higher(probability, other.probability);
+            min = lower(min, other.min);
+            max = higher(max, other.max);
+            clusterMin = lowerInt(clusterMin, other.clusterMin);
+            clusterMax = higherInt(clusterMax, other.clusterMax);
+            clusterProbability = higher(clusterProbability, other.clusterProbability);
+            methods.addAll(other.methods);
+            return this;
+        }
+
+        OreMixDTO dto() {
+            return new OreMixDTO(name, probability, min, max, null, image, id,
+                    methods.isEmpty() ? null : String.join(" · ", methods), clusterMin, clusterMax, clusterProbability);
         }
     }
 
@@ -96,7 +197,7 @@ public class CatalogOreDistributionService {
         private final String code;
         private String version;
         private OffsetDateTime updatedAt;
-        private final Map<String, OreMixDTO> ores = new TreeMap<>();
+        private final Map<String, OreAccumulator> ores = new TreeMap<>();
         Location(String locationKey, String code, String version, OffsetDateTime updatedAt) {
             this.locationKey = locationKey;
             this.code = code;
@@ -106,7 +207,7 @@ public class CatalogOreDistributionService {
         OreLocationDTO dto() {
             OreMetricRangeDTO unknown = new OreMetricRangeDTO(null, null, null);
             return new OreLocationDTO(null, code, "https://api.star-citizen.wiki/commodities", version,
-                    updatedAt, null, null, null, unknown, unknown, unknown, unknown, List.copyOf(ores.values()), locationKey);
+                    updatedAt, null, null, null, unknown, unknown, unknown, unknown, ores.values().stream().map(OreAccumulator::dto).toList(), locationKey);
         }
     }
 }

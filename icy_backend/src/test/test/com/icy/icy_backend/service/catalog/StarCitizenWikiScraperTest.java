@@ -97,4 +97,14 @@ class StarCitizenWikiScraperTest {
         server.verify();
         verify(rawStore).deactivateMissing(CatalogMapper.WIKI_SOURCE, "vehicles", 42L);
     }
+
+    @Test
+    void readsGameVersionFromDetailWhenPresent() throws Exception {
+        var mapper = new ObjectMapper();
+        assertThat(StarCitizenWikiScraper.gameVersion(mapper.readTree(
+                "{\"data\":{},\"meta\":{\"resource\":{\"version\":\"4.10.3-LIVE.13165946\"}}}")))
+                .isEqualTo("4.10.3-LIVE.13165946");
+        assertThat(StarCitizenWikiScraper.gameVersion(mapper.readTree("{\"data\":{\"version\":\"<b>\"}}"))).isNull();
+        assertThat(StarCitizenWikiScraper.gameVersion(mapper.readTree("{\"data\":{}}"))).isNull();
+    }
 }
