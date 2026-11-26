@@ -87,6 +87,10 @@
 .mine-table__freq .mine-bar { width: calc(100% - 4.5rem); max-width: 20rem; }
 .mine-table__freq b { margin-left: 10px; color: rgb(var(--tone)); font-weight: 600; font-variant-numeric: tabular-nums; }
 .mine-table__method { display: block; margin-top: 2px; color: #64748b; font-size: 11px; font-weight: 400; }
+.mine-table__row { cursor: pointer; }
+.mine-table__row:hover td { background: rgb(255 255 255 / 0.03); }
+.mine-table__ore-link { padding: 0; color: inherit; font-weight: inherit; text-align: left; }
+.mine-table__row:hover .mine-table__ore-link { color: rgb(var(--tone)); }
 .mine-table__row--match td { background: rgb(var(--tone) / 0.08); }
 .mine-source { margin-top: 12px; color: #64748b; font-size: 12px; line-height: 1.5; }
 .mine-source a { color: #7dd3fc; }

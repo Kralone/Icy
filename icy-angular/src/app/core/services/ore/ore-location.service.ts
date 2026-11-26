@@ -27,6 +27,8 @@ export interface OreMix {
 export interface OreLocation {
   id: number | null;
   locationKey?: string | null;
+  /** Système indiqué par les fichiers du jeu ; absent pour un relevé importé. */
+  systemName?: string | null;
   locationCode: string;
   sourceUrl?: string | null;
   gameVersion?: string | null;
