@@ -4,13 +4,21 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { ShipService } from '../../core/services/ship/ship.service';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import {WebSocketService} from '../../core/services/websocket/websocket.service';
-import {ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
+import {ShipCatalogStats, ShipDetailModalComponent} from '../../shared/ship-detail-modal/ship-detail-modal.component';
 import {nameInitials, shipRoleTone} from '../../shared/ship-role/ship-role-tone';
+
+const normalize = (value: string): string =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 interface FleetShipGroup {
   name: string;
   imageUrl: string;
   brandImageUrl?: string;
+  brand?: string;
+  focus?: string;
+  crew?: string;
+  cargo?: string;
+  stats?: ShipCatalogStats | null;
   count: number;
   owners?: string[];
 }
@@ -29,6 +37,9 @@ export class FleetComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   fleetSummary: Record<string, FleetShipGroup[]> = {};
+  /** Flotte affichée : fleetSummary restreint à la recherche en cours. */
+  visibleFleet: Record<string, FleetShipGroup[]> = {};
+  query = '';
   private loadingFallback?: ReturnType<typeof setTimeout>;
 
   objectKeys = Object.keys;
@@ -78,6 +89,7 @@ export class FleetComponent implements OnInit, OnDestroy {
           console.error('Erreur de lecture du résumé de flotte', error);
           this.fleetSummary = {};
         } finally {
+          this.applyFilter();
           this.finishLoading();
         }
       },
@@ -97,23 +109,34 @@ export class FleetComponent implements OnInit, OnDestroy {
   }
 
   shipCount(focus: string): number {
-    return (this.fleetSummary[focus] ?? []).reduce((total, ship) => total + ship.count, 0);
-  }
-
-  totalModels(): number {
-    return Object.values(this.fleetSummary).reduce((total, ships) => total + ships.length, 0);
+    return (this.visibleFleet[focus] ?? []).reduce((total, ship) => total + ship.count, 0);
   }
 
   totalShips(): number {
     return Object.values(this.fleetSummary).reduce((total, ships) => total + ships.reduce((count, ship) => count + ship.count, 0), 0);
   }
 
-  totalOwners(): number {
-    const owners = new Set<string>();
-    Object.values(this.fleetSummary).forEach(ships => ships.forEach(ship => ship.owners?.forEach(owner => owners.add(owner))));
-    return owners.size;
+  /** Filtre au fil de la frappe, sans tenir compte de la casse ni des accents. */
+  onSearch(value: string): void {
+    this.query = value;
+    this.applyFilter();
   }
-  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandImageUrl?: string }[]): Record<string, FleetShipGroup[]> {
+
+  private applyFilter(): void {
+    const needle = normalize(this.query.trim());
+    if (!needle) {
+      this.visibleFleet = this.fleetSummary;
+      return;
+    }
+    const result: Record<string, FleetShipGroup[]> = {};
+    for (const [focus, ships] of Object.entries(this.fleetSummary)) {
+      const matches = ships.filter(ship =>
+        normalize(ship.name).includes(needle) || (ship.owners ?? []).some(owner => normalize(owner).includes(needle)));
+      if (matches.length) result[focus] = matches;
+    }
+    this.visibleFleet = result;
+  }
+  private groupShipsByFocus(fleet: { name: string; imageUrl: string; focus: string; brandName?: string; brandImageUrl?: string; crew?: string | null; scu?: number | null; stats?: ShipCatalogStats | null }[]): Record<string, FleetShipGroup[]> {
     const result: Record<string, FleetShipGroup[]> = {};
 
     for (const ship of fleet) {
@@ -129,7 +152,7 @@ export class FleetComponent implements OnInit, OnDestroy {
           if (!existing.owners?.includes(owner)) existing.owners?.push(owner);
         }
       } else {
-        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, count: 1, owners: (ship as any).owners ?? [] });
+        result[focus].push({ name: ship.name, imageUrl: ship.imageUrl, brandImageUrl: ship.brandImageUrl, brand: ship.brandName || undefined, focus, crew: ship.crew || undefined, cargo: ship.scu != null ? `${ship.scu} SCU` : undefined, stats: ship.stats ?? null, count: 1, owners: (ship as any).owners ?? [] });
       }
     }
 

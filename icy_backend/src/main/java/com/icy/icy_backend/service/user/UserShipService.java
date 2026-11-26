@@ -1,6 +1,7 @@
 package com.icy.icy_backend.service.user;
 
 import com.icy.icy_backend.controller.dto.response.ship.FleetSummaryResponse;
+import com.icy.icy_backend.controller.dto.response.ship.ShipCatalogStats;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.user.UserShipDTO;
 import com.icy.icy_backend.db.entity.ship.Ship;
@@ -147,18 +148,25 @@ public class UserShipService {
             return List.of();
         }
 
+        Map<Long, ShipCatalogStats> stats = shipService.catalogStats(
+                userShips.stream().map(userShip -> userShip.getShip().getId()).collect(Collectors.toSet()));
         List<FleetSummaryResponse> fleetSummary = new ArrayList<>();
         for (UserShip userShip : userShips) {
             Ship ship = userShip.getShip();
 
-            fleetSummary.add(new FleetSummaryResponse(
+            FleetSummaryResponse entry = new FleetSummaryResponse(
                     ship.getName(),
                     ship.getImageUrl(),
                     displayFleetFocus(ship),
                     ship.getBrand() != null ? ship.getBrand().getName() : null,
                     ship.getBrand() != null ? ship.getBrand().getImageUrl() : null,
                     List.of(userShip.getUser().getUsername())
-            ));
+            );
+            entry.setCrew(ship.getCrew());
+            entry.setScu(ship.getScu());
+            entry.setSize(ship.getSize());
+            entry.setStats(stats == null ? null : stats.get(ship.getId()));
+            fleetSummary.add(entry);
         }
 
         return fleetSummary;

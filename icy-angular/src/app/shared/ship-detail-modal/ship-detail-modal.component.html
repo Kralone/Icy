@@ -1,1 +1,43 @@
-@if (ship) {<div class="modal-backdrop" (click)="close()" role="presentation"><section class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()"><button class="close" type="button" aria-label="Fermer" (click)="close()">×</button><div class="hero">@if(ship.imageUrl){<img [src]="ship.imageUrl" [alt]="ship.name"/>}<div class="hero-copy">@if(ship.brandImageUrl){<img class="brand" [src]="ship.brandImageUrl" alt=""/>}<span>{{ship.brand || 'Vaisseau'}}</span><h2>{{ship.name}}</h2><small>{{ship.focus || '—'}}</small></div></div><div class="details"><div><b>Équipage</b><span>{{ship.crew || 'Non renseigné'}}</span></div><div><b>Soute</b><span>{{ship.cargo || 'Non renseignée'}}</span></div>@if(ship.description){<p class="description">{{ship.description}}</p>}@if(owners.length){<div class="owners"><b>Propriétaires</b><span>{{owners.join(' · ')}}</span></div>}</div></section></div>}
+@if (ship) {
+  <div class="modal-backdrop" (click)="close()" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" [attr.aria-label]="ship.name" (click)="$event.stopPropagation()">
+      <button class="close" type="button" aria-label="Fermer" (click)="close()">×</button>
+      <div class="hero">
+        @if (ship.imageUrl) { <img [src]="ship.imageUrl" [alt]="ship.name" /> }
+        <div class="hero-copy">
+          @if (ship.brandImageUrl) { <img class="brand" [src]="ship.brandImageUrl" alt="" /> }
+          <span>{{ ship.brand || 'Vaisseau' }}</span>
+          <h2>{{ ship.name }}</h2>
+          <small>{{ roleLine(ship) }}</small>
+          @if (sizeLabel(ship); as size) { <em class="size">{{ size }}</em> }
+        </div>
+      </div>
+      <div class="details">
+        <div><b>Équipage</b><span>{{ crew(ship) }}</span></div>
+        <div><b>Soute</b><span>{{ cargo(ship) }}</span></div>
+        @if (owners.length) {
+          <div class="owners"><b>Propriétaires</b><span>{{ owners.join(' · ') }}</span></div>
+        }
+      </div>
+      @if (groups(ship); as statGroups) {
+        @if (statGroups.length) {
+          <div class="stats">
+            @for (group of statGroups; track group.title) {
+              <section class="stat-group">
+                <h3>{{ group.title }}</h3>
+                <dl>
+                  @for (row of group.rows; track row.label) {
+                    <div><dt>{{ row.label }}</dt><dd>{{ row.value }}</dd></div>
+                  }
+                </dl>
+              </section>
+            }
+          </div>
+        }
+      }
+      @if (description(ship); as text) {
+        <p class="description">{{ text }}</p>
+      }
+    </section>
+  </div>
+}

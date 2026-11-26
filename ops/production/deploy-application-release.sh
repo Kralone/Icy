@@ -225,6 +225,14 @@ fi
 declare -A previous
 for service in backend bot frontend; do
   previous[$service]=$(docker inspect --format '{{.Config.Image}}' "iceforge_${service}")
+  # Le retour arrière relance l'image par son nom : il faut que ce nom désigne encore l'image
+  # qui tourne. Un tag supprimé ou déplacé depuis la création du conteneur est remis sur cette image.
+  running_id=$(docker inspect --format '{{.Image}}' "iceforge_${service}")
+  tagged_id=$(docker image inspect --format '{{.Id}}' "${previous[$service]}" 2>/dev/null || true)
+  if [[ $tagged_id != "$running_id" ]]; then
+    echo "ROLLBACK-IMAGE=RETAG ${service} ${previous[$service]} -> ${running_id}"
+    docker tag "$running_id" "${previous[$service]}"
+  fi
 done
 
 rollback_file=$(mktemp /var/backups/iceforge/application-rollback.XXXXXX)

@@ -50,7 +50,8 @@ expected_id="$(docker image inspect --format '{{.Id}}' "$bot_image")"
 [[ "$(docker exec "$bot_container" id -g)" == "10001" ]]
 
 python_version="$(docker exec "$bot_container" python --version 2>&1)"
-grep -Fq 'Python 3.14.8' <<<"$python_version" || { echo "ERROR: unexpected Python runtime" >&2; exit 1; }
+# Version mineure seulement : les correctifs 3.14.x arrivent par Dependabot (image python:3.14.x).
+[[ $python_version =~ ^Python\ 3\.14\.[0-9]+$ ]] || { echo "ERROR: unexpected Python runtime: $python_version" >&2; exit 1; }
 if docker exec "$bot_container" touch /app/.root-filesystem-write-check >/dev/null 2>&1; then
   docker exec "$bot_container" rm -f /app/.root-filesystem-write-check
   echo "ERROR: bot root filesystem accepted a write" >&2
