@@ -6,7 +6,7 @@ export const LEGAL_INFO = {
   siteName: 'IceForge',
   siteUrl: 'https://iceforge.fr',
   publisher: 'GERARD Florian',
-  contactEmail: 'A_RENSEIGNER@example.invalid',
+  contactEmail: 'iceforgeindustries@gmail.com',
   lastUpdate: '27 novembre 2026',
   host: {
     name: 'Hostinger International Ltd',

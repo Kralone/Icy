@@ -25,11 +25,13 @@
       demandée. Ces journaux servent à faire fonctionner le site et à le protéger contre les abus.
     </p>
     <p>
-      Les polices de caractères du site sont chargées depuis Google Fonts. Votre navigateur transmet donc votre
-      adresse IP à Google lors de l'affichage des pages.
+      Certaines images de vaisseaux et des guides sont affichées depuis leur site d'origine, par exemple le wiki
+      Star Citizen ou le site de Roberts Space Industries. Votre navigateur transmet alors votre adresse IP à ces
+      sites, comme pour tout contenu hébergé ailleurs.
     </p>
 
     <h2>Candidature</h2>
+    <p>Il faut avoir au moins 15 ans pour envoyer une candidature.</p>
     <p>
       Le formulaire de recrutement enregistre le pseudo, l'identifiant Discord, la motivation, et si vous les
       remplissez le parrain, l'expérience en jeu et le gameplay préféré. Les responsables de la guilde lisent la
@@ -111,6 +113,18 @@
             <td>Intérêt légitime de la guilde à organiser ses activités</td>
           </tr>
           <tr>
+            <td>Prévenir les responsables de la guilde à l'arrivée d'une candidature</td>
+            <td>Intérêt légitime de la guilde à traiter les candidatures rapidement</td>
+          </tr>
+          <tr>
+            <td>Afficher publiquement le pseudo, la photo de profil et le statut en ligne des membres</td>
+            <td>Intérêt légitime de la guilde à présenter ses membres actifs</td>
+          </tr>
+          <tr>
+            <td>Envoyer des messages privés sur Discord : rappels, avertissements, mot de passe temporaire</td>
+            <td>Intérêt légitime de la guilde à joindre ses membres là où ils échangent</td>
+          </tr>
+          <tr>
             <td>Appliquer le règlement de la guilde : avertissements et sanctions</td>
             <td>Intérêt légitime de la guilde à faire respecter ses règles</td>
           </tr>
@@ -184,26 +198,26 @@
     <h2>Prestataires et transferts hors de l'Union européenne</h2>
     <ul>
       <li>
-        <strong>{{ info.host.name }}</strong> ({{ info.host.address }}) héberge le site et sa base de données.
+        <strong>{{ info.host.name }}</strong> ({{ info.host.address }}) héberge le site, sa base de données et ses
+        polices de caractères. Les données restent dans l'Union européenne.
       </li>
       <li>
-        <strong>Discord</strong> transmet les messages privés envoyés par le site et les annonces de la guilde.
-        Discord est une société américaine. Votre utilisation de Discord relève aussi de sa propre politique de
-        confidentialité.
+        <strong>Discord</strong> transmet les messages privés envoyés par le site et les annonces de la guilde. Pour
+        les utilisateurs européens, Discord Netherlands BV est responsable des données traitées par Discord. Les
+        données peuvent être transférées à Discord Inc. aux États-Unis, qui adhère au cadre de protection des
+        données UE–États-Unis (Data Privacy Framework). Votre utilisation de Discord relève aussi de sa propre
+        politique de confidentialité.
       </li>
       <li>
-        <strong>Google</strong> fournit les polices de caractères (Google Fonts) et reçoit à ce titre votre adresse
-        IP.
+        <strong>Google (Gmail)</strong> reçoit les messages envoyés à l'adresse de contact. Google LLC adhère au
+        cadre de protection des données UE–États-Unis.
       </li>
       <li>
         <strong>Le service de notification de votre navigateur</strong> (Google, Mozilla, Apple ou Microsoft selon
-        le navigateur) achemine les notifications, si vous les avez activées.
+        le navigateur) achemine les notifications, si vous les avez activées. Les garanties applicables sont celles
+        de l'éditeur du navigateur que vous utilisez.
       </li>
     </ul>
-    <p>
-      Les transferts vers les États-Unis s'appuient sur le cadre de protection des données UE–États-Unis ou sur
-      les clauses contractuelles types de la Commission européenne, selon le prestataire.
-    </p>
 
     <h2>Sécurité</h2>
     <p>
@@ -217,10 +231,25 @@
       <li>obtenir une copie des données qui vous concernent ;</li>
       <li>faire corriger une donnée inexacte ;</li>
       <li>demander la suppression de vos données, y compris de votre compte ;</li>
-      <li>vous opposer à un traitement ou demander sa limitation ;</li>
+      <li>demander la limitation d'un traitement ;</li>
       <li>récupérer vos données dans un format réutilisable ;</li>
       <li>retirer votre consentement aux notifications, depuis votre profil ou votre navigateur.</li>
     </ul>
+    <h3>Droit d'opposition</h3>
+    <p>
+      Vous pouvez vous opposer à tout moment, pour des raisons tenant à votre situation particulière, aux
+      traitements fondés sur l'intérêt légitime de la guilde, c'est-à-dire la plupart des traitements décrits
+      ci-dessus. Le traitement s'arrête alors, sauf motif légitime et impérieux, par exemple garder la trace d'une
+      exclusion.
+    </p>
+
+    <h3>Directives après le décès</h3>
+    <p>
+      Vous pouvez définir des directives sur le sort de vos données après votre décès, comme le prévoit la loi
+      Informatique et Libertés.
+    </p>
+
+    <h3>Exercer vos droits</h3>
     <p>
       Pour exercer ces droits, écrivez à <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>
       ou contactez {{ info.publisher }} en message privé sur le Discord de la guilde. Une réponse vous est
