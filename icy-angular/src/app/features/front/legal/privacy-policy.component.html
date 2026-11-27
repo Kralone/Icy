@@ -146,6 +146,12 @@
             <td>Votre consentement, que vous pouvez retirer à tout moment</td>
           </tr>
           <tr>
+            <td>Répondre aux messages envoyés à l'adresse de contact, dont les demandes d'exercice de vos droits</td>
+            <td>
+              Intérêt légitime à répondre aux demandes ; obligation légale pour les demandes liées au RGPD
+            </td>
+          </tr>
+          <tr>
             <td>Sécuriser le site : connexion, journaux techniques, sauvegardes</td>
             <td>Intérêt légitime à protéger le site et ses données</td>
           </tr>
@@ -196,12 +202,23 @@
             <td>Jusqu'à ce que vous les désactiviez, ou 24 heures après votre départ de la guilde</td>
           </tr>
           <tr>
+            <td>Emails reçus sur l'adresse de contact</td>
+            <td>12 mois après le dernier échange, sauf litige ou demande en cours qui justifie de les garder</td>
+          </tr>
+          <tr>
+            <td>Annonce d'un email reçu dans le salon Discord privé</td>
+            <td>3 mois</td>
+          </tr>
+          <tr>
             <td>Journaux techniques du serveur</td>
             <td>12 mois au plus</td>
           </tr>
           <tr>
             <td>Sauvegardes chiffrées de la base</td>
-            <td>6 mois ; les trois sauvegardes les plus récentes sont toujours gardées pour pouvoir restaurer le site</td>
+            <td>
+              6 mois au plus : à chaque nouvelle sauvegarde, celles de plus de 6 mois sont supprimées. Si une
+              sauvegarde doit être restaurée, les effacements demandés depuis sa date sont refaits aussitôt
+            </td>
           </tr>
         </tbody>
       </table>
@@ -221,7 +238,9 @@
       <li>
         <strong>{{ info.host.name }}</strong>, société établie à Chypre, dans l'Union européenne
         ({{ info.host.address }}), héberge le site, sa base de données et ses polices de caractères sur un serveur
-        situé à Paris, en France. Ces données restent dans l'Union européenne.
+        situé à Paris, en France. Hostinger peut faire intervenir des sous-traitants hors de l'Union européenne, par
+        exemple pour son support technique ; ces transferts sont encadrés par les clauses contractuelles types de la
+        Commission européenne, prévues par l'accord de traitement des données de Hostinger.
       </li>
       <li>
         <strong>Discord</strong> transmet les messages privés envoyés par le site et les annonces de la guilde. Pour
@@ -239,14 +258,18 @@
       </li>
       <li>
         <strong>Le service de notification de votre navigateur</strong> (Google, Mozilla, Apple ou Microsoft selon
-        le navigateur) achemine les notifications, si vous les avez activées. Les garanties applicables sont celles
-        de l'éditeur du navigateur que vous utilisez.
+        le navigateur) achemine les notifications, si vous les avez activées. Ce service, choisi par l'éditeur de votre navigateur, peut
+        être situé hors de l'Union européenne et aucun contrat ne lie la guilde à lui. Il ne reçoit qu'une adresse
+        d'abonnement technique et le texte des notifications. Vous pouvez éviter ce transfert en laissant les
+        notifications désactivées.
       </li>
       <li>
         <strong>Les sites d'origine des images externes</strong> (wiki Star Citizen, Roberts Space Industries,
         stockage Google Cloud et quelques sites de presse sur le jeu) reçoivent votre adresse IP quand une page les
-        affiche. Certains sont situés hors de l'Union européenne, notamment aux États-Unis. Aucun contrat ne lie la
-        guilde à ces sites : leurs propres politiques de confidentialité s'appliquent.
+        affiche. Certains sont situés hors de l'Union européenne, notamment aux États-Unis. Aucun contrat ni garantie
+        de transfert ne lie la guilde à ces sites : ils ne reçoivent que les informations techniques envoyées par
+        votre navigateur (adresse IP, type de navigateur), et leurs propres politiques de confidentialité
+        s'appliquent.
       </li>
     </ul>
 
@@ -266,9 +289,9 @@
       <li>retirer votre consentement aux notifications, depuis votre profil ou votre navigateur.</li>
     </ul>
     <p>
-      Le droit à la portabilité ne s'applique qu'aux traitements fondés sur votre consentement, ici les
-      notifications du navigateur. Pour le reste, la copie de vos données est fournie dans un format lisible et
-      réutilisable, même si la loi ne l'impose pas.
+      Le droit à la portabilité s'applique aux traitements qui remplissent les conditions de l'article 20 du RGPD.
+      Pour les autres, IceForge fournit aussi, sur demande, une copie de vos données dans un format lisible et
+      réutilisable.
     </p>
     <h3>Droit d'opposition</h3>
     <p>
@@ -296,6 +319,8 @@
     <p>
       Certaines données peuvent être conservées malgré une demande de suppression quand elles concernent aussi
       d'autres membres, par exemple le partage des gains d'une session. Elles sont alors rendues anonymes.
+      L'effacement est noté dans un registre, pour être refait si une sauvegarde plus ancienne devait être
+      restaurée.
     </p>
 
     <h2>Réclamation</h2>

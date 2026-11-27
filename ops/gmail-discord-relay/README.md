@@ -22,7 +22,8 @@ politique de confidentialité.
    ajouter `DISCORD_WEBHOOK_URL` avec l'URL copiée à l'étape 1.
 5. **Autoriser et planifier.** Dans l'éditeur, choisir la fonction
    `installTrigger` puis Exécuter, et accepter les autorisations demandées.
-   Le relais tourne ensuite toutes les 5 minutes.
+   Le relais tourne ensuite toutes les 5 minutes, et la purge chaque nuit
+   vers 4 h.
 6. **Tester.** Envoyer un email à l'adresse de contact, puis exécuter
    `relayNewMail` à la main ou attendre 5 minutes.
 
@@ -37,3 +38,15 @@ politique de confidentialité.
 - Les mentions (`@everyone`, rôles) contenues dans un email sont neutralisées.
 - En cas d'échec (webhook supprimé, Discord indisponible), Google envoie un
   email d'erreur au compte et le message est retenté au passage suivant.
+
+## Durées de conservation
+
+La fonction `applyRetention`, lancée chaque nuit, applique la politique de
+confidentialité :
+
+- les conversations relayées sont mises à la corbeille Gmail 12 mois après le
+  dernier message (Gmail vide la corbeille au bout de 30 jours). Ajouter le
+  libellé **« À conserver »** à une conversation qui doit être gardée plus
+  longtemps, par exemple un litige en cours ;
+- les annonces publiées dans Discord par le webhook sont supprimées après
+  3 mois. Seules les annonces publiées depuis cette version sont suivies.

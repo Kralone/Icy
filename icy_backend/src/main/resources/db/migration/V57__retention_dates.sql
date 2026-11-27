@@ -47,3 +47,12 @@ DROP TRIGGER IF EXISTS trg_recruitment_decided_at ON recruitment.recruitment;
 CREATE TRIGGER trg_recruitment_decided_at
     BEFORE INSERT OR UPDATE OF status ON recruitment.recruitment
     FOR EACH ROW EXECUTE FUNCTION recruitment.track_recruitment_decision();
+
+-- Effacements faits à la demande d'un membre. Après la restauration d'une sauvegarde plus ancienne,
+-- les effacements postérieurs sont refaits à partir du registre tenu hors du serveur (docs/rgpd).
+CREATE TABLE IF NOT EXISTS core.erasure_log (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES core.users (id),
+    requested_by UUID REFERENCES core.users (id) ON DELETE SET NULL,
+    erased_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

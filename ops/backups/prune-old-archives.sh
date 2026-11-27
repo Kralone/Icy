@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Supprime les bundles chiffrés plus anciens que la durée annoncée dans la
-# politique de confidentialité (6 mois), en gardant toujours les plus récents.
+# politique de confidentialité (6 mois), en gardant toujours le plus récent.
 #
 #   prune-old-archives.sh --dir /var/backups/iceforge [--max-age-days 183] [--keep 3] [--apply]
 #
@@ -9,7 +9,7 @@ set -euo pipefail
 
 dir=
 max_age_days=183
-keep=3
+keep=1
 apply=false
 
 while (($#)); do

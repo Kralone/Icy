@@ -10,6 +10,10 @@
  */
 
 const RELAY_LABEL = 'Relayé Discord';
+const KEEP_LABEL = 'À conserver';
+const MAIL_RETENTION = '1y';          // emails : 12 mois après le dernier échange
+const NOTICE_RETENTION_DAYS = 90;     // annonces Discord : 3 mois
+const NOTICES_PROPERTY = 'DISCORD_NOTICES';
 const MAX_THREADS_PER_RUN = 20;
 const EMBED_COLOR = 0x22d3ee;
 
@@ -47,7 +51,7 @@ function postToDiscord(webhookUrl, thread, message) {
       timestamp: message.getDate().toISOString()
     }]
   };
-  const response = UrlFetchApp.fetch(webhookUrl, {
+  const response = UrlFetchApp.fetch(webhookUrl + (webhookUrl.indexOf('?') < 0 ? '?' : '&') + 'wait=true', {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify(payload),
@@ -57,16 +61,55 @@ function postToDiscord(webhookUrl, thread, message) {
   if (code >= 300) {
     throw new Error('Discord a refusé le message (' + code + ') : ' + response.getContentText().slice(0, 200));
   }
+  rememberNotice(JSON.parse(response.getContentText()).id);
+}
+
+function rememberNotice(messageId) {
+  const properties = PropertiesService.getScriptProperties();
+  const notices = JSON.parse(properties.getProperty(NOTICES_PROPERTY) || '[]');
+  notices.push({ id: messageId, at: Date.now() });
+  properties.setProperty(NOTICES_PROPERTY, JSON.stringify(notices));
+}
+
+/**
+ * Durées de la politique de confidentialité : emails mis à la corbeille 12 mois après le dernier
+ * échange (sauf libellé « À conserver »), annonces Discord supprimées après 3 mois.
+ */
+function applyRetention() {
+  const trashQuery = 'label:"' + RELAY_LABEL + '" -label:"' + KEEP_LABEL + '" older_than:' + MAIL_RETENTION;
+  let threads;
+  do {
+    threads = GmailApp.search(trashQuery, 0, 100);
+    threads.forEach(function (thread) { thread.moveToTrash(); });
+  } while (threads.length === 100);
+
+  const webhookUrl = PropertiesService.getScriptProperties().getProperty('DISCORD_WEBHOOK_URL');
+  const properties = PropertiesService.getScriptProperties();
+  const cutoff = Date.now() - NOTICE_RETENTION_DAYS * 24 * 3600 * 1000;
+  const kept = [];
+  JSON.parse(properties.getProperty(NOTICES_PROPERTY) || '[]').forEach(function (notice) {
+    if (notice.at >= cutoff || !webhookUrl) {
+      kept.push(notice);
+      return;
+    }
+    const code = UrlFetchApp.fetch(webhookUrl.split('?')[0] + '/messages/' + notice.id,
+      { method: 'delete', muteHttpExceptions: true }).getResponseCode();
+    if (code >= 300 && code !== 404) kept.push(notice);
+  });
+  properties.setProperty(NOTICES_PROPERTY, JSON.stringify(kept));
 }
 
 function truncate(text, max) {
   return text.length > max ? text.slice(0, max - 1) + '…' : text;
 }
 
-/** À lancer une fois à la main : crée le déclencheur toutes les 5 minutes. */
+/** À lancer une fois à la main : relais toutes les 5 minutes, durées de conservation chaque nuit. */
 function installTrigger() {
   ScriptApp.getProjectTriggers()
-    .filter(function (trigger) { return trigger.getHandlerFunction() === 'relayNewMail'; })
+    .filter(function (trigger) {
+      return ['relayNewMail', 'applyRetention'].indexOf(trigger.getHandlerFunction()) >= 0;
+    })
     .forEach(function (trigger) { ScriptApp.deleteTrigger(trigger); });
   ScriptApp.newTrigger('relayNewMail').timeBased().everyMinutes(5).create();
+  ScriptApp.newTrigger('applyRetention').timeBased().everyDays(1).atHour(4).create();
 }

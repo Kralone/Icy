@@ -113,8 +113,42 @@ public class DataRetentionService {
                   AND deactivated_at < NOW() - INTERVAL '2 years'
                 """, UUID.class);
         counts.put("comptes anonymisés", users.size());
+        anonymize(users, counts);
+        return users;
+    }
+
+    /**
+     * Effacement à la demande d'un membre (RGPD art. 17) : compte désactivé et anonymisé tout de suite,
+     * avatar effacé. Sert aussi, après une restauration, à refaire les effacements postérieurs à la sauvegarde.
+     */
+    public Result eraseOnRequest(List<UUID> userIds, UUID requestedBy) {
+        Result result = transactions.execute(status -> {
+            Map<String, Integer> counts = new LinkedHashMap<>();
+            UUID[] requested = userIds.toArray(UUID[]::new);
+            List<UUID> users = jdbc.queryForList(
+                    "SELECT id FROM core.users WHERE id = ANY(?) AND anonymized_at IS NULL", UUID.class, (Object) requested);
+            jdbc.update("UPDATE core.users SET active = FALSE WHERE id = ANY(?)", (Object) users.toArray(UUID[]::new));
+            anonymize(users, counts);
+            for (UUID id : users) {
+                jdbc.update("INSERT INTO core.erasure_log(user_id, requested_by) VALUES (?, ?)", id, requestedBy);
+            }
+            counts.put("comptes anonymisés", users.size());
+            return new Result(true, counts, users);
+        });
+        for (UUID userId : result.anonymizedUsers()) {
+            try {
+                avatars.deleteAvatarOf(userId);
+            } catch (IOException e) {
+                log.warn("Avatar de {} non supprimé : {}", userId, e.getMessage());
+            }
+        }
+        log.info("Effacement sur demande : {} compte(s) anonymisé(s)", result.anonymizedUsers().size());
+        return result;
+    }
+
+    private void anonymize(List<UUID> users, Map<String, Integer> counts) {
         if (users.isEmpty()) {
-            return users;
+            return;
         }
         UUID[] ids = users.toArray(UUID[]::new);
         // Certaines tables stockent user_id en texte : la comparaison se fait sur la forme texte.
@@ -138,7 +172,6 @@ public class DataRetentionService {
                     anonymized_at = NOW()
                 WHERE id = ANY(?)
                 """, FORMER_MEMBER, ids);
-        return users;
     }
 
     /** Candidatures (6 mois après la décision), suivi d'activité (1 an), jetons et données inutiles après un départ. */

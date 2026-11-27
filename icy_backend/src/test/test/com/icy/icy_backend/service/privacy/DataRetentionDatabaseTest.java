@@ -167,6 +167,31 @@ class DataRetentionDatabaseTest {
     }
 
     @Test
+    void erasesOnRequestAtOnceAndOnlyOnce() throws Exception {
+        UUID member = member("Retention Erase", true, null);
+        UUID admin = member("Retention Admin", true, null);
+
+        DataRetentionService.Result first = service.eraseOnRequest(java.util.List.of(member), admin);
+        DataRetentionService.Result replay = service.eraseOnRequest(java.util.List.of(member), admin);
+
+        assertThat(first.anonymizedUsers()).containsExactly(member);
+        assertThat(replay.anonymizedUsers()).isEmpty();
+        assertThat(count("SELECT COUNT(*) FROM core.users WHERE id = ? AND active IS FALSE AND anonymized_at IS NOT NULL", member)).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM core.user_params WHERE user_id = ?", member)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM core.erasure_log WHERE user_id = ? AND requested_by = ?", member, admin)).isEqualTo(1);
+        verify(avatars).deleteAvatarOf(member);
+    }
+
+    @Test
+    void exportsAMembersDataWithoutSecrets() {
+        UUID member = member("Retention Export", true, null);
+        var export = new PersonalDataExportService(jdbc).export(member);
+
+        assertThat(export).containsKeys("core.users", "core.user_params", "core.user_availability");
+        assertThat(export.get("core.users").get(0)).containsEntry("username", "Retention Export").doesNotContainKey("password");
+    }
+
+    @Test
     void reportModeCountsWithoutChangingAnything() throws Exception {
         UUID gone = member("Retention Report", false, "3 years");
         long old = recruitment("REJECTED", "7 months");

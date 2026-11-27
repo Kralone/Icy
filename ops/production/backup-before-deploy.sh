@@ -136,7 +136,7 @@ done
 
 cleanup
 trap - EXIT
-# Durée annoncée dans la politique de confidentialité : 6 mois, les 3 bundles
-# les plus récents étant toujours gardés pour pouvoir restaurer.
-"$ROOT_DIR/ops/backups/prune-old-archives.sh" --dir "$BACKUP_DIR" --keep 3 --max-age-days 183 --apply
+# Durée annoncée dans la politique de confidentialité : 6 mois au plus. Seul le
+# bundle qui vient d’être créé est toujours gardé.
+"$ROOT_DIR/ops/backups/prune-old-archives.sh" --dir "$BACKUP_DIR" --keep 1 --max-age-days 183 --apply
 printf 'PREDEPLOY-BACKUP=OK archive=%s\n' "$archive"

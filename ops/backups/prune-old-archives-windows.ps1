@@ -1,6 +1,6 @@
 # Purge des copies de sauvegarde gardées sur un PC Windows, avec la même règle
 # que le serveur (politique de confidentialité) : supprimer les bundles de plus
-# de 6 mois, en gardant toujours les 3 plus récents.
+# de 6 mois, en gardant toujours la plus récente.
 #
 #   .\prune-old-archives-windows.ps1 -Directory 'D:\Sauvegardes\IceForge'          # liste seulement
 #   .\prune-old-archives-windows.ps1 -Directory 'D:\Sauvegardes\IceForge' -Apply   # supprime
@@ -11,7 +11,7 @@
 param(
     [Parameter(Mandatory)][string]$Directory,
     [ValidateRange(30, 3650)][int]$MaxAgeDays = 183,
-    [ValidateRange(1, 100)][int]$Keep = 3,
+    [ValidateRange(1, 100)][int]$Keep = 1,
     [switch]$Apply
 )
 
