@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -61,6 +62,11 @@ public class AuthService {
 
             // Si l'utilisateur doit réinitialiser son mot de passe
             if (user.getPwdReset()) {
+                LocalDateTime issuedAt = user.getTempPasswordIssuedAt();
+                if (issuedAt != null && issuedAt.plus(UserService.TEMP_PASSWORD_TTL).isBefore(LocalDateTime.now())) {
+                    throw new InvalidCredentialsException(
+                            "Mot de passe temporaire expiré : demande à un responsable d'en générer un nouveau.");
+                }
                 String passwordResetToken = jwtUtil.generatePasswordResetToken(username, user.getId());
                 return new LoginResponseDTO("resetPwd", "resetPwd", userDto, passwordResetToken);
             }

@@ -11,7 +11,7 @@ import { RankOrbitComponent } from '../rank-orbit/rank-orbit.component';
 import { Subscription } from 'rxjs';
 import { memberRank } from '../../core/services/user/member-rank';
 
-type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
+type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne' | 'invisible';
 
 @Component({
   selector: 'app-topbar',
@@ -46,7 +46,8 @@ export class TopbarComponent {
     { key: 'connecte', label: 'Connecté', badgeClass: 'border-emerald-400/60 bg-emerald-400/40 text-emerald-200' },
     { key: 'enjeu', label: 'En jeu', badgeClass: 'border-violet-400/70 bg-violet-400/45 text-violet-200' },
     { key: 'absent', label: 'Absent', badgeClass: 'border-amber-400/60 bg-amber-400/40 text-amber-200' },
-    { key: 'indisponible', label: 'Indisponible', badgeClass: 'border-rose-400/60 bg-rose-400/40 text-rose-200' }
+    { key: 'indisponible', label: 'Indisponible', badgeClass: 'border-rose-400/60 bg-rose-400/40 text-rose-200' },
+    { key: 'invisible', label: 'Invisible', badgeClass: 'border-slate-400/60 bg-slate-400/30 text-slate-200' }
   ];
   /** Pastille de l'avatar : couleur pleine pour rester lisible par-dessus les anneaux de grade. */
   statusBadgeClasses: Record<StatusKey, string> = {
@@ -54,7 +55,8 @@ export class TopbarComponent {
     enjeu: 'bg-violet-400',
     absent: 'bg-amber-400',
     indisponible: 'bg-rose-500',
-    horsligne: 'bg-slate-400'
+    horsligne: 'bg-slate-400',
+    invisible: 'bg-slate-600'
   };
   currentStatus: StatusKey = 'connecte';
   avatarUrl: string | null = null;

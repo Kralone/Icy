@@ -55,7 +55,8 @@ export class OnlineMembersComponent implements OnInit, OnDestroy {
     enjeu: { label: 'En jeu', badgeClass: 'front-online__badge--enjeu' },
     absent: { label: 'Absent', badgeClass: 'front-online__badge--absent' },
     indisponible: { label: 'Indisponible', badgeClass: 'front-online__badge--indisponible' },
-    horsligne: { label: 'Hors ligne', badgeClass: 'front-online__badge--horsligne' }
+    horsligne: { label: 'Hors ligne', badgeClass: 'front-online__badge--horsligne' },
+    invisible: { label: 'Hors ligne', badgeClass: 'front-online__badge--horsligne' }
   };
 
   constructor(

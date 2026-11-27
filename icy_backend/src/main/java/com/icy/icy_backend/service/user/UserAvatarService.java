@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -86,6 +87,18 @@ public class UserAvatarService {
         );
 
         return url;
+    }
+
+    /** Supprime l'avatar d'un membre et sa fiche dans la médiathèque (fichier nommé d'après l'identifiant). */
+    public void deleteAvatarOf(UUID userId) throws IOException {
+        for (String extension : List.of(".jpg", ".png", ".webp")) {
+            String filename = userId + extension;
+            Path path = avatarRoot.resolve(filename);
+            if (Files.deleteIfExists(path)) {
+                log.info("🗑️ Avatar supprime : {}", filename);
+            }
+            imageService.deleteMetadataIfExists("avatars/" + filename);
+        }
     }
 
     private void deletePreviousAvatar(User user, String newFilename) throws IOException {

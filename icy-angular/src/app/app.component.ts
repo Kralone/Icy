@@ -6,6 +6,7 @@ import {VersionService} from './core/services/config/version.service';
 import { UserActivityService } from './core/services/user/user-activity.service';
 import { SeoService } from './core/services/seo/seo.service';
 import { PublicTopbarComponent } from './features/front/public-topbar/public-topbar.component';
+import { LegalLinksComponent } from './features/front/legal/legal-links.component';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,8 @@ import { PublicTopbarComponent } from './features/front/public-topbar/public-top
   templateUrl: './app.component.html',
   imports: [
     RouterOutlet,
-    PublicTopbarComponent
+    PublicTopbarComponent,
+    LegalLinksComponent
 ],
   styleUrl: './app.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -82,5 +84,11 @@ export class AppComponent implements OnInit {
   get showPublicTopbar(): boolean {
     const url = this.router.url || '';
     return !url.startsWith('/icy');
+  }
+
+  /** L'accueil a son propre pied de page ; l'espace membre affiche les liens dans la barre latérale. */
+  get showPublicFooter(): boolean {
+    const path = (this.router.url || '/').split(/[?#]/)[0];
+    return this.showPublicTopbar && path !== '/' && path !== '';
   }
 }

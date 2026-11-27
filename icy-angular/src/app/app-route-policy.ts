@@ -3,13 +3,17 @@ export const canonicalPrerenderRoutes = [
   '',
   'recrutement',
   'guides/minage-star-citizen',
-  'guides/salvage'
+  'guides/salvage',
+  'mentions-legales',
+  'confidentialite'
 ] as const;
 
 const knownRoutes = new Set([
   '/',
   '/login',
   '/recrutement',
+  '/mentions-legales',
+  '/confidentialite',
   '/guides/minage-star-citizen',
   '/guides/salvage',
   '/guides/minage/confirmed',

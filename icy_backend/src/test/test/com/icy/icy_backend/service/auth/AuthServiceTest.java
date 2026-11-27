@@ -86,6 +86,34 @@ class AuthServiceTest {
     }
 
     @Test
+    void authenticateRejectsAnExpiredTemporaryPassword() {
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
+        CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        UserService userService = Mockito.mock(UserService.class);
+        AuthService authService = new AuthService(jwtUtil, userDetailsService, passwordEncoder, userService,
+                Mockito.mock(RefreshTokenService.class));
+
+        UserDetails details = org.springframework.security.core.userdetails.User
+                .withUsername("alice").password("secret")
+                .authorities(new SimpleGrantedAuthority("ROLE_USER")).build();
+        when(userDetailsService.loadUserByUsername("alice")).thenReturn(details);
+        when(passwordEncoder.matches("pwd", "secret")).thenReturn(true);
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setUsername("alice");
+        user.setPwdReset(true);
+        user.setTempPasswordIssuedAt(java.time.LocalDateTime.now().minusHours(73));
+        when(userService.getByUsername("alice")).thenReturn(user);
+
+        assertThatThrownBy(() -> authService.authenticate("alice", "pwd"))
+                .isInstanceOf(InvalidCredentialsException.class)
+                .hasMessageContaining("expiré");
+        Mockito.verifyNoInteractions(jwtUtil);
+    }
+
+    @Test
     void authenticateThrowsForInvalidPassword() {
         JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
         CustomUserDetailsService userDetailsService = Mockito.mock(CustomUserDetailsService.class);

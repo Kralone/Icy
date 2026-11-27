@@ -105,6 +105,11 @@
                   }
                 </button>
 
+                <p class="text-xs text-gray-400 text-center">
+                  Il faut avoir au moins 15 ans pour candidater. Ta candidature est lue par les responsables de la guilde et conservée 6 mois après la décision.
+                  <a routerLink="/confidentialite" class="text-cyan-300 underline">Politique de confidentialité</a>
+                </p>
+
                 @if (errorMessage) {
                   <p role="alert" class="text-red-400 text-center mt-3 animate__animated animate__shakeX">
                     {{ errorMessage }}

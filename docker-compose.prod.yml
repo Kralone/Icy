@@ -1,5 +1,14 @@
+# Journaux Docker bornés : les journaux contiennent des adresses IP, la politique
+# de confidentialité annonce 12 mois au plus. 5 fichiers de 10 Mo par conteneur.
+x-logging: &bounded-logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   db:
+    logging: *bounded-logs
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -9,6 +18,7 @@ services:
     pids_limit: 200
 
   rabbitmq:
+    logging: *bounded-logs
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER is required}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PSWD:?RABBITMQ_PSWD is required}
@@ -18,6 +28,7 @@ services:
     pids_limit: 300
 
   backend:
+    logging: *bounded-logs
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:?SPRING_DATASOURCE_URL is required}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?SPRING_DATASOURCE_USERNAME is required}
@@ -34,6 +45,8 @@ services:
       # Exact Nginx address: trusting a broad Docker subnet would let another
       # compromised container forge X-Forwarded-For.
       ICY_RATE_LIMIT_TRUSTED_PROXIES: ${ICEFORGE_PROD_FRONTEND_IP:-10.253.40.10}/32
+      # report : la purge RGPD nocturne journalise seulement ; apply : elle supprime.
+      ICEFORGE_RETENTION_MODE: ${ICEFORGE_RETENTION_MODE:-report}
     read_only: true
     tmpfs: ["/tmp:size=128m,mode=1777"]
     security_opt: ["no-new-privileges:true"]
@@ -42,6 +55,7 @@ services:
     pids_limit: 300
 
   bot:
+    logging: *bounded-logs
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN:?DISCORD_TOKEN is required}
       GUILD_ID: ${GUILD_ID:?GUILD_ID is required}
@@ -56,6 +70,7 @@ services:
     pids_limit: 150
 
   frontend:
+    logging: *bounded-logs
     ports:
       - "80:8080"
       - "443:8443"

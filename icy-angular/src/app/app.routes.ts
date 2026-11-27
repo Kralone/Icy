@@ -103,6 +103,28 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'mentions-legales',
+    loadComponent: () => import('./features/front/legal/legal-notice.component').then(m => m.LegalNoticeComponent),
+    data: {
+      seo: {
+        title: 'Mentions légales | IceForge Industries',
+        description: 'Éditeur, directeur de la publication et hébergeur du site IceForge.',
+        robots: 'index,follow'
+      }
+    }
+  },
+  {
+    path: 'confidentialite',
+    loadComponent: () => import('./features/front/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent),
+    data: {
+      seo: {
+        title: 'Politique de confidentialité | IceForge Industries',
+        description: 'Données personnelles traitées par IceForge, durées de conservation et exercice de vos droits.',
+        robots: 'index,follow'
+      }
+    }
+  },
+  {
     path: 'utilitaires',
     loadComponent: () => import('./features/front/public-layout/public-layout.component').then(m => m.PublicLayoutComponent),
     data: {

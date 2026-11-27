@@ -57,6 +57,8 @@ public class UserService {
     public static final String TREASURER_ROLE = "TRESORIER";
     private static final Set<String> FUNCTION_ROLES = Set.of(TREASURER_ROLE);
     private static final Duration ACTIVITY_TOUCH_INTERVAL = Duration.ofSeconds(30);
+    /** Un mot de passe temporaire envoyé sur Discord ne sert plus après ce délai. */
+    public static final Duration TEMP_PASSWORD_TTL = Duration.ofHours(72);
     private static final Duration ABSENT_THRESHOLD = Duration.ofMinutes(10);
     private static final Duration OFFLINE_THRESHOLD = Duration.ofMinutes(60);
 
@@ -137,6 +139,7 @@ public class UserService {
         String tempPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
+        user.setTempPasswordIssuedAt(LocalDateTime.now());
 
         Role defaultRole = findRoleByName(roleName);
         user.getRoles().clear();
@@ -161,6 +164,7 @@ public class UserService {
         logger.info("Réinitialisation du mot de passe pour {}", id);
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setPwdReset(false);
+        user.setTempPasswordIssuedAt(null);
         userRepository.save(user);
         notificationPushService.sendToUsers(
                 List.of(id),
@@ -388,7 +392,7 @@ public class UserService {
         }
 
         List<UserOnlineResponseDTO> online = users.stream()
-                .filter(user -> user.getStatus() != UserStatus.HORS_LIGNE)
+                .filter(user -> user.getStatus() != UserStatus.HORS_LIGNE && user.getStatus() != UserStatus.INVISIBLE)
                 .filter(user -> {
                     LocalDateTime seen = user.getLastSeenAt() != null ? user.getLastSeenAt() : user.getCreatedAt();
                     return seen != null && !seen.isBefore(offlineCutoff);
@@ -434,6 +438,7 @@ public class UserService {
         String tempPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPwdReset(true);
+        user.setTempPasswordIssuedAt(LocalDateTime.now());
         userRepository.save(user);
 
         logger.info("Mot de passe temporaire réinitialisé pour {}", user.getUsername());
@@ -554,7 +559,7 @@ public class UserService {
     }
 
     private boolean isAutoStatus(UserStatus status) {
-        return status == null || (status != UserStatus.INDISPONIBLE && status != UserStatus.EN_JEU);
+        return status == null || (status != UserStatus.INDISPONIBLE && status != UserStatus.EN_JEU && status != UserStatus.INVISIBLE);
     }
 
 }

@@ -1,0 +1,332 @@
+<main class="legal-shell">
+  <article class="legal-card">
+    <h1>Politique de confidentialité</h1>
+    <p class="legal-updated">Dernière mise à jour : {{ info.lastUpdate }}</p>
+
+    <p>
+      Cette page explique quelles données personnelles le site {{ info.siteName }} enregistre, pourquoi, pendant
+      combien de temps, et comment exercer vos droits. Elle applique le Règlement général sur la protection des
+      données (RGPD) et la loi Informatique et Libertés.
+    </p>
+
+    <h2>Responsable du traitement</h2>
+    <p>
+      <strong>{{ info.publisher }}</strong>, éditeur du site, à titre non professionnel.<br>
+      Contact : <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>
+    </p>
+
+    <h2>Visiteurs sans compte</h2>
+    <p>
+      Les pages publiques (accueil, guides, utilitaires) ne demandent aucune information. Le site n'utilise ni
+      outil de mesure d'audience, ni publicité, ni bouton de réseau social qui suivrait votre navigation.
+    </p>
+    <p>
+      Comme tout serveur web, le serveur enregistre dans ses journaux techniques l'adresse IP, la date et la page
+      demandée. Ces journaux servent à faire fonctionner le site et à le protéger contre les abus.
+    </p>
+    <p>
+      Certaines images de vaisseaux et des guides sont affichées depuis leur site d'origine, par exemple le wiki
+      Star Citizen ou le site de Roberts Space Industries. Votre navigateur transmet alors votre adresse IP à ces
+      sites, comme pour tout contenu hébergé ailleurs.
+    </p>
+
+    <h2>Candidature</h2>
+    <p>Il faut avoir au moins 15 ans pour envoyer une candidature.</p>
+    <p>
+      Le formulaire de recrutement enregistre le pseudo, l'identifiant Discord et la motivation, qui sont
+      obligatoires : sans eux, la candidature ne peut pas être envoyée ni étudiée. Le parrain, l'expérience en jeu
+      et le gameplay préféré sont facultatifs. Les responsables de la guilde lisent la
+      candidature, ajoutent une décision et un commentaire, et reçoivent une notification à son arrivée.
+    </p>
+
+    <h2>Membres de la guilde</h2>
+    <p>Un compte est créé pour chaque membre. Le site enregistre :</p>
+    <ul>
+      <li>
+        <strong>Le compte</strong> : pseudo, identifiant Discord, mot de passe (stocké sous une forme hachée qui ne
+        permet pas de le relire), rôles et grade, date d'inscription, date de dernière visite et statut en ligne.
+      </li>
+      <li>
+        <strong>Le profil</strong>, si vous le remplissez : photo de profil, description, spécialité, vaisseau
+        favori, vaisseaux du hangar, collections et préférences de notification.
+      </li>
+      <li><strong>Les disponibilités</strong> : jours et moments de la journée où vous pouvez jouer.</li>
+      <li>
+        <strong>La participation</strong> : inscriptions aux événements et opérations, postes occupés,
+        participation aux objectifs et aux événements du jeu.
+      </li>
+      <li>
+        <strong>Les sessions de minage et de récupération</strong> : participants, parts, ventes, frais avancés et
+        versements entre participants.
+      </li>
+      <li>
+        <strong>La banque de guilde</strong> : dépôts et retraits en monnaie du jeu, avec leur date, leur montant,
+        une note éventuelle et le membre qui les a saisis.
+      </li>
+      <li>
+        <strong>Le suivi d'activité</strong> : nombre de jours sans activité (calculé à partir de la dernière
+        visite et de la dernière participation confirmée), mise en pause, rappels envoyés et réponses.
+      </li>
+      <li>
+        <strong>La discipline</strong> : avertissements (catégorie, motif, auteur, date, retrait éventuel) et
+        décisions de sanction, y compris une exclusion.
+      </li>
+      <li>
+        <strong>Les messages privés</strong> envoyés par le site sur Discord (rappels, avertissements) : contenu,
+        date et état de l'envoi.
+      </li>
+      <li>
+        <strong>Le mot de passe temporaire</strong> envoyé en message privé Discord à la création du compte ou à sa
+        réinitialisation n'est jamais enregistré en clair : le site n'en garde qu'une empreinte. Il doit être changé
+        à la première connexion et expire au bout de 72 heures s'il n'a pas servi.
+      </li>
+      <li>
+        <strong>Depuis Discord</strong>, le bot de la guilde reçoit votre identifiant et votre nom d'utilisateur
+        Discord quand vous répondez à un événement ou utilisez une de ses commandes.
+      </li>
+      <li>
+        <strong>Les notifications du navigateur</strong>, si vous les activez : adresse d'abonnement fournie par le
+        navigateur et type de navigateur.
+      </li>
+    </ul>
+
+    <h3>Qui voit ces données</h3>
+    <ul>
+      <li>
+        Sur la page d'accueil publique : le pseudo, la photo de profil et le statut en ligne des membres
+        connectés. Le statut « Invisible », à choisir dans votre profil, vous retire de cette liste et de celle de
+        l'espace membre, même lors de vos visites suivantes.
+      </li>
+      <li>
+        Les autres membres connectés : le profil, le hangar, les disponibilités et la participation aux activités.
+      </li>
+      <li>
+        Les responsables de la guilde (directeurs et officiers) : en plus, les candidatures, le suivi d'activité,
+        la discipline et la banque de guilde, selon leur rôle. Un responsable qui perd son rôle perd ces accès dans
+        les 15 minutes, et un membre parti ne peut plus se connecter.
+      </li>
+    </ul>
+    <p>Aucune donnée n'est vendue, louée ou utilisée à des fins publicitaires.</p>
+
+    <h2>Pourquoi ces données sont traitées</h2>
+    <div class="legal-table-wrap">
+      <table class="legal-table">
+        <thead>
+          <tr><th scope="col">Finalité</th><th scope="col">Base légale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Étudier les candidatures</td>
+            <td>Intérêt légitime de la guilde à recruter ses membres</td>
+          </tr>
+          <tr>
+            <td>
+              Faire fonctionner la guilde : comptes, événements, opérations, sessions, banque, suivi d'activité
+            </td>
+            <td>Intérêt légitime de la guilde à organiser ses activités</td>
+          </tr>
+          <tr>
+            <td>Prévenir les responsables de la guilde à l'arrivée d'une candidature</td>
+            <td>Intérêt légitime de la guilde à traiter les candidatures rapidement</td>
+          </tr>
+          <tr>
+            <td>Afficher publiquement le pseudo, la photo de profil et le statut en ligne des membres</td>
+            <td>Intérêt légitime de la guilde à présenter ses membres actifs</td>
+          </tr>
+          <tr>
+            <td>Envoyer des messages privés sur Discord : rappels, avertissements, mot de passe temporaire</td>
+            <td>Intérêt légitime de la guilde à joindre ses membres là où ils échangent</td>
+          </tr>
+          <tr>
+            <td>Appliquer le règlement de la guilde : avertissements et sanctions</td>
+            <td>Intérêt légitime de la guilde à faire respecter ses règles</td>
+          </tr>
+          <tr>
+            <td>Envoyer des notifications dans le navigateur</td>
+            <td>Votre consentement, que vous pouvez retirer à tout moment</td>
+          </tr>
+          <tr>
+            <td>Répondre aux messages envoyés à l'adresse de contact, dont les demandes d'exercice de vos droits</td>
+            <td>
+              Intérêt légitime à répondre aux demandes ; obligation légale pour les demandes liées au RGPD
+            </td>
+          </tr>
+          <tr>
+            <td>Sécuriser le site : connexion, journaux techniques, sauvegardes</td>
+            <td>Intérêt légitime à protéger le site et ses données</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Durées de conservation</h2>
+    <div class="legal-table-wrap">
+      <table class="legal-table">
+        <thead>
+          <tr><th scope="col">Données</th><th scope="col">Durée</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Candidature</td>
+            <td>6 mois après la décision. Si elle est acceptée, les informations utiles passent dans le compte.</td>
+          </tr>
+          <tr>
+            <td>Compte, profil, disponibilités, participation, sessions et banque</td>
+            <td>
+              Tant que vous êtes membre. À votre départ, le compte est désactivé et ne permet plus de se connecter ;
+              les sessions, les abonnements aux notifications et les disponibilités sont supprimés dans les 24 heures.
+              Le reste (compte, grade, hangar, historique de participation et de banque) est gardé 2 ans pour
+              pouvoir reprendre sa place en cas de retour, puis supprimé ou rendu anonyme.
+            </td>
+          </tr>
+          <tr>
+            <td>Suivi d'activité, rappels et messages privés envoyés</td>
+            <td>1 an à compter de l'envoi ou de la dernière mise à jour</td>
+          </tr>
+          <tr>
+            <td>Avertissements et sanctions</td>
+            <td>
+              Tant que vous êtes membre, puis 2 ans après votre départ ou votre exclusion, pour pouvoir en tenir
+              compte si un ancien membre demande à revenir
+            </td>
+          </tr>
+          <tr>
+            <td>Jetons de connexion</td>
+            <td>
+              Jeton de session : 15 minutes. Jeton de renouvellement : 7 jours au plus, invalidé à la déconnexion et
+              effacé du serveur à son expiration
+            </td>
+          </tr>
+          <tr>
+            <td>Abonnement aux notifications</td>
+            <td>Jusqu'à ce que vous les désactiviez, ou 24 heures après votre départ de la guilde</td>
+          </tr>
+          <tr>
+            <td>Emails reçus sur l'adresse de contact</td>
+            <td>12 mois après le dernier échange, sauf litige ou demande en cours qui justifie de les garder</td>
+          </tr>
+          <tr>
+            <td>Annonce d'un email reçu dans le salon Discord privé</td>
+            <td>3 mois</td>
+          </tr>
+          <tr>
+            <td>Journaux techniques du serveur</td>
+            <td>12 mois au plus</td>
+          </tr>
+          <tr>
+            <td>Sauvegardes chiffrées de la base</td>
+            <td>
+              6 mois au plus : à chaque nouvelle sauvegarde, celles de plus de 6 mois sont supprimées. Si une
+              sauvegarde doit être restaurée, les effacements demandés depuis sa date sont refaits aussitôt
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Cookies et stockage dans le navigateur</h2>
+    <p>
+      Le site ne dépose aucun cookie. Il utilise le stockage local du navigateur uniquement pour son
+      fonctionnement : garder votre session ouverte, retenir les tutoriels déjà vus, un affichage choisi ou un
+      brouillon en cours. Ces éléments restent sur votre appareil et ne servent pas à vous suivre. Ils ne demandent
+      donc pas de consentement. Vous pouvez les effacer depuis les réglages de votre navigateur, ce qui vous
+      déconnecte.
+    </p>
+
+    <h2>Prestataires et transferts hors de l'Union européenne</h2>
+    <ul>
+      <li>
+        <strong>{{ info.host.name }}</strong>, société établie à Chypre, dans l'Union européenne
+        ({{ info.host.address }}), héberge le site, sa base de données et ses polices de caractères sur un serveur
+        situé à Paris, en France. Hostinger peut faire intervenir des sous-traitants hors de l'Union européenne, par
+        exemple pour son support technique ; ces transferts sont encadrés par les clauses contractuelles types de la
+        Commission européenne, prévues par l'accord de traitement des données de Hostinger.
+      </li>
+      <li>
+        <strong>Discord</strong> transmet les messages privés envoyés par le site et les annonces de la guilde. Pour
+        les utilisateurs européens, Discord Netherlands BV est responsable des données traitées par Discord. Les
+        données peuvent être transférées à Discord Inc. aux États-Unis, qui adhère au cadre de protection des
+        données UE–États-Unis (Data Privacy Framework). Votre utilisation de Discord relève aussi de sa propre
+        politique de confidentialité.
+      </li>
+      <li>
+        <strong>Gmail</strong> reçoit les messages envoyés à l'adresse de contact. Google Ireland Ltd en est
+        responsable pour les utilisateurs européens ; les données peuvent être transférées à Google LLC aux
+        États-Unis, qui adhère au cadre de protection des données UE–États-Unis. L'expéditeur et l'objet de
+        chaque message reçu sont signalés dans un salon privé du Discord de la guilde, réservé à ses responsables ;
+        le contenu reste dans Gmail.
+      </li>
+      <li>
+        <strong>Le service de notification de votre navigateur</strong> (Google, Mozilla, Apple ou Microsoft selon
+        le navigateur) achemine les notifications, si vous les avez activées. Ce service, choisi par l'éditeur de votre navigateur, peut
+        être situé hors de l'Union européenne et aucun contrat ne lie la guilde à lui. Il ne reçoit qu'une adresse
+        d'abonnement technique et le texte des notifications. Vous pouvez éviter ce transfert en laissant les
+        notifications désactivées.
+      </li>
+      <li>
+        <strong>Les sites d'origine des images externes</strong> (wiki Star Citizen, Roberts Space Industries,
+        stockage Google Cloud et quelques sites de presse sur le jeu) reçoivent votre adresse IP quand une page les
+        affiche. Certains sont situés hors de l'Union européenne, notamment aux États-Unis. Aucun contrat ni garantie
+        de transfert ne lie la guilde à ces sites : ils ne reçoivent que les informations techniques envoyées par
+        votre navigateur (adresse IP, type de navigateur), et leurs propres politiques de confidentialité
+        s'appliquent.
+      </li>
+    </ul>
+
+    <h2>Sécurité</h2>
+    <p>
+      Les échanges avec le site sont chiffrés (HTTPS). Les mots de passe sont stockés hachés. L'accès aux
+      données sensibles est réservé aux rôles qui en ont besoin. Les sauvegardes sont chiffrées.
+    </p>
+
+    <h2>Vos droits</h2>
+    <p>Dans les conditions prévues par le RGPD, vous pouvez :</p>
+    <ul>
+      <li>accéder aux données qui vous concernent et en obtenir une copie ;</li>
+      <li>faire corriger une donnée inexacte ;</li>
+      <li>demander la suppression de vos données, y compris de votre compte ;</li>
+      <li>demander la limitation d'un traitement ;</li>
+      <li>retirer votre consentement aux notifications, depuis votre profil ou votre navigateur.</li>
+    </ul>
+    <p>
+      Le droit à la portabilité s'applique aux traitements qui remplissent les conditions de l'article 20 du RGPD.
+      Pour les autres, IceForge fournit aussi, sur demande, une copie de vos données dans un format lisible et
+      réutilisable.
+    </p>
+    <h3>Droit d'opposition</h3>
+    <p>
+      Vous pouvez vous opposer à tout moment, pour des raisons tenant à votre situation particulière, aux
+      traitements fondés sur l'intérêt légitime de la guilde, c'est-à-dire la plupart des traitements décrits
+      ci-dessus. Le traitement s'arrête alors, sauf motif légitime et impérieux, par exemple garder la trace d'une
+      exclusion.
+    </p>
+
+    <h3>Directives après le décès</h3>
+    <p>
+      Vous pouvez définir des directives sur la conservation, l'effacement et la communication de vos données après
+      votre décès, comme le prévoit l'article 85 de la loi Informatique et Libertés. Envoyez-les par écrit à
+      <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>.
+    </p>
+
+    <h3>Exercer vos droits</h3>
+    <p>
+      Pour exercer ces droits, écrivez à <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>
+      ou contactez {{ info.publisher }} en message privé sur le Discord de la guilde. Une réponse vous est
+      apportée dans un délai d'un mois. Ce délai peut être prolongé de deux mois si la demande est complexe ou si
+      les demandes sont nombreuses ; vous en êtes alors informé dans le premier mois. Une preuve d'identité peut être demandée en cas de doute, par exemple un
+      message depuis le compte Discord lié.
+    </p>
+    <p>
+      Certaines données peuvent être conservées malgré une demande de suppression quand elles concernent aussi
+      d'autres membres, par exemple le partage des gains d'une session. Elles sont alors rendues anonymes.
+      L'effacement est noté dans un registre, pour être refait si une sauvegarde plus ancienne devait être
+      restaurée.
+    </p>
+
+    <h2>Réclamation</h2>
+    <p>
+      Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL :
+      <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">www.cnil.fr/fr/plaintes</a>.
+    </p>
+  </article>
+</main>

@@ -20,7 +20,10 @@ const routes = [
   { path: '/utilitaires/wikelo', changefreq: 'weekly', priority: '0.7' },
   { path: '/utilitaires/achat-vaisseaux', changefreq: 'weekly', priority: '0.7' },
   { path: '/utilitaires/ressources-minage', changefreq: 'weekly', priority: '0.8' },
-  { path: '/utilitaires/guides', changefreq: 'monthly', priority: '0.6' }
+  { path: '/utilitaires/guides', changefreq: 'monthly', priority: '0.6' },
+
+  { path: '/mentions-legales', changefreq: 'yearly', priority: '0.2' },
+  { path: '/confidentialite', changefreq: 'yearly', priority: '0.2' }
 ];
 
 const items = routes

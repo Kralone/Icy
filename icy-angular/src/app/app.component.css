@@ -11,3 +11,9 @@
   min-height: calc(100dvh - 61px);
   --public-topbar-offset: 61px;
 }
+
+.route-shell__footer {
+  padding: 1.5rem 1rem 2rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  background-color: #0d1b2a;
+}

@@ -7,7 +7,9 @@ public enum UserStatus {
     EN_JEU("enjeu"),
     ABSENT("absent"),
     INDISPONIBLE("indisponible"),
-    HORS_LIGNE("horsligne");
+    HORS_LIGNE("horsligne"),
+    /** Choisi par le membre : il n'apparaît dans aucune liste des membres en ligne. */
+    INVISIBLE("invisible");
 
     private final String apiValue;
 

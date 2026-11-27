@@ -150,3 +150,10 @@ push:
     public-key: ${VAPID_PUBLIC_KEY:}
     private-key: ${VAPID_PRIVATE_KEY:}
     subject: ${VAPID_SUBJECT:mailto:admin@iceforge.fr}
+
+iceforge:
+    retention:
+        # report : journalise chaque nuit ce qui serait purgé, sans rien supprimer.
+        # apply : applique les durées de la politique de confidentialité.
+        mode: ${ICEFORGE_RETENTION_MODE:report}
+        cron: ${ICEFORGE_RETENTION_CRON:0 15 4 * * *}
