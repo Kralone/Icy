@@ -44,7 +44,7 @@ interface FleetSummaryEntry {
   brandImageUrl?: string | null;
 }
 
-type OnlineStatus = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
+type OnlineStatus = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne' | 'invisible';
 
 interface StatusStyle {
   label: string;
@@ -89,7 +89,8 @@ export class DashboardComponent {
     enjeu: { label: 'En jeu', badgeClass: 'border-violet-400/30 bg-violet-400/10 text-violet-200' },
     absent: { label: 'Absent', badgeClass: 'border-amber-400/30 bg-amber-400/10 text-amber-200' },
     indisponible: { label: 'Indisponible', badgeClass: 'border-rose-400/30 bg-rose-400/10 text-rose-200' },
-    horsligne: { label: 'Hors ligne', badgeClass: 'border-slate-400/30 bg-slate-400/10 text-slate-200' }
+    horsligne: { label: 'Hors ligne', badgeClass: 'border-slate-400/30 bg-slate-400/10 text-slate-200' },
+    invisible: { label: 'Hors ligne', badgeClass: 'border-slate-400/30 bg-slate-400/10 text-slate-200' }
   };
 
   objectKeys = Object.keys;
@@ -298,7 +299,8 @@ export class DashboardComponent {
       connecte: 1,
       indisponible: 2,
       absent: 3,
-      horsligne: 4
+      horsligne: 4,
+      invisible: 4
     };
     return [...this.onlineUsers].sort((a, b) => {
       const statusA = (a.status ?? 'connecte') as OnlineStatus;

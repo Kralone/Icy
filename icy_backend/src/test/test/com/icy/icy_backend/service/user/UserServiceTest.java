@@ -359,6 +359,35 @@ class UserServiceTest {
     }
 
     @Test
+    void invisibleMembersStayInvisibleAndOutOfTheOnlineList() {
+        UserRepository userRepository = Mockito.mock(UserRepository.class);
+        MessageService messageService = Mockito.mock(MessageService.class);
+        UserService userService = new UserService(
+                userRepository, Mockito.mock(UserRoleRepository.class), Mockito.mock(RoleRepository.class),
+                Mockito.mock(PasswordEncoder.class), messageService, Mockito.mock(UserPublisher.class),
+                Mockito.mock(NotificationPushService.class), Mockito.mock(ShipRepository.class),
+                Mockito.mock(UserParamRepository.class), Mockito.mock(UserAvatarService.class),
+                Mockito.mock(GoalRepository.class), Mockito.mock(GoalParticipationRepository.class),
+                Mockito.mock(EventParticipationRepository.class), Mockito.mock(UserShipRepository.class),
+                Mockito.mock(UserCollectionRepository.class)
+        );
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setStatus(UserStatus.INVISIBLE);
+        user.setLastSeenAt(LocalDateTime.now().minusHours(2));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.findAll()).thenReturn(List.of(user));
+
+        userService.touchCurrentUserActivity(user.getId());
+        assertThat(user.getStatus()).isEqualTo(UserStatus.INVISIBLE);
+
+        userService.getOnlineUsers();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.INVISIBLE);
+        verify(messageService).buildResponse(eq("user.online.list"), eq(List.of()));
+    }
+
+    @Test
     void updateCurrentUserProfileUpdatesUserAndParams() {
         UserRepository userRepository = Mockito.mock(UserRepository.class);
         UserRoleRepository userRoleRepository = Mockito.mock(UserRoleRepository.class);

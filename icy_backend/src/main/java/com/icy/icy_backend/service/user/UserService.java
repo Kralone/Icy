@@ -388,7 +388,7 @@ public class UserService {
         }
 
         List<UserOnlineResponseDTO> online = users.stream()
-                .filter(user -> user.getStatus() != UserStatus.HORS_LIGNE)
+                .filter(user -> user.getStatus() != UserStatus.HORS_LIGNE && user.getStatus() != UserStatus.INVISIBLE)
                 .filter(user -> {
                     LocalDateTime seen = user.getLastSeenAt() != null ? user.getLastSeenAt() : user.getCreatedAt();
                     return seen != null && !seen.isBefore(offlineCutoff);
@@ -554,7 +554,7 @@ public class UserService {
     }
 
     private boolean isAutoStatus(UserStatus status) {
-        return status == null || (status != UserStatus.INDISPONIBLE && status != UserStatus.EN_JEU);
+        return status == null || (status != UserStatus.INDISPONIBLE && status != UserStatus.EN_JEU && status != UserStatus.INVISIBLE);
     }
 
 }

@@ -13,7 +13,7 @@ import { Ship } from '../../model/ship.model';
 import { AcquisitionType } from '../../shared/ship-selector/ship-selector.component';
 import { AvailabilityEditorComponent } from '../../shared/availability/availability-editor.component';
 
-type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
+type StatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne' | 'invisible';
 
 interface StatusOption {
   key: StatusKey;
@@ -62,21 +62,24 @@ export class ProfileComponent implements OnInit {
     { key: 'connecte', label: 'Connecté', badgeClass: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' },
     { key: 'enjeu', label: 'En jeu', badgeClass: 'border-violet-400/30 bg-violet-400/10 text-violet-200' },
     { key: 'absent', label: 'Absent', badgeClass: 'border-amber-400/30 bg-amber-400/10 text-amber-200' },
-    { key: 'indisponible', label: 'Indisponible', badgeClass: 'border-rose-400/30 bg-rose-400/10 text-rose-200' }
+    { key: 'indisponible', label: 'Indisponible', badgeClass: 'border-rose-400/30 bg-rose-400/10 text-rose-200' },
+    { key: 'invisible', label: 'Invisible', badgeClass: 'border-slate-400/30 bg-slate-400/10 text-slate-300' }
   ];
   statusLabels: Record<StatusKey, string> = {
     connecte: 'Connecté',
     enjeu: 'En jeu',
     absent: 'Absent',
     indisponible: 'Indisponible',
-    horsligne: 'Hors ligne'
+    horsligne: 'Hors ligne',
+    invisible: 'Invisible'
   };
   statusClasses: Record<StatusKey, string> = {
     connecte: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
     enjeu: 'border-violet-400/30 bg-violet-400/10 text-violet-200',
     absent: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
     indisponible: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
-    horsligne: 'border-slate-400/30 bg-slate-400/10 text-slate-200'
+    horsligne: 'border-slate-400/30 bg-slate-400/10 text-slate-200',
+    invisible: 'border-slate-400/30 bg-slate-400/10 text-slate-300'
   };
   rankOptions: RankOption[] = [
     { key: 'ADMIN', label: 'Directeur' },

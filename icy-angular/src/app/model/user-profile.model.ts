@@ -1,4 +1,4 @@
-export type UserStatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne';
+export type UserStatusKey = 'connecte' | 'enjeu' | 'absent' | 'indisponible' | 'horsligne' | 'invisible';
 
 export interface UserProfile {
   id: string;

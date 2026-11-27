@@ -33,8 +33,9 @@
     <h2>Candidature</h2>
     <p>Il faut avoir au moins 15 ans pour envoyer une candidature.</p>
     <p>
-      Le formulaire de recrutement enregistre le pseudo, l'identifiant Discord, la motivation, et si vous les
-      remplissez le parrain, l'expérience en jeu et le gameplay préféré. Les responsables de la guilde lisent la
+      Le formulaire de recrutement enregistre le pseudo, l'identifiant Discord et la motivation, qui sont
+      obligatoires : sans eux, la candidature ne peut pas être envoyée ni étudiée. Le parrain, l'expérience en jeu
+      et le gameplay préféré sont facultatifs. Les responsables de la guilde lisent la
       candidature, ajoutent une décision et un commentaire, et reçoivent une notification à son arrivée.
     </p>
 
@@ -83,7 +84,9 @@
     <h3>Qui voit ces données</h3>
     <ul>
       <li>
-        Sur la page d'accueil publique : le pseudo, la photo de profil et le statut en ligne des membres.
+        Sur la page d'accueil publique : le pseudo, la photo de profil et le statut en ligne des membres
+        connectés. Le statut « Invisible », à choisir dans votre profil, vous retire de cette liste et de celle de
+        l'espace membre, même lors de vos visites suivantes.
       </li>
       <li>
         Les autres membres connectés : le profil, le hangar, les disponibilités et la participation aux activités.
@@ -104,7 +107,7 @@
         <tbody>
           <tr>
             <td>Étudier les candidatures</td>
-            <td>Mesures prises à votre demande, quand vous envoyez votre candidature</td>
+            <td>Intérêt légitime de la guilde à recruter ses membres</td>
           </tr>
           <tr>
             <td>
@@ -155,16 +158,20 @@
             <td>Compte, profil, disponibilités, participation, sessions et banque</td>
             <td>
               Tant que vous êtes membre. À votre départ, le compte est désactivé, puis les données sont supprimées
-              ou rendues anonymes au plus tard 2 ans après.
+              ou rendues anonymes 2 ans après. Ce délai permet de retrouver son compte et son historique en cas de
+              retour dans la guilde.
             </td>
           </tr>
           <tr>
             <td>Suivi d'activité, rappels et messages privés envoyés</td>
-            <td>1 an</td>
+            <td>1 an à compter de l'envoi ou de la dernière mise à jour</td>
           </tr>
           <tr>
             <td>Avertissements et sanctions</td>
-            <td>Tant que vous êtes membre, puis 2 ans après votre départ ou votre exclusion</td>
+            <td>
+              Tant que vous êtes membre, puis 2 ans après votre départ ou votre exclusion, pour pouvoir en tenir
+              compte si un ancien membre demande à revenir
+            </td>
           </tr>
           <tr>
             <td>Jetons de connexion</td>
@@ -198,8 +205,8 @@
     <h2>Prestataires et transferts hors de l'Union européenne</h2>
     <ul>
       <li>
-        <strong>{{ info.host.name }}</strong> ({{ info.host.address }}) héberge le site, sa base de données et ses
-        polices de caractères. Les données restent dans l'Union européenne.
+        <strong>{{ info.host.name }}</strong>, société établie à Chypre, dans l'Union européenne
+        ({{ info.host.address }}), héberge le site, sa base de données et ses polices de caractères.
       </li>
       <li>
         <strong>Discord</strong> transmet les messages privés envoyés par le site et les annonces de la guilde. Pour
@@ -209,13 +216,21 @@
         politique de confidentialité.
       </li>
       <li>
-        <strong>Google (Gmail)</strong> reçoit les messages envoyés à l'adresse de contact. Google LLC adhère au
-        cadre de protection des données UE–États-Unis.
+        <strong>Gmail</strong> reçoit les messages envoyés à l'adresse de contact. Google Ireland Ltd en est
+        responsable pour les utilisateurs européens ; les données peuvent être transférées à Google LLC aux
+        États-Unis, qui adhère au cadre de protection des données UE–États-Unis. Chaque message reçu est aussi
+        signalé dans un salon privé du Discord de la guilde, réservé à ses responsables.
       </li>
       <li>
         <strong>Le service de notification de votre navigateur</strong> (Google, Mozilla, Apple ou Microsoft selon
         le navigateur) achemine les notifications, si vous les avez activées. Les garanties applicables sont celles
         de l'éditeur du navigateur que vous utilisez.
+      </li>
+      <li>
+        <strong>Les sites d'origine des images externes</strong> (wiki Star Citizen, Roberts Space Industries,
+        stockage Google Cloud et quelques sites de presse sur le jeu) reçoivent votre adresse IP quand une page les
+        affiche. Certains sont situés hors de l'Union européenne, notamment aux États-Unis. Aucun contrat ne lie la
+        guilde à ces sites : leurs propres politiques de confidentialité s'appliquent.
       </li>
     </ul>
 
@@ -245,30 +260,28 @@
 
     <h3>Directives après le décès</h3>
     <p>
-      Vous pouvez définir des directives sur le sort de vos données après votre décès, comme le prévoit la loi
-      Informatique et Libertés.
+      Vous pouvez définir des directives sur la conservation, l'effacement et la communication de vos données après
+      votre décès, comme le prévoit l'article 85 de la loi Informatique et Libertés. Envoyez-les par écrit à
+      <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>.
     </p>
 
     <h3>Exercer vos droits</h3>
     <p>
       Pour exercer ces droits, écrivez à <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a>
       ou contactez {{ info.publisher }} en message privé sur le Discord de la guilde. Une réponse vous est
-      apportée dans un délai d'un mois. Une preuve d'identité peut être demandée en cas de doute, par exemple un
+      apportée dans un délai d'un mois. Ce délai peut être prolongé de deux mois si la demande est complexe ou si
+      les demandes sont nombreuses ; vous en êtes alors informé dans le premier mois. Une preuve d'identité peut être demandée en cas de doute, par exemple un
       message depuis le compte Discord lié.
     </p>
     <p>
       Certaines données peuvent être conservées malgré une demande de suppression quand elles concernent aussi
-      d'autres membres, par exemple les comptes d'une session partagée. Elles sont alors rendues anonymes.
+      d'autres membres, par exemple le partage des gains d'une session. Elles sont alors rendues anonymes.
     </p>
 
     <h2>Réclamation</h2>
     <p>
       Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL :
       <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">www.cnil.fr/fr/plaintes</a>.
-    </p>
-
-    <p>
-      Voir aussi les <a routerLink="/mentions-legales">mentions légales</a>.
     </p>
   </article>
 </main>
