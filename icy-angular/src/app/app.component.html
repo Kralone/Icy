@@ -3,6 +3,11 @@
     <front-public-topbar></front-public-topbar>
   }
   <router-outlet></router-outlet>
+  @if (showPublicFooter) {
+    <footer class="route-shell__footer">
+      <front-legal-links></front-legal-links>
+    </footer>
+  }
 </div>
 
 <ng-template #updateToastTpl>

@@ -1,0 +1,50 @@
+<main class="legal-shell">
+  <article class="legal-card">
+    <h1>Mentions légales</h1>
+    <p class="legal-updated">Dernière mise à jour : {{ info.lastUpdate }}</p>
+
+    <h2>Éditeur du site</h2>
+    <p>
+      Le site <a [href]="info.siteUrl">{{ info.siteUrl }}</a> est édité par <strong>{{ info.publisher }}</strong>,
+      personne physique, à titre non professionnel.
+    </p>
+    <p>
+      Le site sert à organiser la guilde IceForge, une communauté de joueurs de Star Citizen. Il n'a aucun but
+      commercial : rien n'y est vendu et il n'affiche pas de publicité.
+    </p>
+    <p>Contact : <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a></p>
+
+    <h2>Directeur de la publication</h2>
+    <p>{{ info.publisher }}</p>
+
+    <h2>Hébergeur</h2>
+    <address class="legal-address">
+      <strong>{{ info.host.name }}</strong><br>
+      {{ info.host.address }}<br>
+      <a [href]="info.host.contactUrl" target="_blank" rel="noopener">{{ info.host.contactUrl }}</a>
+    </address>
+
+    <h2>Propriété intellectuelle</h2>
+    <p>
+      Star Citizen, ses vaisseaux, ses images et ses marques appartiennent à Cloud Imperium Games. Les éléments
+      visuels issus du jeu sont utilisés à des fins communautaires et non commerciales. IceForge n'est ni affilié
+      à Cloud Imperium Games ni approuvé par cet éditeur.
+    </p>
+    <p>
+      Les textes, guides et éléments graphiques propres à IceForge ne peuvent pas être repris sans l'accord de
+      l'éditeur.
+    </p>
+
+    <h2>Données personnelles</h2>
+    <p>
+      Les données traitées par le site et vos droits sont décrits dans la
+      <a routerLink="/confidentialite">politique de confidentialité</a>.
+    </p>
+
+    <h2>Signaler un contenu</h2>
+    <p>
+      Pour signaler un contenu illicite ou demander une correction, écrivez à
+      <a [href]="'mailto:' + info.contactEmail">{{ info.contactEmail }}</a> en indiquant la page concernée.
+    </p>
+  </article>
+</main>

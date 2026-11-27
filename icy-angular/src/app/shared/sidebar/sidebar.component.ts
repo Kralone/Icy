@@ -1,3 +1,4 @@
+import { LegalLinksComponent } from '../../features/front/legal/legal-links.component';
 import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -16,7 +17,7 @@ type SidebarItem = {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, NavIconComponent],
+  imports: [RouterLink, RouterLinkActive, NavIconComponent, LegalLinksComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './sidebar.component.html',
   // Palette « Halo » : icônes bleu glacé à léger halo cyan, étoiles du logo en cyan.

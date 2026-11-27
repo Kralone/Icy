@@ -13,6 +13,8 @@ describe('SSR route policy', () => {
     expect(isKnownAppRoute('/utilitaires/wikelo/')).toBe(true);
     expect(isKnownAppRoute('/icy/outils/ressources-minage')).toBe(true);
     expect(isKnownAppRoute('/icy/admin/goals')).toBe(true);
+    expect(isKnownAppRoute('/mentions-legales')).toBe(true);
+    expect(isKnownAppRoute('/confidentialite')).toBe(true);
     expect(isKnownAppRoute('/definitely-not-a-route')).toBe(false);
     expect(isKnownAppRoute('/guides/also-not-a-route')).toBe(false);
   });

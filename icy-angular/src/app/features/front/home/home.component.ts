@@ -9,6 +9,7 @@ import {ActivitiesComponent} from './activities/activities.component';
 import {CarousselComponent} from './caroussel/caroussel.component';
 import {OnlineMembersComponent} from './online-members/online-members.component';
 import { PublicUtilsComponent } from './public-utils/public-utils.component';
+import { LegalLinksComponent } from '../legal/legal-links.component';
 import strings from '../../../../assets/i18n/front.json';
 
 
@@ -18,7 +19,7 @@ import strings from '../../../../assets/i18n/front.json';
   styleUrls: ['./home.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [HeaderComponent, OnlineMembersComponent, StoryComponent, ActivitiesComponent, CarousselComponent, PublicUtilsComponent]
+  imports: [HeaderComponent, OnlineMembersComponent, StoryComponent, ActivitiesComponent, CarousselComponent, PublicUtilsComponent, LegalLinksComponent]
 })
 export class HomeComponent {
   strings = strings.home;
