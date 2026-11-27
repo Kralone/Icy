@@ -57,5 +57,17 @@ Confirmer à la personne ce qui a été fait, ou expliquer le refus et rappeler 
 
 ## Purge automatique
 
-La purge quotidienne n'efface vraiment qu'avec `ICEFORGE_RETENTION_MODE=apply` dans l'environnement de production.
-En mode `report` (défaut), elle se contente de journaliser les volumes.
+La purge tourne chaque nuit à 04:15 (heure de Paris). En mode `report` (défaut), elle s'exécute puis tout est
+annulé : seuls les volumes sont journalisés. Pour les lire sur le serveur :
+
+```sh
+docker logs --since 48h iceforge_backend 2>&1 | grep 'Conservation des données'
+```
+
+La ligne donne le total et le détail par table (`comptes anonymisés`, `candidatures`, `core.direct_messages`…).
+Vérifier que les volumes sont plausibles : au premier passage, les dates partent du déploiement de V57, donc seuls
+les jetons expirés et les données des comptes déjà désactivés doivent apparaître.
+
+Pour supprimer réellement, ajouter `ICEFORGE_RETENTION_MODE=apply` dans `/root/iceforge/.env`, puis recréer le
+backend avec la commande Compose de production (`docs/PRODUCTION-BACKEND-JAVA25.md`) :
+`up -d --no-deps --no-build --pull never --wait backend`. La ligne du journal indique alors `(apply)`.
