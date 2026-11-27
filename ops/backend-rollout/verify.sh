@@ -116,6 +116,7 @@ case "$flyway_version" in
   55) flyway_check=verify-flyway-v55.sql ;;
   56) flyway_check=verify-flyway-v56.sql ;;
   57) flyway_check=verify-flyway-v57.sql ;;
+  58) flyway_check=verify-flyway-v58.sql ;;
   *) echo "ERROR: unsupported Flyway version: V$flyway_version" >&2; exit 1 ;;
 esac
 docker exec -i iceforge_db sh -ceu \

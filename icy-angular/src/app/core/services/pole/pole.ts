@@ -116,8 +116,6 @@ const IMAGES: Record<PoleKey, string> = {
   INDUSTRIE: 'assets/images/poles/industrie.jpg'
 };
 
-const WIKI = 'https://media.starcitizen.tools/';
-
 const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
   LOGISTIQUE: [
     {
@@ -133,13 +131,13 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
           label: 'Achat de vaisseaux',
           description: 'Où acheter ou louer chaque vaisseau, et à quel prix.',
           route: '/icy/outils/achat-vaisseaux',
-          imageUrl: WIKI + 'thumb/f/f6/IAE2954-day5-polaris-tunnel-view.jpg/400px-IAE2954-day5-polaris-tunnel-view.jpg.webp'
+          imageUrl: 'https://media.starcitizen.tools/thumb/f/f6/IAE2954-day5-polaris-tunnel-view.jpg/400px-IAE2954-day5-polaris-tunnel-view.jpg.webp'
         },
         {
           label: 'Wikelo',
           description: 'Les échanges proposés par Wikelo et ce qu’ils demandent.',
           route: '/icy/outils/wikelo',
-          imageUrl: WIKI + 'thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp'
+          imageUrl: 'https://media.starcitizen.tools/thumb/8/83/Wikelo_Hologram_-_Alpha_4.1.0.jpg/1200px-Wikelo_Hologram_-_Alpha_4.1.0.jpg.webp'
         }
       ]
     }
@@ -159,7 +157,7 @@ const TOOLS: Record<PoleKey, PoleToolGroup[]> = {
           label: 'Hangars exécutifs',
           description: 'Cycle d’ouverture des hangars exécutifs, cartes et suivi des joueurs.',
           route: '/icy/outils/executive-hangar',
-          imageUrl: WIKI + 'b/b8/Cutter_Approaching_Checkmate_Station.png'
+          imageUrl: 'https://media.starcitizen.tools/b/b8/Cutter_Approaching_Checkmate_Station.png'
         }
       ]
     },

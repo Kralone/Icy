@@ -42,6 +42,16 @@ public final class ImageContentValidator {
         }
     }
 
+    /** Type d'image reconnu d'après les premiers octets, ou {@code null} si ce n'est pas une image acceptée. */
+    public static String detectContentType(byte[] bytes) {
+        for (String type : new String[]{"image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"}) {
+            if (matchesSignature(type, bytes)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
     private static boolean matchesSignature(String contentType, byte[] bytes) {
         return switch (contentType) {
             case "image/png" -> startsWith(bytes, new byte[]{(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a});

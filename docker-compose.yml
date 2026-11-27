@@ -81,6 +81,8 @@ services:
       VAULT_FAIL_FAST: ${VAULT_FAIL_FAST:-true}
       # Purge RGPD : report (simulation journalisée) ou apply (suppression réelle).
       ICEFORGE_RETENTION_MODE: ${ICEFORGE_RETENTION_MODE:-report}
+      # Images d'autres sites : report (liste dans le journal) ou apply (copie dans la banque d'images).
+      ICEFORGE_IMAGE_MIRROR_MODE: ${ICEFORGE_IMAGE_MIRROR_MODE:-report}
     depends_on:
       db:
         condition: service_healthy
