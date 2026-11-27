@@ -157,3 +157,9 @@ iceforge:
         # apply : applique les durées de la politique de confidentialité.
         mode: ${ICEFORGE_RETENTION_MODE:report}
         cron: ${ICEFORGE_RETENTION_CRON:0 15 4 * * *}
+    images:
+        mirror:
+            # off : rien ; report : journalise chaque nuit les images externes ; apply : les copie dans la
+            # banque d'images et remplace les liens (après la synchronisation du catalogue).
+            mode: ${ICEFORGE_IMAGE_MIRROR_MODE:report}
+            cron: ${ICEFORGE_IMAGE_MIRROR_CRON:0 45 4 * * *}

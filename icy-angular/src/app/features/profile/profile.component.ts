@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -45,7 +46,7 @@ interface RankGuideEntry {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent, AvailabilityEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ShipSelectorComponent, RankOrbitComponent, LoadingOverlayComponent, AvailabilityEditorComponent],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.component.css'

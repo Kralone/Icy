@@ -33,7 +33,10 @@ public class CatalogMapper {
                 active, last_seen_at, last_seen_run_id
             ) VALUES (
                 :source, :datasetKey, :externalId, :family, :catalogGroup, :name, :slug, :manufacturer,
-                :description, :imageUrl, :imageIsFallback, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
+                :description,
+                -- Image déjà copiée dans la banque d'images : la copie locale est gardée à chaque synchronisation.
+                COALESCE((SELECT m.local_url FROM media.external_image_mirror m WHERE m.source_url = :imageUrl), :imageUrl),
+                :imageIsFallback, :imageUrl, :imageIsFallback, :sourceUrl, :sourceVersion,
                 :sourceUpdatedAt, CAST(:sourcePayload AS jsonb), :focus, :scu, :size, :crew,
                 :flightReady, TRUE, NOW(), :runId
             )

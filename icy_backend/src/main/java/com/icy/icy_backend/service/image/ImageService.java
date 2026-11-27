@@ -35,6 +35,7 @@ public class ImageService {
 
     private static final String DEFAULT_TAG_COLOR = "#22d3ee";
     private static final long MAX_IMAGE_SIZE = 20_000_000;
+    public static final String IMPORTED_CATEGORY = "Images importées";
     private static final Map<String, Set<String>> ALLOWED_IMAGE_EXTENSIONS = Map.of(
             "image/png", Set.of(".png"),
             "image/jpeg", Set.of(".jpg", ".jpeg"),
@@ -150,6 +151,21 @@ public class ImageService {
         meta.setTags(safeTags);
 
         return repo.save(meta);
+    }
+
+    /**
+     * Enregistre dans la banque d'images une image téléchargée depuis un autre site.
+     * Le nom est choisi par l'appelant ; un fichier déjà présent est remplacé.
+     */
+    public ImageMetadata storeImported(String name, byte[] content, String sourceHost) throws IOException {
+        if (content.length == 0 || content.length > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("Taille d'image refusée.");
+        }
+        Path destination = resolveFile(name);
+        Files.write(destination, content);
+        String url = imageBaseUrl + URLEncoder.encode(name, StandardCharsets.UTF_8);
+        return registerExistingImage(name, url, content.length, null, "Import externe",
+                List.of(sourceHost), IMPORTED_CATEGORY, sourceHost, Map.of());
     }
 
     public void deleteMetadataIfExists(String name) {
