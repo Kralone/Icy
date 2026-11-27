@@ -39,7 +39,7 @@ En production :
 - travailler dans `/run/iceforge-backup`, normalement en mémoire, mode `0700` ;
 - chiffrer avec `age` vers une clé de reprise conservée hors du serveur ;
 - envoyer le bundle chiffré vers un stockage distant versionné et immuable ;
-- conserver au moins 7 quotidiennes, 4 hebdomadaires et 6 mensuelles ;
+- conserver au moins 7 quotidiennes, 4 hebdomadaires et 6 mensuelles, sans dépasser 6 mois (politique de confidentialité) : `backup-before-deploy.sh` appelle `ops/backups/prune-old-archives.sh`, et `ops/backups/prune-old-archives-windows.ps1 -Directory <dossier> -Apply` applique la même règle aux copies gardées sur un PC ;
 - ne garder publiquement que le checksum du fichier chiffré ;
 - ne jamais inclure la clé privée `age`, les clés d'unseal ou le token Vault ;
 - ne jamais joindre `docker inspect` complet ou `docker compose config`, qui
