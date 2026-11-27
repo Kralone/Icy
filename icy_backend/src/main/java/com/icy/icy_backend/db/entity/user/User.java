@@ -67,6 +67,10 @@ public class User {
     @Column(name = "pwd_reset", nullable = false)
     private Boolean pwdReset = false;
 
+    /** Date d'envoi du mot de passe temporaire : il expire après UserService.TEMP_PASSWORD_TTL. */
+    @Column(name = "temp_password_issued_at")
+    private LocalDateTime tempPasswordIssuedAt;
+
     public void assignDefaultRole(Role defaultRole) {
         UserRole userRole = new UserRole();
         userRole.setUser(this);

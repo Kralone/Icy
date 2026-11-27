@@ -32,8 +32,8 @@ politique de confidentialité.
 - Chaque conversation relayée reçoit le libellé Gmail « Relayé Discord ». Une
   réponse dans une conversation déjà relayée n'est pas annoncée de nouveau :
   retirer le libellé pour la relayer encore.
-- Le message Discord donne l'expéditeur, l'objet, les 1 500 premiers
-  caractères et un lien vers Gmail. Les pièces jointes restent dans Gmail.
+- Le message Discord ne donne que l'expéditeur, l'objet et un lien vers Gmail.
+  Le contenu et les pièces jointes restent dans Gmail.
 - Les mentions (`@everyone`, rôles) contenues dans un email sont neutralisées.
 - En cas d'échec (webhook supprimé, Discord indisponible), Google envoie un
   email d'erreur au compte et le message est retenté au passage suivant.

@@ -72,8 +72,17 @@
         décisions de sanction, y compris une exclusion.
       </li>
       <li>
-        <strong>Les messages privés</strong> envoyés par le site sur Discord (rappels, avertissements, mot de
-        passe temporaire) : contenu, date et état de l'envoi.
+        <strong>Les messages privés</strong> envoyés par le site sur Discord (rappels, avertissements) : contenu,
+        date et état de l'envoi.
+      </li>
+      <li>
+        <strong>Le mot de passe temporaire</strong> envoyé en message privé Discord à la création du compte ou à sa
+        réinitialisation n'est jamais enregistré en clair : le site n'en garde qu'une empreinte. Il doit être changé
+        à la première connexion et expire au bout de 72 heures s'il n'a pas servi.
+      </li>
+      <li>
+        <strong>Depuis Discord</strong>, le bot de la guilde reçoit votre identifiant et votre nom d'utilisateur
+        Discord quand vous répondez à un événement ou utilisez une de ses commandes.
       </li>
       <li>
         <strong>Les notifications du navigateur</strong>, si vous les activez : adresse d'abonnement fournie par le
@@ -92,8 +101,9 @@
         Les autres membres connectés : le profil, le hangar, les disponibilités et la participation aux activités.
       </li>
       <li>
-        Les responsables de la guilde : en plus, les candidatures, le suivi d'activité, la discipline et la banque
-        de guilde, selon leur rôle.
+        Les responsables de la guilde (directeurs et officiers) : en plus, les candidatures, le suivi d'activité,
+        la discipline et la banque de guilde, selon leur rôle. Un responsable qui perd son rôle perd ces accès dans
+        les 15 minutes, et un membre parti ne peut plus se connecter.
       </li>
     </ul>
     <p>Aucune donnée n'est vendue, louée ou utilisée à des fins publicitaires.</p>
@@ -157,9 +167,10 @@
           <tr>
             <td>Compte, profil, disponibilités, participation, sessions et banque</td>
             <td>
-              Tant que vous êtes membre. À votre départ, le compte est désactivé, puis les données sont supprimées
-              ou rendues anonymes 2 ans après. Ce délai permet de retrouver son compte et son historique en cas de
-              retour dans la guilde.
+              Tant que vous êtes membre. À votre départ, le compte est désactivé et ne permet plus de se connecter ;
+              les sessions, les abonnements aux notifications et les disponibilités sont supprimés dans les 24 heures.
+              Le reste (compte, grade, hangar, historique de participation et de banque) est gardé 2 ans pour
+              pouvoir reprendre sa place en cas de retour, puis supprimé ou rendu anonyme.
             </td>
           </tr>
           <tr>
@@ -175,11 +186,14 @@
           </tr>
           <tr>
             <td>Jetons de connexion</td>
-            <td>7 jours au plus, ou jusqu'à la déconnexion</td>
+            <td>
+              Jeton de session : 15 minutes. Jeton de renouvellement : 7 jours au plus, invalidé à la déconnexion et
+              effacé du serveur à son expiration
+            </td>
           </tr>
           <tr>
             <td>Abonnement aux notifications</td>
-            <td>Jusqu'à ce que vous les désactiviez ou que vous quittiez la guilde</td>
+            <td>Jusqu'à ce que vous les désactiviez, ou 24 heures après votre départ de la guilde</td>
           </tr>
           <tr>
             <td>Journaux techniques du serveur</td>
@@ -187,7 +201,7 @@
           </tr>
           <tr>
             <td>Sauvegardes chiffrées de la base</td>
-            <td>6 mois au plus</td>
+            <td>6 mois ; les trois sauvegardes les plus récentes sont toujours gardées pour pouvoir restaurer le site</td>
           </tr>
         </tbody>
       </table>
@@ -219,8 +233,9 @@
       <li>
         <strong>Gmail</strong> reçoit les messages envoyés à l'adresse de contact. Google Ireland Ltd en est
         responsable pour les utilisateurs européens ; les données peuvent être transférées à Google LLC aux
-        États-Unis, qui adhère au cadre de protection des données UE–États-Unis. Chaque message reçu est aussi
-        signalé dans un salon privé du Discord de la guilde, réservé à ses responsables.
+        États-Unis, qui adhère au cadre de protection des données UE–États-Unis. L'expéditeur et l'objet de
+        chaque message reçu sont signalés dans un salon privé du Discord de la guilde, réservé à ses responsables ;
+        le contenu reste dans Gmail.
       </li>
       <li>
         <strong>Le service de notification de votre navigateur</strong> (Google, Mozilla, Apple ou Microsoft selon
@@ -242,15 +257,19 @@
     </p>
 
     <h2>Vos droits</h2>
-    <p>Vous pouvez à tout moment :</p>
+    <p>Dans les conditions prévues par le RGPD, vous pouvez :</p>
     <ul>
-      <li>obtenir une copie des données qui vous concernent ;</li>
+      <li>accéder aux données qui vous concernent et en obtenir une copie ;</li>
       <li>faire corriger une donnée inexacte ;</li>
       <li>demander la suppression de vos données, y compris de votre compte ;</li>
       <li>demander la limitation d'un traitement ;</li>
-      <li>récupérer vos données dans un format réutilisable ;</li>
       <li>retirer votre consentement aux notifications, depuis votre profil ou votre navigateur.</li>
     </ul>
+    <p>
+      Le droit à la portabilité ne s'applique qu'aux traitements fondés sur votre consentement, ici les
+      notifications du navigateur. Pour le reste, la copie de vos données est fournie dans un format lisible et
+      réutilisable, même si la loi ne l'impose pas.
+    </p>
     <h3>Droit d'opposition</h3>
     <p>
       Vous pouvez vous opposer à tout moment, pour des raisons tenant à votre situation particulière, aux

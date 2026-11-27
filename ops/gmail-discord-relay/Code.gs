@@ -2,7 +2,7 @@
  * Relais Gmail -> Discord pour l'adresse de contact publiée dans les mentions légales.
  *
  * Toutes les 5 minutes, chaque nouveau message arrivé dans la boîte de réception est
- * annoncé dans un salon Discord privé par un webhook, puis reçoit le libellé
+ * annoncé (expéditeur et objet seulement) dans un salon Discord privé par un webhook, puis reçoit le libellé
  * « Relayé Discord » pour ne pas être annoncé deux fois. Le message reste dans Gmail.
  *
  * Installation : voir README.md à côté de ce fichier.
@@ -11,7 +11,6 @@
 
 const RELAY_LABEL = 'Relayé Discord';
 const MAX_THREADS_PER_RUN = 20;
-const MAX_BODY_CHARS = 1500;
 const EMBED_COLOR = 0x22d3ee;
 
 function relayNewMail() {
@@ -33,19 +32,17 @@ function relayNewMail() {
 }
 
 function postToDiscord(webhookUrl, thread, message) {
-  const body = message.getPlainBody().replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
-  const excerpt = body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS) + '…' : body;
+  // Seuls l'expéditeur et l'objet partent sur Discord : le contenu reste dans Gmail.
   const payload = {
     username: 'Contact IceForge',
     allowed_mentions: { parse: [] },
     embeds: [{
       title: truncate(message.getSubject() || '(sans objet)', 250),
       url: 'https://mail.google.com/mail/u/0/#inbox/' + thread.getId(),
-      description: excerpt || '(message vide)',
+      description: 'Nouvel email reçu sur l\'adresse de contact. À lire dans Gmail.',
       color: EMBED_COLOR,
       fields: [
-        { name: 'De', value: truncate(message.getFrom(), 250), inline: true },
-        { name: 'Messages dans la conversation', value: String(thread.getMessageCount()), inline: true }
+        { name: 'De', value: truncate(message.getFrom(), 250), inline: true }
       ],
       timestamp: message.getDate().toISOString()
     }]

@@ -141,8 +141,17 @@ public class DataRetentionService {
         return users;
     }
 
-    /** Candidatures (6 mois après la décision) et suivi d'activité (1 an). */
+    /** Candidatures (6 mois après la décision), suivi d'activité (1 an), jetons et données inutiles après un départ. */
     private void purgeRecentHistory(Map<String, Integer> counts) {
+        counts.merge("core.refresh_tokens", jdbc.update("""
+                DELETE FROM core.refresh_tokens
+                WHERE expires_at < NOW()
+                   OR user_id IN (SELECT id FROM core.users WHERE active IS FALSE)
+                """), Integer::sum);
+        for (String table : List.of("core.notification_subscriptions", "core.user_availability")) {
+            counts.merge(table, jdbc.update("DELETE FROM " + table
+                    + " WHERE user_id IN (SELECT id FROM core.users WHERE active IS FALSE)"), Integer::sum);
+        }
         counts.put("candidatures", jdbc.update("""
                 DELETE FROM recruitment.recruitment
                 WHERE status <> 'PENDING' AND decided_at < NOW() - INTERVAL '6 months'

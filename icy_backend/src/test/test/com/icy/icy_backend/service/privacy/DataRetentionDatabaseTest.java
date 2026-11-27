@@ -119,7 +119,8 @@ class DataRetentionDatabaseTest {
         verify(avatars).deleteAvatarOf(gone);
 
         assertThat(jdbc.queryForObject("SELECT username FROM core.users WHERE id = ?", String.class, recent)).isEqualTo("Retention Recent");
-        assertThat(count("SELECT COUNT(*) FROM core.user_availability WHERE user_id IN (?, ?)", recent, active)).isEqualTo(2);
+        assertThat(count("SELECT COUNT(*) FROM core.user_params WHERE user_id = ?", recent)).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM core.user_availability WHERE user_id = ?", active)).isEqualTo(1);
         assertThat(service.purge(true).anonymizedUsers()).isEmpty();
     }
 
@@ -146,6 +147,23 @@ class DataRetentionDatabaseTest {
 
         assertThat(count("SELECT COUNT(*) FROM core.direct_messages WHERE user_id = ?", active)).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM core.member_follow_up WHERE user_id = ?", active)).isZero();
+    }
+
+    @Test
+    void dropsSessionsSubscriptionsAndAvailabilityAsSoonAsAMemberLeaves() {
+        UUID left = member("Retention Left", false, "1 day");
+        UUID active = member("Retention Stays", true, null);
+        jdbc.update("INSERT INTO core.refresh_tokens(id, user_id, token_hash, expires_at) VALUES (gen_random_uuid(), ?, 'left-hash', NOW() + INTERVAL '5 days')", left);
+        jdbc.update("INSERT INTO core.refresh_tokens(id, user_id, token_hash, expires_at) VALUES (gen_random_uuid(), ?, 'old-hash', NOW() - INTERVAL '1 day')", active);
+        jdbc.update("INSERT INTO core.refresh_tokens(id, user_id, token_hash, expires_at) VALUES (gen_random_uuid(), ?, 'live-hash', NOW() + INTERVAL '5 days')", active);
+
+        service.purge(true);
+
+        assertThat(count("SELECT COUNT(*) FROM core.refresh_tokens WHERE user_id = ?", left)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM core.refresh_tokens WHERE user_id = ?", active)).isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM core.user_availability WHERE user_id = ?", left)).isZero();
+        assertThat(count("SELECT COUNT(*) FROM core.user_availability WHERE user_id = ?", active)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT username FROM core.users WHERE id = ?", String.class, left)).isEqualTo("Retention Left");
     }
 
     @Test

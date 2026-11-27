@@ -3,7 +3,11 @@
 
 ALTER TABLE core.users
     ADD COLUMN IF NOT EXISTS deactivated_at TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS anonymized_at TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS anonymized_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS temp_password_issued_at TIMESTAMP;
+
+-- Les mots de passe temporaires déjà envoyés expirent 72 h après le déploiement.
+UPDATE core.users SET temp_password_issued_at = NOW() WHERE pwd_reset IS TRUE AND temp_password_issued_at IS NULL;
 
 UPDATE core.users SET deactivated_at = NOW() WHERE active IS FALSE AND deactivated_at IS NULL;
 
