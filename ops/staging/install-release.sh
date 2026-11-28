@@ -5,9 +5,11 @@ ENV_FILE=${ICEFORGE_STAGING_ENV_FILE:-/etc/iceforge-staging/staging.env}
 REVISION=
 IMAGE_ARCHIVE=
 EXPECTED_SHA256=
+# Images déjà présentes sur l'hôte (tirées du registre par ci-deploy.sh) : pas d'archive à charger.
+PRELOADED_IMAGES=0
 
 usage() {
-  echo "Usage: install-release.sh --revision SHA --image-archive /chemin/images.tar --sha256 HEX" >&2
+  echo "Usage: install-release.sh --revision SHA (--image-archive /chemin/images.tar --sha256 HEX | --preloaded-images)" >&2
 }
 
 while (($#)); do
@@ -15,6 +17,7 @@ while (($#)); do
     --revision) REVISION=${2:?}; shift 2 ;;
     --image-archive) IMAGE_ARCHIVE=${2:?}; shift 2 ;;
     --sha256) EXPECTED_SHA256=${2:?}; shift 2 ;;
+    --preloaded-images) PRELOADED_IMAGES=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
   esac
@@ -22,10 +25,14 @@ done
 
 [[ $EUID -eq 0 ]] || { echo "install-release.sh doit etre execute en root" >&2; exit 1; }
 [[ $REVISION =~ ^[0-9a-f]{7,40}$ ]] || { echo "Revision Git invalide" >&2; exit 1; }
-[[ $IMAGE_ARCHIVE == /* && -f $IMAGE_ARCHIVE && ! -L $IMAGE_ARCHIVE ]] || { echo "Archive image invalide" >&2; exit 1; }
-[[ $EXPECTED_SHA256 =~ ^[0-9a-fA-F]{64}$ ]] || { echo "SHA-256 invalide" >&2; exit 1; }
-actual_sha256=$(sha256sum "$IMAGE_ARCHIVE" | awk '{print $1}')
-[[ ${actual_sha256,,} == ${EXPECTED_SHA256,,} ]] || { echo "SHA-256 de l'archive image incorrect" >&2; exit 1; }
+if ((PRELOADED_IMAGES)); then
+  [[ -z $IMAGE_ARCHIVE && -z $EXPECTED_SHA256 ]] || { echo "--preloaded-images exclut --image-archive et --sha256" >&2; exit 1; }
+else
+  [[ $IMAGE_ARCHIVE == /* && -f $IMAGE_ARCHIVE && ! -L $IMAGE_ARCHIVE ]] || { echo "Archive image invalide" >&2; exit 1; }
+  [[ $EXPECTED_SHA256 =~ ^[0-9a-fA-F]{64}$ ]] || { echo "SHA-256 invalide" >&2; exit 1; }
+  actual_sha256=$(sha256sum "$IMAGE_ARCHIVE" | awk '{print $1}')
+  [[ ${actual_sha256,,} == ${EXPECTED_SHA256,,} ]] || { echo "SHA-256 de l'archive image incorrect" >&2; exit 1; }
+fi
 
 RELEASE_DIR=/opt/iceforge-staging/releases/$REVISION
 [[ -d $RELEASE_DIR && ! -L $RELEASE_DIR ]] || { echo "Release absente: $RELEASE_DIR" >&2; exit 1; }
@@ -33,7 +40,7 @@ for file in docker-compose.staging.yml deploy.sh verify.sh verify-discord-e2e.sh
   [[ -f $RELEASE_DIR/$file && ! -L $RELEASE_DIR/$file ]] || { echo "Fichier de release absent: $file" >&2; exit 1; }
 done
 
-docker image load --input "$IMAGE_ARCHIVE" >/dev/null
+((PRELOADED_IMAGES)) || docker image load --input "$IMAGE_ARCHIVE" >/dev/null
 for component in backend bot frontend; do
   docker image inspect "iceforge/${component}:${REVISION}" >/dev/null
 done

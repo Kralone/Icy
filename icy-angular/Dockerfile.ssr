@@ -9,6 +9,8 @@ RUN npm run build
 
 FROM node:24.19.0-alpine3.24@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS runtime
 # Les paquets système de l'image de base sont mis à niveau : son empreinte est fixée, pas leurs correctifs de sécurité.
+# OS_PACKAGES_REFRESH change chaque jour en CI : le cache Docker ne fige pas les correctifs de apk upgrade.
+ARG OS_PACKAGES_REFRESH=
 RUN apk upgrade --no-cache
 WORKDIR /app
 

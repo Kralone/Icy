@@ -1,0 +1,21 @@
+# Exceptions du scan « Block fixable PostgreSQL OS vulnerabilities » uniquement
+# (.github/workflows/security.yml). Elles ne s'appliquent à aucune autre image.
+#
+# Image : postgres:18.7-bookworm, la plus récente publiée (24/11/2026). Debian a corrigé
+# ces paquets après la construction de l'image officielle : le correctif arrivera avec la
+# prochaine reconstruction. Chaque ligne expire (exp:) : passé la date, le scan rebloque
+# et l'exception doit être revue, pas prolongée d'office.
+#
+# Revue : mettre à jour le digest postgres, relancer Security, retirer les lignes devenues
+# inutiles.
+
+# linux-pam, traversée de répertoire dans pam_namespace (libpam-modules, libpam-modules-bin,
+# libpam-runtime, libpam0g). Le conteneur n'ouvre aucune session PAM : pas de connexion
+# système (ni sshd, ni login), PostgreSQL authentifie lui-même (scram-sha-256) et
+# pam_namespace n'est pas configuré. Non exploitable ici.
+CVE-2025-6020 exp:2026-12-31
+
+# zstd, fuite d'informations par tampon non initialisé (libzstd1, zstd). Seules les données
+# de la base passent par zstd (compression de WAL ou de base backup), et la base n'est
+# joignable que depuis le réseau Docker interne. Impact faible, échéance courte.
+CVE-2026-124851 exp:2026-12-15
