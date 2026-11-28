@@ -21,4 +21,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Query("UPDATE RefreshToken token SET token.revokedAt = :revokedAt " +
             "WHERE token.user.id = :userId AND token.revokedAt IS NULL")
     int revokeAllActiveForUser(@Param("userId") UUID userId, @Param("revokedAt") Instant revokedAt);
+
+    /** Supprime le jeton qui a été remplacé par {@code tokenHash}, c'est-à-dire son prédécesseur direct. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM RefreshToken token WHERE token.replacedByTokenHash = :tokenHash")
+    int deleteByReplacedByTokenHash(@Param("tokenHash") String tokenHash);
 }

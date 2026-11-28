@@ -55,6 +55,10 @@ public class RefreshTokenService {
             throw invalidToken();
         }
 
+        // On ne garde que le jeton actif et son prédécesseur direct : ce dernier reste en base, révoqué,
+        // pour détecter sa réutilisation. Les jetons plus anciens de la chaîne (n-2) sont supprimés ici ;
+        // les sessions abandonnées et les jetons expirés sont nettoyés par la purge de rétention.
+        repository.deleteByReplacedByTokenHash(stored.getTokenHash());
         String replacement = createToken(stored.getUser());
         stored.setRevokedAt(now);
         stored.setReplacedByTokenHash(hash(replacement));

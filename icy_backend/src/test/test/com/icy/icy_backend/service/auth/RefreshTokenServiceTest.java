@@ -67,6 +67,7 @@ class RefreshTokenServiceTest {
         assertThat(stored.getRevokedAt()).isNotNull();
         assertThat(stored.getReplacedByTokenHash()).hasSize(64);
         verify(repository, Mockito.times(2)).save(any(RefreshToken.class));
+        verify(repository).deleteByReplacedByTokenHash("0".repeat(64));
     }
 
     @Test
@@ -84,6 +85,22 @@ class RefreshTokenServiceTest {
         assertThatThrownBy(() -> service.rotate("replayed-token"))
                 .isInstanceOf(InvalidCredentialsException.class);
         verify(repository).revokeAllActiveForUser(Mockito.eq(user.getId()), any(Instant.class));
+    }
+
+    @Test
+    void refusedRotationKeepsTheTokenChain() {
+        RefreshTokenRepository repository = Mockito.mock(RefreshTokenRepository.class);
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
+        RefreshTokenService service = new RefreshTokenService(repository, jwtUtil);
+        RefreshToken stored = storedToken(user());
+        stored.setExpiresAt(Instant.now().minusSeconds(1));
+
+        when(jwtUtil.validateRefreshToken("expired-token")).thenReturn(true);
+        when(repository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(stored));
+
+        assertThatThrownBy(() -> service.rotate("expired-token"))
+                .isInstanceOf(InvalidCredentialsException.class);
+        verify(repository, Mockito.never()).deleteByReplacedByTokenHash(anyString());
     }
 
     private static User user() {
