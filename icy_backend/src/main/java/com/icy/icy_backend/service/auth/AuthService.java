@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service.auth;
 
+import com.icy.icy_backend.security.companion.MemberAccessRevocation;
 import com.icy.icy_backend.controller.dto.response.auth.LoginResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserResponseDTO;
 import com.icy.icy_backend.db.entity.user.User;
@@ -31,6 +32,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
+
+    private MemberAccessRevocation accessRevocation;
+
+    /** Facultatif pour garder les constructeurs des tests : sans lui, rien n'est révoqué en plus. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAccessRevocation(MemberAccessRevocation accessRevocation) {
+        this.accessRevocation = accessRevocation;
+    }
 
     public AuthService(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
                        UserService userService, RefreshTokenService refreshTokenService) {
@@ -138,13 +147,16 @@ public class AuthService {
 
         String username = userService.updatePasswordAndUnlock(user.getId(), newPassword);
         refreshTokenService.revokeAllForUser(user);
+        if (accessRevocation != null) accessRevocation.revokeCompanion(user, MemberAccessRevocation.PASSWORD_RESET);
         return authenticate(username, newPassword);
     }
 
     @Transactional
     public void forcePasswordReset(UUID userId) {
         userService.forceResetPassword(userId);
-        refreshTokenService.revokeAllForUser(userService.findUserById(userId));
+        User user = userService.findUserById(userId);
+        refreshTokenService.revokeAllForUser(user);
+        if (accessRevocation != null) accessRevocation.revokeCompanion(user, MemberAccessRevocation.PASSWORD_RESET);
     }
 
 

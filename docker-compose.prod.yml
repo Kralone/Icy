@@ -36,6 +36,11 @@ services:
       IMAGE_BASE_URL: ${IMAGE_BASE_URL:-https://iceforge.fr/images/}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       BOT_API_KEY: ${BOT_API_KEY:?BOT_API_KEY is required}
+      # Icy Companion : reste désactivé tant que la clé de signature (Vault) n'est pas fournie.
+      ICY_COMPANION_AUTH_ENABLED: ${ICY_COMPANION_AUTH_ENABLED:-false}
+      ICY_COMPANION_AUTH_ISSUER: ${ICY_COMPANION_AUTH_ISSUER:-https://iceforge.fr}
+      ICY_COMPANION_AUTH_SIGNING_KEY: ${ICY_COMPANION_AUTH_SIGNING_KEY:-}
+      ICY_COMPANION_AUTH_SERVICE_SECRET: ${ICY_COMPANION_AUTH_SERVICE_SECRET:-}
       RABBITMQ_USERNAME: ${RABBITMQ_USER:?RABBITMQ_USER is required}
       RABBITMQ_PASSWORD: ${RABBITMQ_PSWD:?RABBITMQ_PSWD is required}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
