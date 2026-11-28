@@ -133,8 +133,9 @@ public class CompanionAuthServerConfig {
     @Order(3)
     SecurityFilterChain companionServiceChain(HttpSecurity http, JwtDecoder companionServiceJwtDecoder) throws Exception {
         http
+                // Jeton Bearer seulement, pas de cookie : la protection CSRF reste active par défaut et ne gêne
+                // pas les lectures (GET) du service compagnon.
                 .securityMatcher("/api/companion/**")
-                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest()
                         .hasAuthority("SCOPE_" + CompanionAuthProperties.SERVICE_SCOPE))
