@@ -21,8 +21,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Préfixe GHCR des images livrées (nom de dépôt en minuscules, exigé par le registre).
-  IMAGE_PREFIX: ghcr.io/kralone/iceforge-
+  # Préfixe GHCR des images livrées (pas IMAGE_PREFIX : bake lirait la variable dans tous les jobs) (nom de dépôt en minuscules, exigé par le registre).
+  GHCR_PREFIX: ghcr.io/kralone/iceforge-
 
 jobs:
   changes:
@@ -306,7 +306,7 @@ jobs:
           SKIP_TESTS: "true"
           BUILD_COMMIT: ${{ github.sha }}
           OS_PACKAGES_REFRESH: ${{ steps.day.outputs.value }}
-          IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
+          IMAGE_PREFIX: ${{ env.GHCR_PREFIX }}
           TAG: ${{ github.sha }}
         with:
           source: .
@@ -322,7 +322,7 @@ jobs:
             digest=$(jq -er --arg c "$component" '.[$c]["containerimage.digest"]' <<<"$METADATA")
             [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "Digest $component illisible" >&2; exit 1; }
             echo "$component=$digest" >>"$GITHUB_OUTPUT"
-            echo "- \`${IMAGE_PREFIX}${component}@${digest}\`" >>"$GITHUB_STEP_SUMMARY"
+            echo "- \`${GHCR_PREFIX}${component}@${digest}\`" >>"$GITHUB_STEP_SUMMARY"
           done
       - name: Assemble staging release files
         env:
@@ -337,7 +337,7 @@ jobs:
           cp ops/testing/validation-fixtures.sql "$out/"
           jq -n \
             --arg revision "$GITHUB_SHA" \
-            --arg prefix "$IMAGE_PREFIX" \
+            --arg prefix "$GHCR_PREFIX" \
             --arg backend "$BACKEND_DIGEST" --arg bot "$BOT_DIGEST" --arg frontend "$FRONTEND_DIGEST" \
             --arg created "$(date -u +%FT%TZ)" \
             --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
