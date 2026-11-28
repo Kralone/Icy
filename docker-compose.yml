@@ -67,6 +67,11 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iceforge.fr}
+      # Émetteur de jetons d'Icy Companion : désactivé par défaut. Sans clé, une clé jetable est générée.
+      ICY_COMPANION_AUTH_ENABLED: ${ICY_COMPANION_AUTH_ENABLED:-false}
+      ICY_COMPANION_AUTH_ISSUER: ${ICY_COMPANION_AUTH_ISSUER:-http://localhost:8088}
+      ICY_COMPANION_AUTH_SIGNING_KEY: ${ICY_COMPANION_AUTH_SIGNING_KEY:-}
+      ICY_COMPANION_AUTH_SERVICE_SECRET: ${ICY_COMPANION_AUTH_SERVICE_SECRET:-}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER:-icy}

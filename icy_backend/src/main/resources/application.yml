@@ -46,6 +46,16 @@ jwt:
     rotation-enabled: true  # Activation de la rotation des refresh tokens
 
 icy:
+  # Émetteur de jetons d'Icy Companion (OAuth2 + PKCE, RS256). Désactivé tant que ICY_COMPANION_AUTH_ENABLED
+  # ne vaut pas true : la connexion du site (jwt.* ci-dessus) n'en dépend pas.
+  companion-auth:
+    enabled: ${ICY_COMPANION_AUTH_ENABLED:false}
+    issuer: ${ICY_COMPANION_AUTH_ISSUER:https://iceforge.fr}
+    signing-key: ${ICY_COMPANION_AUTH_SIGNING_KEY:}
+    key-id: ${ICY_COMPANION_AUTH_KEY_ID:iceforge-companion-1}
+    service-client-secret: ${ICY_COMPANION_AUTH_SERVICE_SECRET:}
+    access-token-ttl: ${ICY_COMPANION_AUTH_ACCESS_TTL:5m}
+    refresh-token-ttl: ${ICY_COMPANION_AUTH_REFRESH_TTL:7d}
   cors:
     # Comma-separated exact origins. Production stays restrictive by default;
     # local/validation origins must be opted in by their Compose overlay.

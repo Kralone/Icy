@@ -16,6 +16,7 @@ import com.icy.icy_backend.exception.definition.ResourceNotFoundException;
 import com.icy.icy_backend.security.AuthUtils;
 import com.icy.icy_backend.security.UserManagementPolicy;
 import com.icy.icy_backend.service.notification.NotificationPushService;
+import com.icy.icy_backend.security.companion.MemberAccessRevocation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,14 @@ public class MemberWarningService {
     private final UserRepository users;
     private final ModerationMessenger messenger;
     private final NotificationPushService notifications;
+
+    private MemberAccessRevocation accessRevocation;
+
+    /** Facultatif pour garder les constructeurs des tests : sans lui, rien n'est révoqué en plus. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAccessRevocation(MemberAccessRevocation accessRevocation) {
+        this.accessRevocation = accessRevocation;
+    }
 
     @Value("${iceforge.moderation.warning-threshold:3}")
     private int threshold = 3;
@@ -210,6 +219,7 @@ public class MemberWarningService {
             // Même effet que « Désactiver » sur la page Membres : le compte ne peut plus se connecter.
             target.setActive(false);
             users.save(target);
+            if (accessRevocation != null) accessRevocation.revokeEverywhere(target, MemberAccessRevocation.EXCLUDED);
             log.info("Membre {} exclu par {} après {} avertissements", target.getId(), author.getId(), active);
         }
         return record(target);

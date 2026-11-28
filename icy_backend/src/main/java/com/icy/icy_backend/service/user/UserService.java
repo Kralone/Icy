@@ -1,5 +1,6 @@
 package com.icy.icy_backend.service.user;
 
+import com.icy.icy_backend.security.companion.MemberAccessRevocation;
 import com.icy.icy_backend.controller.dto.response.common.MessageResponse;
 import com.icy.icy_backend.controller.dto.response.user.UserOnlineResponseDTO;
 import com.icy.icy_backend.controller.dto.response.user.UserProfileResponseDTO;
@@ -77,6 +78,14 @@ public class UserService {
     private final EventParticipationRepository eventParticipationRepository;
     private final UserShipRepository userShipRepository;
     private final UserCollectionRepository userCollectionRepository;
+
+    private MemberAccessRevocation accessRevocation;
+
+    /** Facultatif pour garder les constructeurs des tests : sans lui, rien n'est révoqué en plus. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAccessRevocation(MemberAccessRevocation accessRevocation) {
+        this.accessRevocation = accessRevocation;
+    }
 
     public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, MessageService messageService, UserPublisher userPublisher, NotificationPushService notificationPushService, ShipRepository shipRepository, UserParamRepository userParamRepository, UserAvatarService userAvatarService, GoalRepository goalRepository, GoalParticipationRepository goalParticipationRepository, EventParticipationRepository eventParticipationRepository, UserShipRepository userShipRepository, UserCollectionRepository userCollectionRepository) {
         this.userRepository = userRepository;
@@ -185,6 +194,7 @@ public class UserService {
         try {
             user.setActive(false);
             userRepository.save(user);
+            if (accessRevocation != null) accessRevocation.revokeEverywhere(user, MemberAccessRevocation.DEACTIVATED);
             logger.info("Utilisateur désactivé avec succès: {}", user.getUsername());
             notifyAdmins(
                     "Admin : compte desactive",
