@@ -26,6 +26,9 @@ images avec le SHA Git, puis produit une archive et son manifeste. Le script
 sans démarrer de service. Le démarrage reste une décision explicite via
 `deploy.sh`.
 
+Depuis la CI, chaque merge sur `main` peut installer la release automatiquement (images
+tirées de GHCR par digest) : voir [CI-DEPLOY.md](CI-DEPLOY.md).
+
 ```bash
 sudo /opt/iceforge-staging/releases/<sha>/prepare-env.sh
 sudoedit /etc/iceforge-staging/staging.env

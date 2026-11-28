@@ -10,6 +10,8 @@ RUN ICEFORGE_BUILD_COMMIT="${ICEFORGE_BUILD_COMMIT}" npm run build
 
 FROM nginx:1.31.9-alpine3.24@sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7
 # Les paquets système de l'image de base sont mis à niveau : son empreinte est fixée, pas leurs correctifs de sécurité.
+# OS_PACKAGES_REFRESH change chaque jour en CI : le cache Docker ne fige pas les correctifs de apk upgrade.
+ARG OS_PACKAGES_REFRESH=
 RUN apk upgrade --no-cache
 ARG ICEFORGE_BUILD_COMMIT=unknown
 LABEL org.opencontainers.image.revision="${ICEFORGE_BUILD_COMMIT}"
